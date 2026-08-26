@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Build Next.js App
-        run: npm run build --workspace=apps/web
+        run: npm run build --workspace=apps/mangodb
 
       - name: Typecheck Backend
         run: npx tsc --noEmit
