@@ -1,3 +1,11 @@
 node_modules
 .env
 .DS_Store
+
+# graphify — derived knowledge graph, regenerate with /graphify
+graphify-out/
+
+# Claude Code — machine-local only; CLAUDE.md / AGENTS.md stay tracked
+.claude/settings.local.json
+.claude/*.local.json
+CLAUDE.local.md
