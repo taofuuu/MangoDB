@@ -1,7 +1,16 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
-import type { AuthTokenPayload } from '@mangodb/shared';
+import type { AuthTokenPayload, UserRole } from '@mangodb/shared';
 
 const DEFAULT_EXPIRES_IN = '1h';
+
+// Keep in sync with the UserRole union in @mangodb/shared. Typing the array as
+// readonly UserRole[] catches stray values here, but adding a role to the union
+// without adding it below only shows up as a rejected token.
+const USER_ROLES: readonly UserRole[] = ['provider', 'receiver', 'admin'];
+
+function isUserRole(value: unknown): value is UserRole {
+    return USER_ROLES.includes(value as UserRole);
+}
 
 // Read lazily: imports are evaluated before dotenv.config() runs in index.ts.
 function getSecret(): string {
@@ -28,7 +37,7 @@ export function verifyAccessToken(token: string): AuthTokenPayload {
     if (
         typeof decoded === 'string' ||
         typeof decoded.sub !== 'string' ||
-        !decoded.role
+        !isUserRole(decoded.role)
     ) {
         throw new jwt.JsonWebTokenError(
             'Token payload is missing required claims',
