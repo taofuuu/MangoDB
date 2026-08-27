@@ -1,0 +1,1257 @@
+<title>MangoDB API Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground: #f3f3f7;
+    --surface: #ffffff;
+    --surface-2: #eaeaf3;
+    --ink: #13131c;
+    --ink-muted: #5a5a6e;
+    --rule: #d8d8e4;
+    --rule-soft: #e6e6ef;
+    --accent: #5a4bd6;
+    --accent-soft: #ecebfb;
+    --ok: #2e7d5b;
+    --ok-soft: #e4f2ea;
+    --warn: #a26a10;
+    --warn-soft: #f7eeda;
+    --deny: #bc4238;
+    --deny-soft: #f9e7e5;
+
+    --font-display: 'Chivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --measure: 68ch;
+    --wide: 1180px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ground: #0d0d14;
+      --surface: #14141f;
+      --surface-2: #1c1c2a;
+      --ink: #e6e6f0;
+      --ink-muted: #9494ac;
+      --rule: #2a2a3c;
+      --rule-soft: #21212f;
+      --accent: #9a8cff;
+      --accent-soft: #1e1b33;
+      --ok: #5fc496;
+      --ok-soft: #16281f;
+      --warn: #e0a94a;
+      --warn-soft: #2a2113;
+      --deny: #e8776a;
+      --deny-soft: #2c1917;
+    }
+  }
+
+  :root[data-theme='dark'] {
+    --ground: #0d0d14;
+    --surface: #14141f;
+    --surface-2: #1c1c2a;
+    --ink: #e6e6f0;
+    --ink-muted: #9494ac;
+    --rule: #2a2a3c;
+    --rule-soft: #21212f;
+    --accent: #9a8cff;
+    --accent-soft: #1e1b33;
+    --ok: #5fc496;
+    --ok-soft: #16281f;
+    --warn: #e0a94a;
+    --warn-soft: #2a2113;
+    --deny: #e8776a;
+    --deny-soft: #2c1917;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 22px;
+    margin-bottom: 44px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.6rem, 7vw, 4.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .thesis {
+    max-width: var(--measure);
+    font-size: 1.12rem;
+    color: var(--ink-muted);
+    margin: 20px 0 30px;
+  }
+
+  .thesis strong { color: var(--ink); font-weight: 600; }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 40px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.9;
+  }
+
+  .meta div { display: flex; gap: 9px; }
+  .meta dt { color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; margin: 0; }
+  .meta dd { margin: 0; font-weight: 500; }
+
+  /* ---------- layout ---------- */
+
+  .shell { display: block; }
+
+  @media (min-width: 1100px) {
+    .shell {
+      display: grid;
+      grid-template-columns: 172px minmax(0, 1fr);
+      gap: 64px;
+      align-items: start;
+    }
+  }
+
+  .rail { display: none; }
+
+  @media (min-width: 1100px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: 36px;
+      max-height: calc(100vh - 72px);
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+    .rail > ol { gap: 22px; }
+    .rail a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      border-left: 2px solid var(--rule);
+      padding-left: 12px;
+      display: block;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .rail a:hover, .rail a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+    .rail-chapter {
+      color: var(--ink) !important;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 11px;
+      border-left-color: var(--ink) !important;
+      margin-bottom: 9px;
+    }
+    .rail-chapter:hover, .rail-chapter:focus-visible {
+      color: var(--accent) !important;
+      border-left-color: var(--accent) !important;
+    }
+    .rail-sub { padding-left: 12px !important; }
+  }
+
+  /* ---------- chapter heads ---------- */
+
+  .chapter-head {
+    border-top: 2px solid var(--ink);
+    padding-top: 20px;
+    margin-bottom: 40px;
+    scroll-margin-top: 28px;
+  }
+
+  .chapter-head h2 {
+    font-size: clamp(1.9rem, 4.5vw, 2.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0 0 14px;
+  }
+
+  .chapter-num {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .chapter-summary { color: var(--ink-muted); margin: 0 0 16px; }
+
+  .chapter-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .chip {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 3px 9px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+
+  /* ---------- coverage ---------- */
+
+  .coverage { margin-bottom: 56px; }
+
+  .coverage h2 {
+    font-size: 1.05rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+  }
+
+  .coverage table { min-width: 560px; }
+  .coverage td:first-child { font-weight: 600; }
+
+  .cov-link { text-decoration: none; }
+  .cov-link:hover { text-decoration: underline; }
+
+  .col { max-width: var(--measure); }
+
+  section { margin-bottom: 68px; scroll-margin-top: 28px; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.85rem;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.14rem;
+    letter-spacing: -0.01em;
+    margin: 36px 0 12px;
+    text-wrap: balance;
+  }
+
+  p { margin: 0 0 18px; }
+  .col > p, .col > ul, .col > ol { max-width: var(--measure); }
+
+  ul, ol { margin: 0 0 18px; padding-left: 22px; }
+  li { margin-bottom: 9px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  pre {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.62;
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 5px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 22px;
+  }
+
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .c-dim { color: var(--ink-muted); }
+  .c-ok { color: var(--ok); }
+  .c-warn { color: var(--warn); }
+  .c-deny { color: var(--deny); }
+  .c-accent { color: var(--accent); }
+
+  /* ---------- breakout for figures ---------- */
+
+  .breakout { max-width: 100%; }
+
+  @media (min-width: 900px) {
+    .breakout { width: min(880px, 100%); }
+  }
+
+  figure {
+    margin: 0 0 26px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 24px 22px 18px;
+  }
+
+  figure svg { display: block; width: 100%; height: auto; color: var(--ink); }
+
+  figcaption {
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule-soft);
+    line-height: 1.55;
+  }
+
+  .fig-scroll { overflow-x: auto; }
+  .fig-scroll > svg { min-width: 620px; }
+
+  /* ---------- anatomy blocks ---------- */
+
+  .anatomy {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 22px;
+    margin: 0 0 26px;
+    font-family: var(--font-mono);
+    overflow-x: auto;
+  }
+
+  .anatomy-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    min-width: max-content;
+  }
+
+  .seg-col { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
+
+  .seg {
+    padding: 7px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+    align-self: stretch;
+  }
+
+  .seg-a { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .seg-b { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+  .seg-c { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+  .seg-dot { padding: 7px 2px; color: var(--ink-muted); }
+
+  .seg-label {
+    font-size: 10.5px;
+    font-weight: 400;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+
+  .anatomy-note {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule-soft);
+    line-height: 1.55;
+  }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 0 0 26px; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 480px;
+    font-size: 14.5px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+
+  thead th {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  .code-cell { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+
+  .status {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .s-ok { background: var(--ok-soft); color: var(--ok); }
+  .s-warn { background: var(--warn-soft); color: var(--warn); }
+  .s-deny { background: var(--deny-soft); color: var(--deny); }
+
+  /* ---------- callouts ---------- */
+
+  .callout {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 6px 6px 0;
+    padding: 18px 20px;
+    margin: 0 0 26px;
+  }
+
+  .callout.danger { border-left-color: var(--deny); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .callout-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .callout.danger .callout-label { color: var(--deny); }
+
+  /* ---------- misc ---------- */
+
+  .layer-mark {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .gap-list { list-style: none; padding: 0; }
+
+  .gap-list li {
+    padding-left: 26px;
+    position: relative;
+    margin-bottom: 13px;
+  }
+
+  .gap-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+  }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    margin-top: 20px;
+    padding-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.8;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Living document · last updated 27 Aug 2026</p>
+    <h1>MangoDB API Guide</h1>
+    <p class="thesis">
+      How the backend actually works, written for people who have not built one before.
+      Each chapter covers one subsystem: what it does, why it was built that way, and
+      <strong>what is not built yet</strong>. Chapters get added as the sprint lands them.
+    </p>
+    <dl class="meta">
+      <div><dt>Repo</dt><dd>taofuuu/MangoDB · apps/api</dd></div>
+      <div><dt>Stack</dt><dd>Express 5 · TypeScript · Supabase Postgres</dd></div>
+      <div><dt>Source</dt><dd>docs/api-guide.html</dd></div>
+    </dl>
+  </header>
+
+  <section class="coverage">
+    <h2>Coverage</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Chapter</th><th>Subsystem</th><th>Stories</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>01</td>
+            <td><a class="cov-link" href="#ch1">The auth spine</a></td>
+            <td class="code-cell">US1-1 · US1-2 · US6-1</td>
+            <td><span class="status s-ok">documented</span></td>
+          </tr>
+          <tr>
+            <td>02</td>
+            <td>Company profiles</td>
+            <td class="code-cell">US1-4 · US1-5</td>
+            <td><span class="status s-warn">not written</span></td>
+          </tr>
+          <tr>
+            <td>03</td>
+            <td>Service catalog CRUD</td>
+            <td class="code-cell">US1-7 · US1-8 · US1-9</td>
+            <td><span class="status s-warn">not written</span></td>
+          </tr>
+          <tr>
+            <td>04</td>
+            <td>Portfolio &amp; file uploads</td>
+            <td class="code-cell">US1-10 · US1-11 · US1-12</td>
+            <td><span class="status s-warn">not written</span></td>
+          </tr>
+          <tr>
+            <td>05</td>
+            <td>Administrative data management</td>
+            <td class="code-cell">US6-2 · US6-3 · US6-4</td>
+            <td><span class="status s-warn">not written</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="shell">
+
+    <nav class="rail" aria-label="Contents">
+      <ol id="rail-list"></ol>
+    </nav>
+
+    <main class="col" id="guide">
+
+      <div class="chapter-head" id="ch1" data-nav="01 · Auth spine">
+        <span class="chapter-num">Chapter 01</span>
+        <h2>The auth spine</h2>
+        <p class="chapter-summary">
+          Three small files decide who gets into the API and what they may do once inside.
+          Every protected endpoint in the project sits behind them.
+        </p>
+        <div class="chapter-meta">
+          <span class="chip">US1-1 · US1-2 · US6-1</span>
+          <span class="chip">9155d97 · 3af0532</span>
+          <span class="chip">bcryptjs · jsonwebtoken</span>
+          <span class="chip">11/11 cases verified</span>
+        </div>
+      </div>
+
+      <!-- ============ TWO QUESTIONS ============ -->
+      <section id="questions" data-nav="Two questions">
+        <h2>Every protected request answers two questions</h2>
+
+        <p>
+          They are different questions, and mixing them up is the most common beginner mistake.
+          A valid admin and a valid provider are <em>equally</em> authenticated — they differ only
+          in what they are allowed to reach.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Question</th><th>Name</th><th>Our code</th><th>Failure</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>“Who are you?”</td>
+                <td><strong>Authentication</strong><br><span class="c-dim">authn</span></td>
+                <td class="code-cell">requireAuth</td>
+                <td><span class="status s-deny">401</span></td>
+              </tr>
+              <tr>
+                <td>“Are you allowed to do this?”</td>
+                <td><strong>Authorization</strong><br><span class="c-dim">authz</span></td>
+                <td class="code-cell">requireRole</td>
+                <td><span class="status s-warn">403</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          That is why <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a
+          provider — we know exactly who you are, you simply cannot come in — but
+          <span class="status s-deny">401</span> to a garbage token, where we do not know who you are at all.
+        </p>
+
+        <p>
+          Getting this backwards leaks information. Returning 401 to a wrong-role user implies
+          “your login is broken” when it is working perfectly. Keep the split when you write the
+          US6 access-denial tests — the two codes are not interchangeable.
+        </p>
+      </section>
+
+      <!-- ============ PASSWORDS ============ -->
+      <section id="passwords" data-nav="01 · Passwords">
+        <span class="layer-mark">Layer 01 · src/auth/password.ts</span>
+        <h2>Passwords are never stored</h2>
+
+        <p>
+          If the database leaks — and databases leak — every stored password becomes an attacker's
+          property. Worse, people reuse passwords, so a leak hands over their email and bank logins too.
+        </p>
+
+        <p>So we store a <strong>hash</strong> instead. A hash is a one-way function: easy forward, impossible backward.</p>
+
+        <pre><code>"hunter2"  --hash--&gt;  "$2b$12$XqR7f...(60 chars)"
+"hunter2"  &lt;--????--  "$2b$12$XqR7f...(60 chars)"   <span class="c-dim">← no way back</span></code></pre>
+
+        <p>
+          This is <em>not</em> encryption. Encryption is designed to be reversed with a key; hashing has
+          no key and no reverse. That is the entire point. Login then works without the server ever
+          knowing the password: hash what the user typed, compare the two hashes, match means correct.
+        </p>
+
+        <h3>Why bcrypt and not SHA-256</h3>
+
+        <p>Two properties ordinary hash functions lack.</p>
+
+        <p>
+          <strong>It salts automatically.</strong> A salt is random data mixed in before hashing.
+          Without it, identical passwords produce identical hashes — crack one <code>"password123"</code>
+          and you have cracked every user who chose it. Attackers also keep precomputed tables of
+          billions of common-password hashes; a random salt makes those tables worthless, since they
+          would need one table per salt.
+        </p>
+
+        <p>
+          <strong>It is deliberately slow.</strong> SHA-256 is built for speed, and a GPU does billions
+          per second — exactly what a password cracker wants. bcrypt is built to waste time.
+        </p>
+
+        <div class="anatomy breakout">
+          <div class="anatomy-row">
+            <span class="seg-col">
+              <span class="seg seg-a">$2b</span>
+              <span class="seg-label">algorithm</span>
+            </span>
+            <span class="seg-dot">$</span>
+            <span class="seg-col">
+              <span class="seg seg-b">12</span>
+              <span class="seg-label">cost</span>
+            </span>
+            <span class="seg-dot">$</span>
+            <span class="seg-col">
+              <span class="seg seg-c">XqR7fK2mN9pQ8rS4tU6vW.eY1zA3bC5dE7fG9hI0jK2lM4nO6pQ8</span>
+              <span class="seg-label">salt + hash, packed together</span>
+            </span>
+          </div>
+          <p class="anatomy-note">
+            The cost is a <em>power of two</em>: <code>SALT_ROUNDS = 12</code> means 2<sup>12</sup> = 4,096
+            internal iterations, roughly 250&nbsp;ms per hash. Each +1 doubles the work — unnoticeable when
+            you log in once, catastrophic for someone trying ten billion guesses. Because the salt and the
+            cost live <em>inside</em> the output string, <code>verifyPassword</code> needs nothing but the
+            stored hash to check a password.
+          </p>
+        </div>
+
+        <p>This is what the smoke test proved — the same password, hashed twice, produced two different results:</p>
+
+        <pre><code>verify correct  : <span class="c-ok">true</span>
+verify wrong    : <span class="c-deny">false</span>
+verify empty    : <span class="c-deny">false</span>
+salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same password, different hash</span></code></pre>
+
+        <p>Yet <code>verifyPassword</code> still matches both, because it reads the salt back out of the stored hash and reuses it.</p>
+
+        <h3>The guard clauses</h3>
+
+        <p>
+          <code>verifyPassword</code> returns <code>false</code> on empty input, but
+          <code>hashPassword</code> <em>throws</em>. That asymmetry is deliberate: an empty password
+          reaching the hashing function is a programming error, not a user typo, and it should crash
+          loudly in development rather than quietly store something useless.
+        </p>
+      </section>
+
+      <!-- ============ TOKENS ============ -->
+      <section id="tokens" data-nav="02 · Tokens">
+        <span class="layer-mark">Layer 02 · src/auth/jwt.ts</span>
+        <h2>Tokens carry identity between requests</h2>
+
+        <p>
+          Password checking happens <strong>once</strong>, at login. But HTTP is <em>stateless</em> — the
+          server forgets you the instant it responds, so every later request arrives as a total stranger.
+          Resending the password each time is obviously out. Instead, login issues a <strong>token</strong>:
+          a signed pass the client attaches to future requests.
+        </p>
+
+        <div class="anatomy breakout">
+          <div class="anatomy-row">
+            <span class="seg-col">
+              <span class="seg seg-a">eyJhbGciOiJIUzI1NiJ9</span>
+              <span class="seg-label">header — algorithm</span>
+            </span>
+            <span class="seg-dot">.</span>
+            <span class="seg-col">
+              <span class="seg seg-b">eyJzdWIiOiJ1LTEiLCJyb2xlIjoiYWRtaW4ifQ</span>
+              <span class="seg-label">payload — the claims</span>
+            </span>
+            <span class="seg-dot">.</span>
+            <span class="seg-col">
+              <span class="seg seg-c">xyQL8SgH_ebyFP6i0rC9RB</span>
+              <span class="seg-label">signature — proof it is genuine</span>
+            </span>
+          </div>
+          <p class="anatomy-note">
+            Three base64 chunks joined by dots. Ours decodes to
+            <code>{ "sub": "u-1", "role": "admin", "iat": …, "exp": … }</code> —
+            <code>sub</code> is the subject (user id), <code>iat</code> issued-at, <code>exp</code> expiry.
+          </p>
+        </div>
+
+        <div class="callout danger">
+          <span class="callout-label">The thing beginners get wrong</span>
+          <p>
+            <strong>The payload is not encrypted.</strong> Base64 is encoding, not secrecy — anyone can
+            paste a token into jwt.io and read it. Never put anything secret in a token: no passwords,
+            no personal data. Ours holds only a user id and a role, both of which the user already knows
+            about themselves.
+          </p>
+        </div>
+
+        <h3>Then what stops someone editing “provider” into “admin”?</h3>
+
+        <p>The signature. When the server signs a token it computes:</p>
+
+        <pre><code>signature = HMAC-SHA256(header + "." + payload, JWT_SECRET)</code></pre>
+
+        <p>
+          <code>JWT_SECRET</code> never leaves the server. On every incoming request
+          <code>jwt.verify</code> recomputes that signature from the token's <em>actual</em> contents and
+          compares. Change one character of the payload and the recomputed signature no longer matches.
+        </p>
+
+        <p>
+          The forged-token test proved it. A perfectly well-formed <code>role: admin</code> token, signed
+          with a <em>guessed</em> secret, was rejected at both endpoints — the payload said “admin”, and the
+          server did not care.
+        </p>
+
+        <div class="callout">
+          <span class="callout-label">Operational consequence</span>
+          <p>
+            The secret <em>is</em> the security of the whole system. Leak it and anyone can mint admin
+            tokens. Hence <code>.env</code>, hence gitignored, hence a different secret per environment.
+            Generate your own with the command in <code>.env.example</code> — never share one.
+          </p>
+        </div>
+
+        <h3>Expiry, and why revocation is hard</h3>
+
+        <p>
+          Tokens are self-contained, which is their strength and their weakness: the server keeps no list
+          of issued tokens, so it cannot revoke one individually. A stolen token works until it expires.
+          Short lifetimes limit the damage window — ours default to <code>1h</code>, and
+          <code>jwt.verify</code> checks <code>exp</code> on its own and throws.
+        </p>
+
+        <h3>One real bug worth knowing about</h3>
+
+        <p>
+          JavaScript runs <strong>all</strong> <code>import</code> statements before <strong>any</strong>
+          other line of a file. So in <code>index.ts</code>:
+        </p>
+
+        <pre><code>import { requireAuth } from './middleware/auth';  <span class="c-dim">← this whole chain runs first</span>
+dotenv.config({ quiet: true });                   <span class="c-dim">← this runs after</span></code></pre>
+
+        <p>
+          If <code>jwt.ts</code> read <code>process.env.JWT_SECRET</code> at the top level it would get
+          <code>undefined</code>, because <code>.env</code> had not loaded yet. Wrapping the read in
+          <code>getSecret()</code> defers it until the first token is actually signed. And if the secret is
+          still missing then, we throw — failing loudly beats signing with <code>undefined</code>, which
+          would silently accept everyone's forgeries.
+        </p>
+      </section>
+
+      <!-- ============ MIDDLEWARE ============ -->
+      <section id="middleware" data-nav="03 · Middleware">
+        <span class="layer-mark">Layer 03 · src/middleware/auth.ts</span>
+        <h2>Middleware is the gate in front of the handler</h2>
+
+        <p>
+          Express middleware is a function that sits <em>before</em> your route handler and decides whether
+          the request continues. Every one has the same shape, <code>(req, res, next)</code>, and exactly
+          one of two things must happen:
+        </p>
+
+        <ul>
+          <li><code>next()</code> — “looks fine, carry on to the next thing”</li>
+          <li><code>res.status(…).json(…)</code> — “stopping here, and here is why” (never call <code>next()</code> after)</li>
+        </ul>
+
+        <p>They chain left to right, and any link can end the request early:</p>
+
+        <div class="breakout">
+          <figure>
+            <div class="fig-scroll">
+              <svg viewBox="0 0 820 268" role="img" aria-label="A request passes through requireAuth, then requireRole, then the handler. requireAuth exits to 401 for a missing, bad or expired token. requireRole exits to 403 when the role is not allowed. Only a request that clears both gates reaches the handler and returns 200.">
+                <defs>
+                  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+                  </marker>
+                  <marker id="ar-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--deny)"></path>
+                  </marker>
+                  <marker id="ar-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)"></path>
+                  </marker>
+                  <marker id="ar-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ok)"></path>
+                  </marker>
+                </defs>
+
+                <!-- row 1 boxes -->
+                <rect x="16" y="50" width="104" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="68" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">GET /me</text>
+                <text x="68" y="91" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.6">+ Bearer</text>
+
+                <line x1="120" y1="78" x2="150" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
+
+                <rect x="156" y="50" width="152" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+                <text x="232" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">requireAuth</text>
+                <text x="232" y="91" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">who are you?</text>
+
+                <line x1="308" y1="78" x2="338" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
+
+                <rect x="344" y="50" width="176" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+                <text x="432" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">requireRole('admin')</text>
+                <text x="432" y="91" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">may you?</text>
+
+                <line x1="520" y1="78" x2="550" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
+
+                <rect x="556" y="50" width="136" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="624" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">handler</text>
+
+                <line x1="692" y1="78" x2="722" y2="78" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#ar-ok)"></line>
+
+                <rect x="728" y="50" width="76" height="56" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5"></rect>
+                <text x="766" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--ok)">200</text>
+
+                <!-- handoff note -->
+                <text x="232" y="130" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.55">sets req.auth</text>
+                <line x1="290" y1="126" x2="374" y2="126" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.45" marker-end="url(#ar)"></line>
+                <text x="432" y="130" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.55">reads req.auth</text>
+
+                <!-- exits -->
+                <line x1="232" y1="106" x2="232" y2="192" stroke="var(--deny)" stroke-width="1.5" marker-end="url(#ar-deny)"></line>
+                <text x="244" y="152" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">no · bad · expired</text>
+
+                <rect x="176" y="198" width="112" height="44" rx="4" fill="var(--deny-soft)" stroke="var(--deny)" stroke-width="1.5"></rect>
+                <text x="232" y="226" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--deny)">401</text>
+
+                <line x1="432" y1="106" x2="432" y2="192" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ar-warn)"></line>
+                <text x="444" y="152" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--warn)">role not allowed</text>
+
+                <rect x="376" y="198" width="112" height="44" rx="4" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.5"></rect>
+                <text x="432" y="226" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--warn)">403</text>
+              </svg>
+            </div>
+            <figcaption>
+              Order matters: <code>requireRole</code> reads <code>req.auth</code>, which exists only because
+              <code>requireAuth</code> put it there. Swap them and the role check has nothing to read.
+            </figcaption>
+          </figure>
+        </div>
+
+        <h3>requireAuth, line by line</h3>
+
+        <p>
+          The client sends <code>Authorization: Bearer eyJhbGci…</code>. “Bearer” is convention meaning
+          “whoever bears this token gets the access”. No header, or the wrong scheme like
+          <code>Basic</code>, and we stop immediately. Otherwise we strip the prefix, verify the rest,
+          and <strong>attach the claims to <code>req</code></strong>:
+        </p>
+
+        <pre><code>req.auth = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
+next();</code></pre>
+
+        <p>
+          That assignment is the handoff. Every downstream handler can now read <code>req.auth</code> and
+          know who is calling, without re-parsing anything.
+        </p>
+
+        <p>
+          Note the <code>try/catch</code>: <code>jwt.verify</code> signals every failure by <em>throwing</em>
+          — bad signature, malformed, expired, all of it. An uncaught throw would crash into a 500 and risk
+          leaking internals to the caller. We catch everything and answer with one deliberately vague
+          message, because telling an attacker <em>which</em> part failed helps them.
+        </p>
+
+        <h3>requireRole — a function that returns a function</h3>
+
+        <p>
+          Express needs a <code>(req, res, next)</code> function, but we want to configure it per route.
+          So an outer function takes the config and builds the real middleware, which “remembers”
+          <code>allowed</code>. That pattern is a <strong>closure</strong>, and it is why the call site has
+          parentheses on one and not the other:
+        </p>
+
+        <pre><code>requireAuth,            <span class="c-dim">← the function itself, Express calls it later</span>
+requireRole('admin'),   <span class="c-dim">← called NOW; its return value is the middleware</span></code></pre>
+
+        <p>
+          Dropping those parentheses is a classic bug: Express receives the factory instead of the
+          middleware and silently enforces nothing. The <code>...allowed</code> rest parameter collects any
+          number of roles, so <code>requireRole('provider', 'receiver')</code> works unchanged when you need
+          “any company type, but not admin”.
+        </p>
+
+        <h3>Why src/types/express.d.ts exists</h3>
+
+        <p>
+          <code>req.auth</code> is not a real Express property — we invented it, and TypeScript would
+          normally reject it. That file performs <strong>declaration merging</strong>: it reaches into
+          Express's own type definitions and adds our field, so the whole codebase gets autocomplete and
+          type-checking on <code>req.auth.role</code>.
+        </p>
+
+        <div class="callout">
+          <span class="callout-label">Gotcha that will bite you</span>
+          <p>
+            <code>tsc</code> reads every file under <code>include</code>, but <code>ts-node</code> only
+            compiles files it actually imports — so <code>npm run dev</code> never saw that augmentation and
+            crashed while <code>npm run typecheck</code> passed. Fixed with
+            <code>"ts-node": { "files": true }</code> in <code>apps/api/tsconfig.json</code>. If you add
+            another <code>.d.ts</code>, this is why it works.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ LIFECYCLE ============ -->
+      <section id="lifecycle" data-nav="Full lifecycle">
+        <h2>Where the database actually gets touched</h2>
+
+        <p>
+          Put the three pieces together and one property stands out — the one that makes this design
+          scale, and the one that makes revocation hard.
+        </p>
+
+        <div class="breakout">
+          <figure>
+            <div class="fig-scroll">
+              <svg viewBox="0 0 820 400" role="img" aria-label="Register writes a password hash to Postgres. Login reads that hash back, verifies it, and signs a token. Every request after that is verified by signature alone and never queries the database.">
+                <defs>
+                  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+                  </marker>
+                </defs>
+
+                <!-- database -->
+                <ellipse cx="700" cy="66" rx="60" ry="15" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></ellipse>
+                <path d="M 640 66 L 640 176 A 60 15 0 0 0 760 176 L 760 66" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></path>
+                <text x="700" y="120" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">Postgres</text>
+                <text x="700" y="138" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">Supabase</text>
+
+                <!-- phase 1 -->
+                <rect x="16" y="40" width="380" height="66" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="34" y="65" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">REGISTER</text>
+                <text x="34" y="88" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">hashPassword("hunter2") → $2b$12$…</text>
+
+                <line x1="396" y1="73" x2="634" y2="73" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"></line>
+                <text x="515" y="64" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor">stores the hash</text>
+
+                <!-- phase 2 -->
+                <rect x="16" y="140" width="380" height="82" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="34" y="165" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">LOGIN</text>
+                <text x="34" y="188" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">verifyPassword(typed, hash) → true</text>
+                <text x="34" y="207" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">signAccessToken({ sub, role })</text>
+
+                <line x1="634" y1="181" x2="400" y2="181" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"></line>
+                <text x="515" y="172" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor">reads the hash</text>
+
+                <!-- divider -->
+                <line x1="16" y1="262" x2="804" y2="262" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.4"></line>
+                <text x="16" y="254" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.2" fill="currentColor" opacity="0.6">TOKEN ISSUED — CLIENT NOW HOLDS THE PASS</text>
+
+                <!-- phase 3 -->
+                <rect x="16" y="286" width="560" height="82" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+                <text x="34" y="311" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">EVERY REQUEST AFTER</text>
+                <text x="34" y="334" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requireAuth → recompute signature → compare</text>
+                <text x="34" y="353" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requireRole → check the role claim</text>
+
+                <!-- the crossed-out arrow: the claim -->
+                <line x1="576" y1="327" x2="676" y2="240" stroke="var(--deny)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.75"></line>
+                <line x1="612" y1="304" x2="632" y2="284" stroke="var(--deny)" stroke-width="2"></line>
+                <line x1="612" y1="284" x2="632" y2="304" stroke="var(--deny)" stroke-width="2"></line>
+                <text x="694" y="300" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">never</text>
+                <text x="694" y="315" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">queried</text>
+              </svg>
+            </div>
+            <figcaption>
+              The database appears only at register and login. Every request after that is verified by
+              mathematics alone — no lookup, no session table. That is what “stateless” buys: speed and
+              scale. The cost is that you cannot revoke a single token, only wait for it to expire.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ FILE MAP ============ -->
+      <section id="files" data-nav="File map">
+        <h2>File map</h2>
+
+        <pre><code>packages/shared/index.ts          <span class="c-dim">UserRole + AuthTokenPayload</span>
+
+apps/api/src/
+├── auth/
+│   ├── password.ts               <span class="c-dim">hashPassword / verifyPassword</span>
+│   └── jwt.ts                    <span class="c-dim">signAccessToken / verifyAccessToken</span>
+├── middleware/
+│   └── auth.ts                   <span class="c-dim">requireAuth / requireRole</span>
+├── types/express.d.ts            <span class="c-dim">teaches TypeScript about req.auth</span>
+└── index.ts                      <span class="c-dim">wires middleware onto routes</span></code></pre>
+
+        <p>
+          The split is deliberate and worth copying as a habit. <code>auth/</code> holds <strong>pure
+          functions</strong> that know nothing about HTTP — you could call them from a CLI or a test with
+          no server running. <code>middleware/</code> is the <strong>HTTP adapter</strong>, translating
+          those functions into status codes and headers. Keeping them apart is what makes the logic
+          trivial to unit-test.
+        </p>
+
+        <p>
+          <code>packages/shared</code> exists so the two apps cannot disagree. If the backend says
+          <code>'admin'</code> and the frontend checks for <code>'administrator'</code>, you get a bug no
+          compiler catches. Defining <code>UserRole</code> once, imported by both, makes that mismatch a
+          build error instead.
+        </p>
+      </section>
+
+      <!-- ============ VERIFIED ============ -->
+      <section id="verified" data-nav="Verified behavior">
+        <h2>Verified behavior</h2>
+
+        <p>Run against a live server before the commits landed. Use these as the shape of your US6 access-denial tests.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>wrong scheme (<code>Basic</code>)</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>forged signature</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ GAPS ============ -->
+      <section id="gaps" data-nav="Not built yet">
+        <h2>What does not exist yet</h2>
+
+        <p>Being precise, because it is easy to over-read what is built:</p>
+
+        <ul class="gap-list">
+          <li><strong>No <code>/auth/register</code> and no <code>/auth/login</code>.</strong> The ingredients are ready; nothing calls them yet. Both need the Company table first.</li>
+          <li><strong>No database connection at all.</strong> Supabase is chosen but not wired up — no client, no ORM, no schema.</li>
+          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims back; it does not read a real profile. That is US1-4.</li>
+          <li><strong>No refresh tokens.</strong> When the 1-hour token expires, the user logs in again. Fine for this sprint.</li>
+          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes.</strong> They exist to prove the middleware works and will be replaced by real endpoints.</li>
+          <li><strong>No test runner anywhere.</strong> Root <code>npm test</code> is still an <code>exit 1</code> stub — someone needs to pick one before the test tasks come due.</li>
+        </ul>
+      </section>
+
+      <!-- ============ TRY ============ -->
+      <section id="try" data-nav="Try it yourself">
+        <h2>Try it yourself</h2>
+
+        <p>
+          Copy <code>apps/api/.env.example</code> to <code>apps/api/.env</code> and generate your own
+          secret with the command inside it. Then:
+        </p>
+
+        <pre><code>cd apps/api &amp;&amp; npm run dev</code></pre>
+
+        <p>In another terminal:</p>
+
+        <pre><code>curl -i localhost:4000/me                              <span class="c-dim"># 401, no token</span>
+
+TOKEN=$(node -e "require('dotenv').config({quiet:true});
+  console.log(require('jsonwebtoken').sign(
+    {sub:'u-1',role:'provider'}, process.env.JWT_SECRET, {expiresIn:'1h'}))")
+
+curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me          <span class="c-dim"># 200</span>
+curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403, wrong role</span></code></pre>
+
+        <p>
+          Then paste <code>$TOKEN</code> into <a href="https://jwt.io">jwt.io</a> — you will read the
+          payload instantly, which drives home why nothing secret goes in there. Now change one character
+          in the middle of the token and re-run the curl: <span class="status s-deny">401</span>. That is
+          the signature doing its job.
+        </p>
+      </section>
+
+      <!--
+      ============================================================
+      ADDING A CHAPTER — copy this block, fill it in, republish.
+      The left rail builds itself from the markup, so there is no
+      nav list to keep in sync. Two rules only:
+        1. every section element needs a unique id + a short data-nav
+        2. chapters open with a .chapter-head that has an id
+      Then update the Coverage table near the top of the file.
+      Full workflow: docs/README.md
+      ============================================================
+
+      <div class="chapter-head" id="ch2" data-nav="02 · Company profiles">
+        <span class="chapter-num">Chapter 02</span>
+        <h2>Company profiles</h2>
+        <p class="chapter-summary">One sentence on what this subsystem does.</p>
+        <div class="chapter-meta">
+          <span class="chip">US1-4 · US1-5</span>
+          <span class="chip">commit sha</span>
+          <span class="chip">key libraries</span>
+        </div>
+      </div>
+
+      <section id="profiles-shape" data-nav="Data shape">
+        <h2>Section heading</h2>
+        <p>Prose. Reusable pieces available:</p>
+
+        <pre><code>code block</code></pre>
+
+        <div class="callout">
+          <span class="callout-label">Label</span>
+          <p>Neutral note. Add class "danger" for a warning.</p>
+        </div>
+
+        <div class="table-wrap"><table>…</table></div>
+
+        <span class="status s-ok">200</span>
+        <span class="status s-warn">403</span>
+        <span class="status s-deny">401</span>
+
+        <div class="breakout">
+          <figure>
+            <div class="fig-scroll">
+              <svg viewBox="0 0 820 260" role="img" aria-label="What the diagram shows.">…</svg>
+            </div>
+            <figcaption>What the reader should take from it.</figcaption>
+          </figure>
+        </div>
+      </section>
+      ============================================================
+      -->
+
+      <footer>
+        MangoDB API Guide · source lives at <code>docs/api-guide.html</code><br>
+        Adding a chapter? See <code>docs/README.md</code> — the rail and anchors update themselves.
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // Builds the left rail from the document itself, so adding a chapter or a
+  // section never requires editing a nav list by hand.
+  (function () {
+    var guide = document.getElementById('guide');
+    var rail = document.getElementById('rail-list');
+    if (!guide || !rail) return;
+
+    var sublist = null;
+
+    function link(href, text, cls) {
+      var a = document.createElement('a');
+      a.href = '#' + href;
+      a.textContent = text;
+      if (cls) a.className = cls;
+      return a;
+    }
+
+    Array.prototype.forEach.call(guide.children, function (el) {
+      if (el.classList.contains('chapter-head') && el.id) {
+        var h2 = el.querySelector('h2');
+        var li = document.createElement('li');
+        li.appendChild(link(el.id, el.getAttribute('data-nav') || (h2 ? h2.textContent : el.id), 'rail-chapter'));
+        sublist = document.createElement('ol');
+        sublist.className = 'rail-sub';
+        li.appendChild(sublist);
+        rail.appendChild(li);
+        return;
+      }
+
+      if (el.tagName === 'SECTION' && el.id) {
+        var heading = el.querySelector('h2');
+        if (!heading) return;
+        var item = document.createElement('li');
+        item.appendChild(link(el.id, el.getAttribute('data-nav') || heading.textContent));
+        (sublist || rail).appendChild(item);
+      }
+    });
+  })();
+</script>
