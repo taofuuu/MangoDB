@@ -596,7 +596,7 @@
           <span class="chip">US1-1 · US1-2 · US6-1</span>
           <span class="chip">9155d97 · 3af0532</span>
           <span class="chip">bcryptjs · jsonwebtoken</span>
-          <span class="chip">11/11 cases verified</span>
+          <span class="chip">12/12 cases verified</span>
         </div>
       </div>
 
@@ -642,6 +642,13 @@
           Getting this backwards leaks information. Returning 401 to a wrong-role user implies
           “your login is broken” when it is working perfectly. Keep the split when you write the
           US6 access-denial tests — the two codes are not interchangeable.
+        </p>
+        <p>
+          One case lands on the 401 side that looks like it should be 403: a correctly
+          signed token whose <code>role</code> is not one this API issues. It never reaches
+          <code>requireRole</code> — <code>verifyAccessToken</code> narrows the claim against
+          the <code>UserRole</code> union first and throws. We could read the signature, but a
+          payload we never minted is not an identity we know, so 401 is the honest answer.
         </p>
       </section>
 
@@ -1102,6 +1109,7 @@ apps/api/src/
               <tr><td class="code-cell">/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
