@@ -27,6 +27,10 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
         working-directory: ./apps/api
+        env:
+          # generate never connects to a database — this only exists to satisfy
+          # prisma.config.ts's env("DIRECT_URL") presence check.
+          DIRECT_URL: "postgresql://user:password@localhost:5432/placeholder"
 
       - name: Typecheck Backend
         run: npx tsc --noEmit
