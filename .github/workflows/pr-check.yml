@@ -24,6 +24,10 @@ jobs:
       - name: Build Next.js App
         run: npm run build --workspace=apps/mangodb
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: ./apps/api
+
       - name: Typecheck Backend
         run: npx tsc --noEmit
         working-directory: ./apps/api
