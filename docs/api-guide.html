@@ -26,9 +26,6 @@
     --font-display: 'Chivo', 'Helvetica Neue', Arial, sans-serif;
     --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-
-    --measure: 68ch;
-    --wide: 1180px;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -75,224 +72,153 @@
     background: var(--ground);
     color: var(--ink);
     font-family: var(--font-body);
-    font-size: 16.5px;
-    line-height: 1.62;
+    font-size: 16px;
+    line-height: 1.55;
     margin: 0;
     -webkit-font-smoothing: antialiased;
   }
 
-  .page {
-    max-width: var(--wide);
-    margin: 0 auto;
-    padding: 0 28px 96px;
-  }
+  .page { max-width: 900px; margin: 0 auto; padding: 0 24px 72px; }
 
   /* ---------- masthead ---------- */
 
-  .masthead {
-    border-bottom: 2px solid var(--ink);
-    padding: 56px 0 22px;
-    margin-bottom: 44px;
-  }
+  .masthead { padding: 40px 0 20px; }
 
   .eyebrow {
     font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 500;
+    font-size: 11px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-muted);
-    margin: 0 0 14px;
+    margin: 0 0 10px;
   }
 
   h1 {
     font-family: var(--font-display);
     font-weight: 900;
-    font-size: clamp(2.6rem, 7vw, 4.2rem);
-    line-height: 0.95;
+    font-size: clamp(2rem, 5.5vw, 2.9rem);
+    line-height: 1;
     letter-spacing: -0.03em;
-    margin: 0;
-    text-wrap: balance;
+    margin: 0 0 12px;
   }
 
-  .thesis {
-    max-width: var(--measure);
-    font-size: 1.12rem;
+  .thesis { color: var(--ink-muted); margin: 0; max-width: 62ch; }
+
+  /* ---------- sticky search ---------- */
+
+  .findbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--ground);
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 32px;
+  }
+
+  .searchwrap { position: relative; display: block; }
+
+  #q {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 11px 84px 11px 14px;
+  }
+
+  #q::placeholder { color: var(--ink-muted); }
+  #q:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  .kbd {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
     color: var(--ink-muted);
-    margin: 20px 0 30px;
+    pointer-events: none;
   }
 
-  .thesis strong { color: var(--ink); font-weight: 600; }
+  .jump { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 40px;
+  .jump a {
     font-family: var(--font-mono);
-    font-size: 12px;
-    line-height: 1.9;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    text-decoration: none;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 4px 9px;
   }
 
-  .meta div { display: flex; gap: 9px; }
-  .meta dt { color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; margin: 0; }
-  .meta dd { margin: 0; font-weight: 500; }
+  .jump a:hover, .jump a:focus-visible { color: var(--accent); border-color: var(--accent); }
 
-  /* ---------- layout ---------- */
+  #count { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-muted); margin-top: 10px; }
 
-  .shell { display: block; }
+  /* ---------- groups + entries ---------- */
 
-  @media (min-width: 1100px) {
-    .shell {
-      display: grid;
-      grid-template-columns: 172px minmax(0, 1fr);
-      gap: 64px;
-      align-items: start;
-    }
-  }
+  .group { margin-bottom: 40px; scroll-margin-top: 116px; }
 
-  .rail { display: none; }
-
-  @media (min-width: 1100px) {
-    .rail {
-      display: block;
-      position: sticky;
-      top: 36px;
-      max-height: calc(100vh - 72px);
-      overflow-y: auto;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-    .rail > ol { gap: 22px; }
-    .rail a {
-      color: var(--ink-muted);
-      text-decoration: none;
-      border-left: 2px solid var(--rule);
-      padding-left: 12px;
-      display: block;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .rail a:hover, .rail a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
-    .rail-chapter {
-      color: var(--ink) !important;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      font-size: 11px;
-      border-left-color: var(--ink) !important;
-      margin-bottom: 9px;
-    }
-    .rail-chapter:hover, .rail-chapter:focus-visible {
-      color: var(--accent) !important;
-      border-left-color: var(--accent) !important;
-    }
-    .rail-sub { padding-left: 12px !important; }
-  }
-
-  /* ---------- chapter heads ---------- */
-
-  .chapter-head {
-    border-top: 2px solid var(--ink);
-    padding-top: 20px;
-    margin-bottom: 40px;
-    scroll-margin-top: 28px;
-  }
-
-  .chapter-head h2 {
-    font-size: clamp(1.9rem, 4.5vw, 2.5rem);
-    line-height: 1.05;
-    letter-spacing: -0.025em;
-    margin: 0 0 14px;
-  }
-
-  .chapter-num {
+  .group > h2 {
     font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--accent);
-    display: block;
-    margin-bottom: 12px;
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
   }
 
-  .chapter-summary { color: var(--ink-muted); margin: 0 0 16px; }
-
-  .chapter-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 10px;
-    font-family: var(--font-mono);
-    font-size: 11px;
+  .entry {
+    background: var(--surface);
+    border: 1px solid var(--rule-soft);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    scroll-margin-top: 120px;
   }
 
-  .chip {
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    padding: 3px 9px;
-    color: var(--ink-muted);
-    white-space: nowrap;
-  }
-
-  /* ---------- coverage ---------- */
-
-  .coverage { margin-bottom: 56px; }
-
-  .coverage h2 {
-    font-size: 1.05rem;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    margin-bottom: 14px;
-  }
-
-  .coverage table { min-width: 560px; }
-  .coverage td:first-child { font-weight: 600; }
-
-  .cov-link { text-decoration: none; }
-  .cov-link:hover { text-decoration: underline; }
-
-  .col { max-width: var(--measure); }
-
-  section { margin-bottom: 68px; scroll-margin-top: 28px; }
-
-  h2 {
+  .entry > h3 {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 1.85rem;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    margin: 0 0 18px;
-    text-wrap: balance;
-  }
-
-  h3 {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.14rem;
+    font-size: 1.02rem;
     letter-spacing: -0.01em;
-    margin: 36px 0 12px;
+    margin: 0 0 8px;
     text-wrap: balance;
   }
 
-  p { margin: 0 0 18px; }
-  .col > p, .col > ul, .col > ol { max-width: var(--measure); }
+  .answer {
+    margin: 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent);
+    font-size: 1rem;
+  }
 
-  ul, ol { margin: 0 0 18px; padding-left: 22px; }
-  li { margin-bottom: 9px; }
+  .entry > p, .entry > ul, .entry > pre, .entry > .table-wrap, .entry > figure { margin: 12px 0 0; }
+  .entry > *:last-child { margin-bottom: 0; }
 
+  .note { color: var(--ink-muted); font-size: 14.5px; }
+
+  p { margin: 0 0 12px; }
+  ul { margin: 0; padding-left: 20px; }
+  li { margin-bottom: 5px; }
+  li:last-child { margin-bottom: 0; }
   strong { font-weight: 600; }
-  em { font-style: italic; }
 
   a { color: var(--accent); text-underline-offset: 3px; }
   a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 
   code {
     font-family: var(--font-mono);
-    font-size: 0.875em;
+    font-size: 0.87em;
     background: var(--surface-2);
     padding: 1px 5px;
     border-radius: 3px;
@@ -301,128 +227,31 @@
   pre {
     font-family: var(--font-mono);
     font-size: 12.5px;
-    line-height: 1.62;
+    line-height: 1.6;
     background: var(--surface-2);
     border: 1px solid var(--rule-soft);
     border-radius: 5px;
-    padding: 16px 18px;
+    padding: 13px 15px;
     overflow-x: auto;
-    margin: 0 0 22px;
   }
 
   pre code { background: none; padding: 0; font-size: inherit; }
 
   .c-dim { color: var(--ink-muted); }
   .c-ok { color: var(--ok); }
-  .c-warn { color: var(--warn); }
   .c-deny { color: var(--deny); }
-  .c-accent { color: var(--accent); }
-
-  /* ---------- breakout for figures ---------- */
-
-  .breakout { max-width: 100%; }
-
-  @media (min-width: 900px) {
-    .breakout { width: min(880px, 100%); }
-  }
-
-  figure {
-    margin: 0 0 26px;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    padding: 24px 22px 18px;
-  }
-
-  figure svg { display: block; width: 100%; height: auto; color: var(--ink); }
-
-  figcaption {
-    font-size: 13.5px;
-    color: var(--ink-muted);
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--rule-soft);
-    line-height: 1.55;
-  }
-
-  .fig-scroll { overflow-x: auto; }
-  .fig-scroll > svg { min-width: 620px; }
-
-  /* ---------- anatomy blocks ---------- */
-
-  .anatomy {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    padding: 22px;
-    margin: 0 0 26px;
-    font-family: var(--font-mono);
-    overflow-x: auto;
-  }
-
-  .anatomy-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    font-size: 13.5px;
-    font-weight: 500;
-    min-width: max-content;
-  }
-
-  .seg-col { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
-
-  .seg {
-    padding: 7px 10px;
-    border-radius: 4px;
-    border: 1px solid;
-    align-self: stretch;
-  }
-
-  .seg-a { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-  .seg-b { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
-  .seg-c { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
-  .seg-dot { padding: 7px 2px; color: var(--ink-muted); }
-
-  .seg-label {
-    font-size: 10.5px;
-    font-weight: 400;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    white-space: nowrap;
-  }
-
-  .anatomy-note {
-    font-family: var(--font-body);
-    font-size: 13.5px;
-    color: var(--ink-muted);
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--rule-soft);
-    line-height: 1.55;
-  }
 
   /* ---------- tables ---------- */
 
-  .table-wrap { overflow-x: auto; margin: 0 0 26px; }
+  .table-wrap { overflow-x: auto; }
 
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 480px;
-    font-size: 14.5px;
-  }
+  table { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 14px; }
 
-  th, td {
-    text-align: left;
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--rule-soft);
-    vertical-align: top;
-  }
+  th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
 
   thead th {
     font-family: var(--font-mono);
-    font-size: 10.5px;
+    font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ink-muted);
@@ -432,13 +261,13 @@
 
   tbody tr:last-child td { border-bottom: none; }
 
-  .code-cell { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+  .code-cell { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
 
   .status {
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
-    padding: 3px 8px;
+    padding: 2px 7px;
     border-radius: 3px;
     white-space: nowrap;
   }
@@ -447,69 +276,28 @@
   .s-warn { background: var(--warn-soft); color: var(--warn); }
   .s-deny { background: var(--deny-soft); color: var(--deny); }
 
-  /* ---------- callouts ---------- */
+  /* ---------- figure ---------- */
 
-  .callout {
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--accent);
-    background: var(--surface);
-    border-radius: 0 6px 6px 0;
-    padding: 18px 20px;
-    margin: 0 0 26px;
-  }
+  figure { margin: 0; background: var(--surface-2); border: 1px solid var(--rule-soft); border-radius: 5px; padding: 16px; }
+  .fig-scroll { overflow-x: auto; }
+  .fig-scroll > svg { min-width: 640px; display: block; width: 100%; height: auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--ink-muted); margin-top: 12px; line-height: 1.5; }
 
-  .callout.danger { border-left-color: var(--deny); }
-  .callout p:last-child { margin-bottom: 0; }
+  /* ---------- search state ---------- */
 
-  .callout-label {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    display: block;
-    margin-bottom: 8px;
-  }
+  .entry[hidden], .group[hidden] { display: none; }
 
-  .callout.danger .callout-label { color: var(--deny); }
-
-  /* ---------- misc ---------- */
-
-  .layer-mark {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    display: block;
-    margin-bottom: 10px;
-  }
-
-  .gap-list { list-style: none; padding: 0; }
-
-  .gap-list li {
-    padding-left: 26px;
-    position: relative;
-    margin-bottom: 13px;
-  }
-
-  .gap-list li::before {
-    content: '—';
-    position: absolute;
-    left: 0;
-    color: var(--ink-muted);
-    font-family: var(--font-mono);
-  }
+  #empty { display: none; color: var(--ink-muted); font-family: var(--font-mono); font-size: 13px; padding: 20px 0; }
+  #empty.on { display: block; }
 
   footer {
-    border-top: 2px solid var(--ink);
-    margin-top: 20px;
-    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    margin-top: 40px;
+    padding-top: 18px;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--ink-muted);
-    line-height: 1.8;
+    line-height: 1.7;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -520,1052 +308,177 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">Living document · last updated 28 Aug 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 28 Aug 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
-      How the backend actually works, written for people who have not built one before.
-      Each chapter covers one subsystem: what it does, why it was built that way, and
-      <strong>what is not built yet</strong>. Chapters get added as the sprint lands them.
+      Search for what you need. Every entry leads with the answer; the detail underneath is there only
+      when the answer alone would mislead you.
     </p>
-    <dl class="meta">
-      <div><dt>Repo</dt><dd>taofuuu/MangoDB · apps/api</dd></div>
-      <div><dt>Stack</dt><dd>Express 5 · TypeScript · Supabase Postgres</dd></div>
-      <div><dt>Source</dt><dd>docs/api-guide.html</dd></div>
-    </dl>
   </header>
 
-  <section class="coverage">
-    <h2>Coverage</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Chapter</th><th>Subsystem</th><th>Stories</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>01</td>
-            <td><a class="cov-link" href="#ch1">The auth spine</a></td>
-            <td class="code-cell">US1-1 · US1-2 · US6-1</td>
-            <td><span class="status s-ok">documented</span></td>
-          </tr>
-          <tr>
-            <td>02</td>
-            <td><a class="cov-link" href="#ch2">Ending a session</a></td>
-            <td class="code-cell">US1-3</td>
-            <td><span class="status s-ok">documented</span></td>
-          </tr>
-          <tr>
-            <td>03</td>
-            <td><a class="cov-link" href="#ch3">One shape for every endpoint</a></td>
-            <td class="code-cell">every story from here on</td>
-            <td><span class="status s-ok">documented</span></td>
-          </tr>
-          <tr>
-            <td>04</td>
-            <td>Company profiles</td>
-            <td class="code-cell">US1-4 · US1-5</td>
-            <td><span class="status s-warn">not written</span></td>
-          </tr>
-          <tr>
-            <td>05</td>
-            <td>Service catalog CRUD</td>
-            <td class="code-cell">US1-7 · US1-8 · US1-9</td>
-            <td><span class="status s-warn">not written</span></td>
-          </tr>
-          <tr>
-            <td>06</td>
-            <td>Portfolio &amp; file uploads</td>
-            <td class="code-cell">US1-10 · US1-11 · US1-12</td>
-            <td><span class="status s-warn">not written</span></td>
-          </tr>
-          <tr>
-            <td>07</td>
-            <td>Administrative data management</td>
-            <td class="code-cell">US6-2 · US6-3 · US6-4</td>
-            <td><span class="status s-warn">not written</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="shell">
-
-    <nav class="rail" aria-label="Contents">
-      <ol id="rail-list"></ol>
+  <div class="findbar">
+    <label class="searchwrap" for="q">
+      <input id="q" type="search" placeholder="Search — error, 403, validate, token, logout, add endpoint…" autocomplete="off" spellcheck="false">
+      <span class="kbd">press /</span>
+    </label>
+    <nav class="jump" aria-label="Jump to section">
+      <a href="#start">Start</a>
+      <a href="#errors">Errors</a>
+      <a href="#input">Input</a>
+      <a href="#auth">Auth</a>
+      <a href="#layout">Layout</a>
+      <a href="#gotchas">Gotchas</a>
+      <a href="#verified">Verified</a>
+      <a href="#missing">Missing</a>
     </nav>
+    <p id="count"></p>
+  </div>
 
-    <main class="col" id="guide">
+  <main id="doc">
 
-      <div class="chapter-head" id="ch1" data-nav="01 · Auth spine">
-        <span class="chapter-num">Chapter 01</span>
-        <h2>The auth spine</h2>
-        <p class="chapter-summary">
-          Three small files decide who gets into the API and what they may do once inside.
-          Every protected endpoint sits behind them.
+    <!-- ================= START ================= -->
+    <section class="group" id="start">
+      <h2>Start</h2>
+
+      <article class="entry" id="run" data-tags="run start dev server setup env install npm">
+        <h3>How do I run the API?</h3>
+        <p class="answer">Copy <code>.env.example</code>, fill three values, <code>npm run dev</code>.</p>
+        <pre><code>cd apps/api
+cp .env.example .env      <span class="c-dim"># then set JWT_SECRET, DATABASE_URL, DIRECT_URL</span>
+npm run db:generate       <span class="c-dim"># regenerate Prisma Client after any schema change</span>
+npm run dev               <span class="c-dim"># http://localhost:4000</span>
+npm run typecheck         <span class="c-dim"># must pass before you open a PR</span></code></pre>
+        <p class="note">
+          Generate your own <code>JWT_SECRET</code> with the command inside <code>.env.example</code>.
+          Never share one between people or environments.
         </p>
-        <div class="chapter-meta">
-          <span class="chip">US1-1 · US1-2 · US6-1</span>
-          <span class="chip">9155d97 · 3af0532</span>
-          <span class="chip">bcryptjs · jsonwebtoken</span>
-          <span class="chip">12/12 cases verified</span>
-        </div>
-      </div>
+      </article>
 
-      <!-- ============ TWO QUESTIONS ============ -->
-      <section id="questions" data-nav="Two questions">
-        <h2>Every protected request answers two questions</h2>
+      <article class="entry" id="add-endpoint" data-tags="add endpoint new route controller create post get">
+        <h3>How do I add an endpoint?</h3>
+        <p class="answer">Handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
+        <pre><code><span class="c-dim">// controllers/company.controller.ts</span>
+const updateSchema = z.object({
+    company_name: z.string().min(1).max(255),
+    email: z.email().max(100),
+});
 
-        <p>
-          They are different questions, and mixing them up is the most common beginner mistake.
-          A valid admin and a valid provider are <em>equally</em> authenticated — they differ only
-          in what they are allowed to reach.
+export async function updateProfile(req: Request, res: Response) {
+    const body = parseBody(updateSchema, req.body);   <span class="c-dim">// typed, or throws</span>
+
+    const company = await prisma.company.findUnique({
+        where: { company_id: Number(req.auth!.sub) },
+    });
+    if (!company) throw ApiError.notFound('Company not found');
+
+    res.json(await prisma.company.update({
+        where: { company_id: company.company_id }, data: body,
+    }));
+}
+
+<span class="c-dim">// routes/company.routes.ts</span>
+companyRoutes.patch('/me', requireAuth, updateProfile);</code></pre>
+        <p class="note">
+          No <code>try</code>/<code>catch</code> and no async wrapper — Express 5 forwards a rejected
+          promise to the error handler by itself.
         </p>
+      </article>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Question</th><th>Name</th><th>Our code</th><th>Failure</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>“Who are you?”</td>
-                <td><strong>Authentication</strong><br><span class="c-dim">authn</span></td>
-                <td class="code-cell">requireAuth</td>
-                <td><span class="status s-deny">401</span></td>
-              </tr>
-              <tr>
-                <td>“Are you allowed to do this?”</td>
-                <td><strong>Authorization</strong><br><span class="c-dim">authz</span></td>
-                <td class="code-cell">requireRole</td>
-                <td><span class="status s-warn">403</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <article class="entry" id="flow" data-tags="flow diagram request lifecycle middleware pipeline overview architecture">
+        <h3>What happens to a request?</h3>
+        <p class="answer">Two gates, then your handler. Every failure exits through one place.</p>
+        <figure>
+          <div class="fig-scroll">
+            <svg viewBox="0 0 820 296" role="img" aria-label="A request passes requireAuth, then requireRole, then the controller. requireAuth fails with 401, requireRole with 403, and the controller with 400, 404 or 409. All three failures are caught by a single errorHandler, which writes one JSON envelope. Anything that is not an ApiError is logged and answered as a generic 500 INTERNAL.">
+              <defs>
+                <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+                </marker>
+                <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"></path>
+                </marker>
+                <marker id="ar-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ok)"></path>
+                </marker>
+              </defs>
 
-        <p>
-          So <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a provider but
-          <span class="status s-deny">401</span> to a garbage token. Answering 401 to a wrong-role user
-          would imply “your login is broken” when it is working perfectly — keep the split when you write
-          the US6 access-denial tests. One case looks like 403 and is not: a correctly signed token whose
-          <code>role</code> we never issue. <code>verifyAccessToken</code> throws before
-          <code>requireRole</code> ever runs.
-        </p>
-      </section>
+              <rect x="8" y="40" width="96" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+              <text x="56" y="63" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">request</text>
+              <text x="56" y="79" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">+ Bearer</text>
 
-      <!-- ============ PASSWORDS ============ -->
-      <section id="passwords" data-nav="01 · Passwords">
-        <span class="layer-mark">Layer 01 · src/auth/password.ts</span>
-        <h2>Passwords are never stored</h2>
+              <line x1="104" y1="66" x2="116" y2="66" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
-        <p>
-          Databases leak, and people reuse passwords — so a leak of stored passwords hands over your
-          users' email and bank logins too. We store a <strong>hash</strong> instead: a one-way
-          function, easy forward and impossible backward.
-        </p>
+              <rect x="122" y="40" width="138" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+              <text x="191" y="63" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="var(--accent)">requireAuth</text>
+              <text x="191" y="79" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--accent)">who are you?</text>
 
-        <pre><code>"hunter2"  --hash--&gt;  "$2b$12$XqR7f...(60 chars)"
-"hunter2"  &lt;--????--  "$2b$12$XqR7f...(60 chars)"   <span class="c-dim">← no way back</span></code></pre>
+              <line x1="260" y1="66" x2="272" y2="66" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
-        <p>
-          This is <em>not</em> encryption — encryption is built to be reversed with a key; hashing has no
-          key and no reverse. Login works without the server ever knowing the password: hash what the user
-          typed, compare the two hashes.
-        </p>
+              <rect x="278" y="40" width="150" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+              <text x="353" y="63" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="var(--accent)">requireRole</text>
+              <text x="353" y="79" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--accent)">may you?</text>
 
-        <h3>Why bcrypt and not SHA-256</h3>
+              <line x1="428" y1="66" x2="440" y2="66" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
 
-        <p>
-          <strong>It salts automatically.</strong> A salt is random data mixed in before hashing. Without
-          it, identical passwords hash identically — crack one <code>"password123"</code> and you have
-          cracked everyone who chose it.
-        </p>
+              <rect x="446" y="40" width="128" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+              <text x="510" y="70" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">controller</text>
 
-        <p>
-          <strong>It is deliberately slow.</strong> SHA-256 is built for speed, which is exactly what a
-          cracker wants. bcrypt is built to waste time.
-        </p>
+              <line x1="574" y1="66" x2="588" y2="66" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#ar-ok)"></line>
 
-        <div class="anatomy breakout">
-          <div class="anatomy-row">
-            <span class="seg-col">
-              <span class="seg seg-a">$2b</span>
-              <span class="seg-label">algorithm</span>
-            </span>
-            <span class="seg-dot">$</span>
-            <span class="seg-col">
-              <span class="seg seg-b">12</span>
-              <span class="seg-label">cost</span>
-            </span>
-            <span class="seg-dot">$</span>
-            <span class="seg-col">
-              <span class="seg seg-c">XqR7fK2mN9pQ8rS4tU6vW.eY1zA3bC5dE7fG9hI0jK2lM4nO6pQ8</span>
-              <span class="seg-label">salt + hash, packed together</span>
-            </span>
+              <rect x="594" y="40" width="68" height="52" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5"></rect>
+              <text x="628" y="72" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13.5" font-weight="600" fill="var(--ok)">2xx</text>
+
+              <line x1="191" y1="92" x2="191" y2="170" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar-a)" opacity="0.8"></line>
+              <text x="201" y="136" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)">401</text>
+
+              <line x1="353" y1="92" x2="353" y2="170" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar-a)" opacity="0.8"></line>
+              <text x="363" y="136" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)">403</text>
+
+              <line x1="510" y1="92" x2="510" y2="170" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar-a)" opacity="0.8"></line>
+              <text x="520" y="136" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)">400 · 404 · 409</text>
+
+              <text x="8" y="164" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.2" fill="currentColor" opacity="0.55">throw ApiError</text>
+
+              <rect x="122" y="176" width="452" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+              <text x="348" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="var(--accent)">errorHandler</text>
+              <text x="348" y="215" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--accent)">the only place that sets a 4xx or 5xx</text>
+
+              <line x1="574" y1="202" x2="588" y2="202" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
+
+              <rect x="594" y="176" width="218" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+              <text x="608" y="198" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">{ error: { code, message,</text>
+              <text x="620" y="214" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor">details? } }</text>
+
+              <text x="122" y="266" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="var(--deny)">Not an ApiError? Logged on the server, answered as a bare 500 INTERNAL — no stack, no SQL.</text>
+            </svg>
           </div>
-          <p class="anatomy-note">
-            The cost is a <em>power of two</em>: <code>SALT_ROUNDS = 12</code> means 2<sup>12</sup> =
-            4,096 iterations, roughly 250&nbsp;ms per hash. Each +1 doubles the work — unnoticeable once,
-            catastrophic for ten billion guesses. Salt and cost live <em>inside</em> the output, so
-            <code>verifyPassword</code> needs nothing but the stored hash.
-          </p>
-        </div>
+          <figcaption>
+            Nothing between the gates and the envelope formats a response, so nothing between them can
+            format it differently.
+          </figcaption>
+        </figure>
+      </article>
+    </section>
 
-        <p>The smoke test proved it — the same password hashed twice gives two different results, and both still verify:</p>
+    <!-- ================= ERRORS ================= -->
+    <section class="group" id="errors">
+      <h2>Errors</h2>
 
-        <pre><code>verify correct  : <span class="c-ok">true</span>
-verify wrong    : <span class="c-deny">false</span>
-verify empty    : <span class="c-deny">false</span>
-salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same password, different hash</span></code></pre>
-
-        <p>
-          One asymmetry is deliberate: on empty input <code>verifyPassword</code> returns
-          <code>false</code>, but <code>hashPassword</code> <em>throws</em>. An empty password reaching the
-          hasher is a programming error, not a user typo, and should crash loudly.
+      <article class="entry" id="throw" data-tags="error throw apierror return fail response status res.status">
+        <h3>How do I return an error?</h3>
+        <p class="answer">Throw an <code>ApiError</code>. Never call <code>res.status(4xx)</code> yourself.</p>
+        <pre><code>throw ApiError.conflict('Username already taken');
+throw ApiError.notFound('Company not found');
+throw ApiError.forbidden();</code></pre>
+        <p class="note">
+          <code>errorHandler</code> is the only place in the API that sets a 4xx or 5xx status. That is
+          what makes “did they use the right shape?” impossible to get wrong instead of a review question.
         </p>
-      </section>
-
-      <!-- ============ TOKENS ============ -->
-      <section id="tokens" data-nav="02 · Tokens">
-        <span class="layer-mark">Layer 02 · src/auth/jwt.ts</span>
-        <h2>Tokens carry identity between requests</h2>
-
-        <p>
-          Password checking happens <strong>once</strong>, at login. But HTTP is <em>stateless</em> — the
-          server forgets you the instant it responds, so every later request arrives as a stranger. Instead
-          of resending the password, login issues a <strong>token</strong>: a signed pass the client
-          attaches to future requests.
-        </p>
-
-        <div class="anatomy breakout">
-          <div class="anatomy-row">
-            <span class="seg-col">
-              <span class="seg seg-a">eyJhbGciOiJIUzI1NiJ9</span>
-              <span class="seg-label">header — algorithm</span>
-            </span>
-            <span class="seg-dot">.</span>
-            <span class="seg-col">
-              <span class="seg seg-b">eyJzdWIiOiJ1LTEiLCJyb2xlIjoiYWRtaW4ifQ</span>
-              <span class="seg-label">payload — the claims</span>
-            </span>
-            <span class="seg-dot">.</span>
-            <span class="seg-col">
-              <span class="seg seg-c">xyQL8SgH_ebyFP6i0rC9RB</span>
-              <span class="seg-label">signature — proof it is genuine</span>
-            </span>
-          </div>
-          <p class="anatomy-note">
-            Three base64 chunks joined by dots. Ours decodes to <code>{ "sub": "u-1", "role": "admin",
-            "iat": …, "exp": …, "jti": … }</code> — subject (user id), issued-at, expiry, and a unique
-            token id added in <a href="#ch2">Chapter 02</a> so logout has something to point at.
-          </p>
-        </div>
-
-        <div class="callout danger">
-          <span class="callout-label">The thing beginners get wrong</span>
-          <p>
-            <strong>The payload is not encrypted.</strong> Base64 is encoding, not secrecy — anyone can
-            paste a token into jwt.io and read it. Never put anything secret in one. Ours holds only a user
-            id and a role, which the user already knows about themselves.
-          </p>
-        </div>
-
-        <h3>Then what stops someone editing “provider” into “admin”?</h3>
-
-        <p>The signature. When the server signs a token it computes:</p>
-
-        <pre><code>signature = HMAC-SHA256(header + "." + payload, JWT_SECRET)</code></pre>
-
-        <p>
-          <code>JWT_SECRET</code> never leaves the server. On every request <code>jwt.verify</code>
-          recomputes that signature from the token's <em>actual</em> contents and compares, so changing one
-          character breaks the match. The forged-token test proved it: a well-formed <code>role:
-          admin</code> token signed with a <em>guessed</em> secret was rejected at both endpoints.
-        </p>
-
-        <div class="callout">
-          <span class="callout-label">Operational consequence</span>
-          <p>
-            The secret <em>is</em> the security of the whole system — leak it and anyone can mint admin
-            tokens. Hence <code>.env</code>, gitignored, one secret per environment. Generate your own with
-            the command in <code>.env.example</code>; never share one.
-          </p>
-        </div>
-
-        <h3>Expiry, and why revocation is hard</h3>
-
-        <p>
-          Tokens are self-contained, which is both strength and weakness: the server keeps no list of
-          issued tokens, so it cannot revoke one individually, and a stolen token works until it expires.
-          Short lifetimes limit the damage — ours default to <code>1h</code>. <a href="#ch2">Chapter
-          02</a> buys revocation back for logout, and accounts for what that cost.
-        </p>
-
-        <h3>One real bug worth knowing about</h3>
-
-        <p>
-          JavaScript runs <strong>all</strong> <code>import</code> statements before <strong>any</strong>
-          other line, so <code>dotenv.config()</code> runs <em>after</em> the import chain. Reading
-          <code>process.env.JWT_SECRET</code> at the top of <code>jwt.ts</code> would get
-          <code>undefined</code>; <code>getSecret()</code> defers the read to the first signature and
-          throws if it is still missing. Signing with <code>undefined</code> would accept everyone's
-          forgeries.
-        </p>
-      </section>
-
-      <!-- ============ MIDDLEWARE ============ -->
-      <section id="middleware" data-nav="03 · Middleware">
-        <span class="layer-mark">Layer 03 · src/middleware/auth.ts</span>
-        <h2>Middleware is the gate in front of the handler</h2>
-
-        <p>
-          Express middleware sits <em>before</em> your route handler and decides whether the request
-          continues. Every one has the shape <code>(req, res, next)</code>, and exactly one thing must
-          happen — carry on, or answer and stop, never both. They chain left to right, and any link can
-          end the request early. (<a href="#ch3">Chapter 03</a> changes <em>how</em> a link answers; the
-          gates themselves are unchanged.)
-        </p>
-
-        <div class="breakout">
-          <figure>
-            <div class="fig-scroll">
-              <svg viewBox="0 0 820 268" role="img" aria-label="A request passes through requireAuth, then requireRole, then the handler. requireAuth exits to 401 for a missing, bad or expired token. requireRole exits to 403 when the role is not allowed. Only a request that clears both gates reaches the handler and returns 200.">
-                <defs>
-                  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
-                  </marker>
-                  <marker id="ar-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--deny)"></path>
-                  </marker>
-                  <marker id="ar-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)"></path>
-                  </marker>
-                  <marker id="ar-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ok)"></path>
-                  </marker>
-                </defs>
-
-                <!-- row 1 boxes -->
-                <rect x="16" y="50" width="104" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="68" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">GET /me</text>
-                <text x="68" y="91" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.6">+ Bearer</text>
-
-                <line x1="120" y1="78" x2="150" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-                <rect x="156" y="50" width="152" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
-                <text x="232" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">requireAuth</text>
-                <text x="232" y="91" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">who are you?</text>
-
-                <line x1="308" y1="78" x2="338" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-                <rect x="344" y="50" width="176" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
-                <text x="432" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">requireRole('admin')</text>
-                <text x="432" y="91" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">may you?</text>
-
-                <line x1="520" y1="78" x2="550" y2="78" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"></line>
-
-                <rect x="556" y="50" width="136" height="56" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="624" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">handler</text>
-
-                <line x1="692" y1="78" x2="722" y2="78" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#ar-ok)"></line>
-
-                <rect x="728" y="50" width="76" height="56" rx="4" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.5"></rect>
-                <text x="766" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--ok)">200</text>
-
-                <!-- handoff note -->
-                <text x="232" y="130" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.55">sets req.auth</text>
-                <line x1="290" y1="126" x2="374" y2="126" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.45" marker-end="url(#ar)"></line>
-                <text x="432" y="130" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.55">reads req.auth</text>
-
-                <!-- exits -->
-                <line x1="232" y1="106" x2="232" y2="192" stroke="var(--deny)" stroke-width="1.5" marker-end="url(#ar-deny)"></line>
-                <text x="244" y="152" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">no · bad · expired</text>
-
-                <rect x="176" y="198" width="112" height="44" rx="4" fill="var(--deny-soft)" stroke="var(--deny)" stroke-width="1.5"></rect>
-                <text x="232" y="226" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--deny)">401</text>
-
-                <line x1="432" y1="106" x2="432" y2="192" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ar-warn)"></line>
-                <text x="444" y="152" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--warn)">role not allowed</text>
-
-                <rect x="376" y="198" width="112" height="44" rx="4" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.5"></rect>
-                <text x="432" y="226" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="var(--warn)">403</text>
-              </svg>
-            </div>
-            <figcaption>
-              Order matters: <code>requireRole</code> reads <code>req.auth</code>, which exists only because
-              <code>requireAuth</code> put it there. Swap them and the role check has nothing to read.
-            </figcaption>
-          </figure>
-        </div>
-
-        <h3>requireAuth</h3>
-
-        <p>
-          The client sends <code>Authorization: Bearer eyJhbGci…</code> — “Bearer” meaning “whoever bears
-          this token gets the access”. No header or the wrong scheme, and we stop. Otherwise we verify and
-          <strong>attach the claims to <code>req</code></strong>, the handoff that lets every downstream
-          handler read <code>req.auth</code> without re-parsing anything.
-        </p>
-
-        <p>
-          <code>jwt.verify</code> signals every failure by <em>throwing</em> — bad signature, malformed,
-          expired — so it sits in a <code>try/catch</code>. We answer with one deliberately vague message:
-          telling an attacker <em>which</em> part failed helps them.
-        </p>
-
-        <h3>requireRole — a function that returns a function</h3>
-
-        <p>
-          Express needs a <code>(req, res, next)</code> function, but we want to configure it per route.
-          So an outer function takes the config and returns the real middleware, which “remembers”
-          <code>allowed</code> — a <strong>closure</strong>. Hence one call site has parentheses and the
-          other does not:
-        </p>
-
-        <pre><code>requireAuth,            <span class="c-dim">← the function itself, Express calls it later</span>
-requireRole('admin'),   <span class="c-dim">← called NOW; its return value is the middleware</span></code></pre>
-
-        <p>
-          Dropping those parentheses is a classic bug: Express receives the factory instead of the
-          middleware and silently enforces nothing. <code>...allowed</code> takes any number of roles.
-        </p>
-
-        <h3>Why src/types/express.d.ts exists</h3>
-
-        <p>
-          <code>req.auth</code> is not a real Express property — we invented it, and TypeScript would
-          reject it. That file performs <strong>declaration merging</strong>: it reaches into Express's own
-          types and adds our field, so the codebase gets type-checking on <code>req.auth.role</code>.
-        </p>
-
-        <div class="callout">
-          <span class="callout-label">Gotcha that will bite you</span>
-          <p>
-            <code>tsc</code> reads every file under <code>include</code>, but a runner only compiles what
-            it imports — so <code>npm run dev</code> never saw that augmentation and crashed while
-            <code>npm run typecheck</code> passed. The <code>"ts-node": { "files": true }</code> block in
-            <code>apps/api/tsconfig.json</code> fixed it; <code>dev</code> now runs on <code>tsx</code>,
-            which needs no such flag, so that block is vestigial.
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ LIFECYCLE ============ -->
-      <section id="lifecycle" data-nav="Full lifecycle">
-        <h2>Where the database actually gets touched</h2>
-
-        <p>
-          Put the three pieces together and one property stands out — the one that makes this design
-          scale, and the one that makes revocation hard.
-        </p>
-
-        <div class="breakout">
-          <figure>
-            <div class="fig-scroll">
-              <svg viewBox="0 0 820 400" role="img" aria-label="Register writes a password hash to Postgres. Login reads that hash back, verifies it, and signs a token. Every request after that is verified by signature alone and never queries the database.">
-                <defs>
-                  <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
-                  </marker>
-                </defs>
-
-                <!-- database -->
-                <ellipse cx="700" cy="66" rx="60" ry="15" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></ellipse>
-                <path d="M 640 66 L 640 176 A 60 15 0 0 0 760 176 L 760 66" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></path>
-                <text x="700" y="120" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">Postgres</text>
-                <text x="700" y="138" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">Supabase</text>
-
-                <!-- phase 1 -->
-                <rect x="16" y="40" width="380" height="66" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="34" y="65" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">REGISTER</text>
-                <text x="34" y="88" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">hashPassword("hunter2") → $2b$12$…</text>
-
-                <line x1="396" y1="73" x2="634" y2="73" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"></line>
-                <text x="515" y="64" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor">stores the hash</text>
-
-                <!-- phase 2 -->
-                <rect x="16" y="140" width="380" height="82" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="34" y="165" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">LOGIN</text>
-                <text x="34" y="188" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">verifyPassword(typed, hash) → true</text>
-                <text x="34" y="207" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">signAccessToken({ sub, role })</text>
-
-                <line x1="634" y1="181" x2="400" y2="181" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"></line>
-                <text x="515" y="172" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor">reads the hash</text>
-
-                <!-- divider -->
-                <line x1="16" y1="262" x2="804" y2="262" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.4"></line>
-                <text x="16" y="254" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.2" fill="currentColor" opacity="0.6">TOKEN ISSUED — CLIENT NOW HOLDS THE PASS</text>
-
-                <!-- phase 3 -->
-                <rect x="16" y="286" width="560" height="82" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
-                <text x="34" y="311" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="var(--accent)">EVERY REQUEST AFTER</text>
-                <text x="34" y="334" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requireAuth → recompute signature → compare</text>
-                <text x="34" y="353" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requireRole → check the role claim</text>
-
-                <!-- the crossed-out arrow: the claim -->
-                <line x1="576" y1="327" x2="676" y2="240" stroke="var(--deny)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.75"></line>
-                <line x1="612" y1="304" x2="632" y2="284" stroke="var(--deny)" stroke-width="2"></line>
-                <line x1="612" y1="284" x2="632" y2="304" stroke="var(--deny)" stroke-width="2"></line>
-                <text x="694" y="300" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">never</text>
-                <text x="694" y="315" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">queried</text>
-              </svg>
-            </div>
-            <figcaption>
-              The database appears only at register and login. Every request after that is verified by
-              mathematics alone — no lookup, no session table. That is what “stateless” buys: speed and
-              scale. The cost is that you cannot revoke a single token, only wait for it to expire —
-              a cost <a href="#ch2">Chapter 02</a> pays down, deliberately and partially, to make logout work.
-            </figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <!-- ============ FILE MAP ============ -->
-      <section id="files" data-nav="File map">
-        <h2>File map</h2>
-
-        <pre><code>packages/shared/index.ts          <span class="c-dim">UserRole + AuthTokenPayload + AuthTokenClaims</span>
-
-apps/api/src/
-├── auth/
-│   ├── password.ts               <span class="c-dim">hashPassword / verifyPassword</span>
-│   ├── jwt.ts                    <span class="c-dim">signAccessToken / verifyAccessToken</span>
-│   └── tokenDenylist.ts          <span class="c-dim">revoked sessions — see chapter 02</span>
-├── middleware/
-│   └── auth.ts                   <span class="c-dim">requireAuth / requireRole</span>
-├── types/express.d.ts            <span class="c-dim">teaches TypeScript about req.auth</span>
-└── index.ts                      <span class="c-dim">wires middleware onto routes</span></code></pre>
-
-        <p>
-          The split is worth copying as a habit. <code>auth/</code> holds <strong>pure functions</strong>
-          that know nothing about HTTP — callable from a test with no server running.
-          <code>middleware/</code> is the <strong>HTTP adapter</strong>. And <code>packages/shared</code>
-          exists so the two apps cannot disagree: backend <code>'admin'</code> vs frontend
-          <code>'administrator'</code> is a bug no compiler catches unless <code>UserRole</code> is defined
-          once and imported by both. <a href="#ch3">Chapter 03</a> adds <code>routes/</code> and
-          <code>controllers/</code> above this layer and empties <code>index.ts</code>.
-        </p>
-      </section>
-
-      <!-- ============ VERIFIED ============ -->
-      <section id="verified" data-nav="Verified behavior">
-        <h2>Verified behavior</h2>
-
-        <p>Run against a live server before the commits landed. Use these as the shape of your US6 access-denial tests.</p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
-            </thead>
-            <tbody>
-              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>wrong scheme (<code>Basic</code>)</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>forged signature</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ============ GAPS ============ -->
-      <section id="gaps" data-nav="Not built yet">
-        <h2>What does not exist yet</h2>
-
-        <ul class="gap-list">
-          <li><strong>No <code>/auth/register</code> and no <code>/auth/login</code>.</strong> The ingredients are ready; nothing calls them yet. Both need the Company table first.</li>
-          <li><strong>No database connection.</strong> <span class="c-dim">Since resolved — Prisma 7 now talks to Supabase Postgres.</span></li>
-          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims back; it does not read a real profile. That is US1-4.</li>
-          <li><strong>No refresh tokens.</strong> When the 1-hour token expires, the user logs in again. Fine for this sprint.</li>
-          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes</strong>, proving the middleware works until real endpoints replace them.</li>
-          <li><strong>No test runner anywhere.</strong> Root <code>npm test</code> is still an <code>exit 1</code> stub.</li>
-        </ul>
-      </section>
-
-      <!-- ============ TRY ============ -->
-      <section id="try" data-nav="Try it yourself">
-        <h2>Try it yourself</h2>
-
-        <p>
-          Copy <code>apps/api/.env.example</code> to <code>apps/api/.env</code>, generate a secret with
-          the command inside it, then <code>cd apps/api &amp;&amp; npm run dev</code>. In another terminal:
-        </p>
-
-        <pre><code>curl -i localhost:4000/me                              <span class="c-dim"># 401, no token</span>
-
-TOKEN=$(node -e "require('dotenv').config({quiet:true});
-  console.log(require('jsonwebtoken').sign(
-    {sub:'u-1',role:'provider'}, process.env.JWT_SECRET,
-    {expiresIn:'1h', jwtid:require('crypto').randomUUID()}))")   <span class="c-dim"># jti required since ch. 02</span>
-
-curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me          <span class="c-dim"># 200</span>
-curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403, wrong role</span></code></pre>
-
-        <p>
-          Paste <code>$TOKEN</code> into <a href="https://jwt.io">jwt.io</a> — you will read the payload
-          instantly, which drives home why nothing secret goes in there. Now change one character in the
-          middle and re-run: <span class="status s-deny">401</span>. That is the signature doing its job.
-        </p>
-      </section>
-
-      <div class="chapter-head" id="ch2" data-nav="02 · Ending a session">
-        <span class="chapter-num">Chapter 02</span>
-        <h2>Ending a session</h2>
-        <p class="chapter-summary">
-          Chapter 01 ended on a limitation: a stateless token cannot be taken back. Logout refuses to
-          accept that. This is what it costs to buy revocation back.
-        </p>
-        <div class="chapter-meta">
-          <span class="chip">US1-3</span>
-          <span class="chip">b33405e</span>
-          <span class="chip">node:crypto randomUUID</span>
-          <span class="chip">8/8 cases verified</span>
-        </div>
-      </div>
-
-      <!-- ============ THE PROBLEM ============ -->
-      <section id="logout-problem" data-nav="The problem">
-        <h2>Deleting the token is not logging out</h2>
-
-        <p>
-          The obvious implementation is for the frontend to drop the token from
-          <code>localStorage</code> and show the login page again. Nothing was revoked. That token is still
-          signed and unexpired, and <code>requireAuth</code> accepts it, because verification is pure
-          mathematics over the token's own contents. Anyone holding a copy keeps full access for the rest
-          of the hour.
-        </p>
-
-        <div class="callout danger">
-          <span class="callout-label">The thing beginners get wrong</span>
-          <p>
-            <strong>Client-side cleanup is a UI convenience, not a security boundary.</strong> Any logout
-            you can defeat by pressing Back, or by replaying a saved request, was never a logout. The test
-            task <em>“user cannot access protected routes after logout”</em> checks exactly this, and a
-            frontend-only implementation fails it.
-          </p>
-        </div>
-
-        <p>
-          In a classic server-session design this is trivial: the session is a database row, and logout
-          deletes it. We gave that up for speed, so the job is to win back one property — <em>this token
-          stops working now</em> — without giving back the rest.
-        </p>
-      </section>
-
-      <!-- ============ JTI ============ -->
-      <section id="jti" data-nav="01 · The jti claim">
-        <span class="layer-mark">Layer 01 · src/auth/jwt.ts</span>
-        <h2>You cannot revoke what you cannot name</h2>
-
-        <p>
-          Two tokens issued to the same user in the same second used to be byte-identical — no way to point
-          at one and say <em>that</em> one is dead. So every token now gets a name: <code>jti</code>, the
-          standard “JWT ID” claim.
-        </p>
-
-        <pre><code>return jwt.sign(payload, getSecret(), {
-    expiresIn: getExpiresIn(),
-    jwtid: randomUUID(),          <span class="c-dim">← new: a unique id per token</span>
-});</code></pre>
-
-        <p>
-          Like everything else in the payload it is public, which is fine — a UUID reveals nothing.
-          <code>verifyAccessToken</code> now demands it and returns <code>exp</code> alongside: the next
-          layer needs to know when the token dies to know when it may stop remembering it.
-        </p>
-
-        <h3>Why per token and not per user</h3>
-
-        <p>
-          We could revoke by user id instead — “everything for <code>u-1</code> issued before now is
-          dead”. That is what a <em>log out everywhere</em> button wants, but as a default it is wrong:
-          logging out on a library computer would also kick you out on your phone. Naming individual tokens
-          keeps logout scoped to the session in front of you.
-        </p>
-
-        <p>
-          One consequence: <strong>tokens minted before this change no longer verify</strong>, having no
-          <code>jti</code>. On a live system that is a forced logout for everyone at deploy time. We have no
-          live system yet — this is the kind of change that is free now and expensive in October.
-        </p>
-      </section>
-
-      <!-- ============ DENYLIST ============ -->
-      <section id="denylist" data-nav="02 · The denylist">
-        <span class="layer-mark">Layer 02 · src/auth/tokenDenylist.ts</span>
-        <h2>Remembering the smallest possible thing</h2>
-
-        <p>
-          With tokens named, revocation is just a list of the ids that have been logged out — one map,
-          wrapped in two functions, <code>revokeToken(jti, exp)</code> and <code>isTokenRevoked(jti)</code>.
-          Nothing outside the file touches it directly.
-        </p>
-
-        <pre><code><span class="c-dim">// jti -&gt; token exp, as a UNIX timestamp in seconds.</span>
-const revoked = new Map&lt;string, number&gt;();</code></pre>
-
-        <h3>Why store the expiry, not just the id</h3>
-
-        <p>
-          An entry is only useful while the token it names would otherwise still work: one second after
-          <code>exp</code>, <code>jwt.verify</code> rejects that token anyway. So every write sweeps the map
-          and drops anything past its expiry, bounding the store by <em>how many people logged out in the
-          last hour</em>. Pruning on write rather than on a timer also avoids an interval keeping the Node
-          process alive.
-        </p>
-
-        <div class="callout">
-          <span class="callout-label">The trade you just made</span>
-          <p>
-            We reintroduced state — the thing Chapter 01 was proud of not having. More precisely, we
-            reintroduced <em>bounded</em> state: a session table holds a row for every active session, while
-            this holds one only for sessions that ended early, and only until they would have ended anyway.
-            Reads stay in memory, so the “never queries the database” property survives.
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ THE CHECK ============ -->
-      <section id="revoke-check" data-nav="03 · The check">
-        <span class="layer-mark">Layer 03 · src/middleware/auth.ts</span>
-        <h2>A third gate in requireAuth</h2>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Gate</th><th>Question</th><th>Failure</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Is there a <code>Bearer</code> header at all?</td>
-                <td><span class="status s-deny">401</span> <span class="c-dim">malformed header</span></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Is the signature genuine and the token unexpired?</td>
-                <td><span class="status s-deny">401</span> <span class="c-dim">invalid or expired</span></td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Has this <code>jti</code> been logged out?</td>
-                <td><span class="status s-deny">401</span> <span class="c-dim">session has ended</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p>
-          Gate 3 runs last because it is the only one that costs anything — no reason to check a map for a
-          forged token. All three answer <span class="status s-deny">401</span>: a revoked token establishes
-          no identity, and 403 would imply one. Only the message differs, so a frontend can tell “log in
-          again” from “this request is broken”.
-        </p>
-
-        <div class="callout">
-          <span class="callout-label">Gotcha that will bite you</span>
-          <p>
-            While adding the gate, one line moved. <code>next()</code> used to sit <em>inside</em> the
-            <code>try</code> that wraps <code>verifyAccessToken</code>:
-          </p>
-          <pre><code>try {
-    req.auth = verifyAccessToken(token);
-    next();                     <span class="c-dim">← every downstream error lands in the catch</span>
-} catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
-}</code></pre>
-          <p>
-            Express runs the rest of the chain synchronously inside that <code>next()</code>, so a crash in
-            <em>any</em> later handler was caught here and reported as <span class="status s-deny">401
-            Invalid or expired token</span> — the real error vanished. Verification now sits alone in the
-            <code>try</code>. Watch for this shape wherever you wrap middleware in <code>try/catch</code>.
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ THE ROUTE ============ -->
-      <section id="logout-route" data-nav="04 · The route">
-        <span class="layer-mark">Layer 04 · src/index.ts</span>
-        <h2>The endpoint itself is four lines</h2>
-
-        <pre><code>app.post('/auth/logout', requireAuth, (req: Request, res: Response) =&gt; {
-    revokeToken(req.auth!.jti, req.auth!.exp);
-    res.status(204).end();
-});</code></pre>
-
-        <p>Every decision in it is about the two words in front of the handler.</p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Choice</th><th>Why</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="code-cell">requireAuth</td>
-                <td>You must prove the session is yours before ending it. Taking a <code>jti</code> from the request body instead would let anyone end anyone's session; reading it off the verified token leaves no parameter to tamper with.</td>
-              </tr>
-              <tr>
-                <td class="code-cell">POST</td>
-                <td><code>GET</code> is defined to be safe, and the world takes that seriously — browsers prefetch, crawlers follow, and an <code>&lt;img src="/auth/logout"&gt;</code> would silently log your users out.</td>
-              </tr>
-              <tr>
-                <td class="code-cell">204</td>
-                <td>There is nothing to say. Returning <code>{ "ok": true }</code> invents a payload for a client to ignore.</td>
-              </tr>
-              <tr>
-                <td>Second call</td>
-                <td>Answers <span class="status s-deny">401</span>, not 204 — gate 3 stops it before the handler. Non-idempotent in status, but the caller wanted the session gone and it is gone. Assert 401 on the repeat.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ============ LIFECYCLE ============ -->
-      <section id="revocation-flow" data-nav="Full lifecycle">
-        <h2>One token, two clocks</h2>
-
-        <p>
-          Two lifetimes run at once: the token's, fixed the moment it was signed, and the denylist
-          entry's, which starts at logout and is deliberately cut short to match.
-        </p>
-
-        <div class="breakout">
-          <figure>
-            <div class="fig-scroll">
-              <svg viewBox="0 0 820 400" role="img" aria-label="A token is minted at login and is valid for one hour. Requests succeed until logout, which adds the token's jti to the denylist. From that moment the same token is rejected with 401. The denylist entry is kept only until the token's original expiry, at which point it is pruned because the token would fail verification anyway.">
-                <defs>
-                  <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
-                  </marker>
-                </defs>
-
-                <text x="16" y="28" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">ONE TOKEN, TWO CLOCKS</text>
-
-                <!-- token lifetime bracket -->
-                <line x1="70" y1="62" x2="70" y2="72" stroke="currentColor" stroke-width="1.5"></line>
-                <line x1="750" y1="62" x2="750" y2="72" stroke="currentColor" stroke-width="1.5"></line>
-                <line x1="70" y1="62" x2="750" y2="62" stroke="currentColor" stroke-width="1.5"></line>
-                <text x="410" y="52" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor">token lifetime — fixed at signing, 1h. Nothing can shorten it.</text>
-
-                <!-- accepted band -->
-                <rect x="70" y="92" width="360" height="46" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
-                <text x="90" y="112" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requests pass</text>
-                <text x="90" y="129" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--accent)">signature ✓ · not expired ✓ · not revoked ✓</text>
-
-                <!-- rejected band -->
-                <rect x="430" y="92" width="320" height="46" rx="4" fill="var(--deny-soft)" stroke="var(--deny)" stroke-width="1.5"></rect>
-                <text x="450" y="112" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--deny)">401 Session has ended</text>
-                <text x="450" y="129" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">signature still ✓ — gate 3 stops it</text>
-
-                <!-- axis -->
-                <line x1="70" y1="176" x2="750" y2="176" stroke="currentColor" stroke-width="1.5"></line>
-                <line x1="70" y1="170" x2="70" y2="182" stroke="currentColor" stroke-width="1.5"></line>
-                <line x1="430" y1="170" x2="430" y2="182" stroke="currentColor" stroke-width="1.5"></line>
-                <line x1="750" y1="170" x2="750" y2="182" stroke="currentColor" stroke-width="1.5"></line>
-
-                <text x="70" y="200" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">login</text>
-                <text x="70" y="216" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">token minted with a jti</text>
-
-                <text x="430" y="200" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">POST /auth/logout</text>
-                <text x="430" y="216" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">jti written to the denylist · 204</text>
-
-                <text x="750" y="200" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">exp</text>
-                <text x="750" y="216" text-anchor="end" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">token dies on its own</text>
-
-                <!-- state row -->
-                <text x="16" y="272" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">STATE WE KEEP</text>
-
-                <rect x="70" y="286" width="360" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.45"></rect>
-                <text x="250" y="317" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity="0.6">nothing — verification is pure maths</text>
-
-                <rect x="430" y="286" width="320" height="52" rx="4" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="450" y="310" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">revoked: { jti → exp }</text>
-                <text x="450" y="328" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.65">one entry, in memory</text>
-
-                <line x1="430" y1="228" x2="430" y2="282" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ar3)" opacity="0.7"></line>
-
-                <line x1="750" y1="312" x2="792" y2="312" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#ar3)"></line>
-                <text x="700" y="362" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--ok)">pruned at exp</text>
-              </svg>
-            </div>
-            <figcaption>
-              The denylist entry never outlives the token. Before logout we store nothing; after
-              <code>exp</code> we store nothing again, because a token that fails <code>jwt.verify</code>
-              needs no help being rejected. The stateful window is exactly the gap between “user logged
-              out” and “token would have died anyway”.
-            </figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <!-- ============ LIMITS ============ -->
-      <section id="denylist-limits" data-nav="Where it breaks">
-        <h2>Where this implementation breaks</h2>
-
-        <p>The denylist lives in a JavaScript <code>Map</code>, inside one Node process. Two consequences:</p>
-
-        <ul class="gap-list">
-          <li><strong>It is lost on restart.</strong> Every deploy or crash empties it, and a token logged out five minutes ago starts working again for whatever remains of its hour.</li>
-          <li><strong>It is not shared.</strong> Run two API instances behind a load balancer and a logout recorded on one is invisible to the other.</li>
-        </ul>
-
-        <p>
-          Both are acceptable <em>right now</em> and only right now: one dev process, one machine, no
-          deployment. Shipping this to real users without fixing it would be a bug, so it is written at the
-          top of the file rather than left to be discovered.
-        </p>
-
-        <p>
-          The fix is already shaped: nothing outside <code>tokenDenylist.ts</code> knows the map exists, so
-          swapping it for a Postgres table — <code>(jti primary key, expires_at timestamptz)</code> plus a
-          periodic <code>DELETE WHERE expires_at &lt;= now()</code> — is a change to one file behind the
-          same two functions. Keep the expiry column: it is what stops the table growing forever.
-        </p>
-      </section>
-
-      <!-- ============ FILE MAP ============ -->
-      <section id="ch2-files" data-nav="File map">
-        <h2>What changed</h2>
-
-        <pre><code>packages/shared/index.ts          <span class="c-dim">+ AuthTokenClaims (payload + jti + exp)</span>
-
-apps/api/src/
-├── auth/
-│   ├── jwt.ts                    <span class="c-dim">mints a jti; verify returns jti + exp</span>
-│   └── tokenDenylist.ts          <span class="c-dim">NEW — revokeToken / isTokenRevoked</span>
-├── middleware/
-│   └── auth.ts                   <span class="c-dim">gate 3; next() moved out of the try</span>
-├── types/express.d.ts            <span class="c-dim">req.auth is now AuthTokenClaims</span>
-└── index.ts                      <span class="c-dim">POST /auth/logout</span></code></pre>
-
-        <p>
-          The layering from Chapter 01 held up, which is the useful signal. <code>tokenDenylist.ts</code>
-          went into <code>auth/</code> because it is a pure function over ids and timestamps — no
-          <code>Request</code>, no <code>Response</code>. Adding a feature meant adding one file in the
-          layer it belonged to.
-        </p>
-      </section>
-
-      <!-- ============ VERIFIED ============ -->
-      <section id="ch2-verified" data-nav="Verified behavior">
-        <h2>Verified behavior</h2>
-
-        <p>
-          Run against a live server: two tokens minted, a provider and an admin, and the provider's logged
-          out. These are the shapes the four US1-3 test tasks should assert.
-        </p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
-            </thead>
-            <tbody>
-              <tr><td class="code-cell">/me</td><td>valid provider — before logout</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid admin — before logout</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>same provider token — after logout</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/auth/logout</td><td>same provider token, second call</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/auth/logout</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p>
-          The sixth row is the one worth staring at: the admin session was never touched by the
-          provider's logout. That is per-token revocation doing its job.
-        </p>
-      </section>
-
-      <!-- ============ GAPS ============ -->
-      <section id="ch2-gaps" data-nav="Not built yet">
-        <h2>What does not exist yet</h2>
-
-        <ul class="gap-list">
-          <li><strong>Nothing issues the tokens this revokes.</strong> There is still no <code>/auth/login</code>, so every token above was minted by hand in a script.</li>
-          <li><strong>The denylist does not survive a restart</strong>, and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
-          <li><strong>No “log out everywhere”.</strong> Revocation is per token by design; ending every session for an account needs a per-user index or a “tokens issued before <em>t</em> are void” marker.</li>
-          <li><strong>No client-side session cleanup and no redirect.</strong> That is the frontend half of US1-3 — the server ends the session, but nothing clears the browser or sends the user to the login page.</li>
-          <li><strong>Still no test runner</strong>, so the four US1-3 test tasks have nowhere to live. The table above came from a shell script: evidence, not a regression suite. <a href="#ch3">Chapter 03</a> splits <code>app.ts</code> out so one can be added.</li>
-        </ul>
-      </section>
-
-      <!-- ============ TRY ============ -->
-      <section id="ch2-try" data-nav="Try it yourself">
-        <h2>Try it yourself</h2>
-
-        <p>Start the API as in Chapter 01, mint a token the same way, then:</p>
-
-        <pre><code>curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim"># 200</span>
-
-curl -i -X POST -H "Authorization: Bearer $TOKEN" \
-  localhost:4000/auth/logout                                  <span class="c-dim"># 204, no body</span>
-
-curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim"># 401 Session has ended</span></code></pre>
-
-        <p>
-          Paste the token into <a href="https://jwt.io">jwt.io</a> again: the signature still verifies and
-          <code>exp</code> is still in the future, so by every rule in Chapter 01 it is valid. It is refused
-          anyway, and the only reason is a UUID in a map on the server. That gap between “cryptographically
-          valid” and “accepted” is the whole chapter. Then restart the server and replay the last curl: it
-          answers <span class="status s-ok">200</span>, because the denylist went with the process.
-        </p>
-      </section>
-
-      <div class="chapter-head" id="ch3" data-nav="03 · One shape">
-        <span class="chapter-num">Chapter 03</span>
-        <h2>One shape for every endpoint</h2>
-        <p class="chapter-summary">
-          Nine people are about to write endpoints into this API at the same time. This is the agreement
-          they write them against: where the code goes, how a failure comes back, how input is checked.
-        </p>
-        <div class="chapter-meta">
-          <span class="chip">every story from here on</span>
-          <span class="chip">64d67e8</span>
-          <span class="chip">zod 4</span>
-          <span class="chip">9/9 cases verified</span>
-        </div>
-      </div>
-
-      <!-- ============ THE PROBLEM ============ -->
-      <section id="one-shape" data-nav="The problem">
-        <h2>The same failure, described three ways</h2>
-
-        <p>
-          Chapters 01 and 02 put four routes straight into <code>src/index.ts</code>. Fine for four. But
-          registration, login and the profile endpoints are being written right now, by different people,
-          and nothing said what a failure should look like — so each would have invented one:
-        </p>
-
-        <pre><code>{ "error": "Username already taken" }
-{ "message": "username taken", "ok": false }
-{ "errors": [ { "username": "taken" } ] }</code></pre>
-
-        <p>
-          All three are reasonable. Together they cost the frontend three code paths for one event, and the
-          third arrives as a form that silently fails to show its error. The fix is boring, and it only
-          works if it lands <em>before</em> the endpoints do.
-        </p>
-      </section>
-
-      <!-- ============ THE ENVELOPE ============ -->
-      <section id="envelope" data-nav="01 · The envelope">
-        <span class="layer-mark">Layer 01 · packages/shared/index.ts</span>
-        <h2>Every failure returns the same body</h2>
-
+      </article>
+
+      <article class="entry" id="envelope" data-tags="envelope shape json body error format details field frontend">
+        <h3>What does an error look like?</h3>
+        <p class="answer">Always this, for every non-2xx response.</p>
         <pre><code>{
   "error": {
     "code": "VALIDATION_FAILED",
@@ -1573,332 +486,426 @@ curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim
     "details": [ { "field": "email", "message": "Invalid email address" } ]
   }
 }</code></pre>
-
-        <p>
-          Three fields, and the split between them is the point. <code>code</code> is for the program — a
-          fixed string the frontend switches on. <code>message</code> is for a human reading a log.
-          <code>details</code> appears only when individual fields were rejected, so a form can put each
-          message beside the input it belongs to instead of dumping them all in one banner.
+        <ul>
+          <li><strong><code>code</code></strong> — for the program. The frontend switches on it.</li>
+          <li><strong><code>message</code></strong> — for a human reading a log. Reword it freely.</li>
+          <li><strong><code>details</code></strong> — only when individual fields failed, so a form can put each message beside its own input.</li>
+        </ul>
+        <p class="note">
+          Success responses return the resource itself, unwrapped — <code>res.json(company)</code>, never
+          <code>{ data: company }</code>. <code>204</code> with no body for a delete or a logout.
         </p>
+      </article>
 
+      <article class="entry" id="codes" data-tags="codes 400 401 403 404 409 500 conflict notfound unauthorized forbidden internal validation">
+        <h3>Which code do I use?</h3>
+        <p class="answer">Seven, and they are the whole vocabulary.</p>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Code</th><th>Status</th><th>Use for</th></tr>
-            </thead>
+            <thead><tr><th>Code</th><th>Status</th><th>Use for</th></tr></thead>
             <tbody>
-              <tr><td class="code-cell">BAD_REQUEST</td><td><span class="status s-deny">400</span></td><td>Malformed request that is not about one field</td></tr>
+              <tr><td class="code-cell">BAD_REQUEST</td><td><span class="status s-deny">400</span></td><td>Malformed, but not about one field</td></tr>
               <tr><td class="code-cell">VALIDATION_FAILED</td><td><span class="status s-deny">400</span></td><td>Field-level rejection — carries <code>details</code></td></tr>
               <tr><td class="code-cell">UNAUTHORIZED</td><td><span class="status s-deny">401</span></td><td>No token, bad token, ended session</td></tr>
               <tr><td class="code-cell">FORBIDDEN</td><td><span class="status s-warn">403</span></td><td>Authenticated, but this role may not</td></tr>
               <tr><td class="code-cell">NOT_FOUND</td><td><span class="status s-warn">404</span></td><td>Unknown route, or a missing resource</td></tr>
               <tr><td class="code-cell">CONFLICT</td><td><span class="status s-warn">409</span></td><td>Existing data blocks the write — a taken username</td></tr>
-              <tr><td class="code-cell">INTERNAL</td><td><span class="status s-deny">500</span></td><td>A bug. Never thrown deliberately</td></tr>
+              <tr><td class="code-cell">INTERNAL</td><td><span class="status s-deny">500</span></td><td>A bug. Never thrown by hand</td></tr>
             </tbody>
           </table>
         </div>
-
-        <p>
-          The 401/403 split from Chapter 01 survives intact — <code>UNAUTHORIZED</code> means “we do not
-          know who you are”, <code>FORBIDDEN</code> means “we know, and no”.
+        <p class="note">
+          Codes are a contract with the frontend, so they live in <code>@mangodb/shared</code> and both
+          apps import them. Renaming one fails the build on both sides instead of reaching a user.
         </p>
+      </article>
 
-        <p>
-          A frontend that switches on <code>code</code> breaks silently when a code is renamed, so the list
-          lives in <code>@mangodb/shared</code> and both apps import it — the same move
-          <code>UserRole</code> made in Chapter 01. Rename one now and TypeScript fails the build on both
-          sides, instead of the bug reaching a user.
+      <article class="entry" id="401-vs-403" data-tags="401 403 difference unauthorized forbidden role denied test">
+        <h3>401 or 403?</h3>
+        <p class="answer"><strong>401</strong> = we do not know who you are. <strong>403</strong> = we know, and no.</p>
+        <p class="note">
+          A missing or broken token is never 403 — that would tell a user their login is broken when it is
+          working perfectly. One case looks like 403 and is not: a correctly signed token carrying a
+          <code>role</code> we never issue is <strong>401</strong>, because
+          <code>verifyAccessToken</code> rejects it before <code>requireRole</code> ever runs.
         </p>
-      </section>
+      </article>
+    </section>
 
-      <!-- ============ THROWING ============ -->
-      <section id="throwing" data-nav="02 · Throwing">
-        <span class="layer-mark">Layer 02 · src/lib/ApiError.ts · src/middleware/errorHandler.ts</span>
-        <h2>Handlers stopped answering failures</h2>
+    <!-- ================= INPUT ================= -->
+    <section class="group" id="input">
+      <h2>Input</h2>
 
-        <p>
-          An agreed shape that every handler formats by hand holds until the first person forgets. So
-          handlers no longer format failures at all. They throw one:
-        </p>
-
-        <pre><code>throw ApiError.conflict('Username already taken');</code></pre>
-
-        <p>
-          A single terminal middleware, mounted after every route, catches those and writes the envelope.
-          It is the only place in the API allowed to set a 4xx or 5xx status — which turns “did they use
-          the right shape?” from a review question into something that cannot go wrong.
-        </p>
-
-        <div class="breakout">
-          <figure>
-            <div class="fig-scroll">
-              <svg viewBox="0 0 820 300" role="img" aria-label="Three different sources of failure — the auth middleware, the body validator, and a controller — all throw an ApiError. Express routes every one of them to a single errorHandler, which writes one JSON envelope. Anything that is not an ApiError is logged and answered as a generic internal error.">
-                <defs>
-                  <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
-                  </marker>
-                  <marker id="ar4-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--deny)"></path>
-                  </marker>
-                </defs>
-
-                <text x="16" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">WHERE FAILURES START</text>
-
-                <rect x="16" y="44" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="32" y="63" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">requireAuth</text>
-                <text x="32" y="79" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">gates 1–3 from chapters 01–02</text>
-
-                <rect x="16" y="106" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="32" y="125" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">parseBody</text>
-                <text x="32" y="141" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">a field failed its schema</text>
-
-                <rect x="16" y="168" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="32" y="187" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">controller</text>
-                <text x="32" y="203" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">a rule about the data says no</text>
-
-                <path d="M 232 66 C 280 66 288 112 330 122" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
-                <path d="M 232 128 L 330 128" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
-                <path d="M 232 190 C 280 190 288 144 330 134" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
-
-                <text x="286" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--accent)">throw ApiError</text>
-
-                <rect x="336" y="94" width="168" height="68" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
-                <text x="420" y="122" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">errorHandler</text>
-                <text x="420" y="140" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">the only place with res.status</text>
-
-                <line x1="504" y1="128" x2="558" y2="128" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar4)"></line>
-
-                <rect x="564" y="94" width="240" height="68" rx="4" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></rect>
-                <text x="580" y="120" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">{ error: { code, message,</text>
-                <text x="592" y="138" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">details? } }</text>
-
-                <line x1="16" y1="240" x2="804" y2="240" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.35"></line>
-
-                <text x="16" y="264" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--deny)">anything that is not an ApiError</text>
-                <line x1="248" y1="260" x2="330" y2="260" stroke="var(--deny)" stroke-width="1.5" marker-end="url(#ar4-deny)"></line>
-                <text x="342" y="256" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">logged on the server,</text>
-                <text x="342" y="272" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">answered as a bare INTERNAL — no stack, no SQL</text>
-              </svg>
-            </div>
-            <figcaption>
-              Three unrelated files, one exit. Nothing in the middle formats a response, so nothing in the
-              middle can format it differently.
-            </figcaption>
-          </figure>
-        </div>
-
-        <p>
-          Express 5 is what makes this cheap: it forwards a rejected promise from an <code>async</code>
-          handler to the error middleware by itself. In Express 4 every async route needed its own
-          <code>try/catch</code> or a wrapper, and a forgotten one left the request hanging until it timed
-          out. Ours need neither — <code>throw</code> is the whole API.
-        </p>
-
-        <div class="callout">
-          <span class="callout-label">The half you get for free</span>
-          <p>
-            Anything that is <em>not</em> an <code>ApiError</code> is a bug nobody planned for — a Prisma
-            failure, a null dereference. Those are logged on the server and answered with a bare
-            <code>INTERNAL</code>. Stack traces, SQL and table names stop at the boundary, and no handler
-            has to remember to make that happen.
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ VALIDATION ============ -->
-      <section id="validation" data-nav="03 · Validation">
-        <span class="layer-mark">Layer 03 · src/middleware/validate.ts</span>
-        <h2>Input is described, not inspected</h2>
-
-        <p>
-          Hand-written checks — <code>if (!body.email) …</code> — drift between endpoints, miss cases, and
-          tell TypeScript nothing, so the code below them still treats the body as <code>any</code>. A
-          schema replaces all three problems at once:
-        </p>
-
+      <article class="entry" id="validate" data-tags="validate validation zod schema parsebody body input required fields">
+        <h3>How do I validate a request body?</h3>
+        <p class="answer">Write a zod schema, call <code>parseBody</code>. Never hand-write <code>if (!body.x)</code>.</p>
         <pre><code>const registerSchema = z.object({
     username: z.string().min(3).max(50),
     email: z.email().max(100),
     password: z.string().min(8),
 });
 
-const body = parseBody(registerSchema, req.body);   <span class="c-dim">← typed, or it throws</span></code></pre>
-
-        <p>
-          <code>body.email</code> is a <code>string</code> as far as the compiler is concerned, and bad
-          input never reaches the next line: <code>parseBody</code> throws
-          <code>VALIDATION_FAILED</code> with one <code>details</code> entry per bad field, which is
-          already the shape the registration form needs.
+const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed, or throws</span></code></pre>
+        <p class="note">
+          <code>body.email</code> is now a <code>string</code> to the compiler, and bad input never reaches
+          the next line — <code>parseBody</code> throws <code>VALIDATION_FAILED</code> with one
+          <code>details</code> entry per bad field, which is already the shape a form needs.
+          For query strings use <code>parseQuery</code>, and reach for <code>z.coerce</code> — every query
+          value arrives as a string.
         </p>
+      </article>
 
-        <h3>Why this is a function and not middleware</h3>
-
-        <p>
-          The conventional Express answer is middleware — <code>router.post('/register',
-          validate(schema), register)</code> — and it reads better in the route file. But middleware has
-          nowhere to put the parsed value except back on <code>req.body</code>, which Express types as
-          <code>any</code>. The handler then needs a cast, and a cast is a promise the compiler cannot
-          check. Calling the parser inside the handler keeps the schema's type all the way down. We traded
-          a visible route contract for a type the compiler enforces.
+      <article class="entry" id="why-not-middleware" data-tags="middleware validate function why design decision cast any type">
+        <h3>Why isn't validation middleware?</h3>
+        <p class="answer">Middleware would have to hand the parsed value back through <code>req.body</code>, which Express types as <code>any</code>.</p>
+        <p class="note">
+          The handler would then need a cast, and a cast is a promise the compiler cannot check. Calling
+          the parser inside the handler keeps the schema's type all the way down. The cost is that the
+          route file no longer shows the contract — a deliberate trade.
         </p>
-      </section>
+      </article>
+    </section>
 
-      <!-- ============ FILE MAP ============ -->
-      <section id="ch3-files" data-nav="File map">
-        <h2>Where code goes now</h2>
+    <!-- ================= AUTH ================= -->
+    <section class="group" id="auth">
+      <h2>Auth</h2>
 
-        <pre><code>apps/api/src/
-├── index.ts              <span class="c-dim">6 lines — listens, nothing else</span>
-├── app.ts                <span class="c-dim">builds the app; does not listen</span>
-├── env.ts                <span class="c-dim">loads .env — first import, always</span>
-├── routes/               <span class="c-dim">paths + middleware, no logic</span>
-├── controllers/          <span class="c-dim">the work</span>
-├── middleware/           <span class="c-dim">auth · errorHandler · validate</span>
-├── lib/                  <span class="c-dim">ApiError · prisma</span>
-└── auth/                 <span class="c-dim">unchanged since chapter 02</span></code></pre>
+      <article class="entry" id="protect" data-tags="protect route guard requireauth requirerole admin role permission">
+        <h3>How do I protect a route?</h3>
+        <p class="answer"><code>requireAuth</code> first, then <code>requireRole</code>. Order is not optional.</p>
+        <pre><code>router.get('/me', requireAuth, getCurrentUser);
 
-        <p>
-          Adding an endpoint is three steps: write the handler in <code>controllers/</code>, wire the path
-          in <code>routes/</code>, and mount the router once in <code>routes/index.ts</code> if the area is
-          new. Two files above are less obvious.
+<span class="c-dim">// admin routers guard once, so a new route cannot miss the check</span>
+adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
+        <p class="note">
+          <code>requireRole</code> is a factory — it takes the roles and <em>returns</em> the middleware,
+          so the parentheses are required. Dropping them hands Express the factory, which silently
+          enforces nothing. It takes any number of roles:
+          <code>requireRole('provider', 'receiver')</code>.
         </p>
+      </article>
 
-        <p>
-          <strong><code>app.ts</code> builds the app but never calls <code>listen</code>.</strong> A test
-          can import it and drive it in-process — no port, no running server, no cleanup. Chapters 01 and
-          02 both ended on “still no test runner”; this is the shape that lets one be added without
-          touching any route.
+      <article class="entry" id="req-auth" data-tags="req.auth claims sub role jti exp user id current">
+        <h3>How do I know who is calling?</h3>
+        <p class="answer"><code>req.auth</code>, set by <code>requireAuth</code>: <code>{ sub, role, jti, exp }</code>.</p>
+        <p class="note">
+          <code>sub</code> is the user id, <code>role</code> is one of
+          <code>provider | receiver | admin</code>. <code>req.auth</code> is not a real Express property —
+          <code>src/types/express.d.ts</code> merges it into Express's own types so TypeScript accepts it.
         </p>
+      </article>
 
-        <p>
-          <strong><code>env.ts</code> must be the first import in an entry point.</strong> Chapter 01 hit
-          this with <code>JWT_SECRET</code> and solved it by deferring the read until first use.
-          <code>lib/prisma.ts</code> cannot defer — it opens the connection while it is being imported — so
-          load order <em>is</em> the fix here, which is fragile enough to be worth the comment sitting on
-          it.
-        </p>
-
-        <p>
-          <code>apps/api/README.md</code> carries the same rules as a checklist with a copyable endpoint.
-          Read that before adding a route; read this chapter to know why it says what it says.
-        </p>
-      </section>
-
-      <!-- ============ VERIFIED ============ -->
-      <section id="ch3-verified" data-nav="Verified behavior">
-        <h2>Verified behavior</h2>
-
-        <p>
-          Run against a live server after the refactor. Every path and status code is unchanged from
-          Chapters 01 and 02 — only the body of a failure is different, which is the result worth checking.
-        </p>
-
+      <article class="entry" id="401-why" data-tags="401 rejected token invalid expired debug why failing session ended">
+        <h3>Why is my token rejected?</h3>
+        <p class="answer">Three gates, all answering 401. The message tells you which one.</p>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
-            </thead>
+            <thead><tr><th>Message</th><th>Means</th></tr></thead>
             <tbody>
-              <tr><td class="code-cell">/health</td><td>none needed</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/nope</td><td>path does not exist</td><td><span class="status s-warn">404</span> <span class="c-dim">NOT_FOUND</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span> <span class="c-dim">FORBIDDEN</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
+              <tr><td class="code-cell">Missing or malformed Authorization header</td><td>No header, or not <code>Bearer &lt;token&gt;</code></td></tr>
+              <tr><td class="code-cell">Invalid or expired token</td><td>Bad signature, malformed, past <code>exp</code>, or a <code>role</code> we never issue</td></tr>
+              <tr><td class="code-cell">Session has ended</td><td>Signature is fine — this token was logged out</td></tr>
             </tbody>
           </table>
         </div>
-
-        <p>
-          Row two is the new one. A URL nobody wrote a handler for used to return Express's default HTML
-          error page; it now returns the same envelope as everything else, because
-          <code>notFoundHandler</code> sits in front of <code>errorHandler</code> and throws like any
-          other failure.
+        <p class="note">
+          Tokens minted before <code>jti</code> was added no longer verify at all. If you have a token
+          saved from an old session, mint a new one.
         </p>
-      </section>
+      </article>
 
-      <!-- ============ GAPS ============ -->
-      <section id="ch3-gaps" data-nav="Not built yet">
-        <h2>What does not exist yet</h2>
-
-        <ul class="gap-list">
-          <li><strong>Nothing uses the convention yet.</strong> Registration, login and the profile endpoints are still being written. The only routes in the tree are the demonstration ones from Chapters 01 and 02.</li>
-          <li><strong>Still no test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. <code>app.ts</code> is now shaped for supertest; nobody has added it.</li>
-          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> has included <code>'admin'</code> since Chapter 01, but the Prisma schema has no admin — so US6-1 has an endpoint to write and nothing to authenticate against.</li>
-          <li><strong>No success envelope, deliberately.</strong> A successful response returns the resource itself. Wrapping it in <code>{ "data": … }</code> buys nothing and costs every caller a hop.</li>
-          <li><strong>No rate limiting and no request logging.</strong> Both belong at this layer; neither is written.</li>
+      <article class="entry" id="tokens" data-tags="jwt token payload secret signature encryption jwt.io expiry 1h">
+        <h3>What is in a token, and what protects it?</h3>
+        <p class="answer">Public claims, protected by a signature — not by secrecy.</p>
+        <pre><code>{ "sub": "u-1", "role": "provider", "iat": …, "exp": …, "jti": … }</code></pre>
+        <ul>
+          <li><strong>The payload is not encrypted.</strong> Base64 is encoding. Anyone can paste a token into jwt.io and read it, so nothing secret goes in one.</li>
+          <li><strong>The signature is what stops edits.</strong> <code>HMAC-SHA256(header.payload, JWT_SECRET)</code> is recomputed on every request; change one character and it stops matching.</li>
+          <li><strong>The secret is the security of the whole system.</strong> Leak it and anyone can mint admin tokens. One per environment, in <code>.env</code>, gitignored.</li>
+          <li><strong>They expire in 1h</strong> and there are no refresh tokens — the user logs in again.</li>
         </ul>
-      </section>
+      </article>
 
-      <!-- ============ TRY ============ -->
-      <section id="ch3-try" data-nav="Try it yourself">
-        <h2>Try it yourself</h2>
+      <article class="entry" id="passwords" data-tags="password hash bcrypt salt store login verify hunter2">
+        <h3>How are passwords stored?</h3>
+        <p class="answer">bcrypt hashes at cost 12. The plaintext is never stored and never recoverable.</p>
+        <pre><code>$2b$12$XqR7fK2mN9pQ8rS4tU6vW.eY1zA3bC5dE7fG9hI0jK2lM4nO6pQ8
+ ↑    ↑  ↑
+ alg  cost salt + hash, packed together</code></pre>
+        <p class="note">
+          bcrypt salts automatically, so two identical passwords produce different hashes and one cracked
+          <code>"password123"</code> does not crack everyone. It is also deliberately slow — cost 12 means
+          2<sup>12</sup> iterations, ~250&#8239;ms per hash. The salt and cost live inside the output, so
+          <code>verifyPassword</code> needs nothing but the stored hash.
+          One asymmetry on empty input: <code>verifyPassword</code> returns <code>false</code>, but
+          <code>hashPassword</code> <em>throws</em> — an empty password reaching the hasher is a bug, not a
+          typo.
+        </p>
+      </article>
 
-        <p>Start the API as in Chapter 01, then ask it for two unrelated failures:</p>
+      <article class="entry" id="logout" data-tags="logout revoke denylist session end destroy 204 jti">
+        <h3>How does logout actually end a session?</h3>
+        <p class="answer"><code>POST /auth/logout</code> puts the token's <code>jti</code> on a denylist. <code>requireAuth</code> then rejects it.</p>
+        <p class="note">
+          Clearing <code>localStorage</code> on the frontend revokes nothing — that token stays signed and
+          unexpired, and anyone holding a copy keeps access for the rest of the hour. The endpoint takes
+          the <code>jti</code> off the <em>verified</em> token, not the body, so nobody can end someone
+          else's session. It answers <span class="status s-ok">204</span>; a second call with the same
+          token answers <span class="status s-deny">401</span>, because gate 3 stops it before the handler.
+          Revocation is per token, so logging out on one device leaves your other sessions alone.
+        </p>
+      </article>
 
+      <article class="entry" id="denylist-limits" data-tags="denylist memory restart deploy scale postgres redis limitation broken production">
+        <h3>Where does the denylist break?</h3>
+        <p class="answer">It is a <code>Map</code> in one Node process: lost on restart, not shared between instances.</p>
+        <p class="note">
+          A token logged out five minutes ago starts working again after a deploy, and a logout recorded
+          on one instance is invisible to another. Acceptable for one dev process and nothing else. The
+          fix is contained — nothing outside <code>tokenDenylist.ts</code> knows the map exists, so a
+          Postgres table <code>(jti primary key, expires_at timestamptz)</code> behind the same two
+          functions is a one-file change. Keep the expiry column; it is what stops the table growing
+          forever.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= LAYOUT ================= -->
+    <section class="group" id="layout">
+      <h2>Layout</h2>
+
+      <article class="entry" id="tree" data-tags="files structure folder tree where put code directory organise">
+        <h3>Where does code go?</h3>
+        <p class="answer">Routes hold paths, controllers hold work, and nothing else holds either.</p>
+        <pre><code>packages/shared/index.ts   <span class="c-dim">UserRole · AuthTokenClaims · ApiErrorCode · ApiErrorResponse</span>
+
+apps/api/src/
+├── index.ts               <span class="c-dim">6 lines — listens, nothing else</span>
+├── app.ts                 <span class="c-dim">builds the app; does not listen</span>
+├── env.ts                 <span class="c-dim">loads .env — first import, always</span>
+├── routes/                <span class="c-dim">paths + middleware, no logic</span>
+├── controllers/           <span class="c-dim">the work</span>
+├── middleware/            <span class="c-dim">auth · errorHandler · validate</span>
+├── lib/                   <span class="c-dim">ApiError · prisma</span>
+├── auth/                  <span class="c-dim">password · jwt · tokenDenylist — pure, no HTTP</span>
+└── types/express.d.ts     <span class="c-dim">teaches TypeScript about req.auth</span></code></pre>
+        <p class="note">
+          <code>auth/</code> holds pure functions that know nothing about HTTP, so a test can call them
+          with no server running. <code>middleware/</code> is the HTTP adapter.
+          <code>packages/shared</code> exists so the two apps cannot disagree — backend
+          <code>'admin'</code> vs frontend <code>'administrator'</code> is a bug no compiler catches
+          unless the type is defined once and imported by both.
+        </p>
+      </article>
+
+      <article class="entry" id="app-ts" data-tags="app.ts listen test supertest port index.ts split">
+        <h3>Why is <code>app.ts</code> separate from <code>index.ts</code>?</h3>
+        <p class="answer"><code>app.ts</code> builds the app but never calls <code>listen</code>, so a test can drive it with no port.</p>
+        <p class="note">
+          <code>index.ts</code> is the only file that opens a socket. This is the shape supertest needs;
+          it exists so a test runner can be added without touching a single route.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= GOTCHAS ================= -->
+    <section class="group" id="gotchas">
+      <h2>Gotchas</h2>
+
+      <article class="entry" id="env-order" data-tags="env dotenv import order prisma undefined DATABASE_URL JWT_SECRET first">
+        <h3>Env vars are <code>undefined</code></h3>
+        <p class="answer">JavaScript runs every <code>import</code> before any other line, so <code>dotenv</code> loads after the import chain.</p>
+        <p class="note">
+          Two fixes coexist. <code>jwt.ts</code> defers the read: <code>getSecret()</code> reads
+          <code>JWT_SECRET</code> at first use and throws if it is missing — signing with
+          <code>undefined</code> would accept everyone's forgeries. <code>lib/prisma.ts</code>
+          <em>cannot</em> defer, because it opens the connection while being imported, so load order is
+          the fix: <code>import './env'</code> must be the first line of any entry point.
+        </p>
+      </article>
+
+      <article class="entry" id="next-in-try" data-tags="try catch next 500 401 middleware swallow error wrong misleading">
+        <h3><code>next()</code> inside a <code>try</code> swallows every later error</h3>
+        <p class="answer">Express runs the rest of the chain synchronously inside <code>next()</code>, so your <code>catch</code> catches their bugs.</p>
+        <pre><code>try {
+    req.auth = verifyAccessToken(token);
+    next();                  <span class="c-deny">// ← every downstream crash lands in the catch below</span>
+} catch {
+    <span class="c-dim">// a valid login gets told its token is bad; the real error vanishes</span>
+}</code></pre>
+        <p class="note">
+          Keep only the throwing call inside the <code>try</code> and call <code>next()</code> after it.
+          Watch for this shape wherever middleware wraps anything in <code>try</code>/<code>catch</code>.
+        </p>
+      </article>
+
+      <article class="entry" id="prisma-wiped" data-tags="prisma generated deleted missing module lint-staged prettier commit cannot find">
+        <h3><code>Cannot find module '../generated/prisma/client'</code></h3>
+        <p class="answer">Prettier formatted the generated client, then lint-staged's stash cleanup deleted it on commit.</p>
+        <pre><code>npm run db:generate --workspace apps/api</code></pre>
+        <p class="note">
+          The root <code>.prettierignore</code> now excludes <code>apps/api/src/generated</code>, so it
+          should not recur. The directory is gitignored, so CI regenerates it before typecheck.
+        </p>
+      </article>
+
+      <article class="entry" id="dev-vs-typecheck" data-tags="ts-node tsx dev typecheck passes crashes files true tsconfig">
+        <h3><code>typecheck</code> passes but <code>dev</code> crashes</h3>
+        <p class="answer"><code>tsc</code> reads every file under <code>include</code>; a runner only compiles what it imports.</p>
+        <p class="note">
+          So <code>src/types/express.d.ts</code> was invisible to <code>npm run dev</code>. The
+          <code>"ts-node": { "files": true }</code> block in <code>tsconfig.json</code> fixed it;
+          <code>dev</code> now runs on <code>tsx</code>, which needs no such flag, so that block is
+          vestigial.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= VERIFIED ================= -->
+    <section class="group" id="verified">
+      <h2>Verified</h2>
+
+      <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
+        <h3>What has actually been run?</h3>
+        <p class="answer">These 21 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td class="code-cell">/health</td><td>none needed</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/nope</td><td>path does not exist</td><td><span class="status s-warn">404</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>wrong scheme (<code>Basic</code>)</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>forged signature</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>same token, second call</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">password</td><td>same input hashed twice</td><td><span class="status s-ok">two hashes, both verify</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Two rows are worth staring at. The provider's logout left the admin session untouched — that is
+          per-token revocation working. And a forged <code>role: admin</code> token signed with a guessed
+          secret was rejected, not accepted as an admin.
+        </p>
+      </article>
+
+      <article class="entry" id="try" data-tags="try curl reproduce yourself demo example test manually">
+        <h3>Try it yourself</h3>
+        <p class="answer">Two unrelated failures, one shape, and no handler formatted either.</p>
         <pre><code>curl -s localhost:4000/nope
 <span class="c-dim">{"error":{"code":"NOT_FOUND","message":"Cannot GET /nope"}}</span>
 
 curl -s localhost:4000/me
 <span class="c-dim">{"error":{"code":"UNAUTHORIZED","message":"Missing or malformed Authorization header"}}</span></code></pre>
+        <p class="note">To mint a token by hand while there is still no login endpoint:</p>
+        <pre><code>cd apps/api
+TOKEN=$(npx tsx -e "import './src/env';
+  import {signAccessToken} from './src/auth/jwt';
+  console.log(signAccessToken({sub:'u-1',role:'provider'}))")
 
-        <p>
-          A typo'd URL and a missing token, raised by two different files, arriving in one shape — and
-          neither handler formatted a thing. Worth seeing once before you write an endpoint that depends
-          on it.
-        </p>
-      </section>
+curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/me          <span class="c-dim"># 200</span>
+curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403</span></code></pre>
+      </article>
+    </section>
 
-      <footer>
-        MangoDB API Guide · source lives at <code>docs/api-guide.html</code> in taofuuu/MangoDB<br>
-        Something wrong or missing? Say so — this page is republished from the repo, so edits made
-        here are overwritten.
-      </footer>
+    <!-- ================= MISSING ================= -->
+    <section class="group" id="missing">
+      <h2>Missing</h2>
 
-    </main>
-  </div>
+      <article class="entry" id="gaps" data-tags="missing not built yet todo gaps blocked test runner admin register login">
+        <h3>What does not exist yet?</h3>
+        <p class="answer">Read this before assuming something works.</p>
+        <ul>
+          <li><strong>No <code>/auth/register</code> or <code>/auth/login</code>.</strong> Every token above was minted by hand. Both are in flight.</li>
+          <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
+          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin, so US6-1 has nothing to authenticate against.</li>
+          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims; it reads no profile. That is US1-4.</li>
+          <li><strong>The denylist does not survive a restart</strong> and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
+          <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging.</li>
+          <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>
+          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes</strong>, alive only until real endpoints replace them.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p id="empty">No entry matches that. Try a status code, a file name, or a word from an error message.</p>
+
+  </main>
+
+  <footer>
+    Source of truth is <code>docs/api-guide.html</code> in taofuuu/MangoDB — edits made on this page are
+    overwritten on the next publish.<br>
+    Adding an endpoint? <code>apps/api/README.md</code> has the same rules as a checklist.
+  </footer>
 </div>
 
 <script>
-  // Builds the left rail from the document itself, so adding a chapter or a
-  // section never requires editing a nav list by hand.
   (function () {
-    var guide = document.getElementById('guide');
-    var rail = document.getElementById('rail-list');
-    if (!guide || !rail) return;
+    var q = document.getElementById('q');
+    var doc = document.getElementById('doc');
+    var count = document.getElementById('count');
+    var empty = document.getElementById('empty');
+    if (!q || !doc) return;
 
-    var sublist = null;
+    var entries = Array.prototype.slice.call(doc.querySelectorAll('.entry'));
+    var groups = Array.prototype.slice.call(doc.querySelectorAll('.group'));
 
-    function link(href, text, cls) {
-      var a = document.createElement('a');
-      a.href = '#' + href;
-      a.textContent = text;
-      if (cls) a.className = cls;
-      return a;
+    // Cache the searchable text once: visible words plus the data-tags synonyms,
+    // so "403" finds the entry whose heading only says "Forbidden".
+    entries.forEach(function (el) {
+      el._hay = (el.textContent + ' ' + (el.getAttribute('data-tags') || '')).toLowerCase();
+    });
+
+    var total = entries.length;
+
+    function apply(term) {
+      var terms = term.toLowerCase().split(/\s+/).filter(Boolean);
+      var shown = 0;
+
+      entries.forEach(function (el) {
+        var hit = terms.every(function (t) { return el._hay.indexOf(t) !== -1; });
+        el.hidden = !hit;
+        if (hit) shown++;
+      });
+
+      groups.forEach(function (g) {
+        g.hidden = !g.querySelector('.entry:not([hidden])');
+      });
+
+      empty.classList.toggle('on', shown === 0);
+      count.textContent = terms.length
+        ? shown + ' of ' + total + ' entries'
+        : total + ' entries';
     }
 
-    Array.prototype.forEach.call(guide.children, function (el) {
-      if (el.classList.contains('chapter-head') && el.id) {
-        var h2 = el.querySelector('h2');
-        var li = document.createElement('li');
-        li.appendChild(link(el.id, el.getAttribute('data-nav') || (h2 ? h2.textContent : el.id), 'rail-chapter'));
-        sublist = document.createElement('ol');
-        sublist.className = 'rail-sub';
-        li.appendChild(sublist);
-        rail.appendChild(li);
-        return;
-      }
+    q.addEventListener('input', function () { apply(q.value); });
 
-      if (el.tagName === 'SECTION' && el.id) {
-        var heading = el.querySelector('h2');
-        if (!heading) return;
-        var item = document.createElement('li');
-        item.appendChild(link(el.id, el.getAttribute('data-nav') || heading.textContent));
-        (sublist || rail).appendChild(item);
+    // "/" focuses search from anywhere; Escape clears it.
+    document.addEventListener('keydown', function (e) {
+      if (e.key === '/' && document.activeElement !== q) {
+        e.preventDefault();
+        q.focus();
+        q.select();
+      } else if (e.key === 'Escape' && document.activeElement === q) {
+        q.value = '';
+        apply('');
       }
     });
+
+    apply('');
   })();
 </script>
