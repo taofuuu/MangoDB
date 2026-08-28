@@ -2,21 +2,22 @@ import type { NextFunction, Request, Response } from 'express';
 import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
+import { ApiError } from '../lib/ApiError';
 
 const BEARER_PREFIX = 'Bearer ';
 
-// Rejects the request unless it carries a valid access token, then exposes
-// the token claims on req.auth for downstream handlers.
+// Verifies the bearer token and exposes its claims on req.auth. Failures go to
+// next() so they leave through errorHandler in the standard envelope.
 export function requireAuth(
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction,
 ): void {
     const header = req.headers.authorization;
     if (!header?.startsWith(BEARER_PREFIX)) {
-        res.status(401).json({
-            error: 'Missing or malformed Authorization header',
-        });
+        next(
+            ApiError.unauthorized('Missing or malformed Authorization header'),
+        );
         return;
     }
 
@@ -24,13 +25,13 @@ export function requireAuth(
     try {
         claims = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
     } catch {
-        res.status(401).json({ error: 'Invalid or expired token' });
+        next(ApiError.unauthorized('Invalid or expired token'));
         return;
     }
 
     // Signature and expiry are fine, but the session was ended by logout.
     if (isTokenRevoked(claims.jti)) {
-        res.status(401).json({ error: 'Session has ended' });
+        next(ApiError.unauthorized('Session has ended'));
         return;
     }
 
@@ -42,13 +43,13 @@ export function requireAuth(
 
 // Use after requireAuth: requireAuth, requireRole('admin')
 export function requireRole(...allowed: UserRole[]) {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return (req: Request, _res: Response, next: NextFunction): void => {
         if (!req.auth) {
-            res.status(401).json({ error: 'Not authenticated' });
+            next(ApiError.unauthorized());
             return;
         }
         if (!allowed.includes(req.auth.role)) {
-            res.status(403).json({ error: 'Insufficient permissions' });
+            next(ApiError.forbidden());
             return;
         }
         next();

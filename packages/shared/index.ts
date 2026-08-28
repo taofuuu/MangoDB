@@ -19,3 +19,28 @@ export interface AuthTokenClaims extends AuthTokenPayload {
     jti: string;
     exp: number;
 }
+
+// The frontend switches on these; a rename is a breaking change for both sides.
+export type ApiErrorCode =
+    | 'BAD_REQUEST'
+    | 'VALIDATION_FAILED'
+    | 'UNAUTHORIZED'
+    | 'FORBIDDEN'
+    | 'NOT_FOUND'
+    | 'CONFLICT'
+    | 'INTERNAL';
+
+// One per bad field, so a form can show each message beside its own input.
+export interface ApiErrorDetail {
+    field: string;
+    message: string;
+}
+
+// Body of every non-2xx response. Success responses return the resource itself.
+export interface ApiErrorResponse {
+    error: {
+        code: ApiErrorCode;
+        message: string;
+        details?: ApiErrorDetail[];
+    };
+}
