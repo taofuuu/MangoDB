@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { UserRole } from '@mangodb/shared';
+import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
+import { isTokenRevoked } from '../auth/tokenDenylist';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -19,12 +20,24 @@ export function requireAuth(
         return;
     }
 
+    let claims: AuthTokenClaims;
     try {
-        req.auth = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
-        next();
+        claims = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
     } catch {
         res.status(401).json({ error: 'Invalid or expired token' });
+        return;
     }
+
+    // Signature and expiry are fine, but the session was ended by logout.
+    if (isTokenRevoked(claims.jti)) {
+        res.status(401).json({ error: 'Session has ended' });
+        return;
+    }
+
+    req.auth = claims;
+    // Outside the try: a handler error further down the chain is not an
+    // authentication failure and must not be reported as one.
+    next();
 }
 
 // Use after requireAuth: requireAuth, requireRole('admin')

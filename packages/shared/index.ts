@@ -7,8 +7,15 @@ export interface User {
     // TODO: add more fields
 }
 
-// Claims carried by an access token issued at login.
+// Claims the caller supplies when issuing an access token at login.
 export interface AuthTokenPayload {
     sub: string;
     role: UserRole;
+}
+
+// What a verified token carries back. jti identifies the individual token so
+// logout can revoke it; exp bounds how long that revocation must be remembered.
+export interface AuthTokenClaims extends AuthTokenPayload {
+    jti: string;
+    exp: number;
 }
