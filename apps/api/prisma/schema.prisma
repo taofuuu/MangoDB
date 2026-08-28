@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model category {
+  cat_id           Int                @id @default(autoincrement())
+  cat_name         String             @unique @db.VarChar(100)
+  listing_category listing_category[]
+}
+
+model certificate {
+  cert_id     Int      @default(1)
+  provider_id Int
+  cert_title  String   @db.VarChar(255)
+  cert_desc   String?
+  cert_image  String   @db.VarChar(255)
+  provider    provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([cert_id, provider_id])
+}
+
+model company {
+  company_id          Int            @id @default(autoincrement())
+  company_name        String         @db.VarChar(255)
+  company_description String?
+  username            String         @unique @db.VarChar(50)
+  password            String         @db.VarChar(255)
+  email               String         @unique @db.VarChar(100)
+  phone               String         @db.VarChar(20)
+  address             String?
+  website             String?        @db.VarChar(255)
+  account_type        String         @db.VarChar(100)
+  company_type        company_type[]
+  listing             listing[]
+  proposal            proposal[]
+  provider            provider?
+  receiver            receiver?
+}
+
+model company_type {
+  company_id   Int
+  company_type String  @db.VarChar(100)
+  company      company @relation(fields: [company_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([company_id, company_type])
+}
+
+model job_requirement {
+  listing_id    Int       @id
+  location_pref String?   @db.VarChar(100)
+  duration      String?   @db.VarChar(100)
+  deadline      DateTime? @db.Date
+  listing       listing   @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model listing {
+  listing_id       Int                @id @default(autoincrement())
+  company_id       Int?
+  listing_title    String             @db.VarChar(255)
+  listing_desc     String
+  min_budget       Int?
+  max_budget       Int
+  listing_status   String             @db.VarChar(50)
+  job_requirement  job_requirement?
+  company          company?           @relation(fields: [company_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+  listing_category listing_category[]
+  proposal         proposal[]
+  service          service?
+}
+
+model listing_category {
+  listing_id Int
+  cat_id     Int
+  category   category @relation(fields: [cat_id], references: [cat_id], onDelete: Cascade, onUpdate: NoAction)
+  listing    listing  @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([listing_id, cat_id])
+}
+
+model project {
+  proj_id          Int                @id @default(autoincrement())
+  proposal_id      Int?               @unique
+  total_budget     Decimal            @db.Decimal(12, 2)
+  start_date       DateTime           @db.Date
+  end_date         DateTime?          @db.Date
+  comment          String?
+  status           String             @db.VarChar(50)
+  proposal         proposal?          @relation(fields: [proposal_id], references: [proposal_id], onDelete: Restrict, onUpdate: NoAction)
+  project_contract project_contract[]
+  rating           rating[]
+}
+
+model project_contract {
+  proj_id       Int
+  document_link String  @db.VarChar(255)
+  project       project @relation(fields: [proj_id], references: [proj_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([proj_id, document_link])
+}
+
+model proposal {
+  proposal_id     Int      @id @default(autoincrement())
+  listing_id      Int?
+  sender_id       Int?
+  proposal_budget Decimal  @db.Decimal(12, 2)
+  proposal_terms  String
+  proposal_status String   @db.VarChar(50)
+  project         project?
+  listing         listing? @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+  company         company? @relation(fields: [sender_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model provider {
+  company_id          Int                   @id
+  warranty_policy     String?
+  service_term        String?
+  certificate         certificate[]
+  company             company               @relation(fields: [company_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+  provider_tech_stack provider_tech_stack[]
+}
+
+model provider_tech_stack {
+  company_id      Int
+  tech_stack_name String   @db.VarChar(100)
+  provider        provider @relation(fields: [company_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([company_id, tech_stack_name])
+}
+
+model rating {
+  rating_id    Int      @id @default(autoincrement())
+  rating_title String   @db.VarChar(100)
+  rating_score Decimal  @db.Decimal(2, 1)
+  proj_id      Int?
+  project      project? @relation(fields: [proj_id], references: [proj_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model receiver {
+  company_id Int     @id
+  company    company @relation(fields: [company_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model service {
+  listing_id        Int                 @id
+  listing           listing             @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+  service_portfolio service_portfolio[]
+}
+
+model service_portfolio {
+  listing_id     Int
+  portfolio_link String  @db.VarChar(255)
+  service        service @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([listing_id, portfolio_link])
+}
