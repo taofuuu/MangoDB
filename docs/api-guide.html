@@ -556,24 +556,30 @@
           </tr>
           <tr>
             <td>03</td>
+            <td><a class="cov-link" href="#ch3">One shape for every endpoint</a></td>
+            <td class="code-cell">every story from here on</td>
+            <td><span class="status s-ok">documented</span></td>
+          </tr>
+          <tr>
+            <td>04</td>
             <td>Company profiles</td>
             <td class="code-cell">US1-4 · US1-5</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>04</td>
+            <td>05</td>
             <td>Service catalog CRUD</td>
             <td class="code-cell">US1-7 · US1-8 · US1-9</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>05</td>
+            <td>06</td>
             <td>Portfolio &amp; file uploads</td>
             <td class="code-cell">US1-10 · US1-11 · US1-12</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>06</td>
+            <td>07</td>
             <td>Administrative data management</td>
             <td class="code-cell">US6-2 · US6-3 · US6-4</td>
             <td><span class="status s-warn">not written</span></td>
@@ -639,16 +645,12 @@
         </div>
 
         <p>
-          So <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a provider — we
-          know who you are, you simply cannot come in — but <span class="status s-deny">401</span> to a
-          garbage token. Returning 401 to a wrong-role user would imply “your login is broken” when it is
-          working perfectly. Keep the split when you write the US6 access-denial tests.
-        </p>
-
-        <p>
-          One case looks like 403 but is not: a correctly signed token whose <code>role</code> is not
-          one this API issues. <code>verifyAccessToken</code> throws before <code>requireRole</code> ever
-          runs — a payload we never minted is not an identity we know.
+          So <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a provider but
+          <span class="status s-deny">401</span> to a garbage token. Answering 401 to a wrong-role user
+          would imply “your login is broken” when it is working perfectly — keep the split when you write
+          the US6 access-denial tests. One case looks like 403 and is not: a correctly signed token whose
+          <code>role</code> we never issue. <code>verifyAccessToken</code> throws before
+          <code>requireRole</code> ever runs.
         </p>
       </section>
 
@@ -676,14 +678,13 @@
 
         <p>
           <strong>It salts automatically.</strong> A salt is random data mixed in before hashing. Without
-          it, identical passwords produce identical hashes — crack one <code>"password123"</code> and you
-          have cracked everyone who chose it, and attackers' precomputed tables work on every account at
-          once.
+          it, identical passwords hash identically — crack one <code>"password123"</code> and you have
+          cracked everyone who chose it.
         </p>
 
         <p>
-          <strong>It is deliberately slow.</strong> SHA-256 is built for speed — a GPU does billions per
-          second, exactly what a cracker wants. bcrypt is built to waste time.
+          <strong>It is deliberately slow.</strong> SHA-256 is built for speed, which is exactly what a
+          cracker wants. bcrypt is built to waste time.
         </p>
 
         <div class="anatomy breakout">
@@ -807,9 +808,9 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
           JavaScript runs <strong>all</strong> <code>import</code> statements before <strong>any</strong>
           other line, so <code>dotenv.config()</code> runs <em>after</em> the import chain. Reading
           <code>process.env.JWT_SECRET</code> at the top of <code>jwt.ts</code> would get
-          <code>undefined</code>; wrapping it in <code>getSecret()</code> defers the read until the first
-          token is signed, and throws if it is still missing. Failing loudly beats signing with
-          <code>undefined</code>, which would accept everyone's forgeries.
+          <code>undefined</code>; <code>getSecret()</code> defers the read to the first signature and
+          throws if it is still missing. Signing with <code>undefined</code> would accept everyone's
+          forgeries.
         </p>
       </section>
 
@@ -820,9 +821,10 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
 
         <p>
           Express middleware sits <em>before</em> your route handler and decides whether the request
-          continues. Every one has the shape <code>(req, res, next)</code>, and exactly one of two things
-          must happen — <code>next()</code> to carry on, or <code>res.status(…).json(…)</code> to stop
-          here (never both). They chain left to right, and any link can end the request early:
+          continues. Every one has the shape <code>(req, res, next)</code>, and exactly one thing must
+          happen — carry on, or answer and stop, never both. They chain left to right, and any link can
+          end the request early. (<a href="#ch3">Chapter 03</a> changes <em>how</em> a link answers; the
+          gates themselves are unchanged.)
         </p>
 
         <div class="breakout">
@@ -908,9 +910,8 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
 
         <p>
           <code>jwt.verify</code> signals every failure by <em>throwing</em> — bad signature, malformed,
-          expired — so it sits in a <code>try/catch</code>; an uncaught throw would become a 500 and risk
-          leaking internals. We answer with one deliberately vague message, because telling an attacker
-          <em>which</em> part failed helps them.
+          expired — so it sits in a <code>try/catch</code>. We answer with one deliberately vague message:
+          telling an attacker <em>which</em> part failed helps them.
         </p>
 
         <h3>requireRole — a function that returns a function</h3>
@@ -927,8 +928,7 @@ requireRole('admin'),   <span class="c-dim">← called NOW; its return value is 
 
         <p>
           Dropping those parentheses is a classic bug: Express receives the factory instead of the
-          middleware and silently enforces nothing. <code>...allowed</code> takes any number of roles, so
-          <code>requireRole('provider', 'receiver')</code> works unchanged.
+          middleware and silently enforces nothing. <code>...allowed</code> takes any number of roles.
         </p>
 
         <h3>Why src/types/express.d.ts exists</h3>
@@ -942,10 +942,11 @@ requireRole('admin'),   <span class="c-dim">← called NOW; its return value is 
         <div class="callout">
           <span class="callout-label">Gotcha that will bite you</span>
           <p>
-            <code>tsc</code> reads every file under <code>include</code>, but <code>ts-node</code> only
-            compiles what it imports — so <code>npm run dev</code> never saw that augmentation and crashed
-            while <code>npm run typecheck</code> passed. Fixed with <code>"ts-node": { "files": true }</code>
-            in <code>apps/api/tsconfig.json</code>.
+            <code>tsc</code> reads every file under <code>include</code>, but a runner only compiles what
+            it imports — so <code>npm run dev</code> never saw that augmentation and crashed while
+            <code>npm run typecheck</code> passed. The <code>"ts-node": { "files": true }</code> block in
+            <code>apps/api/tsconfig.json</code> fixed it; <code>dev</code> now runs on <code>tsx</code>,
+            which needs no such flag, so that block is vestigial.
           </p>
         </div>
       </section>
@@ -1039,10 +1040,11 @@ apps/api/src/
         <p>
           The split is worth copying as a habit. <code>auth/</code> holds <strong>pure functions</strong>
           that know nothing about HTTP — callable from a test with no server running.
-          <code>middleware/</code> is the <strong>HTTP adapter</strong>, turning those into status codes and
-          headers. And <code>packages/shared</code> exists so the two apps cannot disagree: backend
-          <code>'admin'</code> vs frontend <code>'administrator'</code> is a bug no compiler catches, unless
-          <code>UserRole</code> is defined once and imported by both.
+          <code>middleware/</code> is the <strong>HTTP adapter</strong>. And <code>packages/shared</code>
+          exists so the two apps cannot disagree: backend <code>'admin'</code> vs frontend
+          <code>'administrator'</code> is a bug no compiler catches unless <code>UserRole</code> is defined
+          once and imported by both. <a href="#ch3">Chapter 03</a> adds <code>routes/</code> and
+          <code>controllers/</code> above this layer and empties <code>index.ts</code>.
         </p>
       </section>
 
@@ -1081,7 +1083,7 @@ apps/api/src/
 
         <ul class="gap-list">
           <li><strong>No <code>/auth/register</code> and no <code>/auth/login</code>.</strong> The ingredients are ready; nothing calls them yet. Both need the Company table first.</li>
-          <li><strong>No database connection at all.</strong> Supabase is chosen but not wired up — no client, no ORM, no schema.</li>
+          <li><strong>No database connection.</strong> <span class="c-dim">Since resolved — Prisma 7 now talks to Supabase Postgres.</span></li>
           <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims back; it does not read a real profile. That is US1-4.</li>
           <li><strong>No refresh tokens.</strong> When the 1-hour token expires, the user logs in again. Fine for this sprint.</li>
           <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes</strong>, proving the middleware works until real endpoints replace them.</li>
@@ -1136,10 +1138,10 @@ curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
 
         <p>
           The obvious implementation is for the frontend to drop the token from
-          <code>localStorage</code> and show the login page again. It looks correct — but nothing was
-          revoked. That token is still signed and unexpired, and <code>requireAuth</code> would happily
-          accept it, because verification is pure mathematics over the token's own contents. Anyone
-          holding a copy keeps full access for the rest of the hour.
+          <code>localStorage</code> and show the login page again. Nothing was revoked. That token is still
+          signed and unexpired, and <code>requireAuth</code> accepts it, because verification is pure
+          mathematics over the token's own contents. Anyone holding a copy keeps full access for the rest
+          of the hour.
         </p>
 
         <div class="callout danger">
@@ -1165,9 +1167,9 @@ curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
         <h2>You cannot revoke what you cannot name</h2>
 
         <p>
-          Before this chapter, two tokens issued to the same user in the same second were byte-identical —
-          no way to point at one and say <em>that</em> one is dead. So every token now gets a name:
-          <code>jti</code>, the standard “JWT ID” claim.
+          Two tokens issued to the same user in the same second used to be byte-identical — no way to point
+          at one and say <em>that</em> one is dead. So every token now gets a name: <code>jti</code>, the
+          standard “JWT ID” claim.
         </p>
 
         <pre><code>return jwt.sign(payload, getSecret(), {
@@ -1177,8 +1179,8 @@ curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
 
         <p>
           Like everything else in the payload it is public, which is fine — a UUID reveals nothing.
-          <code>verifyAccessToken</code> now demands it and returns <code>exp</code> alongside, because the
-          next layer needs to know when the token dies to know when it may stop remembering it.
+          <code>verifyAccessToken</code> now demands it and returns <code>exp</code> alongside: the next
+          layer needs to know when the token dies to know when it may stop remembering it.
         </p>
 
         <h3>Why per token and not per user</h3>
@@ -1215,11 +1217,10 @@ const revoked = new Map&lt;string, number&gt;();</code></pre>
 
         <p>
           An entry is only useful while the token it names would otherwise still work: one second after
-          <code>exp</code>, <code>jwt.verify</code> rejects that token anyway. So on every write we sweep
-          the map and delete anything past its expiry. Without that sweep the map grows with every logout
-          for the life of the process; with it, the store is bounded by <em>how many people logged out in
-          the last hour</em>. Pruning on write rather than on a timer also avoids an interval keeping the
-          Node process alive.
+          <code>exp</code>, <code>jwt.verify</code> rejects that token anyway. So every write sweeps the map
+          and drops anything past its expiry, bounding the store by <em>how many people logged out in the
+          last hour</em>. Pruning on write rather than on a timer also avoids an interval keeping the Node
+          process alive.
         </p>
 
         <div class="callout">
@@ -1265,9 +1266,9 @@ const revoked = new Map&lt;string, number&gt;();</code></pre>
 
         <p>
           Gate 3 runs last because it is the only one that costs anything — no reason to check a map for a
-          token that turned out to be forged. All three answer <span class="status s-deny">401</span>, which
-          is correct rather than lazy: a revoked token establishes no identity, and 403 would imply one.
-          Only the message differs, so a frontend can tell “log in again” from “this request is broken”.
+          forged token. All three answer <span class="status s-deny">401</span>: a revoked token establishes
+          no identity, and 403 would imply one. Only the message differs, so a frontend can tell “log in
+          again” from “this request is broken”.
         </p>
 
         <div class="callout">
@@ -1285,9 +1286,8 @@ const revoked = new Map&lt;string, number&gt;();</code></pre>
           <p>
             Express runs the rest of the chain synchronously inside that <code>next()</code>, so a crash in
             <em>any</em> later handler was caught here and reported as <span class="status s-deny">401
-            Invalid or expired token</span> — a valid login told its token was bad, while the real error
-            vanished. Verification now sits alone in the <code>try</code>. Watch for this shape wherever you
-            wrap middleware in <code>try/catch</code>.
+            Invalid or expired token</span> — the real error vanished. Verification now sits alone in the
+            <code>try</code>. Watch for this shape wherever you wrap middleware in <code>try/catch</code>.
           </p>
         </div>
       </section>
@@ -1452,8 +1452,8 @@ apps/api/src/
         <p>
           The layering from Chapter 01 held up, which is the useful signal. <code>tokenDenylist.ts</code>
           went into <code>auth/</code> because it is a pure function over ids and timestamps — no
-          <code>Request</code>, no <code>Response</code>. Adding a feature meant adding one file in the layer
-          it belonged to, not threading logic through the ones that existed.
+          <code>Request</code>, no <code>Response</code>. Adding a feature meant adding one file in the
+          layer it belonged to.
         </p>
       </section>
 
@@ -1499,7 +1499,7 @@ apps/api/src/
           <li><strong>The denylist does not survive a restart</strong>, and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
           <li><strong>No “log out everywhere”.</strong> Revocation is per token by design; ending every session for an account needs a per-user index or a “tokens issued before <em>t</em> are void” marker.</li>
           <li><strong>No client-side session cleanup and no redirect.</strong> That is the frontend half of US1-3 — the server ends the session, but nothing clears the browser or sends the user to the login page.</li>
-          <li><strong>Still no test runner</strong>, so the four US1-3 test tasks have nowhere to live. The table above came from a shell script: evidence, not a regression suite.</li>
+          <li><strong>Still no test runner</strong>, so the four US1-3 test tasks have nowhere to live. The table above came from a shell script: evidence, not a regression suite. <a href="#ch3">Chapter 03</a> splits <code>app.ts</code> out so one can be added.</li>
         </ul>
       </section>
 
@@ -1522,6 +1522,333 @@ curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim
           anyway, and the only reason is a UUID in a map on the server. That gap between “cryptographically
           valid” and “accepted” is the whole chapter. Then restart the server and replay the last curl: it
           answers <span class="status s-ok">200</span>, because the denylist went with the process.
+        </p>
+      </section>
+
+      <div class="chapter-head" id="ch3" data-nav="03 · One shape">
+        <span class="chapter-num">Chapter 03</span>
+        <h2>One shape for every endpoint</h2>
+        <p class="chapter-summary">
+          Nine people are about to write endpoints into this API at the same time. This is the agreement
+          they write them against: where the code goes, how a failure comes back, how input is checked.
+        </p>
+        <div class="chapter-meta">
+          <span class="chip">every story from here on</span>
+          <span class="chip">64d67e8</span>
+          <span class="chip">zod 4</span>
+          <span class="chip">9/9 cases verified</span>
+        </div>
+      </div>
+
+      <!-- ============ THE PROBLEM ============ -->
+      <section id="one-shape" data-nav="The problem">
+        <h2>The same failure, described three ways</h2>
+
+        <p>
+          Chapters 01 and 02 put four routes straight into <code>src/index.ts</code>. Fine for four. But
+          registration, login and the profile endpoints are being written right now, by different people,
+          and nothing said what a failure should look like — so each would have invented one:
+        </p>
+
+        <pre><code>{ "error": "Username already taken" }
+{ "message": "username taken", "ok": false }
+{ "errors": [ { "username": "taken" } ] }</code></pre>
+
+        <p>
+          All three are reasonable. Together they cost the frontend three code paths for one event, and the
+          third arrives as a form that silently fails to show its error. The fix is boring, and it only
+          works if it lands <em>before</em> the endpoints do.
+        </p>
+      </section>
+
+      <!-- ============ THE ENVELOPE ============ -->
+      <section id="envelope" data-nav="01 · The envelope">
+        <span class="layer-mark">Layer 01 · packages/shared/index.ts</span>
+        <h2>Every failure returns the same body</h2>
+
+        <pre><code>{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Request body is invalid",
+    "details": [ { "field": "email", "message": "Invalid email address" } ]
+  }
+}</code></pre>
+
+        <p>
+          Three fields, and the split between them is the point. <code>code</code> is for the program — a
+          fixed string the frontend switches on. <code>message</code> is for a human reading a log.
+          <code>details</code> appears only when individual fields were rejected, so a form can put each
+          message beside the input it belongs to instead of dumping them all in one banner.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Status</th><th>Use for</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="code-cell">BAD_REQUEST</td><td><span class="status s-deny">400</span></td><td>Malformed request that is not about one field</td></tr>
+              <tr><td class="code-cell">VALIDATION_FAILED</td><td><span class="status s-deny">400</span></td><td>Field-level rejection — carries <code>details</code></td></tr>
+              <tr><td class="code-cell">UNAUTHORIZED</td><td><span class="status s-deny">401</span></td><td>No token, bad token, ended session</td></tr>
+              <tr><td class="code-cell">FORBIDDEN</td><td><span class="status s-warn">403</span></td><td>Authenticated, but this role may not</td></tr>
+              <tr><td class="code-cell">NOT_FOUND</td><td><span class="status s-warn">404</span></td><td>Unknown route, or a missing resource</td></tr>
+              <tr><td class="code-cell">CONFLICT</td><td><span class="status s-warn">409</span></td><td>Existing data blocks the write — a taken username</td></tr>
+              <tr><td class="code-cell">INTERNAL</td><td><span class="status s-deny">500</span></td><td>A bug. Never thrown deliberately</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The 401/403 split from Chapter 01 survives intact — <code>UNAUTHORIZED</code> means “we do not
+          know who you are”, <code>FORBIDDEN</code> means “we know, and no”.
+        </p>
+
+        <p>
+          A frontend that switches on <code>code</code> breaks silently when a code is renamed, so the list
+          lives in <code>@mangodb/shared</code> and both apps import it — the same move
+          <code>UserRole</code> made in Chapter 01. Rename one now and TypeScript fails the build on both
+          sides, instead of the bug reaching a user.
+        </p>
+      </section>
+
+      <!-- ============ THROWING ============ -->
+      <section id="throwing" data-nav="02 · Throwing">
+        <span class="layer-mark">Layer 02 · src/lib/ApiError.ts · src/middleware/errorHandler.ts</span>
+        <h2>Handlers stopped answering failures</h2>
+
+        <p>
+          An agreed shape that every handler formats by hand holds until the first person forgets. So
+          handlers no longer format failures at all. They throw one:
+        </p>
+
+        <pre><code>throw ApiError.conflict('Username already taken');</code></pre>
+
+        <p>
+          A single terminal middleware, mounted after every route, catches those and writes the envelope.
+          It is the only place in the API allowed to set a 4xx or 5xx status — which turns “did they use
+          the right shape?” from a review question into something that cannot go wrong.
+        </p>
+
+        <div class="breakout">
+          <figure>
+            <div class="fig-scroll">
+              <svg viewBox="0 0 820 300" role="img" aria-label="Three different sources of failure — the auth middleware, the body validator, and a controller — all throw an ApiError. Express routes every one of them to a single errorHandler, which writes one JSON envelope. Anything that is not an ApiError is logged and answered as a generic internal error.">
+                <defs>
+                  <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+                  </marker>
+                  <marker id="ar4-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--deny)"></path>
+                  </marker>
+                </defs>
+
+                <text x="16" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">WHERE FAILURES START</text>
+
+                <rect x="16" y="44" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="32" y="63" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">requireAuth</text>
+                <text x="32" y="79" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">gates 1–3 from chapters 01–02</text>
+
+                <rect x="16" y="106" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="32" y="125" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">parseBody</text>
+                <text x="32" y="141" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">a field failed its schema</text>
+
+                <rect x="16" y="168" width="216" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="32" y="187" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">controller</text>
+                <text x="32" y="203" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">a rule about the data says no</text>
+
+                <path d="M 232 66 C 280 66 288 112 330 122" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
+                <path d="M 232 128 L 330 128" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
+                <path d="M 232 190 C 280 190 288 144 330 134" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#ar4)" opacity="0.85"></path>
+
+                <text x="286" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--accent)">throw ApiError</text>
+
+                <rect x="336" y="94" width="168" height="68" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+                <text x="420" y="122" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600" fill="var(--accent)">errorHandler</text>
+                <text x="420" y="140" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="var(--accent)">the only place with res.status</text>
+
+                <line x1="504" y1="128" x2="558" y2="128" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar4)"></line>
+
+                <rect x="564" y="94" width="240" height="68" rx="4" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="580" y="120" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">{ error: { code, message,</text>
+                <text x="592" y="138" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">details? } }</text>
+
+                <line x1="16" y1="240" x2="804" y2="240" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.35"></line>
+
+                <text x="16" y="264" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="var(--deny)">anything that is not an ApiError</text>
+                <line x1="248" y1="260" x2="330" y2="260" stroke="var(--deny)" stroke-width="1.5" marker-end="url(#ar4-deny)"></line>
+                <text x="342" y="256" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">logged on the server,</text>
+                <text x="342" y="272" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">answered as a bare INTERNAL — no stack, no SQL</text>
+              </svg>
+            </div>
+            <figcaption>
+              Three unrelated files, one exit. Nothing in the middle formats a response, so nothing in the
+              middle can format it differently.
+            </figcaption>
+          </figure>
+        </div>
+
+        <p>
+          Express 5 is what makes this cheap: it forwards a rejected promise from an <code>async</code>
+          handler to the error middleware by itself. In Express 4 every async route needed its own
+          <code>try/catch</code> or a wrapper, and a forgotten one left the request hanging until it timed
+          out. Ours need neither — <code>throw</code> is the whole API.
+        </p>
+
+        <div class="callout">
+          <span class="callout-label">The half you get for free</span>
+          <p>
+            Anything that is <em>not</em> an <code>ApiError</code> is a bug nobody planned for — a Prisma
+            failure, a null dereference. Those are logged on the server and answered with a bare
+            <code>INTERNAL</code>. Stack traces, SQL and table names stop at the boundary, and no handler
+            has to remember to make that happen.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ VALIDATION ============ -->
+      <section id="validation" data-nav="03 · Validation">
+        <span class="layer-mark">Layer 03 · src/middleware/validate.ts</span>
+        <h2>Input is described, not inspected</h2>
+
+        <p>
+          Hand-written checks — <code>if (!body.email) …</code> — drift between endpoints, miss cases, and
+          tell TypeScript nothing, so the code below them still treats the body as <code>any</code>. A
+          schema replaces all three problems at once:
+        </p>
+
+        <pre><code>const registerSchema = z.object({
+    username: z.string().min(3).max(50),
+    email: z.email().max(100),
+    password: z.string().min(8),
+});
+
+const body = parseBody(registerSchema, req.body);   <span class="c-dim">← typed, or it throws</span></code></pre>
+
+        <p>
+          <code>body.email</code> is a <code>string</code> as far as the compiler is concerned, and bad
+          input never reaches the next line: <code>parseBody</code> throws
+          <code>VALIDATION_FAILED</code> with one <code>details</code> entry per bad field, which is
+          already the shape the registration form needs.
+        </p>
+
+        <h3>Why this is a function and not middleware</h3>
+
+        <p>
+          The conventional Express answer is middleware — <code>router.post('/register',
+          validate(schema), register)</code> — and it reads better in the route file. But middleware has
+          nowhere to put the parsed value except back on <code>req.body</code>, which Express types as
+          <code>any</code>. The handler then needs a cast, and a cast is a promise the compiler cannot
+          check. Calling the parser inside the handler keeps the schema's type all the way down. We traded
+          a visible route contract for a type the compiler enforces.
+        </p>
+      </section>
+
+      <!-- ============ FILE MAP ============ -->
+      <section id="ch3-files" data-nav="File map">
+        <h2>Where code goes now</h2>
+
+        <pre><code>apps/api/src/
+├── index.ts              <span class="c-dim">6 lines — listens, nothing else</span>
+├── app.ts                <span class="c-dim">builds the app; does not listen</span>
+├── env.ts                <span class="c-dim">loads .env — first import, always</span>
+├── routes/               <span class="c-dim">paths + middleware, no logic</span>
+├── controllers/          <span class="c-dim">the work</span>
+├── middleware/           <span class="c-dim">auth · errorHandler · validate</span>
+├── lib/                  <span class="c-dim">ApiError · prisma</span>
+└── auth/                 <span class="c-dim">unchanged since chapter 02</span></code></pre>
+
+        <p>
+          Adding an endpoint is three steps: write the handler in <code>controllers/</code>, wire the path
+          in <code>routes/</code>, and mount the router once in <code>routes/index.ts</code> if the area is
+          new. Two files above are less obvious.
+        </p>
+
+        <p>
+          <strong><code>app.ts</code> builds the app but never calls <code>listen</code>.</strong> A test
+          can import it and drive it in-process — no port, no running server, no cleanup. Chapters 01 and
+          02 both ended on “still no test runner”; this is the shape that lets one be added without
+          touching any route.
+        </p>
+
+        <p>
+          <strong><code>env.ts</code> must be the first import in an entry point.</strong> Chapter 01 hit
+          this with <code>JWT_SECRET</code> and solved it by deferring the read until first use.
+          <code>lib/prisma.ts</code> cannot defer — it opens the connection while it is being imported — so
+          load order <em>is</em> the fix here, which is fragile enough to be worth the comment sitting on
+          it.
+        </p>
+
+        <p>
+          <code>apps/api/README.md</code> carries the same rules as a checklist with a copyable endpoint.
+          Read that before adding a route; read this chapter to know why it says what it says.
+        </p>
+      </section>
+
+      <!-- ============ VERIFIED ============ -->
+      <section id="ch3-verified" data-nav="Verified behavior">
+        <h2>Verified behavior</h2>
+
+        <p>
+          Run against a live server after the refactor. Every path and status code is unchanged from
+          Chapters 01 and 02 — only the body of a failure is different, which is the result worth checking.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="code-cell">/health</td><td>none needed</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/nope</td><td>path does not exist</td><td><span class="status s-warn">404</span> <span class="c-dim">NOT_FOUND</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span> <span class="c-dim">FORBIDDEN</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span> <span class="c-dim">UNAUTHORIZED</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Row two is the new one. A URL nobody wrote a handler for used to return Express's default HTML
+          error page; it now returns the same envelope as everything else, because
+          <code>notFoundHandler</code> sits in front of <code>errorHandler</code> and throws like any
+          other failure.
+        </p>
+      </section>
+
+      <!-- ============ GAPS ============ -->
+      <section id="ch3-gaps" data-nav="Not built yet">
+        <h2>What does not exist yet</h2>
+
+        <ul class="gap-list">
+          <li><strong>Nothing uses the convention yet.</strong> Registration, login and the profile endpoints are still being written. The only routes in the tree are the demonstration ones from Chapters 01 and 02.</li>
+          <li><strong>Still no test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. <code>app.ts</code> is now shaped for supertest; nobody has added it.</li>
+          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> has included <code>'admin'</code> since Chapter 01, but the Prisma schema has no admin — so US6-1 has an endpoint to write and nothing to authenticate against.</li>
+          <li><strong>No success envelope, deliberately.</strong> A successful response returns the resource itself. Wrapping it in <code>{ "data": … }</code> buys nothing and costs every caller a hop.</li>
+          <li><strong>No rate limiting and no request logging.</strong> Both belong at this layer; neither is written.</li>
+        </ul>
+      </section>
+
+      <!-- ============ TRY ============ -->
+      <section id="ch3-try" data-nav="Try it yourself">
+        <h2>Try it yourself</h2>
+
+        <p>Start the API as in Chapter 01, then ask it for two unrelated failures:</p>
+
+        <pre><code>curl -s localhost:4000/nope
+<span class="c-dim">{"error":{"code":"NOT_FOUND","message":"Cannot GET /nope"}}</span>
+
+curl -s localhost:4000/me
+<span class="c-dim">{"error":{"code":"UNAUTHORIZED","message":"Missing or malformed Authorization header"}}</span></code></pre>
+
+        <p>
+          A typo'd URL and a missing token, raised by two different files, arriving in one shape — and
+          neither handler formatted a thing. Worth seeing once before you write an endpoint that depends
+          on it.
         </p>
       </section>
 
