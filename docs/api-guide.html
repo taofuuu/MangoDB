@@ -520,7 +520,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">Living document · last updated 27 Aug 2026</p>
+    <p class="eyebrow">Living document · last updated 28 Aug 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       How the backend actually works, written for people who have not built one before.
@@ -550,24 +550,30 @@
           </tr>
           <tr>
             <td>02</td>
+            <td><a class="cov-link" href="#ch2">Ending a session</a></td>
+            <td class="code-cell">US1-3</td>
+            <td><span class="status s-ok">documented</span></td>
+          </tr>
+          <tr>
+            <td>03</td>
             <td>Company profiles</td>
             <td class="code-cell">US1-4 · US1-5</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>03</td>
+            <td>04</td>
             <td>Service catalog CRUD</td>
             <td class="code-cell">US1-7 · US1-8 · US1-9</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>04</td>
+            <td>05</td>
             <td>Portfolio &amp; file uploads</td>
             <td class="code-cell">US1-10 · US1-11 · US1-12</td>
             <td><span class="status s-warn">not written</span></td>
           </tr>
           <tr>
-            <td>05</td>
+            <td>06</td>
             <td>Administrative data management</td>
             <td class="code-cell">US6-2 · US6-3 · US6-4</td>
             <td><span class="status s-warn">not written</span></td>
@@ -590,7 +596,7 @@
         <h2>The auth spine</h2>
         <p class="chapter-summary">
           Three small files decide who gets into the API and what they may do once inside.
-          Every protected endpoint in the project sits behind them.
+          Every protected endpoint sits behind them.
         </p>
         <div class="chapter-meta">
           <span class="chip">US1-1 · US1-2 · US6-1</span>
@@ -633,22 +639,16 @@
         </div>
 
         <p>
-          That is why <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a
-          provider — we know exactly who you are, you simply cannot come in — but
-          <span class="status s-deny">401</span> to a garbage token, where we do not know who you are at all.
+          So <code>/admin/ping</code> answers <span class="status s-warn">403</span> to a provider — we
+          know who you are, you simply cannot come in — but <span class="status s-deny">401</span> to a
+          garbage token. Returning 401 to a wrong-role user would imply “your login is broken” when it is
+          working perfectly. Keep the split when you write the US6 access-denial tests.
         </p>
 
         <p>
-          Getting this backwards leaks information. Returning 401 to a wrong-role user implies
-          “your login is broken” when it is working perfectly. Keep the split when you write the
-          US6 access-denial tests — the two codes are not interchangeable.
-        </p>
-        <p>
-          One case lands on the 401 side that looks like it should be 403: a correctly
-          signed token whose <code>role</code> is not one this API issues. It never reaches
-          <code>requireRole</code> — <code>verifyAccessToken</code> narrows the claim against
-          the <code>UserRole</code> union first and throws. We could read the signature, but a
-          payload we never minted is not an identity we know, so 401 is the honest answer.
+          One case looks like 403 but is not: a correctly signed token whose <code>role</code> is not
+          one this API issues. <code>verifyAccessToken</code> throws before <code>requireRole</code> ever
+          runs — a payload we never minted is not an identity we know.
         </p>
       </section>
 
@@ -658,36 +658,32 @@
         <h2>Passwords are never stored</h2>
 
         <p>
-          If the database leaks — and databases leak — every stored password becomes an attacker's
-          property. Worse, people reuse passwords, so a leak hands over their email and bank logins too.
+          Databases leak, and people reuse passwords — so a leak of stored passwords hands over your
+          users' email and bank logins too. We store a <strong>hash</strong> instead: a one-way
+          function, easy forward and impossible backward.
         </p>
-
-        <p>So we store a <strong>hash</strong> instead. A hash is a one-way function: easy forward, impossible backward.</p>
 
         <pre><code>"hunter2"  --hash--&gt;  "$2b$12$XqR7f...(60 chars)"
 "hunter2"  &lt;--????--  "$2b$12$XqR7f...(60 chars)"   <span class="c-dim">← no way back</span></code></pre>
 
         <p>
-          This is <em>not</em> encryption. Encryption is designed to be reversed with a key; hashing has
-          no key and no reverse. That is the entire point. Login then works without the server ever
-          knowing the password: hash what the user typed, compare the two hashes, match means correct.
+          This is <em>not</em> encryption — encryption is built to be reversed with a key; hashing has no
+          key and no reverse. Login works without the server ever knowing the password: hash what the user
+          typed, compare the two hashes.
         </p>
 
         <h3>Why bcrypt and not SHA-256</h3>
 
-        <p>Two properties ordinary hash functions lack.</p>
-
         <p>
-          <strong>It salts automatically.</strong> A salt is random data mixed in before hashing.
-          Without it, identical passwords produce identical hashes — crack one <code>"password123"</code>
-          and you have cracked every user who chose it. Attackers also keep precomputed tables of
-          billions of common-password hashes; a random salt makes those tables worthless, since they
-          would need one table per salt.
+          <strong>It salts automatically.</strong> A salt is random data mixed in before hashing. Without
+          it, identical passwords produce identical hashes — crack one <code>"password123"</code> and you
+          have cracked everyone who chose it, and attackers' precomputed tables work on every account at
+          once.
         </p>
 
         <p>
-          <strong>It is deliberately slow.</strong> SHA-256 is built for speed, and a GPU does billions
-          per second — exactly what a password cracker wants. bcrypt is built to waste time.
+          <strong>It is deliberately slow.</strong> SHA-256 is built for speed — a GPU does billions per
+          second, exactly what a cracker wants. bcrypt is built to waste time.
         </p>
 
         <div class="anatomy breakout">
@@ -708,30 +704,24 @@
             </span>
           </div>
           <p class="anatomy-note">
-            The cost is a <em>power of two</em>: <code>SALT_ROUNDS = 12</code> means 2<sup>12</sup> = 4,096
-            internal iterations, roughly 250&nbsp;ms per hash. Each +1 doubles the work — unnoticeable when
-            you log in once, catastrophic for someone trying ten billion guesses. Because the salt and the
-            cost live <em>inside</em> the output string, <code>verifyPassword</code> needs nothing but the
-            stored hash to check a password.
+            The cost is a <em>power of two</em>: <code>SALT_ROUNDS = 12</code> means 2<sup>12</sup> =
+            4,096 iterations, roughly 250&nbsp;ms per hash. Each +1 doubles the work — unnoticeable once,
+            catastrophic for ten billion guesses. Salt and cost live <em>inside</em> the output, so
+            <code>verifyPassword</code> needs nothing but the stored hash.
           </p>
         </div>
 
-        <p>This is what the smoke test proved — the same password, hashed twice, produced two different results:</p>
+        <p>The smoke test proved it — the same password hashed twice gives two different results, and both still verify:</p>
 
         <pre><code>verify correct  : <span class="c-ok">true</span>
 verify wrong    : <span class="c-deny">false</span>
 verify empty    : <span class="c-deny">false</span>
 salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same password, different hash</span></code></pre>
 
-        <p>Yet <code>verifyPassword</code> still matches both, because it reads the salt back out of the stored hash and reuses it.</p>
-
-        <h3>The guard clauses</h3>
-
         <p>
-          <code>verifyPassword</code> returns <code>false</code> on empty input, but
-          <code>hashPassword</code> <em>throws</em>. That asymmetry is deliberate: an empty password
-          reaching the hashing function is a programming error, not a user typo, and it should crash
-          loudly in development rather than quietly store something useless.
+          One asymmetry is deliberate: on empty input <code>verifyPassword</code> returns
+          <code>false</code>, but <code>hashPassword</code> <em>throws</em>. An empty password reaching the
+          hasher is a programming error, not a user typo, and should crash loudly.
         </p>
       </section>
 
@@ -742,9 +732,9 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
 
         <p>
           Password checking happens <strong>once</strong>, at login. But HTTP is <em>stateless</em> — the
-          server forgets you the instant it responds, so every later request arrives as a total stranger.
-          Resending the password each time is obviously out. Instead, login issues a <strong>token</strong>:
-          a signed pass the client attaches to future requests.
+          server forgets you the instant it responds, so every later request arrives as a stranger. Instead
+          of resending the password, login issues a <strong>token</strong>: a signed pass the client
+          attaches to future requests.
         </p>
 
         <div class="anatomy breakout">
@@ -765,9 +755,9 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
             </span>
           </div>
           <p class="anatomy-note">
-            Three base64 chunks joined by dots. Ours decodes to
-            <code>{ "sub": "u-1", "role": "admin", "iat": …, "exp": … }</code> —
-            <code>sub</code> is the subject (user id), <code>iat</code> issued-at, <code>exp</code> expiry.
+            Three base64 chunks joined by dots. Ours decodes to <code>{ "sub": "u-1", "role": "admin",
+            "iat": …, "exp": …, "jti": … }</code> — subject (user id), issued-at, expiry, and a unique
+            token id added in <a href="#ch2">Chapter 02</a> so logout has something to point at.
           </p>
         </div>
 
@@ -775,9 +765,8 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
           <span class="callout-label">The thing beginners get wrong</span>
           <p>
             <strong>The payload is not encrypted.</strong> Base64 is encoding, not secrecy — anyone can
-            paste a token into jwt.io and read it. Never put anything secret in a token: no passwords,
-            no personal data. Ours holds only a user id and a role, both of which the user already knows
-            about themselves.
+            paste a token into jwt.io and read it. Never put anything secret in one. Ours holds only a user
+            id and a role, which the user already knows about themselves.
           </p>
         </div>
 
@@ -788,51 +777,39 @@ salted h1!=h2   : <span class="c-ok">true</span>   <span class="c-dim">← same 
         <pre><code>signature = HMAC-SHA256(header + "." + payload, JWT_SECRET)</code></pre>
 
         <p>
-          <code>JWT_SECRET</code> never leaves the server. On every incoming request
-          <code>jwt.verify</code> recomputes that signature from the token's <em>actual</em> contents and
-          compares. Change one character of the payload and the recomputed signature no longer matches.
-        </p>
-
-        <p>
-          The forged-token test proved it. A perfectly well-formed <code>role: admin</code> token, signed
-          with a <em>guessed</em> secret, was rejected at both endpoints — the payload said “admin”, and the
-          server did not care.
+          <code>JWT_SECRET</code> never leaves the server. On every request <code>jwt.verify</code>
+          recomputes that signature from the token's <em>actual</em> contents and compares, so changing one
+          character breaks the match. The forged-token test proved it: a well-formed <code>role:
+          admin</code> token signed with a <em>guessed</em> secret was rejected at both endpoints.
         </p>
 
         <div class="callout">
           <span class="callout-label">Operational consequence</span>
           <p>
-            The secret <em>is</em> the security of the whole system. Leak it and anyone can mint admin
-            tokens. Hence <code>.env</code>, hence gitignored, hence a different secret per environment.
-            Generate your own with the command in <code>.env.example</code> — never share one.
+            The secret <em>is</em> the security of the whole system — leak it and anyone can mint admin
+            tokens. Hence <code>.env</code>, gitignored, one secret per environment. Generate your own with
+            the command in <code>.env.example</code>; never share one.
           </p>
         </div>
 
         <h3>Expiry, and why revocation is hard</h3>
 
         <p>
-          Tokens are self-contained, which is their strength and their weakness: the server keeps no list
-          of issued tokens, so it cannot revoke one individually. A stolen token works until it expires.
-          Short lifetimes limit the damage window — ours default to <code>1h</code>, and
-          <code>jwt.verify</code> checks <code>exp</code> on its own and throws.
+          Tokens are self-contained, which is both strength and weakness: the server keeps no list of
+          issued tokens, so it cannot revoke one individually, and a stolen token works until it expires.
+          Short lifetimes limit the damage — ours default to <code>1h</code>. <a href="#ch2">Chapter
+          02</a> buys revocation back for logout, and accounts for what that cost.
         </p>
 
         <h3>One real bug worth knowing about</h3>
 
         <p>
           JavaScript runs <strong>all</strong> <code>import</code> statements before <strong>any</strong>
-          other line of a file. So in <code>index.ts</code>:
-        </p>
-
-        <pre><code>import { requireAuth } from './middleware/auth';  <span class="c-dim">← this whole chain runs first</span>
-dotenv.config({ quiet: true });                   <span class="c-dim">← this runs after</span></code></pre>
-
-        <p>
-          If <code>jwt.ts</code> read <code>process.env.JWT_SECRET</code> at the top level it would get
-          <code>undefined</code>, because <code>.env</code> had not loaded yet. Wrapping the read in
-          <code>getSecret()</code> defers it until the first token is actually signed. And if the secret is
-          still missing then, we throw — failing loudly beats signing with <code>undefined</code>, which
-          would silently accept everyone's forgeries.
+          other line, so <code>dotenv.config()</code> runs <em>after</em> the import chain. Reading
+          <code>process.env.JWT_SECRET</code> at the top of <code>jwt.ts</code> would get
+          <code>undefined</code>; wrapping it in <code>getSecret()</code> defers the read until the first
+          token is signed, and throws if it is still missing. Failing loudly beats signing with
+          <code>undefined</code>, which would accept everyone's forgeries.
         </p>
       </section>
 
@@ -842,17 +819,11 @@ dotenv.config({ quiet: true });                   <span class="c-dim">← this r
         <h2>Middleware is the gate in front of the handler</h2>
 
         <p>
-          Express middleware is a function that sits <em>before</em> your route handler and decides whether
-          the request continues. Every one has the same shape, <code>(req, res, next)</code>, and exactly
-          one of two things must happen:
+          Express middleware sits <em>before</em> your route handler and decides whether the request
+          continues. Every one has the shape <code>(req, res, next)</code>, and exactly one of two things
+          must happen — <code>next()</code> to carry on, or <code>res.status(…).json(…)</code> to stop
+          here (never both). They chain left to right, and any link can end the request early:
         </p>
-
-        <ul>
-          <li><code>next()</code> — “looks fine, carry on to the next thing”</li>
-          <li><code>res.status(…).json(…)</code> — “stopping here, and here is why” (never call <code>next()</code> after)</li>
-        </ul>
-
-        <p>They chain left to right, and any link can end the request early:</p>
 
         <div class="breakout">
           <figure>
@@ -926,37 +897,29 @@ dotenv.config({ quiet: true });                   <span class="c-dim">← this r
           </figure>
         </div>
 
-        <h3>requireAuth, line by line</h3>
+        <h3>requireAuth</h3>
 
         <p>
-          The client sends <code>Authorization: Bearer eyJhbGci…</code>. “Bearer” is convention meaning
-          “whoever bears this token gets the access”. No header, or the wrong scheme like
-          <code>Basic</code>, and we stop immediately. Otherwise we strip the prefix, verify the rest,
-          and <strong>attach the claims to <code>req</code></strong>:
-        </p>
-
-        <pre><code>req.auth = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
-next();</code></pre>
-
-        <p>
-          That assignment is the handoff. Every downstream handler can now read <code>req.auth</code> and
-          know who is calling, without re-parsing anything.
+          The client sends <code>Authorization: Bearer eyJhbGci…</code> — “Bearer” meaning “whoever bears
+          this token gets the access”. No header or the wrong scheme, and we stop. Otherwise we verify and
+          <strong>attach the claims to <code>req</code></strong>, the handoff that lets every downstream
+          handler read <code>req.auth</code> without re-parsing anything.
         </p>
 
         <p>
-          Note the <code>try/catch</code>: <code>jwt.verify</code> signals every failure by <em>throwing</em>
-          — bad signature, malformed, expired, all of it. An uncaught throw would crash into a 500 and risk
-          leaking internals to the caller. We catch everything and answer with one deliberately vague
-          message, because telling an attacker <em>which</em> part failed helps them.
+          <code>jwt.verify</code> signals every failure by <em>throwing</em> — bad signature, malformed,
+          expired — so it sits in a <code>try/catch</code>; an uncaught throw would become a 500 and risk
+          leaking internals. We answer with one deliberately vague message, because telling an attacker
+          <em>which</em> part failed helps them.
         </p>
 
         <h3>requireRole — a function that returns a function</h3>
 
         <p>
           Express needs a <code>(req, res, next)</code> function, but we want to configure it per route.
-          So an outer function takes the config and builds the real middleware, which “remembers”
-          <code>allowed</code>. That pattern is a <strong>closure</strong>, and it is why the call site has
-          parentheses on one and not the other:
+          So an outer function takes the config and returns the real middleware, which “remembers”
+          <code>allowed</code> — a <strong>closure</strong>. Hence one call site has parentheses and the
+          other does not:
         </p>
 
         <pre><code>requireAuth,            <span class="c-dim">← the function itself, Express calls it later</span>
@@ -964,28 +927,25 @@ requireRole('admin'),   <span class="c-dim">← called NOW; its return value is 
 
         <p>
           Dropping those parentheses is a classic bug: Express receives the factory instead of the
-          middleware and silently enforces nothing. The <code>...allowed</code> rest parameter collects any
-          number of roles, so <code>requireRole('provider', 'receiver')</code> works unchanged when you need
-          “any company type, but not admin”.
+          middleware and silently enforces nothing. <code>...allowed</code> takes any number of roles, so
+          <code>requireRole('provider', 'receiver')</code> works unchanged.
         </p>
 
         <h3>Why src/types/express.d.ts exists</h3>
 
         <p>
           <code>req.auth</code> is not a real Express property — we invented it, and TypeScript would
-          normally reject it. That file performs <strong>declaration merging</strong>: it reaches into
-          Express's own type definitions and adds our field, so the whole codebase gets autocomplete and
-          type-checking on <code>req.auth.role</code>.
+          reject it. That file performs <strong>declaration merging</strong>: it reaches into Express's own
+          types and adds our field, so the codebase gets type-checking on <code>req.auth.role</code>.
         </p>
 
         <div class="callout">
           <span class="callout-label">Gotcha that will bite you</span>
           <p>
             <code>tsc</code> reads every file under <code>include</code>, but <code>ts-node</code> only
-            compiles files it actually imports — so <code>npm run dev</code> never saw that augmentation and
-            crashed while <code>npm run typecheck</code> passed. Fixed with
-            <code>"ts-node": { "files": true }</code> in <code>apps/api/tsconfig.json</code>. If you add
-            another <code>.d.ts</code>, this is why it works.
+            compiles what it imports — so <code>npm run dev</code> never saw that augmentation and crashed
+            while <code>npm run typecheck</code> passed. Fixed with <code>"ts-node": { "files": true }</code>
+            in <code>apps/api/tsconfig.json</code>.
           </p>
         </div>
       </section>
@@ -1053,7 +1013,8 @@ requireRole('admin'),   <span class="c-dim">← called NOW; its return value is 
             <figcaption>
               The database appears only at register and login. Every request after that is verified by
               mathematics alone — no lookup, no session table. That is what “stateless” buys: speed and
-              scale. The cost is that you cannot revoke a single token, only wait for it to expire.
+              scale. The cost is that you cannot revoke a single token, only wait for it to expire —
+              a cost <a href="#ch2">Chapter 02</a> pays down, deliberately and partially, to make logout work.
             </figcaption>
           </figure>
         </div>
@@ -1063,30 +1024,25 @@ requireRole('admin'),   <span class="c-dim">← called NOW; its return value is 
       <section id="files" data-nav="File map">
         <h2>File map</h2>
 
-        <pre><code>packages/shared/index.ts          <span class="c-dim">UserRole + AuthTokenPayload</span>
+        <pre><code>packages/shared/index.ts          <span class="c-dim">UserRole + AuthTokenPayload + AuthTokenClaims</span>
 
 apps/api/src/
 ├── auth/
 │   ├── password.ts               <span class="c-dim">hashPassword / verifyPassword</span>
-│   └── jwt.ts                    <span class="c-dim">signAccessToken / verifyAccessToken</span>
+│   ├── jwt.ts                    <span class="c-dim">signAccessToken / verifyAccessToken</span>
+│   └── tokenDenylist.ts          <span class="c-dim">revoked sessions — see chapter 02</span>
 ├── middleware/
 │   └── auth.ts                   <span class="c-dim">requireAuth / requireRole</span>
 ├── types/express.d.ts            <span class="c-dim">teaches TypeScript about req.auth</span>
 └── index.ts                      <span class="c-dim">wires middleware onto routes</span></code></pre>
 
         <p>
-          The split is deliberate and worth copying as a habit. <code>auth/</code> holds <strong>pure
-          functions</strong> that know nothing about HTTP — you could call them from a CLI or a test with
-          no server running. <code>middleware/</code> is the <strong>HTTP adapter</strong>, translating
-          those functions into status codes and headers. Keeping them apart is what makes the logic
-          trivial to unit-test.
-        </p>
-
-        <p>
-          <code>packages/shared</code> exists so the two apps cannot disagree. If the backend says
-          <code>'admin'</code> and the frontend checks for <code>'administrator'</code>, you get a bug no
-          compiler catches. Defining <code>UserRole</code> once, imported by both, makes that mismatch a
-          build error instead.
+          The split is worth copying as a habit. <code>auth/</code> holds <strong>pure functions</strong>
+          that know nothing about HTTP — callable from a test with no server running.
+          <code>middleware/</code> is the <strong>HTTP adapter</strong>, turning those into status codes and
+          headers. And <code>packages/shared</code> exists so the two apps cannot disagree: backend
+          <code>'admin'</code> vs frontend <code>'administrator'</code> is a bug no compiler catches, unless
+          <code>UserRole</code> is defined once and imported by both.
         </p>
       </section>
 
@@ -1123,15 +1079,13 @@ apps/api/src/
       <section id="gaps" data-nav="Not built yet">
         <h2>What does not exist yet</h2>
 
-        <p>Being precise, because it is easy to over-read what is built:</p>
-
         <ul class="gap-list">
           <li><strong>No <code>/auth/register</code> and no <code>/auth/login</code>.</strong> The ingredients are ready; nothing calls them yet. Both need the Company table first.</li>
           <li><strong>No database connection at all.</strong> Supabase is chosen but not wired up — no client, no ORM, no schema.</li>
           <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims back; it does not read a real profile. That is US1-4.</li>
           <li><strong>No refresh tokens.</strong> When the 1-hour token expires, the user logs in again. Fine for this sprint.</li>
-          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes.</strong> They exist to prove the middleware works and will be replaced by real endpoints.</li>
-          <li><strong>No test runner anywhere.</strong> Root <code>npm test</code> is still an <code>exit 1</code> stub — someone needs to pick one before the test tasks come due.</li>
+          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes</strong>, proving the middleware works until real endpoints replace them.</li>
+          <li><strong>No test runner anywhere.</strong> Root <code>npm test</code> is still an <code>exit 1</code> stub.</li>
         </ul>
       </section>
 
@@ -1140,28 +1094,434 @@ apps/api/src/
         <h2>Try it yourself</h2>
 
         <p>
-          Copy <code>apps/api/.env.example</code> to <code>apps/api/.env</code> and generate your own
-          secret with the command inside it. Then:
+          Copy <code>apps/api/.env.example</code> to <code>apps/api/.env</code>, generate a secret with
+          the command inside it, then <code>cd apps/api &amp;&amp; npm run dev</code>. In another terminal:
         </p>
-
-        <pre><code>cd apps/api &amp;&amp; npm run dev</code></pre>
-
-        <p>In another terminal:</p>
 
         <pre><code>curl -i localhost:4000/me                              <span class="c-dim"># 401, no token</span>
 
 TOKEN=$(node -e "require('dotenv').config({quiet:true});
   console.log(require('jsonwebtoken').sign(
-    {sub:'u-1',role:'provider'}, process.env.JWT_SECRET, {expiresIn:'1h'}))")
+    {sub:'u-1',role:'provider'}, process.env.JWT_SECRET,
+    {expiresIn:'1h', jwtid:require('crypto').randomUUID()}))")   <span class="c-dim"># jti required since ch. 02</span>
 
 curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me          <span class="c-dim"># 200</span>
 curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403, wrong role</span></code></pre>
 
         <p>
-          Then paste <code>$TOKEN</code> into <a href="https://jwt.io">jwt.io</a> — you will read the
-          payload instantly, which drives home why nothing secret goes in there. Now change one character
-          in the middle of the token and re-run the curl: <span class="status s-deny">401</span>. That is
-          the signature doing its job.
+          Paste <code>$TOKEN</code> into <a href="https://jwt.io">jwt.io</a> — you will read the payload
+          instantly, which drives home why nothing secret goes in there. Now change one character in the
+          middle and re-run: <span class="status s-deny">401</span>. That is the signature doing its job.
+        </p>
+      </section>
+
+      <div class="chapter-head" id="ch2" data-nav="02 · Ending a session">
+        <span class="chapter-num">Chapter 02</span>
+        <h2>Ending a session</h2>
+        <p class="chapter-summary">
+          Chapter 01 ended on a limitation: a stateless token cannot be taken back. Logout refuses to
+          accept that. This is what it costs to buy revocation back.
+        </p>
+        <div class="chapter-meta">
+          <span class="chip">US1-3</span>
+          <span class="chip">b33405e</span>
+          <span class="chip">node:crypto randomUUID</span>
+          <span class="chip">8/8 cases verified</span>
+        </div>
+      </div>
+
+      <!-- ============ THE PROBLEM ============ -->
+      <section id="logout-problem" data-nav="The problem">
+        <h2>Deleting the token is not logging out</h2>
+
+        <p>
+          The obvious implementation is for the frontend to drop the token from
+          <code>localStorage</code> and show the login page again. It looks correct — but nothing was
+          revoked. That token is still signed and unexpired, and <code>requireAuth</code> would happily
+          accept it, because verification is pure mathematics over the token's own contents. Anyone
+          holding a copy keeps full access for the rest of the hour.
+        </p>
+
+        <div class="callout danger">
+          <span class="callout-label">The thing beginners get wrong</span>
+          <p>
+            <strong>Client-side cleanup is a UI convenience, not a security boundary.</strong> Any logout
+            you can defeat by pressing Back, or by replaying a saved request, was never a logout. The test
+            task <em>“user cannot access protected routes after logout”</em> checks exactly this, and a
+            frontend-only implementation fails it.
+          </p>
+        </div>
+
+        <p>
+          In a classic server-session design this is trivial: the session is a database row, and logout
+          deletes it. We gave that up for speed, so the job is to win back one property — <em>this token
+          stops working now</em> — without giving back the rest.
+        </p>
+      </section>
+
+      <!-- ============ JTI ============ -->
+      <section id="jti" data-nav="01 · The jti claim">
+        <span class="layer-mark">Layer 01 · src/auth/jwt.ts</span>
+        <h2>You cannot revoke what you cannot name</h2>
+
+        <p>
+          Before this chapter, two tokens issued to the same user in the same second were byte-identical —
+          no way to point at one and say <em>that</em> one is dead. So every token now gets a name:
+          <code>jti</code>, the standard “JWT ID” claim.
+        </p>
+
+        <pre><code>return jwt.sign(payload, getSecret(), {
+    expiresIn: getExpiresIn(),
+    jwtid: randomUUID(),          <span class="c-dim">← new: a unique id per token</span>
+});</code></pre>
+
+        <p>
+          Like everything else in the payload it is public, which is fine — a UUID reveals nothing.
+          <code>verifyAccessToken</code> now demands it and returns <code>exp</code> alongside, because the
+          next layer needs to know when the token dies to know when it may stop remembering it.
+        </p>
+
+        <h3>Why per token and not per user</h3>
+
+        <p>
+          We could revoke by user id instead — “everything for <code>u-1</code> issued before now is
+          dead”. That is what a <em>log out everywhere</em> button wants, but as a default it is wrong:
+          logging out on a library computer would also kick you out on your phone. Naming individual tokens
+          keeps logout scoped to the session in front of you.
+        </p>
+
+        <p>
+          One consequence: <strong>tokens minted before this change no longer verify</strong>, having no
+          <code>jti</code>. On a live system that is a forced logout for everyone at deploy time. We have no
+          live system yet — this is the kind of change that is free now and expensive in October.
+        </p>
+      </section>
+
+      <!-- ============ DENYLIST ============ -->
+      <section id="denylist" data-nav="02 · The denylist">
+        <span class="layer-mark">Layer 02 · src/auth/tokenDenylist.ts</span>
+        <h2>Remembering the smallest possible thing</h2>
+
+        <p>
+          With tokens named, revocation is just a list of the ids that have been logged out — one map,
+          wrapped in two functions, <code>revokeToken(jti, exp)</code> and <code>isTokenRevoked(jti)</code>.
+          Nothing outside the file touches it directly.
+        </p>
+
+        <pre><code><span class="c-dim">// jti -&gt; token exp, as a UNIX timestamp in seconds.</span>
+const revoked = new Map&lt;string, number&gt;();</code></pre>
+
+        <h3>Why store the expiry, not just the id</h3>
+
+        <p>
+          An entry is only useful while the token it names would otherwise still work: one second after
+          <code>exp</code>, <code>jwt.verify</code> rejects that token anyway. So on every write we sweep
+          the map and delete anything past its expiry. Without that sweep the map grows with every logout
+          for the life of the process; with it, the store is bounded by <em>how many people logged out in
+          the last hour</em>. Pruning on write rather than on a timer also avoids an interval keeping the
+          Node process alive.
+        </p>
+
+        <div class="callout">
+          <span class="callout-label">The trade you just made</span>
+          <p>
+            We reintroduced state — the thing Chapter 01 was proud of not having. More precisely, we
+            reintroduced <em>bounded</em> state: a session table holds a row for every active session, while
+            this holds one only for sessions that ended early, and only until they would have ended anyway.
+            Reads stay in memory, so the “never queries the database” property survives.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ THE CHECK ============ -->
+      <section id="revoke-check" data-nav="03 · The check">
+        <span class="layer-mark">Layer 03 · src/middleware/auth.ts</span>
+        <h2>A third gate in requireAuth</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Gate</th><th>Question</th><th>Failure</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Is there a <code>Bearer</code> header at all?</td>
+                <td><span class="status s-deny">401</span> <span class="c-dim">malformed header</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Is the signature genuine and the token unexpired?</td>
+                <td><span class="status s-deny">401</span> <span class="c-dim">invalid or expired</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Has this <code>jti</code> been logged out?</td>
+                <td><span class="status s-deny">401</span> <span class="c-dim">session has ended</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Gate 3 runs last because it is the only one that costs anything — no reason to check a map for a
+          token that turned out to be forged. All three answer <span class="status s-deny">401</span>, which
+          is correct rather than lazy: a revoked token establishes no identity, and 403 would imply one.
+          Only the message differs, so a frontend can tell “log in again” from “this request is broken”.
+        </p>
+
+        <div class="callout">
+          <span class="callout-label">Gotcha that will bite you</span>
+          <p>
+            While adding the gate, one line moved. <code>next()</code> used to sit <em>inside</em> the
+            <code>try</code> that wraps <code>verifyAccessToken</code>:
+          </p>
+          <pre><code>try {
+    req.auth = verifyAccessToken(token);
+    next();                     <span class="c-dim">← every downstream error lands in the catch</span>
+} catch {
+    res.status(401).json({ error: 'Invalid or expired token' });
+}</code></pre>
+          <p>
+            Express runs the rest of the chain synchronously inside that <code>next()</code>, so a crash in
+            <em>any</em> later handler was caught here and reported as <span class="status s-deny">401
+            Invalid or expired token</span> — a valid login told its token was bad, while the real error
+            vanished. Verification now sits alone in the <code>try</code>. Watch for this shape wherever you
+            wrap middleware in <code>try/catch</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ THE ROUTE ============ -->
+      <section id="logout-route" data-nav="04 · The route">
+        <span class="layer-mark">Layer 04 · src/index.ts</span>
+        <h2>The endpoint itself is four lines</h2>
+
+        <pre><code>app.post('/auth/logout', requireAuth, (req: Request, res: Response) =&gt; {
+    revokeToken(req.auth!.jti, req.auth!.exp);
+    res.status(204).end();
+});</code></pre>
+
+        <p>Every decision in it is about the two words in front of the handler.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Choice</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="code-cell">requireAuth</td>
+                <td>You must prove the session is yours before ending it. Taking a <code>jti</code> from the request body instead would let anyone end anyone's session; reading it off the verified token leaves no parameter to tamper with.</td>
+              </tr>
+              <tr>
+                <td class="code-cell">POST</td>
+                <td><code>GET</code> is defined to be safe, and the world takes that seriously — browsers prefetch, crawlers follow, and an <code>&lt;img src="/auth/logout"&gt;</code> would silently log your users out.</td>
+              </tr>
+              <tr>
+                <td class="code-cell">204</td>
+                <td>There is nothing to say. Returning <code>{ "ok": true }</code> invents a payload for a client to ignore.</td>
+              </tr>
+              <tr>
+                <td>Second call</td>
+                <td>Answers <span class="status s-deny">401</span>, not 204 — gate 3 stops it before the handler. Non-idempotent in status, but the caller wanted the session gone and it is gone. Assert 401 on the repeat.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ LIFECYCLE ============ -->
+      <section id="revocation-flow" data-nav="Full lifecycle">
+        <h2>One token, two clocks</h2>
+
+        <p>
+          Two lifetimes run at once: the token's, fixed the moment it was signed, and the denylist
+          entry's, which starts at logout and is deliberately cut short to match.
+        </p>
+
+        <div class="breakout">
+          <figure>
+            <div class="fig-scroll">
+              <svg viewBox="0 0 820 400" role="img" aria-label="A token is minted at login and is valid for one hour. Requests succeed until logout, which adds the token's jti to the denylist. From that moment the same token is rejected with 401. The denylist entry is kept only until the token's original expiry, at which point it is pruned because the token would fail verification anyway.">
+                <defs>
+                  <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+                  </marker>
+                </defs>
+
+                <text x="16" y="28" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">ONE TOKEN, TWO CLOCKS</text>
+
+                <!-- token lifetime bracket -->
+                <line x1="70" y1="62" x2="70" y2="72" stroke="currentColor" stroke-width="1.5"></line>
+                <line x1="750" y1="62" x2="750" y2="72" stroke="currentColor" stroke-width="1.5"></line>
+                <line x1="70" y1="62" x2="750" y2="62" stroke="currentColor" stroke-width="1.5"></line>
+                <text x="410" y="52" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor">token lifetime — fixed at signing, 1h. Nothing can shorten it.</text>
+
+                <!-- accepted band -->
+                <rect x="70" y="92" width="360" height="46" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+                <text x="90" y="112" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">requests pass</text>
+                <text x="90" y="129" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--accent)">signature ✓ · not expired ✓ · not revoked ✓</text>
+
+                <!-- rejected band -->
+                <rect x="430" y="92" width="320" height="46" rx="4" fill="var(--deny-soft)" stroke="var(--deny)" stroke-width="1.5"></rect>
+                <text x="450" y="112" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--deny)">401 Session has ended</text>
+                <text x="450" y="129" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--deny)">signature still ✓ — gate 3 stops it</text>
+
+                <!-- axis -->
+                <line x1="70" y1="176" x2="750" y2="176" stroke="currentColor" stroke-width="1.5"></line>
+                <line x1="70" y1="170" x2="70" y2="182" stroke="currentColor" stroke-width="1.5"></line>
+                <line x1="430" y1="170" x2="430" y2="182" stroke="currentColor" stroke-width="1.5"></line>
+                <line x1="750" y1="170" x2="750" y2="182" stroke="currentColor" stroke-width="1.5"></line>
+
+                <text x="70" y="200" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">login</text>
+                <text x="70" y="216" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">token minted with a jti</text>
+
+                <text x="430" y="200" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">POST /auth/logout</text>
+                <text x="430" y="216" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">jti written to the denylist · 204</text>
+
+                <text x="750" y="200" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">exp</text>
+                <text x="750" y="216" text-anchor="end" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">token dies on its own</text>
+
+                <!-- state row -->
+                <text x="16" y="272" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.4" fill="currentColor" opacity="0.6">STATE WE KEEP</text>
+
+                <rect x="70" y="286" width="360" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.45"></rect>
+                <text x="250" y="317" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity="0.6">nothing — verification is pure maths</text>
+
+                <rect x="430" y="286" width="320" height="52" rx="4" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.5"></rect>
+                <text x="450" y="310" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">revoked: { jti → exp }</text>
+                <text x="450" y="328" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.65">one entry, in memory</text>
+
+                <line x1="430" y1="228" x2="430" y2="282" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#ar3)" opacity="0.7"></line>
+
+                <line x1="750" y1="312" x2="792" y2="312" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#ar3)"></line>
+                <text x="700" y="362" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--ok)">pruned at exp</text>
+              </svg>
+            </div>
+            <figcaption>
+              The denylist entry never outlives the token. Before logout we store nothing; after
+              <code>exp</code> we store nothing again, because a token that fails <code>jwt.verify</code>
+              needs no help being rejected. The stateful window is exactly the gap between “user logged
+              out” and “token would have died anyway”.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ LIMITS ============ -->
+      <section id="denylist-limits" data-nav="Where it breaks">
+        <h2>Where this implementation breaks</h2>
+
+        <p>The denylist lives in a JavaScript <code>Map</code>, inside one Node process. Two consequences:</p>
+
+        <ul class="gap-list">
+          <li><strong>It is lost on restart.</strong> Every deploy or crash empties it, and a token logged out five minutes ago starts working again for whatever remains of its hour.</li>
+          <li><strong>It is not shared.</strong> Run two API instances behind a load balancer and a logout recorded on one is invisible to the other.</li>
+        </ul>
+
+        <p>
+          Both are acceptable <em>right now</em> and only right now: one dev process, one machine, no
+          deployment. Shipping this to real users without fixing it would be a bug, so it is written at the
+          top of the file rather than left to be discovered.
+        </p>
+
+        <p>
+          The fix is already shaped: nothing outside <code>tokenDenylist.ts</code> knows the map exists, so
+          swapping it for a Postgres table — <code>(jti primary key, expires_at timestamptz)</code> plus a
+          periodic <code>DELETE WHERE expires_at &lt;= now()</code> — is a change to one file behind the
+          same two functions. Keep the expiry column: it is what stops the table growing forever.
+        </p>
+      </section>
+
+      <!-- ============ FILE MAP ============ -->
+      <section id="ch2-files" data-nav="File map">
+        <h2>What changed</h2>
+
+        <pre><code>packages/shared/index.ts          <span class="c-dim">+ AuthTokenClaims (payload + jti + exp)</span>
+
+apps/api/src/
+├── auth/
+│   ├── jwt.ts                    <span class="c-dim">mints a jti; verify returns jti + exp</span>
+│   └── tokenDenylist.ts          <span class="c-dim">NEW — revokeToken / isTokenRevoked</span>
+├── middleware/
+│   └── auth.ts                   <span class="c-dim">gate 3; next() moved out of the try</span>
+├── types/express.d.ts            <span class="c-dim">req.auth is now AuthTokenClaims</span>
+└── index.ts                      <span class="c-dim">POST /auth/logout</span></code></pre>
+
+        <p>
+          The layering from Chapter 01 held up, which is the useful signal. <code>tokenDenylist.ts</code>
+          went into <code>auth/</code> because it is a pure function over ids and timestamps — no
+          <code>Request</code>, no <code>Response</code>. Adding a feature meant adding one file in the layer
+          it belonged to, not threading logic through the ones that existed.
+        </p>
+      </section>
+
+      <!-- ============ VERIFIED ============ -->
+      <section id="ch2-verified" data-nav="Verified behavior">
+        <h2>Verified behavior</h2>
+
+        <p>
+          Run against a live server: two tokens minted, a provider and an admin, and the provider's logged
+          out. These are the shapes the four US1-3 test tasks should assert.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Route</th><th>Request</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="code-cell">/me</td><td>valid provider — before logout</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>valid admin — before logout</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>same provider token — after logout</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>same provider token, second call</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/auth/logout</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The sixth row is the one worth staring at: the admin session was never touched by the
+          provider's logout. That is per-token revocation doing its job.
+        </p>
+      </section>
+
+      <!-- ============ GAPS ============ -->
+      <section id="ch2-gaps" data-nav="Not built yet">
+        <h2>What does not exist yet</h2>
+
+        <ul class="gap-list">
+          <li><strong>Nothing issues the tokens this revokes.</strong> There is still no <code>/auth/login</code>, so every token above was minted by hand in a script.</li>
+          <li><strong>The denylist does not survive a restart</strong>, and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
+          <li><strong>No “log out everywhere”.</strong> Revocation is per token by design; ending every session for an account needs a per-user index or a “tokens issued before <em>t</em> are void” marker.</li>
+          <li><strong>No client-side session cleanup and no redirect.</strong> That is the frontend half of US1-3 — the server ends the session, but nothing clears the browser or sends the user to the login page.</li>
+          <li><strong>Still no test runner</strong>, so the four US1-3 test tasks have nowhere to live. The table above came from a shell script: evidence, not a regression suite.</li>
+        </ul>
+      </section>
+
+      <!-- ============ TRY ============ -->
+      <section id="ch2-try" data-nav="Try it yourself">
+        <h2>Try it yourself</h2>
+
+        <p>Start the API as in Chapter 01, mint a token the same way, then:</p>
+
+        <pre><code>curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim"># 200</span>
+
+curl -i -X POST -H "Authorization: Bearer $TOKEN" \
+  localhost:4000/auth/logout                                  <span class="c-dim"># 204, no body</span>
+
+curl -i -H "Authorization: Bearer $TOKEN" localhost:4000/me   <span class="c-dim"># 401 Session has ended</span></code></pre>
+
+        <p>
+          Paste the token into <a href="https://jwt.io">jwt.io</a> again: the signature still verifies and
+          <code>exp</code> is still in the future, so by every rule in Chapter 01 it is valid. It is refused
+          anyway, and the only reason is a UUID in a map on the server. That gap between “cryptographically
+          valid” and “accepted” is the whole chapter. Then restart the server and replay the last curl: it
+          answers <span class="status s-ok">200</span>, because the denylist went with the process.
         </p>
       </section>
 
