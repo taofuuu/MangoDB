@@ -1,6 +1,7 @@
 node_modules
 .env
 .DS_Store
+apps/api/src/generated/prisma/*
 
 # graphify — derived knowledge graph + local agent integration
 graphify-out/
