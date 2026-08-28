@@ -37,5 +37,11 @@
         "moduleDetection": "force",
         "skipLibCheck": true
     },
-    "include": ["src"]
+    "include": ["src"],
+
+    // ts-node only compiles files it actually imports; without this the
+    // Request augmentation in src/types/express.d.ts is invisible to `npm run dev`.
+    "ts-node": {
+        "files": true
+    }
 }

@@ -1,9 +1,9 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import type { User } from '@mangodb/shared';
+import { requireAuth, requireRole } from './middleware/auth';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
@@ -15,15 +15,21 @@ app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok' });
 });
 
-// Placeholder — proves the shared workspace type resolves.
-app.get('/me', (_req: Request, res: Response) => {
-    const user: User = {
-        id: '1',
-        role: 'admin',
-        email: 'admin@mangodb.local',
-    };
-    res.json(user);
+// Protected: proves requireAuth populates req.auth from the access token.
+// The full profile lookup lands with the user repository (US1-4).
+app.get('/me', requireAuth, (req: Request, res: Response) => {
+    res.json({ id: req.auth!.sub, role: req.auth!.role });
 });
+
+// Protected + role-gated: proves requireRole rejects non-admin tokens (US6-1).
+app.get(
+    '/admin/ping',
+    requireAuth,
+    requireRole('admin'),
+    (_req: Request, res: Response) => {
+        res.json({ status: 'ok' });
+    },
+);
 
 app.listen(port, () => {
     console.log(`api listening on http://localhost:${port}`);
