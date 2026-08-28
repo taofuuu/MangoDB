@@ -2,7 +2,8 @@ import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { requireAuth, requireRole } from './middleware/auth';
-
+import { checkCompanyIdentityAvailability } from './services/company-uniqueness';
+import { prisma } from './lib/prisma';
 dotenv.config({ quiet: true });
 
 const app = express();
@@ -30,6 +31,31 @@ app.get(
         res.json({ status: 'ok' });
     },
 );
+
+// checking availability of username and email
+app.post('/auth/check-availability', async (req, res) => {
+    const body = req.body ?? {};
+    const { username, email } = body;
+
+    if (typeof username !== 'string' || typeof email !== 'string') {
+        res.status(400).json({
+            error: 'Username and email are required',
+        });
+        return;
+    }
+    try {
+        const result = await checkCompanyIdentityAvailability({
+            username,
+            email,
+        });
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Uniqueness check failed:', error);
+        res.status(500).json({
+            error: 'Unable to check username and email',
+        });
+    }
+});
 
 app.listen(port, () => {
     console.log(`api listening on http://localhost:${port}`);
