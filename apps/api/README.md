@@ -84,7 +84,8 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout.
+  delete or logout. The one exception is `POST /auth/register`, which returns
+  two things — `{ company, accessToken }` — because it also logs you in.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
   rather than repeating the guards per route, so a new route cannot miss them.
 - **Never put a secret, a stack trace, or a Prisma error in a response.**
@@ -122,6 +123,38 @@ the frontend imports the same definitions.
 
 `401` means "we do not know who you are", `403` means "we know, and no". A
 missing token is never `403`.
+
+### Account types and roles
+
+`company.account_type` holds `PROVIDER`, `RECEIVER`, or `BOTH` — uppercase, as
+the seeded rows have it. It is a discriminator: a company with `PROVIDER` has a
+row in `provider`, `RECEIVER` has one in `receiver`, and `BOTH` has both. Every
+endpoint that creates a company must keep that invariant, or later features
+find a company with no subtype row.
+
+`account_type` is not the token role. `src/auth/roles.ts` maps one to the other
+(`BOTH` → `'both'`) and answers the separate question of what a role may act
+as: `both` grants `provider` and `receiver`, so `requireRole('provider')` lets a
+BOTH company through. `admin` grants only `admin` — it is not a superset.
+
+`company_type` is a different thing again: repeatable industry tags (`SME`,
+`Software House`, `FinTech`), at least one per company.
+
+### Registration
+
+`POST /auth/register` is public. It hashes the password, creates the company,
+its tags, and its subtype rows in one nested `create` — a single transaction —
+then returns `201 { company, accessToken }`. The company never carries its
+password: the handler lists the columns it returns with an explicit `select`.
+
+Duplicate usernames and emails currently rely on the database's unique indexes:
+the handler catches Prisma's `P2002` and maps it to `409 CONFLICT` with the
+offending field in `details`. That block is a placeholder — Fang's
+`company-uniqueness.ts` on `feature/username-email-uniqueness` does the
+case-insensitive pre-check properly and should replace it once that branch is
+rebased onto the current `main`. Note the handler lowercases username and email
+before writing, because the unique index is case-sensitive and would otherwise
+accept `CodeCrafters` next to `codecrafters`.
 
 ### Authentication
 
