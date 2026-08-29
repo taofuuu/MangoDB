@@ -591,7 +591,8 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         <p class="answer"><code>req.auth</code>, set by <code>requireAuth</code>: <code>{ sub, role, jti, exp }</code>.</p>
         <p class="note">
           <code>sub</code> is the user id, <code>role</code> is one of
-          <code>provider | receiver | admin</code>. <code>req.auth</code> is not a real Express property —
+          <code>provider | receiver | both | admin</code> — see <a href="#both-role">what a role grants</a>.
+          <code>req.auth</code> is not a real Express property —
           <code>src/types/express.d.ts</code> merges it into Express's own types so TypeScript accepts it.
         </p>
       </article>
@@ -766,7 +767,7 @@ admin: ['admin'],</code></pre>
       <article class="entry" id="tree" data-tags="files structure folder tree where put code directory organise">
         <h3>Where does code go?</h3>
         <p class="answer">Routes hold paths, controllers hold work, and nothing else holds either.</p>
-        <pre><code>packages/shared/index.ts   <span class="c-dim">UserRole · AuthTokenClaims · ApiErrorCode · ApiErrorResponse</span>
+        <pre><code>packages/shared/index.ts   <span class="c-dim">UserRole · AccountType · CompanyProfile · ApiErrorCode · ApiErrorResponse</span>
 
 apps/api/src/
 ├── index.ts               <span class="c-dim">6 lines — listens, nothing else</span>
@@ -776,7 +777,7 @@ apps/api/src/
 ├── controllers/           <span class="c-dim">the work</span>
 ├── middleware/            <span class="c-dim">auth · errorHandler · validate</span>
 ├── lib/                   <span class="c-dim">ApiError · prisma</span>
-├── auth/                  <span class="c-dim">password · jwt · tokenDenylist — pure, no HTTP</span>
+├── auth/                  <span class="c-dim">password · jwt · roles · tokenDenylist — pure, no HTTP</span>
 └── types/express.d.ts     <span class="c-dim">teaches TypeScript about req.auth</span></code></pre>
         <p class="note">
           <code>auth/</code> holds pure functions that know nothing about HTTP, so a test can call them
