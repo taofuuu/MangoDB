@@ -1,5 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import jwt, { type SignOptions } from 'jsonwebtoken';
-import type { AuthTokenPayload, UserRole } from '@mangodb/shared';
+import type {
+    AuthTokenClaims,
+    AuthTokenPayload,
+    UserRole,
+} from '@mangodb/shared';
 
 const DEFAULT_EXPIRES_IN = '1h';
 
@@ -27,21 +32,33 @@ function getExpiresIn(): ExpiresIn {
     return (process.env.JWT_EXPIRES_IN || DEFAULT_EXPIRES_IN) as ExpiresIn;
 }
 
+// Every token gets a unique jti so logout can revoke one session without
+// invalidating the account's other tokens.
 export function signAccessToken(payload: AuthTokenPayload): string {
-    return jwt.sign(payload, getSecret(), { expiresIn: getExpiresIn() });
+    return jwt.sign(payload, getSecret(), {
+        expiresIn: getExpiresIn(),
+        jwtid: randomUUID(),
+    });
 }
 
 // Throws if the token is malformed, tampered with, or expired.
-export function verifyAccessToken(token: string): AuthTokenPayload {
+export function verifyAccessToken(token: string): AuthTokenClaims {
     const decoded = jwt.verify(token, getSecret());
     if (
         typeof decoded === 'string' ||
         typeof decoded.sub !== 'string' ||
-        !isUserRole(decoded.role)
+        !isUserRole(decoded.role) ||
+        typeof decoded.jti !== 'string' ||
+        typeof decoded.exp !== 'number'
     ) {
         throw new jwt.JsonWebTokenError(
             'Token payload is missing required claims',
         );
     }
-    return { sub: decoded.sub, role: decoded.role };
+    return {
+        sub: decoded.sub,
+        role: decoded.role,
+        jti: decoded.jti,
+        exp: decoded.exp,
+    };
 }
