@@ -357,13 +357,14 @@ npm run typecheck         <span class="c-dim"># must pass before you open a PR</
 
       <article class="entry" id="add-endpoint" data-tags="add endpoint new route controller create post get">
         <h3>How do I add an endpoint?</h3>
-        <p class="answer">Handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
-        <pre><code><span class="c-dim">// controllers/company.controller.ts</span>
-const updateSchema = z.object({
+        <p class="answer">Schema in <code>schemas/</code>, handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
+        <pre><code><span class="c-dim">// schemas/company.schema.ts</span>
+export const updateSchema = z.object({
     company_name: z.string().min(1).max(255),
     email: z.email().max(100),
 });
 
+<span class="c-dim">// controllers/company.controller.ts</span>
 export async function updateProfile(req: Request, res: Response) {
     const body = parseBody(updateSchema, req.body);   <span class="c-dim">// typed, or throws</span>
 
@@ -381,7 +382,8 @@ export async function updateProfile(req: Request, res: Response) {
 companyRoutes.patch('/me', requireAuth, updateProfile);</code></pre>
         <p class="note">
           No <code>try</code>/<code>catch</code> and no async wrapper — Express 5 forwards a rejected
-          promise to the error handler by itself.
+          promise to the error handler by itself. Keep the controller to handlers: a response shape or
+          an error translation that a second endpoint would want belongs in <code>lib/</code>.
         </p>
       </article>
 
@@ -540,12 +542,14 @@ throw ApiError.forbidden();</code></pre>
       <article class="entry" id="validate" data-tags="validate validation zod schema parsebody body input required fields">
         <h3>How do I validate a request body?</h3>
         <p class="answer">Write a zod schema, call <code>parseBody</code>. Never hand-write <code>if (!body.x)</code>.</p>
-        <pre><code>const registerSchema = z.object({
+        <pre><code><span class="c-dim">// schemas/auth.schema.ts</span>
+export const registerSchema = z.object({
     username: z.string().min(3).max(50),
     email: z.email().max(100),
     password: z.string().min(8),
 });
 
+<span class="c-dim">// the controller</span>
 const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed, or throws</span></code></pre>
         <p class="note">
           <code>body.email</code> is now a <code>string</code> to the compiler, and bad input never reaches
@@ -774,14 +778,18 @@ apps/api/src/
 ├── app.ts                 <span class="c-dim">builds the app; does not listen</span>
 ├── env.ts                 <span class="c-dim">loads .env — first import, always</span>
 ├── routes/                <span class="c-dim">paths + middleware, no logic</span>
-├── controllers/           <span class="c-dim">the work</span>
+├── controllers/           <span class="c-dim">handlers, and nothing but handlers</span>
+├── schemas/               <span class="c-dim">zod request schemas, one file per area</span>
 ├── middleware/            <span class="c-dim">auth · errorHandler · validate</span>
-├── lib/                   <span class="c-dim">ApiError · prisma</span>
+├── lib/                   <span class="c-dim">ApiError · prisma · prismaErrors · companyProfile</span>
 ├── auth/                  <span class="c-dim">password · jwt · roles · tokenDenylist — pure, no HTTP</span>
 └── types/express.d.ts     <span class="c-dim">teaches TypeScript about req.auth</span></code></pre>
         <p class="note">
           <code>auth/</code> holds pure functions that know nothing about HTTP, so a test can call them
-          with no server running. <code>middleware/</code> is the HTTP adapter.
+          with no server running. <code>middleware/</code> is the HTTP adapter. A controller that grows
+          past its handlers is a sign something belongs in <code>lib/</code>: the register handler's
+          response shape lives in <code>lib/companyProfile.ts</code> and its error translation in
+          <code>lib/prismaErrors.ts</code>, so US1-4 does not rewrite either.
           <code>packages/shared</code> exists so the two apps cannot disagree — backend
           <code>'admin'</code> vs frontend <code>'administrator'</code> is a bug no compiler catches
           unless the type is defined once and imported by both.

@@ -22,17 +22,23 @@ the frontend can handle all of them with one code path.
 | `src/routes/`      | Paths and middleware only — no logic                      |
 | `src/controllers/` | The work: validate, call Prisma, respond                  |
 | `src/middleware/`  | Cross-cutting request handling (auth, errors, validation) |
-| `src/lib/`         | Shared building blocks (`ApiError`, the Prisma client)    |
-| `src/auth/`        | Token signing/verification, password hashing, denylist    |
+| `src/schemas/`     | zod request schemas, one file per area                    |
+| `src/lib/`         | Shared building blocks (`ApiError`, Prisma, serializers)  |
+| `src/auth/`        | Token signing/verification, password hashing, roles       |
 
 `src/app.ts` builds the app without listening so tests can drive it with
 supertest; `src/index.ts` is the only place that opens a port.
 
 ### Adding an endpoint
 
-1. Write the handler in `src/controllers/<area>.controller.ts`.
-2. Wire it in `src/routes/<area>.routes.ts`.
-3. Mount the router once in `src/routes/index.ts` if the area is new.
+1. Put the request schema in `src/schemas/<area>.schema.ts`.
+2. Write the handler in `src/controllers/<area>.controller.ts`.
+3. Wire it in `src/routes/<area>.routes.ts`.
+4. Mount the router once in `src/routes/index.ts` if the area is new.
+
+A controller should read as handlers and nothing else. Anything reusable — a
+response shape, error translation, a query helper — belongs in `src/lib/`, so
+the next endpoint gets it for free instead of copying it.
 
 ```ts
 // src/controllers/company.controller.ts
@@ -145,11 +151,13 @@ BOTH company through. `admin` grants only `admin` — it is not a superset.
 `POST /auth/register` is public. It hashes the password, creates the company,
 its tags, and its subtype rows in one nested `create` — a single transaction —
 then returns `201 { company, accessToken }`. The company never carries its
-password: the handler lists the columns it returns with an explicit `select`.
+password: `companyProfileSelect` in `src/lib/companyProfile.ts` names the
+columns that may be returned, and `toCompanyProfile` flattens the tag rows.
+Reuse both for any endpoint that returns a company — US1-4 included.
 
 Duplicate usernames and emails currently rely on the database's unique indexes:
-the handler catches Prisma's `P2002` and maps it to `409 CONFLICT` with the
-offending field in `details`. That block is a placeholder — Fang's
+`uniqueViolationFields` in `src/lib/prismaErrors.ts` reads Prisma's `P2002` and
+the handler maps it to `409 CONFLICT` with the offending field in `details`. That block is a placeholder — Fang's
 `company-uniqueness.ts` on `feature/username-email-uniqueness` does the
 case-insensitive pre-check properly and should replace it once that branch is
 rebased onto the current `main`. Note the handler lowercases username and email
