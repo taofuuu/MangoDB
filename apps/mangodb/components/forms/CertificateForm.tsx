@@ -95,7 +95,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                         </div>
 
                         {/* Issue date */}
-                        <form>
+                        <div>
                             <label className="block text-sm !font-[500]">
                                 Issue date
                             </label>
@@ -124,9 +124,9 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                     />
                                 </div>
                             </div>
-                        </form>
+                        </div>
                         {/* Expiration date */}
-                        <form>
+                        <div>
                             <label className="block text-sm !font-[500]">
                                 Expiration date
                             </label>
@@ -155,7 +155,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                     />
                                 </div>
                             </div>
-                        </form>
+                        </div>
                         {/* Credential ID */}
                         <div>
                             <label className="block text-sm font-medium">
