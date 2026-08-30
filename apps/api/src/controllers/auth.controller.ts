@@ -5,7 +5,7 @@ import { checkCompanyIdentityAvailability } from '../lib/companyIdentity';
 import { parseBody } from '../middleware/validate';
 
 const checkAvailabilitySchema = z.object({
-    username: z.string().trim().min(1),
+    username: z.string().trim().min(1).max(50),
     email: z.string().trim().min(1),
 });
 
