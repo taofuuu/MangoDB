@@ -1,26 +1,79 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* font (big -----> small) */
+.text-hd {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.text-lg {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.text-md {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.text-sm {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* corner radius */
+.rounded-button {
+    border-radius: 12px;
+}
+
+.rounded-status {
+    border-radius: 20px;
+}
+
+.rounded-input {
+    border-radius: 4px;
+}
+
+/* scrollbar */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #757575;
+    border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* uploadbox */
+.upload-box {
+    border: 1px dashed #3f6b80;
 }
