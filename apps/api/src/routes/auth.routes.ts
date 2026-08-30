@@ -1,9 +1,16 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { checkAvailability, logout } from '../controllers/auth.controller';
+import {
+    checkAvailability,
+    logout,
+    register,
+} from '../controllers/auth.controller';
 
-// Mounted at /auth. Registration (US1-1) and login (US1-2) go here too.
+// Mounted at /auth. Login (US1-2) goes here too.
 export const authRoutes = Router();
 
-authRoutes.post('/logout', requireAuth, logout);
+// Public: no token yet. check-availability feeds the signup form's inline hint.
+authRoutes.post('/register', register);
 authRoutes.post('/check-availability', checkAvailability);
+
+authRoutes.post('/logout', requireAuth, logout);

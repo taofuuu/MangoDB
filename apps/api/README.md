@@ -22,17 +22,23 @@ the frontend can handle all of them with one code path.
 | `src/routes/`      | Paths and middleware only — no logic                      |
 | `src/controllers/` | The work: validate, call Prisma, respond                  |
 | `src/middleware/`  | Cross-cutting request handling (auth, errors, validation) |
-| `src/lib/`         | Shared building blocks (`ApiError`, the Prisma client)    |
-| `src/auth/`        | Token signing/verification, password hashing, denylist    |
+| `src/schemas/`     | zod request schemas, one file per area                    |
+| `src/lib/`         | Shared building blocks (`ApiError`, Prisma, serializers)  |
+| `src/auth/`        | Token signing/verification, password hashing, roles       |
 
 `src/app.ts` builds the app without listening so tests can drive it with
 supertest; `src/index.ts` is the only place that opens a port.
 
 ### Adding an endpoint
 
-1. Write the handler in `src/controllers/<area>.controller.ts`.
-2. Wire it in `src/routes/<area>.routes.ts`.
-3. Mount the router once in `src/routes/index.ts` if the area is new.
+1. Put the request schema in `src/schemas/<area>.schema.ts`.
+2. Write the handler in `src/controllers/<area>.controller.ts`.
+3. Wire it in `src/routes/<area>.routes.ts`.
+4. Mount the router once in `src/routes/index.ts` if the area is new.
+
+A controller should read as handlers and nothing else. Anything reusable — a
+response shape, error translation, a query helper — belongs in `src/lib/`, so
+the next endpoint gets it for free instead of copying it.
 
 ```ts
 // src/controllers/company.controller.ts
@@ -84,7 +90,8 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout.
+  delete or logout. The one exception is `POST /auth/register`, which returns
+  two things — `{ company, accessToken }` — because it also logs you in.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
   rather than repeating the guards per route, so a new route cannot miss them.
 - **Never put a secret, a stack trace, or a Prisma error in a response.**
@@ -122,6 +129,46 @@ the frontend imports the same definitions.
 
 `401` means "we do not know who you are", `403` means "we know, and no". A
 missing token is never `403`.
+
+### Account types and roles
+
+`company.account_type` holds `PROVIDER`, `RECEIVER`, or `BOTH` — uppercase, as
+the seeded rows have it. It is a discriminator: a company with `PROVIDER` has a
+row in `provider`, `RECEIVER` has one in `receiver`, and `BOTH` has both. Every
+endpoint that creates a company must keep that invariant, or later features
+find a company with no subtype row.
+
+`account_type` is not the token role. `src/auth/roles.ts` maps one to the other
+(`BOTH` → `'both'`) and answers the separate question of what a role may act
+as: `both` grants `provider` and `receiver`, so `requireRole('provider')` lets a
+BOTH company through. `admin` grants only `admin` — it is not a superset.
+
+`company_type` is a different thing again: repeatable industry tags (`SME`,
+`Software House`, `FinTech`), at least one per company.
+
+### Registration
+
+`POST /auth/register` is public. It hashes the password, creates the company,
+its tags, and its subtype rows in one nested `create` — a single transaction —
+then returns `201 { company, accessToken }`. The company never carries its
+password: `companyProfileSelect` in `src/lib/companyProfile.ts` names the
+columns that may be returned, and `toCompanyProfile` flattens the tag rows.
+Reuse both for any endpoint that returns a company — US1-4 included.
+
+Duplicate usernames and emails are caught twice, on purpose.
+`assertCompanyIdentityAvailable` in `src/lib/companyIdentity.ts` runs the
+case-insensitive pre-check before the insert, so a caller colliding on both
+columns is told about both. The unique indexes are still what enforce
+uniqueness: two registrations claiming one username can both clear the check,
+and the loser surfaces as Prisma's `P2002`, which `uniqueViolationFields` in
+`src/lib/prismaErrors.ts` turns into the same `409 CONFLICT` body. Note the
+handler lowercases username and email before writing, because the unique index
+is case-sensitive and would otherwise accept `CodeCrafters` next to
+`codecrafters`.
+
+`POST /auth/check-availability` (US1-1.9) is the same check exposed on its own,
+public, returning `{ usernameAvailable, emailAvailable }` for the signup form's
+inline hint. It is advisory — it reserves nothing, so `register` re-checks.
 
 ### Authentication
 

@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 28 Aug 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 29 Aug 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -326,6 +326,7 @@
       <a href="#errors">Errors</a>
       <a href="#input">Input</a>
       <a href="#auth">Auth</a>
+      <a href="#accounts">Accounts</a>
       <a href="#layout">Layout</a>
       <a href="#gotchas">Gotchas</a>
       <a href="#verified">Verified</a>
@@ -356,13 +357,14 @@ npm run typecheck         <span class="c-dim"># must pass before you open a PR</
 
       <article class="entry" id="add-endpoint" data-tags="add endpoint new route controller create post get">
         <h3>How do I add an endpoint?</h3>
-        <p class="answer">Handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
-        <pre><code><span class="c-dim">// controllers/company.controller.ts</span>
-const updateSchema = z.object({
+        <p class="answer">Schema in <code>schemas/</code>, handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
+        <pre><code><span class="c-dim">// schemas/company.schema.ts</span>
+export const updateSchema = z.object({
     company_name: z.string().min(1).max(255),
     email: z.email().max(100),
 });
 
+<span class="c-dim">// controllers/company.controller.ts</span>
 export async function updateProfile(req: Request, res: Response) {
     const body = parseBody(updateSchema, req.body);   <span class="c-dim">// typed, or throws</span>
 
@@ -380,7 +382,8 @@ export async function updateProfile(req: Request, res: Response) {
 companyRoutes.patch('/me', requireAuth, updateProfile);</code></pre>
         <p class="note">
           No <code>try</code>/<code>catch</code> and no async wrapper — Express 5 forwards a rejected
-          promise to the error handler by itself.
+          promise to the error handler by itself. Keep the controller to handlers: a response shape or
+          an error translation that a second endpoint would want belongs in <code>lib/</code>.
         </p>
       </article>
 
@@ -539,12 +542,14 @@ throw ApiError.forbidden();</code></pre>
       <article class="entry" id="validate" data-tags="validate validation zod schema parsebody body input required fields">
         <h3>How do I validate a request body?</h3>
         <p class="answer">Write a zod schema, call <code>parseBody</code>. Never hand-write <code>if (!body.x)</code>.</p>
-        <pre><code>const registerSchema = z.object({
+        <pre><code><span class="c-dim">// schemas/auth.schema.ts</span>
+export const registerSchema = z.object({
     username: z.string().min(3).max(50),
     email: z.email().max(100),
     password: z.string().min(8),
 });
 
+<span class="c-dim">// the controller</span>
 const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed, or throws</span></code></pre>
         <p class="note">
           <code>body.email</code> is now a <code>string</code> to the compiler, and bad input never reaches
@@ -590,7 +595,8 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         <p class="answer"><code>req.auth</code>, set by <code>requireAuth</code>: <code>{ sub, role, jti, exp }</code>.</p>
         <p class="note">
           <code>sub</code> is the user id, <code>role</code> is one of
-          <code>provider | receiver | admin</code>. <code>req.auth</code> is not a real Express property —
+          <code>provider | receiver | both | admin</code> — see <a href="#both-role">what a role grants</a>.
+          <code>req.auth</code> is not a real Express property —
           <code>src/types/express.d.ts</code> merges it into Express's own types so TypeScript accepts it.
         </p>
       </article>
@@ -670,6 +676,99 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
       </article>
     </section>
 
+    <!-- ================= ACCOUNTS ================= -->
+    <section class="group" id="accounts">
+      <h2>Accounts</h2>
+
+      <article class="entry" id="register" data-tags="register registration signup create account us1-1 company post auth register">
+        <h3>How does a company register?</h3>
+        <p class="answer"><code>POST /auth/register</code>, public, returns <code>201</code> with the company and a token.</p>
+        <pre><code>curl -s -X POST localhost:4000/auth/register -H 'content-type: application/json' -d '{
+  "company_name": "CodeCrafters", "username": "codecrafters",
+  "email": "contact@codecrafters.com", "password": "correct horse battery",
+  "phone": "021111111", "account_type": "PROVIDER",
+  "company_type": ["SME", "Software House"]
+}'
+
+<span class="c-dim">{"company":{"company_id":33,"company_name":"CodeCrafters","username":"codecrafters",
+ "email":"contact@codecrafters.com","account_type":"PROVIDER",
+ "company_type":["SME","Software House"], ...},
+ "accessToken":"eyJhbGciOiJIUzI1NiIs..."}</span></code></pre>
+        <p class="note">
+          This is the one response in the API that wraps its resource. Everything else returns the
+          object itself; register returns two things, because it also logs you in — the token it
+          returns is the same one <code>/me</code> accepts, so the frontend does not have to call
+          login straight after signup. <code>company_description</code>, <code>address</code>, and
+          <code>website</code> are the only optional fields. The password hash is never in the
+          response: the handler names the columns it returns with an explicit <code>select</code>
+          rather than deleting the field afterwards.
+        </p>
+      </article>
+
+      <article class="entry" id="account-type" data-tags="account_type company_type provider receiver both subtype discriminator industry tags">
+        <h3>What is <code>account_type</code>, and how is it different from <code>company_type</code>?</h3>
+        <p class="answer"><code>account_type</code> is one of <code>PROVIDER</code>, <code>RECEIVER</code>, <code>BOTH</code>. <code>company_type</code> is repeatable industry tags.</p>
+        <p class="note">
+          They read alike and are not alike. <code>account_type</code> is a single uppercase
+          discriminator on <code>company</code>, and it decides which subtype row the company gets:
+          <code>PROVIDER</code> gets a row in <code>provider</code>, <code>RECEIVER</code> one in
+          <code>receiver</code>, and <code>BOTH</code> gets both. The seeded database follows that
+          without exception — 9 providers, 9 receivers, 2 BOTH companies carrying both rows — and
+          register keeps it, creating the company, its tags, and its subtype rows in one nested
+          <code>create</code>, which is one transaction.
+        </p>
+        <p class="note">
+          <code>company_type</code> lives in its own table, many rows per company:
+          <code>SME</code>, <code>Software House</code>, <code>FinTech</code>, <code>AI Lab</code>,
+          16 distinct values in the seed data. Registration requires at least one. There is no
+          <code>ADMIN</code> account type — the enum rejects it, so nobody can register themselves
+          an admin.
+        </p>
+      </article>
+
+      <article class="entry" id="both-role" data-tags="both role grants requirerole provider receiver capability 403">
+        <h3>How does a BOTH company pass a provider-only route?</h3>
+        <p class="answer"><code>requireRole</code> compares what the role grants, not the role itself.</p>
+        <pre><code><span class="c-dim">// src/auth/roles.ts</span>
+both: ['provider', 'receiver', 'both'],
+admin: ['admin'],</code></pre>
+        <p class="note">
+          The token role comes from <code>account_type</code> — <code>BOTH</code> becomes
+          <code>'both'</code> — and asking what a role may act as is a separate question from what
+          it is. Without this a BOTH company would get <code>403</code> on both kinds of route,
+          which is the opposite of what it signed up for. Note that <code>admin</code> grants only
+          <code>admin</code>: it is not a superset, and a BOTH token still gets
+          <code>403</code> from <code>/admin/ping</code>.
+        </p>
+      </article>
+
+      <article class="entry" id="duplicates" data-tags="duplicate username taken email conflict 409 p2002 unique constraint case sensitive">
+        <h3>What happens when the username is already taken?</h3>
+        <p class="answer"><code>409 CONFLICT</code>, with the offending field in <code>details</code>.</p>
+        <pre><code><span class="c-dim">{"error":{"code":"CONFLICT","message":"Username or email already registered",
+  "details":[{"field":"username","message":"This username is already registered"}]}}</span></code></pre>
+        <p class="note">
+          Two things check, and both matter. <code>assertCompanyIdentityAvailable</code> in
+          <code>lib/companyIdentity.ts</code> runs a case-insensitive lookup before the insert —
+          that is the one that can report <em>both</em> <code>username</code> and
+          <code>email</code> in <code>details</code>, since an index only fails on whichever column
+          it reaches first.
+        </p>
+        <p class="note">
+          The unique indexes are still the enforcement. Two registrations claiming one username can
+          both clear the pre-check; the loser's insert is rejected, Prisma reports
+          <code>P2002</code>, and the handler turns that into the same envelope. Reading the field
+          out takes a little care: through the driver adapter the columns arrive as the index name
+          (<code>company_username_key</code>) rather than in <code>meta.target</code>.
+        </p>
+        <p class="note">
+          Register lowercases username and email before writing, because the Postgres unique index
+          is case-sensitive — without that, <code>CodeCrafters</code> would register happily
+          alongside <code>codecrafters</code>.
+        </p>
+      </article>
+    </section>
+
     <!-- ================= LAYOUT ================= -->
     <section class="group" id="layout">
       <h2>Layout</h2>
@@ -677,21 +776,25 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
       <article class="entry" id="tree" data-tags="files structure folder tree where put code directory organise">
         <h3>Where does code go?</h3>
         <p class="answer">Routes hold paths, controllers hold work, and nothing else holds either.</p>
-        <pre><code>packages/shared/index.ts   <span class="c-dim">UserRole · AuthTokenClaims · ApiErrorCode · ApiErrorResponse</span>
+        <pre><code>packages/shared/index.ts   <span class="c-dim">UserRole · AccountType · CompanyProfile · ApiErrorCode · ApiErrorResponse</span>
 
 apps/api/src/
 ├── index.ts               <span class="c-dim">6 lines — listens, nothing else</span>
 ├── app.ts                 <span class="c-dim">builds the app; does not listen</span>
 ├── env.ts                 <span class="c-dim">loads .env — first import, always</span>
 ├── routes/                <span class="c-dim">paths + middleware, no logic</span>
-├── controllers/           <span class="c-dim">the work</span>
+├── controllers/           <span class="c-dim">handlers, and nothing but handlers</span>
+├── schemas/               <span class="c-dim">zod request schemas, one file per area</span>
 ├── middleware/            <span class="c-dim">auth · errorHandler · validate</span>
-├── lib/                   <span class="c-dim">ApiError · prisma</span>
-├── auth/                  <span class="c-dim">password · jwt · tokenDenylist — pure, no HTTP</span>
+├── lib/                   <span class="c-dim">ApiError · prisma · prismaErrors · companyProfile · companyIdentity</span>
+├── auth/                  <span class="c-dim">password · jwt · roles · tokenDenylist — pure, no HTTP</span>
 └── types/express.d.ts     <span class="c-dim">teaches TypeScript about req.auth</span></code></pre>
         <p class="note">
           <code>auth/</code> holds pure functions that know nothing about HTTP, so a test can call them
-          with no server running. <code>middleware/</code> is the HTTP adapter.
+          with no server running. <code>middleware/</code> is the HTTP adapter. A controller that grows
+          past its handlers is a sign something belongs in <code>lib/</code>: the register handler's
+          response shape lives in <code>lib/companyProfile.ts</code> and its error translation in
+          <code>lib/prismaErrors.ts</code>, so US1-4 does not rewrite either.
           <code>packages/shared</code> exists so the two apps cannot disagree — backend
           <code>'admin'</code> vs frontend <code>'administrator'</code> is a bug no compiler catches
           unless the type is defined once and imported by both.
@@ -767,7 +870,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 21 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 31 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -793,13 +896,29 @@ apps/api/src/
               <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">password</td><td>same input hashed twice</td><td><span class="status s-ok">two hashes, both verify</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>PROVIDER, all fields</td><td><span class="status s-ok">201</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>BOTH — provider and receiver rows written</td><td><span class="status s-ok">201</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>token straight from register</td><td><span class="status s-ok">200 provider</span></td></tr>
+              <tr><td class="code-cell">/me</td><td>token from a BOTH registration</td><td><span class="status s-ok">200 both</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>BOTH token — grants do not include admin</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>username already taken</td><td><span class="status s-warn">409 username</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>email differing only in case</td><td><span class="status s-warn">409 email</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>no company_type</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>account_type ADMIN</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>7-character password</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>username <em>and</em> email both taken</td><td><span class="status s-warn">409 both fields</span></td></tr>
+              <tr><td class="code-cell">/auth/check-availability</td><td>fresh username and email</td><td><span class="status s-ok">200 both available</span></td></tr>
+              <tr><td class="code-cell">/auth/check-availability</td><td>seeded username, cased differently</td><td><span class="status s-ok">200 username taken</span></td></tr>
             </tbody>
           </table>
         </div>
         <p class="note">
-          Two rows are worth staring at. The provider's logout left the admin session untouched — that is
-          per-token revocation working. And a forged <code>role: admin</code> token signed with a guessed
-          secret was rejected, not accepted as an admin.
+          Three rows are worth staring at. The provider's logout left the admin session untouched — that
+          is per-token revocation working. A forged <code>role: admin</code> token signed with a guessed
+          secret was rejected, not accepted as an admin. And the email that differed from an existing one
+          only in capitalisation was refused, which the database alone would have allowed.
+          The registrations above were run against the shared Supabase database and deleted afterwards;
+          the row count is back to the seeded 20.
         </p>
       </article>
 
@@ -811,7 +930,7 @@ apps/api/src/
 
 curl -s localhost:4000/me
 <span class="c-dim">{"error":{"code":"UNAUTHORIZED","message":"Missing or malformed Authorization header"}}</span></code></pre>
-        <p class="note">To mint a token by hand while there is still no login endpoint:</p>
+        <p class="note">The quickest real token is now a registration — <code>accessToken</code> comes back in the response. To mint one by hand instead, while there is still no login endpoint:</p>
         <pre><code>cd apps/api
 TOKEN=$(npx tsx -e "import './src/env';
   import {signAccessToken} from './src/auth/jwt';
@@ -826,14 +945,15 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
     <section class="group" id="missing">
       <h2>Missing</h2>
 
-      <article class="entry" id="gaps" data-tags="missing not built yet todo gaps blocked test runner admin register login">
+      <article class="entry" id="gaps" data-tags="missing not built yet todo gaps blocked test runner admin login seed hash123">
         <h3>What does not exist yet?</h3>
         <p class="answer">Read this before assuming something works.</p>
         <ul>
-          <li><strong>No <code>/auth/register</code> or <code>/auth/login</code>.</strong> Every token above was minted by hand. Both are in flight.</li>
+          <li><strong>No <code>/auth/login</code>.</strong> <code>/auth/register</code> exists and returns a token, so a brand-new company can call the API — but an existing one has no way back in. That is US1-2.</li>
+          <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
-          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin, so US6-1 has nothing to authenticate against.</li>
-          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims; it reads no profile. That is US1-4.</li>
+          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin and <code>account_type</code> has no <code>ADMIN</code> value, so US6-1 has nothing to authenticate against.</li>
+          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims; it reads no profile, even though register now returns the full <code>CompanyProfile</code> shape US1-4 will need. That is US1-4.</li>
           <li><strong>The denylist does not survive a restart</strong> and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging.</li>
           <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>

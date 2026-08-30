@@ -11,7 +11,12 @@ const DEFAULT_EXPIRES_IN = '1h';
 // Keep in sync with the UserRole union in @mangodb/shared. Typing the array as
 // readonly UserRole[] catches stray values here, but adding a role to the union
 // without adding it below only shows up as a rejected token.
-const USER_ROLES: readonly UserRole[] = ['provider', 'receiver', 'admin'];
+const USER_ROLES: readonly UserRole[] = [
+    'provider',
+    'receiver',
+    'both',
+    'admin',
+];
 
 function isUserRole(value: unknown): value is UserRole {
     return USER_ROLES.includes(value as UserRole);

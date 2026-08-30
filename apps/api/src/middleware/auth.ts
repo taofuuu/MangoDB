@@ -3,6 +3,7 @@ import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
 import { ApiError } from '../lib/ApiError';
+import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -48,7 +49,10 @@ export function requireRole(...allowed: UserRole[]) {
             next(ApiError.unauthorized());
             return;
         }
-        if (!allowed.includes(req.auth.role)) {
+        // Compare what the role grants, not the role itself: a BOTH company
+        // passes requireRole('provider') and requireRole('receiver').
+        const grants = roleGrants(req.auth.role);
+        if (!allowed.some((role) => grants.includes(role))) {
             next(ApiError.forbidden());
             return;
         }

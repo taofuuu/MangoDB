@@ -1,4 +1,10 @@
-export type UserRole = 'provider' | 'receiver' | 'admin';
+// 'both' mirrors account_type BOTH: one company that offers and requests work.
+// What a role is allowed to do is a separate question — see auth/roles.ts.
+export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
+
+// Stored in company.account_type, uppercase as the seeded rows have it. There
+// is no ADMIN account type: admins have no table yet (US6-1).
+export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH';
 
 export interface User {
     id: string;
@@ -43,4 +49,40 @@ export interface ApiErrorResponse {
         message: string;
         details?: ApiErrorDetail[];
     };
+}
+
+// What registration accepts. The zod schema in the controller is the runtime
+// source of truth; this is the same contract for the frontend.
+export interface RegisterRequest {
+    company_name: string;
+    username: string;
+    email: string;
+    password: string;
+    phone: string;
+    account_type: AccountType;
+    company_type: string[];
+    company_description?: string;
+    address?: string;
+    website?: string;
+}
+
+// A company as the API returns it — never carries the password hash.
+// company_type is flattened from its join table to plain tags.
+export interface CompanyProfile {
+    company_id: number;
+    company_name: string;
+    company_description: string | null;
+    username: string;
+    email: string;
+    phone: string;
+    address: string | null;
+    website: string | null;
+    account_type: AccountType;
+    company_type: string[];
+}
+
+// Registration returns two things, so it is the one response that wraps.
+export interface RegisterResponse {
+    company: CompanyProfile;
+    accessToken: string;
 }
