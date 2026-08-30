@@ -31,15 +31,9 @@ export async function checkCompanyIdentityAvailability(
         throw new TypeError('Username and email must not be empty');
     }
 
-    const matches = await prisma.company.findMany({
-        where: {
-            OR: [
-                { username: { equals: username, mode: 'insensitive' } },
-                { email: { equals: email, mode: 'insensitive' } },
-            ],
-        },
-        select: { username: true, email: true },
-    });
+const matches = await prisma.$queryRaw<{ username: string; email: string }[]>`
+    SELECT username, email FROM company
+    WHERE lower(username) = ${u} OR lower(email) = ${u}`;
 
     const usernameTaken = matches.some(
         (company) => normalizeUsername(company.username) === username,
