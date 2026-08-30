@@ -748,18 +748,23 @@ admin: ['admin'],</code></pre>
         <pre><code><span class="c-dim">{"error":{"code":"CONFLICT","message":"Username or email already registered",
   "details":[{"field":"username","message":"This username is already registered"}]}}</span></code></pre>
         <p class="note">
-          Today the database is the only thing checking. The unique indexes on
-          <code>username</code> and <code>email</code> reject the insert, Prisma reports
-          <code>P2002</code>, and the handler turns that into the envelope above. Reading the field
+          Two things check, and both matter. <code>assertCompanyIdentityAvailable</code> in
+          <code>lib/companyIdentity.ts</code> runs a case-insensitive lookup before the insert —
+          that is the one that can report <em>both</em> <code>username</code> and
+          <code>email</code> in <code>details</code>, since an index only fails on whichever column
+          it reaches first.
+        </p>
+        <p class="note">
+          The unique indexes are still the enforcement. Two registrations claiming one username can
+          both clear the pre-check; the loser's insert is rejected, Prisma reports
+          <code>P2002</code>, and the handler turns that into the same envelope. Reading the field
           out takes a little care: through the driver adapter the columns arrive as the index name
           (<code>company_username_key</code>) rather than in <code>meta.target</code>.
         </p>
         <p class="note">
           Register lowercases username and email before writing, because the Postgres unique index
           is case-sensitive — without that, <code>CodeCrafters</code> would register happily
-          alongside <code>codecrafters</code>. The <code>P2002</code> block is a placeholder for
-          <code>company-uniqueness.ts</code> on <code>feature/username-email-uniqueness</code>,
-          which does the case-insensitive check before the insert instead of after it.
+          alongside <code>codecrafters</code>.
         </p>
       </article>
     </section>
@@ -781,7 +786,7 @@ apps/api/src/
 ├── controllers/           <span class="c-dim">handlers, and nothing but handlers</span>
 ├── schemas/               <span class="c-dim">zod request schemas, one file per area</span>
 ├── middleware/            <span class="c-dim">auth · errorHandler · validate</span>
-├── lib/                   <span class="c-dim">ApiError · prisma · prismaErrors · companyProfile</span>
+├── lib/                   <span class="c-dim">ApiError · prisma · prismaErrors · companyProfile · companyIdentity</span>
 ├── auth/                  <span class="c-dim">password · jwt · roles · tokenDenylist — pure, no HTTP</span>
 └── types/express.d.ts     <span class="c-dim">teaches TypeScript about req.auth</span></code></pre>
         <p class="note">
@@ -901,6 +906,9 @@ apps/api/src/
               <tr><td class="code-cell">/auth/register</td><td>no company_type</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>account_type ADMIN</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>7-character password</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>username <em>and</em> email both taken</td><td><span class="status s-warn">409 both fields</span></td></tr>
+              <tr><td class="code-cell">/auth/check-availability</td><td>fresh username and email</td><td><span class="status s-ok">200 both available</span></td></tr>
+              <tr><td class="code-cell">/auth/check-availability</td><td>seeded username, cased differently</td><td><span class="status s-ok">200 username taken</span></td></tr>
             </tbody>
           </table>
         </div>

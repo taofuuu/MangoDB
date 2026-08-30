@@ -155,14 +155,20 @@ password: `companyProfileSelect` in `src/lib/companyProfile.ts` names the
 columns that may be returned, and `toCompanyProfile` flattens the tag rows.
 Reuse both for any endpoint that returns a company — US1-4 included.
 
-Duplicate usernames and emails currently rely on the database's unique indexes:
-`uniqueViolationFields` in `src/lib/prismaErrors.ts` reads Prisma's `P2002` and
-the handler maps it to `409 CONFLICT` with the offending field in `details`. That block is a placeholder — Fang's
-`company-uniqueness.ts` on `feature/username-email-uniqueness` does the
-case-insensitive pre-check properly and should replace it once that branch is
-rebased onto the current `main`. Note the handler lowercases username and email
-before writing, because the unique index is case-sensitive and would otherwise
-accept `CodeCrafters` next to `codecrafters`.
+Duplicate usernames and emails are caught twice, on purpose.
+`assertCompanyIdentityAvailable` in `src/lib/companyIdentity.ts` runs the
+case-insensitive pre-check before the insert, so a caller colliding on both
+columns is told about both. The unique indexes are still what enforce
+uniqueness: two registrations claiming one username can both clear the check,
+and the loser surfaces as Prisma's `P2002`, which `uniqueViolationFields` in
+`src/lib/prismaErrors.ts` turns into the same `409 CONFLICT` body. Note the
+handler lowercases username and email before writing, because the unique index
+is case-sensitive and would otherwise accept `CodeCrafters` next to
+`codecrafters`.
+
+`POST /auth/check-availability` (US1-1.9) is the same check exposed on its own,
+public, returning `{ usernameAvailable, emailAvailable }` for the signup form's
+inline hint. It is advisory — it reserves nothing, so `register` re-checks.
 
 ### Authentication
 

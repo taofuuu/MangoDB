@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import { hashPassword } from '../auth/password';
 import { signAccessToken } from '../auth/jwt';
@@ -9,6 +10,10 @@ import {
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
+import {
+    assertCompanyIdentityAvailable,
+    checkCompanyIdentityAvailability,
+} from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
 import { parseBody } from '../middleware/validate';
 import { REGISTER_UNIQUE_FIELDS, registerSchema } from '../schemas/auth.schema';
@@ -19,6 +24,12 @@ import { REGISTER_UNIQUE_FIELDS, registerSchema } from '../schemas/auth.schema';
 export async function register(req: Request, res: Response): Promise<void> {
     const body = parseBody(registerSchema, req.body);
     const { company_type, account_type, password, ...rest } = body;
+
+    // Reports both collisions at once; an index only fails on the first.
+    await assertCompanyIdentityAvailable({
+        username: rest.username,
+        email: rest.email,
+    });
 
     // A BOTH company gets both rows, exactly as the seeded companies have them.
     const isProvider = account_type === 'PROVIDER' || account_type === 'BOTH';
@@ -45,10 +56,8 @@ export async function register(req: Request, res: Response): Promise<void> {
             select: companyProfileSelect,
         });
     } catch (err) {
-        // TEMPORARY. The unique indexes are the only duplicate check right
-        // now, so a losing insert arrives here. Replace with
-        // assertCompanyIdentityAvailable from Fang's company-uniqueness.ts
-        // once feature/username-email-uniqueness is rebased onto main.
+        // Two registrations can clear the check and race to here; the indexes
+        // are what actually enforce uniqueness.
         const fields = uniqueViolationFields(err, REGISTER_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
@@ -69,6 +78,22 @@ export async function register(req: Request, res: Response): Promise<void> {
         company: toCompanyProfile(company),
         accessToken,
     });
+}
+
+const checkAvailabilitySchema = z.object({
+    username: z.string().trim().min(1).max(50),
+    email: z.email().max(100),
+});
+
+// US 1-1.9 checking uniqueness of username and email
+export async function checkAvailability(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const body = parseBody(checkAvailabilitySchema, req.body);
+    const availability = await checkCompanyIdentityAvailability(body);
+
+    res.json(availability);
 }
 
 // US1-3. requireAuth runs first, so a second logout with the same token 401s.
