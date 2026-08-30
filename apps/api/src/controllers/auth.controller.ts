@@ -6,7 +6,7 @@ import { parseBody } from '../middleware/validate';
 
 const checkAvailabilitySchema = z.object({
     username: z.string().trim().min(1).max(50),
-    email: z.string().trim().min(1),
+    email: z.string().trim().max(100),
 });
 
 // US 1-1.9 checking uniqueness of username and email
