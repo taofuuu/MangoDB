@@ -42,7 +42,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-[45vw] max-h-[92vh] rounded-xl bg-[#FFFDF9] p-[1.5vw] shadow-xl">
+            <div className="w-full max-w-[45vw] max-h-[92vh] rounded-xl bg-[#FFFDF9] text-[#171717] p-[1.5vw] shadow-xl">
                 {/* -------------header----------------- */}
                 <div className=" flex items-center justify-between">
                     <h2 className="text-lg">Add license or certification</h2>
@@ -73,7 +73,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                                 placeholder="Ex: Microsoft certified network associate security"
                                 required
                             />
@@ -88,7 +88,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                 type="text"
                                 value={organize}
                                 onChange={(e) => setOrganize(e.target.value)}
-                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                                 placeholder="Ex: Microsoft"
                                 required
                             />
@@ -166,7 +166,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                 type="text"
                                 value={credID}
                                 onChange={(e) => setCredID(e.target.value)}
-                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                                 required
                             />
                         </div>
@@ -180,7 +180,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                                 type="text"
                                 value={credURL}
                                 onChange={(e) => setCredURL(e.target.value)}
-                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                                 required
                             />
                         </div>
