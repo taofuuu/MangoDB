@@ -97,8 +97,8 @@ export async function checkAvailability(
 }
 
 // US1-3. requireAuth runs first, so a second logout with the same token 401s.
-export function logout(req: Request, res: Response): void {
-    revokeToken(req.auth!.jti, req.auth!.exp);
+export async function logout(req: Request, res: Response): Promise<void> {
+    await revokeToken(req.auth!.jti, req.auth!.exp);
     res.status(204).end();
 }
 
