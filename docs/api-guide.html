@@ -934,7 +934,7 @@ curl -s localhost:4000/companies/me
         <pre><code>cd apps/api
 TOKEN=$(npx tsx -e "import './src/env';
   import {signAccessToken} from './src/auth/jwt';
-  console.log(signAccessToken({sub:'u-1',role:'provider'}))")
+  console.log(signAccessToken({sub:'1',role:'provider'}))")
 
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/companies/me   <span class="c-dim"># 200</span>
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403</span></code></pre>
