@@ -578,7 +578,7 @@ const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed
       <article class="entry" id="protect" data-tags="protect route guard requireauth requirerole admin role permission">
         <h3>How do I protect a route?</h3>
         <p class="answer"><code>requireAuth</code> first, then <code>requireRole</code>. Order is not optional.</p>
-        <pre><code>router.get('/me', requireAuth, getCurrentUser);
+        <pre><code>companyRoutes.get('/me', requireAuth, getMyProfile);
 
 <span class="c-dim">// admin routers guard once, so a new route cannot miss the check</span>
 adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
@@ -697,7 +697,7 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         <p class="note">
           This is the one response in the API that wraps its resource. Everything else returns the
           object itself; register returns two things, because it also logs you in — the token it
-          returns is the same one <code>/me</code> accepts, so the frontend does not have to call
+          returns is the same one <code>/companies/me</code> accepts, so the frontend does not have to call
           login straight after signup. <code>company_description</code>, <code>address</code>, and
           <code>website</code> are the only optional fields. The password hash is never in the
           response: the handler names the columns it returns with an explicit <code>select</code>
@@ -877,20 +877,20 @@ apps/api/src/
             <tbody>
               <tr><td class="code-cell">/health</td><td>none needed</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/nope</td><td>path does not exist</td><td><span class="status s-warn">404</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>wrong scheme (<code>Basic</code>)</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>forged signature</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>wrong scheme (<code>Basic</code>)</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>forged signature</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>expired token</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>same token, second call</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
@@ -898,8 +898,8 @@ apps/api/src/
               <tr><td class="code-cell">password</td><td>same input hashed twice</td><td><span class="status s-ok">two hashes, both verify</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>PROVIDER, all fields</td><td><span class="status s-ok">201</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>BOTH — provider and receiver rows written</td><td><span class="status s-ok">201</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>token straight from register</td><td><span class="status s-ok">200 provider</span></td></tr>
-              <tr><td class="code-cell">/me</td><td>token from a BOTH registration</td><td><span class="status s-ok">200 both</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>token straight from register</td><td><span class="status s-ok">200 provider</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>token from a BOTH registration</td><td><span class="status s-ok">200 both</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>BOTH token — grants do not include admin</td><td><span class="status s-warn">403</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>username already taken</td><td><span class="status s-warn">409 username</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>email differing only in case</td><td><span class="status s-warn">409 email</span></td></tr>
@@ -928,7 +928,7 @@ apps/api/src/
         <pre><code>curl -s localhost:4000/nope
 <span class="c-dim">{"error":{"code":"NOT_FOUND","message":"Cannot GET /nope"}}</span>
 
-curl -s localhost:4000/me
+curl -s localhost:4000/companies/me
 <span class="c-dim">{"error":{"code":"UNAUTHORIZED","message":"Missing or malformed Authorization header"}}</span></code></pre>
         <p class="note">The quickest real token is now a registration — <code>accessToken</code> comes back in the response. To mint one by hand instead, while there is still no login endpoint:</p>
         <pre><code>cd apps/api
@@ -936,7 +936,7 @@ TOKEN=$(npx tsx -e "import './src/env';
   import {signAccessToken} from './src/auth/jwt';
   console.log(signAccessToken({sub:'u-1',role:'provider'}))")
 
-curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/me          <span class="c-dim"># 200</span>
+curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/companies/me   <span class="c-dim"># 200</span>
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403</span></code></pre>
       </article>
     </section>
@@ -953,11 +953,10 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
           <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
           <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin and <code>account_type</code> has no <code>ADMIN</code> value, so US6-1 has nothing to authenticate against.</li>
-          <li><strong>No user lookup.</strong> <code>/me</code> echoes the token's own claims; it reads no profile, even though register now returns the full <code>CompanyProfile</code> shape US1-4 will need. That is US1-4.</li>
           <li><strong>The denylist does not survive a restart</strong> and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging.</li>
           <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>
-          <li><strong><code>/me</code> and <code>/admin/ping</code> are demonstration routes</strong>, alive only until real endpoints replace them.</li>
+          <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>.</li>
         </ul>
       </article>
     </section>
