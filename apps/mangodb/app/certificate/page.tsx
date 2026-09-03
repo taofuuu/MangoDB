@@ -5,10 +5,12 @@ import FormModal from '@/components/forms/CertificateForm';
 import EditCertificateForm, {
     CertificateData,
 } from '@/components/forms/EditCertificateForm';
+import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
 
 export default function CertificatePage() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
     // Sample data to pre-fill the edit form (can be replaced with dynamic data)
     const [certificateToEdit, setCertificateToEdit] = useState<CertificateData>(
@@ -24,6 +26,11 @@ export default function CertificatePage() {
                 'https://learn.microsoft.com/certifications/azure-fundamentals',
         },
     );
+
+    const handleDeleteCertificate = () => {
+        console.log('Certificate deleted:', certificateToEdit);
+        setIsDeleteOpen(false);
+    };
 
     return (
         <main className="flex gap-4 p-10">
@@ -43,6 +50,14 @@ export default function CertificatePage() {
                 Edit certificate
             </button>
 
+            {/* Delete Certificate Button */}
+            <button
+                onClick={() => setIsDeleteOpen(true)}
+                className="rounded-lg bg-[#CE473E] px-4 py-2 text-white hover:bg-[#B93D35] transition-colors"
+            >
+                Delete certificate
+            </button>
+
             {/* Add Certificate Modal */}
             <FormModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
 
@@ -55,6 +70,13 @@ export default function CertificatePage() {
                     setCertificateToEdit(updatedData);
                     console.log('Saved changes:', updatedData);
                 }}
+            />
+
+            {/* Delete Certificate Modal */}
+            <DeleteCertificateModal
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleDeleteCertificate}
             />
         </main>
     );
