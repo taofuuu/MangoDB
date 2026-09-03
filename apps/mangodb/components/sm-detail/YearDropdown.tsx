@@ -49,7 +49,7 @@ export default function YearDropdown({ value, onChange }: YearDropdownProps) {
                                     onChange(String(year));
                                     setOpen(false);
                                 }}
-                                className="block w-full px-3 py-2 text-left hover:bg-gray-100"
+                                className="block w-full px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                             >
                                 {year}
                             </button>
