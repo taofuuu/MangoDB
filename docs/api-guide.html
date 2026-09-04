@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 29 Aug 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 4 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -918,7 +918,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 31 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 50 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -981,8 +981,9 @@ apps/api/src/
           is per-token revocation working. A forged <code>role: admin</code> token signed with a guessed
           secret was rejected, not accepted as an admin. And the email that differed from an existing one
           only in capitalisation was refused, which the database alone would have allowed.
-          The registrations above were run against the shared Supabase database and deleted afterwards;
-          the row count is back to the seeded 20.
+          The registrations above were run against the shared Supabase database and deleted
+          afterwards. One test company from a US1-2 run is still in there, so the table holds 21
+          rows rather than the seeded 20 — delete your own when you finish a run.
         </p>
       </article>
 
