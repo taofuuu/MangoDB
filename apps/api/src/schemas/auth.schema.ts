@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { companyFields } from './company.schema';
 
 // bcrypt reads only the first 72 bytes of a password and ignores the rest, so
 // the cap has to be counted in bytes. `.max(72)` counts characters instead —
@@ -13,43 +14,26 @@ function fitsBcryptLimit(password: string): boolean {
     return Buffer.byteLength(password, 'utf8') <= BCRYPT_MAX_BYTES;
 }
 
-// Sizes match the columns in prisma/schema.prisma; anything longer would be a
-// database error rather than a validation message.
+// The company columns come from companyFields, so registration and the profile
+// edit cannot drift apart on what a valid phone number or username looks like.
 export const registerSchema = z.object({
-    company_name: z.string().trim().min(1).max(255),
-    // Lowercased because the unique index is case-sensitive: without this,
-    // "CodeCrafters" would register alongside "codecrafters".
-    username: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .min(3)
-        .max(50)
-        .regex(/^[a-z0-9_]+$/, 'Use letters, numbers, and underscores only'),
-    email: z.email().max(100).toLowerCase(),
+    company_name: companyFields.company_name,
+    username: companyFields.username,
+    email: companyFields.email,
     // A byte cap, not `.max(72)`: see BCRYPT_MAX_BYTES. This is the one that
     // matters, because it decides what actually gets hashed at signup.
     password: z.string().min(8).refine(fitsBcryptLimit, TOO_LONG_MESSAGE),
-    phone: z
-        .string()
-        .trim()
-        .min(6)
-        .max(20)
-        .regex(/^[0-9+\-\s()]+$/, 'Use digits and + - ( ) only'),
+    phone: companyFields.phone,
     account_type: z.enum(['PROVIDER', 'RECEIVER', 'BOTH']),
-    // Industry tags — SME, Software House, FinTech. Every seeded company has
-    // at least one, so registration requires one too.
-    company_type: z.array(z.string().trim().min(1).max(100)).min(1).max(10),
-    company_description: z.string().trim().max(2000).optional(),
-    address: z.string().trim().max(500).optional(),
-    website: z.url().max(255).optional(),
+    company_type: companyFields.company_type,
+    // The three nullable columns. Optional here, since registration has nothing
+    // to clear; the edit schema makes them nullable instead.
+    company_description: companyFields.company_description.optional(),
+    address: companyFields.address.optional(),
+    website: companyFields.website.optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
-
-// The columns a registration can collide on. prismaErrors uses this to decide
-// which constraint names are worth reporting back to the caller.
-export const REGISTER_UNIQUE_FIELDS = ['username', 'email'] as const;
 
 // US1-2. Shape only — deliberately not register's password rules. A password
 // failing min(8) here would return 400 VALIDATION_FAILED, which answers a
@@ -68,3 +52,4 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+

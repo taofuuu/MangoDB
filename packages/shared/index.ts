@@ -86,3 +86,18 @@ export interface RegisterResponse {
     company: CompanyProfile;
     accessToken: string;
 }
+
+// US1-5. What a profile edit accepts: an absent field means "leave it", and
+// null clears a column that allows it. password is not editable here — that
+// needs the current password — and neither is account_type, which decides
+// which subtype rows a company owns.
+export interface UpdateCompanyProfileRequest {
+    company_name?: string;
+    username?: string;
+    email?: string;
+    phone?: string;
+    company_type?: string[];
+    company_description?: string | null;
+    address?: string | null;
+    website?: string | null;
+}
