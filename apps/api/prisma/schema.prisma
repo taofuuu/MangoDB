@@ -159,3 +159,10 @@ model service_portfolio {
 
   @@id([listing_id, portfolio_link])
 }
+
+model revoked_token {
+  jti        String   @id @db.VarChar(64)
+  expires_at DateTime @db.Timestamptz(6)
+
+  @@index([expires_at])
+}

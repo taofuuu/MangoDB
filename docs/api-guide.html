@@ -662,16 +662,15 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         </p>
       </article>
 
-      <article class="entry" id="denylist-limits" data-tags="denylist memory restart deploy scale postgres redis limitation broken production">
-        <h3>Where does the denylist break?</h3>
-        <p class="answer">It is a <code>Map</code> in one Node process: lost on restart, not shared between instances.</p>
+      <article class="entry" id="denylist-limits" data-tags="denylist memory restart deploy scale postgres redis limitation storage revoked_token async">
+        <h3>Where does the denylist live?</h3>
+        <p class="answer">In Postgres — <code>public.revoked_token</code>, keyed by <code>jti</code>. It survives a restart and is shared between instances.</p>
         <p class="note">
-          A token logged out five minutes ago starts working again after a deploy, and a logout recorded
-          on one instance is invisible to another. Acceptable for one dev process and nothing else. The
-          fix is contained — nothing outside <code>tokenDenylist.ts</code> knows the map exists, so a
-          Postgres table <code>(jti primary key, expires_at timestamptz)</code> behind the same two
-          functions is a one-file change. Keep the expiry column; it is what stops the table growing
-          forever.
+          It was a <code>Map</code> in one process until US1-3, so a logged-out token worked again after
+          any restart — and <code>tsx watch</code> restarts on every file save. Only the storage changed;
+          nothing outside <code>tokenDenylist.ts</code> knows where entries live. The cost is that both
+          functions are async, so <code>requireAuth</code> awaits one query per request. Pruning happens
+          on logout, not on reads.
         </p>
       </article>
     </section>
