@@ -16,7 +16,8 @@ import {
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
 import { parseBody } from '../middleware/validate';
-import { REGISTER_UNIQUE_FIELDS, registerSchema } from '../schemas/auth.schema';
+import { registerSchema } from '../schemas/auth.schema';
+import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -58,7 +59,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     } catch (err) {
         // Two registrations can clear the check and race to here; the indexes
         // are what actually enforce uniqueness.
-        const fields = uniqueViolationFields(err, REGISTER_UNIQUE_FIELDS);
+        const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
                 'Username or email already registered',
