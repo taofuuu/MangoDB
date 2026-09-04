@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 29 Aug 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 4 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -766,6 +766,54 @@ admin: ['admin'],</code></pre>
           alongside <code>codecrafters</code>.
         </p>
       </article>
+
+      <article class="entry" id="edit-profile" data-tags="edit update profile patch companies me partial null clear tags company_type readonly us1-5">
+        <h3>How does a company edit its profile?</h3>
+        <p class="answer"><code>PATCH /companies/me</code>. Send only what changed; <code>null</code> clears a nullable column.</p>
+        <pre><code>curl -s -X PATCH localhost:4000/companies/me -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' -d '{
+  "company_name": "CodeCrafters Co., Ltd.",
+  "address": null,
+  "company_type": ["SME", "AI Lab"]
+}'</code></pre>
+        <p class="note">
+          Three states, not two. A field that is <strong>absent</strong> leaves its column alone —
+          that is what makes this a <code>PATCH</code>, and it is why the edit form may send one
+          input or all of them. A field carrying a <strong>value</strong> overwrites. A field set to
+          <strong><code>null</code></strong> clears, and only <code>company_description</code>,
+          <code>address</code>, and <code>website</code> accept it, because they are the only
+          nullable columns; <code>null</code> anywhere else is a <code>400</code>. An empty body is
+          a <code>400</code> too — it is a client bug, not a no-op worth a <code>200</code>.
+        </p>
+        <p class="note">
+          <code>company_type</code> is a set, not a list you append to: the request carries the
+          whole set and the tags it replaces are deleted. It is a nested write, so the delete and
+          the create are one transaction and the company is never briefly untagged. Note the
+          schema's <code>.min(1)</code> — there is no way to spend an edit removing every tag.
+        </p>
+        <p class="note">
+          <code>username</code> and <code>email</code> are editable, and the same
+          <code>409</code> and the same <code>details</code> shape as registration apply — see
+          <a href="#duplicates">what happens when the username is already taken</a>. The one
+          difference is <code>excludeCompanyId</code>: <code>assertCompanyIdentityAvailable</code>
+          skips the caller's own row, or a form that re-submits every field would collide with
+          itself.
+        </p>
+        <p class="note">
+          <code>password</code> and <code>account_type</code> are <em>not</em> editable here, and
+          the schema strips them silently rather than rejecting the request. A password change needs
+          the current password, which is a different endpoint. <code>account_type</code> decides
+          which subtype rows a company owns and what its token's <code>role</code> claim says, so
+          changing it means writing <code>provider</code>/<code>receiver</code> rows and issuing a
+          new token — also a different endpoint.
+        </p>
+        <p class="note">
+          The response is the whole <code>CompanyProfile</code>, the same body
+          <code>GET /companies/me</code> returns, so the form can render the saved state without a
+          second request. Read-only mode is the frontend's job: the API has no draft state, and a
+          profile the user is only looking at is simply one nobody sent a <code>PATCH</code> for.
+        </p>
+      </article>
     </section>
 
     <!-- ================= LAYOUT ================= -->
@@ -869,7 +917,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 31 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 50 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -908,6 +956,22 @@ apps/api/src/
               <tr><td class="code-cell">/auth/register</td><td>username <em>and</em> email both taken</td><td><span class="status s-warn">409 both fields</span></td></tr>
               <tr><td class="code-cell">/auth/check-availability</td><td>fresh username and email</td><td><span class="status s-ok">200 both available</span></td></tr>
               <tr><td class="code-cell">/auth/check-availability</td><td>seeded username, cased differently</td><td><span class="status s-ok">200 username taken</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>one field — company_name only</td><td><span class="status s-ok">200, nothing else moved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>address: null</td><td><span class="status s-ok">200 address cleared</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_type replaced</td><td><span class="status s-ok">200 old tags gone</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>its own email, unchanged</td><td><span class="status s-ok">200 — self is not a collision</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>username uppercased</td><td><span class="status s-ok">200 stored lowercase</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — stripped, so nothing to update</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>account_type beside a real field</td><td><span class="status s-ok">200, account_type unmoved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>email another company holds</td><td><span class="status s-warn">409 email</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>username <em>and</em> email both taken</td><td><span class="status s-warn">409 both fields</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>phone: "abc"</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name: null</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_type: []</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>empty body</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>GET afterwards</td><td><span class="status s-ok">200, every change present</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -916,8 +980,9 @@ apps/api/src/
           is per-token revocation working. A forged <code>role: admin</code> token signed with a guessed
           secret was rejected, not accepted as an admin. And the email that differed from an existing one
           only in capitalisation was refused, which the database alone would have allowed.
-          The registrations above were run against the shared Supabase database and deleted afterwards;
-          the row count is back to the seeded 20.
+          The registrations above were run against the shared Supabase database and deleted
+          afterwards. One test company from a US1-2 run is still in there, so the table holds 21
+          rows rather than the seeded 20 — delete your own when you finish a run.
         </p>
       </article>
 
@@ -955,7 +1020,8 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
           <li><strong>The denylist does not survive a restart</strong> and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging.</li>
           <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>
-          <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>.</li>
+          <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>, and US1-5 added <code>PATCH</code> beside it.</li>
+          <li><strong>No way to change a password or an <code>account_type</code>.</strong> <code>PATCH /companies/me</code> edits everything else; both of those need an endpoint of their own.</li>
         </ul>
       </article>
     </section>
