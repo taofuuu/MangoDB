@@ -101,8 +101,3 @@ export async function logout(req: Request, res: Response): Promise<void> {
     await revokeToken(req.auth!.jti, req.auth!.exp);
     res.status(204).end();
 }
-
-// Placeholder until US1-4 lands the real company profile lookup.
-export function getCurrentUser(req: Request, res: Response): void {
-    res.json({ id: req.auth!.sub, role: req.auth!.role });
-}
