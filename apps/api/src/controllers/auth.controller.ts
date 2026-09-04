@@ -1,7 +1,11 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
-import { hashPassword } from '../auth/password';
+import {
+    dummyPasswordHash,
+    hashPassword,
+    verifyPassword,
+} from '../auth/password';
 import { signAccessToken } from '../auth/jwt';
 import { accountTypeToRole } from '../auth/roles';
 import { prisma } from '../lib/prisma';
@@ -16,7 +20,11 @@ import {
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
 import { parseBody } from '../middleware/validate';
-import { REGISTER_UNIQUE_FIELDS, registerSchema } from '../schemas/auth.schema';
+import {
+    loginSchema,
+    REGISTER_UNIQUE_FIELDS,
+    registerSchema,
+} from '../schemas/auth.schema';
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -100,4 +108,42 @@ export async function checkAvailability(
 export function logout(req: Request, res: Response): void {
     revokeToken(req.auth!.jti, req.auth!.exp);
     res.status(204).end();
+}
+
+// US1-2. The mirror of register: it also logs you in, so it returns the same
+// { company, accessToken } pair rather than a bare resource. 200, not 201 —
+// login creates nothing.
+export async function login(req: Request, res: Response): Promise<void> {
+    const { email, password } = parseBody(loginSchema, req.body);
+
+    // companyProfileSelect leaves password out on purpose, but verifying needs
+    // the stored hash. Ask for it alongside and drop it before responding —
+    // one round trip instead of a second lookup.
+    const company = await prisma.company.findUnique({
+        where: { email },
+        select: { ...companyProfileSelect, password: true },
+    });
+
+    // Both failures must answer identically: same status, same body, same
+    // time. bcrypt.compare is slow by design, so short-circuiting on a missing
+    // row answered ~7x faster than a wrong password did, and that gap alone
+    // told an attacker which emails were registered. Comparing against a
+    // throwaway hash on the miss path makes every attempt pay the same cost.
+    const storedHash = company?.password ?? (await dummyPasswordHash());
+    const passwordMatches = await verifyPassword(password, storedHash);
+
+    if (!company || !passwordMatches) {
+        throw ApiError.unauthorized('Invalid email or password');
+    }
+
+    // The hash never leaves this function: split it off, serialize the rest.
+    const { password: _hash, ...row } = company;
+    const profile = toCompanyProfile(row);
+
+    const accessToken = signAccessToken({
+        sub: String(profile.company_id),
+        role: accountTypeToRole(profile.account_type),
+    });
+
+    res.json({ company: profile, accessToken });
 }

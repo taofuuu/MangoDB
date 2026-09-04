@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 
 // Cost factor. Raising this slows every login, so change it deliberately.
@@ -15,4 +16,16 @@ export function verifyPassword(plain: string, hash: string): Promise<boolean> {
         return Promise.resolve(false);
     }
     return bcrypt.compare(plain, hash);
+}
+
+// Something for a failed lookup to compare against, so verifying costs the
+// same whether or not the account exists. The input is a random UUID: nobody
+// can supply a password that matches it, so this never authenticates anyone.
+// Hashed on first use rather than at import so it always tracks SALT_ROUNDS
+// and the cost is paid once, not on every miss.
+let dummyHash: Promise<string> | undefined;
+
+export function dummyPasswordHash(): Promise<string> {
+    dummyHash ??= bcrypt.hash(randomUUID(), SALT_ROUNDS);
+    return dummyHash;
 }
