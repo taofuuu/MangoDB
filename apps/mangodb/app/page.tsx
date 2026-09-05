@@ -11,7 +11,7 @@ const ROUTES = [
     {
         href: '/profile/edit',
         title: 'Edit Profile',
-        detail: 'US1-5 — the editable company profile form, on mock data.',
+        detail: 'US1-5 — the editable company profile form, against the API.',
     },
     {
         href: '/certificate',

@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { CompanyProfile } from '@mangodb/shared';
+import type {
+    CompanyProfile,
+    UpdateCompanyProfileRequest,
+} from '@mangodb/shared';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
@@ -20,15 +23,56 @@ export type ProfileFormData = Pick<
     | 'address'
     | 'company_type'
     | 'account_type'
+    // Provider-only columns. A RECEIVER company reads null for both, which is
+    // why the two fields below are not rendered for one.
+    | 'service_term'
+    | 'warranty_policy'
 > & {
-    // TODO(US1-5): provider-only columns. Neither is in companyProfileSelect
-    // or updateCompanyProfileSchema, so they never reach PATCH /companies/me.
-    // Sending them means a nested provider write in updateMyProfile first.
-    service_term: string | null;
-    warranty_policy: string | null;
-    // TODO(US1-5): no upload endpoint, and no column to store the result.
+    // The one field with nowhere to go: no upload endpoint, and no column to
+    // store the result, so it is lost on reload.
     photoUrl: string | null;
 };
+
+// An empty input means "cleared", and the API spells that null. Sending ''
+// would store an empty string in most columns and fail outright on website,
+// whose rule is z.url().
+function orNull(value: string | null): string | null {
+    const trimmed = (value ?? '').trim();
+    return trimmed === '' ? null : trimmed;
+}
+
+// What the form holds is not quite what the endpoint takes. account_type and
+// photoUrl are simply absent here: the first is not editable, the second has no
+// column to live in. Everything else goes every time, which also keeps the body
+// from ever being empty — the API rejects {} as a client bug.
+//
+// It lives beside ProfileFormData rather than in lib/companies.ts so the API
+// layer stays free of anything form-shaped.
+export function toUpdateRequest(
+    data: ProfileFormData,
+): UpdateCompanyProfileRequest {
+    const isProvider =
+        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+
+    return {
+        // Not run through orNull: these columns are not nullable, so a cleared
+        // one should come back as a field-level 400 rather than be dropped.
+        company_name: data.company_name,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        company_type: data.company_type,
+        company_description: orNull(data.company_description),
+        address: orNull(data.address),
+        website: orNull(data.website),
+        // A RECEIVER company owns no provider row, so sending either of these
+        // is a deliberate 403. Leave them out rather than send null.
+        ...(isProvider && {
+            service_term: orNull(data.service_term),
+            warranty_policy: orNull(data.warranty_policy),
+        }),
+    };
+}
 
 type EditProfileFormProps = {
     initialData: ProfileFormData;
@@ -76,8 +120,16 @@ export default function EditProfileForm({
         onCancel?.();
     };
 
+    // Both live on the provider table. A receiver-only company owns no row
+    // there, so showing the inputs would offer edits that cannot be saved.
+    const isProvider =
+        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+
     return (
-        <form onSubmit={handleSubmit}>
+        // noValidate so every message reaches the user the same way. The
+        // browser's own check on type="email" silently blocks submit and shows
+        // its own tooltip, which skips the error slots under each field.
+        <form onSubmit={handleSubmit} noValidate>
             <h1 className="pl-[1.88vw] text-hd !text-[48px] leading-none">
                 Edit Profile
             </h1>
@@ -109,14 +161,16 @@ export default function EditProfileForm({
                         />
                     </div>
 
-                    <div className="mt-[3.09vh]">
-                        <Textarea
-                            label="Service Terms"
-                            value={data.service_term ?? ''}
-                            onChange={(v) => setField('service_term', v)}
-                            error={errors?.service_term}
-                        />
-                    </div>
+                    {isProvider && (
+                        <div className="mt-[3.09vh]">
+                            <Textarea
+                                label="Service Terms"
+                                value={data.service_term ?? ''}
+                                onChange={(v) => setField('service_term', v)}
+                                error={errors?.service_term}
+                            />
+                        </div>
+                    )}
 
                     <div className="mt-[3.09vh]">
                         <Input
@@ -160,14 +214,16 @@ export default function EditProfileForm({
                         />
                     </div>
 
-                    <div className="mt-[3.09vh]">
-                        <Textarea
-                            label="Company Warranty Policy"
-                            value={data.warranty_policy ?? ''}
-                            onChange={(v) => setField('warranty_policy', v)}
-                            error={errors?.warranty_policy}
-                        />
-                    </div>
+                    {isProvider && (
+                        <div className="mt-[3.09vh]">
+                            <Textarea
+                                label="Company Warranty Policy"
+                                value={data.warranty_policy ?? ''}
+                                onChange={(v) => setField('warranty_policy', v)}
+                                error={errors?.warranty_policy}
+                            />
+                        </div>
+                    )}
 
                     <div className="mt-[3.09vh]">
                         <Input
