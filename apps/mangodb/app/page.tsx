@@ -4,6 +4,11 @@ import Link from 'next/link';
 // real home page and the navbar are separate tasks; this goes when they land.
 const ROUTES = [
     {
+        href: '/dev/session',
+        title: 'Dev session',
+        detail: 'Get a token — there is no login page yet. Start here.',
+    },
+    {
         href: '/profile/edit',
         title: 'Edit Profile',
         detail: 'US1-5 — the editable company profile form, on mock data.',
