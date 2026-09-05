@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Talking to the API
+
+Pages that read or write data need `apps/api` running on port 4000. Set
+`NEXT_PUBLIC_API_URL` in `.env.local` to point somewhere else; without it the
+client in `lib/api.ts` falls back to `http://localhost:4000`.
+
+There is no login page yet, so nothing has a token to send. Visit
+[`/dev/session`](http://localhost:3000/dev/session) to register a throwaway
+company and store its access token — the seeded companies cannot log in, their
+`password` column holds a plain string rather than a hash. That route goes away
+when the real login page (US1-2) lands.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
