@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 4 Sep 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 5 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -1013,7 +1013,7 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
         <h3>What does not exist yet?</h3>
         <p class="answer">Read this before assuming something works.</p>
         <ul>
-          <li><strong>No <code>/auth/login</code>.</strong> <code>/auth/register</code> exists and returns a token, so a brand-new company can call the API — but an existing one has no way back in. That is US1-2.</li>
+          <li><strong>No login <em>page</em>.</strong> <code>POST /auth/login</code> itself landed with US1-2 and returns the same <code>{ company, accessToken }</code> pair as register, but nothing in the frontend calls it yet. Until it does, <code>/dev/session</code> in the web app gets you a token — log into a company you already made, or register a throwaway one. Delete that route, and its <code>dev_*</code> rows, when the real login page ships.</li>
           <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
           <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin and <code>account_type</code> has no <code>ADMIN</code> value, so US6-1 has nothing to authenticate against.</li>
