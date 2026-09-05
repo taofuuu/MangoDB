@@ -15,14 +15,33 @@ model category {
 }
 
 model certificate {
-  cert_id     Int      @default(1)
-  provider_id Int
-  cert_title  String   @db.VarChar(255)
-  cert_desc   String?
-  cert_image  String   @db.VarChar(255)
-  provider    provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+  // Surrogate key: the old (cert_id, provider_id) PK made cert_id a value the
+  // app had to increment by hand per provider (cert_id defaulted to 1 for
+  // every insert). This is the same fix applied to service_portfolio's
+  // portfolio_id.
+  certificate_id Int      @id @default(autoincrement())
+  provider_id    Int
+  cert_title     String   @db.VarChar(255)
+  // "Issuing organization" on the edit form.
+  organization   String   @db.VarChar(255)
+  // Month/year only, no day — MonthDropdown/YearDropdown never collect one.
+  // Nullable: not every certification expires, and the frontend doesn't
+  // actually enforce these two as required (only Name, Issuing organization,
+  // Credential ID and Credential URL carry the HTML `required` attribute).
+  issue_month    Int?
+  issue_year     Int?
+  expire_month   Int?
+  expire_year    Int?
+  credential_id  String   @db.VarChar(255)
+  credential_url String   @db.VarChar(255)
+  cert_image     String   @db.VarChar(255)
+  provider       provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([cert_id, provider_id])
+  // provider_id was the *second* column of the old composite PK, so it was
+  // never actually covered by a usable index. Dropping that PK for a
+  // surrogate key would otherwise leave "all certs for this provider" as a
+  // full table scan.
+  @@index([provider_id])
 }
 
 model company {
