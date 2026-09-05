@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 4 Sep 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 5 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -780,10 +780,11 @@ admin: ['admin'],</code></pre>
           Three states, not two. A field that is <strong>absent</strong> leaves its column alone —
           that is what makes this a <code>PATCH</code>, and it is why the edit form may send one
           input or all of them. A field carrying a <strong>value</strong> overwrites. A field set to
-          <strong><code>null</code></strong> clears, and only <code>company_description</code>,
-          <code>address</code>, and <code>website</code> accept it, because they are the only
-          nullable columns; <code>null</code> anywhere else is a <code>400</code>. An empty body is
-          a <code>400</code> too — it is a client bug, not a no-op worth a <code>200</code>.
+          <strong><code>null</code></strong> clears, and only the five nullable columns accept it —
+          <code>company_description</code>, <code>address</code>, <code>website</code>,
+          <code>service_term</code>, and <code>warranty_policy</code>; <code>null</code> anywhere
+          else is a <code>400</code>. An empty body is a <code>400</code> too — it is a client bug,
+          not a no-op worth a <code>200</code>.
         </p>
         <p class="note">
           <code>company_type</code> is a set, not a list you append to: the request carries the
@@ -798,6 +799,17 @@ admin: ['admin'],</code></pre>
           difference is <code>excludeCompanyId</code>: <code>assertCompanyIdentityAvailable</code>
           skips the caller's own row, or a form that re-submits every field would collide with
           itself.
+        </p>
+        <p class="note">
+          <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
+          columns on <code>provider</code>, not on <code>company</code>, so they only exist for a
+          company that offers work. The controller writes them through a nested
+          <code>provider: { update: … }</code> in the same transaction as the rest, and a
+          <code>RECEIVER</code> company that sends either one gets a <code>403</code> — its account
+          type owns no <code>provider</code> row to write to. A <code>BOTH</code> company is a
+          provider too, which is why the check asks <code>roleGrants</code> rather than comparing
+          the role to <code>'provider'</code>. Reading them is always safe: a receiver simply sees
+          <code>null</code> for both.
         </p>
         <p class="note">
           <code>password</code> and <code>account_type</code> are <em>not</em> editable here, and
@@ -917,7 +929,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 50 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 57 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -972,6 +984,13 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>GET afterwards</td><td><span class="status s-ok">200, every change present</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, provider</td><td><span class="status s-ok">200 both saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term: null</td><td><span class="status s-ok">200 cleared, warranty_policy untouched</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, provider</td><td><span class="status s-ok">200, provider columns unmoved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, BOTH</td><td><span class="status s-ok">200 — BOTH grants provider</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term, RECEIVER</td><td><span class="status s-warn">403 — owns no provider row</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, RECEIVER</td><td><span class="status s-ok">200 — the 403 is per-field, not per-request</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>RECEIVER reading the provider columns</td><td><span class="status s-ok">200 both null, no nested key</span></td></tr>
             </tbody>
           </table>
         </div>
