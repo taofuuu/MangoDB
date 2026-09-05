@@ -8,8 +8,18 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
     BOTH: 'both',
 };
 
+// account_type is a VarChar column, not a real Postgres enum (see
+// CompanyProfileRow), so nothing stops a bad value from reaching here except
+// registerSchema — and only for rows register itself wrote. A row from
+// anywhere else (a seed script, a manual edit, a future bulk-import path)
+// isn't covered. Throwing turns a silent undefined-role token into a 500
+// instead of a broken login that still succeeds.
 export function accountTypeToRole(accountType: AccountType): UserRole {
-    return ROLE_BY_ACCOUNT_TYPE[accountType];
+    const role = ROLE_BY_ACCOUNT_TYPE[accountType];
+    if (!role) {
+        throw new Error(`Unknown account_type: ${accountType}`);
+    }
+    return role;
 }
 
 // What each role may act as. A BOTH company offers and requests work, so it

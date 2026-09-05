@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { CompanyProfile } from '@mangodb/shared';
 import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import {
@@ -22,6 +23,20 @@ import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
+
+// Shared by register and login: both sign a token from the same profile shape
+// and answer with the same { company, accessToken } pair.
+function issueSession(company: CompanyProfile): {
+    company: CompanyProfile;
+    accessToken: string;
+} {
+    const accessToken = signAccessToken({
+        sub: String(company.company_id),
+        role: accountTypeToRole(company.account_type),
+    });
+
+    return { company, accessToken };
+}
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -73,16 +88,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         throw err;
     }
 
-    // sub is a string in AuthTokenPayload; company_id is an int.
-    const accessToken = signAccessToken({
-        sub: String(company.company_id),
-        role: accountTypeToRole(account_type),
-    });
-
-    res.status(201).json({
-        company: toCompanyProfile(company),
-        accessToken,
-    });
+    res.status(201).json(issueSession(toCompanyProfile(company)));
 }
 
 const checkAvailabilitySchema = z.object({
@@ -135,12 +141,6 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     // The hash never leaves this function: split it off, serialize the rest.
     const { password: _hash, ...row } = company;
-    const profile = toCompanyProfile(row);
 
-    const accessToken = signAccessToken({
-        sub: String(profile.company_id),
-        role: accountTypeToRole(profile.account_type),
-    });
-
-    res.json({ company: profile, accessToken });
+    res.json(issueSession(toCompanyProfile(row)));
 }
