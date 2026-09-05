@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import FormModal from '@/components/forms/CertificateForm';
 import EditCertificateForm, {
     CertificateData,
@@ -26,7 +27,11 @@ export default function CertificatePage() {
     );
 
     return (
-        <main className="flex gap-4 p-10">
+        <main className="flex items-center gap-4 p-10">
+            <Link href="/" className="text-md !font-[400] underline">
+                ← Back
+            </Link>
+
             {/* Add Certification Button */}
             <button
                 onClick={() => setIsAddOpen(true)}

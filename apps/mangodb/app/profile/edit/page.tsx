@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import EditProfileForm, {
     ProfileFormData,
 } from '@/components/forms/EditProfileForm';
@@ -29,6 +30,17 @@ const MOCK_PROFILE: ProfileFormData = {
 
 export default function EditProfilePage() {
     const [saved, setSaved] = useState<ProfileFormData>(MOCK_PROFILE);
+    const router = useRouter();
+
+    // Cancel leaves the page. Opening /profile/edit directly leaves nothing to
+    // go back to, so fall back to the index rather than doing nothing.
+    const handleCancel = () => {
+        if (window.history.length > 1) {
+            router.back();
+        } else {
+            router.push('/');
+        }
+    };
 
     return (
         // pt matches the gap the design leaves under the 108px navbar, which
@@ -40,6 +52,7 @@ export default function EditProfilePage() {
                     setSaved(data);
                     console.log('saved profile', data);
                 }}
+                onCancel={handleCancel}
             />
         </main>
     );
