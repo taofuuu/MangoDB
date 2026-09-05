@@ -79,6 +79,10 @@ export interface CompanyProfile {
     website: string | null;
     account_type: AccountType;
     company_type: string[];
+    // Both live on the provider table, flattened to here. A RECEIVER company
+    // owns no provider row, so it always reads null for these two.
+    service_term: string | null;
+    warranty_policy: string | null;
 }
 
 // Registration returns two things, so it is the one response that wraps.
@@ -100,4 +104,7 @@ export interface UpdateCompanyProfileRequest {
     company_description?: string | null;
     address?: string | null;
     website?: string | null;
+    // Provider-only. Sending either as a RECEIVER company is a 403.
+    service_term?: string | null;
+    warranty_policy?: string | null;
 }
