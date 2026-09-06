@@ -29,3 +29,17 @@ export function parseQuery<T>(schema: ZodType<T>, query: unknown): T {
     }
     return result.data;
 }
+
+// Path values arrive as strings too, so schemas here need z.coerce for
+// numbers. A malformed path param is not a field-level failure of the body,
+// so this reports BAD_REQUEST like parseQuery rather than VALIDATION_FAILED.
+export function parseParams<T>(schema: ZodType<T>, params: unknown): T {
+    const result = schema.safeParse(params);
+    if (!result.success) {
+        throw ApiError.badRequest(
+            'Path parameters are invalid',
+            toDetails(result.error),
+        );
+    }
+    return result.data;
+}
