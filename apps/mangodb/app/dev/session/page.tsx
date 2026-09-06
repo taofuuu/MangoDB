@@ -1,19 +1,27 @@
 'use client';
 
+// THROWAWAY — do not import from this file, and do not copy it as a pattern.
+// It is one self-contained file on purpose: the button, the input, the API
+// client and the token helpers below are quick stand-ins so this page can get a
+// token. They are not shared code. The real versions belong to the login page
+// (US1-2, Dena and Chin) and to whoever builds the shared UI kit.
+//
+// Why the page exists: there is no login page yet, and the 20 seeded companies
+// cannot log in — their password column holds the literal string "hash123"
+// instead of a bcrypt hash. POST /auth/register is public and hands back a
+// token, so that is how this page gets one.
+//
+// Delete app/dev/ when the real login lands.
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { AccountType, CompanyProfile } from '@mangodb/shared';
-import { apiFetch, ApiRequestError } from '@/lib/api';
-import { clearToken, setToken } from '@/lib/auth';
-import { getMyProfile } from '@/lib/companies';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-
-// Scaffolding. There is no login page yet — "Build the login page inputs"
-// (US1-2) belongs to Dena and Chin — and the 20 seeded companies cannot log in
-// at all: their password column holds the literal string "hash123" instead of a
-// bcrypt hash. POST /auth/register is public and hands back a token, so that is
-// how this page gets one. Delete this route when the real login lands.
+import type {
+    AccountType,
+    ApiErrorCode,
+    ApiErrorDetail,
+    ApiErrorResponse,
+    CompanyProfile,
+} from '@mangodb/shared';
 
 const ACCOUNT_TYPES: AccountType[] = ['PROVIDER', 'RECEIVER', 'BOTH'];
 
@@ -21,8 +29,185 @@ const ACCOUNT_TYPES: AccountType[] = ['PROVIDER', 'RECEIVER', 'BOTH'];
 // into one only ever needs its email.
 const DEV_PASSWORD = 'password123';
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+const TOKEN_KEY = 'mangodb.token';
+
 // register and login answer with the same pair.
 type SessionResponse = { company: CompanyProfile; accessToken: string };
+
+/* --- token ---------------------------------------------------------- */
+
+// The access token lives in localStorage. Every read is guarded because the
+// page renders on the server first, where there is no window to read from.
+function getToken(): string | null {
+    return typeof window === 'undefined'
+        ? null
+        : window.localStorage.getItem(TOKEN_KEY);
+}
+
+function setToken(token: string): void {
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem(TOKEN_KEY, token);
+    }
+}
+
+// Forgetting the token is not the same as ending the session: the token stays
+// signed and valid until it expires. Only POST /auth/logout revokes it.
+function clearToken(): void {
+    if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(TOKEN_KEY);
+    }
+}
+
+/* --- api ------------------------------------------------------------ */
+
+// Every non-2xx from the API arrives in the same envelope, so one error class
+// covers all of them. `code` is the stable half to switch on.
+class ApiRequestError extends Error {
+    readonly status: number;
+    readonly code: ApiErrorCode;
+    readonly details: ApiErrorDetail[];
+
+    constructor(
+        status: number,
+        code: ApiErrorCode,
+        message: string,
+        details: ApiErrorDetail[] = [],
+    ) {
+        super(message);
+        this.name = 'ApiRequestError';
+        this.status = status;
+        this.code = code;
+        this.details = details;
+    }
+}
+
+// Reads the error envelope. A failure that never reached the API — a proxy, a
+// crash — has no envelope, so fall back to something the user can act on.
+async function toRequestError(response: Response): Promise<ApiRequestError> {
+    try {
+        const body = (await response.json()) as ApiErrorResponse;
+        return new ApiRequestError(
+            response.status,
+            body.error.code,
+            body.error.message,
+            body.error.details ?? [],
+        );
+    } catch {
+        return new ApiRequestError(
+            response.status,
+            'INTERNAL',
+            `Request failed with status ${response.status}`,
+        );
+    }
+}
+
+async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const token = getToken();
+
+    const response = await fetch(`${BASE_URL}${path}`, {
+        ...init,
+        headers: {
+            'content-type': 'application/json',
+            ...(token ? { authorization: `Bearer ${token}` } : {}),
+            ...init.headers,
+        },
+    });
+
+    if (!response.ok) {
+        throw await toRequestError(response);
+    }
+
+    // 204 is the success shape for logout and deletes — no body to parse.
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    return (await response.json()) as T;
+}
+
+function getMyProfile(): Promise<CompanyProfile> {
+    return apiFetch<CompanyProfile>('/companies/me');
+}
+
+/* --- local ui ------------------------------------------------------- */
+
+type ButtonVariant = 'primary' | 'outline' | 'danger';
+
+// Fill and border only. Every button here passes its own size through
+// className rather than picking from a size prop.
+const variants: Record<ButtonVariant, string> = {
+    primary: 'bg-[#497B93] text-[#FFFDF9] hover:bg-[#3F6B80]',
+    outline:
+        'border border-[#497B93] bg-white text-[#171717] hover:bg-[#497B93]/10',
+    danger: 'bg-[#C5483B] text-[#FFFDF9] hover:bg-[#A93B30]',
+};
+
+type ButtonProps = {
+    variant?: ButtonVariant;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+function Button({
+    variant = 'primary',
+    className = '',
+    // Buttons inside a <form> submit by default; only the one that means it
+    // should say so.
+    type = 'button',
+    ...props
+}: ButtonProps) {
+    return (
+        <button
+            type={type}
+            className={`rounded-button transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+            {...props}
+        />
+    );
+}
+
+type InputProps = {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+} & Omit<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    'value' | 'onChange' | 'className'
+>;
+
+function Input({
+    label,
+    value,
+    onChange,
+    id,
+    // Spelled out so the field reaches the accessibility tree as a textbox
+    // rather than an input with no type.
+    type = 'text',
+    ...props
+}: InputProps) {
+    const inputId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+    return (
+        <div>
+            <label
+                htmlFor={inputId}
+                className="mb-[0.93vh] block text-lg leading-[1.15]"
+            >
+                {label}
+            </label>
+
+            <input
+                id={inputId}
+                type={type}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="h-[4.79vh] w-full rounded-button border-[0.75px] border-black bg-white px-[0.83vw] text-md text-[#171717] placeholder:text-[#D6D6D6] focus:ring-1 focus:ring-[#497B93] focus:outline-none"
+                {...props}
+            />
+        </div>
+    );
+}
+
+/* --- page ----------------------------------------------------------- */
 
 // Module scope, not the component: username and email are unique indexes, so
 // every click needs its own, and a clock read does not belong in a render.
