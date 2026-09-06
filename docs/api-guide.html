@@ -780,9 +780,10 @@ admin: ['admin'],</code></pre>
           Three states, not two. A field that is <strong>absent</strong> leaves its column alone —
           that is what makes this a <code>PATCH</code>, and it is why the edit form may send one
           input or all of them. A field carrying a <strong>value</strong> overwrites. A field set to
-          <strong><code>null</code></strong> clears, and only the five nullable columns accept it —
+          <strong><code>null</code></strong> clears, and only the six nullable columns accept it —
           <code>company_description</code>, <code>address</code>, <code>website</code>,
-          <code>service_term</code>, and <code>warranty_policy</code>; <code>null</code> anywhere
+          <code>contact_email</code>, <code>service_term</code>, and
+          <code>warranty_policy</code>; <code>null</code> anywhere
           else is a <code>400</code>. An empty body is a <code>400</code> too — it is a client bug,
           not a no-op worth a <code>200</code>.
         </p>
@@ -799,6 +800,17 @@ admin: ['admin'],</code></pre>
           difference is <code>excludeCompanyId</code>: <code>assertCompanyIdentityAvailable</code>
           skips the caller's own row, or a form that re-submits every field would collide with
           itself.
+        </p>
+        <p class="note">
+          <strong>There are two emails, and they are not the same thing.</strong>
+          <code>email</code> is what a company signs in with: it is unique, and it is what
+          <code>POST /auth/login</code> looks a company up by, so changing it changes the
+          credential. <code>contact_email</code> is the address the profile shows so other
+          companies can get in touch — nullable, <em>not</em> unique, and empty until someone
+          fills it in, because registration never asks for one. Two companies sharing a contact
+          address is a <code>200</code>, not a <code>409</code>. The form on
+          <code>/profile/edit</code> writes <code>contact_email</code> only; the account settings
+          page is where <code>username</code> and <code>email</code> are changed.
         </p>
         <p class="note">
           <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
@@ -929,7 +941,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 57 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 64 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -984,6 +996,13 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>GET afterwards</td><td><span class="status s-ok">200, every change present</span></td></tr>
+              <tr><td class="code-cell">GET /companies/me</td><td>contact_email never set</td><td><span class="status s-ok">200, contact_email: null</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email set</td><td><span class="status s-ok">200 saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: null</td><td><span class="status s-ok">200 cleared</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: ""</td><td><span class="status s-warn">400 on contact_email</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email another company holds</td><td><span class="status s-ok">200 — not unique, unlike email</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>email another company holds, after that</td><td><span class="status s-warn">409 — login identity still guarded</span></td></tr>
+              <tr><td class="code-cell">POST /auth/login</td><td>account email, once contact_email is set</td><td><span class="status s-ok">200 — the two are independent</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, provider</td><td><span class="status s-ok">200 both saved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>service_term: null</td><td><span class="status s-ok">200 cleared, warranty_policy untouched</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, provider</td><td><span class="status s-ok">200, provider columns unmoved</span></td></tr>
