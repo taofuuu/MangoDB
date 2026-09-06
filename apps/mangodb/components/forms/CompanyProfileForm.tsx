@@ -16,7 +16,7 @@ export type ProfileFormData = Pick<
     CompanyProfile,
     | 'company_name'
     | 'company_description'
-    | 'email'
+    | 'contact_email'
     | 'phone'
     | 'website'
     | 'address'
@@ -40,10 +40,11 @@ function orNull(value: string | null): string | null {
     return trimmed === '' ? null : trimmed;
 }
 
-// What the form holds is not quite what the endpoint takes. account_type and
-// photoUrl are simply absent here: the first is not editable, the second has no
-// column to live in. Everything else goes every time, which also keeps the body
-// from ever being empty — the API rejects {} as a client bug.
+// What the form holds is not quite what the endpoint takes. Four fields are
+// absent: account_type is not editable, photoUrl has no column to live in, and
+// username and email belong to Account Settings, which is where a company
+// changes what it signs in with. Everything else goes every time, which also
+// keeps the body from ever being empty — the API rejects {} as a client bug.
 //
 // It lives beside ProfileFormData rather than in lib/companies.ts so the API
 // layer stays free of anything form-shaped.
@@ -57,11 +58,11 @@ export function toUpdateRequest(
         // Not run through orNull: these columns are not nullable, so a cleared
         // one should come back as a field-level 400 rather than be dropped.
         company_name: data.company_name,
-        email: data.email,
         phone: data.phone,
         company_type: data.company_type,
         company_description: orNull(data.company_description),
         address: orNull(data.address),
+        contact_email: orNull(data.contact_email),
         website: orNull(data.website),
         // A RECEIVER company owns no provider row, so sending either of these
         // is a deliberate 403. Leave them out rather than send null.
@@ -165,11 +166,11 @@ export default function CompanyProfileForm({
 
                     <div className="mt-[3.09vh]">
                         <Input
-                            label="Email Address"
+                            label="Contact Email"
                             type="email"
-                            value={data.email}
-                            onChange={(v) => setField('email', v)}
-                            error={errors?.email}
+                            value={data.contact_email ?? ''}
+                            onChange={(v) => setField('contact_email', v)}
+                            error={errors?.contact_email}
                         />
                     </div>
 
