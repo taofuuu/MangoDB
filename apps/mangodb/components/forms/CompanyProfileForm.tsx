@@ -14,7 +14,6 @@ import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
-    | 'username'
     | 'company_name'
     | 'company_description'
     | 'email'
@@ -58,7 +57,6 @@ export function toUpdateRequest(
         // Not run through orNull: these columns are not nullable, so a cleared
         // one should come back as a field-level 400 rather than be dropped.
         company_name: data.company_name,
-        username: data.username,
         email: data.email,
         phone: data.phone,
         company_type: data.company_type,
@@ -145,21 +143,14 @@ export default function CompanyProfileForm({
 
                 {/* Middle column */}
                 <div className="ml-[4.73vw] w-[31.13vw] shrink-0">
-                    <Input
-                        label="Username"
-                        value={data.username}
-                        onChange={(v) => setField('username', v)}
-                        error={errors?.username}
+                    {/* Username is edited on /account-settings now, beside the
+                        email and password, so the column starts here. */}
+                    <Textarea
+                        label="Company Description"
+                        value={data.company_description ?? ''}
+                        onChange={(v) => setField('company_description', v)}
+                        error={errors?.company_description}
                     />
-
-                    <div className="mt-[3.09vh]">
-                        <Textarea
-                            label="Company Description"
-                            value={data.company_description ?? ''}
-                            onChange={(v) => setField('company_description', v)}
-                            error={errors?.company_description}
-                        />
-                    </div>
 
                     {isProvider && (
                         <div className="mt-[3.09vh]">
