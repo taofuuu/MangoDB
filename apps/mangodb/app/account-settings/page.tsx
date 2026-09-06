@@ -1,13 +1,28 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+import penIcon from '@/assets/icons/pen.png';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
+import EditProfileForm, {
+    ProfileData,
+} from '@/components/forms/EditProfileForm';
 
 export default function AccountPage() {
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const mockUsername = 'johndoe';
-    const mockEmail = 'johndoe@example.com';
+    const [username, setUsername] = useState('johndoe');
+    const [email, setEmail] = useState('johndoe@example.com');
+    const [password, setPassword] = useState('password123');
+
+    const handleSaveProfile = (data: ProfileData) => {
+        setUsername(data.username);
+        setEmail(data.email);
+        if (data.password) {
+            setPassword(data.password);
+        }
+    };
 
     const handleDeleteAccount = (confirmedEmail: string) => {
         setIsDeleting(true);
@@ -32,15 +47,31 @@ export default function AccountPage() {
                 </header>
 
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <h2 className="text-md font-semibold text-[#171717]">
-                        Profile Information
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-md font-semibold text-[#171717]">
+                            Profile Information
+                        </h2>
+                        <button
+                            type="button"
+                            onClick={() => setIsEditOpen(true)}
+                            aria-label="Edit Profile"
+                            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <Image
+                                src={penIcon}
+                                alt="Edit profile"
+                                width={18}
+                                height={18}
+                                className="w-[18px] h-[18px] object-contain cursor-pointer"
+                            />
+                        </button>
+                    </div>
                     <div className="mt-3 text-xs text-[#555555]">
                         <p>
-                            <strong>Username:</strong> {mockUsername}
+                            <strong>Username:</strong> {username}
                         </p>
                         <p className="mt-1">
-                            <strong>Email:</strong> {mockEmail}
+                            <strong>Email:</strong> {email}
                         </p>
                     </div>
                 </div>
@@ -64,10 +95,19 @@ export default function AccountPage() {
                 </div>
             </div>
 
+            {isEditOpen && (
+                <EditProfileForm
+                    isOpen={isEditOpen}
+                    initialData={{ username, email, password }}
+                    onClose={() => setIsEditOpen(false)}
+                    onSave={handleSaveProfile}
+                />
+            )}
+
             <DeleteAccountModal
                 isOpen={isDeleteOpen}
                 isDeleting={isDeleting}
-                expectedEmail={mockEmail}
+                expectedEmail={email}
                 onClose={() => setIsDeleteOpen(false)}
                 onConfirm={handleDeleteAccount}
             />
