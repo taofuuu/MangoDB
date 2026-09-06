@@ -73,7 +73,11 @@ export interface CompanyProfile {
     company_name: string;
     company_description: string | null;
     username: string;
+    // Signs the company in, and is unique.
     email: string;
+    // Shown on the profile so others can make contact. Not unique, and null
+    // until the company fills it in — registration does not ask for one.
+    contact_email: string | null;
     phone: string;
     address: string | null;
     website: string | null;
@@ -99,6 +103,7 @@ export interface UpdateCompanyProfileRequest {
     company_name?: string;
     username?: string;
     email?: string;
+    contact_email?: string | null;
     phone?: string;
     company_type?: string[];
     company_description?: string | null;

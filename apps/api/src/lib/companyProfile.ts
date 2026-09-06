@@ -8,6 +8,7 @@ export const companyProfileSelect = {
     company_description: true,
     username: true,
     email: true,
+    contact_email: true,
     phone: true,
     address: true,
     website: true,
@@ -24,6 +25,7 @@ export interface CompanyProfileRow {
     company_description: string | null;
     username: string;
     email: string;
+    contact_email: string | null;
     phone: string;
     address: string | null;
     website: string | null;
