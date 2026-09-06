@@ -34,7 +34,12 @@ model certificate {
   expire_year    Int?
   credential_id  String   @db.VarChar(255)
   credential_url String   @db.VarChar(255)
-  cert_image     String   @db.VarChar(255)
+  // Nullable for the same reason as issue/expire month+year above: the form
+  // doesn't require it. FileUpload.tsx carries no `required` attribute, and
+  // EditCertificateForm's handleSubmit puts `file` into the payload as null
+  // without complaint. NOT NULL here would reject a form the UI treats as
+  // valid, and the first POST /certificates would fail on it.
+  cert_image     String?  @db.VarChar(255)
   provider       provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
 
   // provider_id was the *second* column of the old composite PK, so it was
