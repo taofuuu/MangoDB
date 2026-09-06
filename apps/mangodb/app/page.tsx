@@ -13,6 +13,11 @@ const ROUTES = [
         title: 'Certificates',
         detail: 'Add and edit certificate modals, on mock data.',
     },
+    {
+        href: '/viewprofile',
+        title: 'View Profile',
+        detail: 'View the profile information page.',
+    },
 ];
 
 export default function Home() {
