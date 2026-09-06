@@ -153,11 +153,16 @@ model service {
 }
 
 model service_portfolio {
+  portfolio_id   Int     @id @default(autoincrement())
   listing_id     Int
   portfolio_link String  @db.VarChar(255)
   service        service @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([listing_id, portfolio_link])
+  // The old composite PK did two jobs: name the row, and stop one listing
+  // holding the same link twice. portfolio_id takes over the naming; this
+  // keeps the guarantee. A surrogate key replaces the natural key as
+  // identity, never as a constraint.
+  @@unique([listing_id, portfolio_link])
 }
 
 model revoked_token {
