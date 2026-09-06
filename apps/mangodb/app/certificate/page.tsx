@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import FormModal from '@/components/forms/CertificateForm';
 import EditCertificateForm, {
-    CertificateData,
+    type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
 
@@ -26,11 +26,6 @@ export default function CertificatePage() {
                 'https://learn.microsoft.com/certifications/azure-fundamentals',
         },
     );
-
-    const handleDeleteCertificate = () => {
-        console.log('Certificate deleted:', certificateToEdit);
-        setIsDeleteOpen(false);
-    };
 
     return (
         <main className="flex gap-4 p-10">
@@ -72,11 +67,10 @@ export default function CertificatePage() {
                 }}
             />
 
-            {/* Delete Certificate Modal */}
+            {/* Frontend confirmation closes the popup through onClose. */}
             <DeleteCertificateModal
                 isOpen={isDeleteOpen}
                 onClose={() => setIsDeleteOpen(false)}
-                onConfirm={handleDeleteCertificate}
             />
         </main>
     );

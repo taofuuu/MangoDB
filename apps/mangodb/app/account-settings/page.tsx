@@ -5,13 +5,12 @@ import Image from 'next/image';
 import penIcon from '@/assets/icons/pen.png';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditProfileForm, {
-    ProfileData,
+    type ProfileData,
 } from '@/components/forms/EditProfileForm';
 
 export default function AccountPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [username, setUsername] = useState('johndoe');
     const [email, setEmail] = useState('johndoe@example.com');
     const [password, setPassword] = useState('password123');
@@ -22,16 +21,6 @@ export default function AccountPage() {
         if (data.password) {
             setPassword(data.password);
         }
-    };
-
-    const handleDeleteAccount = (confirmedEmail: string) => {
-        setIsDeleting(true);
-        console.log('Account deleted for email:', confirmedEmail);
-        setTimeout(() => {
-            setIsDeleting(false);
-            setIsDeleteOpen(false);
-            alert(`Account with email "${confirmedEmail}" has been deleted.`);
-        }, 800);
     };
 
     return (
@@ -104,12 +93,11 @@ export default function AccountPage() {
                 />
             )}
 
+            {/* Frontend confirmation closes the popup through onClose. */}
             <DeleteAccountModal
                 isOpen={isDeleteOpen}
-                isDeleting={isDeleting}
                 expectedEmail={email}
                 onClose={() => setIsDeleteOpen(false)}
-                onConfirm={handleDeleteAccount}
             />
         </main>
     );
