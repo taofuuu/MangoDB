@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api';
 import { getMyProfile, updateMyProfile } from '@/lib/companies';
-import EditProfileForm, {
+import CompanyProfileForm, {
     ProfileFormData,
     toUpdateRequest,
-} from '@/components/forms/EditProfileForm';
+} from '@/components/forms/CompanyProfileForm';
 
 type FormErrors = Partial<Record<keyof ProfileFormData, string>>;
 type SaveStatus = { type: 'success' | 'error'; message: string } | null;
@@ -127,7 +127,7 @@ export default function EditProfilePage() {
             )}
 
             {saved && (
-                <EditProfileForm
+                <CompanyProfileForm
                     initialData={saved}
                     onSave={handleSave}
                     onCancel={handleCancel}

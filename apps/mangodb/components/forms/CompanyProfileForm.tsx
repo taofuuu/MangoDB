@@ -74,7 +74,7 @@ export function toUpdateRequest(
     };
 }
 
-type EditProfileFormProps = {
+type CompanyProfileFormProps = {
     initialData: ProfileFormData;
     onSave: (data: ProfileFormData) => void;
     onCancel?: () => void;
@@ -84,13 +84,13 @@ type EditProfileFormProps = {
     status?: { type: 'success' | 'error'; message: string } | null;
 };
 
-export default function EditProfileForm({
+export default function CompanyProfileForm({
     initialData,
     onSave,
     onCancel,
     errors,
     status,
-}: EditProfileFormProps) {
+}: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
 
     // A save replaces initialData with what was stored and Cancel resets to
