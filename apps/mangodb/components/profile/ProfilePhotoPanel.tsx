@@ -111,24 +111,6 @@ export default function ProfilePhotoPanel({
                     />
                 ))}
             </div>
-
-            {/* Both belong to US1-6 (request account deletion) and the password
-                change story, neither of which has an endpoint yet. */}
-            <button
-                type="button"
-                onClick={() => console.log('TODO: change password')}
-                className="mt-[3.8vh] cursor-pointer text-md !font-[400] underline"
-            >
-                Change your password
-            </button>
-
-            <button
-                type="button"
-                onClick={() => console.log('TODO(US1-6): delete account')}
-                className="mt-[1.94vh] cursor-pointer text-md !font-[400] underline"
-            >
-                Delete your account
-            </button>
         </div>
     );
 }

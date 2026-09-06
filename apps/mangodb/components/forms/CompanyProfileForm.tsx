@@ -9,7 +9,6 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import CompanyTypeField from './CompanyTypeField';
-import DeleteAccountSection from '../profile/DeleteAccountSection';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 
 export type ProfileFormData = Pick<
@@ -184,8 +183,6 @@ export default function CompanyProfileForm({
                             error={errors?.website}
                         />
                     </div>
-
-                    <DeleteAccountSection />
                 </div>
 
                 {/* Right column */}
