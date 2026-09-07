@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { AccountType } from '@mangodb/shared';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
@@ -31,17 +31,6 @@ export default function ProfilePhotoPanel({
     // Every object URL this panel has handed out, so the previous one is
     // released when a new photo replaces it and the last one on unmount.
     const objectUrl = useRef<string | null>(null);
-
-    // TODO(US1-5): account_type is not editable through PATCH /companies/me —
-    // it decides which provider/receiver rows a company owns. Removing a chip
-    // is local only until there is an endpoint for changing the account type.
-    const [roles, setRoles] = useState(ROLES[accountType]);
-
-    const [lastAccountType, setLastAccountType] = useState(accountType);
-    if (lastAccountType !== accountType) {
-        setLastAccountType(accountType);
-        setRoles(ROLES[accountType]);
-    }
 
     useEffect(() => {
         return () => {
@@ -99,14 +88,15 @@ export default function ProfilePhotoPanel({
                 Change Photo
             </Button>
 
+            {/* Read-only: these come from account_type, which is not editable
+                here — it decides which provider/receiver rows a company owns,
+                and no endpoint changes it. So the chips carry no remove
+                button, rather than one that only pretends to work. */}
             <div className="mt-[4.49vh] flex gap-[1.04vw]">
-                {roles.map((role) => (
+                {ROLES[accountType].map((role) => (
                     <Tag
                         key={role}
                         label={role}
-                        onRemove={() =>
-                            setRoles(roles.filter((r) => r !== role))
-                        }
                         className={`h-[3.33vh] w-[8.48vw] ${ROLE_FILL[role]}`}
                     />
                 ))}
