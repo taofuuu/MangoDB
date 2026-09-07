@@ -177,7 +177,7 @@ export default function CompanyProfileForm({
                         single-line field; built at the common height. */}
                     <div className="mt-[3.09vh]">
                         <Input
-                            label="Website:"
+                            label="Website"
                             value={data.website ?? ''}
                             onChange={(v) => setField('website', v)}
                             error={errors?.website}
@@ -188,7 +188,7 @@ export default function CompanyProfileForm({
                 {/* Right column */}
                 <div className="ml-[8.97vw] w-[31.13vw] shrink-0">
                     <Input
-                        label="Company Name:"
+                        label="Company Name"
                         value={data.company_name}
                         onChange={(v) => setField('company_name', v)}
                         error={errors?.company_name}
@@ -216,7 +216,7 @@ export default function CompanyProfileForm({
 
                     <div className="mt-[3.09vh]">
                         <Input
-                            label="Phone Number:"
+                            label="Phone Number"
                             type="tel"
                             value={data.phone}
                             onChange={(v) => setField('phone', v)}
@@ -226,7 +226,7 @@ export default function CompanyProfileForm({
 
                     <div className="mt-[3.09vh]">
                         <Textarea
-                            label="Company Location:"
+                            label="Company Location"
                             value={data.address ?? ''}
                             onChange={(v) => setField('address', v)}
                             error={errors?.address}
