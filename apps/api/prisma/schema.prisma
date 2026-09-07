@@ -15,14 +15,38 @@ model category {
 }
 
 model certificate {
-  cert_id     Int      @default(1)
-  provider_id Int
-  cert_title  String   @db.VarChar(255)
-  cert_desc   String?
-  cert_image  String   @db.VarChar(255)
-  provider    provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+  // Surrogate key: the old (cert_id, provider_id) PK made cert_id a value the
+  // app had to increment by hand per provider (cert_id defaulted to 1 for
+  // every insert). This is the same fix applied to service_portfolio's
+  // portfolio_id.
+  certificate_id Int      @id @default(autoincrement())
+  provider_id    Int
+  cert_title     String   @db.VarChar(255)
+  // "Issuing organization" on the edit form.
+  organization   String   @db.VarChar(255)
+  // Month/year only, no day — MonthDropdown/YearDropdown never collect one.
+  // Nullable: not every certification expires, and the frontend doesn't
+  // actually enforce these two as required (only Name, Issuing organization,
+  // Credential ID and Credential URL carry the HTML `required` attribute).
+  issue_month    Int?
+  issue_year     Int?
+  expire_month   Int?
+  expire_year    Int?
+  credential_id  String   @db.VarChar(255)
+  credential_url String   @db.VarChar(255)
+  // Required: every certificate must carry its image. The upload form does not
+  // enforce this yet — FileUpload.tsx has no `required` attribute and
+  // EditCertificateForm's handleSubmit still puts `file` into the payload as
+  // null. Until that is fixed, a submission the UI accepts will fail here as a
+  // Prisma error instead of a validation error.
+  cert_image     String   @db.VarChar(255)
+  provider       provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([cert_id, provider_id])
+  // provider_id was the *second* column of the old composite PK, so it was
+  // never actually covered by a usable index. Dropping that PK for a
+  // surrogate key would otherwise leave "all certs for this provider" as a
+  // full table scan.
+  @@index([provider_id])
 }
 
 model company {
@@ -36,6 +60,11 @@ model company {
   address             String?
   website             String?        @db.VarChar(255)
   account_type        String         @db.VarChar(100)
+  // Separate from `email`, which is the login identity and is unique and
+  // required. This one is a public point of contact, so it is optional and
+  // not unique. Added directly to the database ahead of this schema; the
+  // migration that records it is marked applied rather than run.
+  contact_email       String?        @db.VarChar(100)
   company_type        company_type[]
   listing             listing[]
   proposal            proposal[]
@@ -153,9 +182,21 @@ model service {
 }
 
 model service_portfolio {
+  portfolio_id   Int     @id @default(autoincrement())
   listing_id     Int
   portfolio_link String  @db.VarChar(255)
   service        service @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([listing_id, portfolio_link])
+  // The old composite PK did two jobs: name the row, and stop one listing
+  // holding the same link twice. portfolio_id takes over the naming; this
+  // keeps the guarantee. A surrogate key replaces the natural key as
+  // identity, never as a constraint.
+  @@unique([listing_id, portfolio_link])
+}
+
+model revoked_token {
+  jti        String   @id @db.VarChar(64)
+  expires_at DateTime @db.Timestamptz(6)
+
+  @@index([expires_at])
 }

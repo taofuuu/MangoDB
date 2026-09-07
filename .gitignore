@@ -6,6 +6,8 @@ AGENTS.md
 
 # graphify — derived knowledge graph + local agent integration
 graphify-out/
+# repeated at apps/api, but for graphify to read (only root)
+apps/api/src/generated/
 .claude/
 /CLAUDE.md
 
