@@ -49,17 +49,17 @@ export default function AccountPage() {
                 <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <div className="flex items-center justify-between">
                         <h2 className="text-md font-semibold text-[#171717]">
-                            Profile Information
+                            Account Information
                         </h2>
                         <button
                             type="button"
                             onClick={() => setIsEditOpen(true)}
-                            aria-label="Edit Profile"
+                            aria-label="Edit Account Information"
                             className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <Image
                                 src={penIcon}
-                                alt="Edit profile"
+                                alt="Edit account information"
                                 width={18}
                                 height={18}
                                 className="w-[18px] h-[18px] object-contain cursor-pointer"
