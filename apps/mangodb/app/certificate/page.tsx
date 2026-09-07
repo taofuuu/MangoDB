@@ -31,6 +31,10 @@ export default function CertificatePage() {
     const [certificateToEdit, setCertificateToEdit] =
         useState<CertificateData | null>(null);
 
+    // Certificate currently being deleted
+    const [certificateToDelete, setCertificateToDelete] =
+        useState<CertificateData | null>(null);
+
     // -------------------------
     // ADD
     // -------------------------
@@ -56,6 +60,22 @@ export default function CertificatePage() {
 
         setCertificateToEdit(null);
         setIsEditOpen(false);
+    };
+
+    // -------------------------
+    // DELETE
+    // -------------------------
+    const handleDeleteCertificate = () => {
+        if (!certificateToDelete) return;
+
+        console.log('Certificate deleted:', certificateToDelete);
+
+        setCertificates((prev) =>
+            prev.filter((certificate) => certificate !== certificateToDelete),
+        );
+
+        setCertificateToDelete(null);
+        setIsDeleteOpen(false);
     };
 
     return (
@@ -96,6 +116,17 @@ export default function CertificatePage() {
                         </p>
 
                         <p>Credential ID: {certificate.credID}</p>
+
+                        {/* Delete button */}
+                        <button
+                            onClick={() => {
+                                setCertificateToDelete(certificate);
+                                setIsDeleteOpen(true);
+                            }}
+                            className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+                        >
+                            Delete
+                        </button>
                     </div>
                 ))}
             </div>
@@ -122,6 +153,16 @@ export default function CertificatePage() {
                     setCertificateToEdit(null);
                 }}
                 onSave={handleEditCertificate}
+            />
+
+            {/* ------------------------- */}
+            {/* DELETE MODAL */}
+            {/* ------------------------- */}
+
+            <DeleteCertificateModal
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleDeleteCertificate}
             />
         </main>
     );
