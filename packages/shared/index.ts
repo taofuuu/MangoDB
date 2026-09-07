@@ -101,3 +101,27 @@ export interface UpdateCompanyProfileRequest {
     address?: string | null;
     website?: string | null;
 }
+
+// US1-7 & US1-8. Provider service information, service terms, and warranty policy.
+// tech_stack is flattened from provider_tech_stack join table rows.
+export interface ProviderServiceProfile {
+    company_id: number;
+    service_term: string | null;
+    warranty_policy: string | null;
+    tech_stack: string[];
+}
+
+// US1-7. What adding service information and service terms accepts.
+export interface AddProviderServiceRequest {
+    service_term?: string | null;
+    warranty_policy?: string | null;
+    tech_stack?: string[];
+}
+
+// US1-8. What editing service information and service terms accepts.
+// An absent field leaves the value untouched; null clears a nullable column.
+export interface UpdateProviderServiceRequest {
+    service_term?: string | null;
+    warranty_policy?: string | null;
+    tech_stack?: string[];
+}
