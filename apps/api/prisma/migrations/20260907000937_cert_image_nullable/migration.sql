@@ -1,0 +1,11 @@
+-- AlterTable
+-- cert_image becomes nullable. The certificate edit form never requires a
+-- file: FileUpload.tsx carries no `required` attribute and
+-- EditCertificateForm's handleSubmit puts `file` into the payload as null
+-- without complaint. NOT NULL would reject a form the UI treats as valid,
+-- and the first POST /certificates would fail on it. Same reasoning that
+-- made issue/expire month+year nullable in 20260905101620_certificate_fields.
+--
+-- Widening only: every existing row already has a cert_image, and this
+-- touches none of them.
+ALTER TABLE "certificate" ALTER COLUMN "cert_image" DROP NOT NULL;
