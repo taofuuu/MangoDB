@@ -1,53 +1,52 @@
-// Access tokens are stateless, so a logged-out token stays cryptographically
-// valid until it expires. This denylist is what makes logout actually end a
-// session: requireAuth rejects any token whose jti is listed here.
-//
-// Storage is in-process. That means the list is lost on restart and is not
-// shared between API instances, so a logged-out token would be honoured again
-// after a deploy. Acceptable while the API runs as a single dev process; move
-// this to Postgres (or Redis) behind the same two functions once DATABASE_URL
-// is wired up. Nothing outside this file depends on where the entries live.
+import { prisma } from '../lib/prisma';
 
-// jti -> token exp, as a UNIX timestamp in seconds.
-const revoked = new Map<string, number>();
+// A logged-out token stays cryptographically valid until it expires, so
+// requireAuth rejects any jti listed in public.revoked_token. Stored in
+// Postgres so it survives a restart — which is why both functions are async.
 
 function nowInSeconds(): number {
     return Math.floor(Date.now() / 1000);
 }
 
-// An entry is only useful until the token expires on its own, so drop the
-// stale ones rather than growing the map for the life of the process.
-function pruneExpired(now: number): void {
-    for (const [jti, exp] of revoked) {
-        if (exp <= now) {
-            revoked.delete(jti);
-        }
-    }
+function toDate(unixSeconds: number): Date {
+    return new Date(unixSeconds * 1000);
 }
 
-export function revokeToken(jti: string, exp: number): void {
+// On logout only. Revocations are rare, authenticated requests are not.
+async function pruneExpired(now: number): Promise<void> {
+    await prisma.revoked_token.deleteMany({
+        where: { expires_at: { lte: toDate(now) } },
+    });
+}
+
+export async function revokeToken(jti: string, exp: number): Promise<void> {
     const now = nowInSeconds();
-    pruneExpired(now);
-    // Already expired: verifyAccessToken rejects it anyway.
+    // verifyAccessToken rejects it anyway.
     if (exp <= now) {
         return;
     }
-    revoked.set(jti, exp);
+
+    await pruneExpired(now);
+
+    // upsert: two logouts can race the same token, and that is not an error.
+    const expiresAt = toDate(exp);
+    await prisma.revoked_token.upsert({
+        where: { jti },
+        create: { jti, expires_at: expiresAt },
+        update: { expires_at: expiresAt },
+    });
 }
 
-export function isTokenRevoked(jti: string): boolean {
-    const exp = revoked.get(jti);
-    if (exp === undefined) {
+export async function isTokenRevoked(jti: string): Promise<boolean> {
+    const revoked = await prisma.revoked_token.findUnique({ where: { jti } });
+    if (!revoked) {
         return false;
     }
-    if (exp <= nowInSeconds()) {
-        revoked.delete(jti);
-        return false;
-    }
-    return true;
+    // An expired row is dead weight, not a revocation. pruneExpired clears it.
+    return revoked.expires_at.getTime() > Date.now();
 }
 
-// Test hook: lets a suite start from a clean denylist.
-export function clearRevokedTokens(): void {
-    revoked.clear();
+// Test hook: start from a clean denylist.
+export async function clearRevokedTokens(): Promise<void> {
+    await prisma.revoked_token.deleteMany({});
 }

@@ -9,11 +9,11 @@ const BEARER_PREFIX = 'Bearer ';
 
 // Verifies the bearer token and exposes its claims on req.auth. Failures go to
 // next() so they leave through errorHandler in the standard envelope.
-export function requireAuth(
+export async function requireAuth(
     req: Request,
     _res: Response,
     next: NextFunction,
-): void {
+): Promise<void> {
     const header = req.headers.authorization;
     if (!header?.startsWith(BEARER_PREFIX)) {
         next(
@@ -30,8 +30,8 @@ export function requireAuth(
         return;
     }
 
-    // Signature and expiry are fine, but the session was ended by logout.
-    if (isTokenRevoked(claims.jti)) {
+    // Outside the try above: a database error is not an auth failure.
+    if (await isTokenRevoked(claims.jti)) {
         next(ApiError.unauthorized('Session has ended'));
         return;
     }

@@ -37,3 +37,10 @@ export function uniqueViolationDetails(fields: string[]): ApiErrorDetail[] {
         message: `This ${field} is already registered`,
     }));
 }
+
+// P2025 — the row the write targeted is gone. A company deleted mid-session
+// still holds a valid token, so that is a 404 rather than an unhandled 500.
+export function isRecordNotFound(err: unknown): boolean {
+    if (typeof err !== 'object' || err === null) return false;
+    return (err as PrismaError).code === 'P2025';
+}

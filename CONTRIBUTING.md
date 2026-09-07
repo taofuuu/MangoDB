@@ -131,3 +131,43 @@ After pushing the branch to remote repo, to merge seperate branch back to `main`
 #### Cleaning Branch
 
 After PR successfully merged, select `Delete branch` to clean branch history
+
+## Database
+
+One shared Supabase database. There is no local database on your machine.
+
+- **Never** run `prisma migrate dev`. It deletes columns that are missing from your branch's schema.
+- **Never** add or change columns in the Supabase web UI.
+- All `npm run db:*` commands run from the repo root.
+
+### After You Pull
+
+```
+npm run db:generate -w apps/api
+```
+
+Every time. Skip it and TypeScript keeps using the old types with no error.
+
+### Changing the Schema
+
+1. Edit `apps/api/prisma/schema.prisma`
+
+2. Generate the migration. Fill in `YYYYMMDDHHMM_short_name` yourself — for example `202609071400_cert_image_required`:
+
+    ```
+    cd apps/api
+    npx prisma migrate diff --from-config-datasource --to-schema ./prisma/schema.prisma --script --output prisma/migrations/YYYYMMDDHHMM_short_name/migration.sql
+    ```
+
+3. Open the file it wrote and read the SQL. If you see any `DROP`, or you made a column required, **stop and ask the team**.
+
+4. Commit the schema and the migration file together. Open a PR.
+
+5. After approval:
+
+    ```
+    npm run db:migrate -w apps/api
+    npm run db:generate -w apps/api
+    ```
+
+6. Tell the team. Everyone who pulls runs `npm run db:generate -w apps/api`. They do not run the migration.
