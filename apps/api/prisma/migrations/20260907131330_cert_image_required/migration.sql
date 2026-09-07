@@ -1,0 +1,13 @@
+-- AlterTable
+-- cert_image becomes required again, reversing 20260907000937_cert_image_nullable.
+--
+-- Narrowing, not widening: this succeeds only while every row holds a value.
+-- At the time this was written the table had 9 rows and 0 NULLs, so it applies
+-- cleanly. If a NULL is inserted before this is deployed, the statement fails
+-- and the migration must be resolved by hand.
+--
+-- The upload form still does not enforce the field: FileUpload.tsx carries no
+-- `required` attribute and EditCertificateForm's handleSubmit puts `file` into
+-- the payload as null. Until that is fixed, a submission the UI accepts will
+-- fail as a Prisma error rather than a validation error.
+ALTER TABLE "certificate" ALTER COLUMN "cert_image" SET NOT NULL;
