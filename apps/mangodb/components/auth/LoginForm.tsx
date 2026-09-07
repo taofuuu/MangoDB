@@ -86,13 +86,18 @@ export default function LoginForm() {
                 </Link>
             </div>
 
-            {error && (
-                <p role="alert" className="text-sm text-red-600">
-                    {error}
-                </p>
-            )}
+            <p
+                role={error ? 'alert' : undefined}
+                aria-live="polite"
+                aria-hidden={!error}
+                className={`text-sm text-red-600 min-h-5 -mt-2 ${
+                    error ? 'visible' : 'invisible'
+                }`}
+            >
+                {error || '\u00A0'}
+            </p>
 
-            <Button type="submit" isLoading={isSubmitting} className="mt-2">
+            <Button type="submit" isLoading={isSubmitting} className="-mt-2">
                 log in
             </Button>
 
