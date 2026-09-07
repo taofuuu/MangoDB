@@ -1,7 +1,12 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
-import { getOwnedPortfolio, portfolioSelect } from '../lib/portfolio';
+import {
+    getOwnedPortfolio,
+    portfolioSelect,
+    toServicePortfolio,
+} from '../lib/portfolio';
+import { omitUndefined } from '../lib/objects';
 import { isRecordNotFound, uniqueViolationFields } from '../lib/prismaErrors';
 import { parseBody, parseParams } from '../middleware/validate';
 import {
@@ -9,38 +14,36 @@ import {
     updatePortfolioSchema,
 } from '../schemas/portfolio.schema';
 
-// Fixing a dead or mistyped work-sample link. The row keeps its id and stays
-// on its listing; only the link changes.
+// Editing a work sample: name, description, development date, image, and/or
+// link — PATCH, so the body carries only the fields being changed.
 export async function updatePortfolio(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
-    const { portfolio_link } = parseBody(updatePortfolioSchema, req.body);
+    const data = parseBody(updatePortfolioSchema, req.body);
 
     // Ownership is checked before any write happens, but the response still
     // tells the two cases apart: 404 if the id doesn't exist, 403 if it
     // exists but belongs to another company — matching this API's own
     // 401/403/404 convention (README.md), not a uniform response.
-    const portfolio = await getOwnedPortfolio(
-        portfolioId,
-        Number(req.auth!.sub),
-    );
+    await getOwnedPortfolio(portfolioId, Number(req.auth!.sub));
 
-    // Already correct. Returning early keeps the unique index from being asked
-    // whether a row collides with itself.
-    if (portfolio.portfolio_link === portfolio_link) {
-        res.json(portfolio);
-        return;
-    }
-
+    // No same-value early return here: Postgres unique indexes only compare
+    // against *other* rows, so writing portfolio_link back to its current
+    // value can never self-collide. Skipping the write was a micro-
+    // optimization, not a correctness need — and with five editable fields
+    // now, a check keyed on one of them would silently drop the rest of the
+    // PATCH whenever that one field happened to be unchanged.
     try {
         res.json(
-            await prisma.service_portfolio.update({
-                where: { portfolio_id: portfolioId },
-                data: { portfolio_link },
-                select: portfolioSelect,
-            }),
+            toServicePortfolio(
+                await prisma.service_portfolio.update({
+                    where: { portfolio_id: portfolioId },
+                    data: omitUndefined(data),
+                    select: portfolioSelect,
+                }),
+            ),
         );
     } catch (err) {
         // @@unique([listing_id, portfolio_link]) — the listing already carries

@@ -182,10 +182,21 @@ model service {
 }
 
 model service_portfolio {
-  portfolio_id   Int     @id @default(autoincrement())
-  listing_id     Int
-  portfolio_link String  @db.VarChar(255)
-  service        service @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+  portfolio_id          Int      @id @default(autoincrement())
+  listing_id            Int
+  portfolio_name        String   @db.VarChar(255)
+  // Nullable: not every work sample has write-up text yet. Same "String? with
+  // no @db type" pattern as company.company_description — defaults to
+  // Postgres text, no length cap.
+  portfolio_description String?
+  // Month/day/year of the work, e.g. when the project shipped. No day-only or
+  // month-only variant like certificate's issue_month/issue_year: unlike a
+  // certificate's optional expiry, this is required, so a single Date column
+  // is enough.
+  development_date      DateTime @db.Date
+  portfolio_image       String   @db.VarChar(255)
+  portfolio_link        String   @db.VarChar(255)
+  service               service  @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
 
   // The old composite PK did two jobs: name the row, and stop one listing
   // holding the same link twice. portfolio_id takes over the naming; this

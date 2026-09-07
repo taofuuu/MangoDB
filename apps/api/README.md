@@ -221,10 +221,14 @@ duplicates that the old composite primary key made impossible.
 | `PATCH`  | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')` |
 | `DELETE` | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')` |
 
-`PATCH` takes `{ portfolio_link }` and returns the row; retargeting a link the
-listing already carries is a `409`. `DELETE` returns `204` and hard-deletes —
-nothing references a portfolio row, and a soft-deleted one would keep its slot
-in the unique index, blocking that link from ever being added back. Both
+`PATCH` is a partial update — send any subset of `portfolio_name`,
+`portfolio_description`, `development_date`, `portfolio_image`,
+`portfolio_link` and only those columns change; an empty body is a `400`.
+`portfolio_description` is the only nullable one. Returns the full row;
+retargeting a link the listing already carries is a `409`. `DELETE` returns
+`204` and hard-deletes — nothing references a portfolio row, and a
+soft-deleted one would keep its slot in the unique index, blocking that link
+from ever being added back. Both
 check ownership before any write, and the two failure cases stay distinct:
 an id that does not exist is `404`, one that belongs to another company is
 `403`. Creating a row (`POST`) is a separate story and is not wired yet.
