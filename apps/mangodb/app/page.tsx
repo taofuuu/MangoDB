@@ -13,6 +13,11 @@ const ROUTES = [
         title: 'Certificates',
         detail: 'Add and edit certificate modals, on mock data.',
     },
+    {
+        href: '/portfolio',
+        title: 'Portfolio',
+        detail: 'Company portfolio grid and list views, on mock data.',
+    },
 ];
 
 export default function Home() {
