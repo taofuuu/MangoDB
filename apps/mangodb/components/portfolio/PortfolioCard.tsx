@@ -21,7 +21,7 @@ export default function PortfolioCard({ item, onClick }: PortfolioCardProps) {
         <button
             type="button"
             onClick={() => onClick(item)}
-            className="flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80] max-lg:h-auto max-lg:w-full max-lg:px-4"
+            className="flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80] max-lg:h-auto max-lg:w-full max-lg:px-4"
         >
             <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
                 {item.title}
