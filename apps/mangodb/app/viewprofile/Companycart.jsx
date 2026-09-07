@@ -25,7 +25,7 @@ export default function CompanyCard() {
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Company Description
                     </label>
-                    <textarea className="w-full h-24 p-2 text-xs border border-sky-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500 resize-none" />
+                    <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -33,14 +33,14 @@ export default function CompanyCard() {
                     </label>
                     <input
                         type="text"
-                        className="w-full h-10 p-2 text-xs border border-sky-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                     />
                 </div>
                 <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Company Address
                     </label>
-                    <textarea className="w-full h-20 p-2 text-xs border border-sky-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500 resize-none" />
+                    <textarea className="w-full h-20 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
                 <div className="space-y-3">
                     <div>
@@ -49,7 +49,7 @@ export default function CompanyCard() {
                         </label>
                         <input
                             type="text"
-                            className="w-full h-8 p-2 text-xs border border-sky-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            className="w-full h-8 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                         />
                     </div>
                     <div>
@@ -58,7 +58,7 @@ export default function CompanyCard() {
                         </label>
                         <input
                             type="text"
-                            className="w-full h-8 p-2 text-xs border border-sky-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            className="w-full h-8 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                         />
                     </div>
                 </div>

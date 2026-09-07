@@ -29,7 +29,7 @@ export default function PortfolioList() {
                             <span className="text-gray-400 text-[11px]">
                                 {item.date}
                             </span>
-                            <button className="text-sky-600 hover:underline">
+                            <button className="text-[#497B93] hover:underline">
                                 Details
                             </button>
                         </div>

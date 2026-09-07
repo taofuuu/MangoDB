@@ -25,7 +25,7 @@ export default function ProjectTimeline() {
         <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex flex-col">
             {/* Sub Tabs */}
             <div className="bg-gray-100 p-1 rounded-xl flex w-60 mb-4 text-xs">
-                <button className="flex-1 py-1.5 rounded-lg font-medium bg-white shadow text-sky-600">
+                <button className="flex-1 py-1.5 rounded-lg font-medium bg-white shadow text-[#497B93]">
                     History
                 </button>
                 <button className="flex-1 py-1.5 rounded-lg font-medium text-gray-500">
@@ -52,7 +52,7 @@ export default function ProjectTimeline() {
                             className="relative flex items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs justify-between"
                         >
                             {/* Timeline Node Point */}
-                            <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-sky-500"></span>
+                            <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
 
                             <div className="flex gap-4 items-center">
                                 <div>
@@ -98,7 +98,7 @@ export default function ProjectTimeline() {
                                         {item.rating}
                                     </div>
                                 </div>
-                                <button className="text-sky-600 hover:underline">
+                                <button className="text-[#497B93] hover:underline">
                                     Details
                                 </button>
                             </div>

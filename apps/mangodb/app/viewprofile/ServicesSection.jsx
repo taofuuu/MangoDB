@@ -17,13 +17,13 @@ export default function ServicesSection() {
             <div className="bg-gray-100 p-1 rounded-xl flex mb-4 text-xs">
                 <button
                     onClick={() => setActiveTab('services')}
-                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${activeTab === 'services' ? 'bg-white shadow text-sky-600' : 'text-gray-500'}`}
+                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${activeTab === 'services' ? 'bg-white shadow text-[#497B93]' : 'text-gray-500'}`}
                 >
                     Services
                 </button>
                 <button
                     onClick={() => setActiveTab('jobs')}
-                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${activeTab === 'jobs' ? 'bg-white shadow text-sky-600' : 'text-gray-500'}`}
+                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${activeTab === 'jobs' ? 'bg-white shadow text-[#497B93]' : 'text-gray-500'}`}
                 >
                     Job Listing
                 </button>
@@ -39,7 +39,7 @@ export default function ServicesSection() {
                         <span className="text-xs font-medium text-gray-800">
                             {service.name}
                         </span>
-                        <button className="text-xs text-sky-600 hover:underline">
+                        <button className="text-xs text-[#497B93] hover:underline">
                             Details
                         </button>
                     </div>
