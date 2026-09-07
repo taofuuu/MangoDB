@@ -7,6 +7,19 @@ import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';
 
+// Extracts the raw JWT from either the Authorization header or the httpOnly
+// access_token cookie. Returns null if neither is present.
+function extractToken(req: Request): string | null {
+    const header = req.headers.authorization;
+    if (header?.startsWith(BEARER_PREFIX)) {
+        return header.slice(BEARER_PREFIX.length).trim();
+    }
+    if (req.cookies?.access_token) {
+        return req.cookies.access_token as string;
+    }
+    return null;
+}
+
 // Verifies the bearer token and exposes its claims on req.auth. Failures go to
 // next() so they leave through errorHandler in the standard envelope.
 export async function requireAuth(
@@ -14,8 +27,8 @@ export async function requireAuth(
     _res: Response,
     next: NextFunction,
 ): Promise<void> {
-    const header = req.headers.authorization;
-    if (!header?.startsWith(BEARER_PREFIX)) {
+    const token = extractToken(req);
+    if (!token) {
         next(
             ApiError.unauthorized('Missing or malformed Authorization header'),
         );
@@ -24,7 +37,7 @@ export async function requireAuth(
 
     let claims: AuthTokenClaims;
     try {
-        claims = verifyAccessToken(header.slice(BEARER_PREFIX.length).trim());
+        claims = verifyAccessToken(token);
     } catch {
         next(ApiError.unauthorized('Invalid or expired token'));
         return;

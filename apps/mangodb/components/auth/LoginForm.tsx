@@ -2,10 +2,12 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
 import Button from '@/components/sm-detail/Button';
 
 export default function LoginForm() {
+    const router = useRouter();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,14 +19,28 @@ export default function LoginForm() {
         setIsSubmitting(true);
 
         try {
-            // TODO: wire up real auth, e.g.
-            // const res = await fetch("/api/login", {
-            //   method: "POST",
-            //   headers: { "Content-Type": "application/json" },
-            //   body: JSON.stringify({ identifier, password }),
-            // });
-            // if (!res.ok) throw new Error("Invalid username or password");
-            await new Promise((resolve) => setTimeout(resolve, 600));
+            const apiUrl =
+                process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await fetch(`${apiUrl}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // credentials: 'include' sends/receives the httpOnly cookie
+                // the API sets on login, keeping the token out of JS reach.
+                credentials: 'include',
+                body: JSON.stringify({ email: identifier, password }),
+            });
+
+            // Parse JSON first; a network failure or non-JSON body throws here
+            // and is caught below with a generic message.
+            const data = await res.json().catch(() => null);
+
+            if (!res.ok) {
+                throw new Error(
+                    data?.error?.message || 'Invalid email or password',
+                );
+            }
+
+            router.push('/');
         } catch (err) {
             setError(
                 err instanceof Error
@@ -44,9 +60,9 @@ export default function LoginForm() {
         >
             <TextField
                 id="identifier"
-                label="Username or email address"
+                label="Email address"
                 type="text"
-                autoComplete="username"
+                autoComplete="email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
