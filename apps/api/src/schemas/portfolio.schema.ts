@@ -16,9 +16,12 @@ export type PortfolioIdParam = z.infer<typeof portfolioIdParamSchema>;
 export const portfolioFields = {
     portfolio_name: z.string().trim().min(1).max(255),
     portfolio_description: z.string().trim().max(2000),
-    // Date-only column (@db.Date) — z.coerce so "2026-05-01" from a JSON body
-    // becomes a Date, matching what Prisma's `Date` column type expects.
-    development_date: z.coerce.date(),
+    // Date-only column (@db.Date): a YYYY-MM-DD string, then a Date at UTC
+    // midnight. z.coerce.date() would also take a full timestamp, and a client
+    // in UTC+7 sending one would store the day before.
+    development_date: z.iso
+        .date()
+        .transform((day) => new Date(`${day}T00:00:00Z`)),
     portfolio_image: z.url().max(255),
     portfolio_link: z.url().max(255),
 } as const;
