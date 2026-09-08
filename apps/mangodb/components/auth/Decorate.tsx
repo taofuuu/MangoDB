@@ -2,10 +2,13 @@ import Image from 'next/image';
 
 interface DecorativePatternProps {
     className?: string;
+    // Rendered width, so next/image can pick a source that fits.
+    sizes?: string;
 }
 
 export default function DecorativePattern({
     className = '',
+    sizes = '100vw',
 }: DecorativePatternProps) {
     return (
         <div className={`relative overflow-hidden ${className}`}>
@@ -14,9 +17,8 @@ export default function DecorativePattern({
                 alt=""
                 fill
                 priority
-                sizes="100vw"
+                sizes={sizes}
                 className="object-fill"
-                aria-hidden="true"
             />
         </div>
     );
