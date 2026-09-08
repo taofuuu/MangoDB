@@ -60,7 +60,7 @@ export async function createPortfolio(
                 portfolio_name: data.portfolio_name,
                 portfolio_description: data.portfolio_description ?? null,
                 development_date: data.development_date,
-                portfolio_image: imageUrl,
+                portfolio_image: image.url,
                 portfolio_link: data.portfolio_link,
                 service: {
                     connect: {
