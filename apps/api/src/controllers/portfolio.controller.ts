@@ -117,6 +117,8 @@ export async function updatePortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
+        // @@unique([listing_id, portfolio_link]) — this listing already
+        // carries that link on some other row.
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
