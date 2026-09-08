@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function uploadToStorage(
     file: Express.Multer.File,
     folder: string = 'items',
-): Promise<string> {
+): Promise<UploadedImage> {
     const fileExtension = file.originalname.split('.').pop();
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
 
