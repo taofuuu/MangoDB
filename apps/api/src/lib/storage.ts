@@ -6,6 +6,8 @@ const supabaseKey = process.env.SUPABASE_SECRET_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+export type UploadedImage = { path: string; url: string };
+
 export async function uploadToStorage(
     file: Express.Multer.File,
     folder: string = 'items',
