@@ -46,3 +46,7 @@ export const updatePortfolioSchema = z
     });
 
 export type UpdatePortfolioInput = z.infer<typeof updatePortfolioSchema>;
+
+// The columns a unique index can reject. prismaErrors uses this to decide which
+// constraint names are worth reporting back to the caller.
+export const PORTFOLIO_UNIQUE_FIELDS = ['portfolio_link'] as const;

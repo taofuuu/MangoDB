@@ -7,9 +7,14 @@ import {
     toServicePortfolio,
 } from '../lib/portfolio';
 import { omitUndefined } from '../lib/objects';
-import { isRecordNotFound, uniqueViolationFields } from '../lib/prismaErrors';
+import {
+    isRecordNotFound,
+    uniqueViolationDetails,
+    uniqueViolationFields,
+} from '../lib/prismaErrors';
 import { parseBody, parseParams } from '../middleware/validate';
 import {
+    PORTFOLIO_UNIQUE_FIELDS,
     portfolioIdParamSchema,
     updatePortfolioSchema,
 } from '../schemas/portfolio.schema';
@@ -51,15 +56,11 @@ export async function updatePortfolio(
         // pre-check first: that one exists to report a username and an email
         // collision together, and with a single field the index says the same
         // thing one query cheaper.
-        if (uniqueViolationFields(err, ['portfolio_link'])) {
+        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
+        if (fields) {
             throw ApiError.conflict(
                 'This listing already has that portfolio link',
-                [
-                    {
-                        field: 'portfolio_link',
-                        message: 'Already on this listing',
-                    },
-                ],
+                uniqueViolationDetails(fields),
             );
         }
         // Deleted between getOwnedPortfolio and here.
