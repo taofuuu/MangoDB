@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 5 Sep 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 8 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -327,6 +327,7 @@
       <a href="#input">Input</a>
       <a href="#auth">Auth</a>
       <a href="#accounts">Accounts</a>
+      <a href="#portfolios">Portfolios</a>
       <a href="#layout">Layout</a>
       <a href="#gotchas">Gotchas</a>
       <a href="#verified">Verified</a>
@@ -539,7 +540,7 @@ throw ApiError.forbidden();</code></pre>
     <section class="group" id="input">
       <h2>Input</h2>
 
-      <article class="entry" id="validate" data-tags="validate validation zod schema parsebody body input required fields">
+      <article class="entry" id="validate" data-tags="validate validation zod schema parsebody parsequery parseparams params path body input required fields">
         <h3>How do I validate a request body?</h3>
         <p class="answer">Write a zod schema, call <code>parseBody</code>. Never hand-write <code>if (!body.x)</code>.</p>
         <pre><code><span class="c-dim">// schemas/auth.schema.ts</span>
@@ -555,8 +556,9 @@ const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed
           <code>body.email</code> is now a <code>string</code> to the compiler, and bad input never reaches
           the next line — <code>parseBody</code> throws <code>VALIDATION_FAILED</code> with one
           <code>details</code> entry per bad field, which is already the shape a form needs.
-          For query strings use <code>parseQuery</code>, and reach for <code>z.coerce</code> — every query
-          value arrives as a string.
+          For query strings use <code>parseQuery</code>, and for route params like
+          <code>req.params.portfolioId</code> use <code>parseParams</code> — reach for <code>z.coerce</code>
+          in both, since query and path values always arrive as strings.
         </p>
       </article>
 
@@ -812,6 +814,49 @@ admin: ['admin'],</code></pre>
           <code>GET /companies/me</code> returns, so the form can render the saved state without a
           second request. Read-only mode is the frontend's job: the API has no draft state, and a
           profile the user is only looking at is simply one nobody sent a <code>PATCH</code> for.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= PORTFOLIOS ================= -->
+    <section class="group" id="portfolios">
+      <h2>Portfolios</h2>
+
+      <article class="entry" id="edit-portfolio" data-tags="portfolio patch delete work sample edit remove listing service ownership 404 403 409 assertportfolioowned">
+        <h3>How does a company edit or remove a work sample (portfolio)?</h3>
+        <p class="answer"><code>PATCH /portfolios/:portfolioId</code> and <code>DELETE /portfolios/:portfolioId</code>, both <code>requireRole('provider')</code>.</p>
+        <pre><code>curl -s -X PATCH localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' -d '{
+  "portfolio_name": "Inventory dashboard",
+  "development_date": "2026-05-01"
+}'
+
+curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN"   <span class="c-dim"># 204</span></code></pre>
+        <p class="note">
+          There is no owner column on <code>service_portfolio</code> — the company is three hops away,
+          <code>service_portfolio → service → listing → company_id</code>, so
+          <code>assertPortfolioOwned</code> checks it as a nested Prisma select rather than a separate
+          lookup. An unknown id is <span class="status s-warn">404</span>; a company checking someone
+          else's portfolio is <span class="status s-warn">403</span>. The write itself repeats the same
+          <code>company_id</code> filter in its own <code>where</code>, so a listing that changes hands in
+          the gap between the check and the write can't slip through — Prisma finds nothing to update and
+          the same <span class="status s-warn">404</span> handling covers it.
+        </p>
+        <p class="note">
+          <code>PATCH</code> is a partial update like <a href="#edit-profile"><code>/companies/me</code></a>
+          — send only what changed. <code>portfolio_description</code> is the only nullable field; every
+          other field is required whenever it's present at all, and none accepts <code>null</code>.
+          <code>development_date</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
+          fails validation rather than silently shifting the stored day across a timezone.
+          <code>portfolio_image</code> and <code>portfolio_link</code> accept only <code>http</code>/<code>https</code>
+          URLs.
+        </p>
+        <p class="note">
+          A duplicate <code>portfolio_link</code> on the same listing is <span class="status s-warn">409</span>
+          — <code>@@unique([listing_id, portfolio_link])</code> enforces it, the same P2002 pattern as
+          <a href="#duplicates">the username/email conflict</a>. <code>DELETE</code> is a hard delete:
+          nothing references a portfolio row, and a soft-deleted one would keep occupying its slot in the
+          unique index.
         </p>
       </article>
     </section>
