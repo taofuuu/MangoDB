@@ -122,7 +122,9 @@ export async function updatePortfolio(
     res.json(toServicePortfolio(updated));
 }
 
-// Removing a work sample - คงเดิมไม่แก้ไข
+// Removing a work sample. Hard delete: nothing in the schema references a
+// portfolio row, and a soft-deleted one would keep occupying its slot in the
+// unique index, blocking the same link from ever being added back.
 export async function deletePortfolio(
     req: Request,
     res: Response,
