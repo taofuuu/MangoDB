@@ -29,10 +29,8 @@ export async function updatePortfolio(
     const data = parseBody(updatePortfolioSchema, req.body);
     const companyId = Number(req.auth!.sub);
 
-    // Ownership is checked before any write happens, but the response still
-    // tells the two cases apart: 404 if the id doesn't exist, 403 if it
-    // exists but belongs to another company — matching this API's own
-    // 401/403/404 convention (README.md), not a uniform response.
+    // Checked before any write, and the two cases stay distinct: 404 for an
+    // unknown id, 403 for another company's (README.md's 401/403/404 rule).
     await getOwnedPortfolio(portfolioId, companyId);
 
     // No same-value early return here: Postgres unique indexes only compare
@@ -41,25 +39,19 @@ export async function updatePortfolio(
     // optimization, not a correctness need — and with five editable fields
     // now, a check keyed on one of them would silently drop the rest of the
     // PATCH whenever that one field happened to be unchanged.
+    let updated;
     try {
-        res.json(
-            toServicePortfolio(
-                await prisma.service_portfolio.update({
-                    where: {
-                        portfolio_id: portfolioId,
-                        service: { listing: { company_id: companyId } },
-                    },
-                    data: omitUndefined(data),
-                    select: portfolioSelect,
-                }),
-            ),
-        );
+        updated = await prisma.service_portfolio.update({
+            where: {
+                portfolio_id: portfolioId,
+                service: { listing: { company_id: companyId } },
+            },
+            data: omitUndefined(data),
+            select: portfolioSelect,
+        });
     } catch (err) {
-        // @@unique([listing_id, portfolio_link]) — the listing already carries
-        // this link on some other row. Unlike register, there is no findUnique
-        // pre-check first: that one exists to report a username and an email
-        // collision together, and with a single field the index says the same
-        // thing one query cheaper.
+        // @@unique([listing_id, portfolio_link]) — this listing already
+        // carries that link on some other row.
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
@@ -73,6 +65,8 @@ export async function updatePortfolio(
         }
         throw err;
     }
+
+    res.json(toServicePortfolio(updated));
 }
 
 // Removing a work sample. Hard delete: nothing in the schema references a
