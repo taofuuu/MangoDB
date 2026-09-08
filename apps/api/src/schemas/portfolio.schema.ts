@@ -31,6 +31,20 @@ export const portfolioFields = {
 // what changed. portfolio_description is nullable on top of that — it's the
 // one column allowed to actually be empty (schema.prisma: String?) — the
 // other four are required whenever they're present in the body at all.
+
+// Schema for CREATE (POST /portfolios)
+// with service_id (or listing_id) combine with portfolioFields
+export const createPortfolioSchema = z.object({
+    listing_id: z.number().int().positive(),
+    portfolio_name: portfolioFields.portfolio_name,
+    portfolio_description: portfolioFields.portfolio_description.optional().nullable(),
+    development_date: portfolioFields.development_date,
+    portfolio_image: portfolioFields.portfolio_image,
+    portfolio_link: portfolioFields.portfolio_link,
+});
+
+export type CreatePortfolioInput = z.infer<typeof createPortfolioSchema>;
+
 export const updatePortfolioSchema = z
     .object({
         portfolio_name: portfolioFields.portfolio_name,

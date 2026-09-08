@@ -15,9 +15,64 @@ import {
 import { parseBody, parseParams } from '../middleware/validate';
 import {
     PORTFOLIO_UNIQUE_FIELDS,
+    createPortfolioSchema,
     portfolioIdParamSchema,
     updatePortfolioSchema,
 } from '../schemas/portfolio.schema';
+
+// Creating a new work sample/portfolio item (POST /portfolios)
+// Creating a new work sample/portfolio item (POST /portfolios)
+export async function createPortfolio(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const data = parseBody(createPortfolioSchema, req.body);
+    const companyId = Number(req.auth!.sub);
+
+    // ตรวจสอบสิทธิ์ Listing
+    const service = await prisma.service.findUnique({
+        where: { listing_id: data.listing_id },
+        select: { listing: { select: { company_id: true } } },
+    });
+
+    if (!service) {
+        throw ApiError.notFound('Service listing not found');
+    }
+
+    if (service.listing.company_id !== companyId) {
+        throw ApiError.forbidden('This service belongs to another company');
+    }
+
+    let created;
+    try {
+        created = await prisma.service_portfolio.create({
+            data: {
+                portfolio_name: data.portfolio_name,
+                portfolio_description: data.portfolio_description ?? null,
+                development_date: data.development_date,
+                portfolio_image: data.portfolio_image,
+                portfolio_link: data.portfolio_link,
+            service: {
+                connect: {
+                    listing_id: data.listing_id,
+                    },
+                },
+            },
+        select: portfolioSelect,
+    });
+    } catch (err) {
+        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
+        if (fields) {
+            throw ApiError.conflict(
+                'This listing already has that portfolio link',
+                uniqueViolationDetails(fields),
+            );
+        }
+        throw err;
+    }
+
+    res.status(201).json(toServicePortfolio(created));
+}
 
 // Editing a work sample: name, description, development date, image, and/or
 // link — PATCH, so the body carries only the fields being changed.

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
+    createPortfolio,
     deletePortfolio,
     updatePortfolio,
 } from '../controllers/portfolio.controller';
@@ -12,6 +13,14 @@ export const portfolioRoutes = Router();
 // Guarded per route rather than with router.use, unlike admin.routes.ts:
 // everything under /admin is admin-only, but a public GET of a listing's
 // portfolio belongs here later and must not inherit requireRole('provider').
+
+portfolioRoutes.post(
+    '/',
+    requireAuth,
+    requireRole('provider'),
+    createPortfolio,
+);
+
 portfolioRoutes.patch(
     '/:portfolioId',
     requireAuth,
