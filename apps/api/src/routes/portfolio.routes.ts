@@ -7,6 +7,8 @@ import {
     updatePortfolio,
 } from '../controllers/portfolio.controller';
 
+// Mounted at /portfolios. portfolio_id names the row on its own, so the
+// listing does not appear in the path.
 export const portfolioRoutes = Router();
 
 portfolioRoutes.post(
