@@ -30,23 +30,18 @@ export default function LoginForm() {
                 body: JSON.stringify({ email: identifier, password }),
             });
 
-            // Parse JSON first; a network failure or non-JSON body throws here
-            // and is caught below with a generic message.
+            // Parse the body first; a non-JSON response just gives us null and
+            // the status below still decides what the user sees.
             const data = await res.json().catch(() => null);
 
             if (!res.ok) {
-                throw new Error(
-                    data?.error?.message || 'Invalid email or password',
-                );
+                setError(data?.error?.message || 'Invalid email or password');
+                return;
             }
 
             router.push('/');
-        } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : 'Something went wrong. Try again.',
-            );
+        } catch {
+            setError('Could not reach the server. Try again.');
         } finally {
             setIsSubmitting(false);
         }
