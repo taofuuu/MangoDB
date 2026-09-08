@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { httpUrl } from './common.schema';
 
 // Path params arrive as strings, so this coerces before the integer check —
 // the same reason parseQuery's schemas need z.coerce.
@@ -22,8 +23,8 @@ export const portfolioFields = {
     development_date: z.iso
         .date()
         .transform((day) => new Date(`${day}T00:00:00Z`)),
-    portfolio_image: z.url().max(255),
-    portfolio_link: z.url().max(255),
+    portfolio_image: httpUrl,
+    portfolio_link: httpUrl,
 } as const;
 
 // PATCH is a partial update: every field is optional so the client sends only
