@@ -29,3 +29,14 @@ export function parseQuery<T>(schema: ZodType<T>, query: unknown): T {
     }
     return result.data;
 }
+
+export function parseParams<T>(schema: ZodType<T>, params: unknown): T {
+    const result = schema.safeParse(params);
+    if (!result.success) {
+        throw ApiError.badRequest(
+            'Route parameters are invalid',
+            toDetails(result.error),
+        );
+    }
+    return result.data;
+}
