@@ -71,6 +71,8 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
+        await removeFromStorage(image.path);
+
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
