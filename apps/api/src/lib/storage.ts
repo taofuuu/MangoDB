@@ -31,7 +31,7 @@ export async function uploadToStorage(
         .from('portfolio')
         .getPublicUrl(fileName);
 
-    return publicUrlData.publicUrl;
+    return { path: fileName, url: publicUrlData.publicUrl };
 }
 
 // The upload lands before the insert, so a failed insert leaves a file
