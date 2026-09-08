@@ -6,7 +6,7 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-import { uploadToStorage } from '../lib/storage';
+import { uploadToStorage, removeFromStorage } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
