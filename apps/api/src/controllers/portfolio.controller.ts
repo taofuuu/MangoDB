@@ -96,6 +96,8 @@ export async function updatePortfolio(
     const data = parseBody(updatePortfolioSchema, req.body);
     const companyId = Number(req.auth!.sub);
 
+    // Checked before any write, and the two cases stay distinct: 404 for an
+    // unknown id, 403 for another company's (README.md's 401/403/404 rule).
     await assertPortfolioOwned(portfolioId, companyId);
 
     let updated;
