@@ -14,7 +14,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
                 <input
                     ref={ref}
                     id={id}
-                    className={`w-full rounded-md border border-[#9FC3DA] bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-shadow focus:border-[#4F7B99] focus:ring-2 focus:ring-[#4F7B99]/30 ${className}`}
+                    className={`h-[4.89vh] w-[19.79vw] px-1.5 flex w-full items-center justify-between rounded-input border border-[#3F6B80] bg-[#FFFFFF]/80`}
                     {...rest}
                 />
             </div>
