@@ -100,6 +100,12 @@ export async function updatePortfolio(
     // unknown id, 403 for another company's (README.md's 401/403/404 rule).
     await assertPortfolioOwned(portfolioId, companyId);
 
+    // No same-value early return here: Postgres unique indexes only compare
+    // against *other* rows, so writing portfolio_link back to its current
+    // value can never self-collide. Skipping the write was a micro-
+    // optimization, not a correctness need — and with five editable fields
+    // now, a check keyed on one of them would silently drop the rest of the
+    // PATCH whenever that one field happened to be unchanged.
     let updated;
     try {
         updated = await prisma.service_portfolio.update({
