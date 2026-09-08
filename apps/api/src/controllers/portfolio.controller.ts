@@ -27,12 +27,13 @@ export async function updatePortfolio(
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
     const data = parseBody(updatePortfolioSchema, req.body);
+    const companyId = Number(req.auth!.sub);
 
     // Ownership is checked before any write happens, but the response still
     // tells the two cases apart: 404 if the id doesn't exist, 403 if it
     // exists but belongs to another company — matching this API's own
     // 401/403/404 convention (README.md), not a uniform response.
-    await getOwnedPortfolio(portfolioId, Number(req.auth!.sub));
+    await getOwnedPortfolio(portfolioId, companyId);
 
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolio_link back to its current
@@ -44,7 +45,10 @@ export async function updatePortfolio(
         res.json(
             toServicePortfolio(
                 await prisma.service_portfolio.update({
-                    where: { portfolio_id: portfolioId },
+                    where: {
+                        portfolio_id: portfolioId,
+                        service: { listing: { company_id: companyId } },
+                    },
                     data: omitUndefined(data),
                     select: portfolioSelect,
                 }),
@@ -79,12 +83,16 @@ export async function deletePortfolio(
     res: Response,
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
+    const companyId = Number(req.auth!.sub);
 
-    await getOwnedPortfolio(portfolioId, Number(req.auth!.sub));
+    await getOwnedPortfolio(portfolioId, companyId);
 
     try {
         await prisma.service_portfolio.delete({
-            where: { portfolio_id: portfolioId },
+            where: {
+                portfolio_id: portfolioId,
+                service: { listing: { company_id: companyId } },
+            },
         });
     } catch (err) {
         // Someone else deleted it between the check above and this write.
