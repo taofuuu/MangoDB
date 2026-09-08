@@ -84,7 +84,10 @@ export default function EditCertificateForm({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-[45vw] max-h-[92vh] rounded-xl bg-[#FFFDF9] text-[#171717] p-[1.5vw] shadow-xl">
+            <div
+                className="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl
+                    max-h-[calc(100vh-2rem)] overflow-y-auto"
+            >
                 {/* -------------header----------------- */}
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">

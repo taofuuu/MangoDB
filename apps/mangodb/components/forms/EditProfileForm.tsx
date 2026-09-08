@@ -52,7 +52,9 @@ export default function EditProfileForm({
             <div className="w-full max-w-[45vw] max-h-[92vh] overflow-y-auto rounded-xl bg-[#FFFDF9] text-[#171717] p-[1.5vw] shadow-xl min-w-[320px] max-md:max-w-[85vw] max-sm:max-w-[95vw] max-md:p-6">
                 {/* -------------header----------------- */}
                 <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">Edit Profile</h2>
+                    <h2 className="text-lg font-semibold">
+                        Edit Account Information
+                    </h2>
 
                     <button
                         type="button"
