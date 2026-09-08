@@ -50,7 +50,7 @@ export async function createPortfolio(
     }
 
     // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
-    const imageUrl = await uploadToStorage(req.file);
+    const image = await uploadToStorage(req.file);
 
     // 5. บันทึกลง Database
     let created;
