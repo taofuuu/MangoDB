@@ -9,10 +9,13 @@ export const uploadImage = multer({
         fileSize: 5 * 1024 * 1024, // 5MB
     },
     fileFilter: (_req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
+        // Allowlist, not image/*: image/svg+xml is a document the browser
+        // will execute scripts from when the public URL is opened directly.
+        const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+        if (allowed.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(ApiError.badRequest('Only image files are allowed'));
+            cb(ApiError.badRequest('Only PNG, JPEG or WebP images are allowed'));
         }
     },
 });
