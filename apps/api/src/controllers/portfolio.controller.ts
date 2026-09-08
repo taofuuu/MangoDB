@@ -126,6 +126,7 @@ export async function updatePortfolio(
                 uniqueViolationDetails(fields),
             );
         }
+        // Deleted between assertPortfolioOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }
