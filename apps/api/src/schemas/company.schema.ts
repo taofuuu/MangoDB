@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { httpUrl } from './common.schema';
 
 // One definition per editable column, shared by registration (US1-1) and the
 // profile edit (US1-5) so a fix to a rule is one edit rather than two. Sizes
@@ -27,7 +28,7 @@ export const companyFields = {
     company_type: z.array(z.string().trim().min(1).max(100)).min(1).max(10),
     company_description: z.string().trim().max(2000),
     address: z.string().trim().max(500),
-    website: z.url().max(255),
+    website: httpUrl,
     // Provider-only, and TEXT columns rather than VarChar, so the cap is a
     // policy choice rather than the database's — same one company_description
     // uses.
