@@ -101,3 +101,19 @@ export interface UpdateCompanyProfileRequest {
     address?: string | null;
     website?: string | null;
 }
+
+// A work sample on a listing. portfolio_id is a surrogate key: the table used
+// to be identified by (listing_id, portfolio_link), which left no way to name
+// a row in a URL. The pair is still unique — see @@unique in the schema.
+export interface ServicePortfolio {
+    portfolio_id: number;
+    listing_id: number;
+    portfolio_name: string;
+    // Nullable: not every work sample has write-up text yet.
+    portfolio_description: string | null;
+    // ISO date string (YYYY-MM-DD) — how res.json() serializes a Prisma
+    // DateTime, and all this column ever stores is a date, no time-of-day.
+    development_date: string;
+    portfolio_image: string;
+    portfolio_link: string;
+}
