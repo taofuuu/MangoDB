@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import AddFormModal from '@/components/forms/AddCertificateForm';
 import EditCertificateForm, {
-    CertificateData,
+    type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
 
@@ -162,7 +162,6 @@ export default function CertificatePage() {
             <DeleteCertificateModal
                 isOpen={isDeleteOpen}
                 onClose={() => setIsDeleteOpen(false)}
-                onConfirm={handleDeleteCertificate}
             />
         </main>
     );
