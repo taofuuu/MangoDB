@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import {
-    getOwnedPortfolio,
+    assertPortfolioOwned,
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
@@ -31,7 +31,7 @@ export async function updatePortfolio(
 
     // Checked before any write, and the two cases stay distinct: 404 for an
     // unknown id, 403 for another company's (README.md's 401/403/404 rule).
-    await getOwnedPortfolio(portfolioId, companyId);
+    await assertPortfolioOwned(portfolioId, companyId);
 
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolio_link back to its current
@@ -59,7 +59,7 @@ export async function updatePortfolio(
                 uniqueViolationDetails(fields),
             );
         }
-        // Deleted between getOwnedPortfolio and here.
+        // Deleted between assertPortfolioOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }
@@ -79,7 +79,7 @@ export async function deletePortfolio(
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
     const companyId = Number(req.auth!.sub);
 
-    await getOwnedPortfolio(portfolioId, companyId);
+    await assertPortfolioOwned(portfolioId, companyId);
 
     try {
         await prisma.service_portfolio.delete({
