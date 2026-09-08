@@ -33,3 +33,13 @@ export async function uploadToStorage(
 
     return publicUrlData.publicUrl;
 }
+
+// The upload lands before the insert, so a failed insert leaves a file
+// nothing points at. Best effort — a failed cleanup must not mask the
+// error that caused it.
+export async function removeFromStorage(path: string): Promise<void> {
+    const { error } = await supabase.storage.from('portfolio').remove([path]);
+    if (error) {
+        console.error('Orphaned upload left behind:', path, error.message);
+    }
+}
