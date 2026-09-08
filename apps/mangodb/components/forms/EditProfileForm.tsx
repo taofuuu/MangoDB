@@ -8,6 +8,25 @@ export type ProfileData = {
     password?: string;
 };
 
+function EyeIcon({ className = 'w-4 h-4' }: { className?: string }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            aria-hidden="true"
+        >
+            <path d="M4 14.5a8 8 0 0 1 16 0" />
+            <circle cx="12" cy="14.5" r="3.5" />
+        </svg>
+    );
+}
+
 type EditProfileFormProps = {
     isOpen: boolean;
     initialData?: ProfileData;
@@ -124,9 +143,20 @@ export default function EditProfileForm({
                                     onClick={() =>
                                         setShowPassword(!showPassword)
                                     }
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#666666] hover:text-[#171717] transition-colors"
+                                    aria-label={
+                                        showPassword
+                                            ? 'Hide password'
+                                            : 'Show password'
+                                    }
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
                                 >
-                                    {showPassword ? 'Hide' : 'Show'}
+                                    <EyeIcon
+                                        className={`w-4 h-4 ${
+                                            showPassword
+                                                ? 'text-[#171717]'
+                                                : 'text-[#828282]'
+                                        }`}
+                                    />
                                 </button>
                             </div>
                         </div>
