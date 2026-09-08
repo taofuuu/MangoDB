@@ -35,12 +35,11 @@ export const portfolioFields = {
 // Schema for CREATE (POST /portfolios)
 // with service_id (or listing_id) combine with portfolioFields
 export const createPortfolioSchema = z.object({
-    listing_id: z.number().int().positive(),
+    listing_id: z.coerce.number().int().positive(),
     portfolio_name: portfolioFields.portfolio_name,
     portfolio_description: portfolioFields.portfolio_description.optional().nullable(),
     development_date: portfolioFields.development_date,
-    portfolio_image: portfolioFields.portfolio_image,
-    portfolio_link: portfolioFields.portfolio_link,
+    portfolio_link: portfolioFields.portfolio_link
 });
 
 export type CreatePortfolioInput = z.infer<typeof createPortfolioSchema>;
@@ -50,8 +49,8 @@ export const updatePortfolioSchema = z
         portfolio_name: portfolioFields.portfolio_name,
         portfolio_description: portfolioFields.portfolio_description.nullable(),
         development_date: portfolioFields.development_date,
-        portfolio_image: portfolioFields.portfolio_image,
-        portfolio_link: portfolioFields.portfolio_link,
+        portfolio_link: portfolioFields.portfolio_link
+        // portfolio_image: portfolioFields.portfolio_image
     })
     .partial()
     // An empty body is a client bug, not a no-op worth a 200.
