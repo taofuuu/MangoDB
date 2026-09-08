@@ -86,7 +86,8 @@ export async function createPortfolio(
     res.status(201).json(toServicePortfolio(created));
 }
 
-// Editing a work sample - คงเดิมไม่แก้ไข
+// Editing a work sample: name, description, development date, image, and/or
+// link — PATCH, so the body carries only the fields being changed.
 export async function updatePortfolio(
     req: Request,
     res: Response,
