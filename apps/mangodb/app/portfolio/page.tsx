@@ -25,7 +25,6 @@ export default function DeletePortfolioPage() {
             <DeletePortfolioModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onConfirm={() => setIsModalOpen(false)}
             />
         </main>
     );
