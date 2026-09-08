@@ -308,7 +308,7 @@
 <div class="page">
 
   <header class="masthead">
-    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 5 Sep 2026</p>
+    <p class="eyebrow">taofuuu/MangoDB · apps/api · updated 8 Sep 2026</p>
     <h1>MangoDB API Guide</h1>
     <p class="thesis">
       Search for what you need. Every entry leads with the answer; the detail underneath is there only
@@ -327,6 +327,7 @@
       <a href="#input">Input</a>
       <a href="#auth">Auth</a>
       <a href="#accounts">Accounts</a>
+      <a href="#portfolios">Portfolios</a>
       <a href="#layout">Layout</a>
       <a href="#gotchas">Gotchas</a>
       <a href="#verified">Verified</a>
@@ -539,7 +540,7 @@ throw ApiError.forbidden();</code></pre>
     <section class="group" id="input">
       <h2>Input</h2>
 
-      <article class="entry" id="validate" data-tags="validate validation zod schema parsebody body input required fields">
+      <article class="entry" id="validate" data-tags="validate validation zod schema parsebody parsequery parseparams params path body input required fields">
         <h3>How do I validate a request body?</h3>
         <p class="answer">Write a zod schema, call <code>parseBody</code>. Never hand-write <code>if (!body.x)</code>.</p>
         <pre><code><span class="c-dim">// schemas/auth.schema.ts</span>
@@ -555,8 +556,9 @@ const body = parseBody(registerSchema, req.body);   <span class="c-dim">// typed
           <code>body.email</code> is now a <code>string</code> to the compiler, and bad input never reaches
           the next line — <code>parseBody</code> throws <code>VALIDATION_FAILED</code> with one
           <code>details</code> entry per bad field, which is already the shape a form needs.
-          For query strings use <code>parseQuery</code>, and reach for <code>z.coerce</code> — every query
-          value arrives as a string.
+          For query strings use <code>parseQuery</code>, and for route params like
+          <code>req.params.portfolioId</code> use <code>parseParams</code> — reach for <code>z.coerce</code>
+          in both, since query and path values always arrive as strings.
         </p>
       </article>
 
@@ -780,10 +782,12 @@ admin: ['admin'],</code></pre>
           Three states, not two. A field that is <strong>absent</strong> leaves its column alone —
           that is what makes this a <code>PATCH</code>, and it is why the edit form may send one
           input or all of them. A field carrying a <strong>value</strong> overwrites. A field set to
-          <strong><code>null</code></strong> clears, and only <code>company_description</code>,
-          <code>address</code>, and <code>website</code> accept it, because they are the only
-          nullable columns; <code>null</code> anywhere else is a <code>400</code>. An empty body is
-          a <code>400</code> too — it is a client bug, not a no-op worth a <code>200</code>.
+          <strong><code>null</code></strong> clears, and only the six nullable columns accept it —
+          <code>company_description</code>, <code>address</code>, <code>website</code>,
+          <code>contact_email</code>, <code>service_term</code>, and
+          <code>warranty_policy</code>; <code>null</code> anywhere
+          else is a <code>400</code>. An empty body is a <code>400</code> too — it is a client bug,
+          not a no-op worth a <code>200</code>.
         </p>
         <p class="note">
           <code>company_type</code> is a set, not a list you append to: the request carries the
@@ -800,6 +804,28 @@ admin: ['admin'],</code></pre>
           itself.
         </p>
         <p class="note">
+          <strong>There are two emails, and they are not the same thing.</strong>
+          <code>email</code> is what a company signs in with: it is unique, and it is what
+          <code>POST /auth/login</code> looks a company up by, so changing it changes the
+          credential. <code>contact_email</code> is the address the profile shows so other
+          companies can get in touch — nullable, <em>not</em> unique, and empty until someone
+          fills it in, because registration never asks for one. Two companies sharing a contact
+          address is a <code>200</code>, not a <code>409</code>. The form on
+          <code>/profile/edit</code> writes <code>contact_email</code> only; the account settings
+          page is where <code>username</code> and <code>email</code> are changed.
+        </p>
+        <p class="note">
+          <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
+          columns on <code>provider</code>, not on <code>company</code>, so they only exist for a
+          company that offers work. The controller writes them through a nested
+          <code>provider: { update: … }</code> in the same transaction as the rest, and a
+          <code>RECEIVER</code> company that sends either one gets a <code>403</code> — its account
+          type owns no <code>provider</code> row to write to. A <code>BOTH</code> company is a
+          provider too, which is why the check asks <code>roleGrants</code> rather than comparing
+          the role to <code>'provider'</code>. Reading them is always safe: a receiver simply sees
+          <code>null</code> for both.
+        </p>
+        <p class="note">
           <code>password</code> and <code>account_type</code> are <em>not</em> editable here, and
           the schema strips them silently rather than rejecting the request. A password change needs
           the current password, which is a different endpoint. <code>account_type</code> decides
@@ -812,6 +838,49 @@ admin: ['admin'],</code></pre>
           <code>GET /companies/me</code> returns, so the form can render the saved state without a
           second request. Read-only mode is the frontend's job: the API has no draft state, and a
           profile the user is only looking at is simply one nobody sent a <code>PATCH</code> for.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= PORTFOLIOS ================= -->
+    <section class="group" id="portfolios">
+      <h2>Portfolios</h2>
+
+      <article class="entry" id="edit-portfolio" data-tags="portfolio patch delete work sample edit remove listing service ownership 404 403 409 assertportfolioowned">
+        <h3>How does a company edit or remove a work sample (portfolio)?</h3>
+        <p class="answer"><code>PATCH /portfolios/:portfolioId</code> and <code>DELETE /portfolios/:portfolioId</code>, both <code>requireRole('provider')</code>.</p>
+        <pre><code>curl -s -X PATCH localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' -d '{
+  "portfolio_name": "Inventory dashboard",
+  "development_date": "2026-05-01"
+}'
+
+curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN"   <span class="c-dim"># 204</span></code></pre>
+        <p class="note">
+          There is no owner column on <code>service_portfolio</code> — the company is three hops away,
+          <code>service_portfolio → service → listing → company_id</code>, so
+          <code>assertPortfolioOwned</code> checks it as a nested Prisma select rather than a separate
+          lookup. An unknown id is <span class="status s-warn">404</span>; a company checking someone
+          else's portfolio is <span class="status s-warn">403</span>. The write itself repeats the same
+          <code>company_id</code> filter in its own <code>where</code>, so a listing that changes hands in
+          the gap between the check and the write can't slip through — Prisma finds nothing to update and
+          the same <span class="status s-warn">404</span> handling covers it.
+        </p>
+        <p class="note">
+          <code>PATCH</code> is a partial update like <a href="#edit-profile"><code>/companies/me</code></a>
+          — send only what changed. <code>portfolio_description</code> is the only nullable field; every
+          other field is required whenever it's present at all, and none accepts <code>null</code>.
+          <code>development_date</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
+          fails validation rather than silently shifting the stored day across a timezone.
+          <code>portfolio_image</code> and <code>portfolio_link</code> accept only <code>http</code>/<code>https</code>
+          URLs.
+        </p>
+        <p class="note">
+          A duplicate <code>portfolio_link</code> on the same listing is <span class="status s-warn">409</span>
+          — <code>@@unique([listing_id, portfolio_link])</code> enforces it, the same P2002 pattern as
+          <a href="#duplicates">the username/email conflict</a>. <code>DELETE</code> is a hard delete:
+          nothing references a portfolio row, and a soft-deleted one would keep occupying its slot in the
+          unique index.
         </p>
       </article>
     </section>
@@ -917,7 +986,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 50 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 64 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -972,6 +1041,20 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>GET afterwards</td><td><span class="status s-ok">200, every change present</span></td></tr>
+              <tr><td class="code-cell">GET /companies/me</td><td>contact_email never set</td><td><span class="status s-ok">200, contact_email: null</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email set</td><td><span class="status s-ok">200 saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: null</td><td><span class="status s-ok">200 cleared</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: ""</td><td><span class="status s-warn">400 on contact_email</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email another company holds</td><td><span class="status s-ok">200 — not unique, unlike email</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>email another company holds, after that</td><td><span class="status s-warn">409 — login identity still guarded</span></td></tr>
+              <tr><td class="code-cell">POST /auth/login</td><td>account email, once contact_email is set</td><td><span class="status s-ok">200 — the two are independent</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, provider</td><td><span class="status s-ok">200 both saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term: null</td><td><span class="status s-ok">200 cleared, warranty_policy untouched</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, provider</td><td><span class="status s-ok">200, provider columns unmoved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, BOTH</td><td><span class="status s-ok">200 — BOTH grants provider</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term, RECEIVER</td><td><span class="status s-warn">403 — owns no provider row</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, RECEIVER</td><td><span class="status s-ok">200 — the 403 is per-field, not per-request</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>RECEIVER reading the provider columns</td><td><span class="status s-ok">200 both null, no nested key</span></td></tr>
             </tbody>
           </table>
         </div>

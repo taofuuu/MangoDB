@@ -73,12 +73,20 @@ export interface CompanyProfile {
     company_name: string;
     company_description: string | null;
     username: string;
+    // Signs the company in, and is unique.
     email: string;
+    // Shown on the profile so others can make contact. Not unique, and null
+    // until the company fills it in — registration does not ask for one.
+    contact_email: string | null;
     phone: string;
     address: string | null;
     website: string | null;
     account_type: AccountType;
     company_type: string[];
+    // Both live on the provider table, flattened to here. A RECEIVER company
+    // owns no provider row, so it always reads null for these two.
+    service_term: string | null;
+    warranty_policy: string | null;
 }
 
 // Registration returns two things, so it is the one response that wraps.
@@ -95,9 +103,29 @@ export interface UpdateCompanyProfileRequest {
     company_name?: string;
     username?: string;
     email?: string;
+    contact_email?: string | null;
     phone?: string;
     company_type?: string[];
     company_description?: string | null;
     address?: string | null;
     website?: string | null;
+    // Provider-only. Sending either as a RECEIVER company is a 403.
+    service_term?: string | null;
+    warranty_policy?: string | null;
+}
+
+// A work sample on a listing. portfolio_id is a surrogate key: the table used
+// to be identified by (listing_id, portfolio_link), which left no way to name
+// a row in a URL. The pair is still unique — see @@unique in the schema.
+export interface ServicePortfolio {
+    portfolio_id: number;
+    listing_id: number;
+    portfolio_name: string;
+    // Nullable: not every work sample has write-up text yet.
+    portfolio_description: string | null;
+    // ISO date string (YYYY-MM-DD) — how res.json() serializes a Prisma
+    // DateTime, and all this column ever stores is a date, no time-of-day.
+    development_date: string;
+    portfolio_image: string;
+    portfolio_link: string;
 }
