@@ -14,8 +14,8 @@ export default function LoginCard() {
                     <Image
                         src="/assets/mangodblogo.png"
                         alt="MangoDB logo"
-                        width={48}
-                        height={48}
+                        width={82}
+                        height={82}
                         priority
                     />
                     <h1 className="text-2xl font-bold text-gray-900 sm:text-[36px]">
