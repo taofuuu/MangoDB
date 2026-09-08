@@ -18,7 +18,7 @@ portfolioRoutes.post(
     '/',
     requireAuth,
     requireRole('provider'),
-    uploadImage.single('portfolio_image'),
+    uploadImage('portfolio_image'),
     createPortfolio,
 );
 

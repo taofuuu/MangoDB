@@ -37,9 +37,11 @@ export const portfolioFields = {
 export const createPortfolioSchema = z.object({
     listing_id: z.coerce.number().int().positive().max(2147483647),
     portfolio_name: portfolioFields.portfolio_name,
-    portfolio_description: portfolioFields.portfolio_description.optional().nullable(),
+    portfolio_description: portfolioFields.portfolio_description
+        .optional()
+        .nullable(),
     development_date: portfolioFields.development_date,
-    portfolio_link: portfolioFields.portfolio_link
+    portfolio_link: portfolioFields.portfolio_link,
 });
 
 export type CreatePortfolioInput = z.infer<typeof createPortfolioSchema>;
