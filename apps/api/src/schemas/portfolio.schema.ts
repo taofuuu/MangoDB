@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Path params arrive as strings, so this coerces before the integer check —
 // the same reason parseQuery's schemas need z.coerce.
 export const portfolioIdParamSchema = z.object({
-    portfolioId: z.coerce.number().int().positive(),
+    portfolioId: z.coerce.number().int().positive().max(2147483647),
 });
 
 export type PortfolioIdParam = z.infer<typeof portfolioIdParamSchema>;
