@@ -634,6 +634,48 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         </ul>
       </article>
 
+      <article class="entry" id="admin-login" data-tags="admin administrator login signin us6-1 403 401 mirror auth/admin/login not an administrator account verifycredentials cookie session">
+        <h3>How does an administrator log in?</h3>
+        <p class="answer"><code>POST /auth/admin/login</code> — same body as the normal login, and it hands back the same <code>{ company, accessToken }</code> pair and the same cookie.</p>
+        <pre><code>curl -s -X POST localhost:4000/auth/admin/login \
+  -H 'content-type: application/json' \
+  -d '{"email":"admin@example.com","password":"..."}'</code></pre>
+        <p class="note">
+          The two logins are <strong>mirrors</strong>. Each turns away exactly the accounts the other
+          accepts, so a token from either one is never a surprise to the page that asked for it:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Endpoint</th><th>ADMIN account</th><th>Company account</th></tr></thead>
+            <tbody>
+              <tr><td class="code-cell">POST /auth/login</td><td><span class="status s-warn">403</span> use the administrator login</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td><span class="status s-ok">200</span></td><td><span class="status s-warn">403</span> not an administrator account</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Why <span class="status s-warn">403</span> and not <span class="status s-deny">401</span> for
+          the wrong kind of account: the password checked out, so we know who is calling — the answer is
+          just no. A <em>bad</em> credential is still <span class="status s-deny">401</span>, with the
+          same message and the same timing on both endpoints, because both call the same
+          <code>verifyCredentials</code>. See <a href="#401-vs-403">401 or 403</a>.
+        </p>
+        <p class="note">
+          It lives on <code>/auth</code>, not <code>/admin</code>, because
+          <a href="#protect">everything under <code>/admin</code> is guarded by
+          <code>requireAuth</code></a> — a login route there would need a token to get a token.
+          Nothing else is special: <a href="#tokens">the token</a> carries
+          <code>role: "admin"</code>, and <a href="#logout">logout</a> is the same endpoint for
+          everyone.
+        </p>
+        <p class="note">
+          There is still no way to <em>create</em> an administrator. No signup path can make one —
+          <code>registerSchema</code> rejects <code>ADMIN</code> and the profile edit cannot change
+          <code>account_type</code> — and the script that used to write the first one is not in the
+          repo. Ask whoever set up your database.
+        </p>
+      </article>
+
       <article class="entry" id="passwords" data-tags="password hash bcrypt salt store login verify hunter2">
         <h3>How are passwords stored?</h3>
         <p class="answer">bcrypt hashes at cost 12. The plaintext is never stored and never recoverable.</p>
@@ -986,7 +1028,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 64 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 74 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -1055,6 +1097,16 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>service_term, RECEIVER</td><td><span class="status s-warn">403 — owns no provider row</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, RECEIVER</td><td><span class="status s-ok">200 — the 403 is per-field, not per-request</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>RECEIVER reading the provider columns</td><td><span class="status s-ok">200 both null, no nested key</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>administrator credentials</td><td><span class="status s-ok">200 role admin, cookie set</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>admin email, wrong password</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>unknown email</td><td><span class="status s-deny">401 same message</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>valid company credentials</td><td><span class="status s-warn">403 not an administrator</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>empty body</td><td><span class="status s-warn">400 both fields</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>email but no password</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">POST /auth/login</td><td>administrator credentials</td><td><span class="status s-warn">403 use the administrator login</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>cookie from the admin login, no header</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">POST /auth/logout</td><td>admin token</td><td><span class="status s-ok">204</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>that admin token, after logout</td><td><span class="status s-deny">401 session has ended</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1099,7 +1151,7 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
           <li><strong>No login <em>page</em>.</strong> <code>POST /auth/login</code> itself landed with US1-2 and returns the same <code>{ company, accessToken }</code> pair as register, but nothing in the frontend calls it yet. Until it does, <code>/dev/session</code> in the web app gets you a token — log into a company you already made, or register a throwaway one. Delete that route, and its <code>dev_*</code> rows, when the real login page ships.</li>
           <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
-          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin and <code>account_type</code> has no <code>ADMIN</code> value, so US6-1 has nothing to authenticate against.</li>
+          <li><strong>Nothing creates an administrator.</strong> <code>account_type</code> now accepts <code>ADMIN</code> and <a href="#admin-login"><code>POST /auth/admin/login</code></a> authenticates one, but no signup path can make one and the script that wrote the first is not in the repo. If your database has no admin row, ask whoever set it up.</li>
           <li><strong>The denylist does not survive a restart</strong> and is not shared between instances — the one item here that is a defect rather than unbuilt scope.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging.</li>
           <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>

@@ -200,6 +200,25 @@ runs after it. Logout revokes the token's `jti` through the denylist in
 `src/auth/tokenDenylist.ts`, which is in-process today — see the note in that
 file before deploying more than one instance.
 
+There are two login endpoints, and they are mirrors: each turns away exactly
+the accounts the other accepts, so a token from either is never a surprise to
+the page that asked for it.
+
+| Endpoint                 | ADMIN account                                           | Company account                              |
+| ------------------------ | ------------------------------------------------------- | -------------------------------------------- |
+| `POST /auth/login`       | `403` "Administrators must use the administrator login" | `200`                                        |
+| `POST /auth/admin/login` | `200`                                                   | `403` "This is not an administrator account" |
+
+Both share `verifyCredentials`, so a bad credential answers `401` with the same
+message and the same timing either way. Both rejections above are `403` and not
+`401` on purpose: the password checked out, so we know who is calling — the
+answer is just no. `POST /auth/admin/login` sits on the public `authRoutes`
+because `/admin` is guarded by `requireAuth`, and a login route there would
+need a token to get a token.
+
+Logout is the same endpoint for both: `POST /auth/logout` revokes whatever
+token it is given.
+
 ### Portfolio
 
 `service_portfolio` holds a provider's work-sample links, one row per link,
