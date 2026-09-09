@@ -8,6 +8,11 @@ export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
 // provider or receiver row; a table of its own is next sprint (US6-1).
 export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
 
+// What a signup may ask for. Narrower than AccountType on purpose:
+// registerSchema rejects ADMIN at runtime, so the contract the frontend
+// codes against should reject it at compile time too.
+export type RegisterAccountType = Exclude<AccountType, 'ADMIN'>;
+
 export interface User {
     id: string;
     role: UserRole;
@@ -61,7 +66,7 @@ export interface RegisterRequest {
     email: string;
     password: string;
     phone: string;
-    account_type: AccountType;
+    account_type: RegisterAccountType;
     company_type: string[];
     company_description?: string;
     address?: string;
