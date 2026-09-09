@@ -8,6 +8,7 @@ import PortfolioCard, {
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
+import AddPortfolioForm from '@/components/forms/AddPortfolioForm';
 import { apiFetch } from '@/lib/api';
 
 // Mock data - there is no portfolio list endpoint on the API yet.
@@ -55,6 +56,7 @@ export default function PortfolioPage() {
     const [items, setItems] = useState(PORTFOLIO_ITEMS);
     const [view, setView] = useState<PortfolioView>('grid');
     const [category, setCategory] = useState('ALL');
+    const [isAddOpen, setIsAddOpen] = useState(false);
 
     // The item the user asked to delete. Null means the popup is closed.
     const [pendingDelete, setPendingDelete] = useState<PortfolioItem | null>(
@@ -67,7 +69,8 @@ export default function PortfolioPage() {
             : items.filter((item) => item.category === category);
 
     // Dummy handler - wire this to the API once the endpoint exists.
-    const handleAdd = () => {
+    const handleAddPortfolio = () => {
+        setIsAddOpen(true);
         console.log('Add portfolio');
     };
 
@@ -104,7 +107,7 @@ export default function PortfolioPage() {
                 <div className="flex items-center gap-[1.2vw] max-md:w-full max-md:flex-wrap max-md:gap-3">
                     <button
                         type="button"
-                        onClick={handleAdd}
+                        onClick={handleAddPortfolio}
                         className="h-[4.17vh] min-h-[36px] rounded-button bg-[#497B93] px-[1.2vw] text-sm !font-[600] text-white transition-colors hover:bg-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
                     >
                         + Add Portfolio
@@ -151,6 +154,11 @@ export default function PortfolioPage() {
                     ))}
                 </div>
             )}
+            <AddPortfolioForm
+                isOpen={isAddOpen}
+                onClose={() => setIsAddOpen(false)}
+                onSave={handleAddPortfolio}
+            />
 
             <DeletePortfolioModal
                 isOpen={pendingDelete !== null}
