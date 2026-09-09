@@ -16,6 +16,21 @@ export default function LoginForm() {
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+
+        // Client-side guard — catch empty fields before hitting the API.
+        if (!identifier.trim() && !password) {
+            setError('Please enter your email and password.');
+            return;
+        }
+        if (!identifier.trim()) {
+            setError('Please enter your email address.');
+            return;
+        }
+        if (!password) {
+            setError('Please enter your password.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
