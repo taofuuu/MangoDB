@@ -6,7 +6,7 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-import { uploadToStorage } from '../lib/storage';
+import { uploadToStorage, removeFromStorage } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -50,7 +50,7 @@ export async function createPortfolio(
     }
 
     // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
-    const imageUrl = await uploadToStorage(req.file);
+    const image = await uploadToStorage(req.file);
 
     // 5. บันทึกลง Database
     let created;
@@ -60,7 +60,7 @@ export async function createPortfolio(
                 portfolio_name: data.portfolio_name,
                 portfolio_description: data.portfolio_description ?? null,
                 development_date: data.development_date,
-                portfolio_image: imageUrl,
+                portfolio_image: image.url,
                 portfolio_link: data.portfolio_link,
                 service: {
                     connect: {
@@ -71,6 +71,8 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
+        await removeFromStorage(image.path);
+
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
@@ -84,7 +86,8 @@ export async function createPortfolio(
     res.status(201).json(toServicePortfolio(created));
 }
 
-// Editing a work sample - คงเดิมไม่แก้ไข
+// Editing a work sample: name, description, development date, image, and/or
+// link — PATCH, so the body carries only the fields being changed.
 export async function updatePortfolio(
     req: Request,
     res: Response,
@@ -93,8 +96,16 @@ export async function updatePortfolio(
     const data = parseBody(updatePortfolioSchema, req.body);
     const companyId = Number(req.auth!.sub);
 
+    // Checked before any write, and the two cases stay distinct: 404 for an
+    // unknown id, 403 for another company's (README.md's 401/403/404 rule).
     await assertPortfolioOwned(portfolioId, companyId);
 
+    // No same-value early return here: Postgres unique indexes only compare
+    // against *other* rows, so writing portfolio_link back to its current
+    // value can never self-collide. Skipping the write was a micro-
+    // optimization, not a correctness need — and with five editable fields
+    // now, a check keyed on one of them would silently drop the rest of the
+    // PATCH whenever that one field happened to be unchanged.
     let updated;
     try {
         updated = await prisma.service_portfolio.update({
@@ -106,6 +117,8 @@ export async function updatePortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
+        // @@unique([listing_id, portfolio_link]) — this listing already
+        // carries that link on some other row.
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
@@ -113,6 +126,7 @@ export async function updatePortfolio(
                 uniqueViolationDetails(fields),
             );
         }
+        // Deleted between assertPortfolioOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }
@@ -122,7 +136,9 @@ export async function updatePortfolio(
     res.json(toServicePortfolio(updated));
 }
 
-// Removing a work sample - คงเดิมไม่แก้ไข
+// Removing a work sample. Hard delete: nothing in the schema references a
+// portfolio row, and a soft-deleted one would keep occupying its slot in the
+// unique index, blocking the same link from ever being added back.
 export async function deletePortfolio(
     req: Request,
     res: Response,

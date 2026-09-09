@@ -9,9 +9,19 @@ const ROUTES = [
         detail: 'Get a token — there is no login page yet. Start here.',
     },
     {
+        href: '/profile/edit',
+        title: 'Edit Profile',
+        detail: 'US1-5 — the editable company profile form, against the API.',
+    },
+    {
         href: '/certificate',
         title: 'Certificates',
         detail: 'Add and edit certificate modals, on mock data.',
+    },
+    {
+        href: '/login',
+        title: 'Login',
+        detail: 'Sign in to your company account.',
     },
 ];
 

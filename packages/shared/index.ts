@@ -73,12 +73,20 @@ export interface CompanyProfile {
     company_name: string;
     company_description: string | null;
     username: string;
+    // Signs the company in, and is unique.
     email: string;
+    // Shown on the profile so others can make contact. Not unique, and null
+    // until the company fills it in — registration does not ask for one.
+    contact_email: string | null;
     phone: string;
     address: string | null;
     website: string | null;
     account_type: AccountType;
     company_type: string[];
+    // Both live on the provider table, flattened to here. A RECEIVER company
+    // owns no provider row, so it always reads null for these two.
+    service_term: string | null;
+    warranty_policy: string | null;
 }
 
 // Registration returns two things, so it is the one response that wraps.
@@ -95,11 +103,15 @@ export interface UpdateCompanyProfileRequest {
     company_name?: string;
     username?: string;
     email?: string;
+    contact_email?: string | null;
     phone?: string;
     company_type?: string[];
     company_description?: string | null;
     address?: string | null;
     website?: string | null;
+    // Provider-only. Sending either as a RECEIVER company is a 403.
+    service_term?: string | null;
+    warranty_policy?: string | null;
 }
 
 // A work sample on a listing. portfolio_id is a surrogate key: the table used

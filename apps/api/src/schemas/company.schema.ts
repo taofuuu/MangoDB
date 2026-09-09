@@ -29,6 +29,11 @@ export const companyFields = {
     company_description: z.string().trim().max(2000),
     address: z.string().trim().max(500),
     website: httpUrl,
+    // Provider-only, and TEXT columns rather than VarChar, so the cap is a
+    // policy choice rather than the database's — same one company_description
+    // uses.
+    service_term: z.string().trim().max(2000),
+    warranty_policy: z.string().trim().max(2000),
 } as const;
 
 // The columns a unique index can reject. prismaErrors uses this to decide which
@@ -49,6 +54,14 @@ export const updateCompanyProfileSchema = z
         company_description: companyFields.company_description.nullable(),
         address: companyFields.address.nullable(),
         website: companyFields.website.nullable(),
+        // The address the profile shows so others can get in touch. Same rule
+        // as email, a different column: email signs a company in and is
+        // unique, this one is neither, so two companies may share it.
+        contact_email: companyFields.email.nullable(),
+        // These two land on the provider table, not company, so the controller
+        // writes them separately and refuses them from a RECEIVER company.
+        service_term: companyFields.service_term.nullable(),
+        warranty_policy: companyFields.warranty_policy.nullable(),
     })
     .partial()
     // An empty body is a client bug, not a no-op worth a 200.
