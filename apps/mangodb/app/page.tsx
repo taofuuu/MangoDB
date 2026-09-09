@@ -13,6 +13,11 @@ const ROUTES = [
         title: 'Certificates',
         detail: 'Add and edit certificate modals, on mock data.',
     },
+    {
+        href: '/login',
+        title: 'Login',
+        detail: 'Sign in to your company account.',
+    },
 ];
 
 export default function Home() {
