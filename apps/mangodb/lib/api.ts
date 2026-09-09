@@ -3,9 +3,10 @@ import type {
     ApiErrorDetail,
     ApiErrorResponse,
 } from '@mangodb/shared';
-import { getToken } from './auth';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+// Same-origin, via the /api/* rewrite in next.config.ts. The absolute API URL
+// lives there and only the Next server sees it.
+const BASE_URL = '/api';
 
 // Every non-2xx from the API arrives in the same envelope, so one error class
 // covers all of them. `code` is the stable half to switch on; `details` carries
@@ -53,16 +54,13 @@ export async function apiFetch<T>(
     path: string,
     init: RequestInit = {},
 ): Promise<T> {
-    const token = getToken();
-
     const response = await fetch(`${BASE_URL}${path}`, {
         ...init,
-        // Login stores the access token in an httpOnly cookie. Cross-origin
-        // browser requests do not send it unless credentials are included.
-        credentials: init.credentials ?? 'include',
+        // The session is an httpOnly cookie, so there is no token to attach —
+        // the browser sends it. Nothing here can forget to.
+        credentials: 'include',
         headers: {
             'content-type': 'application/json',
-            ...(token ? { authorization: `Bearer ${token}` } : {}),
             ...init.headers,
         },
     });
