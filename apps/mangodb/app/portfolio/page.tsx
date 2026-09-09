@@ -2,6 +2,7 @@
 
 import { type MouseEvent, useState } from 'react';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
+import { apiFetch } from '@/lib/api';
 
 type TestPortfolio = {
     portfolio_id: number;
@@ -63,39 +64,17 @@ export default function DeletePortfolioPage() {
 
     // Delete the selected portfolio
     const handleDeletePortfolio = async () => {
-        // Make sure a portfolio was selected
         if (!selectedPortfolio) {
             throw new Error('No portfolio selected');
-        }
-
-        const token = localStorage.getItem('mangodb.token');
-
-        if (!token) {
-            throw new Error('Authentication required');
         }
 
         setIsDeleting(true);
 
         try {
-            const response = await fetch(
-                `http://localhost:4000/portfolios/${selectedPortfolio.portfolio_id}`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
+            await apiFetch(`/portfolios/${selectedPortfolio.portfolio_id}`, {
+                method: 'DELETE',
+            });
 
-            if (!response.ok) {
-                const result = await response.json();
-
-                throw new Error(
-                    result?.error?.message || 'Failed to delete portfolio',
-                );
-            }
-
-            // Remove the deleted portfolio from the page
             setPortfolios((currentPortfolios) =>
                 currentPortfolios.filter(
                     (portfolio) =>
@@ -104,10 +83,7 @@ export default function DeletePortfolioPage() {
                 ),
             );
 
-            // Clear selected portfolio
             setSelectedPortfolio(null);
-
-            // Close modal
             setIsModalOpen(false);
         } finally {
             setIsDeleting(false);
