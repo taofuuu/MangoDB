@@ -23,6 +23,11 @@ const ROUTES = [
         title: 'Account settings',
         detail: 'Change your username, email, or password. Needs a token.',
     },
+    {
+        href: '/login',
+        title: 'Login',
+        detail: 'Sign in to your company account.',
+    },
 ];
 
 export default function Home() {
