@@ -9,8 +9,7 @@ import PortfolioList from './PortfoilioList'; // Matches PortfoilioList.jsx
 export default function Dashboard() {
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
-            {/* Top Navbar */}
-            <header className="flex justify-between items-center mb-6">
+            {/* <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center font-bold text-red-600 text-xs">
                         M
@@ -40,7 +39,7 @@ export default function Dashboard() {
                     />
                     <div className="w-8 h-8 rounded-full bg-slate-500"></div>
                 </div>
-            </header>
+            </header> */}
 
             {/* Main Grid Workspace */}
             <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">

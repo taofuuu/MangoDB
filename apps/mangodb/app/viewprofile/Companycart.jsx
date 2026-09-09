@@ -27,40 +27,30 @@ export default function CompanyCard() {
                     </label>
                     <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
-                <div>
+                {/* <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Company Account Type
                     </label>
-                    <input
-                        type="text"
-                        className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                    />
+                    <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
+                </div> */}
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Company Warranty Policy
+                    </label>
+                    <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
+
                 <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Company Address
                     </label>
-                    <textarea className="w-full h-20 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
+                    <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
-                <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Company Warranty Policy
-                        </label>
-                        <input
-                            type="text"
-                            className="w-full h-8 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Company Service Term
-                        </label>
-                        <input
-                            type="text"
-                            className="w-full h-8 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                        />
-                    </div>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                        Company Service Term
+                    </label>
+                    <textarea className="w-full h-24 p-2 text-xs border border-[#497B93] rounded-xl focus:outline-none focus:ring-1 focus:ring-[#497B93] resize-none" />
                 </div>
             </div>
         </div>
