@@ -6,6 +6,7 @@ import type { AccountType } from '@mangodb/shared';
 import RegisterLayout from '@/components/register/RegisterLayout';
 import RoleStep from '@/components/register/RoleStep';
 import CompanyInfoStep, {
+    CompanyType,
     type CompanyInfo,
 } from '@/components/register/CompanyInfoStep';
 import AccountStep, {
@@ -39,10 +40,10 @@ export default function RegisterPage() {
   ===================================================== */
 
     const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
-        company_name: '',
-        company_description: '',
-        company_type: [''],
-        phone: '',
+        companyName: '',
+        companyDescription: '',
+        companyType: [],
+        phoneNumber: '',
         email: '',
         address: '',
         website: '',
@@ -153,12 +154,13 @@ export default function RegisterPage() {
   ===================================================== */
 
     const goToStep3 = () => {
+        console.log(companyInfo);
         const valid =
-            companyInfo.company_name.trim() &&
-            companyInfo.phone.trim() &&
+            companyInfo.companyName.trim() &&
+            companyInfo.phoneNumber.trim() &&
             companyInfo.email.trim() &&
-            companyInfo.company_type.length > 0 &&
-            companyInfo.company_type.every((type) => type.trim());
+            companyInfo.companyType.length > 0 &&
+            companyInfo.companyType.every((type: CompanyType) => type.trim());
 
         if (!valid) {
             return;
@@ -220,16 +222,16 @@ export default function RegisterPage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    company_name: companyInfo.company_name.trim(),
+                    company_name: companyInfo.companyName.trim(),
 
                     company_description:
-                        companyInfo.company_description.trim() || undefined,
+                        companyInfo.companyDescription.trim() || undefined,
 
-                    company_type: companyInfo.company_type
+                    company_type: companyInfo.companyType
                         .map((type) => type.trim())
                         .filter(Boolean),
 
-                    phone: companyInfo.phone.trim(),
+                    phone: companyInfo.phoneNumber.trim(),
 
                     email: companyInfo.email.trim().toLowerCase(),
 
@@ -365,9 +367,9 @@ export default function RegisterPage() {
                 <CompanyInfoStep
                     value={companyInfo}
                     onChange={setCompanyInfo}
-                    availability={{
-                        emailAvailable,
-                    }}
+                    // availability={{
+                    //     emailAvailable,
+                    // }}
                 />
             )}
 
@@ -381,6 +383,9 @@ export default function RegisterPage() {
                     serverError={serverError}
                     isSubmitting={isSubmitting}
                     onUsernameBlur={handleUsernameBlur}
+                    onSubmit={() => {
+                        console.log('Submit click');
+                    }} // Replace this with real submit handler
                 />
             )}
         </RegisterLayout>

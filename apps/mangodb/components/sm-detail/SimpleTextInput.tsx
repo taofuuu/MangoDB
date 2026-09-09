@@ -6,6 +6,7 @@ interface SimpleTextInputProps {
     debounceTimeout?: number;
     onChange?: (value: string) => void;
     validate?: (value: string) => boolean;
+    initValue?: string;
 }
 
 export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
@@ -14,8 +15,9 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     debounceTimeout = 500,
     onChange,
     validate,
+    initValue,
 }) => {
-    const [inputValue, setInputValue] = useState<string>('');
+    const [inputValue, setInputValue] = useState<string>(initValue ?? '');
 
     // Track the last emitted value to prevent duplicate updates when the component rerenders
     const lastEmittedValueRef = useRef<string>('');

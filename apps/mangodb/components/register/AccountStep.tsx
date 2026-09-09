@@ -17,7 +17,7 @@ type AccountStepProps = {
     serverError: string;
     isSubmitting: boolean;
     onUsernameBlur: () => void;
-    onBack: () => void;
+    onBack?: () => void;
     onSubmit: () => void;
 };
 

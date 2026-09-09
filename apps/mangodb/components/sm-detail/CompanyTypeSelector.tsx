@@ -1,20 +1,24 @@
 'use client';
 
-import { CompanyType } from '@/app/register/page';
 import React, { useState } from 'react';
+import { CompanyType } from '../register/CompanyInfoStep';
 
 interface CompanyTypeSelectorProps {
     title: string;
     companyTypeList: CompanyType[];
     onChange?: (selectedTypes: CompanyType[]) => void;
+    initValues?: CompanyType[];
 }
 
 export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
     title,
     companyTypeList,
     onChange,
+    initValues,
 }) => {
-    const [selectedValues, setSelectedValues] = useState<CompanyType[]>([]);
+    const [selectedValues, setSelectedValues] = useState<CompanyType[]>(
+        initValues ?? [],
+    );
 
     const handleSelect = (type: CompanyType) => {
         let updatedValues: CompanyType[];
