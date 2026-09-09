@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { CompanyAccountDetail } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -34,12 +34,29 @@ export default function CompanyDetailModal({
     error,
     onClose,
 }: CompanyDetailModalProps) {
+    const panelRef = useRef<HTMLElement>(null);
+
     useEffect(() => {
+        const previousFocus = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        panelRef.current?.focus();
+
         const closeOnEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') onClose();
         };
         window.addEventListener('keydown', closeOnEscape);
-        return () => window.removeEventListener('keydown', closeOnEscape);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', closeOnEscape);
+            if (
+                previousFocus instanceof HTMLElement &&
+                previousFocus.isConnected
+            ) {
+                previousFocus.focus();
+            }
+        };
     }, [onClose]);
 
     const isProvider =
@@ -58,6 +75,8 @@ export default function CompanyDetailModal({
             }}
         >
             <section
+                ref={panelRef}
+                tabIndex={-1}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="company-detail-title"
