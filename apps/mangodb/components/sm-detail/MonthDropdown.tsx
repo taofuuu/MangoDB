@@ -7,18 +7,18 @@ type MonthDropdownProps = {
 };
 
 const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
+    { label: 'January', value: '1' },
+    { label: 'February', value: '2' },
+    { label: 'March', value: '3' },
+    { label: 'April', value: '4' },
+    { label: 'May', value: '5' },
+    { label: 'June', value: '6' },
+    { label: 'July', value: '7' },
+    { label: 'August', value: '8' },
+    { label: 'September', value: '9' },
+    { label: 'October', value: '10' },
+    { label: 'November', value: '11' },
+    { label: 'December', value: '12' },
 ];
 
 export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
@@ -37,7 +37,8 @@ export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
                         value ? 'text-black text-sm' : 'text-[#D6D6D6] text-sm'
                     }
                 >
-                    {value || 'Select month'}
+                    {months.find((month) => month.value === value)?.label ||
+                        'Select month'}
                 </span>
 
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-md text-[#757575]">
@@ -49,17 +50,16 @@ export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
             {open && (
                 <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
                     <div className="custom-scrollbar h-50 overflow-y-auto">
-                        {months.map((month, index) => (
+                        {months.map((month) => (
                             <button
-                                type="button"
-                                key={month}
+                                key={month.value}
                                 onClick={() => {
-                                    onChange(String(month));
+                                    onChange(month.value);
                                     setOpen(false);
                                 }}
                                 className="block w-full px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
                             >
-                                {month}
+                                {month.label}
                             </button>
                         ))}
                     </div>

@@ -28,6 +28,11 @@ const ROUTES = [
         title: 'Account setting',
         detail: 'Manage account settings and delete account.',
     },
+    {
+        href: '/login',
+        title: 'Login',
+        detail: 'Sign in to your company account.',
+    },
 ];
 
 export default function Home() {
