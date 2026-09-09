@@ -5,7 +5,7 @@ export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
 // Stored in company.account_type, uppercase as the seeded rows have it. ADMIN
 // is deliberately absent from registerSchema, so the public signup form can
 // never mint one. An admin is a company row with account_type ADMIN and no
-// provider or receiver row; a table of its own is next sprint (US6-1).
+// provider or receiver row — there is no separate admin table.
 export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
 
 // What a signup may ask for. Narrower than AccountType on purpose:
