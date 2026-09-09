@@ -903,6 +903,33 @@ admin: ['admin'],</code></pre>
           <code>setToken</code> itself, so no page can forget to.
         </p>
       </article>
+
+      <article class="entry" id="admin-company-accounts" data-tags="admin company accounts list detail pagination private contact email phone us6-2">
+        <h3>How does an administrator list and inspect Company accounts?</h3>
+        <p class="answer"><code>GET /admin/companies?page=1&amp;pageSize=12</code> returns one page; <code>GET /admin/companies/:companyId</code> returns the selected account's full profile.</p>
+        <pre><code>curl -s -H "Authorization: Bearer $TOKEN" \
+  "localhost:4000/admin/companies?page=1&amp;pageSize=12"
+
+curl -s -H "Authorization: Bearer $TOKEN" \
+  localhost:4000/admin/companies/33</code></pre>
+        <p class="note">
+          Both routes currently require a valid session so private contact data is never public.
+          Once US6-1 supplies administrator sessions, the router will add
+          <code>requireRole('admin')</code> to restrict them to administrators.
+        </p>
+        <p class="note">
+          Pages are ordered by <code>company_name</code> and then <code>company_id</code> so records
+          do not jump between requests. <code>page</code> defaults to <code>1</code>,
+          <code>pageSize</code> defaults to <code>12</code> and is capped at <code>50</code>.
+          The response contains <code>items</code> plus <code>pagination</code> metadata with the
+          current page, page size, total items and total pages.
+        </p>
+        <p class="note">
+          The list returns only card fields and rating totals. The detail endpoint additionally
+          returns username, sign-in email, contact email, phone, address, website and provider
+          terms. Neither endpoint selects or returns the password hash.
+        </p>
+      </article>
     </section>
 
     <!-- ================= PORTFOLIOS ================= -->
