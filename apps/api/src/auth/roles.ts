@@ -7,8 +7,7 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
     RECEIVER: 'receiver',
     BOTH: 'both',
     // No signup path produces this: registerSchema rejects ADMIN, and the
-    // profile edit cannot change account_type. Only scripts/create-admin.ts
-    // writes it.
+    // profile edit cannot change account_type.
     ADMIN: 'admin',
 };
 
