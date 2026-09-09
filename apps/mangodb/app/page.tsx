@@ -29,11 +29,6 @@ const ROUTES = [
         detail: 'Manage account settings and delete account.',
     },
     {
-        href: '/account-settings',
-        title: 'Account settings',
-        detail: 'Change your username, email, or password. Needs a token.',
-    },
-    {
         href: '/login',
         title: 'Login',
         detail: 'Sign in to your company account.',
