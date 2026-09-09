@@ -90,7 +90,7 @@ export default function CompanyInfoStep({
     }, [companyInfo]);
 
     return (
-        <div className="company-info-page flex flex-col gap-6">
+        <div className="company-info-page flex flex-col gap-5 mt-5">
             <SimpleTextInput
                 title="Company Name"
                 onChange={handleUpdateCompanyName}

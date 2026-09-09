@@ -52,11 +52,8 @@ export default function AccountStep({
         !isSubmitting;
 
     return (
-        <form
-            onSubmit={submit}
-            className="flex flex-col px-7 py-9 sm:px-10 lg:px-12 lg:py-12"
-        >
-            <div className="w-full max-w-[420px] space-y-6">
+        <form onSubmit={submit} className="flex flex-col px-7 py-5 sm:px-10">
+            <div className="w-full max-w-[420px] space-y-5">
                 <div>
                     <label htmlFor="username" className="mb-2 block text-base">
                         Username
@@ -104,7 +101,7 @@ export default function AccountStep({
                     value={value.password}
                     onChange={(nextValue) => update('password', nextValue)}
                 />
-                <p className="-mt-4 text-sm leading-6 text-[#497B93]">
+                <p className="-mt-3 text-sm leading-6 text-[#497B93]">
                     Must be at least 8 characters. Maximum 72 characters.
                 </p>
 
@@ -117,14 +114,14 @@ export default function AccountStep({
                     }
                 />
                 {value.confirmPassword.length > 0 && !confirmValid && (
-                    <p className="-mt-5 text-xs text-[#C5483B]">
+                    <p className="-mt-3 text-xs text-[#C5483B]">
                         ⚠ Passwords do not match.
                     </p>
                 )}
             </div>
 
             {serverError && (
-                <p className="mt-5 max-w-[520px] text-sm text-[#C5483B]">
+                <p className="mt-3 max-w-[520px] text-sm text-[#C5483B]">
                     ⚠ {serverError}
                 </p>
             )}
