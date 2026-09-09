@@ -54,19 +54,9 @@ export default function AccountStep({
     return (
         <form
             onSubmit={submit}
-            className="flex min-h-[720px] flex-col px-7 py-9 sm:px-10 lg:min-h-[800px] lg:px-12 lg:py-12"
+            className="flex flex-col px-7 py-9 sm:px-10 lg:px-12 lg:py-12"
         >
-            <header>
-                <h1 className="text-[38px] font-bold leading-none sm:text-[44px]">
-                    Sign Up
-                </h1>
-                <h2 className="mt-1 text-[28px] font-semibold leading-tight sm:text-[32px]">
-                    Create Your Account
-                </h2>
-                <div className="mt-5 h-px bg-[#497B93]" />
-            </header>
-
-            <div className="mt-7 w-full max-w-[420px] space-y-7">
+            <div className="w-full max-w-[420px] space-y-6">
                 <div>
                     <label htmlFor="username" className="mb-2 block text-base">
                         Username
@@ -87,16 +77,16 @@ export default function AccountStep({
                                 : 'border-[#497B93] focus:ring-[#66A6C5]'
                         }`}
                     />
-                    <p className="mt-2 text-sm leading-6 text-[#497B93]">
+                    {/* <p className="mt-2 text-sm leading-6 text-[#497B93]">
                         This will be used as your login username. Cannot be
                         changed after registration.
-                    </p>
+                    </p> */}
                     {usernameAvailability === 'checking' && (
                         <p className="mt-1 text-xs text-[#497B93]">
                             Checking username…
                         </p>
                     )}
-                    {usernameAvailability === 'available' && (
+                    {/* {usernameAvailability === 'available' && (
                         <p className="mt-1 text-xs text-[#2F7D47]">
                             Username is available.
                         </p>
@@ -105,7 +95,7 @@ export default function AccountStep({
                         <p className="mt-1 text-xs text-[#C5483B]">
                             ⚠ Username already taken. Please choose another one.
                         </p>
-                    )}
+                    )} */}
                 </div>
 
                 <PasswordField
@@ -139,7 +129,7 @@ export default function AccountStep({
                 </p>
             )}
 
-            <div className="mt-auto flex justify-end gap-4 pt-8">
+            {/* <div className="mt-auto flex justify-end gap-4 pt-8">
                 <button
                     type="button"
                     onClick={onBack}
@@ -154,7 +144,7 @@ export default function AccountStep({
                 >
                     {isSubmitting ? 'Creating…' : 'Create Account'}
                 </button>
-            </div>
+            </div> */}
         </form>
     );
 }
