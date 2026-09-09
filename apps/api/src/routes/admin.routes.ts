@@ -7,11 +7,10 @@ import {
 
 export const adminRoutes = Router();
 
-// TODO(US6-1): Move these routes below the admin guard once admin accounts and
-// role-based access are available. They are temporarily public so US6-2's
-// Company account list and detail UI can be developed with real database data.
-adminRoutes.get('/companies', listCompanyAccounts);
-adminRoutes.get('/companies/:companyId', getCompanyAccountDetail);
+// Temporary until US6-1 supplies administrator sessions: a valid session is
+// still required so the private contact fields are never exposed publicly.
+adminRoutes.get('/companies', requireAuth, listCompanyAccounts);
+adminRoutes.get('/companies/:companyId', requireAuth, getCompanyAccountDetail);
 
 // Guarded once, so a new admin route cannot be added without the check.
 adminRoutes.use(requireAuth, requireRole('admin'));
