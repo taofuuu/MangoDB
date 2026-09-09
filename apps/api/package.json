@@ -12,8 +12,7 @@
         "db:generate": "prisma generate",
         "db:studio": "prisma studio",
         "db:migrate": "prisma migrate deploy",
-        "db:pull": "prisma db pull",
-        "create-admin": "tsx src/scripts/create-admin.ts"
+        "db:pull": "prisma db pull"
     },
     "keywords": [],
     "author": "",
