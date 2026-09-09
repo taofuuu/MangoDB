@@ -4,13 +4,15 @@ import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import FileUpload from '../sm-detail/FileUpload';
+import type { CertificateData } from './EditCertificateForm';
 
 type FormModalProps = {
     isOpen: boolean;
     onClose: () => void;
+    onSave?: (data: CertificateData) => void;
 };
 
-export default function FormModal({ isOpen, onClose }: FormModalProps) {
+export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     const [name, setName] = useState('');
     const [organize, setOrganize] = useState('');
     const [month, setMonth] = useState('');
@@ -28,21 +30,33 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log({
+        const newData: CertificateData = {
             name,
             organize,
             month,
             year,
+            exMonth,
+            exYear,
             credID,
             credURL,
-        });
+            file,
+        };
+
+        console.log('New Certificate:', newData);
+
+        if (onSave) {
+            onSave(newData);
+        }
 
         onClose();
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="w-full max-w-[45vw] max-h-[92vh] rounded-xl bg-[#FFFDF9] text-[#171717] p-[1.5vw] shadow-xl">
+            <div
+                className="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl
+                    max-h-[calc(100vh-2rem)] overflow-y-auto"
+            >
                 {/* -------------header----------------- */}
                 <div className=" flex items-center justify-between">
                     <h2 className="text-lg">Add license or certification</h2>
@@ -189,15 +203,17 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
                 </form>
                 <hr className="border-[#3F6B80]/50" />
                 {/* -----------------footer----------------- */}
-                {/* save button */}
-                <div className="flex justify-end item-center gap-3 pt-4">
-                    <button
-                        type="submit"
-                        className="rounded-status bg-[#3F6B80] w-[7vw] h-[4vh] text-[#FFFDF9] text-sm !font-[500]"
-                    >
-                        save
-                    </button>
-                </div>
+                {/* Save button */}
+                <form onSubmit={handleSubmit}>
+                    <div className="flex items-center justify-end gap-3 pt-4">
+                        <button
+                            type="submit"
+                            className="h-[4vh] w-[7vw] rounded-status bg-[#3F6B80] text-sm font-[500] text-[#FFFDF9] transition-colors hover:bg-[#497B93]"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

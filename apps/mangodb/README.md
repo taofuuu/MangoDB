@@ -22,9 +22,17 @@ Pages that read or write data need `apps/api` running on port 4000. Set
 `NEXT_PUBLIC_API_URL` in `.env.local` to point somewhere else; without it the
 default is `http://localhost:4000`.
 
-There is no shared API client yet — the login page (US1-2) brings it. Until
-then the only page that calls the API is `/dev/session`, which carries its own
-throwaway copy.
+`lib/api.ts` is the shared client: it attaches the bearer token and turns the
+API's error envelope into an `ApiRequestError`, which carries the error `code`
+and one `details[]` entry per rejected field — what a form needs to put a
+message beside the right input.
+
+`lib/auth.ts` is the only file that touches storage. The token lives in
+`localStorage` under `mangodb.token`, so no page has to know where it came
+from: whatever signs a company in calls `setToken(accessToken)`, and every
+other page reads it back. `/dev/session` writes that same key today from its
+own throwaway copy of the helpers, and the real login page can drop in beside
+it without either side importing the other.
 
 There is no login page yet, so nothing has a token to send. Visit
 [`/dev/session`](http://localhost:3000/dev/session) to register a throwaway

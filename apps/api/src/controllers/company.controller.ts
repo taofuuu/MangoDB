@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { roleGrants } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
@@ -42,7 +43,19 @@ export async function updateMyProfile(
 ): Promise<void> {
     const body = parseBody(updateCompanyProfileSchema, req.body);
     const companyId = Number(req.auth!.sub);
-    const { company_type, ...columns } = body;
+    const { company_type, service_term, warranty_policy, ...columns } = body;
+
+    // `in`, not a truthiness check: zod drops absent keys, so this is the one
+    // way to tell "left alone" from an explicit null that means "clear it".
+    const editsProvider = 'service_term' in body || 'warranty_policy' in body;
+
+    // roleGrants rather than role === 'provider': a BOTH company is a provider
+    // too, and owns the row these columns live on.
+    if (editsProvider && !roleGrants(req.auth!.role).includes('provider')) {
+        throw ApiError.forbidden(
+            'Only a provider company has service terms and a warranty policy',
+        );
+    }
 
     // Reports both collisions at once; an index only fails on the first. The
     // caller's own row is excluded, or resubmitting your own email would 409.
@@ -68,6 +81,16 @@ export async function updateMyProfile(
                         })),
                     },
                 }),
+                // A second table, same transaction. omitUndefined keeps a body
+                // that sent only one of the two from clearing the other.
+                ...(editsProvider && {
+                    provider: {
+                        update: omitUndefined({
+                            service_term,
+                            warranty_policy,
+                        }),
+                    },
+                }),
             },
             select: companyProfileSelect,
         });
@@ -81,6 +104,9 @@ export async function updateMyProfile(
                 uniqueViolationDetails(fields),
             );
         }
+        // Also fires if a provider company somehow has no provider row, but
+        // register creates one with the company and nothing removes it, so
+        // that would be broken data rather than a case to handle here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company not found');
         }
