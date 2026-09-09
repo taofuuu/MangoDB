@@ -6,6 +6,10 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
     PROVIDER: 'provider',
     RECEIVER: 'receiver',
     BOTH: 'both',
+    // No signup path produces this: registerSchema rejects ADMIN, and the
+    // profile edit cannot change account_type. Only scripts/create-admin.ts
+    // writes it.
+    ADMIN: 'admin',
 };
 
 // account_type is a VarChar column, not a real Postgres enum (see
