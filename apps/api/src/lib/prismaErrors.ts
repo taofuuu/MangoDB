@@ -38,6 +38,13 @@ export function uniqueViolationDetails(fields: string[]): ApiErrorDetail[] {
     }));
 }
 
+// P2002 without asking which column. For a write where only one unique
+// constraint is reachable, the column name adds nothing the caller can act on.
+export function isUniqueViolation(err: unknown): boolean {
+    if (typeof err !== 'object' || err === null) return false;
+    return (err as PrismaError).code === 'P2002';
+}
+
 // P2025 — the row the write targeted is gone. A company deleted mid-session
 // still holds a valid token, so that is a 404 rather than an unhandled 500.
 export function isRecordNotFound(err: unknown): boolean {

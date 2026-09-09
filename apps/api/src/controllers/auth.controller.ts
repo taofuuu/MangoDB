@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import type { CompanyProfile } from '@mangodb/shared';
 import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import {
@@ -7,8 +6,6 @@ import {
     hashPassword,
     verifyPassword,
 } from '../auth/password';
-import { signAccessToken } from '../auth/jwt';
-import { accountTypeToRole } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import {
@@ -20,23 +17,10 @@ import {
     checkCompanyIdentityAvailability,
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+import { issueSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
-
-// Shared by register and login: both sign a token from the same profile shape
-// and answer with the same { company, accessToken } pair.
-function issueSession(company: CompanyProfile): {
-    company: CompanyProfile;
-    accessToken: string;
-} {
-    const accessToken = signAccessToken({
-        sub: String(company.company_id),
-        role: accountTypeToRole(company.account_type),
-    });
-
-    return { company, accessToken };
-}
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a

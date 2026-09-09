@@ -121,20 +121,21 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// Registration returns two things, so it is the one response that wraps.
-export interface RegisterResponse {
+export interface SessionResponse {
     company: CompanyProfile;
     accessToken: string;
 }
 
+// Registration returns two things, so it is one of the two responses that wrap.
+export type RegisterResponse = SessionResponse;
+
 // US1-5. What a profile edit accepts: an absent field means "leave it", and
-// null clears a column that allows it. password is not editable here — that
-// needs the current password — and neither is account_type, which decides
-// which subtype rows a company owns.
+// null clears a column that allows it. The three fields a company signs in with
+// are not here — changing any of them needs the current password, so they have
+// their own endpoint — and neither is account_type, which decides which subtype
+// rows a company owns.
 export interface UpdateCompanyProfileRequest {
     company_name?: string;
-    username?: string;
-    email?: string;
     contact_email?: string | null;
     phone?: string;
     company_type?: string[];
@@ -145,6 +146,21 @@ export interface UpdateCompanyProfileRequest {
     service_term?: string | null;
     warranty_policy?: string | null;
 }
+
+// What a company signs in with, all three behind one gate: the current password
+// is required whatever you change, because each of these is a way to take the
+// account over. An absent field is left alone, and none of them is nullable, so
+// there are two states here rather than the profile edit's three.
+export interface ChangeCredentialsRequest {
+    current_password: string;
+    username?: string;
+    email?: string;
+    new_password?: string;
+}
+
+// Wraps, like register: the token the change was made with is revoked, so the
+// response has to carry the one that replaces it.
+export type ChangeCredentialsResponse = SessionResponse;
 
 // A work sample on a listing. portfolio_id is a surrogate key: the table used
 // to be identified by (listing_id, portfolio_link), which left no way to name

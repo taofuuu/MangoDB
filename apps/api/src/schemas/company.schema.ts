@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { httpUrl } from './common.schema';
+import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 
 // One definition per editable column, shared by registration (US1-1) and the
 // profile edit (US1-5) so a fix to a rule is one edit rather than two. Sizes
@@ -17,6 +18,22 @@ export const companyFields = {
         .max(50)
         .regex(/^[a-z0-9_]+$/, 'Use letters, numbers, and underscores only'),
     email: z.email().max(100).toLowerCase(),
+    // A password being *set* — registration, and a credential change. A byte
+    // cap rather than .max(72): see BCRYPT_MAX_BYTES. This is the one that
+    // matters, because it decides what actually gets hashed.
+    password: z
+        .string()
+        .min(8)
+        .refine(
+            fitsBcryptLimit,
+            `Password must be at most ${BCRYPT_MAX_BYTES} bytes`,
+        ),
+    // A password being *checked*, deliberately not the rule above. Anyone who
+    // registered before fitsBcryptLimit existed may hold a longer one, and
+    // bcrypt still verifies it against the 72 bytes it hashed back then.
+    // Judging it here would lock them out, and would answer a credential
+    // question with a 400 that hands out the policy instead of a 401.
+    passwordAttempt: z.string().min(1).max(72),
     phone: z
         .string()
         .trim()
@@ -41,14 +58,15 @@ export const companyFields = {
 export const COMPANY_UNIQUE_FIELDS = ['username', 'email'] as const;
 
 // US1-5. Every field is optional: an absent one leaves the column alone, and
-// null clears one that is nullable. password is not here — changing it needs
-// the current password — and neither is account_type, which would have to add
-// or remove the provider/receiver rows and restamp the token's role claim.
+// null clears one that is nullable. The three fields a company signs in with —
+// username, email, password — are not here: changing any of them needs the
+// current password, so they belong to changeCredentialsSchema below. Keeping
+// them here too would leave that gate one request away from being walked
+// around. account_type is absent as well, since it would have to add or remove
+// the provider/receiver rows and restamp the token's role claim.
 export const updateCompanyProfileSchema = z
     .object({
         company_name: companyFields.company_name,
-        username: companyFields.username,
-        email: companyFields.email,
         phone: companyFields.phone,
         company_type: companyFields.company_type,
         company_description: companyFields.company_description.nullable(),
@@ -72,3 +90,27 @@ export const updateCompanyProfileSchema = z
 export type UpdateCompanyProfileInput = z.infer<
     typeof updateCompanyProfileSchema
 >;
+
+// The three fields a company signs in with. All of them sit behind the current
+// password, because each one is a way to take the account over: move the email
+// and you own the login, change the password and the owner is locked out. A
+// token alone is not enough for that.
+export const changeCredentialsSchema = z
+    .object({
+        current_password: companyFields.passwordAttempt,
+        username: companyFields.username,
+        email: companyFields.email,
+        new_password: companyFields.password,
+    })
+    .partial({ username: true, email: true, new_password: true })
+    // current_password on its own changes nothing, so it is a client bug rather
+    // than a no-op worth a 200 — the same call updateCompanyProfileSchema makes.
+    .refine(
+        (body) =>
+            body.username !== undefined ||
+            body.email !== undefined ||
+            body.new_password !== undefined,
+        { message: 'Provide a username, an email, or a new password' },
+    );
+
+export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;

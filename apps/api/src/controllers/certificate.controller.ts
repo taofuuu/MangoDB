@@ -24,10 +24,10 @@ export async function addCertificate(req: Request, res: Response) {
             expire_month: body.expire_month ?? null,
             expire_year: body.expire_year ?? null,
 
-            credential_id: body.credential_id,
-            credential_url: body.credential_url,
+            credential_id: body.credential_id ?? null,
+            credential_url: body.credential_url ?? null,
 
-            cert_image: body.cert_image,
+            cert_image: body.cert_image ?? null,
         },
     });
 
