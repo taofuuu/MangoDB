@@ -112,8 +112,11 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout. The one exception is `POST /auth/register`, which returns
-  two things — `{ company, accessToken }` — because it also logs you in.
+  delete or logout. Two endpoints are exceptions, both returning
+  `{ company, accessToken }` because both hand you a session:
+  `POST /auth/register`, which logs you in, and
+  `PATCH /companies/me/credentials`, which _re_-logs you in — it revokes the
+  token it was called with, so it has to return the replacement.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
   rather than repeating the guards per route, so a new route cannot miss them.
 - **Never put a secret, a stack trace, or a Prisma error in a response.**
@@ -192,13 +195,45 @@ is case-sensitive and would otherwise accept `CodeCrafters` next to
 public, returning `{ usernameAvailable, emailAvailable }` for the signup form's
 inline hint. It is advisory — it reserves nothing, so `register` re-checks.
 
+### Account credentials
+
+`PATCH /companies/me/credentials` (`requireAuth`) changes the three fields a
+company signs in with. Send `current_password` plus any of `username`, `email`,
+and `new_password`; `current_password` alone is a `400`, because it changes
+nothing.
+
+| Method  | Path                        | Middleware    |
+| ------- | --------------------------- | ------------- |
+| `PATCH` | `/companies/me/credentials` | `requireAuth` |
+
+The current password gates all three, not just the password. Each of them is a
+way to take an account over — move the email and you own the login — so a token
+alone is not enough. That is also why **`PATCH /companies/me` no longer accepts
+`username` or `email`**: leaving them there would make the gate decorative,
+since anyone holding a token could walk around it with one request. The profile
+edit still writes `contact_email`, which is a different, non-unique column.
+
+A wrong `current_password` is `401`, the same answer login gives, and it is
+checked before anything is written. A username or email another company holds
+is `409` with one `details` entry per rejected field — the same
+`assertCompanyIdentityAvailable` pre-check registration uses, passed
+`excludeCompanyId` so re-submitting your own value is not a collision.
+
+On success it revokes the token it was called with and returns
+`{ company, accessToken }`, so the caller must store the new token. See the
+response-shape rule above for why this wraps.
+
 ### Authentication
 
 `requireAuth` verifies the bearer token, rejects revoked ones, and puts the
 claims on `req.auth` (`sub`, `role`, `jti`, `exp`). `requireRole(...roles)`
-runs after it. Logout revokes the token's `jti` through the denylist in
-`src/auth/tokenDenylist.ts`, which is in-process today — see the note in that
-file before deploying more than one instance.
+runs after it. Two endpoints revoke a token's `jti` through the denylist in
+`src/auth/tokenDenylist.ts` — `POST /auth/logout`, and
+`PATCH /companies/me/credentials`, which ends the session its change was made
+with. Both revoke one token, not every session the company holds: there is no
+per-company token version, so a second device stays signed in until its own
+token expires. The denylist lives in `public.revoked_token`, so it survives a
+restart and is shared between instances.
 
 ### Portfolio
 
