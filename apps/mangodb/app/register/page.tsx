@@ -65,6 +65,7 @@ export default function RegisterPage() {
     const validatePhoneNUmber = (num: string) => {
         if (Number.isNaN(Number(num))) return false;
         if (num.length > 10) return false;
+        // if(num[0] != '0') return false;
         return true;
     };
 
