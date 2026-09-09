@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
+import { uploadImage } from '../middleware/upload';
 import {
     createPortfolio,
     deletePortfolio,
@@ -23,6 +24,7 @@ portfolioRoutes.post(
     '/',
     requireAuth,
     requireRole('provider'),
+    uploadImage('portfolio_image'),
     createPortfolio,
 );
 
@@ -32,6 +34,7 @@ portfolioRoutes.patch(
     requireRole('provider'),
     updatePortfolio,
 );
+
 portfolioRoutes.delete(
     '/:portfolioId',
     requireAuth,

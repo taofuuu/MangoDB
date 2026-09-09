@@ -6,6 +6,7 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
+import { uploadToStorage, removeFromStorage } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -21,15 +22,20 @@ import {
 } from '../schemas/portfolio.schema';
 
 // Creating a new work sample/portfolio item (POST /portfolios)
-// Creating a new work sample/portfolio item (POST /portfolios)
 export async function createPortfolio(
     req: Request,
     res: Response,
 ): Promise<void> {
+    // 1. ตรวจสอบว่าส่งไฟล์รูปมาหรือไม่
+    if (!req.file) {
+        throw ApiError.badRequest('Portfolio image file is required');
+    }
+
+    // 2. Parse Text Fields จาก Form-Data
     const data = parseBody(createPortfolioSchema, req.body);
     const companyId = Number(req.auth!.sub);
 
-    // ตรวจสอบสิทธิ์ Listing
+    // 3. AUTHORIZATION & OWNERSHIP CHECK ก่อนทำการ Upload ไฟล์
     const service = await prisma.service.findUnique({
         where: { listing_id: data.listing_id },
         select: { listing: { select: { company_id: true } } },
@@ -43,6 +49,10 @@ export async function createPortfolio(
         throw ApiError.forbidden('This service belongs to another company');
     }
 
+    // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
+    const image = await uploadToStorage(req.file);
+
+    // 5. บันทึกลง Database
     let created;
     try {
         created = await prisma.service_portfolio.create({
@@ -50,7 +60,7 @@ export async function createPortfolio(
                 portfolio_name: data.portfolio_name,
                 portfolio_description: data.portfolio_description ?? null,
                 development_date: data.development_date,
-                portfolio_image: data.portfolio_image,
+                portfolio_image: image.url,
                 portfolio_link: data.portfolio_link,
                 service: {
                     connect: {
@@ -61,6 +71,8 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
+        await removeFromStorage(image.path);
+
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
             throw ApiError.conflict(
@@ -144,7 +156,6 @@ export async function deletePortfolio(
             },
         });
     } catch (err) {
-        // Someone else deleted it between the check above and this write.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }

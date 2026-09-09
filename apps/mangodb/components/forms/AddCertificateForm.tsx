@@ -5,11 +5,26 @@ import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
+import { apiFetch, ApiRequestError } from '@/lib/api';
+
+type CertificateResponse = {
+    certificate_id: number;
+    provider_id: number;
+    cert_title: string;
+    organization: string;
+    issue_month: number | null;
+    issue_year: number | null;
+    expire_month: number | null;
+    expire_year: number | null;
+    credential_id: string | null;
+    credential_url: string | null;
+    cert_image: string | null;
+};
 
 type FormModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    onSave?: (data: CertificateData) => void;
+    onSave: (data: CertificateData) => void;
 };
 
 export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
@@ -23,34 +38,81 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     const [credURL, setCredURL] = useState('');
     const [file, setFile] = useState<File | null>(null);
 
+    const resetForm = () => {
+        setName('');
+        setOrganize('');
+        setMonth('');
+        setYear('');
+        setExMonth('');
+        setExYear('');
+        setCredID('');
+        setCredURL('');
+        setFile(null);
+    };
+
     if (!isOpen) {
         return null;
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const newData: CertificateData = {
-            name,
-            organize,
-            month,
-            year,
-            exMonth,
-            exYear,
-            credID,
-            credURL,
-            file,
-        };
+        try {
+            const result = await apiFetch<CertificateResponse>(
+                '/certificates',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        cert_title: name,
+                        organization: organize,
+                        issue_month: month ? Number(month) : null,
+                        issue_year: year ? Number(year) : null,
+                        expire_month: exMonth ? Number(exMonth) : null,
+                        expire_year: exYear ? Number(exYear) : null,
+                        credential_id: credID || null,
+                        credential_url: credURL || null,
+                        cert_image: file?.name ?? null,
+                    }),
+                },
+            );
 
-        console.log('New Certificate:', newData);
+            console.log('Certificate created:', result);
 
-        if (onSave) {
+            // Only update the page AFTER the API succeeds
+            const newData: CertificateData = {
+                name: result.cert_title,
+                organize: result.organization,
+                month: result.issue_month?.toString() ?? '',
+                year: result.issue_year?.toString() ?? '',
+                exMonth: result.expire_month?.toString() ?? '',
+                exYear: result.expire_year?.toString() ?? '',
+                credID: result.credential_id ?? '',
+                credURL: result.credential_url ?? '',
+                file,
+            };
+
             onSave(newData);
+
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error('Error creating certificate:', error);
+
+            if (error instanceof ApiRequestError) {
+                if (error.details.length > 0) {
+                    const errorMessages = error.details
+                        .map((detail) => detail.message)
+                        .join('\n');
+
+                    alert(errorMessages);
+                } else {
+                    alert(error.message);
+                }
+            } else {
+                alert('Unable to connect to the server.');
+            }
         }
-
-        onClose();
     };
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div
@@ -63,7 +125,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={() => {
+                            resetForm();
+                            onClose();
+                        }}
                         className="text-[#828282] hover:text-gray-800"
                     >
                         X
@@ -181,7 +246,6 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 value={credID}
                                 onChange={(e) => setCredID(e.target.value)}
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                required
                             />
                         </div>
                         {/* Credential URL */}
@@ -195,16 +259,13 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 value={credURL}
                                 onChange={(e) => setCredURL(e.target.value)}
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                required
                             />
                         </div>
                         <FileUpload value={file} onChange={setFile} />
                     </div>
-                </form>
-                <hr className="border-[#3F6B80]/50" />
-                {/* -----------------footer----------------- */}
-                {/* Save button */}
-                <form onSubmit={handleSubmit}>
+                    <hr className="border-[#3F6B80]/50" />
+                    {/* -----------------footer----------------- */}
+                    {/* Save button */}
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <button
                             type="submit"
