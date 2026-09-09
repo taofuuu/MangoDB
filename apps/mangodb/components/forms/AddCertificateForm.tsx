@@ -5,11 +5,26 @@ import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
+import { apiFetch, ApiRequestError } from '@/lib/api';
+
+type CertificateResponse = {
+    certificate_id: number;
+    provider_id: number;
+    cert_title: string;
+    organization: string;
+    issue_month: number | null;
+    issue_year: number | null;
+    expire_month: number | null;
+    expire_year: number | null;
+    credential_id: string | null;
+    credential_url: string | null;
+    cert_image: string | null;
+};
 
 type FormModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    onSave?: (data: CertificateData) => void;
+    onSave: (data: CertificateData) => void;
 };
 
 export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
@@ -43,82 +58,59 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         e.preventDefault();
 
         try {
-            const token = localStorage.getItem('mangodb.token');
-
-            if (!token) {
-                alert('Please log in first.');
-                return;
-            }
-
-            const response = await fetch('http://localhost:4000/certificates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
+            const result = await apiFetch<CertificateResponse>(
+                '/certificates',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        cert_title: name,
+                        organization: organize,
+                        issue_month: month ? Number(month) : null,
+                        issue_year: year ? Number(year) : null,
+                        expire_month: exMonth ? Number(exMonth) : null,
+                        expire_year: exYear ? Number(exYear) : null,
+                        credential_id: credID || null,
+                        credential_url: credURL || null,
+                        cert_image: file?.name ?? null,
+                    }),
                 },
-                body: JSON.stringify({
-                    cert_title: name,
-                    organization: organize,
-                    issue_month: month ? Number(month) : null,
-                    issue_year: year ? Number(year) : null,
-                    expire_month: exMonth ? Number(exMonth) : null,
-                    expire_year: exYear ? Number(exYear) : null,
-                    credential_id: credID ? credID : null,
-                    credential_url: credURL ? credURL : null,
-                    cert_image: file ? file.name : null,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                const details = result?.error?.details;
-
-                if (details?.length > 0) {
-                    const errorMessages = details
-                        .map(
-                            (detail: { field: string; message: string }) =>
-                                detail.message,
-                        )
-                        .join('\n');
-
-                    alert(errorMessages);
-                } else {
-                    alert(
-                        result?.error?.message ??
-                            result?.message ??
-                            'Failed to create certificate.',
-                    );
-                }
-
-                return;
-            }
+            );
 
             console.log('Certificate created:', result);
 
+            // Only update the page AFTER the API succeeds
             const newData: CertificateData = {
-                name,
-                organize,
-                month,
-                year,
-                exMonth,
-                exYear,
-                credID,
-                credURL,
+                name: result.cert_title,
+                organize: result.organization,
+                month: result.issue_month?.toString() ?? '',
+                year: result.issue_year?.toString() ?? '',
+                exMonth: result.expire_month?.toString() ?? '',
+                exYear: result.expire_year?.toString() ?? '',
+                credID: result.credential_id ?? '',
+                credURL: result.credential_url ?? '',
                 file,
             };
 
-            console.log('New Certificate:', newData);
-
-            if (onSave) {
-                onSave(newData);
-            }
+            onSave(newData);
 
             resetForm();
             onClose();
         } catch (error) {
-            console.error('Error creating certificate: ', error);
-            alert('Unable to connect to the server.');
+            console.error('Error creating certificate:', error);
+
+            if (error instanceof ApiRequestError) {
+                if (error.details.length > 0) {
+                    const errorMessages = error.details
+                        .map((detail) => detail.message)
+                        .join('\n');
+
+                    alert(errorMessages);
+                } else {
+                    alert(error.message);
+                }
+            } else {
+                alert('Unable to connect to the server.');
+            }
         }
     };
     return (
