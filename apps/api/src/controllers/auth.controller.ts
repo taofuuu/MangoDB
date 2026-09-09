@@ -17,7 +17,7 @@ import {
     checkCompanyIdentityAvailability,
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
-import { issueSession } from '../lib/session';
+import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
@@ -72,7 +72,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         throw err;
     }
 
-    res.status(201).json(issueSession(toCompanyProfile(company)));
+    sendSession(res, toCompanyProfile(company), 201);
 }
 
 const checkAvailabilitySchema = z.object({
@@ -127,17 +127,5 @@ export async function login(req: Request, res: Response): Promise<void> {
     // The hash never leaves this function: split it off, serialize the rest.
     const { password: _hash, ...row } = company;
 
-    const session = issueSession(toCompanyProfile(row));
-
-    // Set the token in an httpOnly cookie so it is not accessible to JS on
-    // the client. The frontend relies on credentials: 'include' to send it
-    // back on subsequent requests. Max-age mirrors the JWT expiry (1 h).
-    res.cookie('access_token', session.accessToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 1000, // 1 hour in ms
-    });
-
-    res.json(session);
+    sendSession(res, toCompanyProfile(row));
 }

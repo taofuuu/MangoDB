@@ -13,7 +13,7 @@ import {
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
-import { issueSession } from '../lib/session';
+import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
@@ -185,5 +185,8 @@ export async function changeMyCredentials(
     // any copy of this token and nothing else.
     await revokeToken(req.auth!.jti, req.auth!.exp);
 
-    res.json(issueSession(toCompanyProfile(company)));
+    // Replaces the cookie as well as the body. The token just revoked is the
+    // one the browser is holding, so skipping this would sign the caller out
+    // the moment they changed their own email.
+    sendSession(res, toCompanyProfile(company));
 }
