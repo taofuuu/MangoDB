@@ -52,10 +52,13 @@ export default function AccountStep({
         !isSubmitting;
 
     return (
-        <form onSubmit={submit} className="flex flex-col px-7 py-5 sm:px-10">
+        <form onSubmit={submit} className="flex flex-col py-5">
             <div className="w-full max-w-[420px] space-y-5">
                 <div>
-                    <label htmlFor="username" className="mb-2 block text-base">
+                    <label
+                        htmlFor="username"
+                        className="mb-[3px] block text-sm"
+                    >
                         Username
                     </label>
                     <input
@@ -68,18 +71,18 @@ export default function AccountStep({
                         onBlur={onUsernameBlur}
                         maxLength={50}
                         autoComplete="username"
-                        className={`h-[46px] w-full rounded-md border bg-white/50 px-4 outline-none transition focus:ring-2 ${
+                        className={`h-[40px] w-full rounded-[6px] border bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out ${
                             usernameAvailability === 'taken'
-                                ? 'border-[#C5483B] focus:ring-[#C5483B]/30'
-                                : 'border-[#497B93] focus:ring-[#66A6C5]'
+                                ? 'border-[#C5483B] focus:ring-2 focus:ring-[#C5483B]/30'
+                                : 'border-[#497B93] focus:ring-2 focus:ring-[#497B93]/30'
                         }`}
                     />
-                    {/* <p className="mt-2 text-sm leading-6 text-[#497B93]">
+                    <p className="mt-2 text-sm leading-6 text-[#497B93]">
                         This will be used as your login username. Cannot be
                         changed after registration.
-                    </p> */}
+                    </p>
                     {usernameAvailability === 'checking' && (
-                        <p className="mt-1 text-xs text-[#497B93]">
+                        <p className="mt-1 text-sm text-[#497B93]">
                             Checking username…
                         </p>
                     )}
@@ -159,7 +162,7 @@ function PasswordField({
 }) {
     return (
         <div>
-            <label htmlFor={id} className="mb-2 block text-base">
+            <label htmlFor={id} className="mb-[3px] block text-sm">
                 {label}
             </label>
             <input
@@ -171,7 +174,7 @@ function PasswordField({
                 autoComplete={
                     id === 'password' ? 'new-password' : 'new-password'
                 }
-                className="h-[46px] w-full rounded-md border border-[#497B93] bg-white/50 px-4 outline-none transition focus:ring-2 focus:ring-[#66A6C5]"
+                className="h-[40px] w-full rounded-[6px] border border-[#497B93] bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out focus:ring-2 focus:ring-[#497B93]/30"
             />
         </div>
     );

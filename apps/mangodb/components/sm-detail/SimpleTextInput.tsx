@@ -51,7 +51,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
 
     return (
         <div style={styles.container}>
-            <label className="text-md">{title}</label>
+            <label className="text-sm">{title}</label>
             <input
                 type="text"
                 value={inputValue}
@@ -70,8 +70,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     container: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
-        fontFamily: 'sans-serif',
+        gap: '3px',
         width: '100%',
     },
     // label: {
@@ -83,7 +82,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         width: '100%',
         padding: '0 12px',
         fontSize: '14px',
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFDF9',
         borderRadius: '6px',
         boxSizing: 'border-box',
         outline: 'none',

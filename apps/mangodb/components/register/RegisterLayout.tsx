@@ -36,21 +36,45 @@ export default function RegisterLayout({
                 />
             </div>
 
+            {/* MangoDB Cooperation badge */}
+            <div
+                className="
+                    fixed right-[16px] top-[10px] z-50
+                    flex items-center gap-[8px]
+                    rounded-full
+                    bg-[#FFFDF9]
+                    px-[12px] py-[8px]
+                    shadow-[0_1px_3px_rgba(0,0,0,0.25)]
+                "
+            >
+                <div className="relative h-[25px] w-[32px] overflow-hidden">
+                    <Image
+                        src="/images/mangodblogo.png"
+                        alt="MangoDB"
+                        fill
+                        className="object-cover"
+                    />
+                </div>
+
+                <span className="text-sm">MangoDB Cooperation</span>
+            </div>
+
             {/* register card */}
             <div
                 className="
-          absolute left-1/2 top-1/2
-          flex h-[75%] w-[55%]
-          -translate-x-1/2 -translate-y-1/2
-          overflow-hidden rounded-status bg-white shadow-lg
+                    absolute left-1/2 top-1/2
+                    flex h-[75%] w-[55%]
+                    -translate-x-1/2 -translate-y-1/2
+                    overflow-hidden rounded-status bg-[#FFFDF9] shadow-lg
 
-          max-sm:h-[calc(100%-32px)]
-          max-sm:w-[calc(100%-32px)]
-        "
+                    max-sm:top-[calc(50%+35px)]
+                    max-sm:h-[calc(100%-50px)]
+                    max-sm:w-[calc(100%-32px)]
+                    "
             >
                 {/* left side */}
                 <div className="w-[42%] pl-[20px] py-[20px] max-sm:hidden">
-                    <div className="relative h-full w-full overflow-hidden rounded-[20px_20px_500px_20px]">
+                    <div className="relative h-full w-full overflow-hidden rounded-[20px_20px_500px_20px] shadow-lg">
                         <Image
                             src="/images/background-keyboard.png"
                             alt=""
@@ -72,7 +96,7 @@ export default function RegisterLayout({
                     </header>
 
                     {/* content */}
-                    <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto">
+                    <div className="modal-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto">
                         {children}
                     </div>
 
@@ -104,7 +128,7 @@ export default function RegisterLayout({
                     rounded-button
                     bg-[#3F6B80]
                     px-[24px] py-[5px]
-                    text-md text-white
+                    text-md text-[#FFFDF9]
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "

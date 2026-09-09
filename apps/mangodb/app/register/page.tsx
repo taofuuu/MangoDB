@@ -328,7 +328,7 @@ export default function RegisterPage() {
 
         3: {
             title: 'Sign Up',
-            subtitle: 'Account',
+            subtitle: 'Create Your Account',
 
             showBack: true,
             onBack: goBack,

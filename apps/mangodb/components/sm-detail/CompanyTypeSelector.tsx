@@ -38,7 +38,7 @@ export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
 
     return (
         <div style={styles.container}>
-            <h3 className="text-md">{title}</h3>
+            <h3 className="text-sm">{title}</h3>
 
             <div style={styles.optionsGrid}>
                 {companyTypeList.map((type) => {
@@ -66,8 +66,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     container: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
-        fontFamily: 'sans-serif',
+        gap: '3px',
         width: '100%',
     },
     // title: {
@@ -85,7 +84,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     optionButton: {
         padding: '8px 16px',
         fontSize: '14px',
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFDF9',
         borderRadius: '6px',
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
