@@ -34,7 +34,7 @@ export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
 
     return (
         <div style={styles.container}>
-            <h3 style={styles.title}>{title}</h3>
+            <h3 className="text-md">{title}</h3>
 
             <div style={styles.optionsGrid}>
                 {companyTypeList.map((type) => {
@@ -66,12 +66,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: 'sans-serif',
         width: '100%',
     },
-    title: {
-        margin: 0,
-        fontSize: '16px',
-        fontWeight: 600,
-        color: '#333',
-    },
+    // title: {
+    //     margin: 0,
+    //     fontSize: '16px',
+    //     fontWeight: 600,
+    //     color: '#333',
+    // },
     optionsGrid: {
         display: 'flex',
         flexDirection: 'row',
@@ -89,12 +89,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         // Avoided shorthand 'border: 1px solid #ccc' to prevent conflicts with selected state
         borderStyle: 'solid',
         borderWidth: '1px',
-        borderColor: '#ccc',
+        borderColor: '#497B93',
     },
     selectedButton: {
-        backgroundColor: '#007bff',
+        backgroundColor: '#497B93',
         color: '#fff',
         // Safely overriding just the color now that styles are split
-        borderColor: '#0056b3',
+        borderColor: '#497B93',
     },
 };
