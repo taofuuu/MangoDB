@@ -148,18 +148,33 @@ export async function deletePortfolio(
 
     await assertPortfolioOwned(portfolioId, companyId);
 
+    let deleted;
     try {
-        await prisma.service_portfolio.delete({
+        deleted = await prisma.service_portfolio.delete({
             where: {
                 portfolio_id: portfolioId,
                 service: { listing: { company_id: companyId } },
             },
+            select: { portfolio_image: true },
         });
     } catch (err) {
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }
         throw err;
+    }
+
+    // Extract the storage path from the public URL and remove the file.
+    // URL shape: .../storage/v1/object/public/<bucket>/<path>
+    // removeFromStorage is best-effort — a failed cleanup won't block the 204.
+    const bucket = 'portfolio';
+    const marker = `/object/public/${bucket}/`;
+    const markerIdx = deleted.portfolio_image.indexOf(marker);
+    if (markerIdx !== -1) {
+        const storagePath = deleted.portfolio_image.slice(
+            markerIdx + marker.length,
+        );
+        await removeFromStorage(storagePath);
     }
 
     res.status(204).end();
