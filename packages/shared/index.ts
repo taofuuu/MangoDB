@@ -121,6 +121,8 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
+// A company and a token to act as it. Register, login, and a credential change
+// all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {
     company: CompanyProfile;
     accessToken: string;
