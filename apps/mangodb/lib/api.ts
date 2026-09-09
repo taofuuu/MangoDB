@@ -57,6 +57,9 @@ export async function apiFetch<T>(
 
     const response = await fetch(`${BASE_URL}${path}`, {
         ...init,
+        // Login stores the access token in an httpOnly cookie. Cross-origin
+        // browser requests do not send it unless credentials are included.
+        credentials: init.credentials ?? 'include',
         headers: {
             'content-type': 'application/json',
             ...(token ? { authorization: `Bearer ${token}` } : {}),
