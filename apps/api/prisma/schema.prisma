@@ -15,14 +15,20 @@ model category {
 }
 
 model certificate {
-  cert_id     Int      @default(1)
-  provider_id Int
-  cert_title  String   @db.VarChar(255)
-  cert_desc   String?
-  cert_image  String   @db.VarChar(255)
-  provider    provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
+  provider_id    Int
+  cert_title     String   @db.VarChar(255)
+  cert_image     String?  @db.VarChar(255)
+  certificate_id Int      @id @default(autoincrement())
+  credential_id  String?  @db.VarChar(255)
+  credential_url String?  @db.VarChar(255)
+  expire_month   Int?
+  expire_year    Int?
+  issue_month    Int?
+  issue_year     Int?
+  organization   String   @db.VarChar(255)
+  provider       provider @relation(fields: [provider_id], references: [company_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([cert_id, provider_id])
+  @@index([provider_id])
 }
 
 model company {
@@ -36,11 +42,22 @@ model company {
   address             String?
   website             String?        @db.VarChar(255)
   account_type        String         @db.VarChar(100)
+  contact_email       String?        @db.VarChar(100)
+  // Soft delete. Null means active; a timestamp means the account is gone as
+  // far as discovery is concerned, while everything it is attached to -
+  // listings, proposals, projects, reviews - stays exactly where it is.
+  //
+  // The rule this creates: discovery queries (company search, browse, find a
+  // provider) filter on deleted_at; history queries (past projects, reviews)
+  // must NOT, or they hide the very history this column exists to keep.
+  deleted_at          DateTime?      @db.Timestamptz(6)
   company_type        company_type[]
   listing             listing[]
   proposal            proposal[]
   provider            provider?
   receiver            receiver?
+
+  @@index([deleted_at])
 }
 
 model company_type {
@@ -153,11 +170,16 @@ model service {
 }
 
 model service_portfolio {
-  listing_id     Int
-  portfolio_link String  @db.VarChar(255)
-  service        service @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
+  listing_id            Int
+  portfolio_link        String   @db.VarChar(255)
+  portfolio_id          Int      @id @default(autoincrement())
+  development_date      DateTime @db.Date
+  portfolio_description String?
+  portfolio_image       String   @db.VarChar(255)
+  portfolio_name        String   @db.VarChar(255)
+  service               service  @relation(fields: [listing_id], references: [listing_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([listing_id, portfolio_link])
+  @@unique([listing_id, portfolio_link])
 }
 
 model revoked_token {

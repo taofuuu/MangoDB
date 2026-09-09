@@ -12,13 +12,6 @@
     --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
-}
-
 body {
     background: var(--background);
     color: var(--foreground);
@@ -46,6 +39,11 @@ body {
     font-weight: 400;
 }
 
+.text-xs {
+    font-size: 12px;
+    font-weight: 400;
+}
+
 /* corner radius */
 .rounded-button {
     border-radius: 12px;
@@ -59,18 +57,31 @@ body {
     border-radius: 4px;
 }
 
+.rounded-popup {
+    border-radius: 30px;
+}
+
 /* scrollbar */
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #757575;
-    border-radius: 8px;
+.modal-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #497b93 transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-    width: 7px;
+.modal-scrollbar::-webkit-scrollbar {
+    width: 8px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+.modal-scrollbar::-webkit-scrollbar-track {
     background: transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+    background: #497b93;
+    border-radius: 9999px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3f6b80;
 }
 
 /* uploadbox */

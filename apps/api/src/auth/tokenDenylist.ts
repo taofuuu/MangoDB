@@ -12,7 +12,8 @@ function toDate(unixSeconds: number): Date {
     return new Date(unixSeconds * 1000);
 }
 
-// On logout only. Revocations are rare, authenticated requests are not.
+// Only where a token is revoked. Revocations are rare, authenticated requests
+// are not, so this cost never lands on a read.
 async function pruneExpired(now: number): Promise<void> {
     await prisma.revoked_token.deleteMany({
         where: { expires_at: { lte: toDate(now) } },
