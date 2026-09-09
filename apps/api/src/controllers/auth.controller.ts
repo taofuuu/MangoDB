@@ -19,7 +19,7 @@ import {
     checkCompanyIdentityAvailability,
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
-import { issueSession } from '../lib/session';
+import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
@@ -53,17 +53,6 @@ async function verifyCredentials(
     const { password: _hash, ...row } = company;
 
     return toCompanyProfile(row);
-}
-
-// httpOnly so client JS cannot read the token, and the max-age mirrors the JWT
-// expiry so the cookie does not outlive what it carries.
-function setSessionCookie(res: Response, accessToken: string): void {
-    res.cookie('access_token', accessToken, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 1000, // 1 hour in ms
-    });
 }
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
@@ -116,7 +105,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         throw err;
     }
 
-    res.status(201).json(issueSession(toCompanyProfile(company)));
+    sendSession(res, toCompanyProfile(company), 201);
 }
 
 const checkAvailabilitySchema = z.object({
@@ -159,10 +148,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         );
     }
 
-    const session = issueSession(company);
-    setSessionCookie(res, session.accessToken);
-
-    res.json(session);
+    sendSession(res, company);
 }
 
 // US6-1. The admin half of login. Same credentials, same session, same cookie —
@@ -176,8 +162,5 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
         throw ApiError.forbidden('This is not an administrator account');
     }
 
-    const session = issueSession(company);
-    setSessionCookie(res, session.accessToken);
-
-    res.json(session);
+    sendSession(res, company);
 }

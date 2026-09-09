@@ -1,135 +1,34 @@
 'use client';
 
 // THROWAWAY — do not import from this file, and do not copy it as a pattern.
-// It is one self-contained file on purpose: the button, the input, the API
-// client and the token helpers below are quick stand-ins so this page can get a
-// token. They are not shared code. The real versions belong to the login page
-// (US1-2, Dena and Chin) and to whoever builds the shared UI kit.
+// The buttons and inputs below are quick stand-ins; the real versions belong to
+// whoever builds the shared UI kit. The API client and token helpers this file
+// used to carry are gone: those exist for real in lib/ now, and this page goes
+// through them like every other page.
 //
-// Why the page exists: there is no login page yet, and the 20 seeded companies
-// cannot log in — their password column holds the literal string "hash123"
-// instead of a bcrypt hash. POST /auth/register is public and hands back a
-// token, so that is how this page gets one.
+// Why it outlived the login page: there is still no /signup, and the 20 seeded
+// companies cannot log in — their password column holds the literal string
+// "hash123" instead of a bcrypt hash. POST /auth/register is public, so this is
+// the only way to get an account worth logging in with.
 //
-// Delete app/dev/ when the real login lands.
+// Delete app/dev/ once /signup exists.
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type {
     AccountType,
-    ApiErrorCode,
-    ApiErrorDetail,
-    ApiErrorResponse,
     CompanyProfile,
+    SessionResponse,
 } from '@mangodb/shared';
+import { ApiRequestError, apiFetch } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
+import { login } from '@/lib/session';
 
 const ACCOUNT_TYPES: AccountType[] = ['PROVIDER', 'RECEIVER', 'BOTH'];
 
 // The one password every company this page creates is given, so logging back
 // into one only ever needs its email.
 const DEV_PASSWORD = 'password123';
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
-const TOKEN_KEY = 'mangodb.token';
-
-// register and login answer with the same pair.
-type SessionResponse = { company: CompanyProfile; accessToken: string };
-
-/* --- token ---------------------------------------------------------- */
-
-// The access token lives in localStorage. Every read is guarded because the
-// page renders on the server first, where there is no window to read from.
-function getToken(): string | null {
-    return typeof window === 'undefined'
-        ? null
-        : window.localStorage.getItem(TOKEN_KEY);
-}
-
-function setToken(token: string): void {
-    if (typeof window !== 'undefined') {
-        window.localStorage.setItem(TOKEN_KEY, token);
-    }
-}
-
-// Forgetting the token is not the same as ending the session: the token stays
-// signed and valid until it expires. Only POST /auth/logout revokes it.
-function clearToken(): void {
-    if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(TOKEN_KEY);
-    }
-}
-
-/* --- api ------------------------------------------------------------ */
-
-// Every non-2xx from the API arrives in the same envelope, so one error class
-// covers all of them. `code` is the stable half to switch on.
-class ApiRequestError extends Error {
-    readonly status: number;
-    readonly code: ApiErrorCode;
-    readonly details: ApiErrorDetail[];
-
-    constructor(
-        status: number,
-        code: ApiErrorCode,
-        message: string,
-        details: ApiErrorDetail[] = [],
-    ) {
-        super(message);
-        this.name = 'ApiRequestError';
-        this.status = status;
-        this.code = code;
-        this.details = details;
-    }
-}
-
-// Reads the error envelope. A failure that never reached the API — a proxy, a
-// crash — has no envelope, so fall back to something the user can act on.
-async function toRequestError(response: Response): Promise<ApiRequestError> {
-    try {
-        const body = (await response.json()) as ApiErrorResponse;
-        return new ApiRequestError(
-            response.status,
-            body.error.code,
-            body.error.message,
-            body.error.details ?? [],
-        );
-    } catch {
-        return new ApiRequestError(
-            response.status,
-            'INTERNAL',
-            `Request failed with status ${response.status}`,
-        );
-    }
-}
-
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const token = getToken();
-
-    const response = await fetch(`${BASE_URL}${path}`, {
-        ...init,
-        headers: {
-            'content-type': 'application/json',
-            ...(token ? { authorization: `Bearer ${token}` } : {}),
-            ...init.headers,
-        },
-    });
-
-    if (!response.ok) {
-        throw await toRequestError(response);
-    }
-
-    // 204 is the success shape for logout and deletes — no body to parse.
-    if (response.status === 204) {
-        return undefined as T;
-    }
-
-    return (await response.json()) as T;
-}
-
-function getMyProfile(): Promise<CompanyProfile> {
-    return apiFetch<CompanyProfile>('/companies/me');
-}
 
 /* --- local ui ------------------------------------------------------- */
 
@@ -226,40 +125,19 @@ export default function DevSessionPage() {
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState(DEV_PASSWORD);
-    const [pasted, setPasted] = useState('');
     const [message, setMessage] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
 
-    // register and login both end here: keep the token, show who it belongs to.
-    const signIn = (result: SessionResponse) => {
-        setToken(result.accessToken);
-        setCompany(result.company);
-        setMessage(`Signed in as ${result.company.username}.`);
+    // register and login both end here. Nothing to store — the API set the
+    // session cookie on the response that got us here.
+    const signIn = (profile: CompanyProfile) => {
+        setCompany(profile);
+        setMessage(`Signed in as ${profile.username}.`);
     };
 
-    // Who does the stored token belong to? Asking the API is the only way to
-    // know, and it doubles as a check that the token still works.
-    const refresh = async () => {
-        try {
-            setCompany(await getMyProfile());
-        } catch (err) {
-            setCompany(null);
-            // 401 on load just means nobody has signed in yet, which is the
-            // normal first visit rather than something to report.
-            if (err instanceof ApiRequestError && err.status === 401) {
-                return;
-            }
-            setMessage(
-                err instanceof ApiRequestError
-                    ? `Stored token is not usable: ${err.message}`
-                    : 'Could not reach the API. Is it running on port 4000?',
-            );
-        }
-    };
-
-    // Mount only — the stored token cannot change unless this page changes it.
-    // Written inline rather than calling refresh() so both writes land in a
-    // promise callback; a first visit with no token 401s, which is normal.
+    // Mount only. Who the cookie belongs to is a question only the API can
+    // answer, and asking doubles as a check that the session still works. A
+    // first visit with nobody signed in 401s, which is normal.
     useEffect(() => {
         getMyProfile()
             .then((profile) => setCompany(profile))
@@ -286,7 +164,7 @@ export default function DevSessionPage() {
                 }),
             });
 
-            signIn(result);
+            signIn(result.company);
             // Prefilled so the next visit can log back into this same company
             // instead of leaving another row behind.
             setEmail(result.company.email);
@@ -305,12 +183,7 @@ export default function DevSessionPage() {
         setMessage(null);
 
         try {
-            const result = await apiFetch<SessionResponse>('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ email: email.trim(), password }),
-            });
-
-            signIn(result);
+            signIn(await login(email.trim(), password));
         } catch (err) {
             setMessage(describe(err));
         } finally {
@@ -318,22 +191,21 @@ export default function DevSessionPage() {
         }
     };
 
-    const usePastedToken = async () => {
-        if (!pasted.trim()) {
-            return;
-        }
-        setToken(pasted.trim());
-        setPasted('');
+    // The real thing, not a local forget: /auth/logout revokes the token and
+    // clears the cookie, so the session is over on the server too.
+    const logOut = async () => {
+        setBusy(true);
         setMessage(null);
-        await refresh();
-    };
 
-    const forgetToken = () => {
-        clearToken();
-        setCompany(null);
-        setMessage(
-            'Token forgotten locally. The session itself is still open.',
-        );
+        try {
+            await apiFetch<void>('/auth/logout', { method: 'POST' });
+            setCompany(null);
+            setMessage('Signed out.');
+        } catch (err) {
+            setMessage(describe(err));
+        } finally {
+            setBusy(false);
+        }
     };
 
     return (
@@ -341,8 +213,12 @@ export default function DevSessionPage() {
             <h1 className="text-hd leading-none">Dev session</h1>
 
             <p className="mt-[2vh] max-w-[45vw] text-md !font-[400]">
-                A stand-in until the login page exists. Log back into a company
-                you already made, or register a new one.
+                A stand-in until /signup exists. Register a company here, then
+                sign in with it anywhere — including the real{' '}
+                <Link href="/login" className="underline">
+                    login page
+                </Link>
+                .
             </p>
 
             <p className="mt-[1vh] max-w-[45vw] text-sm">
@@ -350,9 +226,9 @@ export default function DevSessionPage() {
                 database, so prefer logging in — and delete your{' '}
                 <code>dev_*</code> companies when you finish, the way the API
                 guide asks. The seeded companies cannot log in at all: their
-                password column holds a plain string, not a hash. Forgetting the
-                token here only drops the local copy; it does not end the
-                session on the server.
+                password column holds a plain string, not a hash. Signing in
+                here is the same session the rest of the app uses, so you can go
+                straight to any page afterwards.
             </p>
 
             <div className="mt-[4vh] w-[31.13vw]">
@@ -413,30 +289,14 @@ export default function DevSessionPage() {
             </div>
 
             <div className="mt-[4vh] w-[31.13vw]">
-                <Input
-                    label="Or paste an existing token"
-                    value={pasted}
-                    onChange={setPasted}
-                    placeholder="eyJhbGciOi..."
-                />
-
-                <div className="mt-[1.5vh] flex gap-[1vw]">
-                    <Button
-                        variant="outline"
-                        onClick={usePastedToken}
-                        className="h-[4.5vh] w-[9vw] cursor-pointer text-md"
-                    >
-                        Use token
-                    </Button>
-
-                    <Button
-                        variant="danger"
-                        onClick={forgetToken}
-                        className="h-[4.5vh] w-[9vw] cursor-pointer text-md"
-                    >
-                        Forget
-                    </Button>
-                </div>
+                <Button
+                    variant="danger"
+                    onClick={logOut}
+                    disabled={busy || !company}
+                    className="h-[4.5vh] w-[9vw] cursor-pointer text-md"
+                >
+                    Log out
+                </Button>
             </div>
 
             <div className="mt-[4vh] max-w-[45vw]">
@@ -447,7 +307,7 @@ export default function DevSessionPage() {
                 <p className="mt-[1vh] text-md !font-[400]">
                     {company
                         ? `${company.username} · ${company.email} · ${company.account_type} · company_id ${company.company_id}`
-                        : 'Nobody. Log in, create a company, or paste a token.'}
+                        : 'Nobody. Log in or create a company.'}
                 </p>
 
                 {message && (
