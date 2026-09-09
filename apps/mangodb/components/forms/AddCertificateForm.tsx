@@ -5,6 +5,22 @@ import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
+import { ApiRequestError, apiFetch } from '@/lib/api';
+
+// VALIDATION_FAILED puts one entry per rejected field in details[], so show all
+// of them rather than the summary line.
+function errorMessage(err: unknown): string {
+    if (!(err instanceof ApiRequestError)) {
+        return 'Unable to connect to the server.';
+    }
+    if (err.status === 401) {
+        return 'Please log in first.';
+    }
+    if (err.details.length > 0) {
+        return err.details.map((detail) => detail.message).join('\n');
+    }
+    return err.message;
+}
 
 type FormModalProps = {
     isOpen: boolean;
@@ -43,19 +59,8 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         e.preventDefault();
 
         try {
-            const token = localStorage.getItem('mangodb.token');
-
-            if (!token) {
-                alert('Please log in first.');
-                return;
-            }
-
-            const response = await fetch('http://localhost:4000/certificates', {
+            const result = await apiFetch<unknown>('/certificates', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
                 body: JSON.stringify({
                     cert_title: name,
                     organization: organize,
@@ -68,31 +73,6 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                     cert_image: file ? file.name : null,
                 }),
             });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                const details = result?.error?.details;
-
-                if (details?.length > 0) {
-                    const errorMessages = details
-                        .map(
-                            (detail: { field: string; message: string }) =>
-                                detail.message,
-                        )
-                        .join('\n');
-
-                    alert(errorMessages);
-                } else {
-                    alert(
-                        result?.error?.message ??
-                            result?.message ??
-                            'Failed to create certificate.',
-                    );
-                }
-
-                return;
-            }
 
             console.log('Certificate created:', result);
 
@@ -118,7 +98,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             onClose();
         } catch (error) {
             console.error('Error creating certificate: ', error);
-            alert('Unable to connect to the server.');
+            alert(errorMessage(error));
         }
     };
     return (
