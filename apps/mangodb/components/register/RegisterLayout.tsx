@@ -61,9 +61,9 @@ export default function RegisterLayout({
                 </div>
 
                 {/* right side */}
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[24px] py-[20px]">
                     {/* header */}
-                    <header className="shrink-0 px-[24px] pt-[20px]">
+                    <header className="shrink-0">
                         <h1 className="text-hd">{title}</h1>
 
                         <h2 className="text-lg">{subtitle}</h2>
@@ -77,7 +77,7 @@ export default function RegisterLayout({
                     </div>
 
                     {/* footer */}
-                    <footer className="flex shrink-0 justify-between px-[24px] pb-[20px] pt-[10px] max-sm:px-[24px] max-sm:py-[20px]">
+                    <footer className="flex shrink-0 justify-between pt-[10px] max-sm:px-[24px] max-sm:py-[20px]">
                         {showBack ? (
                             <button
                                 type="button"

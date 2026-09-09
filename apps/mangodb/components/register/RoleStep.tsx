@@ -39,13 +39,7 @@ const roles: Array<{
 
 export default function RoleStep({ value, onChange, onNext }: RoleStepProps) {
     return (
-        <div className="flex min-h-[720px] flex-col px-7 py-9 sm:px-10 lg:min-h-[800px] lg:px-12 lg:py-12">
-            <header>
-                <h1 className="text-hd">Sign Up</h1>
-                <h2 className="mt-1 text-lg">Company Role</h2>
-                <div className="mt-5 h-px bg-[#497B93]" />
-            </header>
-
+        <div className="flex min-h-[720px] flex-col py-9 lg:min-h-[800px] lg:py-12">
             <div className="mt-8 flex flex-1 flex-col gap-4">
                 {roles.map((role) => {
                     const selected = value === role.value;
@@ -75,17 +69,6 @@ export default function RoleStep({ value, onChange, onNext }: RoleStepProps) {
                         </button>
                     );
                 })}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-                <button
-                    type="button"
-                    onClick={onNext}
-                    disabled={!value}
-                    className="rounded-[20px] bg-[#497B93] px-8 py-2 text-lg font-bold text-white shadow-[2px_4px_4px_rgba(0,0,0,0.25)] transition hover:bg-[#3F6B80] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                    Next
-                </button>
             </div>
         </div>
     );
