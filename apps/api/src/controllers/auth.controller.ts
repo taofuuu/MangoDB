@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { CompanyProfile } from '@mangodb/shared';
 import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import {
@@ -6,6 +7,7 @@ import {
     hashPassword,
     verifyPassword,
 } from '../auth/password';
+import { accountTypeToRole } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import {
@@ -21,6 +23,37 @@ import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
+
+// Both login endpoints ask the same question, so they share the answer — and
+// share the defence. Both failures must look identical: same status, same body,
+// same time. bcrypt.compare is slow by design, so short-circuiting on a missing
+// row answered ~7x faster than a wrong password did, and that gap alone told an
+// attacker which emails were registered. Comparing against a throwaway hash on
+// the miss path makes every attempt pay the same cost.
+async function verifyCredentials(
+    email: string,
+    password: string,
+): Promise<CompanyProfile> {
+    // companyProfileSelect leaves password out on purpose, but verifying needs
+    // the stored hash. Ask for it alongside and drop it before returning —
+    // one round trip instead of a second lookup.
+    const company = await prisma.company.findUnique({
+        where: { email },
+        select: { ...companyProfileSelect, password: true },
+    });
+
+    const storedHash = company?.password ?? (await dummyPasswordHash());
+    const passwordMatches = await verifyPassword(password, storedHash);
+
+    if (!company || !passwordMatches) {
+        throw ApiError.unauthorized('Invalid email or password');
+    }
+
+    // The hash never leaves this function: split it off, return the rest.
+    const { password: _hash, ...row } = company;
+
+    return toCompanyProfile(row);
+}
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -103,29 +136,31 @@ export async function logout(req: Request, res: Response): Promise<void> {
 // login creates nothing.
 export async function login(req: Request, res: Response): Promise<void> {
     const { email, password } = parseBody(loginSchema, req.body);
+    const company = await verifyCredentials(email, password);
 
-    // companyProfileSelect leaves password out on purpose, but verifying needs
-    // the stored hash. Ask for it alongside and drop it before responding —
-    // one round trip instead of a second lookup.
-    const company = await prisma.company.findUnique({
-        where: { email },
-        select: { ...companyProfileSelect, password: true },
-    });
-
-    // Both failures must answer identically: same status, same body, same
-    // time. bcrypt.compare is slow by design, so short-circuiting on a missing
-    // row answered ~7x faster than a wrong password did, and that gap alone
-    // told an attacker which emails were registered. Comparing against a
-    // throwaway hash on the miss path makes every attempt pay the same cost.
-    const storedHash = company?.password ?? (await dummyPasswordHash());
-    const passwordMatches = await verifyPassword(password, storedHash);
-
-    if (!company || !passwordMatches) {
-        throw ApiError.unauthorized('Invalid email or password');
+    // The mirror of the check in adminLogin. An admin signing in here would
+    // get a working token and land on the company dashboard, reading its own
+    // row as if it were a company — so send it to the door built for it.
+    // 403, not 401: the password checked out, so we know who this is.
+    if (accountTypeToRole(company.account_type) === 'admin') {
+        throw ApiError.forbidden(
+            'Administrators must use the administrator login',
+        );
     }
 
-    // The hash never leaves this function: split it off, serialize the rest.
-    const { password: _hash, ...row } = company;
+    sendSession(res, company);
+}
 
-    sendSession(res, toCompanyProfile(row));
+// US6-1. The admin half of login. Same credentials, same session, same cookie —
+// the only difference is which accounts it turns away, so each login page can
+// say which of the two things went wrong.
+export async function adminLogin(req: Request, res: Response): Promise<void> {
+    const { email, password } = parseBody(loginSchema, req.body);
+    const company = await verifyCredentials(email, password);
+
+    if (accountTypeToRole(company.account_type) !== 'admin') {
+        throw ApiError.forbidden('This is not an administrator account');
+    }
+
+    sendSession(res, company);
 }
