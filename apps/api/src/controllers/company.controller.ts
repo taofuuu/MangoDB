@@ -9,6 +9,7 @@ import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
+    isUniqueViolation,
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
@@ -95,8 +96,9 @@ export async function updateMyProfile(
         // Only one unique constraint is still reachable from here: company_type
         // is keyed on (company_id, company_type), so a tag repeated inside one
         // request collides with itself. Username and email moved to
-        // changeMyCredentials, and nothing else this writes is unique.
-        if (uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS)) {
+        // changeMyCredentials, and nothing else this writes is unique. So the
+        // code alone names the constraint — no need to match the index name.
+        if (isUniqueViolation(err)) {
             throw ApiError.conflict('Company types must not repeat', [
                 { field: 'company_type', message: 'Remove the duplicate tag' },
             ]);
