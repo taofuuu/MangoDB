@@ -52,14 +52,14 @@ export async function createPortfolio(
                 development_date: data.development_date,
                 portfolio_image: data.portfolio_image,
                 portfolio_link: data.portfolio_link,
-            service: {
-                connect: {
-                    listing_id: data.listing_id,
+                service: {
+                    connect: {
+                        listing_id: data.listing_id,
                     },
                 },
             },
-        select: portfolioSelect,
-    });
+            select: portfolioSelect,
+        });
     } catch (err) {
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
@@ -152,4 +152,40 @@ export async function deletePortfolio(
     }
 
     res.status(204).end();
+}
+// Public: Fetching a single portfolio item by ID (GET /portfolios/:portfolioId)
+export async function getPortfolio(req: Request, res: Response): Promise<void> {
+    const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
+
+    const portfolio = await prisma.service_portfolio.findUnique({
+        where: { portfolio_id: portfolioId },
+        select: portfolioSelect,
+    });
+
+    if (!portfolio) {
+        throw ApiError.notFound('Portfolio not found');
+    }
+
+    res.json(toServicePortfolio(portfolio));
+}
+
+// Public: Fetching all portfolios, optionally filtered by listingId (GET /portfolios?listingId=123)
+export async function getAllPortfolios(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const listingIdParam = req.query.listingId;
+    const listingId = listingIdParam ? Number(listingIdParam) : undefined;
+
+    if (listingIdParam && isNaN(listingId!)) {
+        throw ApiError.badRequest('Invalid listingId');
+    }
+
+    const portfolios = await prisma.service_portfolio.findMany({
+        ...(listingId ? { where: { listing_id: listingId } } : {}),
+        select: portfolioSelect,
+        orderBy: { development_date: 'desc' },
+    });
+
+    res.json(portfolios.map(toServicePortfolio));
 }
