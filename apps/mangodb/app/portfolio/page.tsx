@@ -7,8 +7,10 @@ import PortfolioCard, {
 } from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
+import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
+import { apiFetch } from '@/lib/api';
 
-// Mock data - there is no portfolio endpoint on the API yet.
+// Mock data - there is no portfolio list endpoint on the API yet.
 const PORTFOLIO_ITEMS: PortfolioItem[] = [
     {
         id: 1,
@@ -50,21 +52,40 @@ const PORTFOLIO_ITEMS: PortfolioItem[] = [
 const CATEGORIES = ['ALL', 'Robotics', 'AI', 'Software'];
 
 export default function PortfolioPage() {
+    const [items, setItems] = useState(PORTFOLIO_ITEMS);
     const [view, setView] = useState<PortfolioView>('grid');
     const [category, setCategory] = useState('ALL');
 
+    // The item the user asked to delete. Null means the popup is closed.
+    const [pendingDelete, setPendingDelete] = useState<PortfolioItem | null>(
+        null,
+    );
+
     const visible =
         category === 'ALL'
-            ? PORTFOLIO_ITEMS
-            : PORTFOLIO_ITEMS.filter((item) => item.category === category);
+            ? items
+            : items.filter((item) => item.category === category);
 
-    // Dummy handlers - wire these to the API once the endpoints exist.
+    // Dummy handler - wire this to the API once the endpoint exists.
     const handleAdd = () => {
         console.log('Add portfolio');
     };
 
     const handleOpen = (item: PortfolioItem) => {
         console.log('Open portfolio', item.id);
+    };
+
+    // The modal shows any thrown error and only closes once this resolves.
+    const handleDelete = async () => {
+        if (!pendingDelete) return;
+
+        await apiFetch<void>(`/portfolios/${pendingDelete.id}`, {
+            method: 'DELETE',
+        });
+
+        setItems((current) =>
+            current.filter((item) => item.id !== pendingDelete.id),
+        );
     };
 
     return (
@@ -112,6 +133,7 @@ export default function PortfolioPage() {
                             key={item.id}
                             item={item}
                             onClick={handleOpen}
+                            onDelete={setPendingDelete}
                         />
                     ))}
                 </div>
@@ -124,10 +146,17 @@ export default function PortfolioPage() {
                             key={item.id}
                             item={item}
                             onClick={handleOpen}
+                            onDelete={setPendingDelete}
                         />
                     ))}
                 </div>
             )}
+
+            <DeletePortfolioModal
+                isOpen={pendingDelete !== null}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={handleDelete}
+            />
         </main>
     );
 }

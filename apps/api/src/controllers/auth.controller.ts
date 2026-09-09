@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import type { CompanyProfile } from '@mangodb/shared';
 import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import {
@@ -7,8 +6,6 @@ import {
     hashPassword,
     verifyPassword,
 } from '../auth/password';
-import { signAccessToken } from '../auth/jwt';
-import { accountTypeToRole } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import {
@@ -20,23 +17,10 @@ import {
     checkCompanyIdentityAvailability,
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+import { issueSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
-
-// Shared by register and login: both sign a token from the same profile shape
-// and answer with the same { company, accessToken } pair.
-function issueSession(company: CompanyProfile): {
-    company: CompanyProfile;
-    accessToken: string;
-} {
-    const accessToken = signAccessToken({
-        sub: String(company.company_id),
-        role: accountTypeToRole(company.account_type),
-    });
-
-    return { company, accessToken };
-}
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -110,6 +94,7 @@ export async function checkAvailability(
 // US1-3. requireAuth runs first, so a second logout with the same token 401s.
 export async function logout(req: Request, res: Response): Promise<void> {
     await revokeToken(req.auth!.jti, req.auth!.exp);
+    res.clearCookie('access_token');
     res.status(204).end();
 }
 
@@ -142,5 +127,17 @@ export async function login(req: Request, res: Response): Promise<void> {
     // The hash never leaves this function: split it off, serialize the rest.
     const { password: _hash, ...row } = company;
 
-    res.json(issueSession(toCompanyProfile(row)));
+    const session = issueSession(toCompanyProfile(row));
+
+    // Set the token in an httpOnly cookie so it is not accessible to JS on
+    // the client. The frontend relies on credentials: 'include' to send it
+    // back on subsequent requests. Max-age mirrors the JWT expiry (1 h).
+    res.cookie('access_token', session.accessToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 1000, // 1 hour in ms
+    });
+
+    res.json(session);
 }

@@ -14,15 +14,25 @@ export type PortfolioItem = {
 type PortfolioCardProps = {
     item: PortfolioItem;
     onClick: (item: PortfolioItem) => void;
+    onDelete: (item: PortfolioItem) => void;
 };
 
-export default function PortfolioCard({ item, onClick }: PortfolioCardProps) {
+export default function PortfolioCard({
+    item,
+    onClick,
+    onDelete,
+}: PortfolioCardProps) {
     return (
-        <button
-            type="button"
-            onClick={() => onClick(item)}
-            className="flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80] max-lg:h-auto max-lg:w-full max-lg:px-4"
-        >
+        <div className="relative flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
+            {/* Covers the card so any spot but Delete opens it. z-10 keeps it
+                above the image, which is positioned and would swallow clicks. */}
+            <button
+                type="button"
+                onClick={() => onClick(item)}
+                aria-label={`Open ${item.title}`}
+                className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
+            />
+
             <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
                 {item.title}
             </h2>
@@ -42,10 +52,19 @@ export default function PortfolioCard({ item, onClick }: PortfolioCardProps) {
                 />
             </div>
 
-            {/* mt-auto pins the dots to the bottom of the card */}
-            <div className="mt-auto flex justify-end pt-[2vh] pr-[1vw]">
+            {/* mt-auto pins the footer to the bottom of the card */}
+            <div className="mt-auto flex items-center justify-between pt-[2vh] pr-[1vw]">
+                {/* z-20 lifts Delete above the overlay so it stays clickable */}
+                <button
+                    type="button"
+                    onClick={() => onDelete(item)}
+                    className="relative z-20 text-sm !font-[600] text-[#C5483E] transition-colors hover:text-[#B93D35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5483E]"
+                >
+                    Delete
+                </button>
+
                 <PortfolioDots />
             </div>
-        </button>
+        </div>
     );
 }
