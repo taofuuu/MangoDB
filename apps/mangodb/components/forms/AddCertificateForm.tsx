@@ -23,34 +23,104 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     const [credURL, setCredURL] = useState('');
     const [file, setFile] = useState<File | null>(null);
 
+    const resetForm = () => {
+        setName('');
+        setOrganize('');
+        setMonth('');
+        setYear('');
+        setExMonth('');
+        setExYear('');
+        setCredID('');
+        setCredURL('');
+        setFile(null);
+    };
+
     if (!isOpen) {
         return null;
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const newData: CertificateData = {
-            name,
-            organize,
-            month,
-            year,
-            exMonth,
-            exYear,
-            credID,
-            credURL,
-            file,
-        };
+        try {
+            const token = localStorage.getItem('mangodb.token');
 
-        console.log('New Certificate:', newData);
+            if (!token) {
+                alert('Please log in first.');
+                return;
+            }
 
-        if (onSave) {
-            onSave(newData);
+            const response = await fetch('http://localhost:4000/certificates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    cert_title: name,
+                    organization: organize,
+                    issue_month: month ? Number(month) : null,
+                    issue_year: year ? Number(year) : null,
+                    expire_month: exMonth ? Number(exMonth) : null,
+                    expire_year: exYear ? Number(exYear) : null,
+                    credential_id: credID ? credID : null,
+                    credential_url: credURL ? credURL : null,
+                    cert_image: file ? file.name : null,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                const details = result?.error?.details;
+
+                if (details?.length > 0) {
+                    const errorMessages = details
+                        .map(
+                            (detail: { field: string; message: string }) =>
+                                detail.message,
+                        )
+                        .join('\n');
+
+                    alert(errorMessages);
+                } else {
+                    alert(
+                        result?.error?.message ??
+                            result?.message ??
+                            'Failed to create certificate.',
+                    );
+                }
+
+                return;
+            }
+
+            console.log('Certificate created:', result);
+
+            const newData: CertificateData = {
+                name,
+                organize,
+                month,
+                year,
+                exMonth,
+                exYear,
+                credID,
+                credURL,
+                file,
+            };
+
+            console.log('New Certificate:', newData);
+
+            if (onSave) {
+                onSave(newData);
+            }
+
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error('Error creating certificate: ', error);
+            alert('Unable to connect to the server.');
         }
-
-        onClose();
     };
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div
@@ -63,7 +133,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={() => {
+                            resetForm();
+                            onClose();
+                        }}
                         className="text-[#828282] hover:text-gray-800"
                     >
                         X
@@ -181,7 +254,6 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 value={credID}
                                 onChange={(e) => setCredID(e.target.value)}
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                required
                             />
                         </div>
                         {/* Credential URL */}
@@ -195,16 +267,13 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 value={credURL}
                                 onChange={(e) => setCredURL(e.target.value)}
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                required
                             />
                         </div>
                         <FileUpload value={file} onChange={setFile} />
                     </div>
-                </form>
-                <hr className="border-[#3F6B80]/50" />
-                {/* -----------------footer----------------- */}
-                {/* Save button */}
-                <form onSubmit={handleSubmit}>
+                    <hr className="border-[#3F6B80]/50" />
+                    {/* -----------------footer----------------- */}
+                    {/* Save button */}
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <button
                             type="submit"

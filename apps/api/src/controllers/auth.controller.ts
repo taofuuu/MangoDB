@@ -7,7 +7,6 @@ import {
     hashPassword,
     verifyPassword,
 } from '../auth/password';
-import { signAccessToken } from '../auth/jwt';
 import { accountTypeToRole } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
@@ -20,23 +19,10 @@ import {
     checkCompanyIdentityAvailability,
 } from '../lib/companyIdentity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+import { issueSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
-
-// Shared by register and login: both sign a token from the same profile shape
-// and answer with the same { company, accessToken } pair.
-function issueSession(company: CompanyProfile): {
-    company: CompanyProfile;
-    accessToken: string;
-} {
-    const accessToken = signAccessToken({
-        sub: String(company.company_id),
-        role: accountTypeToRole(company.account_type),
-    });
-
-    return { company, accessToken };
-}
 
 // Both login endpoints ask the same question, so they share the answer — and
 // share the defence. Both failures must look identical: same status, same body,
