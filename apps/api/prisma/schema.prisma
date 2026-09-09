@@ -17,10 +17,10 @@ model category {
 model certificate {
   provider_id    Int
   cert_title     String   @db.VarChar(255)
-  cert_image     String?   @db.VarChar(255)
+  cert_image     String?  @db.VarChar(255)
   certificate_id Int      @id @default(autoincrement())
-  credential_id  String?   @db.VarChar(255)
-  credential_url String?   @db.VarChar(255)
+  credential_id  String?  @db.VarChar(255)
+  credential_url String?  @db.VarChar(255)
   expire_month   Int?
   expire_year    Int?
   issue_month    Int?
@@ -32,22 +32,33 @@ model certificate {
 }
 
 model company {
-  company_id          Int            @id @default(autoincrement())
-  company_name        String         @db.VarChar(255)
-  company_description String?
-  username            String         @unique @db.VarChar(50)
-  password            String         @db.VarChar(255)
-  email               String         @unique @db.VarChar(100)
-  phone               String         @db.VarChar(20)
-  address             String?
-  website             String?        @db.VarChar(255)
-  account_type        String         @db.VarChar(100)
-  contact_email       String?        @db.VarChar(100)
-  company_type        company_type[]
-  listing             listing[]
-  proposal            proposal[]
-  provider            provider?
-  receiver            receiver?
+  company_id           Int            @id @default(autoincrement())
+  company_name         String         @db.VarChar(255)
+  company_description  String?
+  username             String         @unique @db.VarChar(50)
+  password             String         @db.VarChar(255)
+  email                String         @unique @db.VarChar(100)
+  phone                String         @db.VarChar(20)
+  address              String?
+  website              String?        @db.VarChar(255)
+  account_type         String         @db.VarChar(100)
+  contact_email        String?        @db.VarChar(100)
+  // Soft delete. Null means active; a timestamp means the account is gone as
+  // far as discovery is concerned, while its projects and reviews stay intact.
+  // Discovery queries (search, browse) must filter on this; history queries
+  // (past projects, reviews) must NOT, or they hide what this column exists
+  // to preserve.
+  deleted_at           DateTime?      @db.Timestamptz(6)
+  company_type         company_type[]
+  listing              listing[]
+  proposal             proposal[]
+  provider             provider?
+  receiver             receiver?
+  // Two roles on the same table, so both relations need names.
+  projects_as_provider project[]      @relation("project_provider")
+  projects_as_receiver project[]      @relation("project_receiver")
+
+  @@index([deleted_at])
 }
 
 model company_type {
@@ -93,14 +104,34 @@ model listing_category {
 model project {
   proj_id          Int                @id @default(autoincrement())
   proposal_id      Int?               @unique
+  // Who did the work and who paid for it, resolved once at project creation.
+  // Deriving them instead means walking project -> proposal -> listing, and
+  // that walk forks: on a job_requirement listing the owner is the receiver,
+  // on a service listing the owner is the provider. Getting the fork wrong
+  // returns a real company that is simply the wrong one, with no error.
+  provider_id      Int?
+  receiver_id      Int?
   total_budget     Decimal            @db.Decimal(12, 2)
   start_date       DateTime           @db.Date
   end_date         DateTime?          @db.Date
   comment          String?
   status           String             @db.VarChar(50)
+  // start_date and end_date are the plan for the work: editable, and a DATE
+  // with no time. These two are the record of what happened, which is what
+  // "retain history" needs. reviewed_at is null until a review is left.
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  reviewed_at      DateTime?          @db.Timestamptz(6)
   proposal         proposal?          @relation(fields: [proposal_id], references: [proposal_id], onDelete: Restrict, onUpdate: NoAction)
+  // Restrict, not SetNull: soft delete means a company is never removed, so
+  // this never fires in normal use. It is the database-enforced backstop for
+  // a raw DELETE run by hand, which the soft-delete convention cannot stop.
+  provider         company?           @relation("project_provider", fields: [provider_id], references: [company_id], onDelete: Restrict, onUpdate: NoAction)
+  receiver         company?           @relation("project_receiver", fields: [receiver_id], references: [company_id], onDelete: Restrict, onUpdate: NoAction)
   project_contract project_contract[]
   rating           rating[]
+
+  @@index([provider_id])
+  @@index([receiver_id])
 }
 
 model project_contract {
@@ -141,11 +172,25 @@ model provider_tech_stack {
 }
 
 model rating {
-  rating_id    Int      @id @default(autoincrement())
-  rating_title String   @db.VarChar(100)
-  rating_score Decimal  @db.Decimal(2, 1)
-  proj_id      Int?
-  project      project? @relation(fields: [proj_id], references: [proj_id], onDelete: Cascade, onUpdate: NoAction)
+  rating_id    Int     @id @default(autoincrement())
+  rating_title String  @db.VarChar(100)
+  rating_score Decimal @db.Decimal(2, 1)
+  // Was nullable: a score attached to no project cannot be displayed,
+  // counted or attributed. NOT NULL also rules out SetNull below, which is
+  // the right outcome - an orphan score is worse than a refused delete.
+  proj_id      Int
+  // Was Cascade, which let one DELETE erase a company's reviews silently.
+  // A review is a fact about a company that others rely on, so removing the
+  // project it belongs to has to be refused, not quietly obeyed.
+  project      project @relation(fields: [proj_id], references: [proj_id], onDelete: Restrict, onUpdate: NoAction)
+
+  // One score per criterion per project. Without this, "Punctuality 4.5" and
+  // "Punctuality 2.0" can both exist and no query can say which is real.
+  // proj_id leads this index, so it also serves "all ratings for project X" -
+  // a separate @@index([proj_id]) would be redundant.
+  // A CHECK that rating_score is between 0 and 5 belongs here too, but Prisma
+  // cannot express CHECK constraints; it is added by hand in the migration.
+  @@unique([proj_id, rating_title])
 }
 
 model receiver {
