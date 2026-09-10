@@ -13,12 +13,13 @@ import {
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
-import { parseBody, parseParams } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     PORTFOLIO_UNIQUE_FIELDS,
     createPortfolioSchema,
     portfolioIdParamSchema,
     updatePortfolioSchema,
+    portfolioQuerySchema,
 } from '../schemas/portfolio.schema';
 
 // Creating a new work sample/portfolio item (POST /portfolios)
@@ -167,4 +168,35 @@ export async function deletePortfolio(
     }
 
     res.status(204).end();
+}
+// Public: Fetching a single portfolio item by ID (GET /portfolios/:portfolioId)
+export async function getPortfolio(req: Request, res: Response): Promise<void> {
+    const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
+
+    const portfolio = await prisma.service_portfolio.findUnique({
+        where: { portfolio_id: portfolioId },
+        select: portfolioSelect,
+    });
+
+    if (!portfolio) {
+        throw ApiError.notFound('Portfolio not found');
+    }
+
+    res.json(toServicePortfolio(portfolio));
+}
+
+// Public: Fetching all portfolios, optionally filtered by listingId (GET /portfolios?listingId=123)
+export async function getAllPortfolios(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { listingId } = parseQuery(portfolioQuerySchema, req.query);
+
+    const portfolios = await prisma.service_portfolio.findMany({
+        ...(listingId ? { where: { listing_id: listingId } } : {}),
+        select: portfolioSelect,
+        orderBy: { development_date: 'desc' },
+    });
+
+    res.json(portfolios.map(toServicePortfolio));
 }
