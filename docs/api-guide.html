@@ -1211,7 +1211,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 114 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 118 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -1256,6 +1256,7 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — rejected, not editable here</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>a key the schema does not know</td><td><span class="status s-warn">400 names the key</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_name after that</td><td><span class="status s-ok">200 — the profile edit still works</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>account_type beside a real field</td><td><span class="status s-ok">200, account_type unmoved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>phone: "abc"</td><td><span class="status s-warn">400</span></td></tr>
@@ -1319,6 +1320,9 @@ apps/api/src/
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — empty body</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only</td><td><span class="status s-warn">400 names the key</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>username</code> and <code>password</code></td><td><span class="status s-warn">400 names both</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>email</code> in one body</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>service_term</code> on a RECEIVER</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a PROVIDER whose <code>provider</code> row was deleted by hand</td><td><span class="status s-ok">200 row recreated</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — phone <code>abc</code></td><td><span class="status s-warn">400 names phone</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — website <code>javascript:</code></td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/999999</td><td>PATCH — unknown id</td><td><span class="status s-warn">404</span></td></tr>
