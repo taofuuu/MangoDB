@@ -22,6 +22,9 @@ export default function FileUpload({
         onChange(file);
     };
 
+    const defaultClassName =
+        'mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer items-center justify-center';
+
     return (
         <div>
             {/* Hidden file input */}

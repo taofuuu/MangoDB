@@ -121,6 +121,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             console.error('Error creating certificate:', error);
 
             if (error instanceof ApiRequestError) {
+                console.error('Status:', error.status);
+                console.error('Message:', error.message);
+                console.error('Details:', error.details);
+
                 if (error.details.length > 0) {
                     const errorMessages = error.details
                         .map((detail) => detail.message)
