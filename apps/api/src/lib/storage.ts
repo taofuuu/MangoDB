@@ -59,9 +59,15 @@ export async function uploadToStorage(
 // nothing points at. Best effort — a failed cleanup must not mask the
 // error that caused it.
 export async function removeFromStorage(path: string): Promise<void> {
-    const { error } = await getSupabase().storage.from(BUCKET).remove([path]);
-    if (error) {
-        console.error('Orphaned upload left behind:', path, error.message);
+    try {
+        const { error } = await getSupabase()
+            .storage.from(BUCKET)
+            .remove([path]);
+        if (error) {
+            console.error('Orphaned upload left behind:', path, error.message);
+        }
+    } catch (err) {
+        console.error('Orphaned upload left behind:', path, err);
     }
 }
 
