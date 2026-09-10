@@ -34,15 +34,20 @@ const ROUTES = [
         detail: 'Sign in to your company account.',
     },
     {
-        href: '/profile/view',
-        title: 'View Profile',
-        detail: 'View the profile information page.',
+        href: '/profile/view/provider',
+        title: 'View Profile (Provider)',
+        detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
+    },
+    {
+        href: '/profile/view/receiver',
+        title: 'View Profile (Receiver)',
+        detail: 'View profile page for Receiver role (Vertical company card, Job listings).',
     },
 ];
 
 export default function Home() {
     return (
-        <main className="min-h-screen bg-[#FFFDF9] px-[4.06vw] pt-[6.25vh] text-[#171717]">
+        <main className="min-h-screen bg-[#FFFDF9] px-[4.06vw] pt-[6.25vh] pb-[6.25vh] text-[#171717]">
             <h1 className="text-hd leading-none">MangoDB</h1>
 
             <p className="mt-[2vh] text-md !font-[400]">Pages built so far.</p>
@@ -52,11 +57,13 @@ export default function Home() {
                     <li key={route.href}>
                         <Link
                             href={route.href}
-                            className="block w-[31.13vw] rounded-button border border-[#497B93] bg-white px-[1.2vw] py-[2vh] transition-colors hover:bg-[#497B93]/10"
+                            className="block w-full max-w-[450px] rounded-button border border-[#497B93] bg-white px-[1.2vw] py-[2vh] transition-colors hover:bg-[#497B93]/10"
                         >
-                            <span className="block text-lg">{route.title}</span>
+                            <span className="block text-lg font-semibold">
+                                {route.title}
+                            </span>
 
-                            <span className="mt-[0.5vh] block text-md !font-[400]">
+                            <span className="mt-[0.5vh] block text-md !font-[400] text-gray-600">
                                 {route.detail}
                             </span>
                         </Link>
