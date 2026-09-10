@@ -283,8 +283,8 @@ The `PATCH` writes **profile columns only** — the same field set
 than declaring a second one. Username, email and password are unreachable here
 on purpose: each is a way to take an account over, and the current-password
 gate that gates them is one an administrator cannot satisfy for someone else.
-A body of only those fields is a `400`, because the schema drops them and the
-non-empty refine then has nothing left.
+The schema is a `strictObject`, so sending one of them is a `400` naming the
+key rather than a `200` that quietly ignored half the request.
 
 `companyProfileUpdateData` in `src/lib/companyProfile.ts` is the shared write
 shape. Both this endpoint and `updateMyProfile` call it; they differ only in

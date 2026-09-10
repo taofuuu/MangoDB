@@ -885,8 +885,8 @@ admin: ['admin'],</code></pre>
           leaving them on an endpoint that never asks for one would make that gate decorative —
           anyone holding a token could walk around it with a single request. They moved to
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>, and this
-          schema strips them silently, so <code>{"email": "…"}</code> alone is a
-          <code>400</code> with nothing left to update.
+          schema is a <code>strictObject</code>, so <code>{"email": "…"}</code> is a
+          <code>400</code> that names the key.
         </p>
         <p class="note">
           <strong>There are two emails, and they are not the same thing.</strong>
@@ -912,8 +912,10 @@ admin: ['admin'],</code></pre>
           <code>null</code> for both.
         </p>
         <p class="note">
-          Four fields are <em>not</em> editable here, and the schema strips all four silently
-          rather than rejecting the request. <code>username</code>, <code>email</code>, and
+          Four fields are <em>not</em> editable here, and the schema rejects all four rather
+          than dropping them silently — a body carrying one gets a <code>400</code> naming the
+          key, so a client never reads a <code>200</code> as "all of that was applied".
+          <code>username</code>, <code>email</code>, and
           <code>password</code> need the current password, so they live on
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>.
           <code>account_type</code> decides which subtype rows a company owns and what its token's
@@ -1028,8 +1030,8 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
           <a href="#edit-profile"><code>PATCH /companies/me</code></a> takes, so it reuses
           <code>updateCompanyProfileSchema</code> rather than declaring a second one.
           <code>username</code>, <code>email</code>, <code>password</code> and
-          <code>account_type</code> are dropped by the schema, so a body of only those is a
-          <span class="status s-warn">400</span> with nothing left to update. That is
+          <code>account_type</code> are rejected by the schema, so a body carrying any of them
+          is a <span class="status s-warn">400</span> naming the key. That is
           deliberate: each of the three is a way to take an account over, and
           <a href="#change-credentials">the credentials endpoint</a> gates them behind the
           current password — a gate an administrator cannot satisfy for someone else.
@@ -1247,9 +1249,9 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>one field — company_name only</td><td><span class="status s-ok">200, nothing else moved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>address: null</td><td><span class="status s-ok">200 address cleared</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_type replaced</td><td><span class="status s-ok">200 old tags gone</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — stripped, so nothing to update</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — stripped, the gate is not bypassable</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — stripped, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — rejected, not editable here</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_name after that</td><td><span class="status s-ok">200 — the profile edit still works</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>account_type beside a real field</td><td><span class="status s-ok">200, account_type unmoved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>phone: "abc"</td><td><span class="status s-warn">400</span></td></tr>
@@ -1311,8 +1313,8 @@ apps/api/src/
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — company_name on a RECEIVER</td><td><span class="status s-ok">200 refusal is per-field</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a BOTH</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — empty body</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only, stripped</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>username</code> and <code>password</code>, stripped</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only</td><td><span class="status s-warn">400 names the key</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>username</code> and <code>password</code></td><td><span class="status s-warn">400 names both</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — phone <code>abc</code></td><td><span class="status s-warn">400 names phone</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — website <code>javascript:</code></td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/999999</td><td>PATCH — unknown id</td><td><span class="status s-warn">404</span></td></tr>
