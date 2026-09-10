@@ -186,12 +186,7 @@ export async function getAllPortfolios(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const listingIdParam = req.query.listingId;
-    const listingId = listingIdParam ? Number(listingIdParam) : undefined;
-
-    if (listingIdParam && isNaN(listingId!)) {
-        throw ApiError.badRequest('Invalid listingId');
-    }
+    const { listingId } = parseQuery(portfolioQuerySchema, req.query);
 
     const portfolios = await prisma.service_portfolio.findMany({
         ...(listingId ? { where: { listing_id: listingId } } : {}),
