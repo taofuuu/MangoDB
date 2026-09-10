@@ -43,6 +43,11 @@ const ROUTES = [
         detail: 'list of company that can be viewed by admin',
     },
     {
+        href: '/companies',
+        title: 'Companies view for admin',
+        detail: 'list of company that can be viewed by admin',
+    },
+    {
         href: '/register',
         title: 'Register',
         detail: 'Register new user',

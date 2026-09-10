@@ -69,11 +69,42 @@ export async function removeFromStorage(
     path: string,
     bucket: Bucket,
 ): Promise<void> {
-    const { error } = await getSupabase().storage.from(bucket).remove([path]);
+    try {
+        const { error } = await getSupabase()
+            .storage
+            .from(bucket)
+            .remove([path]);
 
-    if (error) {
-        console.error('Orphaned upload left behind:', path, error.message);
+        if (error) {
+            console.error(
+                'Orphaned upload left behind:',
+                path,
+                error.message,
+            );
+        }
+    } catch (err) {
+        console.error('Orphaned upload left behind:', path, err);
     }
+}
+
+export async function removeFromStorageByUrl(
+    url: string,
+    bucket: Bucket,
+): Promise<void> {
+    const marker = `/object/public/${bucket}/`;
+    const markerIdx = url.indexOf(marker);
+
+    if (markerIdx === -1) {
+        console.error(
+            `URL is not a recognized ${bucket} storage URL:`,
+            url,
+        );
+        return;
+    }
+
+    const path = url.slice(markerIdx + marker.length);
+
+    await removeFromStorage(path, bucket);
 }
 
 export { BUCKETS };
