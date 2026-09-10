@@ -4,35 +4,61 @@ import { prisma } from '../lib/prisma';
 
 import { parseBody } from '../middleware/validate';
 
-import { addCertificateSchema } from '../schemas/certificate.schema';
+import { createCertificateSchema } from '../schemas/certificate.schema';
 
-export async function addCertificate(req: Request, res: Response) {
+import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
+
+export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
 
-    const body = parseBody(addCertificateSchema, req.body);
+    const body = parseBody(createCertificateSchema, req.body);
 
-    const certificate = await prisma.certificate.create({
-        data: {
-            provider_id: providerId,
+    let certImage: string | null = null;
+    let certImagePath: string | null = null;
 
-            cert_title: body.cert_title,
-            organization: body.organization,
+    // Upload certificate image if one was provided
+    if (req.file) {
+        const uploaded = await uploadToStorage(
+            req.file,
+            BUCKETS.CERTIFICATE,
+            'certificates',
+        );
 
-            issue_month: body.issue_month ?? null,
-            issue_year: body.issue_year ?? null,
+        certImage = uploaded.url;
+        certImagePath = uploaded.path;
+    }
 
-            expire_month: body.expire_month ?? null,
-            expire_year: body.expire_year ?? null,
+    try {
+        const certificate = await prisma.certificate.create({
+            data: {
+                provider_id: providerId,
 
-            credential_id: body.credential_id ?? null,
-            credential_url: body.credential_url ?? null,
+                cert_title: body.cert_title,
+                organization: body.organization,
 
-            cert_image: body.cert_image ?? null,
-        },
-    });
+                issue_month: body.issue_month ?? null,
+                issue_year: body.issue_year ?? null,
 
-    return res.status(201).json({
-        message: 'Certificate created successfully',
-        certificate,
-    });
+                expire_month: body.expire_month ?? null,
+                expire_year: body.expire_year ?? null,
+
+                credential_id: body.credential_id ?? null,
+                credential_url: body.credential_url ?? null,
+
+                cert_image: certImage,
+            },
+        });
+
+        return res.status(201).json({
+            message: 'Certificate created successfully',
+            certificate,
+        });
+    } catch (error) {
+        // Database creation failed, so remove the uploaded file
+        if (certImagePath) {
+            await removeFromStorage(certImagePath, BUCKETS.CERTIFICATE);
+        }
+
+        throw error;
+    }
 }

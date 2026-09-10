@@ -6,11 +6,14 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
+
 import {
     uploadToStorage,
     removeFromStorage,
     removeFromStorageByUrl,
+    BUCKETS,
 } from '../lib/storage';
+
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -55,7 +58,11 @@ export async function createPortfolio(
     }
 
     // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
-    const image = await uploadToStorage(req.file);
+    const image = await uploadToStorage(
+        req.file,
+        BUCKETS.PORTFOLIO,
+        'portfolios',
+    );
 
     // 5. บันทึกลง Database
     let created;
@@ -76,7 +83,7 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
-        await removeFromStorage(image.path);
+        await removeFromStorage(image.path, BUCKETS.PORTFOLIO);
 
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
@@ -171,7 +178,7 @@ export async function deletePortfolio(
 
     // Best-effort cleanup of the image file: a failed remove logs but won't
     // block the 204, and the DB row is already gone either way.
-    await removeFromStorageByUrl(deleted.portfolio_image);
+    await removeFromStorageByUrl(deleted.portfolio_image, BUCKETS.PORTFOLIO);
 
     res.status(204).end();
 }
