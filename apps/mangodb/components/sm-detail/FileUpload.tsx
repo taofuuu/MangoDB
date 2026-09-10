@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import Image from 'next/image';
 import upload from '../../assets/icons/upload-icon.png';
 
@@ -10,10 +10,15 @@ type FileUploadProps = {
     className?: string;
 };
 
+// className replaces the box styling rather than adding to it, so the default
+// carries the whole look — a caller that passes nothing still gets a box.
+const BOX_CLASS =
+    'my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50';
+
 export default function FileUpload({
     value,
     onChange,
-    className = '',
+    className = BOX_CLASS,
 }: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,8 +41,7 @@ export default function FileUpload({
             {/* Upload block */}
             <div
                 onClick={() => inputRef.current?.click()}
-                className={`${className}`}
-                //className="mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
+                className={className}
             >
                 <Image
                     src={upload}
