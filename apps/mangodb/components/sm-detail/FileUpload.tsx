@@ -36,7 +36,7 @@ export default function FileUpload({
             {/* Upload block */}
             <div
                 onClick={() => inputRef.current?.click()}
-                className={`${className}`}
+                className={`${defaultClassName} ${className}`}
                 //className="mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
             >
                 <Image
