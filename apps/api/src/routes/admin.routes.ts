@@ -7,13 +7,16 @@ import {
 
 export const adminRoutes = Router();
 
-// Temporary until US6-1 supplies administrator sessions: a valid session is
-// still required so the private contact fields are never exposed publicly.
-adminRoutes.get('/companies', requireAuth, listCompanyAccounts);
-adminRoutes.get('/companies/:companyId', requireAuth, getCompanyAccountDetail);
-
-// Guarded once, so a new admin route cannot be added without the check.
+// Guarded once, so a new admin route cannot be added without the check. The
+// account routes below shipped with their own requireAuth and no role check,
+// because US6-1 had not landed and there were no administrator sessions to
+// require. There are now, so they moved under the guard with everything else:
+// a router with a guarded half and an unguarded half is a router someone will
+// add a route to on the wrong side of the line.
 adminRoutes.use(requireAuth, requireRole('admin'));
+
+adminRoutes.get('/companies', listCompanyAccounts);
+adminRoutes.get('/companies/:companyId', getCompanyAccountDetail);
 
 adminRoutes.get('/ping', (_req, res) => {
     res.json({ status: 'ok' });
