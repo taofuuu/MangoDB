@@ -64,8 +64,13 @@ export const COMPANY_UNIQUE_FIELDS = ['username', 'email'] as const;
 // them here too would leave that gate one request away from being walked
 // around. account_type is absent as well, since it would have to add or remove
 // the provider/receiver rows and restamp the token's role claim.
+//
+// strictObject, not object: a plain zod object drops keys it does not know, so
+// { company_name, email } would answer 200 having written only half of what was
+// asked for. Rejecting names the key instead. (z.strictObject rather than
+// .strict(), which zod 4 deprecates.)
 export const updateCompanyProfileSchema = z
-    .object({
+    .strictObject({
         company_name: companyFields.company_name,
         phone: companyFields.phone,
         company_type: companyFields.company_type,
