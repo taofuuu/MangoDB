@@ -52,7 +52,7 @@ export default function AdminLoginForm() {
 
         try {
             await adminLogin(normalizedEmail, password);
-            router.replace('/companies');
+            router.push('/');
         } catch (requestError) {
             setError(describeLoginError(requestError));
         } finally {
