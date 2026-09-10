@@ -7,6 +7,8 @@ import EditCertificateForm, {
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
 export default function CertificatePage() {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -47,7 +49,76 @@ export default function CertificatePage() {
     // -------------------------
     // EDIT
     // -------------------------
-    const handleEditCertificate = (updatedCertificate: CertificateData) => {
+    // const handleEditCertificate = (updatedCertificate: CertificateData) => {
+    //     setCertificates((prev) =>
+    //         prev.map((certificate) =>
+    //             certificate === certificateToEdit
+    //                 ? updatedCertificate
+    //                 : certificate,
+    //         ),
+    //     );
+
+    //     console.log('Updated certificate:', updatedCertificate);
+
+    //     setCertificateToEdit(null);
+    //     setIsEditOpen(false);
+    // };
+
+    const handleEditCertificate = async (
+        updatedCertificate: CertificateData,
+    ) => {
+        const certId = (certificateToEdit as any)?.certificate_id;
+
+        // Call backend API if ID exists
+        if (certId) {
+            try {
+                const token = localStorage.getItem('token');
+
+                // Map frontend fields to backend Prisma schema format
+                const payload = {
+                    cert_title: updatedCertificate.name,
+                    organization: updatedCertificate.organize,
+                    issue_month: updatedCertificate.month
+                        ? Number(updatedCertificate.month)
+                        : null,
+                    issue_year: updatedCertificate.year
+                        ? Number(updatedCertificate.year)
+                        : null,
+                    expire_month: updatedCertificate.exMonth
+                        ? Number(updatedCertificate.exMonth)
+                        : null,
+                    expire_year: updatedCertificate.exYear
+                        ? Number(updatedCertificate.exYear)
+                        : null,
+                    credential_id: updatedCertificate.credID || null,
+                    credential_url: updatedCertificate.credURL || null,
+                };
+
+                const res = await fetch(
+                    `${API_BASE_URL}/companies/certificates/${certId}`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: token ? `Bearer ${token}` : '',
+                        },
+                        body: JSON.stringify(payload),
+                    },
+                );
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(
+                        data.message || 'Failed to update certificate',
+                    );
+                }
+            } catch (error: any) {
+                alert(error.message);
+                return;
+            }
+        }
+
+        // Update local state
         setCertificates((prev) =>
             prev.map((certificate) =>
                 certificate === certificateToEdit
@@ -57,7 +128,6 @@ export default function CertificatePage() {
         );
 
         console.log('Updated certificate:', updatedCertificate);
-
         setCertificateToEdit(null);
         setIsEditOpen(false);
     };
@@ -65,11 +135,40 @@ export default function CertificatePage() {
     // -------------------------
     // DELETE
     // -------------------------
-    const handleDeleteCertificate = () => {
+
+    const handleDeleteCertificate = async () => {
+        // Assumes certificateToDelete has certificate_id (e.g. from backend)
+        const certId = (certificateToDelete as any)?.certificate_id;
+
         if (!certificateToDelete) return;
 
-        console.log('Certificate deleted:', certificateToDelete);
+        // Call backend API if ID exists
+        if (certId) {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(
+                    `${API_BASE_URL}/companies/certificates/${certId}`,
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : '',
+                        },
+                    },
+                );
 
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(
+                        data.message || 'Failed to delete certificate',
+                    );
+                }
+            } catch (error: any) {
+                alert(error.message);
+                return;
+            }
+        }
+
+        // Update local state
         setCertificates((prev) =>
             prev.filter((certificate) => certificate !== certificateToDelete),
         );
@@ -162,6 +261,7 @@ export default function CertificatePage() {
             <DeleteCertificateModal
                 isOpen={isDeleteOpen}
                 onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleDeleteCertificate}
             />
         </main>
     );
