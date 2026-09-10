@@ -3,7 +3,34 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function ReceiverCompanyCard() {
+interface ReceiverCompanyCardProps {
+    data?: {
+        name: string;
+        subName: string;
+        email: string;
+        website: string;
+        phone: string;
+        description: string;
+        type: string;
+        address: string;
+    };
+}
+
+const defaultMockData = {
+    name: 'MangoDB COOP',
+    subName: 'MangoDB COOP',
+    email: 'mongoDB@org.com',
+    website: 'mangodb.com',
+    phone: '081-234-5678',
+    description:
+        'Leading provider of database solutions and infrastructure services.',
+    type: 'Cooperative / Enterprise',
+    address: '123 Tech Park, Tower A, Bangkok, Thailand 10110',
+};
+
+export default function ReceiverCompanyCard({
+    data = defaultMockData,
+}: ReceiverCompanyCardProps) {
     return (
         <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs flex flex-col justify-between w-full h-full font-sans">
             <div>
@@ -13,51 +40,63 @@ export default function ReceiverCompanyCard() {
                         CP
                     </div>
                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                        MangoDB COOP
+                        {data.name}
                     </h2>
                     <span className="text-xs text-gray-400 font-normal mt-0.5 mb-3">
-                        MangoDB COOP
+                        {data.subName}
                     </span>
 
                     <div className="text-xs text-gray-600 space-y-0.5 font-normal">
-                        <p>mongoDB@org.com</p>
-                        <p>mangodb.com</p>
-                        <p>081-234-5678</p>
+                        <p>{data.email}</p>
+                        <p>{data.website}</p>
+                        <p>{data.phone}</p>
                     </div>
                 </div>
 
                 {/* Form Fields Stack */}
                 <div className="flex flex-col gap-3">
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="company-description"
+                            className="block text-xs font-medium text-gray-700 mb-1"
+                        >
                             Company Description
                         </label>
                         <textarea
+                            id="company-description"
                             readOnly
-                            value=""
-                            className="w-full h-28 p-3 text-xs border border-[#497B93] rounded-xl bg-white focus:outline-none resize-none cursor-default"
+                            value={data.description}
+                            className="w-full h-28 p-3 text-xs border border-[#497B93] rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="company-type"
+                            className="block text-xs font-medium text-gray-700 mb-1"
+                        >
                             Company Type
                         </label>
                         <textarea
+                            id="company-type"
                             readOnly
-                            value=""
-                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-xl bg-white focus:outline-none resize-none cursor-default"
+                            value={data.type}
+                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                        <label
+                            htmlFor="company-address"
+                            className="block text-xs font-medium text-gray-700 mb-1"
+                        >
                             Company Address
                         </label>
                         <textarea
+                            id="company-address"
                             readOnly
-                            value=""
-                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-xl bg-white focus:outline-none resize-none cursor-default"
+                            value={data.address}
+                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                         />
                     </div>
                 </div>

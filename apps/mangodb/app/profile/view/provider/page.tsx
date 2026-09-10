@@ -4,7 +4,7 @@ import React from 'react';
 import CompanyCard from '../../../../components/viewprofile/Companycard';
 import ServicesSection from '../../../../components/viewprofile/ServicesSection';
 import ProjectTimeline from '../../../../components/viewprofile/ProjectTimeline';
-import PortfolioList from '../../../../components/viewprofile/PortfoilioList';
+import PortfolioList from '../../../../components/viewprofile/PortfolioList';
 
 export default function ViewProfilePage() {
     return (

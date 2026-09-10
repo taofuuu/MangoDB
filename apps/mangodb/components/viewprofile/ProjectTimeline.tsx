@@ -54,6 +54,9 @@ export default function ProjectTimeline() {
         'history',
     );
 
+    const currentEvents =
+        activeTab === 'history' ? historyEvents : ongoingEvents;
+
     return (
         <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex flex-col font-sans">
             {/* Sub Tabs Switcher */}
@@ -95,53 +98,55 @@ export default function ProjectTimeline() {
                     </button>
                 </div>
 
-                {/* Timeline Feed - Shows History OR Ongoing based on activeTab */}
+                {/* Timeline Feed */}
                 <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-300">
-                    {activeTab === 'history' &&
-                        historyEvents.map((item) => (
-                            <div
-                                key={item.id}
-                                className="relative flex items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs justify-between"
-                            >
-                                {/* Timeline Node Point */}
-                                <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
+                    {currentEvents.map((item) => (
+                        <div
+                            key={item.id}
+                            className="relative flex items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs justify-between"
+                        >
+                            {/* Timeline Node Point */}
+                            <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
 
-                                <div className="flex gap-4 items-center">
-                                    <div>
-                                        <div className="font-semibold text-gray-800">
-                                            {item.startDate}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Start Date
-                                        </div>
+                            <div className="flex gap-4 items-center">
+                                <div>
+                                    <div className="font-semibold text-gray-800">
+                                        {item.startDate}
                                     </div>
-                                    <div>
-                                        <div className="font-semibold text-gray-800">
-                                            {item.endDate}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400">
-                                            End Date
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Customer
-                                        </div>
-                                        <div className="font-medium text-gray-700">
-                                            {item.customer}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Project Name
-                                        </div>
-                                        <div className="font-medium text-gray-700">
-                                            {item.project}
-                                        </div>
+                                    <div className="text-[10px] text-gray-400">
+                                        Start Date
                                     </div>
                                 </div>
+                                <div>
+                                    <div className="font-semibold text-gray-800">
+                                        {item.endDate}
+                                    </div>
+                                    <div className="text-[10px] text-gray-400">
+                                        {activeTab === 'history'
+                                            ? 'End Date'
+                                            : 'Est. End Date'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-gray-400">
+                                        Customer
+                                    </div>
+                                    <div className="font-medium text-gray-700">
+                                        {item.customer}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-gray-400">
+                                        Project Name
+                                    </div>
+                                    <div className="font-medium text-gray-700">
+                                        {item.project}
+                                    </div>
+                                </div>
+                            </div>
 
-                                <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4">
+                                {activeTab === 'history' ? (
                                     <div className="text-right">
                                         <div className="text-[10px] text-gray-400">
                                             Rating
@@ -150,67 +155,17 @@ export default function ProjectTimeline() {
                                             {item.rating}
                                         </div>
                                     </div>
-                                    <button className="text-[#497B93] hover:underline">
-                                        Details
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-                    {activeTab === 'ongoing' &&
-                        ongoingEvents.map((item) => (
-                            <div
-                                key={item.id}
-                                className="relative flex items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs justify-between"
-                            >
-                                {/* Timeline Node Point */}
-                                <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
-
-                                <div className="flex gap-4 items-center">
-                                    <div>
-                                        <div className="font-semibold text-gray-800">
-                                            {item.startDate}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Start Date
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-gray-800">
-                                            {item.endDate}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Est. End Date
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Customer
-                                        </div>
-                                        <div className="font-medium text-gray-700">
-                                            {item.customer}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] text-gray-400">
-                                            Project Name
-                                        </div>
-                                        <div className="font-medium text-gray-700">
-                                            {item.project}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4">
+                                ) : (
                                     <span className="text-[10px] text-[#497B93] bg-[#497B93]/10 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
                                         {item.status || 'Active'}
                                     </span>
-                                    <button className="text-[#497B93] hover:underline">
-                                        Details
-                                    </button>
-                                </div>
+                                )}
+                                <button className="text-[#497B93] hover:underline">
+                                    Details
+                                </button>
                             </div>
-                        ))}
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
