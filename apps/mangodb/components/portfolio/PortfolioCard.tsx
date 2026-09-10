@@ -1,20 +1,13 @@
 'use client';
 
 import Image from 'next/image';
+import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioDots from './PortfolioDots';
 
-export type PortfolioItem = {
-    id: number;
-    title: string;
-    subtitle: string;
-    category: string;
-    image: string;
-};
-
 type PortfolioCardProps = {
-    item: PortfolioItem;
-    onClick: (item: PortfolioItem) => void;
-    onDelete: (item: PortfolioItem) => void;
+    item: ServicePortfolio;
+    onClick: (item: ServicePortfolio) => void;
+    onDelete: (item: ServicePortfolio) => void;
 };
 
 export default function PortfolioCard({
@@ -29,22 +22,22 @@ export default function PortfolioCard({
             <button
                 type="button"
                 onClick={() => onClick(item)}
-                aria-label={`Open ${item.title}`}
+                aria-label={`Open ${item.portfolio_name}`}
                 className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
             />
 
             <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
-                {item.title}
+                {item.portfolio_name}
             </h2>
 
             <p className="mt-[0.3vh] text-md leading-snug !font-[400] text-[#757575]">
-                {item.subtitle}
+                {item.portfolio_description}
             </p>
 
             {/* Fixed height so every card lines its image up at the same spot */}
             <div className="relative mx-[1.88vw] mt-[2.2vh] h-[16.39vh] overflow-hidden rounded-[4px] max-lg:mx-0 max-lg:h-[22vh]">
                 <Image
-                    src={item.image}
+                    src={item.portfolio_image}
                     alt=""
                     fill
                     sizes="19vw"

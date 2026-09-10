@@ -1,13 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import type { PortfolioItem } from './PortfolioCard';
+import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioDots from './PortfolioDots';
 
 type PortfolioRowProps = {
-    item: PortfolioItem;
-    onClick: (item: PortfolioItem) => void;
-    onDelete: (item: PortfolioItem) => void;
+    item: ServicePortfolio;
+    onClick: (item: ServicePortfolio) => void;
+    onDelete: (item: ServicePortfolio) => void;
 };
 
 export default function PortfolioRow({
@@ -22,13 +22,13 @@ export default function PortfolioRow({
             <button
                 type="button"
                 onClick={() => onClick(item)}
-                aria-label={`Open ${item.title}`}
+                aria-label={`Open ${item.portfolio_name}`}
                 className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
             />
 
             <div className="relative h-[9.26vh] w-[9.9vw] shrink-0 overflow-hidden rounded-[4px]">
                 <Image
-                    src={item.image}
+                    src={item.portfolio_image}
                     alt=""
                     fill
                     sizes="10vw"
@@ -38,11 +38,11 @@ export default function PortfolioRow({
 
             <div className="min-w-0">
                 <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
-                    {item.title}
+                    {item.portfolio_name}
                 </h2>
 
                 <p className="mt-[0.3vh] text-md leading-snug !font-[400] text-[#757575]">
-                    {item.subtitle}
+                    {item.portfolio_description}
                 </p>
             </div>
 
