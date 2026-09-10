@@ -103,8 +103,8 @@ export async function updateCompanyAccount(
         throw ApiError.notFound('Company account not found');
     }
 
-    // `in`, not a truthiness check: zod drops absent keys, so this is the one
-    // way to tell "left alone" from an explicit null that means "clear it".
+    // The names, not just a yes/no like editsProviderFields: the error below
+    // reports one details entry per field the caller actually sent.
     const providerEdits = PROVIDER_PROFILE_FIELDS.filter(
         (field) => field in body,
     );
