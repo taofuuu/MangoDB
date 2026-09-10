@@ -59,8 +59,29 @@ export async function uploadToStorage(
 // nothing points at. Best effort — a failed cleanup must not mask the
 // error that caused it.
 export async function removeFromStorage(path: string): Promise<void> {
-    const { error } = await getSupabase().storage.from(BUCKET).remove([path]);
-    if (error) {
-        console.error('Orphaned upload left behind:', path, error.message);
+    try {
+        const { error } = await getSupabase()
+            .storage.from(BUCKET)
+            .remove([path]);
+        if (error) {
+            console.error('Orphaned upload left behind:', path, error.message);
+        }
+    } catch (err) {
+        console.error('Orphaned upload left behind:', path, err);
     }
+}
+
+// On delete only the stored public URL is available, not the original
+// upload path. getPublicUrl() produces `.../object/public/<bucket>/<path>`,
+// so slice the path back out and remove it. Anything that isn't one of our
+// bucket URLs (e.g. the migration placeholder) is left alone.
+export async function removeFromStorageByUrl(url: string): Promise<void> {
+    const marker = `/object/public/${BUCKET}/`;
+    const markerIdx = url.indexOf(marker);
+    if (markerIdx === -1) {
+        console.error('portfolio_image is not a recognized storage URL:', url);
+        return;
+    }
+    const path = url.slice(markerIdx + marker.length);
+    await removeFromStorage(path);
 }
