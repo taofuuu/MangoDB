@@ -34,7 +34,7 @@ const ROUTES = [
         detail: 'Sign in to your company account.',
     },
     {
-        href: '/viewprofile',
+        href: '/profile/view',
         title: 'View Profile',
         detail: 'View the profile information page.',
     },

@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import CompanyCard from './Companycart'; // Matches Companycart.jsx
-import ServicesSection from './ServicesSection';
-import ProjectTimeline from './ProjectTimeline';
-import PortfolioList from './PortfoilioList'; // Matches PortfoilioList.jsx
+import CompanyCard from '../../../components/viewprofile/Companycard';
+import ServicesSection from '../../../components/viewprofile/ServicesSection';
+import ProjectTimeline from '../../../components/viewprofile/ProjectTimeline';
+import PortfolioList from '../../../components/viewprofile/PortfoilioList';
 
-export default function Dashboard() {
+export default function ViewProfilePage() {
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
             {/* <header className="flex justify-between items-center mb-6">
