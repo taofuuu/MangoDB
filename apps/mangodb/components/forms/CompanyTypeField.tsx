@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Tag from '../ui/Tag';
+import { PREDEFINED_COMPANY_TYPES } from '@/lib/validation';
 
 type CompanyTypeFieldProps = {
     label: string;
@@ -11,8 +12,8 @@ type CompanyTypeFieldProps = {
 };
 
 // The tags box from the design: chips wrap inside a bordered area, and the
-// trailing "+" turns into an inline field so a tag can be added without a
-// dialog.
+// trailing "+" turns into an inline field with predefined suggestions so a
+// tag can be added cleanly without a dialog.
 export default function CompanyTypeField({
     label,
     value,
@@ -22,16 +23,13 @@ export default function CompanyTypeField({
     const [adding, setAdding] = useState(false);
     const [draft, setDraft] = useState('');
 
-    // min(1)/max(10) from updateCompanyProfileSchema are deliberately not
-    // enforced here — that is the "Validate required profile fields" task.
-    // This only keeps the list free of blanks and same-name duplicates.
     const commit = () => {
         const tag = draft.trim();
         const taken = value.some(
             (existing) => existing.toLowerCase() === tag.toLowerCase(),
         );
 
-        if (tag && !taken) {
+        if (tag && !taken && tag.length <= 100 && value.length < 10) {
             onChange([...value, tag]);
         }
 
@@ -60,25 +58,33 @@ export default function CompanyTypeField({
                 ))}
 
                 {adding ? (
-                    <input
-                        autoFocus
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onBlur={commit}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                e.preventDefault();
-                                commit();
-                            }
-                            if (e.key === 'Escape') {
-                                setDraft('');
-                                setAdding(false);
-                            }
-                        }}
-                        placeholder="Company type"
-                        aria-label="New company type"
-                        className="h-[3.33vh] w-[12.89vw] rounded-status bg-[#D9D9D9] px-[0.94vw] text-md text-[#171717] placeholder:text-[#8A8A8A] focus:outline-none"
-                    />
+                    <>
+                        <input
+                            autoFocus
+                            list="predefined-company-types"
+                            value={draft}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onBlur={commit}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    commit();
+                                }
+                                if (e.key === 'Escape') {
+                                    setDraft('');
+                                    setAdding(false);
+                                }
+                            }}
+                            placeholder="Company type"
+                            aria-label="New company type"
+                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-[#D9D9D9] px-[0.94vw] text-md text-[#171717] placeholder:text-[#8A8A8A] focus:outline-none"
+                        />
+                        <datalist id="predefined-company-types">
+                            {PREDEFINED_COMPANY_TYPES.map((type) => (
+                                <option key={type} value={type} />
+                            ))}
+                        </datalist>
+                    </>
                 ) : (
                     <button
                         type="button"
