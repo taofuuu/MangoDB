@@ -20,7 +20,7 @@ const ROUTES = [
     {
         href: '/portfolio',
         title: 'Portfolio',
-        detail: 'Add, edit and delete portfolio modals, on mock data.',
+        detail: 'Company portfolio grid and list views, against the API.',
     },
     {
         href: '/account-settings',
