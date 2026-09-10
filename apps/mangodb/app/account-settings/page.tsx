@@ -7,6 +7,7 @@ import type { ChangeCredentialsRequest, CompanyProfile } from '@mangodb/shared';
 import penIcon from '@/assets/icons/pen.png';
 import { ApiRequestError } from '@/lib/api';
 import { changeMyCredentials, getMyProfile } from '@/lib/companies';
+import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditAccountModal, {
     type EditAccountMode,
@@ -235,6 +236,21 @@ export default function AccountPage() {
                                     </button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Session */}
+                        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                            <div>
+                                <h2 className="text-md font-semibold text-[#171717]">
+                                    Session
+                                </h2>
+                                <p className="mt-1 text-xs text-[#666666]">
+                                    Logging out revokes the token this session
+                                    is using. You will need to log in again.
+                                </p>
+                            </div>
+
+                            <LogoutButton />
                         </div>
 
                         {/* Danger Zone */}
