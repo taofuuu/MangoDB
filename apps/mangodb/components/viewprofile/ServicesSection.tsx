@@ -34,20 +34,6 @@ export default function ServicesDashboard() {
         },
     });
 
-    // Handle form changes based on active tab
-    const handleChange = (
-        e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    ) => {
-        const { name, value } = e.target;
-        setData((prev) => ({
-            ...prev,
-            [activeTab]: {
-                ...prev[activeTab],
-                [name]: value,
-            },
-        }));
-    };
-
     const currentTabContent = data[activeTab];
 
     return (
