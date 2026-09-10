@@ -301,7 +301,8 @@ edited, so this endpoint asks `ownsProviderRow` about the target's
 `account_type` instead. A `RECEIVER` or `ADMIN` target owns no `provider` row
 and gets a `400` with one `details` entry per offending field — not a `403`,
 because the administrator is not the one being refused. The refusal is
-per-field, so other columns in the same body still save.
+per-field in the error response. The request remains atomic, so no fields in
+the same body are saved when any provider-only field is rejected.
 
 The target is read before the write, like `updatePortfolio`: an unknown id is a
 plain `404` rather than a `P2025` surfacing mid-update, and the same lookup
