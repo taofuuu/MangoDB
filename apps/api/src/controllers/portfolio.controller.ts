@@ -6,7 +6,7 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-import { uploadToStorage, removeFromStorage } from '../lib/storage';
+import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -50,7 +50,11 @@ export async function createPortfolio(
     }
 
     // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
-    const image = await uploadToStorage(req.file);
+    const image = await uploadToStorage(
+        req.file,
+        BUCKETS.PORTFOLIO,
+        'portfolios',
+    );
 
     // 5. บันทึกลง Database
     let created;
@@ -71,7 +75,7 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
-        await removeFromStorage(image.path);
+        await removeFromStorage(image.path, BUCKETS.PORTFOLIO);
 
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {

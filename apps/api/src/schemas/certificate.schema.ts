@@ -30,11 +30,9 @@ export const certificateFields = {
     credential_id: z.string().trim().max(255).nullable().optional(),
 
     credential_url: z.url().nullable().optional(),
-
-    cert_image: z.string().trim().max(255).nullable().optional(),
 } as const;
 
-export const addCertificateSchema = z.object(certificateFields).refine(
+export const createCertificateSchema = z.object(certificateFields).refine(
     (data) => {
         // If either date is not provided, don't validate the comparison
         if (

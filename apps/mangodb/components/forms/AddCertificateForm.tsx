@@ -58,27 +58,49 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         e.preventDefault();
 
         try {
+            const formData = new FormData();
+
+            formData.append('cert_title', name);
+            formData.append('organization', organize);
+
+            if (month) {
+                formData.append('issue_month', month);
+            }
+
+            if (year) {
+                formData.append('issue_year', year);
+            }
+
+            if (exMonth) {
+                formData.append('expire_month', exMonth);
+            }
+
+            if (exYear) {
+                formData.append('expire_year', exYear);
+            }
+
+            if (credID) {
+                formData.append('credential_id', credID);
+            }
+
+            if (credURL) {
+                formData.append('credential_url', credURL);
+            }
+
+            if (file) {
+                formData.append('cert_image', file);
+            }
+
             const result = await apiFetch<CertificateResponse>(
                 '/certificates',
                 {
                     method: 'POST',
-                    body: JSON.stringify({
-                        cert_title: name,
-                        organization: organize,
-                        issue_month: month ? Number(month) : null,
-                        issue_year: year ? Number(year) : null,
-                        expire_month: exMonth ? Number(exMonth) : null,
-                        expire_year: exYear ? Number(exYear) : null,
-                        credential_id: credID || null,
-                        credential_url: credURL || null,
-                        cert_image: file?.name ?? null,
-                    }),
+                    body: formData,
                 },
             );
 
             console.log('Certificate created:', result);
 
-            // Only update the page AFTER the API succeeds
             const newData: CertificateData = {
                 name: result.cert_title,
                 organize: result.organization,

@@ -4,12 +4,27 @@ import { prisma } from '../lib/prisma';
 
 import { parseBody } from '../middleware/validate';
 
-import { addCertificateSchema } from '../schemas/certificate.schema';
+import { createCertificateSchema } from '../schemas/certificate.schema';
 
-export async function addCertificate(req: Request, res: Response) {
+import { uploadToStorage, BUCKETS } from '../lib/storage';
+
+export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
 
-    const body = parseBody(addCertificateSchema, req.body);
+    const body = parseBody(createCertificateSchema, req.body);
+
+    let certImage: string | null = null;
+
+    // Upload certificate image if one was provided
+    if (req.file) {
+        const uploaded = await uploadToStorage(
+            req.file,
+            BUCKETS.CERTIFICATE,
+            'certificates',
+        );
+
+        certImage = uploaded.url;
+    }
 
     const certificate = await prisma.certificate.create({
         data: {
@@ -27,7 +42,7 @@ export async function addCertificate(req: Request, res: Response) {
             credential_id: body.credential_id ?? null,
             credential_url: body.credential_url ?? null,
 
-            cert_image: body.cert_image ?? null,
+            cert_image: certImage,
         },
     });
 

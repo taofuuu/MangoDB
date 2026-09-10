@@ -19,11 +19,6 @@ const ROUTES = [
         detail: 'Add, edit and delete certificate modals, on mock data.',
     },
     {
-        href: '/portfolio',
-        title: 'Portfolio',
-        detail: 'Add, edit and delete portfolio modals, on mock data.',
-    },
-    {
         href: '/account-settings',
         title: 'Account setting',
         detail: 'Manage account settings and delete account.',

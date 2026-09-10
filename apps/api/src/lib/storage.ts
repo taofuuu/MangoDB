@@ -1,30 +1,35 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ApiError } from './ApiError';
 
-const BUCKET = 'portfolio';
+const BUCKETS = {
+    CERTIFICATE: 'certificate',
+    PORTFOLIO: 'portfolio',
+} as const;
 
-// Read lazily, like getSecret() in src/auth/jwt.ts: imports are evaluated
-// before dotenv.config() runs, and a missing key should fail the upload with
-// a clear message rather than take the whole server down at boot.
+type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
+
 let client: SupabaseClient | undefined;
 
 function getSupabase(): SupabaseClient {
     if (!client) {
         const url = process.env.SUPABASE_URL;
         const key = process.env.SUPABASE_SECRET_KEY;
+
         if (!url || !key) {
             throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY are not set');
         }
+
         client = createClient(url, key);
     }
+
     return client;
 }
 
-export type UploadedImage = { path: string; url: string };
+export type UploadedImage = {
+    path: string;
+    url: string;
+};
 
-// Extension from the mimetype, not the filename: fileFilter has already
-// narrowed it to these three, and originalname has nothing to slice off when
-// the client sends a name without a dot.
 const EXTENSIONS: Record<string, string> = {
     'image/png': 'png',
     'image/jpeg': 'jpg',
@@ -33,14 +38,16 @@ const EXTENSIONS: Record<string, string> = {
 
 export async function uploadToStorage(
     file: Express.Multer.File,
-    folder = 'portfolios',
+    bucket: Bucket,
+    folder: string,
 ): Promise<UploadedImage> {
     const extension = EXTENSIONS[file.mimetype] ?? 'bin';
     const random = Math.random().toString(36).substring(2);
+
     const path = `${folder}/${Date.now()}-${random}.${extension}`;
 
     const { error } = await getSupabase()
-        .storage.from(BUCKET)
+        .storage.from(bucket)
         .upload(path, file.buffer, {
             contentType: file.mimetype,
             upsert: false,
@@ -50,17 +57,23 @@ export async function uploadToStorage(
         throw ApiError.badRequest(`Failed to upload image: ${error.message}`);
     }
 
-    const { data } = getSupabase().storage.from(BUCKET).getPublicUrl(path);
+    const { data } = getSupabase().storage.from(bucket).getPublicUrl(path);
 
-    return { path, url: data.publicUrl };
+    return {
+        path,
+        url: data.publicUrl,
+    };
 }
 
-// The upload lands before the insert, so a failed insert leaves a file
-// nothing points at. Best effort — a failed cleanup must not mask the
-// error that caused it.
-export async function removeFromStorage(path: string): Promise<void> {
-    const { error } = await getSupabase().storage.from(BUCKET).remove([path]);
+export async function removeFromStorage(
+    path: string,
+    bucket: Bucket,
+): Promise<void> {
+    const { error } = await getSupabase().storage.from(bucket).remove([path]);
+
     if (error) {
         console.error('Orphaned upload left behind:', path, error.message);
     }
 }
+
+export { BUCKETS };
