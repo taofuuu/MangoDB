@@ -289,7 +289,10 @@ key rather than a `200` that quietly ignored half the request.
 `companyProfileUpdateData` in `src/lib/companyProfile.ts` is the shared write
 shape. Both this endpoint and `updateMyProfile` call it; they differ only in
 their `select`, their serializer and their error messages. Add a profile column
-to `updateCompanyProfileSchema` and both endpoints get it.
+to `updateCompanyProfileSchema` and both endpoints get it. Its nested provider
+write is an `upsert`: `account_type` is not proof the `provider` row exists —
+nothing in the schema enforces that — so a missing one is created rather than
+raising `P2025` and reading as a `404` for a company that plainly exists.
 
 `service_term` and `warranty_policy` live on `provider`, so **who may send them
 is a different question here**. `PATCH /companies/me` asks `roleGrants` about

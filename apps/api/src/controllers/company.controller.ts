@@ -85,9 +85,9 @@ export async function updateMyProfile(
                 { field: 'company_type', message: 'Remove the duplicate tag' },
             ]);
         }
-        // Also fires if a provider company somehow has no provider row, but
-        // register creates one with the company and nothing removes it, so
-        // that would be broken data rather than a case to handle here.
+        // The company was deleted mid-session — its token is still valid. A
+        // missing provider row cannot land here any more: the nested write
+        // upserts it.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company not found');
         }
