@@ -603,6 +603,45 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         </p>
       </article>
 
+      <article class="entry" id="cookie" data-tags="cookie session browser httponly samesite credentials proxy same-origin localstorage csrf frontend stay signed in">
+        <h3>How does the browser stay signed in?</h3>
+        <p class="answer">An <code>httpOnly</code> cookie the API sets. The frontend never holds the token.</p>
+        <pre><code><span class="c-dim">// src/lib/session.ts — every endpoint that issues a token goes through here</span>
+res.cookie('access_token', session.accessToken, {
+    httpOnly: true,          <span class="c-dim">// JS cannot read it, so a script cannot steal it</span>
+    sameSite: 'lax',         <span class="c-dim">// not sent on a cross-site POST — this is what stops CSRF</span>
+    secure: NODE_ENV === 'production',
+    maxAge: 60 * 60 * 1000,  <span class="c-dim">// mirrors the 1 h token expiry</span>
+});</code></pre>
+        <p class="note">
+          Three endpoints hand out a session — <a href="#register">register</a>,
+          <code>POST /auth/login</code>, and
+          <a href="#change-credentials">a credential change</a> — and all three go through
+          <code>sendSession</code>. That is the whole point of it: when only login set the cookie,
+          the other two quietly left the browser without one.
+        </p>
+        <p class="note">
+          <strong>The frontend stores nothing.</strong> It used to keep the token in
+          <code>localStorage</code> and attach it by hand — and the login page shipped without the
+          line that stored it, so every page after login was signed out. A browser cannot forget to
+          send a cookie, which is what makes that whole class of bug go away.
+          <code>apiFetch</code> in <code>apps/mangodb/lib/api.ts</code> sets
+          <code>credentials: 'include'</code> once, and no page thinks about auth again.
+        </p>
+        <p class="note">
+          The web app calls the API at <code>/api/…</code>, not <code>localhost:4000</code>:
+          <code>next.config.ts</code> proxies <code>/api/*</code> through, so the browser only ever
+          talks to one origin. Same-origin means the cookie needs no CORS, and keeps working when
+          the frontend and API deploy to different hosts — where a cross-site cookie would need
+          <code>SameSite=None</code> and a CSRF token beside it.
+        </p>
+        <p class="note">
+          The token is still in the response body too, for callers that are not a browser. Those
+          send <code>Authorization: Bearer &lt;token&gt;</code> instead, and
+          <code>requireAuth</code> accepts either — header first, cookie second.
+        </p>
+      </article>
+
       <article class="entry" id="401-why" data-tags="401 rejected token invalid expired debug why failing session ended">
         <h3>Why is my token rejected?</h3>
         <p class="answer">Three gates, all answering 401. The message tells you which one.</p>
@@ -610,7 +649,7 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
           <table>
             <thead><tr><th>Message</th><th>Means</th></tr></thead>
             <tbody>
-              <tr><td class="code-cell">Missing or malformed Authorization header</td><td>No header, or not <code>Bearer &lt;token&gt;</code></td></tr>
+              <tr><td class="code-cell">Missing or malformed Authorization header</td><td>No <code>Bearer &lt;token&gt;</code> header <em>and</em> no <code>access_token</code> cookie — see <a href="#cookie">how the browser stays signed in</a></td></tr>
               <tr><td class="code-cell">Invalid or expired token</td><td>Bad signature, malformed, past <code>exp</code>, or a <code>role</code> we never issue</td></tr>
               <tr><td class="code-cell">Session has ended</td><td>Signature is fine — this token was logged out</td></tr>
             </tbody>
@@ -634,6 +673,48 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
         </ul>
       </article>
 
+      <article class="entry" id="admin-login" data-tags="admin administrator login signin us6-1 403 401 mirror auth/admin/login not an administrator account verifycredentials cookie session">
+        <h3>How does an administrator log in?</h3>
+        <p class="answer"><code>POST /auth/admin/login</code> — same body as the normal login, and it hands back the same <code>{ company, accessToken }</code> pair and the same cookie.</p>
+        <pre><code>curl -s -X POST localhost:4000/auth/admin/login \
+  -H 'content-type: application/json' \
+  -d '{"email":"admin@example.com","password":"..."}'</code></pre>
+        <p class="note">
+          The two logins are <strong>mirrors</strong>. Each turns away exactly the accounts the other
+          accepts, so a token from either one is never a surprise to the page that asked for it:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Endpoint</th><th>ADMIN account</th><th>Company account</th></tr></thead>
+            <tbody>
+              <tr><td class="code-cell">POST /auth/login</td><td><span class="status s-warn">403</span> use the administrator login</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td><span class="status s-ok">200</span></td><td><span class="status s-warn">403</span> not an administrator account</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Why <span class="status s-warn">403</span> and not <span class="status s-deny">401</span> for
+          the wrong kind of account: the password checked out, so we know who is calling — the answer is
+          just no. A <em>bad</em> credential is still <span class="status s-deny">401</span>, with the
+          same message and the same timing on both endpoints, because both call the same
+          <code>verifyCredentials</code>. See <a href="#401-vs-403">401 or 403</a>.
+        </p>
+        <p class="note">
+          It lives on <code>/auth</code>, not <code>/admin</code>, because
+          <a href="#protect">everything under <code>/admin</code> is guarded by
+          <code>requireAuth</code></a> — a login route there would need a token to get a token.
+          Nothing else is special: <a href="#tokens">the token</a> carries
+          <code>role: "admin"</code>, and <a href="#logout">logout</a> is the same endpoint for
+          everyone.
+        </p>
+        <p class="note">
+          There is still no way to <em>create</em> an administrator. No signup path can make one —
+          <code>registerSchema</code> rejects <code>ADMIN</code> and the profile edit cannot change
+          <code>account_type</code> — and the script that used to write the first one is not in the
+          repo. Ask whoever set up your database.
+        </p>
+      </article>
+
       <article class="entry" id="passwords" data-tags="password hash bcrypt salt store login verify hunter2">
         <h3>How are passwords stored?</h3>
         <p class="answer">bcrypt hashes at cost 12. The plaintext is never stored and never recoverable.</p>
@@ -653,10 +734,11 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
 
       <article class="entry" id="logout" data-tags="logout revoke denylist session end destroy 204 jti">
         <h3>How does logout actually end a session?</h3>
-        <p class="answer"><code>POST /auth/logout</code> puts the token's <code>jti</code> on a denylist. <code>requireAuth</code> then rejects it.</p>
+        <p class="answer"><code>POST /auth/logout</code> puts the token's <code>jti</code> on a denylist, and clears the cookie. <code>requireAuth</code> then rejects it.</p>
         <p class="note">
-          Clearing <code>localStorage</code> on the frontend revokes nothing — that token stays signed and
-          unexpired, and anyone holding a copy keeps access for the rest of the hour. The endpoint takes
+          Dropping the cookie on its own revokes nothing — that token stays signed and
+          unexpired, and anyone holding a copy keeps access for the rest of the hour. That is why
+          logout is a request and not a client-side delete. The endpoint takes
           the <code>jti</code> off the <em>verified</em> token, not the body, so nobody can end someone
           else's session. It answers <span class="status s-ok">204</span>; a second call with the same
           token answers <span class="status s-deny">401</span>, because gate 3 stops it before the handler.
@@ -699,7 +781,9 @@ adminRoutes.use(requireAuth, requireRole('admin'));</code></pre>
           This is the one response in the API that wraps its resource. Everything else returns the
           object itself; register returns two things, because it also logs you in — the token it
           returns is the same one <code>/companies/me</code> accepts, so the frontend does not have to call
-          login straight after signup. <code>company_description</code>, <code>address</code>, and
+          login straight after signup — and it sets the session
+          <a href="#cookie">cookie</a> as well, so a browser is signed in the moment it registers.
+          <code>company_description</code>, <code>address</code>, and
           <code>website</code> are the only optional fields. The password hash is never in the
           response: the handler names the columns it returns with an explicit <code>select</code>
           rather than deleting the field afterwards.
@@ -897,10 +981,10 @@ admin: ['admin'],</code></pre>
           happens after the write, never before, so a wrong password or a <code>409</code> does not
           cost the caller its session. It revokes one <code>jti</code>, not every session the
           company holds — there is no per-company token version — so a copy of <em>this</em> token
-          dies and a second device stays signed in until its own expires. The caller must store the
-          new <code>accessToken</code>; on the frontend
-          <code>changeMyCredentials</code> in <code>lib/companies.ts</code> calls
-          <code>setToken</code> itself, so no page can forget to.
+          dies and a second device stays signed in until its own expires. The replacement rides back
+          on the same response as a fresh <a href="#cookie">cookie</a>, so a browser stays signed in
+          with nothing to do. Skipping that is not a small bug: the token the caller is holding was
+          just revoked, so a company changing its own email would be signed out on its next click.
         </p>
       </article>
     </section>
@@ -1049,7 +1133,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 76 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 86 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -1130,6 +1214,16 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>new_password valid</td><td><span class="status s-ok">200 saved</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>the old password, after that</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>the new email + the new password</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>administrator credentials</td><td><span class="status s-ok">200 role admin, cookie set</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>admin email, wrong password</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>unknown email</td><td><span class="status s-deny">401 same message</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>valid company credentials</td><td><span class="status s-warn">403 not an administrator</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>empty body</td><td><span class="status s-warn">400 both fields</span></td></tr>
+              <tr><td class="code-cell">POST /auth/admin/login</td><td>email but no password</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">POST /auth/login</td><td>administrator credentials</td><td><span class="status s-warn">403 use the administrator login</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>cookie from the admin login, no header</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">POST /auth/logout</td><td>admin token</td><td><span class="status s-ok">204</span></td></tr>
+              <tr><td class="code-cell">/admin/ping</td><td>that admin token, after logout</td><td><span class="status s-deny">401 session has ended</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1155,14 +1249,29 @@ apps/api/src/
 
 curl -s localhost:4000/companies/me
 <span class="c-dim">{"error":{"code":"UNAUTHORIZED","message":"Missing or malformed Authorization header"}}</span></code></pre>
-        <p class="note">The quickest real token is now a registration — <code>accessToken</code> comes back in the response. To mint one by hand instead, while there is still no login endpoint:</p>
-        <pre><code>cd apps/api
-TOKEN=$(npx tsx -e "import './src/env';
-  import {signAccessToken} from './src/auth/jwt';
-  console.log(signAccessToken({sub:'1',role:'provider'}))")
+        <p class="note">The quickest real token is a registration or a login — <code>accessToken</code> comes back in the response either way:</p>
+        <pre><code>TOKEN=$(curl -s -X POST localhost:4000/auth/login -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"…"}' | npx json accessToken)
 
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/companies/me   <span class="c-dim"># 200</span>
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403</span></code></pre>
+        <p class="note">
+          Or skip the token and let curl behave like a browser, with a
+          <a href="#cookie">cookie</a> jar. This is the path the web app takes:
+        </p>
+        <pre><code>curl -s -c jar -X POST localhost:4000/auth/login -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"…"}' &gt; /dev/null
+
+curl -s -b jar localhost:4000/companies/me   <span class="c-dim"># 200, no Authorization header</span>
+curl -s -b jar -X POST localhost:4000/auth/logout <span class="c-dim"># 204, and the jar's cookie is cleared</span></code></pre>
+        <p class="note">
+          To mint one by hand without an account at all — useful for a role you cannot register as,
+          like <code>admin</code>:
+        </p>
+        <pre><code>cd apps/api
+TOKEN=$(npx tsx -e "import './src/env';
+  import {signAccessToken} from './src/auth/jwt';
+  console.log(signAccessToken({sub:'1',role:'provider'}))")</code></pre>
       </article>
     </section>
 
@@ -1174,12 +1283,12 @@ curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class
         <h3>What does not exist yet?</h3>
         <p class="answer">Read this before assuming something works.</p>
         <ul>
-          <li><strong>No login <em>page</em>.</strong> <code>POST /auth/login</code> itself landed with US1-2 and returns the same <code>{ company, accessToken }</code> pair as register, but nothing in the frontend calls it yet. Until it does, <code>/dev/session</code> in the web app gets you a token — log into a company you already made, or register a throwaway one. Delete that route, and its <code>dev_*</code> rows, when the real login page ships.</li>
+          <li><strong>No signup <em>page</em>.</strong> The login page landed with US1-2 and signs you in for real — see <a href="#cookie">how the browser stays signed in</a> — but <code>POST /auth/register</code> still has no form in front of it. <code>/dev/session</code> in the web app is the stand-in: register a throwaway company there, then use it anywhere. Delete that route, and its <code>dev_*</code> rows, when <code>/signup</code> ships.</li>
           <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
-          <li><strong>No table an administrator could live in.</strong> <code>UserRole</code> includes <code>'admin'</code>, but the Prisma schema has no admin and <code>account_type</code> has no <code>ADMIN</code> value, so US6-1 has nothing to authenticate against.</li>
+          <li><strong>Nothing creates an administrator.</strong> <code>account_type</code> now accepts <code>ADMIN</code> and <a href="#admin-login"><code>POST /auth/admin/login</code></a> authenticates one, but no signup path can make one and the script that wrote the first is not in the repo. If your database has no admin row, ask whoever set it up.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging. Changing a password revokes only the token the change was made with — see <a href="#change-credentials">the credentials endpoint</a> — because revoking every session a company holds needs a per-company token version, and there is no column for one.</li>
-          <li><strong>No client-side session cleanup or redirect.</strong> The server ends the session; nothing clears the browser.</li>
+          <li><strong>No route guard, and only one logout button.</strong> There is no <code>middleware.ts</code>, so an unauthenticated visitor reaches any page and each one handles its own <span class="status s-deny">401</span> — <code>account-settings</code> and <code>profile/edit</code> hand-roll the same block. Logout exists only on <code>/dev/session</code>.</li>
           <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>, US1-5 added <code>PATCH</code> beside it, and <code>PATCH /companies/me/credentials</code> now sits under both.</li>
           <li><strong>No way to change an <code>account_type</code>.</strong> <code>PATCH /companies/me</code> edits the profile and <code>PATCH /companies/me/credentials</code> the login identity, but moving a company between <code>PROVIDER</code>, <code>RECEIVER</code>, and <code>BOTH</code> means adding or removing subtype rows and restamping the token's <code>role</code> — still an endpoint nobody has written.</li>
           <li><strong>Nothing verifies a new email address.</strong> The change takes effect immediately, so a typo locks a company out of its own login until an admin fixes the row — and there is no admin. A confirmation link is the missing half.</li>

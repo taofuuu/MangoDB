@@ -9,6 +9,9 @@ const ROLES: Record<AccountType, string[]> = {
     PROVIDER: ['Provider'],
     RECEIVER: ['Receiver'],
     BOTH: ['Provider', 'Receiver'],
+    // An administrator offers and requests nothing, so it wears no tag. The
+    // key still has to be here: Record<AccountType, ...> demands every one.
+    ADMIN: [],
 };
 
 const ROLE_FILL: Record<string, string> = {

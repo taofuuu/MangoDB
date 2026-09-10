@@ -5,6 +5,21 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
 import Button from '@/components/sm-detail/Button';
+import { ApiRequestError } from '@/lib/api';
+import { login } from '@/lib/session';
+
+// A wrong password and a malformed email both have to read the same. The API
+// rejects the second as VALIDATION_FAILED, and showing that would tell an
+// attacker the address is not what it is unhappy about.
+function messageFor(err: unknown): string {
+    if (!(err instanceof ApiRequestError)) {
+        return 'Could not reach the server. Try again.';
+    }
+    if (err.status === 400 || err.status === 401) {
+        return 'Invalid email or password';
+    }
+    return err.message;
+}
 
 export default function LoginForm() {
     const router = useRouter();
@@ -34,29 +49,12 @@ export default function LoginForm() {
         setIsSubmitting(true);
 
         try {
-            const apiUrl =
-                process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // credentials: 'include' sends/receives the httpOnly cookie
-                // the API sets on login, keeping the token out of JS reach.
-                credentials: 'include',
-                body: JSON.stringify({ email: identifier, password }),
-            });
-
-            // Parse the body first; a non-JSON response just gives us null and
-            // the status below still decides what the user sees.
-            const data = await res.json().catch(() => null);
-
-            if (!res.ok) {
-                setError(data?.error?.message || 'Invalid email or password');
-                return;
-            }
-
+            // The session cookie is set on this response, so everything after
+            // this point is authenticated.
+            await login(identifier, password);
             router.push('/');
-        } catch {
-            setError('Could not reach the server. Try again.');
+        } catch (err) {
+            setError(messageFor(err));
         } finally {
             setIsSubmitting(false);
         }
