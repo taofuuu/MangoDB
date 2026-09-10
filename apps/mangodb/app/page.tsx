@@ -33,6 +33,11 @@ const ROUTES = [
         title: 'Login',
         detail: 'Sign in to your company account.',
     },
+    {
+        href: '/companies',
+        title: 'Companies view for admin',
+        detail: 'list of company that can be viewed by admin',
+    },
 ];
 
 export default function Home() {
