@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioDots from './PortfolioDots';
+import { portfolioImageSrc } from './portfolioImage';
 
 type PortfolioRowProps = {
     item: ServicePortfolio;
@@ -28,7 +29,7 @@ export default function PortfolioRow({
 
             <div className="relative h-[9.26vh] w-[9.9vw] shrink-0 overflow-hidden rounded-[4px]">
                 <Image
-                    src={item.portfolio_image}
+                    src={portfolioImageSrc(item.portfolio_image)}
                     alt=""
                     fill
                     sizes="10vw"

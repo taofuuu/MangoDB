@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioDots from './PortfolioDots';
+import { portfolioImageSrc } from './portfolioImage';
 
 type PortfolioCardProps = {
     item: ServicePortfolio;
@@ -37,7 +38,7 @@ export default function PortfolioCard({
             {/* Fixed height so every card lines its image up at the same spot */}
             <div className="relative mx-[1.88vw] mt-[2.2vh] h-[16.39vh] overflow-hidden rounded-[4px] max-lg:mx-0 max-lg:h-[22vh]">
                 <Image
-                    src={item.portfolio_image}
+                    src={portfolioImageSrc(item.portfolio_image)}
                     alt=""
                     fill
                     sizes="19vw"
