@@ -115,6 +115,7 @@ import { parseBody } from '../middleware/validate';
 import {
     addCertificateSchema,
     updateCertificateSchema,
+    UpdateCertificateInput,
 } from '../schemas/certificate.schema';
 
 export async function addCertificate(req: Request, res: Response) {
@@ -203,7 +204,35 @@ export async function updateCertificate(req: Request, res: Response) {
 
     const updatedCertificate = await prisma.certificate.update({
         where: { certificate_id: certificateId },
-        data: body,
+        data: {
+            ...(body.cert_title !== undefined && {
+                cert_title: body.cert_title,
+            }),
+            ...(body.organization !== undefined && {
+                organization: body.organization,
+            }),
+            ...(body.issue_month !== undefined && {
+                issue_month: body.issue_month,
+            }),
+            ...(body.issue_year !== undefined && {
+                issue_year: body.issue_year,
+            }),
+            ...(body.expire_month !== undefined && {
+                expire_month: body.expire_month,
+            }),
+            ...(body.expire_year !== undefined && {
+                expire_year: body.expire_year,
+            }),
+            ...(body.credential_id !== undefined && {
+                credential_id: body.credential_id,
+            }),
+            ...(body.credential_url !== undefined && {
+                credential_url: body.credential_url,
+            }),
+            ...(body.cert_image !== undefined && {
+                cert_image: body.cert_image,
+            }),
+        },
     });
 
     return res.status(200).json({
