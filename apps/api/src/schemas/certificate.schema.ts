@@ -5,19 +5,16 @@ export const certificateFields = {
 
     organization: z.string().trim().max(255),
 
-    issue_month: z.number().int().min(1).max(12).nullable().optional(),
-
-    issue_year: z
+    issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    issue_year: z.coerce
         .number()
         .int()
         .min(1990, 'Issue year must be 1990 or later')
         .max(new Date().getFullYear(), 'Issue year cannot be in the future')
         .nullable()
         .optional(),
-
-    expire_month: z.number().int().min(1).max(12).nullable().optional(),
-
-    expire_year: z
+    expire_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    expire_year: z.coerce
         .number()
         .int()
         .min(
@@ -30,11 +27,9 @@ export const certificateFields = {
     credential_id: z.string().trim().max(255).nullable().optional(),
 
     credential_url: z.url().nullable().optional(),
-
-    cert_image: z.string().trim().max(255).nullable().optional(),
 } as const;
 
-export const addCertificateSchema = z.object(certificateFields).refine(
+export const createCertificateSchema = z.object(certificateFields).refine(
     (data) => {
         // If either date is not provided, don't validate the comparison
         if (

@@ -1,161 +1,169 @@
 'use client';
 
-import { type MouseEvent, useState } from 'react';
+import { useState } from 'react';
+import CategoryFilter from '@/components/portfolio/CategoryFilter';
+import PortfolioCard, {
+    PortfolioItem,
+} from '@/components/portfolio/PortfolioCard';
+import PortfolioRow from '@/components/portfolio/PortfolioRow';
+import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
+import AddPortfolioForm from '@/components/forms/AddPortfolioForm';
 import { apiFetch } from '@/lib/api';
 
-type TestPortfolio = {
-    portfolio_id: number;
-    portfolio_name: string;
-    portfolio_description: string;
-    development_date: string;
-    portfolio_link: string;
-};
+// Mock data - there is no portfolio list endpoint on the API yet.
+const PORTFOLIO_ITEMS: PortfolioItem[] = [
+    {
+        id: 1,
+        title: 'Robot Development',
+        subtitle: 'AI Robot & AI Machine Learning',
+        category: 'Robotics',
+        image: '/portfolio-placeholder.svg',
+    },
+    {
+        id: 2,
+        title: 'Robot Development',
+        subtitle: 'AI Robot & AI Machine Learning',
+        category: 'Robotics',
+        image: '/portfolio-placeholder.svg',
+    },
+    {
+        id: 3,
+        title: 'Robot Development',
+        subtitle: 'AI Robot & AI Machine Learning',
+        category: 'AI',
+        image: '/portfolio-placeholder.svg',
+    },
+    {
+        id: 4,
+        title: 'Robot Development',
+        subtitle: 'AI Robot & AI Machine Learning',
+        category: 'AI',
+        image: '/portfolio-placeholder.svg',
+    },
+    {
+        id: 5,
+        title: 'Robot Development',
+        subtitle: 'AI Robot & AI Machine Learning',
+        category: 'Software',
+        image: '/portfolio-placeholder.svg',
+    },
+];
 
-export default function DeletePortfolioPage() {
-    // Test portfolios
-    // In the real page, this data will come from your API/database.
-    const [portfolios, setPortfolios] = useState<TestPortfolio[]>([
-        {
-            portfolio_id: 13,
-            portfolio_name: 'Test Portfolio 1',
-            portfolio_description:
-                'This is the first test portfolio for testing the delete functionality.',
-            development_date: '2026-09-08',
-            portfolio_link: 'https://example.com/test-portfolio-1',
-        },
-        {
-            portfolio_id: 14,
-            portfolio_name: 'Test Portfolio 2',
-            portfolio_description:
-                'This is the second test portfolio for testing the delete functionality.',
-            development_date: '2026-09-08',
-            portfolio_link: 'https://example.com/test-portfolio-2',
-        },
-        {
-            portfolio_id: 15,
-            portfolio_name: 'Test Portfolio 3',
-            portfolio_description:
-                'This is the third test portfolio for testing the delete functionality.',
-            development_date: '2026-09-08',
-            portfolio_link: 'https://example.com/test-portfolio-3',
-        },
-    ]);
+const CATEGORIES = ['ALL', 'Robotics', 'AI', 'Software'];
 
-    // The portfolio that the user selected to delete
-    const [selectedPortfolio, setSelectedPortfolio] =
-        useState<TestPortfolio | null>(null);
+export default function PortfolioPage() {
+    const [items, setItems] = useState(PORTFOLIO_ITEMS);
+    const [view, setView] = useState<PortfolioView>('grid');
+    const [category, setCategory] = useState('ALL');
+    const [isAddOpen, setIsAddOpen] = useState(false);
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    // The item the user asked to delete. Null means the popup is closed.
+    const [pendingDelete, setPendingDelete] = useState<PortfolioItem | null>(
+        null,
+    );
 
-    // Open confirmation modal for a specific portfolio
-    const handleOpenModal = (
-        event: MouseEvent<HTMLButtonElement>,
-        portfolio: TestPortfolio,
-    ) => {
-        event.preventDefault();
-        event.stopPropagation();
+    const visible =
+        category === 'ALL'
+            ? items
+            : items.filter((item) => item.category === category);
 
-        // Remember which portfolio the user clicked
-        setSelectedPortfolio(portfolio);
-        setIsModalOpen(true);
+    // Dummy handler - wire this to the API once the endpoint exists.
+    const handleAddPortfolio = () => {
+        setIsAddOpen(true);
+        console.log('Add portfolio');
     };
 
-    // Delete the selected portfolio
-    const handleDeletePortfolio = async () => {
-        if (!selectedPortfolio) {
-            throw new Error('No portfolio selected');
-        }
+    const handleOpen = (item: PortfolioItem) => {
+        console.log('Open portfolio', item.id);
+    };
 
-        setIsDeleting(true);
+    // The modal shows any thrown error and only closes once this resolves.
+    const handleDelete = async () => {
+        if (!pendingDelete) return;
 
-        try {
-            await apiFetch(`/portfolios/${selectedPortfolio.portfolio_id}`, {
-                method: 'DELETE',
-            });
+        await apiFetch<void>(`/portfolios/${pendingDelete.id}`, {
+            method: 'DELETE',
+        });
 
-            setPortfolios((currentPortfolios) =>
-                currentPortfolios.filter(
-                    (portfolio) =>
-                        portfolio.portfolio_id !==
-                        selectedPortfolio.portfolio_id,
-                ),
-            );
-
-            setSelectedPortfolio(null);
-            setIsModalOpen(false);
-        } finally {
-            setIsDeleting(false);
-        }
+        setItems((current) =>
+            current.filter((item) => item.id !== pendingDelete.id),
+        );
     };
 
     return (
-        <main className="min-h-screen p-[3.7vh]">
-            {/* Portfolio list */}
-            <div className="space-y-6">
-                {portfolios.map((portfolio) => (
-                    <div
-                        key={portfolio.portfolio_id}
-                        className="w-full max-w-[500px] rounded-xl border border-[#D6D6D6] bg-[#FFFDF9] p-6 shadow-sm"
+        <main className="min-h-screen bg-[#FFFDF9] px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-[#171717] max-md:px-[5vw]">
+            <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">
+                <div>
+                    <h1 className="text-hd !text-[48px] leading-none">
+                        Portfolio
+                    </h1>
+
+                    <p className="mt-[1vh] text-lg !font-[400]">
+                        List of company&apos;s portfolio
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-[1.2vw] max-md:w-full max-md:flex-wrap max-md:gap-3">
+                    <button
+                        type="button"
+                        onClick={handleAddPortfolio}
+                        className="h-[4.17vh] min-h-[36px] rounded-button bg-[#497B93] px-[1.2vw] text-sm !font-[600] text-white transition-colors hover:bg-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
                     >
-                        <h1 className="mb-3 text-xl font-semibold text-[#171717]">
-                            {portfolio.portfolio_name}
-                        </h1>
+                        + Add Portfolio
+                    </button>
 
-                        <p className="mb-4 text-sm text-[#65798e]">
-                            {portfolio.portfolio_description}
-                        </p>
+                    <CategoryFilter
+                        value={category}
+                        onChange={setCategory}
+                        options={CATEGORIES}
+                    />
 
-                        <div className="mb-4 space-y-2 text-sm text-[#171717]">
-                            <p>
-                                <span className="font-semibold">
-                                    Portfolio ID:
-                                </span>{' '}
-                                {portfolio.portfolio_id}
-                            </p>
-
-                            <p>
-                                <span className="font-semibold">
-                                    Development Date:
-                                </span>{' '}
-                                {portfolio.development_date}
-                            </p>
-
-                            <p>
-                                <span className="font-semibold">
-                                    Portfolio Link:
-                                </span>{' '}
-                                {portfolio.portfolio_link}
-                            </p>
-                        </div>
-
-                        {/* Delete button for this specific portfolio */}
-                        <button
-                            type="button"
-                            onClick={(event) =>
-                                handleOpenModal(event, portfolio)
-                            }
-                            disabled={isDeleting}
-                            className="rounded-button h-[4.44vh] min-h-[40px] w-[10.42vw] min-w-[160px] bg-[#CE473E] text-sm font-[600] text-[#FFFDF9] transition-colors hover:bg-[#B93D35] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#CE473E]"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                ))}
+                    <ViewToggle value={view} onChange={setView} />
+                </div>
             </div>
 
-            {/* Delete confirmation popup */}
+            {visible.length === 0 && (
+                <p className="mt-[4.5vh] text-md !font-[400] text-[#757575]">
+                    No portfolio in this category yet.
+                </p>
+            )}
+
+            {view === 'grid' && (
+                <div className="mt-[4.5vh] grid grid-cols-4 gap-x-[3.49vw] gap-y-[3.7vh] max-lg:grid-cols-2 max-sm:grid-cols-1">
+                    {visible.map((item) => (
+                        <PortfolioCard
+                            key={item.id}
+                            item={item}
+                            onClick={handleOpen}
+                            onDelete={setPendingDelete}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {view === 'list' && (
+                <div className="mt-[4.5vh] flex flex-col gap-[2vh]">
+                    {visible.map((item) => (
+                        <PortfolioRow
+                            key={item.id}
+                            item={item}
+                            onClick={handleOpen}
+                            onDelete={setPendingDelete}
+                        />
+                    ))}
+                </div>
+            )}
+            <AddPortfolioForm
+                isOpen={isAddOpen}
+                onClose={() => setIsAddOpen(false)}
+                onSave={handleAddPortfolio}
+            />
+
             <DeletePortfolioModal
-                isOpen={isModalOpen}
-                onClose={() => {
-                    if (!isDeleting) {
-                        setIsModalOpen(false);
-                        setSelectedPortfolio(null);
-                    }
-                }}
-                onConfirm={handleDeletePortfolio}
-                isDeleting={isDeleting}
+                isOpen={pendingDelete !== null}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={handleDelete}
             />
         </main>
     );
