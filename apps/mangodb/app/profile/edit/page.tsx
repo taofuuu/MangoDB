@@ -75,8 +75,9 @@ export default function EditProfilePage() {
 
         try {
             const profile = await updateMyProfile(toUpdateRequest(data));
-            // Keep the photo: the response cannot carry one, so spreading it
-            // over the form state would wipe the preview the user just picked.
+            // Update saved with the newly persisted profile so subsequent Cancel
+            // actions revert to this latest saved baseline. Keep the photoUrl as
+            // the response does not carry one.
             setSaved({ ...profile, photoUrl: data.photoUrl });
             setStatus({
                 type: 'success',
