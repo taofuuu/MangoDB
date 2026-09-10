@@ -112,11 +112,13 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout. Two endpoints are exceptions, both returning
-  `{ company, accessToken }` because both hand you a session:
-  `POST /auth/register`, which logs you in, and
+  delete or logout. Three endpoints are exceptions, all returning
+  `{ company, accessToken }` because all three hand you a session:
+  `POST /auth/register`, `POST /auth/login`, and
   `PATCH /companies/me/credentials`, which _re_-logs you in — it revokes the
-  token it was called with, so it has to return the replacement.
+  token it was called with, so it has to return the replacement. All three go
+  through `sendSession` in `src/lib/session.ts`, which also sets the
+  `access_token` cookie — see Authentication below.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
   rather than repeating the guards per route, so a new route cannot miss them.
 - **Never put a secret, a stack trace, or a Prisma error in a response.**
@@ -220,20 +222,50 @@ is `409` with one `details` entry per rejected field — the same
 `excludeCompanyId` so re-submitting your own value is not a collision.
 
 On success it revokes the token it was called with and returns
-`{ company, accessToken }`, so the caller must store the new token. See the
-response-shape rule above for why this wraps.
+`{ company, accessToken }` — plus a replacement cookie, so a browser stays
+signed in with nothing to do. Skipping that cookie would sign the caller out
+the moment they changed their own email. See the response-shape rule above for
+why this wraps.
 
 ### Authentication
 
-`requireAuth` verifies the bearer token, rejects revoked ones, and puts the
-claims on `req.auth` (`sub`, `role`, `jti`, `exp`). `requireRole(...roles)`
-runs after it. Two endpoints revoke a token's `jti` through the denylist in
+`requireAuth` takes the token from an `Authorization: Bearer` header or, failing
+that, the `access_token` cookie — header first. It verifies it, rejects revoked
+ones, and puts the claims on `req.auth` (`sub`, `role`, `jti`, `exp`).
+`requireRole(...roles)` runs after it.
+
+The cookie is how the web app authenticates: `sendSession` sets it `httpOnly`
+(so page scripts cannot read the token) and `SameSite=Lax` (so it is not sent
+on a cross-site POST, which is what stops CSRF). The frontend stores nothing and
+attaches nothing — `apiFetch` sends `credentials: 'include'` and the browser
+does the rest. The header path stays for callers that are not a browser, like
+curl and Postman. The web app reaches the API at `/api/*`, proxied by
+`next.config.ts`, so its requests are same-origin and need no CORS. Two endpoints revoke a token's `jti` through the denylist in
 `src/auth/tokenDenylist.ts` — `POST /auth/logout`, and
 `PATCH /companies/me/credentials`, which ends the session its change was made
 with. Both revoke one token, not every session the company holds: there is no
 per-company token version, so a second device stays signed in until its own
 token expires. The denylist lives in `public.revoked_token`, so it survives a
 restart and is shared between instances.
+
+There are two login endpoints, and they are mirrors: each turns away exactly
+the accounts the other accepts, so a token from either is never a surprise to
+the page that asked for it.
+
+| Endpoint                 | ADMIN account                                           | Company account                              |
+| ------------------------ | ------------------------------------------------------- | -------------------------------------------- |
+| `POST /auth/login`       | `403` "Administrators must use the administrator login" | `200`                                        |
+| `POST /auth/admin/login` | `200`                                                   | `403` "This is not an administrator account" |
+
+Both share `verifyCredentials`, so a bad credential answers `401` with the same
+message and the same timing either way. Both rejections above are `403` and not
+`401` on purpose: the password checked out, so we know who is calling — the
+answer is just no. `POST /auth/admin/login` sits on the public `authRoutes`
+because `/admin` is guarded by `requireAuth`, and a login route there would
+need a token to get a token.
+
+Logout is the same endpoint for both: `POST /auth/logout` revokes whatever
+token it is given.
 
 ### Portfolio
 

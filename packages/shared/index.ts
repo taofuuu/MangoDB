@@ -2,9 +2,16 @@
 // What a role is allowed to do is a separate question — see auth/roles.ts.
 export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
 
-// Stored in company.account_type, uppercase as the seeded rows have it. There
-// is no ADMIN account type: admins have no table yet (US6-1).
-export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH';
+// Stored in company.account_type, uppercase as the seeded rows have it. ADMIN
+// is deliberately absent from registerSchema, so the public signup form can
+// never mint one. An admin is a company row with account_type ADMIN and no
+// provider or receiver row — there is no separate admin table.
+export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
+
+// What a signup may ask for. Narrower than AccountType on purpose:
+// registerSchema rejects ADMIN at runtime, so the contract the frontend
+// codes against should reject it at compile time too.
+export type RegisterAccountType = Exclude<AccountType, 'ADMIN'>;
 
 export interface User {
     id: string;
@@ -59,7 +66,7 @@ export interface RegisterRequest {
     email: string;
     password: string;
     phone: string;
-    account_type: AccountType;
+    account_type: RegisterAccountType;
     company_type: string[];
     company_description?: string;
     address?: string;
