@@ -11,7 +11,7 @@ import Textarea from '../ui/Textarea';
 import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
-import { normalizeWebsiteUrl } from '@/lib/validation';
+import { normalizeWebsiteUrl, validateProfile } from '@/lib/validation';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -78,7 +78,7 @@ export function toUpdateRequest(
 
 type CompanyProfileFormProps = {
     initialData: ProfileFormData;
-    onSave: (data: ProfileFormData) => void;
+    onSave: (data: ProfileFormData) => Promise<void> | void;
     onCancel?: () => void;
     errors?: Partial<Record<keyof ProfileFormData, string>>;
     status?: StatusMessageData;
@@ -98,6 +98,15 @@ export default function CompanyProfileForm({
     onDismissStatus,
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
+    const [localErrors, setLocalErrors] = useState<
+        Partial<Record<keyof ProfileFormData, string>>
+    >({});
+    const [localStatus, setLocalStatus] = useState<StatusMessageData>(null);
+
+    // Both live on the provider table. A receiver-only company owns no row
+    // there, so showing the inputs would offer edits that cannot be saved.
+    const isProvider =
+        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
 
     // A save replaces initialData with what was stored and Cancel resets to
     // the same thing, so the form always edits the last known good profile.
@@ -107,6 +116,8 @@ export default function CompanyProfileForm({
     if (lastInitial !== initialData) {
         setLastInitial(initialData);
         setData(initialData);
+        setLocalErrors({});
+        setLocalStatus(null);
     }
 
     const setField = <K extends keyof ProfileFormData>(
@@ -114,25 +125,50 @@ export default function CompanyProfileForm({
         value: ProfileFormData[K],
     ) => {
         setData((current) => ({ ...current, [key]: value }));
+        if (localErrors[key]) {
+            setLocalErrors((prev) => {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+            });
+        }
         if (errors?.[key] && onClearError) {
             onClearError(key);
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(data);
+
+        // 1. Client-side field and format validation
+        const validationErrors = validateProfile(data, isProvider);
+        if (Object.keys(validationErrors).length > 0) {
+            setLocalErrors(validationErrors);
+            setLocalStatus({
+                type: 'error',
+                message: 'Please fix the errors before saving.',
+            });
+            return; // Stops submit immediately, onSave is NOT called
+        }
+
+        setLocalErrors({});
+        setLocalStatus(null);
+        await onSave(data);
     };
 
     const handleCancel = () => {
         setData(initialData);
+        setLocalErrors({});
+        setLocalStatus(null);
         onCancel?.();
     };
 
-    // Both live on the provider table. A receiver-only company owns no row
-    // there, so showing the inputs would offer edits that cannot be saved.
-    const isProvider =
-        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+    const displayErrors = { ...errors, ...localErrors };
+    const displayStatus = localStatus || status;
+    const handleDismissStatus = () => {
+        setLocalStatus(null);
+        onDismissStatus?.();
+    };
 
     return (
         // noValidate so every message reaches the user the same way. The
@@ -160,7 +196,7 @@ export default function CompanyProfileForm({
                         label="Company Description"
                         value={data.company_description ?? ''}
                         onChange={(v) => setField('company_description', v)}
-                        error={errors?.company_description}
+                        error={displayErrors.company_description}
                         maxLength={1000}
                     />
 
@@ -170,7 +206,7 @@ export default function CompanyProfileForm({
                                 label="Service Terms"
                                 value={data.service_term ?? ''}
                                 onChange={(v) => setField('service_term', v)}
-                                error={errors?.service_term}
+                                error={displayErrors.service_term}
                                 maxLength={2000}
                             />
                         </div>
@@ -182,7 +218,7 @@ export default function CompanyProfileForm({
                             type="email"
                             value={data.contact_email ?? ''}
                             onChange={(v) => setField('contact_email', v)}
-                            error={errors?.contact_email}
+                            error={displayErrors.contact_email}
                             maxLength={100}
                         />
                     </div>
@@ -194,7 +230,7 @@ export default function CompanyProfileForm({
                             label="Website"
                             value={data.website ?? ''}
                             onChange={(v) => setField('website', v)}
-                            error={errors?.website}
+                            error={displayErrors.website}
                             maxLength={255}
                         />
                     </div>
@@ -206,7 +242,7 @@ export default function CompanyProfileForm({
                         label="Company Name"
                         value={data.company_name}
                         onChange={(v) => setField('company_name', v)}
-                        error={errors?.company_name}
+                        error={displayErrors.company_name}
                         maxLength={255}
                     />
 
@@ -215,7 +251,7 @@ export default function CompanyProfileForm({
                             label="Company Type"
                             value={data.company_type}
                             onChange={(v) => setField('company_type', v)}
-                            error={errors?.company_type}
+                            error={displayErrors.company_type}
                         />
                     </div>
 
@@ -225,7 +261,7 @@ export default function CompanyProfileForm({
                                 label="Company Warranty Policy"
                                 value={data.warranty_policy ?? ''}
                                 onChange={(v) => setField('warranty_policy', v)}
-                                error={errors?.warranty_policy}
+                                error={displayErrors.warranty_policy}
                                 maxLength={2000}
                             />
                         </div>
@@ -237,7 +273,7 @@ export default function CompanyProfileForm({
                             type="tel"
                             value={data.phone}
                             onChange={(v) => setField('phone', v)}
-                            error={errors?.phone}
+                            error={displayErrors.phone}
                             maxLength={20}
                         />
                     </div>
@@ -247,7 +283,7 @@ export default function CompanyProfileForm({
                             label="Company Location"
                             value={data.address ?? ''}
                             onChange={(v) => setField('address', v)}
-                            error={errors?.address}
+                            error={displayErrors.address}
                             className="h-[20.86vh]"
                             maxLength={500}
                         />
@@ -255,7 +291,10 @@ export default function CompanyProfileForm({
                 </div>
             </div>
 
-            <StatusMessage status={status} onDismiss={onDismissStatus} />
+            <StatusMessage
+                status={displayStatus}
+                onDismiss={handleDismissStatus}
+            />
 
             <div className="mt-[8.33vh] flex justify-center gap-[5.23vw] pb-[6vh]">
                 <Button

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api';
 import { getMyProfile, updateMyProfile } from '@/lib/companies';
-import { validateProfile, type ProfileErrors } from '@/lib/validation';
+import type { ProfileErrors } from '@/lib/validation';
 import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
     ProfileFormData,
@@ -70,18 +70,6 @@ export default function EditProfilePage() {
 
     const handleSave = async (data: ProfileFormData) => {
         setStatus(null);
-
-        // 1. Client-side field and format validation
-        const validationErrors = validateProfile(data);
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            setStatus({
-                type: 'error',
-                message: 'Please fix the errors before saving.',
-            });
-            return;
-        }
-
         setErrors({});
         setIsSaving(true);
 

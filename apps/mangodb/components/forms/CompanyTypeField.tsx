@@ -71,6 +71,7 @@ export default function CompanyTypeField({
                                     commit();
                                 }
                                 if (e.key === 'Escape') {
+                                    e.preventDefault();
                                     setDraft('');
                                     setAdding(false);
                                 }
