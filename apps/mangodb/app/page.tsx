@@ -47,6 +47,11 @@ const ROUTES = [
         title: 'Register',
         detail: 'Register new user',
     },
+    {
+        href: '/admin/login',
+        title: 'Admin Login',
+        detail: 'login for admin role',
+    },
 ];
 
 export default function Home() {
