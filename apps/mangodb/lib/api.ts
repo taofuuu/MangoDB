@@ -56,6 +56,11 @@ export async function apiFetch<T>(
     const token = getToken();
 
     const response = await fetch(`${BASE_URL}${path}`, {
+        // The API takes either an Authorization header or the httpOnly
+        // access_token cookie that login sets, and only one of the two is
+        // ever present. Sending credentials covers the cookie case, and is
+        // what lets logout's Set-Cookie clear it.
+        credentials: 'include',
         ...init,
         headers: {
             'content-type': 'application/json',
