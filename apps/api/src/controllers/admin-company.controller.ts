@@ -142,9 +142,10 @@ export async function updateCompanyAccount(
                 { field: 'company_type', message: 'Remove the duplicate tag' },
             ]);
         }
-        // The company was deleted between the lookup above and this write. The
-        // nested provider update cannot raise this any more — the check above
-        // already refused the only account types that own no provider row.
+        // The company was deleted between the lookup above and this write.
+        // That is the only way to get here: the check above refuses the
+        // account types that own no provider row, and the nested write upserts
+        // the row for the ones that do but are missing it.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company account not found');
         }

@@ -103,12 +103,18 @@ export function companyProfileUpdateData(
         }),
         // A second table, same transaction. omitUndefined keeps a body that
         // sent only one of the two from clearing the other.
+        //
+        // upsert, not update: account_type says the company owns a provider
+        // row, but no constraint enforces it, so an imported or hand-edited
+        // company can be missing one. update would throw P2025 there, which
+        // both callers translate into "not found" for a company that plainly
+        // exists. Creating the row is the repair.
         ...(editsProviderFields(body) && {
             provider: {
-                update: omitUndefined({
-                    service_term,
-                    warranty_policy,
-                }),
+                upsert: {
+                    create: omitUndefined({ service_term, warranty_policy }),
+                    update: omitUndefined({ service_term, warranty_policy }),
+                },
             },
         }),
     };

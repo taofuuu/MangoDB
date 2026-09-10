@@ -904,7 +904,10 @@ admin: ['admin'],</code></pre>
           <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
           columns on <code>provider</code>, not on <code>company</code>, so they only exist for a
           company that offers work. The controller writes them through a nested
-          <code>provider: { update: … }</code> in the same transaction as the rest, and a
+          <code>provider: { upsert: … }</code> in the same transaction as the rest — an
+          <code>upsert</code> because <code>account_type</code> is not proof the row exists,
+          and creating a missing one beats a <code>P2025</code> surfacing as a
+          <span class="status s-warn">404</span> — and a
           <code>RECEIVER</code> company that sends either one gets a <code>403</code> — its account
           type owns no <code>provider</code> row to write to. A <code>BOTH</code> company is a
           provider too, which is why the check asks <code>roleGrants</code> rather than comparing
