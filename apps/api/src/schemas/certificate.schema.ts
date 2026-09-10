@@ -5,19 +5,16 @@ export const certificateFields = {
 
     organization: z.string().trim().max(255),
 
-    issue_month: z.number().int().min(1).max(12).nullable().optional(),
-
-    issue_year: z
+    issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    issue_year: z.coerce
         .number()
         .int()
         .min(1990, 'Issue year must be 1990 or later')
         .max(new Date().getFullYear(), 'Issue year cannot be in the future')
         .nullable()
         .optional(),
-
-    expire_month: z.number().int().min(1).max(12).nullable().optional(),
-
-    expire_year: z
+    expire_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    expire_year: z.coerce
         .number()
         .int()
         .min(

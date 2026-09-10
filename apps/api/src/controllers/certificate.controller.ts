@@ -6,7 +6,7 @@ import { parseBody } from '../middleware/validate';
 
 import { createCertificateSchema } from '../schemas/certificate.schema';
 
-import { uploadToStorage, BUCKETS } from '../lib/storage';
+import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
 
 export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
@@ -14,6 +14,7 @@ export async function createCertificate(req: Request, res: Response) {
     const body = parseBody(createCertificateSchema, req.body);
 
     let certImage: string | null = null;
+    let certImagePath: string | null = null;
 
     // Upload certificate image if one was provided
     if (req.file) {
@@ -24,30 +25,40 @@ export async function createCertificate(req: Request, res: Response) {
         );
 
         certImage = uploaded.url;
+        certImagePath = uploaded.path;
     }
 
-    const certificate = await prisma.certificate.create({
-        data: {
-            provider_id: providerId,
+    try {
+        const certificate = await prisma.certificate.create({
+            data: {
+                provider_id: providerId,
 
-            cert_title: body.cert_title,
-            organization: body.organization,
+                cert_title: body.cert_title,
+                organization: body.organization,
 
-            issue_month: body.issue_month ?? null,
-            issue_year: body.issue_year ?? null,
+                issue_month: body.issue_month ?? null,
+                issue_year: body.issue_year ?? null,
 
-            expire_month: body.expire_month ?? null,
-            expire_year: body.expire_year ?? null,
+                expire_month: body.expire_month ?? null,
+                expire_year: body.expire_year ?? null,
 
-            credential_id: body.credential_id ?? null,
-            credential_url: body.credential_url ?? null,
+                credential_id: body.credential_id ?? null,
+                credential_url: body.credential_url ?? null,
 
-            cert_image: certImage,
-        },
-    });
+                cert_image: certImage,
+            },
+        });
 
-    return res.status(201).json({
-        message: 'Certificate created successfully',
-        certificate,
-    });
+        return res.status(201).json({
+            message: 'Certificate created successfully',
+            certificate,
+        });
+    } catch (error) {
+        // Database creation failed, so remove the uploaded file
+        if (certImagePath) {
+            await removeFromStorage(certImagePath, BUCKETS.CERTIFICATE);
+        }
+
+        throw error;
+    }
 }
