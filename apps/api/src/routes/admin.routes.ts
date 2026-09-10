@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import {
     getCompanyAccountDetail,
     listCompanyAccounts,
+    updateCompanyAccount,
 } from '../controllers/admin-company.controller';
 
 export const adminRoutes = Router();
@@ -17,6 +18,7 @@ adminRoutes.use(requireAuth, requireRole('admin'));
 
 adminRoutes.get('/companies', listCompanyAccounts);
 adminRoutes.get('/companies/:companyId', getCompanyAccountDetail);
+adminRoutes.patch('/companies/:companyId', updateCompanyAccount);
 
 adminRoutes.get('/ping', (_req, res) => {
     res.json({ status: 'ok' });
