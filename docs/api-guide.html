@@ -1048,8 +1048,9 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
           offending field. <a href="#edit-profile"><code>PATCH /companies/me</code></a> answers
           <span class="status s-warn">403</span> for the same rule, because there the caller
           <em>is</em> the one refused; here the administrator is not refused anything — the
-          columns simply do not exist on that account. The refusal is per-field, so a
-          <code>company_name</code> sent in the same body still saves.
+          columns simply do not exist on that account. The refusal is per-field in the
+          <code>details</code> array only — the check runs before the write, so the request
+          stays atomic and a <code>company_name</code> sent in the same body is not saved.
         </p>
         <p class="note">
           <code>company_type</code> is a <strong>set replacement</strong>, not an append: the
@@ -1313,7 +1314,7 @@ apps/api/src/
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a RECEIVER</td><td><span class="status s-warn">400 one detail</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — both provider fields on a RECEIVER</td><td><span class="status s-warn">400 two details</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — warranty_policy on an ADMIN row</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — company_name on a RECEIVER</td><td><span class="status s-ok">200 refusal is per-field</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — company_name on a RECEIVER</td><td><span class="status s-ok">200 no provider field sent</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a BOTH</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — empty body</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only</td><td><span class="status s-warn">400 names the key</span></td></tr>
