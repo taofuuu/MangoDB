@@ -181,15 +181,26 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
     res.json(toServicePortfolio(portfolio));
 }
 
-// Public: Fetching all portfolios, optionally filtered by listingId (GET /portfolios?listingId=123)
+// Public: fetching all portfolios, optionally narrowed to one listing or one
+// company (GET /portfolios?listingId=123, ?companyId=4, or both).
 export async function getAllPortfolios(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { listingId } = parseQuery(portfolioQuerySchema, req.query);
+    const { listingId, companyId } = parseQuery(
+        portfolioQuerySchema,
+        req.query,
+    );
 
+    // One where object rather than a conditional spread of the whole key, so
+    // the two filters can combine. An empty one matches everything.
     const portfolios = await prisma.service_portfolio.findMany({
-        ...(listingId ? { where: { listing_id: listingId } } : {}),
+        where: {
+            ...(listingId ? { listing_id: listingId } : {}),
+            ...(companyId
+                ? { service: { listing: { company_id: companyId } } }
+                : {}),
+        },
         select: portfolioSelect,
         orderBy: { development_date: 'desc' },
     });
