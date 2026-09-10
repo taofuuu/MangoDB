@@ -46,24 +46,6 @@ export default function CertificatePage() {
         console.log('Added certificate:', newCertificate);
     };
 
-    // -------------------------
-    // EDIT
-    // -------------------------
-    // const handleEditCertificate = (updatedCertificate: CertificateData) => {
-    //     setCertificates((prev) =>
-    //         prev.map((certificate) =>
-    //             certificate === certificateToEdit
-    //                 ? updatedCertificate
-    //                 : certificate,
-    //         ),
-    //     );
-
-    //     console.log('Updated certificate:', updatedCertificate);
-
-    //     setCertificateToEdit(null);
-    //     setIsEditOpen(false);
-    // };
-
     const handleEditCertificate = async (
         updatedCertificate: CertificateData,
     ) => {
