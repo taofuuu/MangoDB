@@ -6,7 +6,11 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-import { uploadToStorage, removeFromStorage } from '../lib/storage';
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+} from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -149,12 +153,14 @@ export async function deletePortfolio(
 
     await assertPortfolioOwned(portfolioId, companyId);
 
+    let deleted;
     try {
-        await prisma.service_portfolio.delete({
+        deleted = await prisma.service_portfolio.delete({
             where: {
                 portfolio_id: portfolioId,
                 service: { listing: { company_id: companyId } },
             },
+            select: { portfolio_image: true },
         });
     } catch (err) {
         if (isRecordNotFound(err)) {
@@ -162,6 +168,10 @@ export async function deletePortfolio(
         }
         throw err;
     }
+
+    // Best-effort cleanup of the image file: a failed remove logs but won't
+    // block the 204, and the DB row is already gone either way.
+    await removeFromStorageByUrl(deleted.portfolio_image);
 
     res.status(204).end();
 }
