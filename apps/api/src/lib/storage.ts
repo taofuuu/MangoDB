@@ -79,6 +79,9 @@ export async function removeFromStorageByUrl(url: string): Promise<void> {
     const marker = `/object/public/${BUCKET}/`;
     const markerIdx = url.indexOf(marker);
     if (markerIdx === -1) {
+            console.error('portfolio_image is not a recognized storage URL:', url);
+        return;
+        }
         return;
     }
     const path = url.slice(markerIdx + marker.length);
