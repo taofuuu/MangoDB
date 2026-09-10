@@ -13,12 +13,13 @@ import {
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
-import { parseBody, parseParams } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     PORTFOLIO_UNIQUE_FIELDS,
     createPortfolioSchema,
     portfolioIdParamSchema,
     updatePortfolioSchema,
+    portfolioQuerySchema,
 } from '../schemas/portfolio.schema';
 
 // Creating a new work sample/portfolio item (POST /portfolios)
