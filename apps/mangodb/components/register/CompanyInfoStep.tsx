@@ -19,6 +19,7 @@ type CompanyInfoStepProps = {
     onChange: (value: CompanyInfo) => void;
 };
 
+// TODO: Replace with company types from DB/API.
 export enum CompanyType {
     SoftwareHouse = 'Software house',
     Consultancy = 'Consultancy',
