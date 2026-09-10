@@ -196,14 +196,6 @@ export default function RegisterPage() {
 
         /* ---------- password ---------- */
 
-        if (
-            accountInfo.password.length < 8 ||
-            accountInfo.password.length > 72
-        ) {
-            setServerError('Password must be between 8 and 72 characters.');
-            return;
-        }
-
         /* ---------- confirm password ---------- */
 
         if (accountInfo.password !== accountInfo.confirmPassword) {
