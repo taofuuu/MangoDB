@@ -6,7 +6,11 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-+import { uploadToStorage, removeFromStorage, BUCKET } from '../lib/storage';```
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+} from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -164,18 +168,9 @@ export async function deletePortfolio(
         throw err;
     }
 
-    // Extract the storage path from the public URL and remove the file.
-    // URL shape: .../storage/v1/object/public/<bucket>/<path>
-    // removeFromStorage is best-effort — a failed cleanup won't block the 204.
-    const bucket = 'portfolio';
-    const marker = `/object/public/${bucket}/`;
-    const markerIdx = deleted.portfolio_image.indexOf(marker);
-    if (markerIdx !== -1) {
-        const storagePath = deleted.portfolio_image.slice(
-            markerIdx + marker.length,
-        );
-        await removeFromStorage(storagePath);
-    }
+    // Best-effort cleanup of the image file: a failed remove logs but won't
+    // block the 204, and the DB row is already gone either way.
+    await removeFromStorageByUrl(deleted.portfolio_image);
 
     res.status(204).end();
 }

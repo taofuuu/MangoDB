@@ -64,3 +64,17 @@ export async function removeFromStorage(path: string): Promise<void> {
         console.error('Orphaned upload left behind:', path, error.message);
     }
 }
+
+// On delete only the stored public URL is available, not the original
+// upload path. getPublicUrl() produces `.../object/public/<bucket>/<path>`,
+// so slice the path back out and remove it. Anything that isn't one of our
+// bucket URLs (e.g. the migration placeholder) is left alone.
+export async function removeFromStorageByUrl(url: string): Promise<void> {
+    const marker = `/object/public/${BUCKET}/`;
+    const markerIdx = url.indexOf(marker);
+    if (markerIdx === -1) {
+        return;
+    }
+    const path = url.slice(markerIdx + marker.length);
+    await removeFromStorage(path);
+}
