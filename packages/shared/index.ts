@@ -96,6 +96,38 @@ export interface CompanyProfile {
     warranty_policy: string | null;
 }
 
+// US6-2. The administrator list deliberately carries less than a full profile:
+// enough to render each card, but no sign-in email or address until a specific
+// account is opened. Password is never part of either admin response.
+export interface CompanyAccountSummary {
+    company_id: number;
+    company_name: string;
+    company_description: string | null;
+    phone: string;
+    account_type: AccountType;
+    average_rating: number | null;
+    rating_count: number;
+}
+
+// The detail endpoint is admin-only, so it may include the private contact
+// fields already exposed by CompanyProfile along with the list's rating data.
+export interface CompanyAccountDetail extends CompanyProfile {
+    average_rating: number | null;
+    rating_count: number;
+}
+
+export interface PaginationMeta {
+    page: number;
+    page_size: number;
+    total_items: number;
+    total_pages: number;
+}
+
+export interface CompanyAccountListResponse {
+    items: CompanyAccountSummary[];
+    pagination: PaginationMeta;
+}
+
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {
