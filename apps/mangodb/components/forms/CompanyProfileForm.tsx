@@ -10,6 +10,7 @@ import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
+import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -80,6 +81,12 @@ type CompanyProfileFormProps = {
     // fields and formats" and "Display profile save success/error messages".
     errors?: Partial<Record<keyof ProfileFormData, string>>;
     status?: { type: 'success' | 'error'; message: string } | null;
+    // US6-4. Set only when an administrator is editing another company's
+    // account: it turns on the Delete account section below the form fields.
+    // A company editing its own profile never gets these, so the section stays
+    // hidden — self-deletion lives on /account-settings.
+    onDeleteAccount?: (adminPassword: string) => void | Promise<void>;
+    deleteAccountUsername?: string;
 };
 
 export default function CompanyProfileForm({
@@ -88,8 +95,11 @@ export default function CompanyProfileForm({
     onCancel,
     errors,
     status,
+    onDeleteAccount,
+    deleteAccountUsername,
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // A save replaces initialData with what was stored and Cancel resets to
     // the same thing, so the form always edits the last known good profile.
@@ -183,6 +193,27 @@ export default function CompanyProfileForm({
                             error={errors?.website}
                         />
                     </div>
+
+                    {/* US6-4. Admin-only: hidden unless the page wires a
+                        delete handler for the account being edited. */}
+                    {onDeleteAccount && (
+                        <div className="mt-[3.09vh]">
+                            <h2 className="border-b border-[#C5483B]/40 pb-[0.74vh] text-md !font-[600] text-[#C5483B]">
+                                Delete account
+                            </h2>
+                            <p className="mt-[1.11vh] text-sm !font-[400] text-[#666666]">
+                                Once you delete this account, there is no going
+                                back. Please be certain.
+                            </p>
+                            <Button
+                                variant="danger"
+                                onClick={() => setIsDeleteModalOpen(true)}
+                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] text-sm"
+                            >
+                                Delete this account
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right column */}
@@ -265,6 +296,15 @@ export default function CompanyProfileForm({
                     Save Changes
                 </Button>
             </div>
+
+            {onDeleteAccount && (
+                <AdminDeleteAccountModal
+                    isOpen={isDeleteModalOpen}
+                    username={deleteAccountUsername ?? data.company_name}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={onDeleteAccount}
+                />
+            )}
         </form>
     );
 }

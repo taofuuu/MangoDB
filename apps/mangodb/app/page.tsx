@@ -43,6 +43,11 @@ const ROUTES = [
         detail: 'list of company that can be viewed by admin',
     },
     {
+        href: '/profile/edit?companyId=1',
+        title: 'Edit account as admin',
+        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
+    },
+    {
         href: '/register',
         title: 'Register',
         detail: 'Register new user',

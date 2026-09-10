@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api';
-import { getMyProfile, updateMyProfile } from '@/lib/companies';
+import {
+    getCompanyAccountDetail,
+    getMyProfile,
+    updateMyProfile,
+} from '@/lib/companies';
 import CompanyProfileForm, {
     ProfileFormData,
     toUpdateRequest,
@@ -28,9 +32,16 @@ function toFormErrors(details: ApiRequestError['details']): FormErrors {
     return errors;
 }
 
-export default function EditProfilePage() {
+function EditProfilePageInner() {
     const router = useRouter();
+    // US6-4. When an administrator opens this page for another account, the id
+    // rides in as ?companyId=. Absent, the page edits the signed-in company's
+    // own profile exactly as before.
+    const targetCompanyId = useSearchParams().get('companyId');
+    const isAdminEditingOther = targetCompanyId !== null;
+
     const [saved, setSaved] = useState<ProfileFormData | null>(null);
+    const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [errors, setErrors] = useState<FormErrors>({});
     const [status, setStatus] = useState<SaveStatus>(null);
@@ -39,24 +50,27 @@ export default function EditProfilePage() {
     // that is expired or revoked lands in the same place. One path for "you are
     // not signed in", whatever the reason.
     useEffect(() => {
-        getMyProfile()
-            .then((profile) => {
-                // photoUrl has no column on the server, so it starts empty and
-                // only ever lives in this page's state.
-                setSaved({ ...profile, photoUrl: null });
-            })
-            .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
-                    return;
-                }
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
-            });
-    }, []);
+        const load = isAdminEditingOther
+            ? getCompanyAccountDetail(Number(targetCompanyId))
+            : getMyProfile();
+
+        load.then((profile) => {
+            // photoUrl has no column on the server, so it starts empty and
+            // only ever lives in this page's state.
+            setSaved({ ...profile, photoUrl: null });
+            setTargetUsername(profile.username);
+        }).catch((err: unknown) => {
+            if (err instanceof ApiRequestError && err.status === 401) {
+                setLoadError('no-token');
+                return;
+            }
+            setLoadError(
+                err instanceof ApiRequestError
+                    ? err.message
+                    : 'Could not reach the API. Is it running on port 4000?',
+            );
+        });
+    }, [isAdminEditingOther, targetCompanyId]);
 
     const handleSave = async (data: ProfileFormData) => {
         setErrors({});
@@ -90,6 +104,16 @@ export default function EditProfilePage() {
                         : err.message,
             });
         }
+    };
+
+    // US6-4. The confirm popup passes the admin's password to this handler, but
+    // the DELETE request is a separate backend task, so the argument is dropped
+    // for now rather than named and left unused.
+    const handleDeleteAccount = async () => {
+        // TODO(US6-4 backend): take the admin password and call
+        // DELETE /api/admin/companies/:companyId, then throw on failure so the
+        // modal keeps its error line. On success the redirect below stands.
+        router.push('/companies');
     };
 
     // Cancel leaves the page. Opening /profile/edit directly leaves nothing to
@@ -133,8 +157,27 @@ export default function EditProfilePage() {
                     onCancel={handleCancel}
                     errors={errors}
                     status={status}
+                    onDeleteAccount={
+                        isAdminEditingOther ? handleDeleteAccount : undefined
+                    }
+                    deleteAccountUsername={targetUsername ?? undefined}
                 />
             )}
         </main>
+    );
+}
+
+export default function EditProfilePage() {
+    // useSearchParams needs a Suspense boundary above it to render.
+    return (
+        <Suspense
+            fallback={
+                <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
+                    <p className="text-md !font-[400]">Loading…</p>
+                </main>
+            }
+        >
+            <EditProfilePageInner />
+        </Suspense>
     );
 }
