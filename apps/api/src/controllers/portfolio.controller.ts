@@ -7,7 +7,12 @@ import {
     toServicePortfolio,
 } from '../lib/portfolio';
 
-import { uploadToStorage, removeFromStorage, removeFromStorageByUrl, BUCKETS } from '../lib/storage';
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    BUCKETS,
+} from '../lib/storage';
 
 import { omitUndefined } from '../lib/objects';
 import {
@@ -173,7 +178,7 @@ export async function deletePortfolio(
 
     // Best-effort cleanup of the image file: a failed remove logs but won't
     // block the 204, and the DB row is already gone either way.
-    await removeFromStorageByUrl(deleted.portfolio_image);
+    await removeFromStorageByUrl(deleted.portfolio_image, BUCKETS.PORTFOLIO);
 
     res.status(204).end();
 }
