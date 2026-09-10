@@ -8,8 +8,10 @@ import type {
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
+import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
+import { normalizeWebsiteUrl } from '@/lib/validation';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -62,7 +64,9 @@ export function toUpdateRequest(
         company_description: orNull(data.company_description),
         address: orNull(data.address),
         contact_email: orNull(data.contact_email),
-        website: orNull(data.website),
+        // Normalizes website so formats like www.domain.com prepend https://
+        // to satisfy backend z.url() validation while accepting standard domain input.
+        website: normalizeWebsiteUrl(data.website),
         // A RECEIVER company owns no provider row, so sending either of these
         // is a deliberate 403. Leave them out rather than send null.
         ...(isProvider && {
@@ -76,10 +80,11 @@ type CompanyProfileFormProps = {
     initialData: ProfileFormData;
     onSave: (data: ProfileFormData) => void;
     onCancel?: () => void;
-    // Both slots are filled by sibling tasks: "Validate required profile
-    // fields and formats" and "Display profile save success/error messages".
     errors?: Partial<Record<keyof ProfileFormData, string>>;
-    status?: { type: 'success' | 'error'; message: string } | null;
+    status?: StatusMessageData;
+    isSaving?: boolean;
+    onClearError?: (field: keyof ProfileFormData) => void;
+    onDismissStatus?: () => void;
 };
 
 export default function CompanyProfileForm({
@@ -88,6 +93,9 @@ export default function CompanyProfileForm({
     onCancel,
     errors,
     status,
+    isSaving = false,
+    onClearError,
+    onDismissStatus,
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
 
@@ -106,6 +114,9 @@ export default function CompanyProfileForm({
         value: ProfileFormData[K],
     ) => {
         setData((current) => ({ ...current, [key]: value }));
+        if (errors?.[key] && onClearError) {
+            onClearError(key);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -150,6 +161,7 @@ export default function CompanyProfileForm({
                         value={data.company_description ?? ''}
                         onChange={(v) => setField('company_description', v)}
                         error={errors?.company_description}
+                        maxLength={1000}
                     />
 
                     {isProvider && (
@@ -159,6 +171,7 @@ export default function CompanyProfileForm({
                                 value={data.service_term ?? ''}
                                 onChange={(v) => setField('service_term', v)}
                                 error={errors?.service_term}
+                                maxLength={2000}
                             />
                         </div>
                     )}
@@ -170,6 +183,7 @@ export default function CompanyProfileForm({
                             value={data.contact_email ?? ''}
                             onChange={(v) => setField('contact_email', v)}
                             error={errors?.contact_email}
+                            maxLength={100}
                         />
                     </div>
 
@@ -181,6 +195,7 @@ export default function CompanyProfileForm({
                             value={data.website ?? ''}
                             onChange={(v) => setField('website', v)}
                             error={errors?.website}
+                            maxLength={255}
                         />
                     </div>
                 </div>
@@ -192,6 +207,7 @@ export default function CompanyProfileForm({
                         value={data.company_name}
                         onChange={(v) => setField('company_name', v)}
                         error={errors?.company_name}
+                        maxLength={255}
                     />
 
                     <div className="mt-[3.09vh]">
@@ -210,6 +226,7 @@ export default function CompanyProfileForm({
                                 value={data.warranty_policy ?? ''}
                                 onChange={(v) => setField('warranty_policy', v)}
                                 error={errors?.warranty_policy}
+                                maxLength={2000}
                             />
                         </div>
                     )}
@@ -221,6 +238,7 @@ export default function CompanyProfileForm({
                             value={data.phone}
                             onChange={(v) => setField('phone', v)}
                             error={errors?.phone}
+                            maxLength={20}
                         />
                     </div>
 
@@ -231,28 +249,19 @@ export default function CompanyProfileForm({
                             onChange={(v) => setField('address', v)}
                             error={errors?.address}
                             className="h-[20.86vh]"
+                            maxLength={500}
                         />
                     </div>
                 </div>
             </div>
 
-            {status && (
-                <p
-                    role="status"
-                    className={`mt-[4vh] text-center text-md ${
-                        status.type === 'success'
-                            ? 'text-[#497B93]'
-                            : 'text-[#C5483B]'
-                    }`}
-                >
-                    {status.message}
-                </p>
-            )}
+            <StatusMessage status={status} onDismiss={onDismissStatus} />
 
             <div className="mt-[8.33vh] flex justify-center gap-[5.23vw] pb-[6vh]">
                 <Button
                     variant="outline"
                     onClick={handleCancel}
+                    disabled={isSaving}
                     className="h-[7.04vh] w-[13.91vw] cursor-pointer text-lg"
                 >
                     Cancel
@@ -260,9 +269,10 @@ export default function CompanyProfileForm({
 
                 <Button
                     type="submit"
+                    disabled={isSaving}
                     className="h-[7.13vh] w-[13.96vw] cursor-pointer text-lg"
                 >
-                    Save Changes
+                    {isSaving ? 'Saving…' : 'Save Changes'}
                 </Button>
             </div>
         </form>

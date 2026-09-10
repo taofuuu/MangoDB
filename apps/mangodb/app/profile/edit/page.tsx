@@ -5,18 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api';
 import { getMyProfile, updateMyProfile } from '@/lib/companies';
+import { validateProfile, type ProfileErrors } from '@/lib/validation';
+import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
     ProfileFormData,
     toUpdateRequest,
 } from '@/components/forms/CompanyProfileForm';
 
-type FormErrors = Partial<Record<keyof ProfileFormData, string>>;
-type SaveStatus = { type: 'success' | 'error'; message: string } | null;
-
 // zod reports an array problem as "company_type.0"; the form keys its errors by
 // field, so only the part before the first dot is useful here.
-function toFormErrors(details: ApiRequestError['details']): FormErrors {
-    const errors: FormErrors = {};
+function toFormErrors(details: ApiRequestError['details']): ProfileErrors {
+    const errors: ProfileErrors = {};
 
     for (const detail of details) {
         const field = detail.field.split('.')[0] as keyof ProfileFormData;
@@ -32,8 +31,9 @@ export default function EditProfilePage() {
     const router = useRouter();
     const [saved, setSaved] = useState<ProfileFormData | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [errors, setErrors] = useState<FormErrors>({});
-    const [status, setStatus] = useState<SaveStatus>(null);
+    const [errors, setErrors] = useState<ProfileErrors>({});
+    const [status, setStatus] = useState<StatusMessageData>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // No token check first: without one the request 401s anyway, and a token
     // that is expired or revoked lands in the same place. One path for "you are
@@ -58,16 +58,42 @@ export default function EditProfilePage() {
             });
     }, []);
 
+    const handleClearError = (field: keyof ProfileFormData) => {
+        if (errors[field]) {
+            setErrors((prev) => {
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
+        }
+    };
+
     const handleSave = async (data: ProfileFormData) => {
-        setErrors({});
         setStatus(null);
+
+        // 1. Client-side field and format validation
+        const validationErrors = validateProfile(data);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            setStatus({
+                type: 'error',
+                message: 'Please fix the errors before saving.',
+            });
+            return;
+        }
+
+        setErrors({});
+        setIsSaving(true);
 
         try {
             const profile = await updateMyProfile(toUpdateRequest(data));
             // Keep the photo: the response cannot carry one, so spreading it
             // over the form state would wipe the preview the user just picked.
             setSaved({ ...profile, photoUrl: data.photoUrl });
-            setStatus({ type: 'success', message: 'Profile saved.' });
+            setStatus({
+                type: 'success',
+                message: 'Profile saved successfully.',
+            });
         } catch (err) {
             if (!(err instanceof ApiRequestError)) {
                 setStatus({
@@ -89,6 +115,8 @@ export default function EditProfilePage() {
                         ? 'Some fields need fixing.'
                         : err.message,
             });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -133,6 +161,9 @@ export default function EditProfilePage() {
                     onCancel={handleCancel}
                     errors={errors}
                     status={status}
+                    isSaving={isSaving}
+                    onClearError={handleClearError}
+                    onDismissStatus={() => setStatus(null)}
                 />
             )}
         </main>
