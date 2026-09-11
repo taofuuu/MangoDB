@@ -52,20 +52,20 @@ export default function RegisterPage() {
     const goBack = () => {
         setErrorMessage('');
         if (currentStep === RegisterStep.AccountInfo) {
-            setCurrentStep(RegisterStep.CompanyInfo);
-        } else if (currentStep === RegisterStep.CompanyInfo) {
             setCurrentStep(RegisterStep.SelectRole);
+        } else if (currentStep === RegisterStep.CompanyInfo) {
+            setCurrentStep(RegisterStep.AccountInfo);
         }
-    };
-
-    const goToCompanyInfo = () => {
-        setErrorMessage('');
-        setCurrentStep(RegisterStep.CompanyInfo);
     };
 
     const goToAccountInfo = () => {
         setErrorMessage('');
         setCurrentStep(RegisterStep.AccountInfo);
+    };
+
+    const goToCompanyInfo = () => {
+        setErrorMessage('');
+        setCurrentStep(RegisterStep.CompanyInfo);
     };
 
     /* ================= SUBMIT ================= */
@@ -132,18 +132,18 @@ export default function RegisterPage() {
             subtitle: 'Company Role',
             showBack: false,
             nextLabel: 'Next',
-            onNext: goToCompanyInfo,
-        },
-        [RegisterStep.CompanyInfo]: {
-            title: 'Sign Up',
-            subtitle: 'Company Information',
-            showBack: true,
-            nextLabel: 'Next',
             onNext: goToAccountInfo,
         },
         [RegisterStep.AccountInfo]: {
             title: 'Sign Up',
             subtitle: 'Create Your Account',
+            showBack: true,
+            nextLabel: 'Next',
+            onNext: goToCompanyInfo,
+        },
+        [RegisterStep.CompanyInfo]: {
+            title: 'Sign Up',
+            subtitle: 'Company Information',
             showBack: true,
             nextLabel: isSubmitting ? 'Creating...' : 'Create Account',
             onNext: submitRegister,
