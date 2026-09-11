@@ -1,0 +1,22 @@
+{
+    // Shared by apps/api, apps/mangodb and packages/shared. Only the rules that
+    // should hold everywhere live here — anything about module resolution or
+    // output belongs to the workspace that owns it.
+    "compilerOptions": {
+        "strict": true,
+
+        // The two that used to be backend-only. Without them the same
+        // packages/shared types were checked strictly on one side of the app
+        // and loosely on the other.
+        // - noUncheckedIndexedAccess: reading list[i] gives T | undefined,
+        //   because the list may be shorter than the index.
+        // - exactOptionalPropertyTypes: "not passed" and "passed as undefined"
+        //   stop being the same thing, so a prop that accepts both says so.
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "skipLibCheck": true
+    }
+}
