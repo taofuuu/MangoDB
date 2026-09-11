@@ -8,12 +8,16 @@ type FileUploadProps = {
     value: File | null;
     onChange: (file: File | null) => void;
     className?: string;
+    accept?: string;
+    label?: string;
 };
 
 export default function FileUpload({
     value,
     onChange,
     className = '',
+    accept = '.pdf,.jpg,.jpeg,.png',
+    label = 'Upload',
 }: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,16 +35,16 @@ export default function FileUpload({
             <input
                 ref={inputRef}
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept={accept}
                 onChange={handleFileChange}
                 className="hidden"
             />
 
             {/* Upload block */}
-            <div
+            <button
+                type="button"
                 onClick={() => inputRef.current?.click()}
                 className={className || defaultClassName}
-                //className="mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
             >
                 <Image
                     src={upload}
@@ -50,8 +54,10 @@ export default function FileUpload({
                     className="ml-1 mt-2"
                 />
 
-                <p className="mt-2 text-sm font-medium underline">Upload</p>
-            </div>
+                <span className="mt-2 max-w-full truncate px-2 text-sm !font-[500] underline">
+                    {value?.name ?? label}
+                </span>
+            </button>
         </div>
     );
 }
