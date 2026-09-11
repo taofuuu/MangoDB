@@ -6,6 +6,9 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
     PROVIDER: 'provider',
     RECEIVER: 'receiver',
     BOTH: 'both',
+    // No signup path produces this: registerSchema rejects ADMIN, and the
+    // profile edit cannot change account_type.
+    ADMIN: 'admin',
 };
 
 // account_type is a VarChar column, not a real Postgres enum (see
@@ -34,4 +37,15 @@ const GRANTS: Record<UserRole, readonly UserRole[]> = {
 
 export function roleGrants(role: UserRole): readonly UserRole[] {
     return GRANTS[role];
+}
+
+// Which account types own a row in `provider`, and so have a service term and
+// a warranty policy to edit. roleGrants answers the same question about the
+// caller's own token, which is the wrong company to ask when an administrator
+// is editing someone else's account — so this one takes an account_type.
+// Typed as string, not AccountType: account_type is a VarChar column (see
+// CompanyProfileRow), so an unrecognised value is possible, and answering
+// false for it refuses the write instead of letting Prisma fail mid-update.
+export function ownsProviderRow(accountType: string): boolean {
+    return accountType === 'PROVIDER' || accountType === 'BOTH';
 }

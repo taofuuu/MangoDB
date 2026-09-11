@@ -2,9 +2,16 @@
 // What a role is allowed to do is a separate question — see auth/roles.ts.
 export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
 
-// Stored in company.account_type, uppercase as the seeded rows have it. There
-// is no ADMIN account type: admins have no table yet (US6-1).
-export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH';
+// Stored in company.account_type, uppercase as the seeded rows have it. ADMIN
+// is deliberately absent from registerSchema, so the public signup form can
+// never mint one. An admin is a company row with account_type ADMIN and no
+// provider or receiver row — there is no separate admin table.
+export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
+
+// What a signup may ask for. Narrower than AccountType on purpose:
+// registerSchema rejects ADMIN at runtime, so the contract the frontend
+// codes against should reject it at compile time too.
+export type RegisterAccountType = Exclude<AccountType, 'ADMIN'>;
 
 export interface User {
     id: string;
@@ -59,7 +66,7 @@ export interface RegisterRequest {
     email: string;
     password: string;
     phone: string;
-    account_type: AccountType;
+    account_type: RegisterAccountType;
     company_type: string[];
     company_description?: string;
     address?: string;
@@ -87,6 +94,38 @@ export interface CompanyProfile {
     // owns no provider row, so it always reads null for these two.
     service_term: string | null;
     warranty_policy: string | null;
+}
+
+// US6-2. The administrator list deliberately carries less than a full profile:
+// enough to render each card, but no sign-in email or address until a specific
+// account is opened. Password is never part of either admin response.
+export interface CompanyAccountSummary {
+    company_id: number;
+    company_name: string;
+    company_description: string | null;
+    phone: string;
+    account_type: AccountType;
+    average_rating: number | null;
+    rating_count: number;
+}
+
+// The detail endpoint is admin-only, so it may include the private contact
+// fields already exposed by CompanyProfile along with the list's rating data.
+export interface CompanyAccountDetail extends CompanyProfile {
+    average_rating: number | null;
+    rating_count: number;
+}
+
+export interface PaginationMeta {
+    page: number;
+    page_size: number;
+    total_items: number;
+    total_pages: number;
+}
+
+export interface CompanyAccountListResponse {
+    items: CompanyAccountSummary[];
+    pagination: PaginationMeta;
 }
 
 // A company and a token to act as it. Register, login, and a credential change

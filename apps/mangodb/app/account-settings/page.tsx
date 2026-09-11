@@ -117,8 +117,8 @@ export default function AccountPage() {
                 {loadError === 'no-token' && (
                     <p className="text-xs text-[#666666]">
                         You are not signed in.{' '}
-                        <Link href="/dev/session" className="underline">
-                            Get a token
+                        <Link href="/login" className="underline">
+                            Log in
                         </Link>
                         , then come back.
                     </p>

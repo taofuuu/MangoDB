@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { logout } from '@/lib/session';
 
-// Signing out is two things that both have to happen: the server revokes the
-// token, then the browser forgets it. logout() owns that order, so this only
-// decides where the user lands and what a failure says.
+// logout() ends the session on the server — the token is revoked and the
+// cookie cleared on the same response — so this only decides where the user
+// lands and what a failure says.
 export default function LogoutButton() {
     const router = useRouter();
     const [isPending, setIsPending] = useState(false);
@@ -20,8 +20,10 @@ export default function LogoutButton() {
         try {
             await logout();
         } catch {
-            // The token is still live on the server, so staying put is the
-            // honest outcome: the session did not end.
+            // The token may still be live on the server, so staying put is
+            // the honest outcome: nothing here confirms the session ended. If
+            // the revoke did land and only the response was lost, a retry
+            // 401s, and logout() treats that as done.
             setError('Could not sign you out. Try again.');
             setIsPending(false);
             return;

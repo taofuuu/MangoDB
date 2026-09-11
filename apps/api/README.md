@@ -112,11 +112,13 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout. Two endpoints are exceptions, both returning
-  `{ company, accessToken }` because both hand you a session:
-  `POST /auth/register`, which logs you in, and
+  delete or logout. Three endpoints are exceptions, all returning
+  `{ company, accessToken }` because all three hand you a session:
+  `POST /auth/register`, `POST /auth/login`, and
   `PATCH /companies/me/credentials`, which _re_-logs you in — it revokes the
-  token it was called with, so it has to return the replacement.
+  token it was called with, so it has to return the replacement. All three go
+  through `sendSession` in `src/lib/session.ts`, which also sets the
+  `access_token` cookie — see Authentication below.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
   rather than repeating the guards per route, so a new route cannot miss them.
 - **Never put a secret, a stack trace, or a Prisma error in a response.**
@@ -220,20 +222,96 @@ is `409` with one `details` entry per rejected field — the same
 `excludeCompanyId` so re-submitting your own value is not a collision.
 
 On success it revokes the token it was called with and returns
-`{ company, accessToken }`, so the caller must store the new token. See the
-response-shape rule above for why this wraps.
+`{ company, accessToken }` — plus a replacement cookie, so a browser stays
+signed in with nothing to do. Skipping that cookie would sign the caller out
+the moment they changed their own email. See the response-shape rule above for
+why this wraps.
 
 ### Authentication
 
-`requireAuth` verifies the bearer token, rejects revoked ones, and puts the
-claims on `req.auth` (`sub`, `role`, `jti`, `exp`). `requireRole(...roles)`
-runs after it. Two endpoints revoke a token's `jti` through the denylist in
+`requireAuth` takes the token from an `Authorization: Bearer` header or, failing
+that, the `access_token` cookie — header first. It verifies it, rejects revoked
+ones, and puts the claims on `req.auth` (`sub`, `role`, `jti`, `exp`).
+`requireRole(...roles)` runs after it.
+
+The cookie is how the web app authenticates: `sendSession` sets it `httpOnly`
+(so page scripts cannot read the token) and `SameSite=Lax` (so it is not sent
+on a cross-site POST, which is what stops CSRF). The frontend stores nothing and
+attaches nothing — `apiFetch` sends `credentials: 'include'` and the browser
+does the rest. The header path stays for callers that are not a browser, like
+curl and Postman. The web app reaches the API at `/api/*`, proxied by
+`next.config.ts`, so its requests are same-origin and need no CORS. Two endpoints revoke a token's `jti` through the denylist in
 `src/auth/tokenDenylist.ts` — `POST /auth/logout`, and
 `PATCH /companies/me/credentials`, which ends the session its change was made
 with. Both revoke one token, not every session the company holds: there is no
 per-company token version, so a second device stays signed in until its own
 token expires. The denylist lives in `public.revoked_token`, so it survives a
 restart and is shared between instances.
+
+There are two login endpoints, and they are mirrors: each turns away exactly
+the accounts the other accepts, so a token from either is never a surprise to
+the page that asked for it.
+
+| Endpoint                 | ADMIN account                                           | Company account                              |
+| ------------------------ | ------------------------------------------------------- | -------------------------------------------- |
+| `POST /auth/login`       | `403` "Administrators must use the administrator login" | `200`                                        |
+| `POST /auth/admin/login` | `200`                                                   | `403` "This is not an administrator account" |
+
+Both share `verifyCredentials`, so a bad credential answers `401` with the same
+message and the same timing either way. Both rejections above are `403` and not
+`401` on purpose: the password checked out, so we know who is calling — the
+answer is just no. `POST /auth/admin/login` sits on the public `authRoutes`
+because `/admin` is guarded by `requireAuth`, and a login route there would
+need a token to get a token.
+
+Logout is the same endpoint for both: `POST /auth/logout` revokes whatever
+token it is given.
+
+### Administrator: company accounts
+
+`adminRoutes` is guarded once at the router, per the rule above — do not repeat
+the middleware per route, and do not register anything above the guard.
+
+| Method  | Path                          | Guard                                         |
+| ------- | ----------------------------- | --------------------------------------------- |
+| `GET`   | `/admin/companies`            | router: `requireAuth`, `requireRole('admin')` |
+| `GET`   | `/admin/companies/:companyId` | same                                          |
+| `PATCH` | `/admin/companies/:companyId` | same                                          |
+
+The `PATCH` writes **profile columns only** — the same field set
+`PATCH /companies/me` takes — so it reuses `updateCompanyProfileSchema` rather
+than declaring a second one. Username, email and password are unreachable here
+on purpose: each is a way to take an account over, and the current-password
+gate that gates them is one an administrator cannot satisfy for someone else.
+The schema is a `strictObject`, so sending one of them is a `400` naming the
+key rather than a `200` that quietly ignored half the request.
+
+`companyProfileUpdateData` in `src/lib/companyProfile.ts` is the shared write
+shape. Both this endpoint and `updateMyProfile` call it; they differ only in
+their `select`, their serializer and their error messages. Add a profile column
+to `updateCompanyProfileSchema` and both endpoints get it. Its nested provider
+write is an `upsert`: `account_type` is not proof the `provider` row exists —
+nothing in the schema enforces that — so a missing one is created rather than
+raising `P2025` and reading as a `404` for a company that plainly exists.
+
+`service_term` and `warranty_policy` live on `provider`, so **who may send them
+is a different question here**. `PATCH /companies/me` asks `roleGrants` about
+the caller's own token; an admin token says nothing about the company being
+edited, so this endpoint asks `ownsProviderRow` about the target's
+`account_type` instead. A `RECEIVER` or `ADMIN` target owns no `provider` row
+and gets a `400` with one `details` entry per offending field — not a `403`,
+because the administrator is not the one being refused. The refusal is
+per-field in the error response. The request remains atomic, so no fields in
+the same body are saved when any provider-only field is rejected.
+
+The target is read before the write, like `updatePortfolio`: an unknown id is a
+plain `404` rather than a `P2025` surfacing mid-update, and the same lookup
+supplies the `account_type` the check above needs.
+
+The response is the full `CompanyAccountDetail` — what the detail `GET`
+returns, ratings included — so the admin UI re-renders without a second fetch.
+Note that `company_type` is a set replacement: the request carries the whole
+set and omitted tags are deleted, so an edit form must pre-fill all of them.
 
 ### Portfolio
 
