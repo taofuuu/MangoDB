@@ -115,6 +115,7 @@ export interface CompanyAccountSummary {
 export interface CompanyAccountDetail extends CompanyProfile {
     average_rating: number | null;
     rating_count: number;
+    deleted_at: string | null;
 }
 
 export interface PaginationMeta {

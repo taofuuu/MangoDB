@@ -26,7 +26,8 @@ export async function listCompanyAccounts(
         req.query,
     );
     const skip = (page - 1) * pageSize;
-
+    // schema.prisma's rule for deleted_at: a discovery query filters it out.
+    // includeDeleted is the opt-out, for an admin auditing removed accounts.
     const where: Prisma.companyWhereInput = {
         ...(q && {
             OR: [
@@ -37,7 +38,14 @@ export async function listCompanyAccounts(
             ],
         }),
         ...(filter && {
-            account_type: filter,
+            account_type: {
+                in: [
+                    filter,
+                    ...(filter === 'PROVIDER' || filter === 'RECEIVER'
+                        ? ['BOTH']
+                        : []),
+                ],
+            },
         }),
         ...(!includeDeleted && {
             deleted_at: null,
