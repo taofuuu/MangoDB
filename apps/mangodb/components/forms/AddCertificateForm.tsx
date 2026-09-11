@@ -7,7 +7,7 @@ import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 
-type CertificateResponse = {
+export type CertificateResponse = {
     certificate_id: number;
     provider_id: number;
     cert_title: string;
@@ -106,7 +106,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             const cert = result.certificate ?? (result as CertificateResponse);
 
             const newData: CertificateData = {
-                certificate_id: cert.certificate_id,
+                id: cert.certificate_id,
                 name: cert.cert_title,
                 organize: cert.organization,
                 month: cert.issue_month?.toString() ?? '',

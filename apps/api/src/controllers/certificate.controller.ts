@@ -53,6 +53,8 @@ export async function createCertificate(req: Request, res: Response) {
             },
         });
 
+        console.log(certificate);
+
         return res.status(201).json({
             message: 'Certificate created successfully',
             certificate,
@@ -65,6 +67,22 @@ export async function createCertificate(req: Request, res: Response) {
 
         throw error;
     }
+}
+
+export async function getAllCertificates(req: Request, res: Response) {
+    const result = await prisma.certificate.findMany();
+    return res.status(200).json(result);
+}
+
+export async function getCertificatesByProvider(req: Request, res: Response) {
+    const providerId = Number(req.auth!.sub);
+    const result = await prisma.certificate.findMany({
+        where: {
+            provider_id: providerId,
+        },
+    });
+    console.log(result);
+    return res.status(200).json(result);
 }
 
 export async function updateCertificate(req: Request, res: Response) {

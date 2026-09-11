@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import AddCertificateForm from '@/components/forms/AddCertificateForm';
+import { useEffect, useState } from 'react';
+import AddCertificateForm, {
+    CertificateResponse,
+} from '@/components/forms/AddCertificateForm';
 import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
+import { apiFetch } from '@/lib/api';
 
 const INITIAL_CERTIFICATES: CertificateData[] = [
     {
-        certificate_id: 1,
+        id: 1,
         name: 'Microsoft Certified: Azure Fundamentals',
         organize: 'Microsoft',
         month: '3',
@@ -38,14 +41,14 @@ const MONTH_NAMES = [
     'Dec',
 ];
 
-function formatMonthYear(month?: string, year?: string): string {
-    if (!month && !year) return '';
-    const num = parseInt(month || '', 10);
-    const monthStr =
-        !isNaN(num) && num >= 1 && num <= 12 ? MONTH_NAMES[num] : month || '';
-    if (monthStr && year) return `${monthStr} ${year}`;
-    return monthStr || year || '';
-}
+// function formatMonthYear(month?: string, year?: string): string {
+//     if (!month && !year) return '';
+//     const num = parseInt(month || '', 10);
+//     const monthStr =
+//         !isNaN(num) && num >= 1 && num <= 12 ? MONTH_NAMES[num] : month || '';
+//     if (monthStr && year) return `${monthStr} ${year}`;
+//     return monthStr || year || '';
+// }
 
 export default function CertificatePage() {
     const [certificates, setCertificates] =
@@ -62,6 +65,33 @@ export default function CertificatePage() {
     const [certificateToDelete, setCertificateToDelete] =
         useState<CertificateData | null>(null);
 
+    useEffect(() => {
+        const fetchCertificates = async () => {
+            const res = await apiFetch<CertificateResponse[]>(
+                '/certificates/provider',
+                {
+                    method: 'GET',
+                },
+            );
+            const formatted_certs: CertificateData[] = res.map(
+                (cert: CertificateResponse) => ({
+                    id: cert.certificate_id,
+                    name: cert.cert_title,
+                    organize: cert.organization,
+                    month: String(cert.issue_month) ?? undefined,
+                    year: String(cert.issue_year) ?? undefined,
+                    exMonth: String(cert.expire_month) ?? undefined,
+                    exYear: String(cert.expire_year) ?? undefined,
+                    credID: cert.credential_id ?? undefined,
+                    credURL: cert.credential_url ?? undefined,
+                }),
+            );
+            setCertificates(formatted_certs);
+        };
+
+        fetchCertificates();
+    }, []);
+
     // -------------------------
     // ADD
     // -------------------------
@@ -76,9 +106,8 @@ export default function CertificatePage() {
         setCertificates((prev) =>
             prev.map((certificate) => {
                 const isMatch =
-                    (certificateToEdit?.certificate_id != null &&
-                        certificate.certificate_id ===
-                            certificateToEdit.certificate_id) ||
+                    (certificateToEdit?.id != null &&
+                        certificate.id === certificateToEdit.id) ||
                     certificate === certificateToEdit;
                 return isMatch ? updatedCertificate : certificate;
             }),
@@ -97,9 +126,8 @@ export default function CertificatePage() {
         setCertificates((prev) =>
             prev.filter((certificate) => {
                 const isMatch =
-                    (certificateToDelete.certificate_id != null &&
-                        certificate.certificate_id ===
-                            certificateToDelete.certificate_id) ||
+                    (certificateToDelete.id != null &&
+                        certificate.id === certificateToDelete.id) ||
                     certificate === certificateToDelete;
                 return !isMatch;
             }),

@@ -7,7 +7,7 @@ import FileUpload from '../sm-detail/FileUpload';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 
 export type CertificateData = {
-    certificate_id?: number | undefined;
+    id?: number | undefined;
     name?: string | undefined;
     organize?: string | undefined;
     month?: string | undefined;
@@ -67,7 +67,7 @@ export default function EditCertificateForm({
     if (!isOpen) return null;
     return (
         <EditCertificateDialog
-            key={props.initialData?.certificate_id ?? 'edit-cert'}
+            key={props.initialData?.id ?? 'edit-cert'}
             {...props}
         />
     );
@@ -109,7 +109,7 @@ function EditCertificateDialog({
         setIsSubmitting(true);
 
         const updatedData: CertificateData = {
-            certificate_id: initialData?.certificate_id,
+            id: initialData?.id,
             name,
             organize,
             month,
@@ -123,7 +123,7 @@ function EditCertificateDialog({
         };
 
         try {
-            if (initialData?.certificate_id) {
+            if (initialData?.id) {
                 const payload = {
                     cert_title: name,
                     organization: organize,
@@ -149,7 +149,7 @@ function EditCertificateDialog({
                         credential_url: string | null;
                         cert_image: string | null;
                     };
-                }>(`/certificates/${initialData.certificate_id}`, {
+                }>(`/certificates/${initialData.id}`, {
                     method: 'PATCH',
                     body: JSON.stringify(payload),
                 });

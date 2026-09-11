@@ -10,8 +10,7 @@ export type DeleteCertificateFormProps = Omit<DeleteModalProps, 'onConfirm'> & {
     certificate?: CertificateData | null | undefined;
     onConfirm?: (() => void | Promise<void>) | undefined;
     onDelete?:
-        | ((certificate: CertificateData) => void | Promise<void>)
-        | undefined;
+        ((certificate: CertificateData) => void | Promise<void>) | undefined;
 };
 
 export default function DeleteCertificateForm({
@@ -23,8 +22,9 @@ export default function DeleteCertificateForm({
     isDeleting,
 }: DeleteCertificateFormProps) {
     const handleConfirm = async () => {
-        if (certificate?.certificate_id) {
-            await apiFetch<void>(`/certificates/${certificate.certificate_id}`, {
+        if (certificate?.id) {
+            console.log('heyyyyy');
+            await apiFetch<void>(`/certificates/${certificate.id}`, {
                 method: 'DELETE',
             });
         }
@@ -61,4 +61,3 @@ export default function DeleteCertificateForm({
         />
     );
 }
-

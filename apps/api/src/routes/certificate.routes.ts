@@ -4,10 +4,26 @@ import {
     createCertificate,
     updateCertificate,
     deleteCertificate,
+    getAllCertificates,
+    getCertificatesByProvider,
 } from '../controllers/certificate.controller';
 import { uploadImage } from '../middleware/upload';
 
 export const certificateRoutes = Router();
+
+certificateRoutes.get(
+    '/',
+    requireAuth,
+    requireRole('provider'),
+    getAllCertificates,
+);
+
+certificateRoutes.get(
+    '/provider',
+    requireAuth,
+    requireRole('provider'),
+    getCertificatesByProvider,
+);
 
 certificateRoutes.post(
     '/',
