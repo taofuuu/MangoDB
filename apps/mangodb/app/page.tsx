@@ -58,6 +58,11 @@ const ROUTES = [
         detail: 'Register new user',
     },
     {
+        href: '/admin/login',
+        title: 'Admin Login',
+        detail: 'login for admin role',
+    },
+    {
         href: '/profile/view/provider',
         title: 'View Profile (Provider)',
         detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
