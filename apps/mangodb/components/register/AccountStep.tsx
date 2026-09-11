@@ -10,6 +10,12 @@ export type AccountInfo = {
 
 type UsernameAvailability = 'idle' | 'checking' | 'available' | 'taken';
 
+type AccountStepErrors = {
+    username?: string;
+    password?: string;
+    confirmPassword?: string;
+};
+
 type AccountStepProps = {
     value: AccountInfo;
     onChange: (next: AccountInfo) => void;
@@ -19,6 +25,8 @@ type AccountStepProps = {
     onUsernameBlur: () => void;
     onBack?: () => void;
     onSubmit: () => void;
+    errors?: AccountStepErrors;
+    onClearError?: (field: keyof AccountInfo) => void;
 };
 
 export default function AccountStep({
@@ -30,26 +38,20 @@ export default function AccountStep({
     onUsernameBlur,
     onBack,
     onSubmit,
+    errors,
+    onClearError,
 }: AccountStepProps) {
     const update = (field: keyof AccountInfo, nextValue: string) => {
         onChange({ ...value, [field]: nextValue });
+        if (errors?.[field]) {
+            onClearError?.(field);
+        }
     };
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         onSubmit();
     };
-
-    const passwordValid =
-        value.password.length >= 8 && value.password.length <= 72;
-    const confirmValid =
-        value.password === value.confirmPassword &&
-        value.confirmPassword.length > 0;
-    const canSubmit =
-        passwordValid &&
-        confirmValid &&
-        usernameAvailability === 'available' &&
-        !isSubmitting;
 
     return (
         <form onSubmit={submit} className="flex flex-col py-5">
@@ -60,6 +62,7 @@ export default function AccountStep({
                         className="mb-[3px] block text-sm"
                     >
                         Username
+                        <span className="ml-1 text-[#C5483B]">*</span>
                     </label>
                     <input
                         id="username"
@@ -72,11 +75,16 @@ export default function AccountStep({
                         maxLength={50}
                         autoComplete="username"
                         className={`h-[40px] w-full rounded-[6px] border bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out ${
-                            usernameAvailability === 'taken'
+                            errors?.username || usernameAvailability === 'taken'
                                 ? 'border-[#C5483B] focus:ring-2 focus:ring-[#C5483B]/30'
                                 : 'border-[#497B93] focus:ring-2 focus:ring-[#497B93]/30'
                         }`}
                     />
+                    {errors?.username && (
+                        <p className="mt-1 text-xs text-[#C5483B]">
+                            {errors.username}
+                        </p>
+                    )}
                     <p className="mt-2 text-sm leading-6 text-[#497B93]">
                         This will be used as your login username. Cannot be
                         changed after registration.
@@ -86,16 +94,6 @@ export default function AccountStep({
                             Checking username…
                         </p>
                     )}
-                    {/* {usernameAvailability === 'available' && (
-                        <p className="mt-1 text-xs text-[#2F7D47]">
-                            Username is available.
-                        </p>
-                    )}
-                    {usernameAvailability === 'taken' && (
-                        <p className="mt-1 text-xs text-[#C5483B]">
-                            ⚠ Username already taken. Please choose another one.
-                        </p>
-                    )} */}
                 </div>
 
                 <PasswordField
@@ -103,10 +101,9 @@ export default function AccountStep({
                     label="Password"
                     value={value.password}
                     onChange={(nextValue) => update('password', nextValue)}
+                    error={errors?.password}
+                    required
                 />
-                <p className="-mt-3 text-sm leading-6 text-[#497B93]">
-                    Must be at least 8 characters. Maximum 72 characters.
-                </p>
 
                 <PasswordField
                     id="confirmPassword"
@@ -115,12 +112,9 @@ export default function AccountStep({
                     onChange={(nextValue) =>
                         update('confirmPassword', nextValue)
                     }
+                    error={errors?.confirmPassword}
+                    required
                 />
-                {value.confirmPassword.length > 0 && !confirmValid && (
-                    <p className="-mt-3 text-xs text-[#C5483B]">
-                        ⚠ Passwords do not match.
-                    </p>
-                )}
             </div>
 
             {serverError && (
@@ -128,23 +122,6 @@ export default function AccountStep({
                     ⚠ {serverError}
                 </p>
             )}
-
-            {/* <div className="mt-auto flex justify-end gap-4 pt-8">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="rounded-[20px] border border-[#497B93] px-7 py-2 text-base font-semibold text-[#497B93] hover:bg-[#497B93]/10"
-                >
-                    Back
-                </button>
-                <button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="rounded-[20px] bg-[#497B93] px-7 py-2 text-lg font-bold text-white shadow-[2px_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                    {isSubmitting ? 'Creating…' : 'Create Account'}
-                </button>
-            </div> */}
         </form>
     );
 }
@@ -154,16 +131,21 @@ function PasswordField({
     label,
     value,
     onChange,
+    error,
+    required,
 }: {
     id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
+    error?: string;
+    required?: boolean;
 }) {
     return (
         <div>
             <label htmlFor={id} className="mb-[3px] block text-sm">
                 {label}
+                {required && <span className="ml-1 text-[#C5483B]">*</span>}
             </label>
             <input
                 id={id}
@@ -171,11 +153,14 @@ function PasswordField({
                 type="password"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                autoComplete={
-                    id === 'password' ? 'new-password' : 'new-password'
-                }
-                className="h-[40px] w-full rounded-[6px] border border-[#497B93] bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out focus:ring-2 focus:ring-[#497B93]/30"
+                autoComplete="new-password"
+                className={`h-[40px] w-full rounded-[6px] border bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out ${
+                    error
+                        ? 'border-[#C5483B] focus:ring-2 focus:ring-[#C5483B]/30'
+                        : 'border-[#497B93] focus:ring-2 focus:ring-[#497B93]/30'
+                }`}
             />
+            {error && <p className="mt-1 text-xs text-[#C5483B]">{error}</p>}
         </div>
     );
 }

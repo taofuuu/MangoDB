@@ -7,6 +7,10 @@ interface SimpleTextInputProps {
     onChange?: (value: string) => void;
     validate?: (value: string) => boolean;
     initValue?: string;
+    error?: string;
+    required?: boolean;
+    type?: string;
+    maxLength?: number;
 }
 
 export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
@@ -16,11 +20,22 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     onChange,
     validate,
     initValue,
+    error,
+    required,
+    type = 'text',
+    maxLength,
 }) => {
     const [inputValue, setInputValue] = useState<string>(initValue ?? '');
 
     // Track the last emitted value to prevent duplicate updates when the component rerenders
     const lastEmittedValueRef = useRef<string>('');
+
+    useEffect(() => {
+        if (initValue !== undefined && initValue !== inputValue) {
+            setInputValue(initValue);
+            lastEmittedValueRef.current = initValue;
+        }
+    }, [initValue]);
 
     useEffect(() => {
         if (!onChange) return;
@@ -39,7 +54,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     }, [inputValue, debounceTimeout, onChange]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        //validate input
+        // validate input
         if (validate !== undefined) {
             if (!validate(e.target.value)) {
                 return;
@@ -49,19 +64,33 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
         setInputValue(e.target.value);
     };
 
+    const handleBlur = () => {
+        if (onChange && inputValue !== lastEmittedValueRef.current) {
+            lastEmittedValueRef.current = inputValue;
+            onChange(inputValue);
+        }
+    };
+
     return (
         <div style={styles.container}>
-            <label className="text-sm">{title}</label>
+            <label className="text-sm">
+                {title}
+                {required && <span className="ml-1 text-[#C5483B]">*</span>}
+            </label>
             <input
-                type="text"
+                type={type}
                 value={inputValue}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
+                maxLength={maxLength}
                 style={{
                     ...styles.input,
                     height: inputHeight,
+                    borderColor: error ? '#C5483B' : '#497B93',
                 }}
                 placeholder="Type here..."
             />
+            {error && <p className="mt-1 text-xs text-[#C5483B]">{error}</p>}
         </div>
     );
 };

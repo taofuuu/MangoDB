@@ -8,6 +8,8 @@ interface CompanyTypeSelectorProps {
     companyTypeList: CompanyType[];
     onChange?: (selectedTypes: CompanyType[]) => void;
     initValues?: CompanyType[];
+    error?: string;
+    required?: boolean;
 }
 
 export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
@@ -15,10 +17,18 @@ export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
     companyTypeList,
     onChange,
     initValues,
+    error,
+    required,
 }) => {
     const [selectedValues, setSelectedValues] = useState<CompanyType[]>(
         initValues ?? [],
     );
+
+    React.useEffect(() => {
+        if (initValues) {
+            setSelectedValues(initValues);
+        }
+    }, [initValues]);
 
     const handleSelect = (type: CompanyType) => {
         let updatedValues: CompanyType[];
@@ -38,7 +48,10 @@ export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
 
     return (
         <div style={styles.container}>
-            <h3 className="text-sm">{title}</h3>
+            <h3 className="text-sm">
+                {title}
+                {required && <span className="ml-1 text-[#C5483B]">*</span>}
+            </h3>
 
             <div style={styles.optionsGrid}>
                 {companyTypeList.map((type) => {
@@ -58,6 +71,7 @@ export const CompanyTypeSelector: React.FC<CompanyTypeSelectorProps> = ({
                     );
                 })}
             </div>
+            {error && <p className="mt-1 text-xs text-[#C5483B]">{error}</p>}
         </div>
     );
 };

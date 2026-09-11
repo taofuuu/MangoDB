@@ -17,6 +17,8 @@ export type CompanyInfo = {
 type CompanyInfoStepProps = {
     value: CompanyInfo;
     onChange: (value: CompanyInfo) => void;
+    errors?: Partial<Record<keyof CompanyInfo, string>>;
+    onClearError?: (field: keyof CompanyInfo) => void;
 };
 
 // TODO: Replace with company types from DB/API.
@@ -28,6 +30,8 @@ export enum CompanyType {
 export default function CompanyInfoStep({
     value,
     onChange,
+    errors,
+    onClearError,
 }: CompanyInfoStepProps) {
     const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(
         value ?? {
@@ -41,25 +45,30 @@ export default function CompanyInfoStep({
         },
     );
 
-    useEffect(() => {});
-
     const handleUpdateCompanyType = (cType: CompanyType[]) => {
-        setCompanyInfo({ ...companyInfo, companyType: cType });
+        setCompanyInfo((prev) => ({ ...prev, companyType: cType }));
+        if (cType.length > 0) {
+            onClearError?.('companyType');
+        }
     };
 
     const handleUpdateCompanyName = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyName: cName });
+        setCompanyInfo((prev) => ({ ...prev, companyName: cName }));
+        if (cName.trim()) {
+            onClearError?.('companyName');
+        }
     };
 
-    const handleUpdateCompanyDescription = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyDescription: cName });
+    const handleUpdateCompanyDescription = (desc: string) => {
+        setCompanyInfo((prev) => ({ ...prev, companyDescription: desc }));
+        onClearError?.('companyDescription');
     };
 
-    const handleUpdatePhoneNumber = (newData: string) => {
-        setCompanyInfo({
-            ...companyInfo,
-            phoneNumber: newData,
-        });
+    const handleUpdatePhoneNumber = (phone: string) => {
+        setCompanyInfo((prev) => ({ ...prev, phoneNumber: phone }));
+        if (phone.trim()) {
+            onClearError?.('phoneNumber');
+        }
     };
 
     const validatePhoneNUmber = (num: string) => {
@@ -72,35 +81,43 @@ export default function CompanyInfoStep({
         return true;
     };
 
-    const handleUpdateEmail = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, email: newData });
+    const handleUpdateEmail = (email: string) => {
+        setCompanyInfo((prev) => ({ ...prev, email }));
+        if (email.trim()) {
+            onClearError?.('email');
+        }
     };
 
-    const handleUpdateAddress = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, address: newData });
+    const handleUpdateAddress = (address: string) => {
+        setCompanyInfo((prev) => ({ ...prev, address }));
+        onClearError?.('address');
     };
 
-    const handleUpdateWebsite = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, website: newData });
+    const handleUpdateWebsite = (website: string) => {
+        setCompanyInfo((prev) => ({ ...prev, website }));
+        onClearError?.('website');
     };
 
     useEffect(() => {
-        console.log('companyInfo is ....');
-        console.log(companyInfo);
         onChange(companyInfo);
-    }, [companyInfo]);
+    }, [companyInfo, onChange]);
 
     return (
-        <div className="company-info-page flex flex-col gap-5 my-5">
+        <div className="company-info-page my-5 flex flex-col gap-5">
             <SimpleTextInput
                 title="Company Name"
                 onChange={handleUpdateCompanyName}
                 initValue={value ? value.companyName : ''}
+                error={errors?.companyName}
+                required
+                maxLength={255}
             />
             <SimpleTextInput
                 title="Company Description"
                 onChange={handleUpdateCompanyDescription}
                 initValue={value ? value.companyDescription : ''}
+                error={errors?.companyDescription}
+                maxLength={2000}
             />
             <CompanyTypeSelector
                 title="Company Type"
@@ -110,6 +127,8 @@ export default function CompanyInfoStep({
                 ]}
                 onChange={handleUpdateCompanyType}
                 initValues={value ? value.companyType : []}
+                error={errors?.companyType}
+                required
             />
             <div className="flex gap-4">
                 <SimpleTextInput
@@ -117,22 +136,34 @@ export default function CompanyInfoStep({
                     onChange={handleUpdatePhoneNumber}
                     validate={validatePhoneNUmber}
                     initValue={value ? value.phoneNumber : ''}
+                    error={errors?.phoneNumber}
+                    required
+                    type="tel"
+                    maxLength={20}
                 />
                 <SimpleTextInput
                     title="Email"
                     onChange={handleUpdateEmail}
                     initValue={value ? value.email : ''}
+                    error={errors?.email}
+                    required
+                    type="email"
+                    maxLength={100}
                 />
             </div>
             <SimpleTextInput
                 title="Address"
                 onChange={handleUpdateAddress}
                 initValue={value ? value.address : ''}
+                error={errors?.address}
+                maxLength={500}
             />
             <SimpleTextInput
                 title="Website"
                 onChange={handleUpdateWebsite}
                 initValue={value ? value.website : ''}
+                error={errors?.website}
+                maxLength={255}
             />
         </div>
     );

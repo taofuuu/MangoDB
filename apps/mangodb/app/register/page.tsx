@@ -12,6 +12,7 @@ import CompanyInfoStep, {
 import AccountStep, {
     type AccountInfo,
 } from '@/components/register/AccountStep';
+import { validateCompanyInfo, validateAccountInfo } from '@/lib/validation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -49,6 +50,10 @@ export default function RegisterPage() {
         website: '',
     });
 
+    const [companyInfoErrors, setCompanyInfoErrors] = useState<
+        Partial<Record<keyof CompanyInfo, string>>
+    >({});
+
     /* =====================================================
      ACCOUNT INFO
   ===================================================== */
@@ -58,6 +63,12 @@ export default function RegisterPage() {
         password: '',
         confirmPassword: '',
     });
+
+    const [accountInfoErrors, setAccountInfoErrors] = useState<{
+        username?: string;
+        password?: string;
+        confirmPassword?: string;
+    }>({});
 
     /* =====================================================
      AVAILABILITY
@@ -76,6 +87,26 @@ export default function RegisterPage() {
     const [serverError, setServerError] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleClearCompanyError = (field: keyof CompanyInfo) => {
+        if (companyInfoErrors[field]) {
+            setCompanyInfoErrors((prev) => {
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
+        }
+    };
+
+    const handleClearAccountError = (field: keyof AccountInfo) => {
+        if (accountInfoErrors[field]) {
+            setAccountInfoErrors((prev) => {
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
+        }
+    };
 
     /* =====================================================
      CHECK USERNAME / EMAIL AVAILABILITY
@@ -154,18 +185,13 @@ export default function RegisterPage() {
   ===================================================== */
 
     const goToStep3 = () => {
-        console.log(companyInfo);
-        const valid =
-            companyInfo.companyName.trim() &&
-            companyInfo.phoneNumber.trim() &&
-            companyInfo.email.trim() &&
-            companyInfo.companyType.length > 0 &&
-            companyInfo.companyType.every((type: CompanyType) => type.trim());
-
-        if (!valid) {
+        const errors = validateCompanyInfo(companyInfo);
+        if (Object.keys(errors).length > 0) {
+            setCompanyInfoErrors(errors);
             return;
         }
 
+        setCompanyInfoErrors({});
         setServerError('');
 
         void checkAvailability(accountInfo.username, companyInfo.email);
@@ -187,27 +213,20 @@ export default function RegisterPage() {
             return;
         }
 
-        /* ---------- username ---------- */
+        /* ---------- client-side required field validation ---------- */
+
+        const errors = validateAccountInfo(accountInfo);
+        if (Object.keys(errors).length > 0) {
+            setAccountInfoErrors(errors);
+            return;
+        }
+
+        setAccountInfoErrors({});
+
+        /* ---------- username availability ---------- */
 
         if (usernameAvailable !== 'available') {
             setServerError('Please choose an available username.');
-            return;
-        }
-
-        /* ---------- password ---------- */
-
-        if (
-            accountInfo.password.length < 8 ||
-            accountInfo.password.length > 72
-        ) {
-            setServerError('Password must be between 8 and 72 characters.');
-            return;
-        }
-
-        /* ---------- confirm password ---------- */
-
-        if (accountInfo.password !== accountInfo.confirmPassword) {
-            setServerError('Passwords do not match.');
             return;
         }
 
@@ -288,11 +307,13 @@ export default function RegisterPage() {
         setServerError('');
 
         if (step === 2) {
+            setCompanyInfoErrors({});
             setStep(1);
             return;
         }
 
         if (step === 3) {
+            setAccountInfoErrors({});
             setStep(2);
         }
     };
@@ -367,9 +388,8 @@ export default function RegisterPage() {
                 <CompanyInfoStep
                     value={companyInfo}
                     onChange={setCompanyInfo}
-                    // availability={{
-                    //     emailAvailable,
-                    // }}
+                    errors={companyInfoErrors}
+                    onClearError={handleClearCompanyError}
                 />
             )}
 
@@ -383,9 +403,9 @@ export default function RegisterPage() {
                     serverError={serverError}
                     isSubmitting={isSubmitting}
                     onUsernameBlur={handleUsernameBlur}
-                    onSubmit={() => {
-                        console.log('Submit click');
-                    }} // Replace this with real submit handler
+                    onSubmit={submitRegister}
+                    errors={accountInfoErrors}
+                    onClearError={handleClearAccountError}
                 />
             )}
         </RegisterLayout>
