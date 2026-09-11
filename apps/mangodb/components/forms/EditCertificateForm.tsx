@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import FileUpload from '../sm-detail/FileUpload';
@@ -40,8 +40,15 @@ export default function EditCertificateForm({
     const [credURL, setCredURL] = useState(initialData?.credURL || '');
     const [file, setFile] = useState<File | null>(initialData?.file || null);
 
-    // Sync form state when modal opens with initialData
-    useEffect(() => {
+    // Sync form state when the modal opens with initialData. Adjusted during
+    // render rather than in an effect: an effect would paint the previous
+    // certificate's values once before correcting them.
+    const [lastOpened, setLastOpened] = useState({ isOpen, initialData });
+    if (
+        lastOpened.isOpen !== isOpen ||
+        lastOpened.initialData !== initialData
+    ) {
+        setLastOpened({ isOpen, initialData });
         if (isOpen && initialData) {
             setName(initialData.name || '');
             setOrganize(initialData.organize || '');
@@ -53,7 +60,7 @@ export default function EditCertificateForm({
             setCredURL(initialData.credURL || '');
             setFile(initialData.file || null);
         }
-    }, [isOpen, initialData]);
+    }
 
     if (!isOpen) {
         return null;
