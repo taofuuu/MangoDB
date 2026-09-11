@@ -58,18 +58,16 @@ export default function CompaniesPage() {
     const filterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        const nextSearch = searchQuery.trim();
+        if (nextSearch === debouncedSearch) return;
+
         const timer = setTimeout(() => {
-            const nextSearch = searchQuery.trim();
-            setDebouncedSearch((prevSearch) => {
-                if (prevSearch !== nextSearch) {
-                    setPage(1);
-                }
-                return nextSearch;
-            });
+            setDebouncedSearch(nextSearch);
+            setPage(1);
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, debouncedSearch]);
 
     useEffect(() => {
         if (!isFilterOpen) return;
@@ -160,12 +158,8 @@ export default function CompaniesPage() {
 
     const clearSearch = () => {
         setSearchQuery('');
-        setDebouncedSearch((prevSearch) => {
-            if (prevSearch !== '') {
-                setPage(1);
-            }
-            return '';
-        });
+        setDebouncedSearch('');
+        setPage(1);
     };
 
     const handleFilterSelect = (selected: FilterOption) => {
