@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { CompanyAccountDetail } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -34,6 +35,7 @@ export default function CompanyDetailModal({
     error,
     onClose,
 }: CompanyDetailModalProps) {
+    const router = useRouter();
     const panelRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -198,13 +200,26 @@ export default function CompanyDetailModal({
                             )}
                         </dl>
 
-                        <div className="mt-[2.22vh] flex justify-end">
+                        <div className="mt-[2.22vh] flex justify-end gap-[0.83vw]">
                             <Button
                                 variant="outline"
                                 onClick={onClose}
                                 className="h-[4.63vh] px-[1.25vw] text-sm"
                             >
                                 Close
+                            </Button>
+                            {/* US6-3/US6-4: opens the shared profile form in
+                                admin mode for this account, where the Delete
+                                account section lives. */}
+                            <Button
+                                onClick={() =>
+                                    router.push(
+                                        `/profile/edit?companyId=${company.company_id}`,
+                                    )
+                                }
+                                className="h-[4.63vh] px-[1.25vw] text-sm"
+                            >
+                                Edit account
                             </Button>
                         </div>
                     </>

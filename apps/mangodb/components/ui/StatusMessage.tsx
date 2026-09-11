@@ -8,7 +8,7 @@ export type StatusMessageData = {
 } | null;
 
 type StatusMessageProps = {
-    status?: StatusMessageData;
+    status?: StatusMessageData | undefined;
     onDismiss?: () => void;
     className?: string;
     autoDismissMs?: number;

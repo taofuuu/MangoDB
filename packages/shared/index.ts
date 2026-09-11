@@ -107,6 +107,7 @@ export interface CompanyAccountSummary {
     account_type: AccountType;
     average_rating: number | null;
     rating_count: number;
+    deleted_at: string | null;
 }
 
 // The detail endpoint is admin-only, so it may include the private contact
@@ -114,6 +115,7 @@ export interface CompanyAccountSummary {
 export interface CompanyAccountDetail extends CompanyProfile {
     average_rating: number | null;
     rating_count: number;
+    deleted_at: string | null;
 }
 
 export interface PaginationMeta {

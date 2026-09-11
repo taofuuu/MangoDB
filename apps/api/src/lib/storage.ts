@@ -71,16 +71,11 @@ export async function removeFromStorage(
 ): Promise<void> {
     try {
         const { error } = await getSupabase()
-            .storage
-            .from(bucket)
+            .storage.from(bucket)
             .remove([path]);
 
         if (error) {
-            console.error(
-                'Orphaned upload left behind:',
-                path,
-                error.message,
-            );
+            console.error('Orphaned upload left behind:', path, error.message);
         }
     } catch (err) {
         console.error('Orphaned upload left behind:', path, err);
@@ -95,10 +90,7 @@ export async function removeFromStorageByUrl(
     const markerIdx = url.indexOf(marker);
 
     if (markerIdx === -1) {
-        console.error(
-            `URL is not a recognized ${bucket} storage URL:`,
-            url,
-        );
+        console.error(`URL is not a recognized ${bucket} storage URL:`, url);
         return;
     }
 

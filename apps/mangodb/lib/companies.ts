@@ -41,6 +41,16 @@ export function getCompanyAccountDetail(
     return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`);
 }
 
+export function updateCompanyAccount(
+    companyId: number,
+    body: UpdateCompanyProfileRequest,
+): Promise<CompanyAccountDetail> {
+    return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+    });
+}
+
 // Username, email, and password, each gated on the current password. The server
 // revokes the token the change was made with and sets a replacement cookie on
 // the same response, so a successful save keeps the session rather than ending
