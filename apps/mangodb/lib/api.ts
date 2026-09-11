@@ -54,13 +54,17 @@ export async function apiFetch<T>(
     path: string,
     init: RequestInit = {},
 ): Promise<T> {
+    const isFormData = init.body instanceof FormData;
+
     const response = await fetch(`${BASE_URL}${path}`, {
         ...init,
         // The session is an httpOnly cookie, so there is no token to attach —
         // the browser sends it. Nothing here can forget to.
         credentials: 'include',
         headers: {
-            'content-type': 'application/json',
+            ...(!isFormData && {
+                'content-type': 'application/json',
+            }),
             ...init.headers,
         },
     });

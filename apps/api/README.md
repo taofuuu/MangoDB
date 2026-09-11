@@ -267,6 +267,52 @@ need a token to get a token.
 Logout is the same endpoint for both: `POST /auth/logout` revokes whatever
 token it is given.
 
+### Administrator: company accounts
+
+`adminRoutes` is guarded once at the router, per the rule above — do not repeat
+the middleware per route, and do not register anything above the guard.
+
+| Method  | Path                          | Guard                                         |
+| ------- | ----------------------------- | --------------------------------------------- |
+| `GET`   | `/admin/companies`            | router: `requireAuth`, `requireRole('admin')` |
+| `GET`   | `/admin/companies/:companyId` | same                                          |
+| `PATCH` | `/admin/companies/:companyId` | same                                          |
+
+The `PATCH` writes **profile columns only** — the same field set
+`PATCH /companies/me` takes — so it reuses `updateCompanyProfileSchema` rather
+than declaring a second one. Username, email and password are unreachable here
+on purpose: each is a way to take an account over, and the current-password
+gate that gates them is one an administrator cannot satisfy for someone else.
+The schema is a `strictObject`, so sending one of them is a `400` naming the
+key rather than a `200` that quietly ignored half the request.
+
+`companyProfileUpdateData` in `src/lib/companyProfile.ts` is the shared write
+shape. Both this endpoint and `updateMyProfile` call it; they differ only in
+their `select`, their serializer and their error messages. Add a profile column
+to `updateCompanyProfileSchema` and both endpoints get it. Its nested provider
+write is an `upsert`: `account_type` is not proof the `provider` row exists —
+nothing in the schema enforces that — so a missing one is created rather than
+raising `P2025` and reading as a `404` for a company that plainly exists.
+
+`service_term` and `warranty_policy` live on `provider`, so **who may send them
+is a different question here**. `PATCH /companies/me` asks `roleGrants` about
+the caller's own token; an admin token says nothing about the company being
+edited, so this endpoint asks `ownsProviderRow` about the target's
+`account_type` instead. A `RECEIVER` or `ADMIN` target owns no `provider` row
+and gets a `400` with one `details` entry per offending field — not a `403`,
+because the administrator is not the one being refused. The refusal is
+per-field in the error response. The request remains atomic, so no fields in
+the same body are saved when any provider-only field is rejected.
+
+The target is read before the write, like `updatePortfolio`: an unknown id is a
+plain `404` rather than a `P2025` surfacing mid-update, and the same lookup
+supplies the `account_type` the check above needs.
+
+The response is the full `CompanyAccountDetail` — what the detail `GET`
+returns, ratings included — so the admin UI re-renders without a second fetch.
+Note that `company_type` is a set replacement: the request carries the whole
+set and omitted tags are deleted, so an edit form must pre-fill all of them.
+
 ### Portfolio
 
 `service_portfolio` holds a provider's work-sample links, one row per link,
