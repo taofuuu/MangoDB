@@ -86,17 +86,17 @@ export default function CompanyInfoStep({
     return (
         <div className="company-info-page flex flex-col gap-5 my-5">
             <SimpleTextInput
-                title="Company Name"
+                title="Company Name *"
                 onChange={handleUpdateCompanyName}
                 initValue={value ? value.companyName : ''}
             />
             <SimpleTextInput
-                title="Company Description"
+                title="Company Description *"
                 onChange={handleUpdateCompanyDescription}
                 initValue={value ? value.companyDescription : ''}
             />
             <CompanyTypeSelector
-                title="Company Type"
+                title="Company Type *"
                 companyTypeList={[
                     CompanyType.SoftwareHouse,
                     CompanyType.Consultancy,
@@ -106,12 +106,12 @@ export default function CompanyInfoStep({
             />
             <div className="flex gap-4">
                 <SimpleTextInput
-                    title="Phone Number"
+                    title="Phone Number *"
                     onChange={handleUpdatePhoneNumber}
                     initValue={value ? value.phoneNumber : ''}
                 />
                 <SimpleTextInput
-                    title="Email"
+                    title="Email *"
                     onChange={handleUpdateEmail}
                     initValue={value ? value.email : ''}
                 />

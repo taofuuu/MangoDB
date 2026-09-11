@@ -68,9 +68,17 @@ export default function RegisterPage() {
         setCurrentStep(RegisterStep.CompanyInfo);
     };
 
+    const goToHome = () => {
+        window.location.href = '/';
+    };
+
     /* ================= SUBMIT ================= */
 
     const submitRegister = async () => {
+        if (accountInfo.password !== accountInfo.confirmPassword) {
+            setErrorMessage('Passwords do not match.');
+            return;
+        }
         setIsSubmitting(true);
         setErrorMessage('');
 
@@ -103,12 +111,16 @@ export default function RegisterPage() {
 
             if (!response.ok) {
                 const apiError =
-                    data?.message ||
+                    data?.error?.details
+                        ?.map(
+                            (detail: { field: string; message: string }) =>
+                                `${detail.field}: ${detail.message}`,
+                        )
+                        .join(', ') ||
                     data?.error?.message ||
+                    data?.message ||
                     'Registration failed.';
-                setErrorMessage(
-                    Array.isArray(apiError) ? apiError.join(', ') : apiError,
-                );
+                setErrorMessage(apiError);
                 return;
             }
 
@@ -167,7 +179,10 @@ export default function RegisterPage() {
             onBack={goBack}
             nextLabel={layoutProps.nextLabel}
             onNext={layoutProps.onNext}
-            nextDisabled={isSubmitting}
+            nextDisabled={
+                isSubmitting ||
+                (currentStep === RegisterStep.SelectRole && !accountType)
+            }
         >
             {/* Server Error Message Display */}
             {errorMessage && (
@@ -205,6 +220,23 @@ export default function RegisterPage() {
                     <p className="mt-2 text-gray-600">
                         Your account has been created successfully.
                     </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.location.href = '/';
+                        }}
+                        className="
+                            rounded-button
+                            bg-[#3F6B80]
+                            mt-2
+                            px-[24px] py-[5px]
+                            text-md text-[#FFFDF9]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                            "
+                    >
+                        Go to Home
+                    </button>
                 </div>
             )}
         </RegisterLayout>

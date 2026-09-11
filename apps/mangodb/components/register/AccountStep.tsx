@@ -52,11 +52,13 @@ export default function AccountInfoStep({
             <div className="flex gap-4">
                 <SimpleTextInput
                     title="Password"
+                    type="password"
                     onChange={handleUpdatePassword}
                     initValue={value ? (value.password ?? '') : ''}
                 />
                 <SimpleTextInput
                     title="Confirm Password"
+                    type="password"
                     onChange={handleUpdateConfirmPassword}
                     initValue={value ? (value.confirmPassword ?? '') : ''}
                 />
