@@ -43,35 +43,38 @@ export default function CompanyInfoStep({
 
     useEffect(() => {});
 
-    const handleUpdateCompanyType = (cType: CompanyType[]) => {
-        setCompanyInfo({ ...companyInfo, companyType: cType });
+    const handleUpdateCompanyType = (companyType: CompanyType[]) => {
+        setCompanyInfo({ ...companyInfo, companyType: companyType });
     };
 
-    const handleUpdateCompanyName = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyName: cName });
+    const handleUpdateCompanyName = (companyName: string) => {
+        setCompanyInfo({ ...companyInfo, companyName: companyName });
     };
 
-    const handleUpdateCompanyDescription = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyDescription: cName });
-    };
-
-    const handleUpdatePhoneNumber = (newData: string) => {
+    const handleUpdateCompanyDescription = (companyDescription: string) => {
         setCompanyInfo({
             ...companyInfo,
-            phoneNumber: newData,
+            companyDescription: companyDescription,
         });
     };
 
-    const handleUpdateEmail = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, email: newData });
+    const handleUpdatePhoneNumber = (phoneNumber: string) => {
+        setCompanyInfo({
+            ...companyInfo,
+            phoneNumber: phoneNumber,
+        });
     };
 
-    const handleUpdateAddress = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, address: newData });
+    const handleUpdateEmail = (email: string) => {
+        setCompanyInfo({ ...companyInfo, email: email });
     };
 
-    const handleUpdateWebsite = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, website: newData });
+    const handleUpdateAddress = (address: string) => {
+        setCompanyInfo({ ...companyInfo, address: address });
+    };
+
+    const handleUpdateWebsite = (website: string) => {
+        setCompanyInfo({ ...companyInfo, website: website });
     };
 
     useEffect(() => {
