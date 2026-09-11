@@ -82,7 +82,6 @@ type CompanyProfileFormProps = {
     onSave: (data: ProfileFormData) => Promise<void> | void;
     onCancel?: () => void;
     errors?: Partial<Record<keyof ProfileFormData, string>>;
-    status?: { type: 'success' | 'error'; message: string } | null;
     // US6-4. Set only when an administrator is editing another company's
     // account: it turns on the Delete account section below the form fields.
     // A company editing its own profile never gets these, so the section stays
@@ -103,7 +102,7 @@ export default function CompanyProfileForm({
     status,
     onDeleteAccount,
     deleteAccountUsername,
-     isSaving = false,
+    isSaving = false,
     onClearError,
     onDismissStatus,
 }: CompanyProfileFormProps) {
