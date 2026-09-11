@@ -6,7 +6,14 @@ import {
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
-import { uploadToStorage, removeFromStorage } from '../lib/storage';
+
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    BUCKETS,
+} from '../lib/storage';
+
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -51,7 +58,11 @@ export async function createPortfolio(
     }
 
     // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
-    const image = await uploadToStorage(req.file);
+    const image = await uploadToStorage(
+        req.file,
+        BUCKETS.PORTFOLIO,
+        'portfolios',
+    );
 
     // 5. บันทึกลง Database
     let created;
@@ -72,7 +83,7 @@ export async function createPortfolio(
             select: portfolioSelect,
         });
     } catch (err) {
-        await removeFromStorage(image.path);
+        await removeFromStorage(image.path, BUCKETS.PORTFOLIO);
 
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
@@ -149,12 +160,14 @@ export async function deletePortfolio(
 
     await assertPortfolioOwned(portfolioId, companyId);
 
+    let deleted;
     try {
-        await prisma.service_portfolio.delete({
+        deleted = await prisma.service_portfolio.delete({
             where: {
                 portfolio_id: portfolioId,
                 service: { listing: { company_id: companyId } },
             },
+            select: { portfolio_image: true },
         });
     } catch (err) {
         if (isRecordNotFound(err)) {
@@ -162,6 +175,10 @@ export async function deletePortfolio(
         }
         throw err;
     }
+
+    // Best-effort cleanup of the image file: a failed remove logs but won't
+    // block the 204, and the DB row is already gone either way.
+    await removeFromStorageByUrl(deleted.portfolio_image, BUCKETS.PORTFOLIO);
 
     res.status(204).end();
 }

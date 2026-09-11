@@ -4,7 +4,12 @@ import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
-import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+import {
+    companyProfileSelect,
+    companyProfileUpdateData,
+    editsProviderFields,
+    toCompanyProfile,
+} from '../lib/companyProfile';
 import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
 import { omitUndefined } from '../lib/objects';
 import {
@@ -48,15 +53,15 @@ export async function updateMyProfile(
 ): Promise<void> {
     const body = parseBody(updateCompanyProfileSchema, req.body);
     const companyId = Number(req.auth!.sub);
-    const { company_type, service_term, warranty_policy, ...columns } = body;
-
-    // `in`, not a truthiness check: zod drops absent keys, so this is the one
-    // way to tell "left alone" from an explicit null that means "clear it".
-    const editsProvider = 'service_term' in body || 'warranty_policy' in body;
 
     // roleGrants rather than role === 'provider': a BOTH company is a provider
-    // too, and owns the row these columns live on.
-    if (editsProvider && !roleGrants(req.auth!.role).includes('provider')) {
+    // too, and owns the row these columns live on. US6-3's administrator edit
+    // asks the same question of the *target* company instead, because an admin
+    // token says nothing about the company being edited.
+    if (
+        editsProviderFields(body) &&
+        !roleGrants(req.auth!.role).includes('provider')
+    ) {
         throw ApiError.forbidden(
             'Only a provider company has service terms and a warranty policy',
         );
@@ -66,30 +71,7 @@ export async function updateMyProfile(
     try {
         company = await prisma.company.update({
             where: { company_id: companyId },
-            data: {
-                ...omitUndefined(columns),
-                // Tags are a set, not a list to append to: the request carries
-                // the whole set, so the rows it replaces go. A nested write is
-                // one transaction, so the company is never left untagged.
-                ...(company_type && {
-                    company_type: {
-                        deleteMany: {},
-                        create: company_type.map((tag) => ({
-                            company_type: tag,
-                        })),
-                    },
-                }),
-                // A second table, same transaction. omitUndefined keeps a body
-                // that sent only one of the two from clearing the other.
-                ...(editsProvider && {
-                    provider: {
-                        update: omitUndefined({
-                            service_term,
-                            warranty_policy,
-                        }),
-                    },
-                }),
-            },
+            data: companyProfileUpdateData(body),
             select: companyProfileSelect,
         });
     } catch (err) {
@@ -103,9 +85,9 @@ export async function updateMyProfile(
                 { field: 'company_type', message: 'Remove the duplicate tag' },
             ]);
         }
-        // Also fires if a provider company somehow has no provider row, but
-        // register creates one with the company and nothing removes it, so
-        // that would be broken data rather than a case to handle here.
+        // The company was deleted mid-session — its token is still valid. A
+        // missing provider row cannot land here any more: the nested write
+        // upserts it.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company not found');
         }
