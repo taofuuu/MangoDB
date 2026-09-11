@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState } from 'react';
 
 // Data types
 export interface BlockContent {
@@ -14,27 +14,24 @@ export interface DualSectionData {
     jobs: BlockContent;
 }
 
+const sectionData: DualSectionData = {
+    services: {
+        title1: 'DevOps & Infrastructure Setup',
+        body1: 'Automated CI/CD pipelines, cloud provisioning, and cluster management optimized for scale.',
+        title2: 'Cybersecurity Compliance',
+        body2: 'Comprehensive security audits, risk management frameworks, and automated compliance checks.',
+    },
+    jobs: {
+        title1: 'Senior DevOps Engineer',
+        body1: 'Full-time • Remote — Looking for 5+ years experience in AWS, Kubernetes, and Terraform.',
+        title2: 'Lead UI/UX Designer',
+        body2: 'Full-time • Hybrid — Seeking a product designer to lead design systems and user research.',
+    },
+};
+
 export default function ServicesDashboard() {
-    // 1. Active Tab State for the display panel
     const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
-
-    // 2. Form & Section Data State
-    const [data, setData] = useState<DualSectionData>({
-        services: {
-            title1: 'DevOps & Infrastructure Setup',
-            body1: 'Automated CI/CD pipelines, cloud provisioning, and cluster management optimized for scale.',
-            title2: 'Cybersecurity Compliance',
-            body2: 'Comprehensive security audits, risk management frameworks, and automated compliance checks.',
-        },
-        jobs: {
-            title1: 'Senior DevOps Engineer',
-            body1: 'Full-time • Remote — Looking for 5+ years experience in AWS, Kubernetes, and Terraform.',
-            title2: 'Lead UI/UX Designer',
-            body2: 'Full-time • Hybrid — Seeking a product designer to lead design systems and user research.',
-        },
-    });
-
-    const currentTabContent = data[activeTab];
+    const currentTabContent = sectionData[activeTab];
 
     return (
         <div className="flex flex-col md:flex-row gap-4 p-4 bg-gray-50 max-w-5xl mx-auto rounded-3xl">

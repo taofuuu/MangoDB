@@ -18,11 +18,6 @@ const ROUTES = [
         detail: 'Add, edit and delete certificate modals, on mock data.',
     },
     {
-        href: '/portfolio',
-        title: 'Portfolio',
-        detail: 'Add, edit and delete portfolio modals, on mock data.',
-    },
-    {
         href: '/account-settings',
         title: 'Account setting',
         detail: 'Manage account settings and delete account.',
@@ -33,19 +28,29 @@ const ROUTES = [
         detail: 'Sign in to your company account.',
     },
     {
-        href: '/companies',
-        title: 'Companies view for admin',
-        detail: 'list of company that can be viewed by admin',
+        href: '/portfolio',
+        title: 'Portfolio',
+        detail: 'Company portfolio grid and list views, on mock data.',
     },
     {
         href: '/companies',
         title: 'Companies view for admin',
         detail: 'list of company that can be viewed by admin',
+    },
+    {
+        href: '/profile/edit?companyId=1',
+        title: 'Edit account as admin',
+        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
     },
     {
         href: '/register',
         title: 'Register',
         detail: 'Register new user',
+    },
+    {
+        href: '/admin/login',
+        title: 'Admin Login',
+        detail: 'login for admin role',
     },
     {
         href: '/profile/view/provider',

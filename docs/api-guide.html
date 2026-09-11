@@ -885,8 +885,8 @@ admin: ['admin'],</code></pre>
           leaving them on an endpoint that never asks for one would make that gate decorative —
           anyone holding a token could walk around it with a single request. They moved to
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>, and this
-          schema strips them silently, so <code>{"email": "…"}</code> alone is a
-          <code>400</code> with nothing left to update.
+          schema is a <code>strictObject</code>, so <code>{"email": "…"}</code> is a
+          <code>400</code> that names the key.
         </p>
         <p class="note">
           <strong>There are two emails, and they are not the same thing.</strong>
@@ -904,7 +904,10 @@ admin: ['admin'],</code></pre>
           <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
           columns on <code>provider</code>, not on <code>company</code>, so they only exist for a
           company that offers work. The controller writes them through a nested
-          <code>provider: { update: … }</code> in the same transaction as the rest, and a
+          <code>provider: { upsert: … }</code> in the same transaction as the rest — an
+          <code>upsert</code> because <code>account_type</code> is not proof the row exists,
+          and creating a missing one beats a <code>P2025</code> surfacing as a
+          <span class="status s-warn">404</span> — and a
           <code>RECEIVER</code> company that sends either one gets a <code>403</code> — its account
           type owns no <code>provider</code> row to write to. A <code>BOTH</code> company is a
           provider too, which is why the check asks <code>roleGrants</code> rather than comparing
@@ -912,8 +915,10 @@ admin: ['admin'],</code></pre>
           <code>null</code> for both.
         </p>
         <p class="note">
-          Four fields are <em>not</em> editable here, and the schema strips all four silently
-          rather than rejecting the request. <code>username</code>, <code>email</code>, and
+          Four fields are <em>not</em> editable here, and the schema rejects all four rather
+          than dropping them silently — a body carrying one gets a <code>400</code> naming the
+          key, so a client never reads a <code>200</code> as "all of that was applied".
+          <code>username</code>, <code>email</code>, and
           <code>password</code> need the current password, so they live on
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>.
           <code>account_type</code> decides which subtype rows a company owns and what its token's
@@ -988,18 +993,28 @@ admin: ['admin'],</code></pre>
         </p>
       </article>
 
-      <article class="entry" id="admin-company-accounts" data-tags="admin company accounts list detail pagination private contact email phone us6-2">
-        <h3>How does an administrator list and inspect Company accounts?</h3>
-        <p class="answer"><code>GET /admin/companies?page=1&amp;pageSize=12</code> returns one page; <code>GET /admin/companies/:companyId</code> returns the selected account's full profile.</p>
-        <pre><code>curl -s -H "Authorization: Bearer $TOKEN" \
+      <article class="entry" id="admin-company-accounts" data-tags="admin company accounts list detail edit patch pagination private contact email phone us6-2 us6-3">
+        <h3>How does an administrator list, inspect, and edit Company accounts?</h3>
+        <p class="answer"><code>GET /admin/companies?page=1&amp;pageSize=12</code> returns one page; <code>GET /admin/companies/:companyId</code> returns the selected account's full profile; <code>PATCH /admin/companies/:companyId</code> edits it.</p>
+        <pre><code>curl -s -H "Authorization: Bearer $ADMIN" \
   "localhost:4000/admin/companies?page=1&amp;pageSize=12"
 
-curl -s -H "Authorization: Bearer $TOKEN" \
-  localhost:4000/admin/companies/33</code></pre>
+curl -s -H "Authorization: Bearer $ADMIN" \
+  localhost:4000/admin/companies/33
+
+curl -s -X PATCH localhost:4000/admin/companies/33 \
+  -H "Authorization: Bearer $ADMIN" -H 'content-type: application/json' -d '{
+  "company_name": "CodeCrafters Co., Ltd.",
+  "address": null,
+  "company_type": ["SME", "AI Lab"]
+}'</code></pre>
         <p class="note">
-          Both routes currently require a valid session so private contact data is never public.
-          Once US6-1 supplies administrator sessions, the router will add
-          <code>requireRole('admin')</code> to restrict them to administrators.
+          All three sit under one <code>adminRoutes.use(requireAuth, requireRole('admin'))</code>,
+          so no session is a <span class="status s-deny">401</span> and a non-administrator
+          session is a <span class="status s-warn">403</span>. The two <code>GET</code>s carried
+          their own <code>requireAuth</code> and no role check until
+          <a href="#admin-login">US6-1</a> landed — any signed-in company could read another's
+          private contact details in that window.
         </p>
         <p class="note">
           Pages are ordered by <code>company_name</code> and then <code>company_id</code> so records
@@ -1011,7 +1026,43 @@ curl -s -H "Authorization: Bearer $TOKEN" \
         <p class="note">
           The list returns only card fields and rating totals. The detail endpoint additionally
           returns username, sign-in email, contact email, phone, address, website and provider
-          terms. Neither endpoint selects or returns the password hash.
+          terms. Nothing here selects or returns the password hash.
+        </p>
+        <p class="note">
+          <strong>The edit writes profile columns only</strong> — the same field set
+          <a href="#edit-profile"><code>PATCH /companies/me</code></a> takes, so it reuses
+          <code>updateCompanyProfileSchema</code> rather than declaring a second one.
+          <code>username</code>, <code>email</code>, <code>password</code> and
+          <code>account_type</code> are rejected by the schema, so a body carrying any of them
+          is a <span class="status s-warn">400</span> naming the key. That is
+          deliberate: each of the three is a way to take an account over, and
+          <a href="#change-credentials">the credentials endpoint</a> gates them behind the
+          current password — a gate an administrator cannot satisfy for someone else.
+        </p>
+        <p class="note">
+          <code>service_term</code> and <code>warranty_policy</code> live on
+          <code>provider</code>, so they are judged against the <em>target's</em>
+          <code>account_type</code>, not the caller's role: a <code>RECEIVER</code> or
+          <code>ADMIN</code> target owns no <code>provider</code> row and gets a
+          <span class="status s-warn">400</span> with one <code>details</code> entry per
+          offending field. <a href="#edit-profile"><code>PATCH /companies/me</code></a> answers
+          <span class="status s-warn">403</span> for the same rule, because there the caller
+          <em>is</em> the one refused; here the administrator is not refused anything — the
+          columns simply do not exist on that account. The refusal is per-field in the
+          <code>details</code> array only — the check runs before the write, so the request
+          stays atomic and a <code>company_name</code> sent in the same body is not saved.
+        </p>
+        <p class="note">
+          <code>company_type</code> is a <strong>set replacement</strong>, not an append: the
+          request carries the whole set, and the tags it leaves out are deleted. An edit form
+          has to pre-fill every existing tag, or saving quietly drops the rest. A tag repeated
+          inside one request collides with itself and is a
+          <span class="status s-warn">409</span>.
+        </p>
+        <p class="note">
+          The edit answers with the full <code>CompanyAccountDetail</code> — the same body the
+          detail <code>GET</code> returns, ratings included — so the list card and the detail
+          panel re-render from the response instead of fetching again.
         </p>
       </article>
     </section>
@@ -1160,7 +1211,7 @@ apps/api/src/
 
       <article class="entry" id="cases" data-tags="verified tested cases proof evidence curl results status codes test">
         <h3>What has actually been run?</h3>
-        <p class="answer">These 86 cases, against a live server. Use them as the shape of your test tasks.</p>
+        <p class="answer">These 118 cases, against a live server. Use them as the shape of your test tasks.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Route</th><th>Request</th><th>Result</th></tr></thead>
@@ -1202,9 +1253,10 @@ apps/api/src/
               <tr><td class="code-cell">PATCH /companies/me</td><td>one field — company_name only</td><td><span class="status s-ok">200, nothing else moved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>address: null</td><td><span class="status s-ok">200 address cleared</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_type replaced</td><td><span class="status s-ok">200 old tags gone</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — stripped, so nothing to update</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — stripped, the gate is not bypassable</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — stripped, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — rejected, not editable here</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>a key the schema does not know</td><td><span class="status s-warn">400 names the key</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>company_name after that</td><td><span class="status s-ok">200 — the profile edit still works</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>account_type beside a real field</td><td><span class="status s-ok">200, account_type unmoved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>phone: "abc"</td><td><span class="status s-warn">400</span></td></tr>
@@ -1251,6 +1303,37 @@ apps/api/src/
               <tr><td class="code-cell">/admin/ping</td><td>cookie from the admin login, no header</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">POST /auth/logout</td><td>admin token</td><td><span class="status s-ok">204</span></td></tr>
               <tr><td class="code-cell">/admin/ping</td><td>that admin token, after logout</td><td><span class="status s-deny">401 session has ended</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>valid provider — after the guard move</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — no header</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — valid provider</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, company_name</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, <code>address: null</code></td><td><span class="status s-ok">200 cleared</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, new company_type set</td><td><span class="status s-ok">200 replaced</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, tag repeated in one request</td><td><span class="status s-warn">409</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a PROVIDER</td><td><span class="status s-ok">200 warranty untouched</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a RECEIVER</td><td><span class="status s-warn">400 one detail</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — both provider fields on a RECEIVER</td><td><span class="status s-warn">400 two details</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — warranty_policy on an ADMIN row</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — company_name on a RECEIVER</td><td><span class="status s-ok">200 no provider field sent</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a BOTH</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — empty body</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only</td><td><span class="status s-warn">400 names the key</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>username</code> and <code>password</code></td><td><span class="status s-warn">400 names both</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>email</code> in one body</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>service_term</code> on a RECEIVER</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a PROVIDER whose <code>provider</code> row was deleted by hand</td><td><span class="status s-ok">200 row recreated</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — phone <code>abc</code></td><td><span class="status s-warn">400 names phone</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — website <code>javascript:</code></td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/999999</td><td>PATCH — unknown id</td><td><span class="status s-warn">404</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/abc</td><td>PATCH — non-numeric id</td><td><span class="status s-warn">400 path params</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>GET after the edits above</td><td><span class="status s-ok">200 all present</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH company_name — after the refactor</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH <code>address: null</code> — after the refactor</td><td><span class="status s-ok">200 cleared</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH company_type — after the refactor</td><td><span class="status s-ok">200 replaced</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH service_term as a RECEIVER</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH service_term as a PROVIDER</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH tag repeated in one request</td><td><span class="status s-warn">409</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -1318,6 +1401,12 @@ TOKEN=$(npx tsx -e "import './src/env';
           <li><strong>No route guard, and only one logout button.</strong> There is no <code>middleware.ts</code>, so an unauthenticated visitor reaches any page and each one handles its own <span class="status s-deny">401</span> — <code>account-settings</code> and <code>profile/edit</code> hand-roll the same block. Logout exists only on <code>/dev/session</code>.</li>
           <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>, US1-5 added <code>PATCH</code> beside it, and <code>PATCH /companies/me/credentials</code> now sits under both.</li>
           <li><strong>No way to change an <code>account_type</code>.</strong> <code>PATCH /companies/me</code> edits the profile and <code>PATCH /companies/me/credentials</code> the login identity, but moving a company between <code>PROVIDER</code>, <code>RECEIVER</code>, and <code>BOTH</code> means adding or removing subtype rows and restamping the token's <code>role</code> — still an endpoint nobody has written.</li>
+          <li><strong>Nothing reads <code>company.deleted_at</code>.</strong> The soft-delete
+          column exists, but no endpoint sets it and none filters on it — the admin list counts
+          and returns every row, and <a href="#admin-company-accounts">the admin edit</a> does
+          not refuse a soft-deleted company. Whoever writes the delete story settles that policy
+          for the list, the detail, and the edit at once; guessing it here would have made the
+          edit the only verb in the trio that disagreed with the other two.</li>
           <li><strong>Nothing verifies a new email address.</strong> The change takes effect immediately, so a typo locks a company out of its own login until an admin fixes the row — and there is no admin. A confirmation link is the missing half.</li>
         </ul>
       </article>

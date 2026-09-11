@@ -91,7 +91,8 @@ export default function CertificatePage() {
 
                 <button
                     onClick={() => {
-                        setCertificateToEdit(certificates[0]);
+                        // Empty list means there is nothing to edit.
+                        setCertificateToEdit(certificates[0] ?? null);
                         setIsEditOpen(true);
                     }}
                     className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
