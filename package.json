@@ -19,8 +19,13 @@
         "packages/*"
     ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "prepare": "husky"
+        "prepare": "husky",
+        "lint": "npm run lint --workspaces --if-present",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "build": "npm run build --workspaces --if-present",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "verify": "npm run format:check && npm run lint && npm run typecheck"
     },
     "devDependencies": {
         "husky": "^9.1.7",
@@ -31,6 +36,9 @@
     "lint-staged": {
         "**/*.{js,jsx,mjs,cjs,ts,tsx,json,css,md,yml,yaml}": [
             "prettier --write"
+        ],
+        "**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --fix --no-warn-ignored"
         ]
     }
 }
