@@ -2,11 +2,22 @@ import type { Request, Response } from 'express';
 
 import { prisma } from '../lib/prisma';
 
-import { parseBody } from '../middleware/validate';
+import { parseBody, parseParams } from '../middleware/validate';
 
-import { createCertificateSchema } from '../schemas/certificate.schema';
+import {
+    certificateIdParamSchema,
+    createCertificateSchema,
+    updateCertificateSchema,
+} from '../schemas/certificate.schema';
 
-import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    BUCKETS,
+} from '../lib/storage';
+import { ApiError } from '../lib/ApiError';
+import { omitUndefined } from '../lib/objects';
 
 export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
@@ -61,4 +72,106 @@ export async function createCertificate(req: Request, res: Response) {
 
         throw error;
     }
+}
+
+export async function getCertificatesByProvider(req: Request, res: Response) {
+    const providerId = Number(req.auth!.sub);
+    const certificates = await prisma.certificate.findMany({
+        where: { provider_id: providerId },
+        orderBy: { certificate_id: 'desc' },
+    });
+    return res.status(200).json(certificates);
+}
+
+export async function updateCertificate(req: Request, res: Response) {
+    const providerId = Number(req.auth!.sub);
+    const { certificateId } = parseParams(certificateIdParamSchema, req.params);
+
+    const body = parseBody(updateCertificateSchema, req.body);
+
+    // Fetch existing certificate for ownership and date merging
+    const existingCertificate = await prisma.certificate.findFirst({
+        where: {
+            certificate_id: certificateId,
+            provider_id: providerId,
+        },
+    });
+
+    if (!existingCertificate) {
+        throw ApiError.notFound('Certificate not found');
+    }
+
+    // Merge state for date validation
+    const issueYear =
+        body.issue_year !== undefined
+            ? body.issue_year
+            : existingCertificate.issue_year;
+    const issueMonth =
+        body.issue_month !== undefined
+            ? body.issue_month
+            : existingCertificate.issue_month;
+    const expireYear =
+        body.expire_year !== undefined
+            ? body.expire_year
+            : existingCertificate.expire_year;
+    const expireMonth =
+        body.expire_month !== undefined
+            ? body.expire_month
+            : existingCertificate.expire_month;
+
+    if (
+        issueYear != null &&
+        issueMonth != null &&
+        expireYear != null &&
+        expireMonth != null
+    ) {
+        const issueDate = issueYear * 100 + issueMonth;
+        const expireDate = expireYear * 100 + expireMonth;
+
+        if (expireDate < issueDate) {
+            throw ApiError.badRequest(
+                'Expiration date cannot be before the issue date',
+            );
+        }
+    }
+
+    const updatedCertificate = await prisma.certificate.update({
+        where: { certificate_id: certificateId },
+        data: omitUndefined(body),
+    });
+
+    return res.status(200).json({
+        message: 'Certificate updated successfully',
+        certificate: updatedCertificate,
+    });
+}
+
+export async function deleteCertificate(req: Request, res: Response) {
+    const providerId = Number(req.auth!.sub);
+    const { certificateId } = parseParams(certificateIdParamSchema, req.params);
+
+    const existingCertificate = await prisma.certificate.findFirst({
+        where: {
+            certificate_id: certificateId,
+            provider_id: providerId,
+        },
+    });
+
+    if (!existingCertificate) {
+        throw ApiError.notFound('Certificate not found');
+    }
+
+    await prisma.certificate.delete({
+        where: { certificate_id: certificateId },
+    });
+
+    // Best-effort cleanup: the row is gone either way.
+    if (existingCertificate.cert_image) {
+        await removeFromStorageByUrl(
+            existingCertificate.cert_image,
+            BUCKETS.CERTIFICATE,
+        );
+    }
+
+    return res.status(204).end();
 }

@@ -317,10 +317,10 @@ set and omitted tags are deleted, so an edit form must pre-fill all of them.
 
 `service_portfolio` holds a provider's work-sample links, one row per link,
 reached through `listing -> service`. It has no owner column: the company is
-three hops away, and `getOwnedPortfolio` in `src/lib/portfolio.ts` walks that
-chain in a single nested `select`. Reuse it for anything that touches a
-portfolio row — it returns the row, throws `404` when the id is unknown and
-`403` when the listing belongs to another company.
+three hops away, and `assertPortfolioOwned` in `src/lib/portfolio.ts` walks
+that chain in a single nested `select`. Reuse it for anything that touches a
+portfolio row — it throws `404` when the id is unknown and `403` when the
+listing belongs to another company.
 
 `portfolio_id` is a surrogate key, added so a row can be named in a URL; the
 table used to be identified by `(listing_id, portfolio_link)`. That pair is
@@ -329,19 +329,35 @@ carry the same link twice. A surrogate key replaces the natural key as
 identity, never as a constraint; dropping the `@@unique` would quietly allow
 duplicates that the old composite primary key made impossible.
 
-| Method   | Path                       | Guard                                    |
-| -------- | -------------------------- | ---------------------------------------- |
-| `PATCH`  | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')` |
-| `DELETE` | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')` |
+| Method   | Path                       | Guard                                                   |
+| -------- | -------------------------- | ------------------------------------------------------- |
+| `GET`    | `/portfolios`              | none — public                                           |
+| `GET`    | `/portfolios/:portfolioId` | none — public                                           |
+| `POST`   | `/portfolios`              | `requireAuth`, `requireRole('provider')`, `uploadImage` |
+| `PATCH`  | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')`                |
+| `DELETE` | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')`                |
+
+The two `GET`s are public: a work sample is meant to be seen, and neither
+reads anything the profile does not already show. `GET /portfolios` takes
+`listingId` and `companyId`, both optional and combinable — `companyId`
+filters through `service -> listing` because the row itself has no owner
+column. Left off, it answers with every row in the table. Ordered by
+`development_date` desc, no pagination, and the body is a bare array.
+
+`POST` is `multipart/form-data`, not JSON: the image is the file part
+`portfolio_image` (png/jpeg/webp, 5 MB, see `src/middleware/upload.ts`) and
+the rest are text parts. `listing_id` is required and is checked against the
+caller's company _before_ the upload, so a rejected request never leaves a
+file behind; a failed insert afterwards removes the one it just wrote.
 
 `PATCH` is a partial update — send any subset of `portfolio_name`,
-`portfolio_description`, `development_date`, `portfolio_image`,
-`portfolio_link` and only those columns change; an empty body is a `400`.
-`portfolio_description` is the only nullable one. Returns the full row;
-retargeting a link the listing already carries is a `409`. `DELETE` returns
-`204` and hard-deletes — nothing references a portfolio row, and a
-soft-deleted one would keep its slot in the unique index, blocking that link
-from ever being added back. Both
-check ownership before any write, and the two failure cases stay distinct:
-an id that does not exist is `404`, one that belongs to another company is
-`403`. Creating a row (`POST`) is a separate story and is not wired yet.
+`portfolio_description`, `development_date`, `portfolio_link` and only those
+columns change; an empty body is a `400`. `portfolio_description` is the only
+nullable one. `portfolio_image` is deliberately not editable: changing it
+means another upload, which is a multipart route rather than this one.
+Returns the full row; retargeting a link the listing already carries is a
+`409`. `DELETE` returns `204` and hard-deletes — nothing references a
+portfolio row, and a soft-deleted one would keep its slot in the unique
+index, blocking that link from ever being added back. All three writes check
+ownership first, and the two failure cases stay distinct: an id that does not
+exist is `404`, one that belongs to another company is `403`.

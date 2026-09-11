@@ -1071,6 +1071,61 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
     <section class="group" id="portfolios">
       <h2>Portfolios</h2>
 
+      <article class="entry" id="list-portfolios" data-tags="portfolio get list public read work sample companyid listingid query filter array">
+        <h3>How do I read a company's work samples?</h3>
+        <p class="answer"><code>GET /portfolios?companyId=4</code> — public, no token.</p>
+        <pre><code>curl -s 'localhost:4000/portfolios?companyId=4'      <span class="c-dim"># one company's rows</span>
+curl -s 'localhost:4000/portfolios?listingId=12'    <span class="c-dim"># one listing's rows</span>
+curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one row by id</span></code></pre>
+        <p class="note">
+          Both <code>GET</code>s are public: a work sample exists to be seen, and neither returns anything
+          the profile page doesn't already show. That's why the front end reads them with no token, and why
+          they sit above the <code>requireAuth</code> routes in <code>portfolio.routes.ts</code>.
+        </p>
+        <p class="note">
+          <code>listingId</code> and <code>companyId</code> are both optional and can be combined.
+          <code>companyId</code> filters through <code>service → listing</code>, the same chain
+          <code>assertPortfolioOwned</code> walks, because the row has no owner column of its own. Leave
+          both off and you get <em>every</em> row in the table — fine now, worth paginating later. The body
+          is a bare array, ordered by <code>development_date</code> newest first.
+        </p>
+        <p class="note">
+          <code>development_date</code> comes back as <code>YYYY-MM-DD</code>, not a timestamp:
+          <code>toServicePortfolio</code> in <code>src/lib/portfolio.ts</code> slices the ISO string, so
+          every route that returns a portfolio row agrees on the shape. Hand raw Prisma output to
+          <code>res.json()</code> and you'd leak a <code>T00:00:00.000Z</code> the client has to strip.
+        </p>
+      </article>
+
+      <article class="entry" id="add-portfolio" data-tags="portfolio post create add work sample upload image multipart form-data supabase storage 201 403 409">
+        <h3>How does a company add a work sample?</h3>
+        <p class="answer"><code>POST /portfolios</code> — <code>requireRole('provider')</code>, and
+          <code>multipart/form-data</code> rather than JSON, because it carries the image.</p>
+        <pre><code>curl -s -X POST localhost:4000/portfolios -H "Authorization: Bearer $TOKEN"   -F 'listing_id=12'   -F 'portfolio_name=Inventory dashboard'   -F 'portfolio_description=Stock tracking for a small warehouse'   -F 'development_date=2026-05-01'   -F 'portfolio_link=https://example.com/work/inventory'   -F 'portfolio_image=@./shot.png'                  <span class="c-dim"># 201</span></code></pre>
+        <p class="note">
+          Note the <code>-F</code> flags, not <code>-d</code>. The file part is <code>portfolio_image</code>
+          — PNG, JPEG or WebP, 5MB ceiling, enforced by <code>uploadImage</code> in
+          <code>src/middleware/upload.ts</code>. The allowlist is deliberate rather than
+          <code>image/*</code>: <code>image/svg+xml</code> is a document the browser runs scripts from once
+          the public URL is opened. Everything else in the body arrives as a text part, which is why the
+          schema leans on <code>z.coerce</code> for <code>listing_id</code> — form fields are always strings.
+        </p>
+        <p class="note">
+          Ownership is checked <em>before</em> the upload, not after. A <code>listing_id</code> that isn't
+          yours is <span class="status s-warn">403</span> and an unknown one is
+          <span class="status s-warn">404</span>, and in both cases nothing was written to storage yet. If
+          the database insert fails afterwards, <code>removeFromStorage</code> deletes the file that was
+          just written — otherwise a rejected request would leave an orphan in the bucket that nothing
+          points at and nothing cleans up.
+        </p>
+        <p class="note">
+          A <code>portfolio_link</code> the listing already carries is <span class="status s-warn">409</span>,
+          the same <code>@@unique([listing_id, portfolio_link])</code> that
+          <a href="#edit-portfolio"><code>PATCH</code></a> hits. The response is the created row, in the
+          same shape the <code>GET</code>s return.
+        </p>
+      </article>
+
       <article class="entry" id="edit-portfolio" data-tags="portfolio patch delete work sample edit remove listing service ownership 404 403 409 assertportfolioowned">
         <h3>How does a company edit or remove a work sample (portfolio)?</h3>
         <p class="answer"><code>PATCH /portfolios/:portfolioId</code> and <code>DELETE /portfolios/:portfolioId</code>, both <code>requireRole('provider')</code>.</p>
@@ -1097,8 +1152,9 @@ curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" 
           other field is required whenever it's present at all, and none accepts <code>null</code>.
           <code>development_date</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
           fails validation rather than silently shifting the stored day across a timezone.
-          <code>portfolio_image</code> and <code>portfolio_link</code> accept only <code>http</code>/<code>https</code>
-          URLs.
+          <code>portfolio_link</code> accepts only <code>http</code>/<code>https</code> URLs.
+          <code>portfolio_image</code> is not editable here: replacing the picture means uploading another
+          file, which is <a href="#add-portfolio">the multipart <code>POST</code></a>, not this route.
         </p>
         <p class="note">
           A duplicate <code>portfolio_link</code> on the same listing is <span class="status s-warn">409</span>

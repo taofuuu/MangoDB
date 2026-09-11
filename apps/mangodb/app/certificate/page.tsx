@@ -1,31 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import AddFormModal from '@/components/forms/AddCertificateForm';
+import { useEffect, useState } from 'react';
+import AddCertificateForm, {
+    CertificateResponse,
+} from '@/components/forms/AddCertificateForm';
 import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
-import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
+import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
+import { apiFetch } from '@/lib/api';
 
 export default function CertificatePage() {
+    const [certificates, setCertificates] = useState<CertificateData[]>([]);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-    // Store all certificates
-    const [certificates, setCertificates] = useState<CertificateData[]>([
-        {
-            name: 'Microsoft Certified: Azure Fundamentals',
-            organize: 'Microsoft',
-            month: 'March',
-            year: '2023',
-            exMonth: 'March',
-            exYear: '2026',
-            credID: 'AZ-900-123456',
-            credURL:
-                'https://learn.microsoft.com/certifications/azure-fundamentals',
-        },
-    ]);
 
     // Certificate currently being edited
     const [certificateToEdit, setCertificateToEdit] =
@@ -35,13 +25,44 @@ export default function CertificatePage() {
     const [certificateToDelete, setCertificateToDelete] =
         useState<CertificateData | null>(null);
 
+    useEffect(() => {
+        const fetchCertificates = async () => {
+            try {
+                const res = await apiFetch<CertificateResponse[]>(
+                    '/certificates/provider',
+                    { method: 'GET' },
+                );
+
+                setCertificates(
+                    res.map((cert) => ({
+                        id: cert.certificate_id,
+                        name: cert.cert_title,
+                        organize: cert.organization,
+                        month: cert.issue_month?.toString() ?? undefined,
+                        year: cert.issue_year?.toString() ?? undefined,
+                        exMonth: cert.expire_month?.toString() ?? undefined,
+                        exYear: cert.expire_year?.toString() ?? undefined,
+                        credID: cert.credential_id ?? undefined,
+                        credURL: cert.credential_url ?? undefined,
+                    })),
+                );
+            } catch (err) {
+                setLoadError(
+                    err instanceof Error
+                        ? err.message
+                        : 'Could not load certificates.',
+                );
+            }
+        };
+
+        void fetchCertificates();
+    }, []);
+
     // -------------------------
     // ADD
     // -------------------------
     const handleAddCertificate = (newCertificate: CertificateData) => {
         setCertificates((prev) => [...prev, newCertificate]);
-
-        console.log('Added certificate:', newCertificate);
     };
 
     // -------------------------
@@ -49,14 +70,14 @@ export default function CertificatePage() {
     // -------------------------
     const handleEditCertificate = (updatedCertificate: CertificateData) => {
         setCertificates((prev) =>
-            prev.map((certificate) =>
-                certificate === certificateToEdit
-                    ? updatedCertificate
-                    : certificate,
-            ),
+            prev.map((certificate) => {
+                const isMatch =
+                    (certificateToEdit?.id != null &&
+                        certificate.id === certificateToEdit.id) ||
+                    certificate === certificateToEdit;
+                return isMatch ? updatedCertificate : certificate;
+            }),
         );
-
-        console.log('Updated certificate:', updatedCertificate);
 
         setCertificateToEdit(null);
         setIsEditOpen(false);
@@ -68,10 +89,14 @@ export default function CertificatePage() {
     const handleDeleteCertificate = () => {
         if (!certificateToDelete) return;
 
-        console.log('Certificate deleted:', certificateToDelete);
-
         setCertificates((prev) =>
-            prev.filter((certificate) => certificate !== certificateToDelete),
+            prev.filter((certificate) => {
+                const isMatch =
+                    (certificateToDelete.id != null &&
+                        certificate.id === certificateToDelete.id) ||
+                    certificate === certificateToDelete;
+                return !isMatch;
+            }),
         );
 
         setCertificateToDelete(null);
@@ -133,10 +158,18 @@ export default function CertificatePage() {
             </div>
 
             {/* ------------------------- */}
+            {/* Load error */}
+            {/* ------------------------- */}
+            {loadError && (
+                <p role="alert" className="mt-4 text-sm text-[#C5483E]">
+                    {loadError}
+                </p>
+            )}
+            {/* ------------------------- */}
             {/* ADD MODAL */}
             {/* ------------------------- */}
 
-            <AddFormModal
+            <AddCertificateForm
                 isOpen={isAddOpen}
                 onClose={() => setIsAddOpen(false)}
                 onSave={handleAddCertificate}
@@ -160,9 +193,14 @@ export default function CertificatePage() {
             {/* DELETE MODAL */}
             {/* ------------------------- */}
 
-            <DeleteCertificateModal
+            <DeleteCertificateForm
                 isOpen={isDeleteOpen}
-                onClose={() => setIsDeleteOpen(false)}
+                certificate={certificateToDelete ?? undefined}
+                onClose={() => {
+                    setIsDeleteOpen(false);
+                    setCertificateToDelete(null);
+                }}
+                onConfirm={handleDeleteCertificate}
             />
         </main>
     );
