@@ -8,7 +8,12 @@ const STORAGE_HOST = /^[^.]+\.supabase\.co$/;
 
 export function portfolioImageSrc(url: string): string {
     try {
-        return STORAGE_HOST.test(new URL(url).hostname)
+        const parsed = new URL(url);
+
+        // remotePatterns pins the protocol too, so http on the right host
+        // still throws.
+        return parsed.protocol === 'https:' &&
+            STORAGE_HOST.test(parsed.hostname)
             ? url
             : '/portfolio-placeholder.svg';
     } catch {
