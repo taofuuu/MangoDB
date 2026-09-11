@@ -2,6 +2,8 @@
 
 import { type FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import { ApiRequestError } from '@/lib/api';
 import { adminLogin } from '@/lib/session';
 
@@ -107,7 +109,11 @@ export default function AdminLoginForm() {
                     aria-pressed={showPassword}
                     className="absolute right-[1.04vw] top-1/2 -translate-y-1/2 rounded-input p-[0.31vw] text-[#757575] hover:text-[#497B93] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
                 >
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    {showPassword ? (
+                        <EyeOff className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]" />
+                    ) : (
+                        <Eye className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]" />
+                    )}
                 </button>
             </div>
 
@@ -122,46 +128,14 @@ export default function AdminLoginForm() {
                 {error ?? '\u00A0'}
             </p>
 
-            <button
+            <Button
                 type="submit"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
-                className="h-[4.89vh] min-h-[44px] w-full rounded-button bg-[#497B93] text-sm !font-[600] text-white transition-colors hover:bg-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93] disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-[4.89vh] min-h-[44px] w-full text-sm !font-[600] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
             >
                 {isSubmitting ? 'Logging in…' : 'Login'}
-            </button>
+            </Button>
         </form>
-    );
-}
-
-function EyeIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
-            <circle cx="12" cy="12" r="3" />
-        </svg>
-    );
-}
-
-function EyeOffIcon() {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-        >
-            <path d="m3 3 18 18" />
-            <path d="M10.6 6.2A11.7 11.7 0 0 1 12 6c6.5 0 10 6 10 6a17.8 17.8 0 0 1-2.1 2.8M6.1 6.1C3.4 8 2 12 2 12s3.5 6 10 6a10.7 10.7 0 0 0 3.4-.5" />
-        </svg>
     );
 }

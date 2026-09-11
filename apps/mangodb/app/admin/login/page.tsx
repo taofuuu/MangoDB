@@ -28,8 +28,8 @@ export default function AdminLoginPage() {
                             <Image
                                 src="/assets/MangoDB_Logo_nobg.png"
                                 alt="MangoDB logo"
-                                width={82}
-                                height={82}
+                                width={256}
+                                height={256}
                                 priority
                                 className="h-[20vh] min-h-[64px] w-auto"
                             />
