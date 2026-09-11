@@ -23,6 +23,7 @@ export const adminCompanyListSelect = {
     company_description: true,
     phone: true,
     account_type: true,
+    deleted_at: true,
     ...ratingSelect,
 } as const;
 
@@ -68,6 +69,7 @@ interface CompanyAccountSummaryRow extends RatingSource {
     company_description: string | null;
     phone: string;
     account_type: string;
+    deleted_at: Date | null;
 }
 
 export function toCompanyAccountSummary(
@@ -79,6 +81,9 @@ export function toCompanyAccountSummary(
         company_description: company.company_description,
         phone: company.phone,
         account_type: company.account_type as AccountType,
+        deleted_at: !company.deleted_at
+            ? null
+            : company.deleted_at.toISOString(),
         ...getRating(company),
     };
 }
