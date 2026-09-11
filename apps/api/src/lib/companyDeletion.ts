@@ -5,9 +5,8 @@ import { prisma } from './prisma';
 // cascade, no cleanup — so listings, proposals, projects, and reviews stay
 // exactly where they are for the history that depends on them.
 //
-// Idempotent on purpose: a second call just re-stamps the timestamp, which
-// matters because the eligibility check and the update cannot be one atomic
-// step, so a caller may end up racing itself.
+// Idempotent: the deleted_at: null guard means a second call matches no rows,
+// so the first deletion timestamp is the one that sticks.
 export async function softDeleteCompany(companyId: number): Promise<void> {
     await prisma.company.updateMany({
         where: { company_id: companyId, deleted_at: null },
