@@ -126,31 +126,6 @@ export default function CompaniesPage() {
                                 className="h-[1.30vh] w-[0.73vw]"
                             />
                         </button>
-                        <div className="flex gap-[0.21vw] rounded-input bg-[#E5E5E5] p-[0.16vw]">
-                            <button
-                                type="button"
-                                aria-label="Grid view"
-                                aria-pressed="true"
-                                className="rounded-input bg-white p-[0.42vw] text-[#171717] shadow-sm"
-                            >
-                                <LayoutGrid
-                                    aria-hidden="true"
-                                    className="h-[1.48vh] w-[0.83vw]"
-                                />
-                            </button>
-                            <button
-                                type="button"
-                                disabled
-                                aria-label="List view"
-                                title="List view is not part of this task"
-                                className="rounded-input p-[0.42vw] text-[#888888] disabled:cursor-not-allowed"
-                            >
-                                <Menu
-                                    aria-hidden="true"
-                                    className="h-[1.48vh] w-[0.83vw]"
-                                />
-                            </button>
-                        </div>
                     </div>
                 </header>
 
