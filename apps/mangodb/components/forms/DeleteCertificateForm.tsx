@@ -23,7 +23,6 @@ export default function DeleteCertificateForm({
 }: DeleteCertificateFormProps) {
     const handleConfirm = async () => {
         if (certificate?.id) {
-            console.log('heyyyyy');
             await apiFetch<void>(`/certificates/${certificate.id}`, {
                 method: 'DELETE',
             });
