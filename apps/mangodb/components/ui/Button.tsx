@@ -26,7 +26,7 @@ export default function Button({
     return (
         <button
             type={type}
-            className={`rounded-button transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+            className={`rounded-button transition-colors disabled:cursor-not-allowed disabled:opacity-50 text-md ${variants[variant]} ${className}`}
             {...props}
         />
     );
