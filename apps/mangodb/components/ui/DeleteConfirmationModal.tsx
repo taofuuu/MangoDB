@@ -7,7 +7,7 @@ export type DeleteModalProps = {
     isDeleting?: boolean;
     onClose: () => void;
     // Optional action. Without it, confirmation simply closes the popup.
-    onConfirm?: () => void | Promise<void>;
+    onConfirm?: (() => void | Promise<void>) | undefined;
 };
 
 type DeleteConfirmationModalProps = DeleteModalProps & {
