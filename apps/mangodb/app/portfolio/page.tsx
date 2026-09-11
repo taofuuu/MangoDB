@@ -44,11 +44,6 @@ export default function PortfolioPage() {
             });
     }, []);
 
-    // No detail page yet, so the card opens the work sample itself.
-    const handleOpen = (item: ServicePortfolio) => {
-        window.open(item.portfolio_link, '_blank', 'noopener');
-    };
-
     // The modal shows any thrown error and only closes once this resolves.
     const handleDelete = async () => {
         if (!pendingDelete) return;
@@ -110,7 +105,6 @@ export default function PortfolioPage() {
                         <PortfolioCard
                             key={item.portfolio_id}
                             item={item}
-                            onClick={handleOpen}
                             onDelete={setPendingDelete}
                         />
                     ))}
@@ -123,7 +117,6 @@ export default function PortfolioPage() {
                         <PortfolioRow
                             key={item.portfolio_id}
                             item={item}
-                            onClick={handleOpen}
                             onDelete={setPendingDelete}
                         />
                     ))}
