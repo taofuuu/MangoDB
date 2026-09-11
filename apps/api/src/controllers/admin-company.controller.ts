@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type { CompanyAccountListResponse } from '@mangodb/shared';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
+import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from '../lib/ApiError';
 import {
     adminCompanyDetailSelect,
@@ -27,16 +28,41 @@ export async function listCompanyAccounts(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { page, pageSize } = parseQuery(
+    const { page, pageSize, q, filter, includeDeleted } = parseQuery(
         companyAccountListQuerySchema,
         req.query,
     );
     const skip = (page - 1) * pageSize;
-
+    // schema.prisma's rule for deleted_at: a discovery query filters it out.
+    // includeDeleted is the opt-out, for an admin auditing removed accounts.
+    const where: Prisma.companyWhereInput = {
+        ...(q && {
+            OR: [
+                { company_name: { contains: q, mode: 'insensitive' } },
+                { company_description: { contains: q, mode: 'insensitive' } },
+                { phone: { contains: q, mode: 'insensitive' } },
+                { email: { contains: q, mode: 'insensitive' } },
+            ],
+        }),
+        ...(filter && {
+            account_type: {
+                in: [
+                    filter,
+                    ...(filter === 'PROVIDER' || filter === 'RECEIVER'
+                        ? ['BOTH']
+                        : []),
+                ],
+            },
+        }),
+        ...(!includeDeleted && {
+            deleted_at: null,
+        }),
+    };
     const [totalItems, companies] = await prisma.$transaction([
-        prisma.company.count(),
+        prisma.company.count({ where }),
         prisma.company.findMany({
             skip,
+            where,
             take: pageSize,
             orderBy: [{ company_name: 'asc' }, { company_id: 'asc' }],
             select: adminCompanyListSelect,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export type EditAccountMode = 'username' | 'email' | 'password';
 
@@ -62,8 +62,20 @@ export default function EditAccountModal({
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Reset fields on open or mode switch
-    useEffect(() => {
+    // Reset fields on open or mode switch. Adjusted during render rather than
+    // in an effect: an effect would paint the previous mode's values once
+    // before correcting them.
+    const [lastOpened, setLastOpened] = useState({
+        isOpen,
+        mode,
+        currentValue,
+    });
+    if (
+        lastOpened.isOpen !== isOpen ||
+        lastOpened.mode !== mode ||
+        lastOpened.currentValue !== currentValue
+    ) {
+        setLastOpened({ isOpen, mode, currentValue });
         if (isOpen) {
             setInputValue(currentValue);
             setNewPassword('');
@@ -75,7 +87,7 @@ export default function EditAccountModal({
             setError(null);
             setIsSaving(false);
         }
-    }, [isOpen, mode, currentValue]);
+    }
 
     if (!isOpen) return null;
 

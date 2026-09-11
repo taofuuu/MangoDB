@@ -6,7 +6,7 @@ type InputProps = {
     onChange: (value: string) => void;
     // Filled in by the "Validate required profile fields and formats" task.
     // The slot lives here so adding a rule never has to touch this file.
-    error?: string;
+    error?: string | undefined;
 } & Omit<
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'className'

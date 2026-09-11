@@ -8,7 +8,7 @@ type CompanyTypeFieldProps = {
     label: string;
     value: string[];
     onChange: (value: string[]) => void;
-    error?: string;
+    error?: string | undefined;
 };
 
 // The tags box from the design: chips wrap inside a bordered area, and the

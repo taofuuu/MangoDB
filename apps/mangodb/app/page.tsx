@@ -48,6 +48,11 @@ const ROUTES = [
         detail: 'list of company that can be viewed by admin',
     },
     {
+        href: '/profile/edit?companyId=1',
+        title: 'Edit account as admin',
+        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
+    },
+    {
         href: '/register',
         title: 'Register',
         detail: 'Register new user',
@@ -56,6 +61,16 @@ const ROUTES = [
         href: '/admin/login',
         title: 'Admin Login',
         detail: 'login for admin role',
+    },
+    {
+        href: '/profile/view/provider',
+        title: 'View Profile (Provider)',
+        detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
+    },
+    {
+        href: '/profile/view/receiver',
+        title: 'View Profile (Receiver)',
+        detail: 'View profile page for Receiver role (Vertical company card, Job listings).',
     },
 ];
 
