@@ -6,38 +6,30 @@ import type { AccountType } from '@mangodb/shared';
 import RegisterLayout from '@/components/register/RegisterLayout';
 import RoleStep from '@/components/register/RoleStep';
 import CompanyInfoStep, {
-    CompanyType,
     type CompanyInfo,
 } from '@/components/register/CompanyInfoStep';
-import AccountStep, {
+import AccountInfoStep, {
     type AccountInfo,
 } from '@/components/register/AccountStep';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-type Step = 1 | 2 | 3;
-
-type AvailabilityResponse = {
-    usernameAvailable: boolean;
-    emailAvailable: boolean;
-};
+export enum RegisterStep {
+    SelectRole = 'SELECT_ROLE',
+    CompanyInfo = 'COMPANY_INFO',
+    AccountInfo = 'ACCOUNT_INFO',
+    Success = 'SUCCESS',
+}
 
 export default function RegisterPage() {
-    /* =====================================================
-     STEP
-  ===================================================== */
+    /* ================= STATE ================= */
 
-    const [step, setStep] = useState<Step>(1);
-
-    /* =====================================================
-     ACCOUNT TYPE
-  ===================================================== */
-
+    const [currentStep, setCurrentStep] = useState<RegisterStep>(
+        RegisterStep.SelectRole,
+    );
     const [accountType, setAccountType] = useState<AccountType | null>(null);
-
-    /* =====================================================
-     COMPANY INFO
-  ===================================================== */
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const [companyInfo, setCompanyInfo] = useState<CompanyInfo>({
         companyName: '',
@@ -49,344 +41,171 @@ export default function RegisterPage() {
         website: '',
     });
 
-    /* =====================================================
-     ACCOUNT INFO
-  ===================================================== */
-
     const [accountInfo, setAccountInfo] = useState<AccountInfo>({
         username: '',
         password: '',
         confirmPassword: '',
     });
 
-    /* =====================================================
-     AVAILABILITY
-  ===================================================== */
+    /* ================= NAVIGATION ================= */
 
-    const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
-
-    const [usernameAvailable, setUsernameAvailable] = useState<
-        'idle' | 'checking' | 'available' | 'taken'
-    >('idle');
-
-    /* =====================================================
-     ERROR / SUBMIT
-  ===================================================== */
-
-    const [serverError, setServerError] = useState('');
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    /* =====================================================
-     CHECK USERNAME / EMAIL AVAILABILITY
-  ===================================================== */
-
-    const checkAvailability = async (username: string, email: string) => {
-        const normalizedUsername = username.trim().toLowerCase();
-
-        const normalizedEmail = email.trim().toLowerCase();
-
-        if (!normalizedUsername || !normalizedEmail) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/auth/check-availability`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: normalizedUsername,
-                    email: normalizedEmail,
-                }),
-            });
-
-            if (!response.ok) {
-                return;
-            }
-
-            const data = (await response.json()) as AvailabilityResponse;
-
-            setUsernameAvailable(
-                data.usernameAvailable ? 'available' : 'taken',
-            );
-
-            setEmailAvailable(data.emailAvailable);
-        } catch {
-            // Final registration still has
-            // server-side uniqueness checks.
+    const goBack = () => {
+        setErrorMessage('');
+        if (currentStep === RegisterStep.AccountInfo) {
+            setCurrentStep(RegisterStep.CompanyInfo);
+        } else if (currentStep === RegisterStep.CompanyInfo) {
+            setCurrentStep(RegisterStep.SelectRole);
         }
     };
 
-    /* =====================================================
-     USERNAME BLUR
-  ===================================================== */
-
-    const handleUsernameBlur = () => {
-        const username = accountInfo.username.trim().toLowerCase();
-
-        if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
-            setUsernameAvailable('idle');
-            return;
-        }
-
-        setUsernameAvailable('checking');
-
-        void checkAvailability(accountInfo.username, companyInfo.email);
+    const goToCompanyInfo = () => {
+        setErrorMessage('');
+        setCurrentStep(RegisterStep.CompanyInfo);
     };
 
-    /* =====================================================
-     STEP 1 → STEP 2
-  ===================================================== */
-
-    const goToStep2 = () => {
-        if (!accountType) {
-            return;
-        }
-
-        setServerError('');
-        setStep(2);
+    const goToAccountInfo = () => {
+        setErrorMessage('');
+        setCurrentStep(RegisterStep.AccountInfo);
     };
 
-    /* =====================================================
-     STEP 2 → STEP 3
-  ===================================================== */
-
-    const goToStep3 = () => {
-        console.log(companyInfo);
-        const valid =
-            companyInfo.companyName.trim() &&
-            companyInfo.phoneNumber.trim() &&
-            companyInfo.email.trim() &&
-            companyInfo.companyType.length > 0 &&
-            companyInfo.companyType.every((type: CompanyType) => type.trim());
-
-        if (!valid) {
-            return;
-        }
-
-        setServerError('');
-
-        void checkAvailability(accountInfo.username, companyInfo.email);
-
-        setStep(3);
-    };
-
-    /* =====================================================
-     STEP 3 → SUBMIT
-  ===================================================== */
+    /* ================= SUBMIT ================= */
 
     const submitRegister = async () => {
-        setServerError('');
-
-        /* ---------- account type ---------- */
-
-        if (!accountType) {
-            setStep(1);
-            return;
-        }
-
-        /* ---------- username ---------- */
-
-        if (usernameAvailable !== 'available') {
-            setServerError('Please choose an available username.');
-            return;
-        }
-
-        /* ---------- password ---------- */
-
-        if (
-            accountInfo.password.length < 8 ||
-            accountInfo.password.length > 72
-        ) {
-            setServerError('Password must be between 8 and 72 characters.');
-            return;
-        }
-
-        /* ---------- confirm password ---------- */
-
-        if (accountInfo.password !== accountInfo.confirmPassword) {
-            setServerError('Passwords do not match.');
-            return;
-        }
-
-        /* ---------- submitting ---------- */
-
         setIsSubmitting(true);
+        setErrorMessage('');
+
+        // Clean empty string values so optional fields aren't validated as invalid URLs or strings
+        const websiteValue = companyInfo.website.trim();
+        const addressValue = companyInfo.address.trim();
+        const descriptionValue = companyInfo.companyDescription.trim();
+
+        const payload = {
+            company_name: companyInfo.companyName,
+            company_description: descriptionValue || undefined,
+            company_type: companyInfo.companyType,
+            phone: companyInfo.phoneNumber,
+            email: companyInfo.email,
+            address: addressValue || undefined,
+            website: websiteValue !== '' ? websiteValue : undefined,
+            account_type: accountType,
+            username: accountInfo.username,
+            password: accountInfo.password,
+        };
 
         try {
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    company_name: companyInfo.companyName.trim(),
-
-                    company_description:
-                        companyInfo.companyDescription.trim() || undefined,
-
-                    company_type: companyInfo.companyType
-                        .map((type) => type.trim())
-                        .filter(Boolean),
-
-                    phone: companyInfo.phoneNumber.trim(),
-
-                    email: companyInfo.email.trim().toLowerCase(),
-
-                    address: companyInfo.address.trim() || undefined,
-
-                    website: companyInfo.website.trim() || undefined,
-
-                    account_type: accountType,
-
-                    username: accountInfo.username.trim().toLowerCase(),
-
-                    password: accountInfo.password,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
 
-            const data = (await response.json().catch(() => null)) as {
-                accessToken?: string;
-                message?: string;
-            } | null;
-
-            /* ---------- server error ---------- */
+            const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                setServerError(
-                    data?.message ?? 'Registration failed. Please try again.',
+                const apiError =
+                    data?.message ||
+                    data?.error?.message ||
+                    'Registration failed.';
+                setErrorMessage(
+                    Array.isArray(apiError) ? apiError.join(', ') : apiError,
                 );
-
                 return;
             }
-
-            /* ---------- save token ---------- */
 
             if (data?.accessToken) {
                 localStorage.setItem('accessToken', data.accessToken);
             }
 
-            /* ---------- success ---------- */
-
-            window.location.href = '/';
+            setCurrentStep(RegisterStep.Success);
         } catch {
-            setServerError(
-                'Cannot connect to the server. Make sure the API is running.',
-            );
+            setErrorMessage('Unable to connect to the server.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    /* =====================================================
-     BACK BUTTON
-  ===================================================== */
-
-    const goBack = () => {
-        setServerError('');
-
-        if (step === 2) {
-            setStep(1);
-            return;
-        }
-
-        if (step === 3) {
-            setStep(2);
-        }
-    };
-
-    /* =====================================================
-     LAYOUT CONFIG
-  ===================================================== */
+    /* ================= LAYOUT CONFIG ================= */
 
     const layoutProps = {
-        1: {
+        [RegisterStep.SelectRole]: {
             title: 'Sign Up',
             subtitle: 'Company Role',
-
             showBack: false,
-
             nextLabel: 'Next',
-            onNext: goToStep2,
-            nextDisabled: !accountType,
+            onNext: goToCompanyInfo,
         },
-
-        2: {
+        [RegisterStep.CompanyInfo]: {
             title: 'Sign Up',
             subtitle: 'Company Information',
-
             showBack: true,
-            onBack: goBack,
-
             nextLabel: 'Next',
-            onNext: goToStep3,
-
-            nextDisabled: false,
+            onNext: goToAccountInfo,
         },
-
-        3: {
+        [RegisterStep.AccountInfo]: {
             title: 'Sign Up',
             subtitle: 'Create Your Account',
-
             showBack: true,
-            onBack: goBack,
-
             nextLabel: isSubmitting ? 'Creating...' : 'Create Account',
-
             onNext: submitRegister,
-
-            nextDisabled: isSubmitting,
         },
-    }[step];
+        [RegisterStep.Success]: {
+            title: 'Sign Up',
+            subtitle: 'Complete',
+            showBack: false,
+            nextLabel: '',
+            onNext: undefined,
+        },
+    }[currentStep];
 
-    /* =====================================================
-     RENDER
-  ===================================================== */
+    /* ================= RENDER ================= */
 
     return (
         <RegisterLayout
             title={layoutProps.title}
             subtitle={layoutProps.subtitle}
             showBack={layoutProps.showBack}
-            onBack={layoutProps.onBack}
+            onBack={goBack}
             nextLabel={layoutProps.nextLabel}
             onNext={layoutProps.onNext}
-            nextDisabled={layoutProps.nextDisabled}
+            nextDisabled={isSubmitting}
         >
-            {/* ================= STEP 1 ================= */}
+            {/* Server Error Message Display */}
+            {errorMessage && (
+                <div className="my-2 rounded-md bg-red-50 p-3 text-sm font-medium text-red-600 border border-red-200">
+                    {errorMessage}
+                </div>
+            )}
 
-            {step === 1 && (
+            {currentStep === RegisterStep.SelectRole && (
                 <RoleStep value={accountType} onChange={setAccountType} />
             )}
 
-            {/* ================= STEP 2 ================= */}
-
-            {step === 2 && (
+            {currentStep === RegisterStep.CompanyInfo && (
                 <CompanyInfoStep
                     value={companyInfo}
                     onChange={setCompanyInfo}
-                    // availability={{
-                    //     emailAvailable,
-                    // }}
                 />
             )}
 
-            {/* ================= STEP 3 ================= */}
-
-            {step === 3 && (
-                <AccountStep
+            {currentStep === RegisterStep.AccountInfo && (
+                <AccountInfoStep
                     value={accountInfo}
                     onChange={setAccountInfo}
-                    usernameAvailability={usernameAvailable}
-                    serverError={serverError}
-                    isSubmitting={isSubmitting}
-                    onUsernameBlur={handleUsernameBlur}
-                    onSubmit={() => {
-                        console.log('Submit click');
-                    }} // Replace this with real submit handler
                 />
+            )}
+
+            {currentStep === RegisterStep.Success && (
+                <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 text-3xl font-bold">
+                        ✓
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-800">
+                        Success
+                    </h1>
+                    <p className="mt-2 text-gray-600">
+                        Your account has been created successfully.
+                    </p>
+                </div>
             )}
         </RegisterLayout>
     );

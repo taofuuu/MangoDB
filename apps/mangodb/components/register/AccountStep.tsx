@@ -1,181 +1,75 @@
 'use client';
 
-import type { ChangeEvent, FormEvent } from 'react';
+import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
+import { useEffect, useState } from 'react';
 
 export type AccountInfo = {
     username: string;
-    password: string;
-    confirmPassword: string;
+    password?: string;
+    confirmPassword?: string;
 };
 
-type UsernameAvailability = 'idle' | 'checking' | 'available' | 'taken';
-
-type AccountStepProps = {
+type AccountInfoStepProps = {
     value: AccountInfo;
-    onChange: (next: AccountInfo) => void;
-    usernameAvailability: UsernameAvailability;
-    serverError: string;
-    isSubmitting: boolean;
-    onUsernameBlur: () => void;
-    onBack?: () => void;
-    onSubmit: () => void;
+    onChange: (value: AccountInfo, isValid: boolean) => void;
 };
 
-export default function AccountStep({
+export default function AccountInfoStep({
     value,
     onChange,
-    usernameAvailability,
-    serverError,
-    isSubmitting,
-    onUsernameBlur,
-    onBack,
-    onSubmit,
-}: AccountStepProps) {
-    const update = (field: keyof AccountInfo, nextValue: string) => {
-        onChange({ ...value, [field]: nextValue });
-    };
-
-    const submit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        onSubmit();
-    };
-
-    const passwordValid =
-        value.password.length >= 8 && value.password.length <= 72;
-    const confirmValid =
-        value.password === value.confirmPassword &&
-        value.confirmPassword.length > 0;
-    const canSubmit =
-        passwordValid &&
-        confirmValid &&
-        usernameAvailability === 'available' &&
-        !isSubmitting;
-
-    return (
-        <form onSubmit={submit} className="flex flex-col py-5">
-            <div className="w-full max-w-[420px] space-y-5">
-                <div>
-                    <label
-                        htmlFor="username"
-                        className="mb-[3px] block text-sm"
-                    >
-                        Username
-                    </label>
-                    <input
-                        id="username"
-                        name="username"
-                        value={value.username}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                            update('username', event.target.value.toLowerCase())
-                        }
-                        onBlur={onUsernameBlur}
-                        maxLength={50}
-                        autoComplete="username"
-                        className={`h-[40px] w-full rounded-[6px] border bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out ${
-                            usernameAvailability === 'taken'
-                                ? 'border-[#C5483B] focus:ring-2 focus:ring-[#C5483B]/30'
-                                : 'border-[#497B93] focus:ring-2 focus:ring-[#497B93]/30'
-                        }`}
-                    />
-                    <p className="mt-2 text-sm leading-6 text-[#497B93]">
-                        This will be used as your login username. Cannot be
-                        changed after registration.
-                    </p>
-                    {usernameAvailability === 'checking' && (
-                        <p className="mt-1 text-sm text-[#497B93]">
-                            Checking username…
-                        </p>
-                    )}
-                    {/* {usernameAvailability === 'available' && (
-                        <p className="mt-1 text-xs text-[#2F7D47]">
-                            Username is available.
-                        </p>
-                    )}
-                    {usernameAvailability === 'taken' && (
-                        <p className="mt-1 text-xs text-[#C5483B]">
-                            ⚠ Username already taken. Please choose another one.
-                        </p>
-                    )} */}
-                </div>
-
-                <PasswordField
-                    id="password"
-                    label="Password"
-                    value={value.password}
-                    onChange={(nextValue) => update('password', nextValue)}
-                />
-                <p className="-mt-3 text-sm leading-6 text-[#497B93]">
-                    Must be at least 8 characters. Maximum 72 characters.
-                </p>
-
-                <PasswordField
-                    id="confirmPassword"
-                    label="Confirm Password"
-                    value={value.confirmPassword}
-                    onChange={(nextValue) =>
-                        update('confirmPassword', nextValue)
-                    }
-                />
-                {value.confirmPassword.length > 0 && !confirmValid && (
-                    <p className="-mt-3 text-xs text-[#C5483B]">
-                        ⚠ Passwords do not match.
-                    </p>
-                )}
-            </div>
-
-            {serverError && (
-                <p className="mt-3 max-w-[520px] text-sm text-[#C5483B]">
-                    ⚠ {serverError}
-                </p>
-            )}
-
-            {/* <div className="mt-auto flex justify-end gap-4 pt-8">
-                <button
-                    type="button"
-                    onClick={onBack}
-                    className="rounded-[20px] border border-[#497B93] px-7 py-2 text-base font-semibold text-[#497B93] hover:bg-[#497B93]/10"
-                >
-                    Back
-                </button>
-                <button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="rounded-[20px] bg-[#497B93] px-7 py-2 text-lg font-bold text-white shadow-[2px_4px_4px_rgba(0,0,0,0.25)] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                    {isSubmitting ? 'Creating…' : 'Create Account'}
-                </button>
-            </div> */}
-        </form>
+}: AccountInfoStepProps) {
+    const [accountInfo, setAccountInfo] = useState<AccountInfo>(
+        value ?? {
+            username: '',
+            password: '',
+            confirmPassword: '',
+        },
     );
-}
 
-function PasswordField({
-    id,
-    label,
-    value,
-    onChange,
-}: {
-    id: string;
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-}) {
+    const handleUpdateUsername = (newUsername: string) => {
+        setAccountInfo({ ...accountInfo, username: newUsername });
+    };
+
+    const handleUpdatePassword = (newPassword: string) => {
+        setAccountInfo({ ...accountInfo, password: newPassword });
+    };
+
+    const handleUpdateConfirmPassword = (newConfirmPassword: string) => {
+        setAccountInfo({ ...accountInfo, confirmPassword: newConfirmPassword });
+    };
+
+    const passwordsMatch =
+        !!accountInfo.password &&
+        accountInfo.password === accountInfo.confirmPassword;
+
+    const isValid = !!accountInfo.username.trim() && passwordsMatch;
+
+    useEffect(() => {
+        onChange(accountInfo, isValid);
+    }, [accountInfo, isValid]);
+
     return (
-        <div>
-            <label htmlFor={id} className="mb-[3px] block text-sm">
-                {label}
-            </label>
-            <input
-                id={id}
-                name={id}
-                type="password"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                autoComplete={
-                    id === 'password' ? 'new-password' : 'new-password'
-                }
-                className="h-[40px] w-full rounded-[6px] border border-[#497B93] bg-[#FFFDF9] px-3 text-sm outline-none transition-[border-color,box-shadow] duration-200 ease-in-out focus:ring-2 focus:ring-[#497B93]/30"
+        <div className="account-info-page flex flex-col gap-5 my-5">
+            <SimpleTextInput
+                title="Username"
+                onChange={handleUpdateUsername}
+                initValue={value ? value.username : ''}
             />
+            <div className="flex gap-4">
+                <SimpleTextInput
+                    title="Password"
+                    onChange={handleUpdatePassword}
+                    initValue={value ? (value.password ?? '') : ''}
+                />
+                <SimpleTextInput
+                    title="Confirm Password"
+                    onChange={handleUpdateConfirmPassword}
+                    initValue={value ? (value.confirmPassword ?? '') : ''}
+                />
+            </div>
+            {!passwordsMatch && accountInfo.confirmPassword && (
+                <p className="text-sm text-red-500">Passwords do not match.</p>
+            )}
         </div>
     );
 }
