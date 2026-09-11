@@ -4,6 +4,7 @@ import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from '../lib/ApiError';
+import { softDeleteCompany } from '../lib/accountDeletion';
 import {
     adminCompanyDetailSelect,
     adminCompanyListSelect,
@@ -179,4 +180,30 @@ export async function updateCompanyAccount(
     }
 
     res.json(toCompanyAccountDetail(company));
+}
+export async function deleteCompanyAccount(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    // Step 1: does the company exist? Same pattern as getCompanyAccountDetail —
+    // findUnique, throw ApiError.notFound if null.
+    const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
+    const company = await prisma.company.findUnique({
+        where: { company_id: companyId },
+        select: {
+            company_id: true,
+        },
+    });
+
+    if (!company) {
+        throw ApiError.notFound('Company account not found');
+    }
+
+    // Step 2: does it have an active project? Call hasActiveProject.
+    // If true, throw ApiError.badRequest with a message explaining why.
+
+    // Step 3: soft-delete it. softDeleteCom
+    const valid: boolean = await softDeleteCompany(companyId);
+    if (valid) res.status(204).send();
+    else throw ApiError.notFound('Company account not found');
 }
