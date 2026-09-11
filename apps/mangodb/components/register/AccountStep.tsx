@@ -86,16 +86,6 @@ export default function AccountStep({
                             Checking username…
                         </p>
                     )}
-                    {/* {usernameAvailability === 'available' && (
-                        <p className="mt-1 text-xs text-[#2F7D47]">
-                            Username is available.
-                        </p>
-                    )}
-                    {usernameAvailability === 'taken' && (
-                        <p className="mt-1 text-xs text-[#C5483B]">
-                            ⚠ Username already taken. Please choose another one.
-                        </p>
-                    )} */}
                 </div>
 
                 <PasswordField
