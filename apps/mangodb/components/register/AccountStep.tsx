@@ -11,7 +11,7 @@ export type AccountInfo = {
 
 type AccountInfoStepProps = {
     value: AccountInfo;
-    onChange: (value: AccountInfo, isValid: boolean) => void;
+    onChange: (value: AccountInfo) => void;
 };
 
 export default function AccountInfoStep({
@@ -38,15 +38,9 @@ export default function AccountInfoStep({
         setAccountInfo({ ...accountInfo, confirmPassword: newConfirmPassword });
     };
 
-    const passwordsMatch =
-        !!accountInfo.password &&
-        accountInfo.password === accountInfo.confirmPassword;
-
-    const isValid = !!accountInfo.username.trim() && passwordsMatch;
-
     useEffect(() => {
-        onChange(accountInfo, isValid);
-    }, [accountInfo, isValid]);
+        onChange(accountInfo);
+    }, [accountInfo]);
 
     return (
         <div className="account-info-page flex flex-col gap-5 my-5">
@@ -67,9 +61,6 @@ export default function AccountInfoStep({
                     initValue={value ? (value.confirmPassword ?? '') : ''}
                 />
             </div>
-            {!passwordsMatch && accountInfo.confirmPassword && (
-                <p className="text-sm text-red-500">Passwords do not match.</p>
-            )}
         </div>
     );
 }
