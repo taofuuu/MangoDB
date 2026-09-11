@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import { logout } from '@/lib/session';
 
@@ -9,7 +8,6 @@ import { logout } from '@/lib/session';
 // cookie cleared on the same response — so this only decides where the user
 // lands and what a failure says.
 export default function LogoutButton() {
-    const router = useRouter();
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,10 +29,14 @@ export default function LogoutButton() {
 
         // No setIsPending(false) on success — the button leaves with the page,
         // and staying disabled stops a second click during the navigation.
-        // refresh() drops the router cache so nothing signed-in is replayed
-        // from it after the token is gone.
-        router.replace('/login');
-        router.refresh();
+        // A full page load clears everything this session left in memory.
+        // replace(), not href: after a push, the browser's back-forward cache
+        // can restore this signed-in page as it was. Chrome skips that cache
+        // for replace(), but no spec promises it, so reload if it comes back.
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) window.location.reload();
+        });
+        window.location.replace('/login');
     };
 
     return (
