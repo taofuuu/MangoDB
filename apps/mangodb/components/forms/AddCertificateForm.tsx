@@ -91,26 +91,32 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 formData.append('cert_image', file);
             }
 
-            const result = await apiFetch<CertificateResponse>(
-                '/certificates',
+            const result = await apiFetch<
                 {
-                    method: 'POST',
-                    body: formData,
-                },
-            );
+                    message?: string;
+                    certificate?: CertificateResponse;
+                } & Partial<CertificateResponse>
+            >('/certificates', {
+                method: 'POST',
+                body: formData,
+            });
 
             console.log('Certificate created:', result);
 
+            const cert = result.certificate ?? (result as CertificateResponse);
+
             const newData: CertificateData = {
-                name: result.cert_title,
-                organize: result.organization,
-                month: result.issue_month?.toString() ?? '',
-                year: result.issue_year?.toString() ?? '',
-                exMonth: result.expire_month?.toString() ?? '',
-                exYear: result.expire_year?.toString() ?? '',
-                credID: result.credential_id ?? '',
-                credURL: result.credential_url ?? '',
+                certificate_id: cert.certificate_id,
+                name: cert.cert_title,
+                organize: cert.organization,
+                month: cert.issue_month?.toString() ?? '',
+                year: cert.issue_year?.toString() ?? '',
+                exMonth: cert.expire_month?.toString() ?? '',
+                exYear: cert.expire_year?.toString() ?? '',
+                credID: cert.credential_id ?? '',
+                credURL: cert.credential_url ?? '',
                 file,
+                cert_image: cert.cert_image ?? null,
             };
 
             onSave(newData);

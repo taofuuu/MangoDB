@@ -34,11 +34,11 @@
         "typescript": "^5.9.2"
     },
     "lint-staged": {
-        "**/*.{js,jsx,mjs,cjs,ts,tsx,json,css,md,yml,yaml}": [
-            "prettier --write"
+        "apps/mangodb/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config apps/mangodb/eslint.config.mjs --fix --no-warn-ignored"
         ],
-        "apps/api/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
-            "eslint --config apps/api/eslint.config.mjs --fix --no-warn-ignored"
+        "packages/shared/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config packages/shared/eslint.config.mjs --fix --no-warn-ignored"
         ]
     }
 }

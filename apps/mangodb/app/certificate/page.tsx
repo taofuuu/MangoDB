@@ -1,33 +1,58 @@
 'use client';
 
 import { useState } from 'react';
-import AddFormModal from '@/components/forms/AddCertificateForm';
+import AddCertificateForm from '@/components/forms/AddCertificateForm';
 import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
-import DeleteCertificateModal from '@/components/ui/DeleteCertificateModal';
+import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const INITIAL_CERTIFICATES: CertificateData[] = [
+    {
+        certificate_id: 1,
+        name: 'Microsoft Certified: Azure Fundamentals',
+        organize: 'Microsoft',
+        month: '3',
+        year: '2023',
+        exMonth: '3',
+        exYear: '2026',
+        credID: 'AZ-900-123456',
+        credURL:
+            'https://learn.microsoft.com/certifications/azure-fundamentals',
+    },
+];
+
+const MONTH_NAMES = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+];
+
+function formatMonthYear(month?: string, year?: string): string {
+    if (!month && !year) return '';
+    const num = parseInt(month || '', 10);
+    const monthStr =
+        !isNaN(num) && num >= 1 && num <= 12 ? MONTH_NAMES[num] : month || '';
+    if (monthStr && year) return `${monthStr} ${year}`;
+    return monthStr || year || '';
+}
 
 export default function CertificatePage() {
+    const [certificates, setCertificates] =
+        useState<CertificateData[]>(INITIAL_CERTIFICATES);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-    // Store all certificates
-    const [certificates, setCertificates] = useState<CertificateData[]>([
-        {
-            name: 'Microsoft Certified: Azure Fundamentals',
-            organize: 'Microsoft',
-            month: 'March',
-            year: '2023',
-            exMonth: 'March',
-            exYear: '2026',
-            credID: 'AZ-900-123456',
-            credURL:
-                'https://learn.microsoft.com/certifications/azure-fundamentals',
-        },
-    ]);
 
     // Certificate currently being edited
     const [certificateToEdit, setCertificateToEdit] =
@@ -42,74 +67,23 @@ export default function CertificatePage() {
     // -------------------------
     const handleAddCertificate = (newCertificate: CertificateData) => {
         setCertificates((prev) => [...prev, newCertificate]);
-
-        console.log('Added certificate:', newCertificate);
     };
 
-    const handleEditCertificate = async (
-        updatedCertificate: CertificateData,
-    ) => {
-        const certId = (certificateToEdit as any)?.certificate_id;
-
-        // Call backend API if ID exists
-        if (certId) {
-            try {
-                const token = localStorage.getItem('token');
-
-                // Map frontend fields to backend Prisma schema format
-                const payload = {
-                    cert_title: updatedCertificate.name,
-                    organization: updatedCertificate.organize,
-                    issue_month: updatedCertificate.month
-                        ? Number(updatedCertificate.month)
-                        : null,
-                    issue_year: updatedCertificate.year
-                        ? Number(updatedCertificate.year)
-                        : null,
-                    expire_month: updatedCertificate.exMonth
-                        ? Number(updatedCertificate.exMonth)
-                        : null,
-                    expire_year: updatedCertificate.exYear
-                        ? Number(updatedCertificate.exYear)
-                        : null,
-                    credential_id: updatedCertificate.credID || null,
-                    credential_url: updatedCertificate.credURL || null,
-                };
-
-                const res = await fetch(
-                    `${API_BASE_URL}/companies/certificates/${certId}`,
-                    {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: token ? `Bearer ${token}` : '',
-                        },
-                        body: JSON.stringify(payload),
-                    },
-                );
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(
-                        data.message || 'Failed to update certificate',
-                    );
-                }
-            } catch (error: any) {
-                alert(error.message);
-                return;
-            }
-        }
-
-        // Update local state
+    // -------------------------
+    // EDIT
+    // -------------------------
+    const handleEditCertificate = (updatedCertificate: CertificateData) => {
         setCertificates((prev) =>
-            prev.map((certificate) =>
-                certificate === certificateToEdit
-                    ? updatedCertificate
-                    : certificate,
-            ),
+            prev.map((certificate) => {
+                const isMatch =
+                    (certificateToEdit?.certificate_id != null &&
+                        certificate.certificate_id ===
+                            certificateToEdit.certificate_id) ||
+                    certificate === certificateToEdit;
+                return isMatch ? updatedCertificate : certificate;
+            }),
         );
 
-        console.log('Updated certificate:', updatedCertificate);
         setCertificateToEdit(null);
         setIsEditOpen(false);
     };
@@ -117,42 +91,18 @@ export default function CertificatePage() {
     // -------------------------
     // DELETE
     // -------------------------
-
-    const handleDeleteCertificate = async () => {
-        // Assumes certificateToDelete has certificate_id (e.g. from backend)
-        const certId = (certificateToDelete as any)?.certificate_id;
-
+    const handleDeleteCertificate = () => {
         if (!certificateToDelete) return;
 
-        // Call backend API if ID exists
-        if (certId) {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch(
-                    `${API_BASE_URL}/companies/certificates/${certId}`,
-                    {
-                        method: 'DELETE',
-                        headers: {
-                            Authorization: token ? `Bearer ${token}` : '',
-                        },
-                    },
-                );
-
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(
-                        data.message || 'Failed to delete certificate',
-                    );
-                }
-            } catch (error: any) {
-                alert(error.message);
-                return;
-            }
-        }
-
-        // Update local state
         setCertificates((prev) =>
-            prev.filter((certificate) => certificate !== certificateToDelete),
+            prev.filter((certificate) => {
+                const isMatch =
+                    (certificateToDelete.certificate_id != null &&
+                        certificate.certificate_id ===
+                            certificateToDelete.certificate_id) ||
+                    certificate === certificateToDelete;
+                return !isMatch;
+            }),
         );
 
         setCertificateToDelete(null);
@@ -217,7 +167,7 @@ export default function CertificatePage() {
             {/* ADD MODAL */}
             {/* ------------------------- */}
 
-            <AddFormModal
+            <AddCertificateForm
                 isOpen={isAddOpen}
                 onClose={() => setIsAddOpen(false)}
                 onSave={handleAddCertificate}
@@ -241,9 +191,13 @@ export default function CertificatePage() {
             {/* DELETE MODAL */}
             {/* ------------------------- */}
 
-            <DeleteCertificateModal
+            <DeleteCertificateForm
                 isOpen={isDeleteOpen}
-                onClose={() => setIsDeleteOpen(false)}
+                certificate={certificateToDelete ?? undefined}
+                onClose={() => {
+                    setIsDeleteOpen(false);
+                    setCertificateToDelete(null);
+                }}
                 onConfirm={handleDeleteCertificate}
             />
         </main>
