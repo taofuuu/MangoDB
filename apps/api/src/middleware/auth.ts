@@ -3,6 +3,7 @@ import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
 import { ApiError } from '../lib/ApiError';
+import { isCompanyDeleted } from '../lib/accountDeletion';
 import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';
@@ -45,6 +46,16 @@ export async function requireAuth(
 
     // Outside the try above: a database error is not an auth failure.
     if (await isTokenRevoked(claims.jti)) {
+        next(ApiError.unauthorized('Session has ended'));
+        return;
+    }
+
+    // US1-6 / US6-4. A token issued before deletion stays cryptographically
+    // valid until it expires, and there is no per-company list of outstanding
+    // jtis to revoke individually — so every authenticated request re-checks
+    // the account itself. Same message as a revoked token: this is not the
+    // caller's business to distinguish from a plain logout.
+    if (await isCompanyDeleted(Number(claims.sub))) {
         next(ApiError.unauthorized('Session has ended'));
         return;
     }
