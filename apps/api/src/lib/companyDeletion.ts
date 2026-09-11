@@ -9,8 +9,8 @@ import { prisma } from './prisma';
 // matters because the eligibility check and the update cannot be one atomic
 // step, so a caller may end up racing itself.
 export async function softDeleteCompany(companyId: number): Promise<void> {
-    await prisma.company.update({
-        where: { company_id: companyId },
+    await prisma.company.updateMany({
+        where: { company_id: companyId, deleted_at: null },
         data: { deleted_at: new Date() },
     });
 }
