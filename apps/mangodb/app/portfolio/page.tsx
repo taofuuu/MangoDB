@@ -1,93 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import CategoryFilter from '@/components/portfolio/CategoryFilter';
-import PortfolioCard, {
-    PortfolioItem,
-} from '@/components/portfolio/PortfolioCard';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { ServicePortfolio } from '@mangodb/shared';
+import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
-import AddPortfolioForm from '@/components/forms/AddPortfolioForm';
-import { apiFetch } from '@/lib/api';
-
-// Mock data - there is no portfolio list endpoint on the API yet.
-const PORTFOLIO_ITEMS: PortfolioItem[] = [
-    {
-        id: 1,
-        title: 'Robot Development',
-        subtitle: 'AI Robot & AI Machine Learning',
-        category: 'Robotics',
-        image: '/portfolio-placeholder.svg',
-    },
-    {
-        id: 2,
-        title: 'Robot Development',
-        subtitle: 'AI Robot & AI Machine Learning',
-        category: 'Robotics',
-        image: '/portfolio-placeholder.svg',
-    },
-    {
-        id: 3,
-        title: 'Robot Development',
-        subtitle: 'AI Robot & AI Machine Learning',
-        category: 'AI',
-        image: '/portfolio-placeholder.svg',
-    },
-    {
-        id: 4,
-        title: 'Robot Development',
-        subtitle: 'AI Robot & AI Machine Learning',
-        category: 'AI',
-        image: '/portfolio-placeholder.svg',
-    },
-    {
-        id: 5,
-        title: 'Robot Development',
-        subtitle: 'AI Robot & AI Machine Learning',
-        category: 'Software',
-        image: '/portfolio-placeholder.svg',
-    },
-];
-
-const CATEGORIES = ['ALL', 'Robotics', 'AI', 'Software'];
+import { ApiRequestError } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
+import { getPortfolios, deletePortfolio } from '@/lib/portfolios';
 
 export default function PortfolioPage() {
-    const [items, setItems] = useState(PORTFOLIO_ITEMS);
+    // Null means still loading — the same three-state shape as profile/edit.
+    const [items, setItems] = useState<ServicePortfolio[] | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [view, setView] = useState<PortfolioView>('grid');
-    const [category, setCategory] = useState('ALL');
-    const [isAddOpen, setIsAddOpen] = useState(false);
 
     // The item the user asked to delete. Null means the popup is closed.
-    const [pendingDelete, setPendingDelete] = useState<PortfolioItem | null>(
+    const [pendingDelete, setPendingDelete] = useState<ServicePortfolio | null>(
         null,
     );
 
-    const visible =
-        category === 'ALL'
-            ? items
-            : items.filter((item) => item.category === category);
+    // Two hops: /portfolios is public and needs to be told whose rows to
+    // return, and /companies/me is the only thing that knows the id. No token
+    // check first — without one that call 401s anyway, and an expired or
+    // revoked token lands in the same place.
+    useEffect(() => {
+        getMyProfile()
+            .then((profile) => getPortfolios(profile.company_id))
+            .then(setItems)
+            .catch((err: unknown) => {
+                if (err instanceof ApiRequestError && err.status === 401) {
+                    setLoadError('no-token');
+                    return;
+                }
 
-    // Dummy handler - wire this to the API once the endpoint exists.
-    const handleAddPortfolio = () => {
-        setIsAddOpen(true);
-        console.log('Add portfolio');
-    };
-
-    const handleOpen = (item: PortfolioItem) => {
-        console.log('Open portfolio', item.id);
-    };
+                setLoadError(
+                    err instanceof ApiRequestError
+                        ? err.message
+                        : 'Could not reach the API. Is it running on port 4000?',
+                );
+            });
+    }, []);
 
     // The modal shows any thrown error and only closes once this resolves.
     const handleDelete = async () => {
         if (!pendingDelete) return;
 
-        await apiFetch<void>(`/portfolios/${pendingDelete.id}`, {
-            method: 'DELETE',
-        });
+        await deletePortfolio(pendingDelete.portfolio_id);
 
         setItems((current) =>
-            current.filter((item) => item.id !== pendingDelete.id),
+            (current ?? []).filter(
+                (item) => item.portfolio_id !== pendingDelete.portfolio_id,
+            ),
         );
     };
 
@@ -104,61 +70,58 @@ export default function PortfolioPage() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-[1.2vw] max-md:w-full max-md:flex-wrap max-md:gap-3">
-                    <button
-                        type="button"
-                        onClick={handleAddPortfolio}
-                        className="h-[4.17vh] min-h-[36px] rounded-button bg-[#497B93] px-[1.2vw] text-sm !font-[600] text-white transition-colors hover:bg-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
-                    >
-                        + Add Portfolio
-                    </button>
-
-                    <CategoryFilter
-                        value={category}
-                        onChange={setCategory}
-                        options={CATEGORIES}
-                    />
-
-                    <ViewToggle value={view} onChange={setView} />
-                </div>
+                {items && <ViewToggle value={view} onChange={setView} />}
             </div>
 
-            {visible.length === 0 && (
-                <p className="mt-[4.5vh] text-md !font-[400] text-[#757575]">
-                    No portfolio in this category yet.
+            {loadError === 'no-token' && (
+                <p className="mt-[4.5vh] text-md !font-[400]">
+                    You are not signed in.{' '}
+                    <Link href="/login" className="underline">
+                        Log in
+                    </Link>
+                    , then come back.
                 </p>
             )}
 
-            {view === 'grid' && (
+            {loadError && loadError !== 'no-token' && (
+                <p className="mt-[4.5vh] text-md !font-[400] text-[#C5483B]">
+                    {loadError}
+                </p>
+            )}
+
+            {!loadError && !items && (
+                <p className="mt-[4.5vh] text-md !font-[400]">Loading…</p>
+            )}
+
+            {items?.length === 0 && (
+                <p className="mt-[4.5vh] text-md !font-[400] text-[#757575]">
+                    No portfolio items yet.
+                </p>
+            )}
+
+            {items && view === 'grid' && (
                 <div className="mt-[4.5vh] grid grid-cols-4 gap-x-[3.49vw] gap-y-[3.7vh] max-lg:grid-cols-2 max-sm:grid-cols-1">
-                    {visible.map((item) => (
+                    {items.map((item) => (
                         <PortfolioCard
-                            key={item.id}
+                            key={item.portfolio_id}
                             item={item}
-                            onClick={handleOpen}
                             onDelete={setPendingDelete}
                         />
                     ))}
                 </div>
             )}
 
-            {view === 'list' && (
+            {items && view === 'list' && (
                 <div className="mt-[4.5vh] flex flex-col gap-[2vh]">
-                    {visible.map((item) => (
+                    {items.map((item) => (
                         <PortfolioRow
-                            key={item.id}
+                            key={item.portfolio_id}
                             item={item}
-                            onClick={handleOpen}
                             onDelete={setPendingDelete}
                         />
                     ))}
                 </div>
             )}
-            <AddPortfolioForm
-                isOpen={isAddOpen}
-                onClose={() => setIsAddOpen(false)}
-                onSave={handleAddPortfolio}
-            />
 
             <DeletePortfolioModal
                 isOpen={pendingDelete !== null}

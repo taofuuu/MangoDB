@@ -297,11 +297,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                             />
                         </div>
-                        <FileUpload
-                            value={file}
-                            onChange={setFile}
-                            className="my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
-                        />
+                        <FileUpload value={file} onChange={setFile} />
                     </div>
                     <hr className="border-[#3F6B80]/50" />
                     {/* -----------------footer----------------- */}

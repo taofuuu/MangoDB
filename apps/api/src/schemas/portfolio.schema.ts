@@ -68,6 +68,9 @@ export const PORTFOLIO_UNIQUE_FIELDS = ['portfolio_link'] as const;
 
 export const portfolioQuerySchema = z.object({
     listingId: z.coerce.number().int().positive().max(2147483647).optional(),
+    // No owner column on the row: the company is three hops away, so this
+    // filters through service -> listing, the chain assertPortfolioOwned walks.
+    companyId: z.coerce.number().int().positive().max(2147483647).optional(),
 });
 
 export type PortfolioQuery = z.infer<typeof portfolioQuerySchema>;
