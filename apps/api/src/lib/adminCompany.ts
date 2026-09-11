@@ -23,12 +23,14 @@ export const adminCompanyListSelect = {
     company_description: true,
     phone: true,
     account_type: true,
+    deleted_at: true,
     ...ratingSelect,
 } as const;
 
 export const adminCompanyDetailSelect = {
     ...companyProfileSelect,
     ...ratingSelect,
+    deleted_at: true,
 } as const;
 
 interface RatingSource {
@@ -68,6 +70,7 @@ interface CompanyAccountSummaryRow extends RatingSource {
     company_description: string | null;
     phone: string;
     account_type: string;
+    deleted_at: Date | null;
 }
 
 export function toCompanyAccountSummary(
@@ -79,20 +82,24 @@ export function toCompanyAccountSummary(
         company_description: company.company_description,
         phone: company.phone,
         account_type: company.account_type as AccountType,
+        deleted_at: !company.deleted_at
+            ? null
+            : company.deleted_at.toISOString(),
         ...getRating(company),
     };
 }
 
 type CompanyAccountDetailRow = Parameters<typeof toCompanyProfile>[0] &
-    RatingSource;
+    RatingSource & { deleted_at: Date | null };
 
 export function toCompanyAccountDetail(
     company: CompanyAccountDetailRow,
 ): CompanyAccountDetail {
-    const { proposal, ...profile } = company;
+    const { proposal, deleted_at, ...profile } = company;
 
     return {
         ...toCompanyProfile(profile),
         ...getRating({ proposal }),
+        deleted_at: !deleted_at ? null : deleted_at.toISOString(),
     };
 }

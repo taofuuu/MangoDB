@@ -7,15 +7,23 @@ import upload from '../../assets/icons/upload-icon.png';
 type FileUploadProps = {
     value: File | null;
     onChange: (file: File | null) => void;
+    className?: string;
 };
 
-export default function FileUpload({ value, onChange }: FileUploadProps) {
+export default function FileUpload({
+    value,
+    onChange,
+    className = '',
+}: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
         onChange(file);
     };
+
+    const defaultClassName =
+        'mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer items-center justify-center';
 
     return (
         <div>
@@ -31,7 +39,8 @@ export default function FileUpload({ value, onChange }: FileUploadProps) {
             {/* Upload block */}
             <div
                 onClick={() => inputRef.current?.click()}
-                className="mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
+                className={className || defaultClassName}
+                //className="mb-4 my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
             >
                 <Image
                     src={upload}

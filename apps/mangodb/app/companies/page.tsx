@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+    AccountType,
     CompanyAccountDetail,
     CompanyAccountListResponse,
 } from '@mangodb/shared';
-import { ChevronDown, LayoutGrid, Menu } from 'lucide-react';
+import { ChevronDown, LayoutGrid, Menu, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
@@ -13,6 +14,15 @@ import { ApiRequestError } from '@/lib/api';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
 
 const PAGE_SIZE = 12;
+
+type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
+
+const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
+    { value: 'ALL', label: 'ALL' },
+    { value: 'PROVIDER', label: 'PROVIDER' },
+    { value: 'RECEIVER', label: 'RECEIVER' },
+    { value: 'BOTH', label: 'BOTH' },
+];
 
 function describeError(error: unknown): string {
     if (error instanceof ApiRequestError) {
@@ -29,6 +39,10 @@ function describeError(error: unknown): string {
 
 export default function CompaniesPage() {
     const [page, setPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [filter, setFilter] = useState<FilterOption>('ALL');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [result, setResult] = useState<CompanyAccountListResponse | null>(
         null,
     );
@@ -41,11 +55,57 @@ export default function CompaniesPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState<string | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    const filterRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const nextSearch = searchQuery.trim();
+        if (nextSearch === debouncedSearch) return;
+
+        const timer = setTimeout(() => {
+            setDebouncedSearch(nextSearch);
+            setPage(1);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, debouncedSearch]);
+
+    useEffect(() => {
+        if (!isFilterOpen) return;
+
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                filterRef.current &&
+                !filterRef.current.contains(event.target as Node)
+            ) {
+                setIsFilterOpen(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                setIsFilterOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFilterOpen]);
 
     useEffect(() => {
         let cancelled = false;
 
-        getCompanyAccounts(page, PAGE_SIZE)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
+        setError(null);
+
+        getCompanyAccounts(page, PAGE_SIZE, {
+            q: debouncedSearch || undefined,
+            filter: filter === 'ALL' ? undefined : filter,
+        })
             .then((data) => {
                 if (cancelled) return;
                 setResult(data);
@@ -61,7 +121,7 @@ export default function CompaniesPage() {
         return () => {
             cancelled = true;
         };
-    }, [page, reloadKey]);
+    }, [page, debouncedSearch, filter, reloadKey]);
 
     const closeDetail = useCallback(() => {
         setIsDetailOpen(false);
@@ -85,25 +145,42 @@ export default function CompaniesPage() {
     };
 
     const changePage = (nextPage: number) => {
-        setIsLoading(true);
-        setError(null);
         setPage(nextPage);
     };
 
     const retryList = () => {
-        setIsLoading(true);
-        setError(null);
         setReloadKey((key) => key + 1);
     };
 
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value);
+    };
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setDebouncedSearch('');
+        setPage(1);
+    };
+
+    const handleFilterSelect = (selected: FilterOption) => {
+        if (selected !== filter) {
+            setFilter(selected);
+            setPage(1);
+        }
+        setIsFilterOpen(false);
+    };
+
     const pagination = result?.pagination;
+    const visibleCompanies = (result?.items ?? []).filter(
+        (company) => company.account_type !== 'ADMIN',
+    );
     const hasPreviousPage = page > 1;
     const hasNextPage = Boolean(pagination && page < pagination.total_pages);
 
     return (
         <main className="min-h-screen bg-[#FBFBFB] px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto max-w-[93.75vw]">
-                <header className="mb-[2.96vh] flex items-start justify-between gap-[1.67vw]">
+                <header className="mb-[2.96vh] flex flex-wrap items-start justify-between gap-[1.67vw]">
                     <div>
                         <h1 className="text-hd leading-tight text-[#171717]">
                             Companies
@@ -113,19 +190,86 @@ export default function CompaniesPage() {
                         </p>
                     </div>
 
-                    <div className="mt-[0.74vh] flex items-center gap-[0.63vw]">
-                        <button
-                            type="button"
-                            disabled
-                            title="Account filtering belongs to a separate US6-2 task"
-                            className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button px-[0.63vw] text-xs !font-[500] text-[#666666] disabled:cursor-not-allowed"
-                        >
-                            ALL
-                            <ChevronDown
+                    <div className="mt-[0.74vh] flex flex-wrap items-center gap-[0.63vw]">
+                        <div className="relative flex items-center">
+                            <Search
                                 aria-hidden="true"
-                                className="h-[1.30vh] w-[0.73vw]"
+                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-[#888888]"
                             />
-                        </button>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) =>
+                                    handleSearchChange(e.target.value)
+                                }
+                                maxLength={100}
+                                placeholder="Search companies..."
+                                aria-label="Search companies by keyword"
+                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-[#E5E5E5] bg-white pl-[1.88vw] pr-[1.67vw] text-xs text-[#171717] placeholder:text-[#888888] focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93] focus:outline-none"
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={clearSearch}
+                                    aria-label="Clear search"
+                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-[#888888] hover:bg-[#EDEDED] hover:text-[#171717] focus-visible:outline-none"
+                                >
+                                    <X
+                                        aria-hidden="true"
+                                        className="h-[1.48vh] w-[0.73vw]"
+                                    />
+                                </button>
+                            )}
+                        </div>
+
+                        <div ref={filterRef} className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsFilterOpen((prev) => !prev)}
+                                aria-expanded={isFilterOpen}
+                                aria-haspopup="listbox"
+                                aria-label="Filter companies by account type"
+                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-[#E5E5E5] bg-white px-[0.63vw] text-xs !font-[500] text-[#171717] hover:bg-[#F5F5F5] focus-visible:ring-2 focus-visible:ring-[#497B93] focus-visible:outline-none"
+                            >
+                                {filter}
+                                <ChevronDown
+                                    aria-hidden="true"
+                                    className={`h-[1.30vh] w-[0.73vw] text-[#666666] transition-transform duration-200 ${
+                                        isFilterOpen ? 'rotate-180' : ''
+                                    }`}
+                                />
+                            </button>
+
+                            {isFilterOpen && (
+                                <div
+                                    role="listbox"
+                                    aria-label="Account type options"
+                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-[#E5E5E5] bg-white py-[0.37vh] shadow-md"
+                                >
+                                    {FILTER_OPTIONS.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            role="option"
+                                            aria-selected={
+                                                filter === option.value
+                                            }
+                                            onClick={() =>
+                                                handleFilterSelect(option.value)
+                                            }
+                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left text-xs !font-[500] transition-colors hover:bg-[#F5F5F5] ${
+                                                filter === option.value
+                                                    ? 'bg-[#497B93]/10 font-semibold text-[#497B93]'
+                                                    : 'text-[#171717]'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex gap-[0.21vw] rounded-input bg-[#E5E5E5] p-[0.16vw]">
                             <button
                                 type="button"
@@ -142,7 +286,6 @@ export default function CompaniesPage() {
                                 type="button"
                                 disabled
                                 aria-label="List view"
-                                title="List view is not part of this task"
                                 className="rounded-input p-[0.42vw] text-[#888888] disabled:cursor-not-allowed"
                             >
                                 <Menu
@@ -187,9 +330,9 @@ export default function CompaniesPage() {
                                     />
                                 ))}
                             </div>
-                        ) : result && result.items.length > 0 ? (
+                        ) : result && visibleCompanies.length > 0 ? (
                             <div className="grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                {result.items.map((company) => (
+                                {visibleCompanies.map((company) => (
                                     <CompanyCard
                                         key={company.company_id}
                                         company={company}
@@ -199,7 +342,9 @@ export default function CompaniesPage() {
                             </div>
                         ) : (
                             <p className="py-[9.26vh] text-center text-md text-[#666666]">
-                                No Company accounts found.
+                                {debouncedSearch || filter !== 'ALL'
+                                    ? 'No Company accounts found matching your search or filter.'
+                                    : 'No Company accounts found.'}
                             </p>
                         )}
                     </div>
