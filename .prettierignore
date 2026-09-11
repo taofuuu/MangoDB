@@ -1,4 +1,12 @@
 node_modules
 dist
-apps/api/src/generated
 package-lock.json
+
+# Generated, never hand-edited.
+apps/api/src/generated
+apps/mangodb/.next
+apps/mangodb/next-env.d.ts
+graphify-out
+
+# Maintained by hand. Formatting it is a 4700-line diff for no gain.
+docs/api-guide.html

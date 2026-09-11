@@ -3,32 +3,28 @@ import { z } from 'zod';
 export const certificateFields = {
     cert_title: z.string().trim().max(255),
     organization: z.string().trim().max(255),
-    issue_month: z.number().int().min(1).max(12).nullable().optional(),
-    issue_year: z
+
+    issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    issue_year: z.coerce
         .number()
         .int()
         .min(1990, 'Issue year must be 1990 or later')
         .max(new Date().getFullYear(), 'Issue year cannot be in the future')
         .nullable()
         .optional(),
-    expire_month: z.number().int().min(1).max(12).nullable().optional(),
-    expire_year: z
+    expire_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
+    expire_year: z.coerce
         .number()
         .int()
         .min(1990, 'Expiration year must be 1990 or later')
         .nullable()
         .optional(),
     credential_id: z.string().trim().max(255).nullable().optional(),
-    credential_url: z
-        .string()
-        .trim()
-        .url('Invalid URL format')
-        .nullable()
-        .optional(),
+    credential_url: z.url().nullable().optional(),
     cert_image: z.string().trim().max(255).nullable().optional(),
 } as const;
 
-export const addCertificateSchema = z.object(certificateFields).refine(
+export const createCertificateSchema = z.object(certificateFields).refine(
     (data) => {
         if (
             data.issue_year == null ||
@@ -51,5 +47,4 @@ export const addCertificateSchema = z.object(certificateFields).refine(
 // All fields optional for partial PATCH operations
 export const updateCertificateSchema = z.object(certificateFields).partial();
 
-export type AddCertificateInput = z.infer<typeof addCertificateSchema>;
 export type UpdateCertificateInput = z.infer<typeof updateCertificateSchema>;

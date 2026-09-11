@@ -4,10 +4,10 @@ type TextareaProps = {
     label: string;
     value: string;
     onChange: (value: string) => void;
-    error?: string;
+    error?: string | undefined;
     // Height only — the design gives Company Location a taller box than the
     // rest, and everything else about the field is identical.
-    className?: string;
+    className?: string | undefined;
 } & Omit<
     React.TextareaHTMLAttributes<HTMLTextAreaElement>,
     'value' | 'onChange' | 'className'

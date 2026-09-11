@@ -18,11 +18,6 @@ const ROUTES = [
         detail: 'Add, edit and delete certificate modals, on mock data.',
     },
     {
-        href: '/portfolio',
-        title: 'Portfolio',
-        detail: 'Add, edit and delete portfolio modals, on mock data.',
-    },
-    {
         href: '/account-settings',
         title: 'Account setting',
         detail: 'Manage account settings and delete account.',
@@ -33,9 +28,9 @@ const ROUTES = [
         detail: 'Sign in to your company account.',
     },
     {
-        href: '/viewprofile',
-        title: 'View Profile',
-        detail: 'View the profile information page.',
+        href: '/portfolio',
+        title: 'Portfolio',
+        detail: 'Company portfolio grid and list views, on mock data.',
     },
     {
         href: '/companies',
@@ -46,11 +41,31 @@ const ROUTES = [
         href: '/companies',
         title: 'Companies view for admin',
         detail: 'list of company that can be viewed by admin',
+    },
+    {
+        href: '/companies',
+        title: 'Companies view for admin',
+        detail: 'list of company that can be viewed by admin',
+    },
+    {
+        href: '/profile/edit?companyId=1',
+        title: 'Edit account as admin',
+        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
     },
     {
         href: '/register',
         title: 'Register',
         detail: 'Register new user',
+    },
+    {
+        href: '/profile/view/provider',
+        title: 'View Profile (Provider)',
+        detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
+    },
+    {
+        href: '/profile/view/receiver',
+        title: 'View Profile (Receiver)',
+        detail: 'View profile page for Receiver role (Vertical company card, Job listings).',
     },
 ];
 

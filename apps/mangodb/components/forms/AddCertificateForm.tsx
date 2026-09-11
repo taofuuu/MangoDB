@@ -58,27 +58,49 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         e.preventDefault();
 
         try {
+            const formData = new FormData();
+
+            formData.append('cert_title', name);
+            formData.append('organization', organize);
+
+            if (month) {
+                formData.append('issue_month', month);
+            }
+
+            if (year) {
+                formData.append('issue_year', year);
+            }
+
+            if (exMonth) {
+                formData.append('expire_month', exMonth);
+            }
+
+            if (exYear) {
+                formData.append('expire_year', exYear);
+            }
+
+            if (credID) {
+                formData.append('credential_id', credID);
+            }
+
+            if (credURL) {
+                formData.append('credential_url', credURL);
+            }
+
+            if (file) {
+                formData.append('cert_image', file);
+            }
+
             const result = await apiFetch<CertificateResponse>(
                 '/certificates',
                 {
                     method: 'POST',
-                    body: JSON.stringify({
-                        cert_title: name,
-                        organization: organize,
-                        issue_month: month ? Number(month) : null,
-                        issue_year: year ? Number(year) : null,
-                        expire_month: exMonth ? Number(exMonth) : null,
-                        expire_year: exYear ? Number(exYear) : null,
-                        credential_id: credID || null,
-                        credential_url: credURL || null,
-                        cert_image: file?.name ?? null,
-                    }),
+                    body: formData,
                 },
             );
 
             console.log('Certificate created:', result);
 
-            // Only update the page AFTER the API succeeds
             const newData: CertificateData = {
                 name: result.cert_title,
                 organize: result.organization,
@@ -99,6 +121,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             console.error('Error creating certificate:', error);
 
             if (error instanceof ApiRequestError) {
+                console.error('Status:', error.status);
+                console.error('Message:', error.message);
+                console.error('Details:', error.details);
+
                 if (error.details.length > 0) {
                     const errorMessages = error.details
                         .map((detail) => detail.message)
@@ -116,8 +142,18 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div
-                className="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl
-                    max-h-[calc(100vh-2rem)] overflow-y-auto"
+                className="
+                    modal-scrollbar
+                    w-full max-w-[45vw]
+                    h-[92vh]
+                    max-h-[calc(100vh-2rem)]
+                    rounded-xl
+                    bg-[#FFFDF9]
+                    p-[1.5vw]
+                    text-[#171717]
+                    shadow-xl   
+                    overflow-y-auto
+                "
             >
                 {/* -------------header----------------- */}
                 <div className=" flex items-center justify-between">
@@ -261,7 +297,11 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                             />
                         </div>
-                        <FileUpload value={file} onChange={setFile} />
+                        <FileUpload
+                            value={file}
+                            onChange={setFile}
+                            className="my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
+                        />
                     </div>
                     <hr className="border-[#3F6B80]/50" />
                     {/* -----------------footer----------------- */}
