@@ -44,16 +44,16 @@ export async function listCompanyAccounts(
                 { email: { contains: q, mode: 'insensitive' } },
             ],
         }),
-        ...(filter && {
-            account_type: {
-                in: [
-                    filter,
-                    ...(filter === 'PROVIDER' || filter === 'RECEIVER'
-                        ? ['BOTH']
-                        : []),
-                ],
-            },
-        }),
+        account_type: filter
+            ? {
+                  in: [
+                      filter,
+                      ...(filter === 'PROVIDER' || filter === 'RECEIVER'
+                          ? ['BOTH']
+                          : []),
+                  ],
+              }
+            : { not: 'ADMIN' },
         ...(!includeDeleted && {
             deleted_at: null,
         }),

@@ -1,4 +1,5 @@
 import type {
+    AccountType,
     CompanyAccountDetail,
     CompanyAccountListResponse,
     ChangeCredentialsRequest,
@@ -7,6 +8,12 @@ import type {
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
+
+export interface GetCompanyAccountsOptions {
+    q?: string | undefined;
+    filter?: AccountType | undefined;
+    includeDeleted?: boolean | undefined;
+}
 
 export function getMyProfile(): Promise<CompanyProfile> {
     return apiFetch<CompanyProfile>('/companies/me');
@@ -24,11 +31,22 @@ export function updateMyProfile(
 export function getCompanyAccounts(
     page: number,
     pageSize: number,
+    options?: GetCompanyAccountsOptions,
 ): Promise<CompanyAccountListResponse> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
     });
+
+    if (options?.q?.trim()) {
+        query.set('q', options.q.trim());
+    }
+    if (options?.filter) {
+        query.set('filter', options.filter);
+    }
+    if (options?.includeDeleted !== undefined) {
+        query.set('includeDeleted', String(options.includeDeleted));
+    }
 
     return apiFetch<CompanyAccountListResponse>(
         `/admin/companies?${query.toString()}`,
