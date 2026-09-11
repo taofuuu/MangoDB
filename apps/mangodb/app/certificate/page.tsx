@@ -158,6 +158,14 @@ export default function CertificatePage() {
             </div>
 
             {/* ------------------------- */}
+            {/* Load error */}
+            {/* ------------------------- */}
+            {loadError && (
+                <p role="alert" className="mt-4 text-sm text-[#C5483E]">
+                    {loadError}
+                </p>
+            )}
+            {/* ------------------------- */}
             {/* ADD MODAL */}
             {/* ------------------------- */}
 

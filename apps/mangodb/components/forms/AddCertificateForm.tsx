@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
 import { apiFetch, ApiRequestError } from '@/lib/api';
+import FileUpload from '../sm-detail/FileUpload';
 
 export type CertificateResponse = {
     certificate_id: number;
@@ -111,7 +111,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 exYear: cert.expire_year?.toString() ?? '',
                 credID: cert.credential_id ?? '',
                 credURL: cert.credential_url ?? '',
-                file,
+                file: file ?? undefined,
                 cert_image: cert.cert_image ?? null,
             };
 

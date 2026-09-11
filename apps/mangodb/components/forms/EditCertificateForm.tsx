@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import FileUpload from '../sm-detail/FileUpload';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 
 export type CertificateData = {
@@ -16,7 +15,7 @@ export type CertificateData = {
     exYear?: string | undefined;
     credID?: string | undefined;
     credURL?: string | undefined;
-    file?: File | null | undefined;
+    file?: File | undefined;
     cert_image?: string | null | undefined;
 };
 
@@ -88,7 +87,6 @@ function EditCertificateDialog({
     const [exYear, setExYear] = useState(initialData?.exYear || '');
     const [credID, setCredID] = useState(initialData?.credID || '');
     const [credURL, setCredURL] = useState(initialData?.credURL || '');
-    const [file, setFile] = useState<File | null>(initialData?.file || null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -118,7 +116,6 @@ function EditCertificateDialog({
             exYear,
             credID,
             credURL,
-            file,
             cert_image: initialData?.cert_image,
         };
 
@@ -349,7 +346,6 @@ function EditCertificateDialog({
                                 placeholder="https://learn.microsoft.com/..."
                             />
                         </div>
-                        <FileUpload value={file} onChange={setFile} />
                     </div>
 
                     <hr className="border-[#3F6B80]/50 my-4" />
