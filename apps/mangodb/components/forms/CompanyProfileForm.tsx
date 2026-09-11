@@ -80,18 +80,19 @@ export function toUpdateRequest(
 type CompanyProfileFormProps = {
     initialData: ProfileFormData;
     onSave: (data: ProfileFormData) => Promise<void> | void;
-    onCancel?: () => void;
-    errors?: Partial<Record<keyof ProfileFormData, string>>;
+    onCancel?: (() => void) | undefined;
+    errors?: Partial<Record<keyof ProfileFormData, string>> | undefined;
     // US6-4. Set only when an administrator is editing another company's
     // account: it turns on the Delete account section below the form fields.
     // A company editing its own profile never gets these, so the section stays
     // hidden — self-deletion lives on /account-settings.
-    onDeleteAccount?: (adminPassword: string) => void | Promise<void>;
-    deleteAccountUsername?: string;
-    status?: StatusMessageData;
-    isSaving?: boolean;
-    onClearError?: (field: keyof ProfileFormData) => void;
-    onDismissStatus?: () => void;
+    onDeleteAccount?:
+        ((adminPassword: string) => void | Promise<void>) | undefined;
+    deleteAccountUsername?: string | undefined;
+    status?: StatusMessageData | undefined;
+    isSaving?: boolean | undefined;
+    onClearError?: ((field: keyof ProfileFormData) => void) | undefined;
+    onDismissStatus?: (() => void) | undefined;
 };
 
 export default function CompanyProfileForm({

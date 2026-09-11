@@ -20,7 +20,7 @@ export type CertificateData = {
 type EditFormModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    initialData?: CertificateData;
+    initialData?: CertificateData | undefined;
     onSave?: (data: CertificateData) => void;
 };
 
