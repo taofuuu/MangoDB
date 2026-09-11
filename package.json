@@ -19,17 +19,32 @@
         "packages/*"
     ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "prepare": "husky"
+        "prepare": "husky",
+        "lint": "npm run lint --workspaces --if-present",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "build": "npm run build --workspaces --if-present",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "verify": "npm run format:check && npm run lint && npm run typecheck"
     },
     "devDependencies": {
         "husky": "^9.1.7",
         "lint-staged": "^16.4.0",
-        "prettier": "^3.9.6"
+        "prettier": "^3.9.6",
+        "typescript": "^5.9.2"
     },
     "lint-staged": {
-        "**/*.{js,jsx,ts,tsx,json,css,md}": [
+        "**/*.{js,jsx,mjs,cjs,ts,tsx,json,css,md,yml,yaml}": [
             "prettier --write"
+        ],
+        "apps/api/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config apps/api/eslint.config.mjs --fix --no-warn-ignored"
+        ],
+        "apps/mangodb/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config apps/mangodb/eslint.config.mjs --fix --no-warn-ignored"
+        ],
+        "packages/shared/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config packages/shared/eslint.config.mjs --fix --no-warn-ignored"
         ]
     }
 }

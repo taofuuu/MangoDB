@@ -1,0 +1,13 @@
+{
+    // The contract both apps import. Checked on its own so a type nobody
+    // currently imports still gets compiled.
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "target": "esnext",
+        "lib": ["esnext"],
+        "noEmit": true
+    },
+    "include": ["index.ts"]
+}

@@ -5,7 +5,7 @@ type RegisterLayoutProps = {
     children: ReactNode;
     title: string;
     subtitle: string;
-    onBack?: () => void;
+    onBack?: (() => void) | undefined;
     onNext?: () => void;
     nextLabel?: string;
     nextDisabled?: boolean;

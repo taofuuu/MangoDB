@@ -1,37 +1,48 @@
 name: PR Check
 
 on:
-  pull_request:
-    branches: [ "main" ]
+    pull_request:
+        branches: ['main']
+    # main itself, so a merge is still checked after the fact.
+    push:
+        branches: ['main']
+
+# A new push supersedes the run already in flight for the same branch.
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+    verify:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Build Next.js App
-        run: npm run build --workspace=apps/mangodb
+            # Before any backend check: the Prisma types do not exist until this
+            # runs, so typecheck and build both depend on it.
+            - name: Generate Prisma Client
+              run: npx prisma generate
+              working-directory: ./apps/api
+              env:
+                  # generate never connects to a database — this only exists to satisfy
+                  # prisma.config.ts's env("DIRECT_URL") presence check.
+                  DIRECT_URL: 'postgresql://user:password@localhost:5432/placeholder'
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
-        working-directory: ./apps/api
-        env:
-          # generate never connects to a database — this only exists to satisfy
-          # prisma.config.ts's env("DIRECT_URL") presence check.
-          DIRECT_URL: "postgresql://user:password@localhost:5432/placeholder"
+            # Format, lint and typecheck. Same command anyone can run locally.
+            - name: Verify
+              run: npm run verify
 
-      - name: Typecheck Backend
-        run: npx tsc --noEmit
-        working-directory: ./apps/api
+            - name: Build
+              run: npm run build
