@@ -88,7 +88,9 @@ function EditProfilePageInner() {
         setIsSaving(true);
 
         try {
-            const profile = await updateMyProfile(toUpdateRequest(data));
+            const profile = isAdminEditingOther
+                   ? await updateCompanyAccount(Number(targetCompanyId), toUpdateRequest(data))
+                   : await updateMyProfile(toUpdateRequest(data));
             // Update saved with the newly persisted profile so subsequent Cancel
             // actions revert to this latest saved baseline. Keep the photoUrl as
             // the response does not carry one.

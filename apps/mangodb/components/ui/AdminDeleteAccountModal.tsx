@@ -80,6 +80,9 @@ function AdminDeleteAccountDialog({
                     required
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.preventDefault();
+                    }}
                     className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-[#171717] bg-transparent text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#171717] disabled:opacity-60"
                 />
             </div>
