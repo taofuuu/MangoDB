@@ -11,6 +11,7 @@ import {
 } from '../schemas/certificate.schema';
 
 import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
+import { ApiError } from '../lib/ApiError';
 
 export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
@@ -53,8 +54,6 @@ export async function createCertificate(req: Request, res: Response) {
             },
         });
 
-        console.log(certificate);
-
         return res.status(201).json({
             message: 'Certificate created successfully',
             certificate,
@@ -69,20 +68,13 @@ export async function createCertificate(req: Request, res: Response) {
     }
 }
 
-export async function getAllCertificates(req: Request, res: Response) {
-    const result = await prisma.certificate.findMany();
-    return res.status(200).json(result);
-}
-
 export async function getCertificatesByProvider(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
-    const result = await prisma.certificate.findMany({
-        where: {
-            provider_id: providerId,
-        },
+    const certificates = await prisma.certificate.findMany({
+        where: { provider_id: providerId },
+        orderBy: { certificate_id: 'desc' },
     });
-    console.log(result);
-    return res.status(200).json(result);
+    return res.status(200).json(certificates);
 }
 
 export async function updateCertificate(req: Request, res: Response) {
@@ -103,7 +95,7 @@ export async function updateCertificate(req: Request, res: Response) {
     });
 
     if (!existingCertificate) {
-        return res.status(404).json({ message: 'Certificate not found' });
+        throw ApiError.notFound('Certificate not found');
     }
 
     // Merge state for date validation

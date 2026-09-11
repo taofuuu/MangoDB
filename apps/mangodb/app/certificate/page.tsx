@@ -10,20 +10,20 @@ import EditCertificateForm, {
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 import { apiFetch } from '@/lib/api';
 
-const INITIAL_CERTIFICATES: CertificateData[] = [
-    {
-        id: 1,
-        name: 'Microsoft Certified: Azure Fundamentals',
-        organize: 'Microsoft',
-        month: '3',
-        year: '2023',
-        exMonth: '3',
-        exYear: '2026',
-        credID: 'AZ-900-123456',
-        credURL:
-            'https://learn.microsoft.com/certifications/azure-fundamentals',
-    },
-];
+// const INITIAL_CERTIFICATES: CertificateData[] = [
+//     {
+//         id: 1,
+//         name: 'Microsoft Certified: Azure Fundamentals',
+//         organize: 'Microsoft',
+//         month: '3',
+//         year: '2023',
+//         exMonth: '3',
+//         exYear: '2026',
+//         credID: 'AZ-900-123456',
+//         credURL:
+//             'https://learn.microsoft.com/certifications/azure-fundamentals',
+//     },
+// ];
 
 const MONTH_NAMES = [
     '',
@@ -51,8 +51,7 @@ const MONTH_NAMES = [
 // }
 
 export default function CertificatePage() {
-    const [certificates, setCertificates] =
-        useState<CertificateData[]>(INITIAL_CERTIFICATES);
+    const [certificates, setCertificates] = useState<CertificateData[]>([]);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);

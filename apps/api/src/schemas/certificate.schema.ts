@@ -16,7 +16,7 @@ export const certificateFields = {
     expire_year: z.coerce
         .number()
         .int()
-        .min(1990, 'Expiration year must be 1990 or later')
+        .min(2026, 'Expiration year must be 2026 or later')
         .nullable()
         .optional(),
     credential_id: z.string().trim().max(255).nullable().optional(),
