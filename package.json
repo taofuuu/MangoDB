@@ -34,6 +34,12 @@
         "typescript": "^5.9.2"
     },
     "lint-staged": {
+        "**/*.{js,jsx,mjs,cjs,ts,tsx,json,css,md,yml,yaml}": [
+            "prettier --write"
+        ],
+        "apps/api/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
+            "eslint --config apps/api/eslint.config.mjs --fix --no-warn-ignored"
+        ],
         "apps/mangodb/**/*.{js,jsx,mjs,cjs,ts,tsx}": [
             "eslint --config apps/mangodb/eslint.config.mjs --fix --no-warn-ignored"
         ],

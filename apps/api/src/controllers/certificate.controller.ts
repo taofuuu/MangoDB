@@ -2,16 +2,22 @@ import type { Request, Response } from 'express';
 
 import { prisma } from '../lib/prisma';
 
-import { parseBody } from '../middleware/validate';
+import { parseBody, parseParams } from '../middleware/validate';
 
 import {
+    certificateIdParamSchema,
     createCertificateSchema,
     updateCertificateSchema,
-    UpdateCertificateInput,
 } from '../schemas/certificate.schema';
 
-import { uploadToStorage, removeFromStorage, BUCKETS } from '../lib/storage';
+import {
+    uploadToStorage,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    BUCKETS,
+} from '../lib/storage';
 import { ApiError } from '../lib/ApiError';
+import { omitUndefined } from '../lib/objects';
 
 export async function createCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
@@ -79,12 +85,9 @@ export async function getCertificatesByProvider(req: Request, res: Response) {
 
 export async function updateCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
-    const certificateId = Number(req.params.certificateId);
+    const { certificateId } = parseParams(certificateIdParamSchema, req.params);
 
-    const body: UpdateCertificateInput = parseBody(
-        updateCertificateSchema,
-        req.body,
-    );
+    const body = parseBody(updateCertificateSchema, req.body);
 
     // Fetch existing certificate for ownership and date merging
     const existingCertificate = await prisma.certificate.findFirst({
@@ -126,43 +129,15 @@ export async function updateCertificate(req: Request, res: Response) {
         const expireDate = expireYear * 100 + expireMonth;
 
         if (expireDate < issueDate) {
-            return res.status(400).json({
-                message: 'Expiration date cannot be before the issue date',
-            });
+            throw ApiError.badRequest(
+                'Expiration date cannot be before the issue date',
+            );
         }
     }
 
     const updatedCertificate = await prisma.certificate.update({
         where: { certificate_id: certificateId },
-        data: {
-            ...(body.cert_title !== undefined && {
-                cert_title: body.cert_title,
-            }),
-            ...(body.organization !== undefined && {
-                organization: body.organization,
-            }),
-            ...(body.issue_month !== undefined && {
-                issue_month: body.issue_month,
-            }),
-            ...(body.issue_year !== undefined && {
-                issue_year: body.issue_year,
-            }),
-            ...(body.expire_month !== undefined && {
-                expire_month: body.expire_month,
-            }),
-            ...(body.expire_year !== undefined && {
-                expire_year: body.expire_year,
-            }),
-            ...(body.credential_id !== undefined && {
-                credential_id: body.credential_id,
-            }),
-            ...(body.credential_url !== undefined && {
-                credential_url: body.credential_url,
-            }),
-            ...(body.cert_image !== undefined && {
-                cert_image: body.cert_image,
-            }),
-        },
+        data: omitUndefined(body),
     });
 
     return res.status(200).json({
@@ -173,7 +148,7 @@ export async function updateCertificate(req: Request, res: Response) {
 
 export async function deleteCertificate(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
-    const certificateId = Number(req.params.certificateId);
+    const { certificateId } = parseParams(certificateIdParamSchema, req.params);
 
     const existingCertificate = await prisma.certificate.findFirst({
         where: {
@@ -183,14 +158,20 @@ export async function deleteCertificate(req: Request, res: Response) {
     });
 
     if (!existingCertificate) {
-        return res.status(404).json({ message: 'Certificate not found' });
+        throw ApiError.notFound('Certificate not found');
     }
 
     await prisma.certificate.delete({
         where: { certificate_id: certificateId },
     });
 
-    return res.status(200).json({
-        message: 'Certificate deleted successfully',
-    });
+    // Best-effort cleanup: the row is gone either way.
+    if (existingCertificate.cert_image) {
+        await removeFromStorageByUrl(
+            existingCertificate.cert_image,
+            BUCKETS.CERTIFICATE,
+        );
+    }
+
+    return res.status(204).end();
 }

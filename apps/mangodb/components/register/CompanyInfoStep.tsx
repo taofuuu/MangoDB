@@ -62,6 +62,16 @@ export default function CompanyInfoStep({
         });
     };
 
+    const validatePhoneNUmber = (num: string) => {
+        if (Number.isNaN(Number(num))) return false;
+        if (num.length > 10) return false;
+        if (num[0] !== '0') {
+            if (num.length === 0) return true;
+            else return false;
+        }
+        return true;
+    };
+
     const handleUpdateEmail = (newData: string) => {
         setCompanyInfo({ ...companyInfo, email: newData });
     };
@@ -105,6 +115,7 @@ export default function CompanyInfoStep({
                 <SimpleTextInput
                     title="Phone Number"
                     onChange={handleUpdatePhoneNumber}
+                    validate={validatePhoneNUmber}
                     initValue={value ? value.phoneNumber : ''}
                 />
                 <SimpleTextInput

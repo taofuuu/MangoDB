@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const certificateIdParamSchema = z.object({
+    certificateId: z.coerce.number().int().positive().max(2147483647),
+});
+
 export const certificateFields = {
     cert_title: z.string().trim().max(255),
     organization: z.string().trim().max(255),
@@ -16,12 +20,11 @@ export const certificateFields = {
     expire_year: z.coerce
         .number()
         .int()
-        .min(2026, 'Expiration year must be 2026 or later')
+        .min(1990, 'Expiration year must be 1990 or later')
         .nullable()
         .optional(),
     credential_id: z.string().trim().max(255).nullable().optional(),
     credential_url: z.url().nullable().optional(),
-    cert_image: z.string().trim().max(255).nullable().optional(),
 } as const;
 
 export const createCertificateSchema = z.object(certificateFields).refine(

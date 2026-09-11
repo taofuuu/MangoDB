@@ -91,19 +91,15 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 formData.append('cert_image', file);
             }
 
-            const result = await apiFetch<
-                {
-                    message?: string;
-                    certificate?: CertificateResponse;
-                } & Partial<CertificateResponse>
-            >('/certificates', {
+            const result = await apiFetch<{
+                message: string;
+                certificate: CertificateResponse;
+            }>('/certificates', {
                 method: 'POST',
                 body: formData,
             });
 
-            console.log('Certificate created:', result);
-
-            const cert = result.certificate ?? (result as CertificateResponse);
+            const cert = result.certificate;
 
             const newData: CertificateData = {
                 id: cert.certificate_id,

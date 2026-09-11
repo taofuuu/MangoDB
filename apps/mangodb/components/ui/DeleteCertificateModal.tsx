@@ -1,8 +1,5 @@
 'use client';
 
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from './DeleteConfirmationModal';
 import DeleteCertificateForm, {
     type DeleteCertificateFormProps,
 } from '@/components/forms/DeleteCertificateForm';

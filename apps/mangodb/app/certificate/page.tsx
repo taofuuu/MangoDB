@@ -10,48 +10,9 @@ import EditCertificateForm, {
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 import { apiFetch } from '@/lib/api';
 
-// const INITIAL_CERTIFICATES: CertificateData[] = [
-//     {
-//         id: 1,
-//         name: 'Microsoft Certified: Azure Fundamentals',
-//         organize: 'Microsoft',
-//         month: '3',
-//         year: '2023',
-//         exMonth: '3',
-//         exYear: '2026',
-//         credID: 'AZ-900-123456',
-//         credURL:
-//             'https://learn.microsoft.com/certifications/azure-fundamentals',
-//     },
-// ];
-
-const MONTH_NAMES = [
-    '',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-];
-
-// function formatMonthYear(month?: string, year?: string): string {
-//     if (!month && !year) return '';
-//     const num = parseInt(month || '', 10);
-//     const monthStr =
-//         !isNaN(num) && num >= 1 && num <= 12 ? MONTH_NAMES[num] : month || '';
-//     if (monthStr && year) return `${monthStr} ${year}`;
-//     return monthStr || year || '';
-// }
-
 export default function CertificatePage() {
     const [certificates, setCertificates] = useState<CertificateData[]>([]);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -66,29 +27,35 @@ export default function CertificatePage() {
 
     useEffect(() => {
         const fetchCertificates = async () => {
-            const res = await apiFetch<CertificateResponse[]>(
-                '/certificates/provider',
-                {
-                    method: 'GET',
-                },
-            );
-            const formatted_certs: CertificateData[] = res.map(
-                (cert: CertificateResponse) => ({
-                    id: cert.certificate_id,
-                    name: cert.cert_title,
-                    organize: cert.organization,
-                    month: String(cert.issue_month) ?? undefined,
-                    year: String(cert.issue_year) ?? undefined,
-                    exMonth: String(cert.expire_month) ?? undefined,
-                    exYear: String(cert.expire_year) ?? undefined,
-                    credID: cert.credential_id ?? undefined,
-                    credURL: cert.credential_url ?? undefined,
-                }),
-            );
-            setCertificates(formatted_certs);
+            try {
+                const res = await apiFetch<CertificateResponse[]>(
+                    '/certificates/provider',
+                    { method: 'GET' },
+                );
+
+                setCertificates(
+                    res.map((cert) => ({
+                        id: cert.certificate_id,
+                        name: cert.cert_title,
+                        organize: cert.organization,
+                        month: cert.issue_month?.toString() ?? undefined,
+                        year: cert.issue_year?.toString() ?? undefined,
+                        exMonth: cert.expire_month?.toString() ?? undefined,
+                        exYear: cert.expire_year?.toString() ?? undefined,
+                        credID: cert.credential_id ?? undefined,
+                        credURL: cert.credential_url ?? undefined,
+                    })),
+                );
+            } catch (err) {
+                setLoadError(
+                    err instanceof Error
+                        ? err.message
+                        : 'Could not load certificates.',
+                );
+            }
         };
 
-        fetchCertificates();
+        void fetchCertificates();
     }, []);
 
     // -------------------------
