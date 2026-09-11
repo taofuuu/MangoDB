@@ -1,37 +1,37 @@
 name: PR Check
 
 on:
-  pull_request:
-    branches: [ "main" ]
+    pull_request:
+        branches: ['main']
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+    build-and-test:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Build Next.js App
-        run: npm run build --workspace=apps/mangodb
+            - name: Build Next.js App
+              run: npm run build --workspace=apps/mangodb
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
-        working-directory: ./apps/api
-        env:
-          # generate never connects to a database — this only exists to satisfy
-          # prisma.config.ts's env("DIRECT_URL") presence check.
-          DIRECT_URL: "postgresql://user:password@localhost:5432/placeholder"
+            - name: Generate Prisma Client
+              run: npx prisma generate
+              working-directory: ./apps/api
+              env:
+                  # generate never connects to a database — this only exists to satisfy
+                  # prisma.config.ts's env("DIRECT_URL") presence check.
+                  DIRECT_URL: 'postgresql://user:password@localhost:5432/placeholder'
 
-      - name: Typecheck Backend
-        run: npx tsc --noEmit
-        working-directory: ./apps/api
+            - name: Typecheck Backend
+              run: npx tsc --noEmit
+              working-directory: ./apps/api
