@@ -2,34 +2,43 @@
 
 import React from 'react';
 import Link from 'next/link';
+import type { CompanyProfile } from '@mangodb/shared';
+
+export interface ReceiverCompanyCardData {
+    name: string;
+    email: string;
+    website: string;
+    phone: string;
+    description: string;
+    type: string;
+    address: string;
+}
 
 interface ReceiverCompanyCardProps {
-    data?: {
-        name: string;
-        subName: string;
-        email: string;
-        website: string;
-        phone: string;
-        description: string;
-        type: string;
-        address: string;
+    data: ReceiverCompanyCardData;
+}
+
+// The profile's nullable columns become "Not provided" here rather than
+// rendering an empty textarea, which reads as a loading glitch.
+export function toReceiverCompanyCardData(
+    profile: CompanyProfile,
+): ReceiverCompanyCardData {
+    return {
+        name: profile.company_name,
+        email: profile.contact_email ?? profile.email,
+        website: profile.website ?? 'Not provided',
+        phone: profile.phone,
+        description: profile.company_description ?? 'No description provided.',
+        type:
+            profile.company_type.length > 0
+                ? profile.company_type.join(', ')
+                : 'Not specified',
+        address: profile.address ?? 'Not provided',
     };
 }
 
-const defaultMockData = {
-    name: 'MangoDB COOP',
-    subName: 'MangoDB COOP',
-    email: 'mongoDB@org.com',
-    website: 'mangodb.com',
-    phone: '081-234-5678',
-    description:
-        'Leading provider of database solutions and infrastructure services.',
-    type: 'Cooperative / Enterprise',
-    address: '123 Tech Park, Tower A, Bangkok, Thailand 10110',
-};
-
 export default function ReceiverCompanyCard({
-    data = defaultMockData,
+    data,
 }: ReceiverCompanyCardProps) {
     return (
         <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs flex flex-col justify-between w-full h-full font-sans">
@@ -39,12 +48,9 @@ export default function ReceiverCompanyCard({
                     <div className="w-20 h-20 bg-[#FFB800] rounded-full flex items-center justify-center font-bold text-[#E53E3E] text-2xl shadow-inner mb-3">
                         CP
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-3">
                         {data.name}
                     </h2>
-                    <span className="text-xs text-gray-400 font-normal mt-0.5 mb-3">
-                        {data.subName}
-                    </span>
 
                     <div className="text-xs text-gray-600 space-y-0.5 font-normal">
                         <p>{data.email}</p>
