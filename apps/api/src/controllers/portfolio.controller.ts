@@ -123,6 +123,11 @@ export async function updatePortfolio(
         ? await uploadToStorage(req.file, BUCKETS.PORTFOLIO, 'portfolios')
         : null;
 
+    const updateData = omitUndefined(data);
+    if (updateData.portfolio_description === '') {
+        updateData.portfolio_description = null;
+    }
+
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolio_link back to its current
     // value can never self-collide. Skipping the write was a micro-
@@ -137,7 +142,7 @@ export async function updatePortfolio(
                 service: { listing: { company_id: companyId } },
             },
             data: {
-                ...omitUndefined(data),
+                ...updateData,
                 ...(replacement ? { portfolio_image: replacement.url } : {}),
             },
             select: portfolioSelect,

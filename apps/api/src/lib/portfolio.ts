@@ -37,8 +37,8 @@ export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
     };
 }
 
-// Authorizes without reading the row's own columns — both callers only need
-// the throw. There is no owner column: the company is three hops away,
+// Authorizes, and hands back portfolio_image so a replacement can clean up
+// the old object. There is no owner column: the company is three hops away,
 // service_portfolio -> service -> listing, so asking for it as a nested
 // select beats walking the chain query by query.
 export async function assertPortfolioOwned(
