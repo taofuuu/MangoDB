@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+import logoutIcon from '@/assets/icons/logout.png';
 import Button from '@/components/ui/Button';
 import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
 import { logout } from '@/lib/session';
@@ -40,9 +42,16 @@ export default function LogoutButton() {
             <Button
                 variant="outline"
                 onClick={() => setIsConfirmOpen(true)}
+                aria-label="Log Out"
                 className="px-4 py-2 text-xs font-semibold"
             >
-                Log Out
+                <Image
+                    src={logoutIcon}
+                    alt=""
+                    width={18}
+                    height={18}
+                    className="h-[18px] w-[18px] object-contain"
+                />
             </Button>
 
             <LogoutConfirmationModal

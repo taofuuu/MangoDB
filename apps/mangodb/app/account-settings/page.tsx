@@ -242,7 +242,7 @@ export default function AccountPage() {
                         <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                             <div>
                                 <h2 className="text-md font-semibold text-[#171717]">
-                                    Session
+                                    Logout
                                 </h2>
                                 <p className="mt-1 text-xs text-[#666666]">
                                     Logging out revokes the token this session
