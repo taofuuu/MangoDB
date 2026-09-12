@@ -61,15 +61,21 @@ export function validateContactEmail(
 }
 
 // 3. Phone Number: Strictly required, 6 to 20 characters, allowing digits and + - ( ) spaces.
+// Must contain at least 6 digits so values like "--------" are rejected.
 export function validatePhone(value: string | undefined): string | null {
     const trimmed = (value ?? '').trim();
     if (!trimmed) {
         return 'Phone number is required.';
     }
+
+    const digitsOnly = trimmed.replace(/\D/g, '');
+
     if (
         trimmed.length < 6 ||
         trimmed.length > 20 ||
-        !/^[0-9+\-\s()]+$/.test(trimmed)
+        !/^[0-9+\-\s()]+$/.test(trimmed) ||
+        digitsOnly.length < 6 ||
+        digitsOnly.length > 15
     ) {
         return 'Please provide a valid phone number';
     }
