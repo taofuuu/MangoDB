@@ -181,6 +181,57 @@ export async function updateCompanyAccount(
 
     res.json(toCompanyAccountDetail(company));
 }
+
+// written under time-crunch bypass — review later.
+// Checked against the live DB (2026-09-12): project.status is one of
+// 'Delivered', 'In Progress', 'Waiting Deposit', and nothing in code defines
+// them as constants yet. The rule is stated by exclusion on purpose — a
+// project is a live commitment until it is delivered, so a status added later
+// blocks deletion by default instead of silently slipping past this check.
+const COMPLETED_PROJECT_STATUS = 'Delivered';
+
+// written under time-crunch bypass — review later.
+// Two paths from company to project, OR'd together: sender_id (this company
+// sent the proposal) and listing.company_id (this company posted the listing
+// the accepted proposal responded to). Either one having an undelivered
+// project blocks deletion.
+async function hasActiveProject(companyId: number): Promise<boolean> {
+    const match = await prisma.company.findFirst({
+        where: {
+            company_id: companyId,
+            OR: [
+                {
+                    proposal: {
+                        some: {
+                            project: {
+                                status: { not: COMPLETED_PROJECT_STATUS },
+                            },
+                        },
+                    },
+                },
+                {
+                    listing: {
+                        some: {
+                            proposal: {
+                                some: {
+                                    project: {
+                                        status: {
+                                            not: COMPLETED_PROJECT_STATUS,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            ],
+        },
+        select: { company_id: true },
+    });
+
+    return match !== null;
+}
+
 export async function deleteCompanyAccount(
     req: Request,
     res: Response,
@@ -191,19 +242,42 @@ export async function deleteCompanyAccount(
     const company = await prisma.company.findUnique({
         where: { company_id: companyId },
         select: {
-            company_id: true,
+            account_type: true,
+            deleted_at: true,
         },
     });
 
-    if (!company) {
+    // Same "deleted = gone" convention as isCompanyDeleted: an already-deleted
+    // company 404s here instead of falling through to the eligibility check.
+    if (!company || company.deleted_at !== null) {
         throw ApiError.notFound('Company account not found');
     }
 
-    // Step 2: does it have an active project? Call hasActiveProject.
-    // If true, throw ApiError.badRequest with a message explaining why.
+    // written under time-crunch bypass — review later.
+    // Deleting an administrator locks it out for good: requireAuth rejects a
+    // deleted account on every request, and nothing in this codebase undoes a
+    // soft delete. A 400 rather than a 403 for the same reason the provider
+    // check above uses one — this is a fact about the target, not a permission
+    // the caller is missing.
+    if (company.account_type === 'ADMIN') {
+        throw ApiError.badRequest('Administrator accounts cannot be deleted');
+    }
 
-    // Step 3: soft-delete it. softDeleteCom
-    const valid: boolean = await softDeleteCompany(companyId);
-    if (valid) res.status(204).send();
-    else throw ApiError.notFound('Company account not found');
+    // Step 2: does it have an active project?
+    if (await hasActiveProject(companyId)) {
+        throw ApiError.badRequest(
+            'Company has active projects and cannot be deleted',
+        );
+    }
+
+    // Step 3 + 4: soft-delete it, then respond. softDeleteCompany's guard
+    // means `false` here only means "already gone" (never existed, or was
+    // deleted between Step 1 and here) — Step 1 already ruled out the first
+    // case, so this is the race-condition case, reported the same way.
+    const wasDeleted = await softDeleteCompany(companyId);
+    if (wasDeleted) {
+        res.status(204).send();
+    } else {
+        throw ApiError.notFound('Company account not found');
+    }
 }
