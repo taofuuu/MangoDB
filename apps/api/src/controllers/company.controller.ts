@@ -4,6 +4,7 @@ import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
+import { softDeleteCompany } from '../lib/companyDeletion';
 import {
     companyProfileSelect,
     companyProfileUpdateData,
@@ -18,6 +19,7 @@ import {
     uniqueViolationDetails,
     uniqueViolationFields,
 } from '../lib/prismaErrors';
+import { hasOngoingProject } from '../lib/projectEligibility';
 import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import {
@@ -171,4 +173,23 @@ export async function changeMyCredentials(
     // one the browser is holding, so skipping this would sign the caller out
     // the moment they changed their own email.
     sendSession(res, toCompanyProfile(company));
+}
+
+// US1-6. Coordinates the existing eligibility and soft-delete layers without
+// owning either rule. Session invalidation and deleted-account login blocking
+// are integrated by their separately assigned US1-6 task.
+export async function requestMyAccountDeletion(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const companyId = Number(req.auth!.sub);
+
+    if (await hasOngoingProject(companyId)) {
+        throw ApiError.conflict(
+            'Account deletion is blocked while the company has an ongoing project',
+        );
+    }
+
+    await softDeleteCompany(companyId);
+    res.status(204).end();
 }
