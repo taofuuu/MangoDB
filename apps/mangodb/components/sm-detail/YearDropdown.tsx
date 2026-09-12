@@ -5,15 +5,20 @@ import { useState } from 'react';
 type YearDropdownProps = {
     value: string;
     onChange: (value: string) => void;
+    minYear: number;
+    maxYear: number;
 };
 
-export default function YearDropdown({ value, onChange }: YearDropdownProps) {
+export default function YearDropdown({
+    value,
+    onChange,
+    minYear,
+    maxYear,
+}: YearDropdownProps) {
     const [open, setOpen] = useState(false);
-    const startYear = 2020;
-    const endYear = 2035;
     const years = Array.from(
-        { length: endYear - startYear + 1 },
-        (_, index) => startYear + index,
+        { length: maxYear - minYear + 1 },
+        (_, index) => minYear + index,
     );
 
     return (

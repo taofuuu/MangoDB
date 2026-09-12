@@ -89,6 +89,11 @@ export async function updateCertificate(req: Request, res: Response) {
 
     const body = parseBody(updateCertificateSchema, req.body);
 
+    // The text body may be empty when the only change is a replacement image.
+    if (Object.keys(body).length === 0 && !req.file) {
+        throw ApiError.badRequest('Provide at least one field to update');
+    }
+
     // Fetch existing certificate for ownership and date merging
     const existingCertificate = await prisma.certificate.findFirst({
         where: {
@@ -135,10 +140,37 @@ export async function updateCertificate(req: Request, res: Response) {
         }
     }
 
-    const updatedCertificate = await prisma.certificate.update({
-        where: { certificate_id: certificateId },
-        data: omitUndefined(body),
-    });
+    // Multer keeps the file in memory; storage is not touched until ownership
+    // and the dates are known good. If the update later fails, this is removed.
+    const replacement = req.file
+        ? await uploadToStorage(req.file, BUCKETS.CERTIFICATE, 'certificates')
+        : null;
+
+    let updatedCertificate;
+    try {
+        updatedCertificate = await prisma.certificate.update({
+            where: { certificate_id: certificateId },
+            data: {
+                ...omitUndefined(body),
+                ...(replacement ? { cert_image: replacement.url } : {}),
+            },
+        });
+    } catch (error) {
+        if (replacement) {
+            await removeFromStorage(replacement.path, BUCKETS.CERTIFICATE);
+        }
+
+        throw error;
+    }
+
+    // The row points at the replacement now, so the old object is unreferenced.
+    // Cleanup is best-effort, matching certificate deletion.
+    if (replacement && existingCertificate.cert_image) {
+        await removeFromStorageByUrl(
+            existingCertificate.cert_image,
+            BUCKETS.CERTIFICATE,
+        );
+    }
 
     return res.status(200).json({
         message: 'Certificate updated successfully',
