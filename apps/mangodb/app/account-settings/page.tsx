@@ -6,7 +6,11 @@ import Link from 'next/link';
 import type { ChangeCredentialsRequest, CompanyProfile } from '@mangodb/shared';
 import penIcon from '@/assets/icons/pen.png';
 import { ApiRequestError } from '@/lib/api';
-import { changeMyCredentials, getMyProfile } from '@/lib/companies';
+import {
+    changeMyCredentials,
+    deleteMyAccount,
+    getMyProfile,
+} from '@/lib/companies';
 import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditAccountModal, {
@@ -43,6 +47,26 @@ export default function AccountPage() {
     const [profile, setProfile] = useState<CompanyProfile | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [status, setStatus] = useState<string | null>(null);
+    const [deletionSuccess, setDeletionSuccess] = useState(false);
+
+    const redirectToLogin = () => {
+        window.addEventListener(
+            'pageshow',
+            (event) => {
+                if (event.persisted) window.location.reload();
+            },
+            { once: true },
+        );
+        window.location.replace('/login');
+    };
+
+    useEffect(() => {
+        if (!deletionSuccess) return;
+        const timer = setTimeout(() => {
+            redirectToLogin();
+        }, 2500);
+        return () => clearTimeout(timer);
+    }, [deletionSuccess]);
 
     // No token check first: without one the request 401s anyway, and a token
     // that is expired or revoked lands in the same place. One path for "you are
@@ -100,6 +124,18 @@ export default function AccountPage() {
         }
 
         setStatus(`${LABELS[mode]} updated.`);
+    };
+
+    const handleDeleteAccount = async () => {
+        try {
+            await deleteMyAccount();
+        } catch (err) {
+            // Rethrown so DeleteConfirmationModal catches and displays the error (e.g. 409 ongoing project)
+            throw new Error(toModalMessage(err));
+        }
+
+        setIsDeleteOpen(false);
+        setDeletionSuccess(true);
     };
 
     return (
@@ -295,7 +331,60 @@ export default function AccountPage() {
                 isOpen={isDeleteOpen}
                 expectedEmail={profile?.email ?? ''}
                 onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleDeleteAccount}
             />
+
+            {/* Deletion Result Modal */}
+            {deletionSuccess && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.6vh]">
+                    <section
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="deletion-result-title"
+                        aria-describedby="deletion-result-desc"
+                        className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-[#FFFDF9] text-[#171717] px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
+                    >
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#F0D1C9] text-[#C5483E]">
+                            <svg
+                                className="h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                                aria-hidden="true"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        </div>
+                        <h2
+                            id="deletion-result-title"
+                            className="text-md font-semibold text-[#171717] mt-3"
+                        >
+                            Account Deleted
+                        </h2>
+                        <p
+                            id="deletion-result-desc"
+                            className="text-xs text-[#666666] mt-2 leading-relaxed"
+                        >
+                            Your account has been successfully deleted. Please
+                            note that records of your past projects and reviews
+                            have been retained. You will now be redirected to
+                            the login page.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={redirectToLogin}
+                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-[#C5483E] text-xs text-[#FFFDF9] font-semibold transition-colors hover:bg-[#B93D35] cursor-pointer"
+                        >
+                            Go to Login
+                        </button>
+                    </section>
+                </div>
+            )}
         </main>
     );
 }
