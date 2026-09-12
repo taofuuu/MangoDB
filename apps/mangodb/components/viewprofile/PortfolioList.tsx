@@ -4,38 +4,23 @@ import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import type { CertificateResponse } from '@/components/forms/AddCertificateForm';
 import { getPortfolios } from '@/lib/portfolios';
-import { getCertificates } from '@/lib/certificates';
+import { getCertificates } from '@/lib/certificate';
+import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 
 // Matches the card's fixed-height design: enough to preview at a glance,
 // the rest lives behind "See more" instead of an in-card scrollbar.
 const MAX_VISIBLE_ITEMS = 3;
 
-const MONTH_NAMES = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-];
-
 function formatPortfolioDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+    // Split rather than new Date() — an ISO date parses as UTC midnight and
+    // would render a day early west of UTC.
+    const [year, month, day] = dateString.split('-');
+    return `${Number(day)} ${monthLabel(String(Number(month)))} ${year}`;
 }
 
 function formatCertificateDate(cert: CertificateResponse): string {
     if (!cert.issue_month || !cert.issue_year) return '—';
-    return `${MONTH_NAMES[cert.issue_month - 1]} ${cert.issue_year}`;
+    return `${monthLabel(String(cert.issue_month))} ${cert.issue_year}`;
 }
 
 interface DisplayItem {
