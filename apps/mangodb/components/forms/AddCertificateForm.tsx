@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import FileUpload from '../sm-detail/FileUpload';
 import type { CertificateData } from './EditCertificateForm';
 import { apiFetch, ApiRequestError } from '@/lib/api';
+import FileUpload from '../sm-detail/FileUpload';
 
-type CertificateResponse = {
+export type CertificateResponse = {
     certificate_id: number;
     provider_id: number;
     cert_title: string;
@@ -91,26 +91,28 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 formData.append('cert_image', file);
             }
 
-            const result = await apiFetch<CertificateResponse>(
-                '/certificates',
-                {
-                    method: 'POST',
-                    body: formData,
-                },
-            );
+            const result = await apiFetch<{
+                message: string;
+                certificate: CertificateResponse;
+            }>('/certificates', {
+                method: 'POST',
+                body: formData,
+            });
 
-            console.log('Certificate created:', result);
+            const cert = result.certificate;
 
             const newData: CertificateData = {
-                name: result.cert_title,
-                organize: result.organization,
-                month: result.issue_month?.toString() ?? '',
-                year: result.issue_year?.toString() ?? '',
-                exMonth: result.expire_month?.toString() ?? '',
-                exYear: result.expire_year?.toString() ?? '',
-                credID: result.credential_id ?? '',
-                credURL: result.credential_url ?? '',
-                file,
+                id: cert.certificate_id,
+                name: cert.cert_title,
+                organize: cert.organization,
+                month: cert.issue_month?.toString() ?? '',
+                year: cert.issue_year?.toString() ?? '',
+                exMonth: cert.expire_month?.toString() ?? '',
+                exYear: cert.expire_year?.toString() ?? '',
+                credID: cert.credential_id ?? '',
+                credURL: cert.credential_url ?? '',
+                file: file ?? undefined,
+                cert_image: cert.cert_image ?? null,
             };
 
             onSave(newData);
@@ -297,11 +299,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                 className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
                             />
                         </div>
-                        <FileUpload
-                            value={file}
-                            onChange={setFile}
-                            className="my-4 upload-box mx-auto flex h-[80px] w-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#3F6B80]/90 bg-[#E3F1F1]/40 hover:bg-gray-50"
-                        />
+                        <FileUpload value={file} onChange={setFile} />
                     </div>
                     <hr className="border-[#3F6B80]/50" />
                     {/* -----------------footer----------------- */}

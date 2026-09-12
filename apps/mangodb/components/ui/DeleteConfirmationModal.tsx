@@ -16,8 +16,18 @@ type DeleteConfirmationModalProps = DeleteModalProps & {
     icon?: ReactNode;
     layout?: 'inline' | 'stacked';
     confirmLabel?: string;
+    // 'danger' is every existing use of this modal — an irreversible delete.
+    // 'primary' is for a confirmation that isn't destructive, like logout.
+    confirmVariant?: 'danger' | 'primary';
+    pendingLabel?: string;
+    cancelLabel?: string;
     confirmDisabled?: boolean;
     children?: ReactNode;
+};
+
+const CONFIRM_VARIANTS: Record<'danger' | 'primary', string> = {
+    danger: 'bg-[#C5483E] hover:bg-[#B93D35] focus-visible:outline-[#C5483E]',
+    primary: 'bg-[#497B93] hover:bg-[#3F6B80] focus-visible:outline-[#497B93]',
 };
 
 export default function DeleteConfirmationModal({
@@ -37,6 +47,9 @@ function DeleteConfirmationDialog({
     icon = <WarningIcon />,
     layout = 'inline',
     confirmLabel = 'Yes, Delete',
+    confirmVariant = 'danger',
+    pendingLabel = 'Deleting...',
+    cancelLabel = 'Go Back',
     confirmDisabled = false,
     children,
 }: Omit<DeleteConfirmationModalProps, 'isOpen'>) {
@@ -195,7 +208,7 @@ function DeleteConfirmationDialog({
                                 : 'rounded-[14px] h-[3.8vh] min-h-[34px] w-[6.8vw] min-w-[105px] border-0 px-3 bg-[#D9D9D9] text-xs text-[#756D6D] !font-[600] outline-none transition-colors hover:bg-[#CBCBCB] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
                         }
                     >
-                        Go Back
+                        {cancelLabel}
                     </button>
                     <button
                         type="button"
@@ -203,11 +216,11 @@ function DeleteConfirmationDialog({
                         disabled={isBusy || confirmDisabled}
                         className={
                             layout === 'stacked'
-                                ? 'flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] px-2 bg-[#C5483E] text-xs text-[#FFFDF9] !font-[600] transition-colors hover:bg-[#B93D35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5483E] disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap'
-                                : 'rounded-[14px] h-[3.8vh] min-h-[34px] w-[6.8vw] min-w-[105px] px-3 bg-[#C5483E] text-xs text-[#FFFDF9] !font-[600] transition-colors hover:bg-[#B93D35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5483E] disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
+                                ? `flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] px-2 text-xs text-[#FFFDF9] !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap ${CONFIRM_VARIANTS[confirmVariant]}`
+                                : `rounded-[14px] h-[3.8vh] min-h-[34px] w-[6.8vw] min-w-[105px] px-3 text-xs text-[#FFFDF9] !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full ${CONFIRM_VARIANTS[confirmVariant]}`
                         }
                     >
-                        {isBusy ? 'Deleting...' : confirmLabel}
+                        {isBusy ? pendingLabel : confirmLabel}
                     </button>
                 </div>
             </section>

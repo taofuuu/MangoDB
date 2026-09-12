@@ -1,11 +1,21 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
+import {
+    createCertificate,
+    updateCertificate,
+    deleteCertificate,
+    getCertificatesByProvider,
+} from '../controllers/certificate.controller';
 import { uploadImage } from '../middleware/upload';
-import { createCertificate } from '../controllers/certificate.controller';
 
-// Mounted at /companies. Everything here is the caller's own company, so it is
-// authenticated but not role-restricted.
 export const certificateRoutes = Router();
+
+certificateRoutes.get(
+    '/provider',
+    requireAuth,
+    requireRole('provider'),
+    getCertificatesByProvider,
+);
 
 certificateRoutes.post(
     '/',
@@ -13,4 +23,18 @@ certificateRoutes.post(
     requireRole('provider'),
     uploadImage('cert_image'),
     createCertificate,
+);
+
+certificateRoutes.patch(
+    '/:certificateId',
+    requireAuth,
+    requireRole('provider'),
+    updateCertificate,
+);
+
+certificateRoutes.delete(
+    '/:certificateId',
+    requireAuth,
+    requireRole('provider'),
+    deleteCertificate,
 );

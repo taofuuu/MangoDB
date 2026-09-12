@@ -108,9 +108,25 @@ export async function updatePortfolio(
     const data = parseBody(updatePortfolioSchema, req.body);
     const companyId = Number(req.auth!.sub);
 
+    // The text body may be empty when the only change is a replacement image.
+    if (Object.keys(data).length === 0 && !req.file) {
+        throw ApiError.badRequest('Provide at least one field to update');
+    }
+
     // Checked before any write, and the two cases stay distinct: 404 for an
     // unknown id, 403 for another company's (README.md's 401/403/404 rule).
-    await assertPortfolioOwned(portfolioId, companyId);
+    const existing = await assertPortfolioOwned(portfolioId, companyId);
+
+    // Multer keeps the file in memory; storage is not touched until ownership
+    // is known. If the database write later fails, the new upload is removed.
+    const replacement = req.file
+        ? await uploadToStorage(req.file, BUCKETS.PORTFOLIO, 'portfolios')
+        : null;
+
+    const updateData = omitUndefined(data);
+    if (updateData.portfolio_description === '') {
+        updateData.portfolio_description = null;
+    }
 
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolio_link back to its current
@@ -125,10 +141,17 @@ export async function updatePortfolio(
                 portfolio_id: portfolioId,
                 service: { listing: { company_id: companyId } },
             },
-            data: omitUndefined(data),
+            data: {
+                ...updateData,
+                ...(replacement ? { portfolio_image: replacement.url } : {}),
+            },
             select: portfolioSelect,
         });
     } catch (err) {
+        if (replacement) {
+            await removeFromStorage(replacement.path, BUCKETS.PORTFOLIO);
+        }
+
         // @@unique([listing_id, portfolio_link]) — this listing already
         // carries that link on some other row.
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
@@ -143,6 +166,15 @@ export async function updatePortfolio(
             throw ApiError.notFound('Portfolio not found');
         }
         throw err;
+    }
+
+    // The row points at the replacement now, so the old object is no longer
+    // needed. Cleanup is best-effort, matching portfolio deletion.
+    if (replacement) {
+        await removeFromStorageByUrl(
+            existing.portfolio_image,
+            BUCKETS.PORTFOLIO,
+        );
     }
 
     res.json(toServicePortfolio(updated));
@@ -198,15 +230,26 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
     res.json(toServicePortfolio(portfolio));
 }
 
-// Public: Fetching all portfolios, optionally filtered by listingId (GET /portfolios?listingId=123)
+// Public: fetching all portfolios, optionally narrowed to one listing or one
+// company (GET /portfolios?listingId=123, ?companyId=4, or both).
 export async function getAllPortfolios(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { listingId } = parseQuery(portfolioQuerySchema, req.query);
+    const { listingId, companyId } = parseQuery(
+        portfolioQuerySchema,
+        req.query,
+    );
 
+    // One where object rather than a conditional spread of the whole key, so
+    // the two filters can combine. An empty one matches everything.
     const portfolios = await prisma.service_portfolio.findMany({
-        ...(listingId ? { where: { listing_id: listingId } } : {}),
+        where: {
+            ...(listingId ? { listing_id: listingId } : {}),
+            ...(companyId
+                ? { service: { listing: { company_id: companyId } } }
+                : {}),
+        },
         select: portfolioSelect,
         orderBy: { development_date: 'desc' },
     });

@@ -30,7 +30,7 @@ const ROUTES = [
     {
         href: '/portfolio',
         title: 'Portfolio',
-        detail: 'Company portfolio grid and list views, on mock data.',
+        detail: 'Company portfolio grid and list views, against the API.',
     },
     {
         href: '/companies',

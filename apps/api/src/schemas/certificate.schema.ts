@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
+export const certificateIdParamSchema = z.object({
+    certificateId: z.coerce.number().int().positive().max(2147483647),
+});
+
 export const certificateFields = {
     cert_title: z.string().trim().max(255),
-
     organization: z.string().trim().max(255),
 
     issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
@@ -17,21 +20,15 @@ export const certificateFields = {
     expire_year: z.coerce
         .number()
         .int()
-        .min(
-            new Date().getFullYear(),
-            'Expiration year cannot be before the current year',
-        )
+        .min(1990, 'Expiration year must be 1990 or later')
         .nullable()
         .optional(),
-
     credential_id: z.string().trim().max(255).nullable().optional(),
-
     credential_url: z.url().nullable().optional(),
 } as const;
 
 export const createCertificateSchema = z.object(certificateFields).refine(
     (data) => {
-        // If either date is not provided, don't validate the comparison
         if (
             data.issue_year == null ||
             data.issue_month == null ||
@@ -40,11 +37,8 @@ export const createCertificateSchema = z.object(certificateFields).refine(
         ) {
             return true;
         }
-
-        // Convert the dates to YYYYMM for easy comparison
         const issueDate = data.issue_year * 100 + data.issue_month;
         const expireDate = data.expire_year * 100 + data.expire_month;
-
         return expireDate >= issueDate;
     },
     {
@@ -52,3 +46,8 @@ export const createCertificateSchema = z.object(certificateFields).refine(
         path: ['expire_year'],
     },
 );
+
+// All fields optional for partial PATCH operations
+export const updateCertificateSchema = z.object(certificateFields).partial();
+
+export type UpdateCertificateInput = z.infer<typeof updateCertificateSchema>;
