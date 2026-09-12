@@ -1,6 +1,24 @@
+import type { ApiRequestError } from '@/lib/api';
 import type { ProfileFormData } from '@/components/forms/CompanyProfileForm';
 
 export type ProfileErrors = Partial<Record<keyof ProfileFormData, string>>;
+
+// zod reports an array problem as "company_type.0"; the form keys its errors by
+// field, so only the part before the first dot is useful here.
+export function toFormErrors(
+    details: ApiRequestError['details'],
+): ProfileErrors {
+    const errors: ProfileErrors = {};
+
+    for (const detail of details) {
+        const field = detail.field.split('.')[0] as keyof ProfileFormData;
+        if (field && !errors[field]) {
+            errors[field] = detail.message;
+        }
+    }
+
+    return errors;
+}
 
 export const PREDEFINED_COMPANY_TYPES = [
     'Technology consultant',
@@ -23,13 +41,13 @@ export function validateCompanyName(value: string | undefined): string | null {
     return null;
 }
 
-// 2. Contact Email: Required, must follow standard email format (company@domain.com), max 100 chars.
+// 2. Contact Email: Optional, but if provided must follow standard email format (company@domain.com), max 100 chars.
 export function validateContactEmail(
     value: string | null | undefined,
 ): string | null {
     const trimmed = (value ?? '').trim();
     if (!trimmed) {
-        return 'Email address is required.';
+        return null;
     }
     if (trimmed.length > 100) {
         return 'Email address cannot exceed 100 characters.';
@@ -42,18 +60,22 @@ export function validateContactEmail(
     return null;
 }
 
-// 3. Phone Number: Must be 9 or 10 digits, without hyphen (-) or plus (+).
+// 3. Phone Number: Strictly required, 6 to 20 characters, allowing digits and + - ( ) spaces.
+// Must contain at least 6 digits so values like "--------" are rejected.
 export function validatePhone(value: string | undefined): string | null {
     const trimmed = (value ?? '').trim();
     if (!trimmed) {
         return 'Phone number is required.';
     }
+
+    const digitsOnly = trimmed.replace(/\D/g, '');
+
     if (
-        /[a-zA-Z]/.test(trimmed) ||
-        /[+\-]/.test(trimmed) ||
-        !/^\d+$/.test(trimmed) ||
-        trimmed.length < 9 ||
-        trimmed.length > 10
+        trimmed.length < 6 ||
+        trimmed.length > 20 ||
+        !/^[0-9+\-\s()]+$/.test(trimmed) ||
+        digitsOnly.length < 6 ||
+        digitsOnly.length > 15
     ) {
         return 'Please provide a valid phone number';
     }
@@ -72,11 +94,24 @@ export function validateWebsite(
         return 'Website URL cannot exceed 255 characters.';
     }
 
-    // Accepts http://, https://, or standard domain formats like www.domain.com / domain.com
-    const urlPattern =
-        /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d+)?(\/[^\s]*)?$/i;
+    // If it has a scheme (like ftp:// or javascript:), don't prepend https://
+    // If it lacks a scheme (like www.example.com or domain.com), prepend https:// so the URL constructor can parse it
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed);
+    const testUrl = hasScheme ? trimmed : `https://${trimmed}`;
 
-    if (!urlPattern.test(trimmed)) {
+    try {
+        const url = new URL(testUrl);
+
+        // Ensure the protocol is strictly http or https (blocks ftp://, javascript:, etc.)
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return 'Please enter a valid website URL (http or https).';
+        }
+
+        // Ensure there is at least one dot in the hostname and it doesn't end with a dot to require a valid domain/TLD
+        if (!url.hostname.includes('.') || url.hostname.endsWith('.')) {
+            return 'Please enter a valid website URL (e.g., https://example.com or www.example.com).';
+        }
+    } catch {
         return 'Please enter a valid website URL (e.g., https://example.com or www.example.com).';
     }
 
@@ -98,7 +133,7 @@ export function normalizeWebsiteUrl(
     return `https://${trimmed}`;
 }
 
-// 5. Company Type: Array/list of tags, required (at least 1 tag), max 10 tags, each up to 100 chars.
+// 5. Company Type: Array/list of tags, required (at least 1 tag), max 10 tags, each up to 100 chars, no duplicates.
 export function validateCompanyType(tags: string[] | undefined): string | null {
     if (!tags || tags.length === 0) {
         return 'Select at least one company type.';
@@ -106,6 +141,7 @@ export function validateCompanyType(tags: string[] | undefined): string | null {
     if (tags.length > 10) {
         return 'You can select at most 10 company types.';
     }
+    const seen = new Set<string>();
     for (const tag of tags) {
         const trimmed = tag.trim();
         if (!trimmed) {
@@ -114,6 +150,11 @@ export function validateCompanyType(tags: string[] | undefined): string | null {
         if (trimmed.length > 100) {
             return 'Each company type cannot exceed 100 characters.';
         }
+        const lower = trimmed.toLowerCase();
+        if (seen.has(lower)) {
+            return 'Company types must not contain duplicate tags.';
+        }
+        seen.add(lower);
     }
     return null;
 }
