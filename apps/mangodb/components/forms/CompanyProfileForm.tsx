@@ -186,9 +186,7 @@ export default function CompanyProfileForm({
         // browser's own check on type="email" silently blocks submit and shows
         // its own tooltip, which skips the error slots under each field.
         <form onSubmit={handleSubmit} noValidate>
-            <h1 className="pl-[1.88vw] text-hd !text-[48px] leading-none">
-                Edit Profile
-            </h1>
+            <h1 className="pl-[1.88vw] text-hd leading-none">Edit Profile</h1>
 
             <div className="mt-[1.85vh] flex">
                 <div className="w-[17.99vw] shrink-0">
@@ -333,7 +331,7 @@ export default function CompanyProfileForm({
                     variant="outline"
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-lg"
+                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-md"
                 >
                     Cancel
                 </Button>
@@ -341,7 +339,7 @@ export default function CompanyProfileForm({
                 <Button
                     type="submit"
                     disabled={isSaving}
-                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-lg"
+                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-md"
                 >
                     {isSaving ? 'Saving…' : 'Save Changes'}
                 </Button>
