@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { httpUrl } from './common.schema';
 
 export const certificateIdParamSchema = z.object({
     certificateId: z.coerce.number().int().positive().max(2147483647),
@@ -50,7 +51,9 @@ export const certificateFields = {
     credential_id: emptyToNull(
         z.string().trim().max(255).nullable().optional(),
     ),
-    credential_url: emptyToNull(z.url().nullable().optional()),
+    // httpUrl, not z.url(): the certificate page renders this as an href, and
+    // z.url() accepts javascript: — stored XSS the moment someone clicks it.
+    credential_url: emptyToNull(httpUrl.nullable().optional()),
 } as const;
 
 export const createCertificateSchema = z.object(certificateFields).refine(
