@@ -127,29 +127,15 @@ function EditCertificateDialog({
                 formData.append('cert_title', name);
                 formData.append('organization', organize);
 
-                if (month) {
-                    formData.append('issue_month', month);
-                }
-
-                if (year) {
-                    formData.append('issue_year', year);
-                }
-
-                if (exMonth) {
-                    formData.append('expire_month', exMonth);
-                }
-
-                if (exYear) {
-                    formData.append('expire_year', exYear);
-                }
-
-                if (credID) {
-                    formData.append('credential_id', credID);
-                }
-
-                if (credURL) {
-                    formData.append('credential_url', credURL);
-                }
+                // Sent even when empty: the API reads '' as null, which is the
+                // only way to clear a field that already has a value. Skipping
+                // them here would make every optional field write-once.
+                formData.append('issue_month', month);
+                formData.append('issue_year', year);
+                formData.append('expire_month', exMonth);
+                formData.append('expire_year', exYear);
+                formData.append('credential_id', credID);
+                formData.append('credential_url', credURL);
 
                 // Only send cert_image when user selected a new file
                 if (file) {
