@@ -43,8 +43,8 @@ export default function JobListing() {
     ];
 
     return (
-        <div className="bg-[#EDEDED] rounded-3xl p-6 w-full h-full font-sans">
-            <h3 className="text-base font-bold text-gray-900 mb-4 px-1">
+        <div className="bg-[#EDEDED] rounded-popup p-6 w-full h-full font-sans">
+            <h3 className="text-md !font-bold text-gray-900 mb-4 px-1">
                 Job Listing
             </h3>
 
@@ -52,15 +52,15 @@ export default function JobListing() {
                 {mockJobs.map((job) => (
                     <div
                         key={job.id}
-                        className="bg-white rounded-xl px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-xs border border-gray-100/60"
+                        className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-xs border border-gray-100/60"
                     >
-                        <div className="flex-1 font-bold text-gray-900 text-sm">
+                        <div className="flex-1 text-sm !font-bold text-gray-900">
                             {job.title}
                         </div>
 
                         <div className="flex gap-10 text-xs text-gray-400 mr-8 mt-2 sm:mt-0">
                             <div className="flex flex-col items-start">
-                                <span className="text-[11px] text-gray-400 font-normal">
+                                <span className="text-xs text-gray-400">
                                     Budget
                                 </span>
                                 <span className="font-semibold text-gray-800">
@@ -68,7 +68,7 @@ export default function JobListing() {
                                 </span>
                             </div>
                             <div className="flex flex-col items-start">
-                                <span className="text-[11px] text-gray-400 font-normal">
+                                <span className="text-xs text-gray-400">
                                     Deadline
                                 </span>
                                 <span className="font-semibold text-gray-800">
@@ -77,7 +77,7 @@ export default function JobListing() {
                             </div>
                         </div>
 
-                        <button className="text-[#497B93] hover:underline text-xs font-medium mt-2 sm:mt-0 transition-colors">
+                        <button className="text-[#497B93] hover:underline text-xs !font-medium mt-2 sm:mt-0 transition-colors">
                             Details
                         </button>
                     </div>
