@@ -41,7 +41,7 @@ export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
 
 export default function CompanyCard({ data }: CompanyCardProps) {
     return (
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col relative w-full">
+        <div className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full">
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Left Profile Info */}
                 <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-gray-200 pr-0 md:pr-8 justify-center py-4">

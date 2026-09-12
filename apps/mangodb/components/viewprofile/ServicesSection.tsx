@@ -35,7 +35,7 @@ export default function ServicesDashboard() {
 
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-3xl">
-            <main className="flex-1 bg-white rounded-2xl p-4 border border-gray-200 shadow-sm flex flex-col font-sans">
+            <main className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full">
                 {/* Tab Switcher */}
                 <div className="bg-gray-100 p-1 rounded-xl flex mb-4 text-xs">
                     <button

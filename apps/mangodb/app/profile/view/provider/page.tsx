@@ -33,7 +33,7 @@ export default function ViewProfilePage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-stone-50 p-6 font-sans">
+        <div className="min-h-screen bg-[#FFFDF9] p-6 font-sans">
             {loadError === 'no-token' && (
                 <p className="text-sm">
                     You are not signed in.{' '}
