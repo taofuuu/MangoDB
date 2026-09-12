@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 interface SimpleTextInputProps {
     title: string;
+    type?: 'text' | 'password';
     inputHeight?: string | number;
     debounceTimeout?: number;
     onChange?: (value: string) => void;
@@ -11,6 +12,7 @@ interface SimpleTextInputProps {
 
 export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     title,
+    type = 'text',
     inputHeight = '40px',
     debounceTimeout = 500,
     onChange,
@@ -53,7 +55,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
         <div style={styles.container}>
             <label className="text-sm">{title}</label>
             <input
-                type="text"
+                type={type}
                 value={inputValue}
                 onChange={handleInputChange}
                 style={{

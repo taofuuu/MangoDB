@@ -43,45 +43,38 @@ export default function CompanyInfoStep({
 
     useEffect(() => {});
 
-    const handleUpdateCompanyType = (cType: CompanyType[]) => {
-        setCompanyInfo({ ...companyInfo, companyType: cType });
+    const handleUpdateCompanyType = (companyType: CompanyType[]) => {
+        setCompanyInfo({ ...companyInfo, companyType: companyType });
     };
 
-    const handleUpdateCompanyName = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyName: cName });
+    const handleUpdateCompanyName = (companyName: string) => {
+        setCompanyInfo({ ...companyInfo, companyName: companyName });
     };
 
-    const handleUpdateCompanyDescription = (cName: string) => {
-        setCompanyInfo({ ...companyInfo, companyDescription: cName });
-    };
-
-    const handleUpdatePhoneNumber = (newData: string) => {
+    const handleUpdateCompanyDescription = (companyDescription: string) => {
         setCompanyInfo({
             ...companyInfo,
-            phoneNumber: newData,
+            companyDescription: companyDescription,
         });
     };
 
-    const validatePhoneNUmber = (num: string) => {
-        if (Number.isNaN(Number(num))) return false;
-        if (num.length > 10) return false;
-        if (num[0] !== '0') {
-            if (num.length === 0) return true;
-            else return false;
-        }
-        return true;
+    const handleUpdatePhoneNumber = (phoneNumber: string) => {
+        setCompanyInfo({
+            ...companyInfo,
+            phoneNumber: phoneNumber,
+        });
     };
 
-    const handleUpdateEmail = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, email: newData });
+    const handleUpdateEmail = (email: string) => {
+        setCompanyInfo({ ...companyInfo, email: email });
     };
 
-    const handleUpdateAddress = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, address: newData });
+    const handleUpdateAddress = (address: string) => {
+        setCompanyInfo({ ...companyInfo, address: address });
     };
 
-    const handleUpdateWebsite = (newData: string) => {
-        setCompanyInfo({ ...companyInfo, website: newData });
+    const handleUpdateWebsite = (website: string) => {
+        setCompanyInfo({ ...companyInfo, website: website });
     };
 
     useEffect(() => {
@@ -93,7 +86,7 @@ export default function CompanyInfoStep({
     return (
         <div className="company-info-page flex flex-col gap-5 my-5">
             <SimpleTextInput
-                title="Company Name"
+                title="Company Name *"
                 onChange={handleUpdateCompanyName}
                 initValue={value ? value.companyName : ''}
             />
@@ -103,7 +96,7 @@ export default function CompanyInfoStep({
                 initValue={value ? value.companyDescription : ''}
             />
             <CompanyTypeSelector
-                title="Company Type"
+                title="Company Type *"
                 companyTypeList={[
                     CompanyType.SoftwareHouse,
                     CompanyType.Consultancy,
@@ -113,13 +106,12 @@ export default function CompanyInfoStep({
             />
             <div className="flex gap-4">
                 <SimpleTextInput
-                    title="Phone Number"
+                    title="Phone Number *"
                     onChange={handleUpdatePhoneNumber}
-                    validate={validatePhoneNUmber}
                     initValue={value ? value.phoneNumber : ''}
                 />
                 <SimpleTextInput
-                    title="Email"
+                    title="Email *"
                     onChange={handleUpdateEmail}
                     initValue={value ? value.email : ''}
                 />
