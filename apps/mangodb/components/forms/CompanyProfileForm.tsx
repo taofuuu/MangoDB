@@ -12,7 +12,7 @@ import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
-import { normalizeWebsiteUrl, validateProfile } from '@/lib/validation';
+import { normalizeWebsiteUrl } from '@/lib/validation';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -109,10 +109,6 @@ export default function CompanyProfileForm({
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [localErrors, setLocalErrors] = useState<
-        Partial<Record<keyof ProfileFormData, string>>
-    >({});
-    const [localStatus, setLocalStatus] = useState<StatusMessageData>(null);
 
     // Both live on the provider table. A receiver-only company owns no row
     // there, so showing the inputs would offer edits that cannot be saved.
@@ -127,8 +123,6 @@ export default function CompanyProfileForm({
     if (lastInitial !== initialData) {
         setLastInitial(initialData);
         setData(initialData);
-        setLocalErrors({});
-        setLocalStatus(null);
     }
 
     const setField = <K extends keyof ProfileFormData>(
@@ -136,13 +130,6 @@ export default function CompanyProfileForm({
         value: ProfileFormData[K],
     ) => {
         setData((current) => ({ ...current, [key]: value }));
-        if (localErrors[key]) {
-            setLocalErrors((prev) => {
-                const next = { ...prev };
-                delete next[key];
-                return next;
-            });
-        }
         if (errors?.[key] && onClearError) {
             onClearError(key);
         }
@@ -150,34 +137,17 @@ export default function CompanyProfileForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // 1. Client-side field and format validation
-        const validationErrors = validateProfile(data, isProvider);
-        if (Object.keys(validationErrors).length > 0) {
-            setLocalErrors(validationErrors);
-            setLocalStatus({
-                type: 'error',
-                message: 'Please fix the errors before saving.',
-            });
-            return; // Stops submit immediately, onSave is NOT called
-        }
-
-        setLocalErrors({});
-        setLocalStatus(null);
         await onSave(data);
     };
 
     const handleCancel = () => {
         setData(initialData);
-        setLocalErrors({});
-        setLocalStatus(null);
         onCancel?.();
     };
 
-    const displayErrors = { ...errors, ...localErrors };
-    const displayStatus = localStatus || status;
+    const displayErrors = errors ?? {};
+    const displayStatus = status ?? null;
     const handleDismissStatus = () => {
-        setLocalStatus(null);
         onDismissStatus?.();
     };
 
