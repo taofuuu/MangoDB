@@ -282,7 +282,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                     <YearDropdown
                                         value={exYear}
                                         onChange={setExYear}
-                                        minYear={new Date().getFullYear()}
+                                        minYear={1990}
                                         maxYear={new Date().getFullYear() + 20}
                                     />
                                 </div>

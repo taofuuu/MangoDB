@@ -326,7 +326,7 @@ function EditCertificateDialog({
                                     <YearDropdown
                                         value={exYear}
                                         onChange={setExYear}
-                                        minYear={new Date().getFullYear()}
+                                        minYear={1990}
                                         maxYear={new Date().getFullYear() + 20}
                                     />
                                 </div>
