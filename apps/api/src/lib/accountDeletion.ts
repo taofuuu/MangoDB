@@ -10,9 +10,22 @@ import { prisma } from './prisma';
 // already-deleted row must be a no-op, not a clobber of the original
 // deleted_at timestamp. The boolean tells the caller whether this call was
 // the one that did it.
+//
+// The account_type guard is an invariant rather than eligibility, which is why
+// it sits here and not with the caller: deleting an administrator is a one-way
+// lockout, because requireAuth refuses a deleted account on every request and
+// nothing in this codebase undoes a soft delete. Putting it in the where clause
+// means no caller can skip it — the company's own deletion route, when it
+// lands, is covered without having to remember this rule. A caller that wants
+// to explain the refusal checks account_type itself first; here an
+// administrator simply never matches, and the call is a no-op like any other.
 export async function softDeleteCompany(companyId: number): Promise<boolean> {
     const { count } = await prisma.company.updateMany({
-        where: { company_id: companyId, deleted_at: null },
+        where: {
+            company_id: companyId,
+            deleted_at: null,
+            account_type: { not: 'ADMIN' },
+        },
         data: { deleted_at: new Date() },
     });
     return count > 0;

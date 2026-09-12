@@ -253,12 +253,12 @@ export async function deleteCompanyAccount(
         throw ApiError.notFound('Company account not found');
     }
 
-    // written under time-crunch bypass — review later.
-    // Deleting an administrator locks it out for good: requireAuth rejects a
-    // deleted account on every request, and nothing in this codebase undoes a
-    // soft delete. A 400 rather than a 403 for the same reason the provider
-    // check above uses one — this is a fact about the target, not a permission
-    // the caller is missing.
+    // softDeleteCompany refuses an administrator on its own, so this check is
+    // here to explain the refusal, not to enforce it — without it an admin
+    // target would fall through to the no-op path below and report a confusing
+    // 404. A 400 rather than a 403 for the same reason the provider check above
+    // uses one: this is a fact about the target, not a permission the caller is
+    // missing.
     if (company.account_type === 'ADMIN') {
         throw ApiError.badRequest('Administrator accounts cannot be deleted');
     }
