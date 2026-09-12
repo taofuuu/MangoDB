@@ -70,7 +70,6 @@ export function updateCompanyAccount(
     });
 }
 
-// written under time-crunch bypass — review later.
 // US6-4. 204 on success, so apiFetch resolves with undefined — nothing to
 // return. A wrong password is a 401, which surfaces as an ApiRequestError
 // for the confirm modal to catch and show inline.

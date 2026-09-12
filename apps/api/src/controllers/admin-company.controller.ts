@@ -193,7 +193,6 @@ export async function deleteCompanyAccount(
     // the id, not the password.
     const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
 
-    // written under time-crunch bypass — review later.
     // US6-4 re-auth: the confirm modal collects the admin's own password to
     // prove intent before an irreversible delete. Checked against req.auth's
     // own row, not the target's — this is "is it really the admin", not

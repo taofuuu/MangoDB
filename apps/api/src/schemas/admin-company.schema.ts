@@ -18,7 +18,6 @@ export const companyAccountIdParamSchema = z.object({
     companyId: z.coerce.number().int().positive(),
 });
 
-// written under time-crunch bypass — review later.
 // US6-4. The admin's own password, same field changeCredentialsSchema takes,
 // confirming intent before this endpoint's irreversible delete.
 export const deleteCompanyAccountBodySchema = z.object({

@@ -169,7 +169,6 @@ export interface ChangeCredentialsRequest {
     new_password?: string;
 }
 
-// written under time-crunch bypass — review later.
 // US6-4. The admin's own password, confirming intent before an irreversible
 // delete of another company's account. Same current_password shape as
 // ChangeCredentialsRequest, checked against the admin's own row.

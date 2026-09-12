@@ -130,7 +130,6 @@ function EditProfilePageInner() {
         }
     };
 
-    // written under time-crunch bypass — review later.
     // US6-4. The confirm modal collects the admin's own password and hands it
     // here. Deliberately uncaught: DeleteConfirmationModal's onConfirm already
     // catches and shows a thrown error's .message as the modal's error line,
