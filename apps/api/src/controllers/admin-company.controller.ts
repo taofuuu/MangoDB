@@ -4,18 +4,19 @@ import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from '../lib/ApiError';
-import { softDeleteCompany } from '../lib/accountDeletion';
 import {
     adminCompanyDetailSelect,
     adminCompanyListSelect,
     toCompanyAccountDetail,
     toCompanyAccountSummary,
 } from '../lib/adminCompany';
+import { softDeleteCompany } from '../lib/companyDeletion';
 import {
     PROVIDER_PROFILE_FIELDS,
     companyProfileUpdateData,
 } from '../lib/companyProfile';
 import { isRecordNotFound, isUniqueViolation } from '../lib/prismaErrors';
+import { hasOngoingProject } from '../lib/projectEligibility';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     companyAccountIdParamSchema,
@@ -182,55 +183,6 @@ export async function updateCompanyAccount(
     res.json(toCompanyAccountDetail(company));
 }
 
-// Checked against the live DB (2026-09-12): project.status is one of
-// 'Delivered', 'In Progress', 'Waiting Deposit', and nothing in code defines
-// them as constants yet. The rule is stated by exclusion on purpose — a
-// project is a live commitment until it is delivered, so a status added later
-// blocks deletion by default instead of silently slipping past this check.
-const COMPLETED_PROJECT_STATUS = 'Delivered';
-
-// written under time-crunch bypass — review later.
-// Two paths from company to project, OR'd together: sender_id (this company
-// sent the proposal) and listing.company_id (this company posted the listing
-// the accepted proposal responded to). Either one having an undelivered
-// project blocks deletion.
-async function hasActiveProject(companyId: number): Promise<boolean> {
-    const match = await prisma.company.findFirst({
-        where: {
-            company_id: companyId,
-            OR: [
-                {
-                    proposal: {
-                        some: {
-                            project: {
-                                status: { not: COMPLETED_PROJECT_STATUS },
-                            },
-                        },
-                    },
-                },
-                {
-                    listing: {
-                        some: {
-                            proposal: {
-                                some: {
-                                    project: {
-                                        status: {
-                                            not: COMPLETED_PROJECT_STATUS,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            ],
-        },
-        select: { company_id: true },
-    });
-
-    return match !== null;
-}
-
 export async function deleteCompanyAccount(
     req: Request,
     res: Response,
@@ -262,8 +214,9 @@ export async function deleteCompanyAccount(
         throw ApiError.badRequest('Administrator accounts cannot be deleted');
     }
 
-    // Step 2: does it have an active project?
-    if (await hasActiveProject(companyId)) {
+    // Step 2: is it on an ongoing project? projectEligibility owns that rule
+    // and the definition of "ongoing" (anything not yet Delivered).
+    if (await hasOngoingProject(companyId)) {
         throw ApiError.badRequest(
             'Company has active projects and cannot be deleted',
         );

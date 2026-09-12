@@ -3,7 +3,7 @@ import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
 import { ApiError } from '../lib/ApiError';
-import { isCompanyDeleted } from '../lib/accountDeletion';
+import { isCompanyDeleted } from '../lib/companyDeletion';
 import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';
