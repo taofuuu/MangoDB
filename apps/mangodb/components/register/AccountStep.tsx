@@ -8,20 +8,29 @@ export type AccountInfo = {
     password?: string;
     confirmPassword?: string;
 };
+export type AccountInfoError = {
+    usernameError?: string;
+    passwordError?: string;
+    confirmPasswordError?: string;
+};
 
 type AccountInfoStepProps = {
     value: AccountInfo;
     onChange: (value: AccountInfo) => void;
+    errors?: AccountInfoError;
 };
 
 export default function AccountInfoStep({
     value,
     onChange,
+    errors,
 }: AccountInfoStepProps) {
     const [accountInfo, setAccountInfo] = useState<AccountInfo>(
         value ?? {
             username: '',
+
             password: '',
+
             confirmPassword: '',
         },
     );
@@ -48,21 +57,24 @@ export default function AccountInfoStep({
                 title="Username"
                 onChange={handleUpdateUsername}
                 initValue={value ? value.username : ''}
+                error={errors?.usernameError || ''}
             />
-            <div className="flex gap-4">
-                <SimpleTextInput
-                    title="Password"
-                    type="password"
-                    onChange={handleUpdatePassword}
-                    initValue={value ? (value.password ?? '') : ''}
-                />
-                <SimpleTextInput
-                    title="Confirm Password"
-                    type="password"
-                    onChange={handleUpdateConfirmPassword}
-                    initValue={value ? (value.confirmPassword ?? '') : ''}
-                />
-            </div>
+
+            <SimpleTextInput
+                title="Password"
+                type="password"
+                onChange={handleUpdatePassword}
+                initValue={value ? (value.password ?? '') : ''}
+                error={errors?.passwordError || ''}
+            />
+
+            <SimpleTextInput
+                title="Confirm Password"
+                type="password"
+                onChange={handleUpdateConfirmPassword}
+                initValue={value ? (value.confirmPassword ?? '') : ''}
+                error={errors?.confirmPasswordError || ''}
+            />
         </div>
     );
 }

@@ -221,3 +221,114 @@ export function validateProfile(
         ? validateProviderProfile(data)
         : validateReceiverProfile(data);
 }
+
+// 10. Registration: Username validation
+// Required field, letters, numbers, and underscores only.
+export function validateUsername(value: string | undefined): string | null {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed) {
+        return 'Username is required.';
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return 'Use letters, numbers, and underscores only.';
+    }
+    if (trimmed.length < 3) {
+        return 'Username must be longer than 3 letters';
+    }
+    return null;
+}
+
+// 11. Registration: Password validation
+// Required field.
+export function validatePassword(value: string | undefined): string | null {
+    const text = value ?? '';
+    if (!text) {
+        return 'Password is required.';
+    }
+    return null;
+}
+
+// 12. Registration: Confirm Password validation
+// Required field, must match password.
+export function validateConfirmPassword(
+    password: string | undefined,
+    confirmPassword: string | undefined,
+): string | null {
+    if (!confirmPassword) {
+        return 'Please confirm your password.';
+    }
+    if (password !== confirmPassword) {
+        return 'Passwords do not match.';
+    }
+    return null;
+}
+
+// 13. Registration: Account Type validation
+// Required field.
+export function validateAccountType(
+    value: string | null | undefined,
+): string | null {
+    if (!value) {
+        return 'Please select an account type to continue.';
+    }
+    return null;
+}
+
+// Registration Step 2: Validate Company Information fields
+export function validateCompanyInfo(info: {
+    companyName: string;
+    phoneNumber: string;
+    email: string;
+    companyType: string[];
+    companyDescription?: string;
+    address?: string;
+    website?: string;
+}): Record<string, string> {
+    const errors: Record<string, string> = {};
+
+    const nameErr = validateCompanyName(info.companyName);
+    if (nameErr) errors.companyName = nameErr;
+
+    const phoneErr = validatePhone(info.phoneNumber);
+    if (phoneErr) errors.phoneNumber = phoneErr;
+
+    const emailErr = validateContactEmail(info.email);
+    if (emailErr) errors.email = emailErr;
+
+    const typeErr = validateCompanyType(info.companyType);
+    if (typeErr) errors.companyType = typeErr;
+
+    const webErr = validateWebsite(info.website);
+    if (webErr) errors.website = webErr;
+
+    const descErr = validateCompanyDescription(info.companyDescription);
+    if (descErr) errors.companyDescription = descErr;
+
+    const addrErr = validateLocation(info.address);
+    if (addrErr) errors.address = addrErr;
+
+    return errors;
+}
+
+// Registration Step 3: Validate Account Information fields
+export function validateAccountInfo(info: {
+    username: string;
+    password: string;
+    confirmPassword: string;
+}): Record<string, string> {
+    const errors: Record<string, string> = {};
+
+    const userErr = validateUsername(info.username);
+    if (userErr) errors.username = userErr;
+
+    const passErr = validatePassword(info.password);
+    if (passErr) errors.password = passErr;
+
+    const confirmErr = validateConfirmPassword(
+        info.password,
+        info.confirmPassword,
+    );
+    if (confirmErr) errors.confirmPassword = confirmErr;
+
+    return errors;
+}

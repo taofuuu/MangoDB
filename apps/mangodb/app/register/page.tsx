@@ -1,17 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import type { AccountType } from '@mangodb/shared';
+import type { AccountType, SessionResponse } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
 import RoleStep from '@/components/register/RoleStep';
 import CompanyInfoStep, {
+    CompanyInfoError,
     type CompanyInfo,
 } from '@/components/register/CompanyInfoStep';
 import AccountInfoStep, {
+    AccountInfoError,
     type AccountInfo,
 } from '@/components/register/AccountStep';
+import {
+    validateCompanyDescription,
+    validateCompanyName,
+    validateCompanyType,
+    validateConfirmPassword,
+    validateContactEmail,
+    validateLocation,
+    validatePassword,
+    validatePhone,
+    validateUsername,
+    validateWebsite,
+} from '@/lib/validation';
+import { apiFetch } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -48,6 +63,14 @@ export default function RegisterPage() {
         confirmPassword: '',
     });
 
+    const [accountInfoError, setAccountInfoError] = useState<AccountInfoError>(
+        {},
+    );
+
+    const [companyInfoError, setCompanyInfoError] = useState<CompanyInfoError>(
+        {},
+    );
+
     /* ================= NAVIGATION ================= */
 
     const goBack = () => {
@@ -65,12 +88,25 @@ export default function RegisterPage() {
     };
 
     const goToCompanyInfo = () => {
-        if (accountInfo.password !== accountInfo.confirmPassword) {
-            setErrorMessage('Passwords do not match.');
-            return;
+        const usernameError = validateUsername(accountInfo.username) || '';
+        const passwordError = validatePassword(accountInfo.password) || '';
+        const confirmPasswordError =
+            validateConfirmPassword(
+                accountInfo.password,
+                accountInfo.confirmPassword,
+            ) || '';
+
+        if (usernameError || passwordError || confirmPasswordError) {
+            setAccountInfoError({
+                ...accountInfoError,
+                usernameError,
+                passwordError,
+                confirmPasswordError,
+            });
+        } else {
+            setCurrentStep(RegisterStep.CompanyInfo);
+            setAccountInfoError({});
         }
-        setErrorMessage('');
-        setCurrentStep(RegisterStep.CompanyInfo);
     };
 
     const router = useRouter();
@@ -81,12 +117,22 @@ export default function RegisterPage() {
 
     const submitRegister = async () => {
         setIsSubmitting(true);
-        setErrorMessage('');
 
         // Clean empty string values so optional fields aren't validated as invalid URLs or strings
         const websiteValue = companyInfo.website.trim();
         const addressValue = companyInfo.address.trim();
         const descriptionValue = companyInfo.companyDescription.trim();
+
+        const companyNameError =
+            validateCompanyName(companyInfo.companyName) || '';
+        const companyDescriptionError =
+            validateCompanyDescription(companyInfo.companyDescription) || '';
+        const companyTypeError =
+            validateCompanyType(companyInfo.companyType) || '';
+        const phoneNumberError = validatePhone(companyInfo.phoneNumber) || '';
+        const emailError = validateContactEmail(companyInfo.email) || '';
+        const addressError = validateLocation(companyInfo.address) || '';
+        const websiteError = validateWebsite(companyInfo.website) || '';
 
         const payload = {
             company_name: companyInfo.companyName,
@@ -102,34 +148,37 @@ export default function RegisterPage() {
         };
 
         try {
-            const response = await fetch(`${API_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            if (
+                companyNameError ||
+                companyDescriptionError ||
+                companyTypeError ||
+                phoneNumberError ||
+                emailError ||
+                addressError ||
+                websiteError
+            ) {
+                setCompanyInfoError({
+                    ...companyInfoError,
+                    companyNameError,
+                    companyDescriptionError,
+                    companyTypeError,
+                    phoneNumberError,
+                    emailError,
+                    addressError,
+                    websiteError,
+                });
+            } else {
+                setCurrentStep(RegisterStep.Success);
+                setCompanyInfoError({});
+                const data = await apiFetch<SessionResponse>(`/auth/register`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
 
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                const apiError =
-                    data?.error?.details
-                        ?.map(
-                            (detail: { field: string; message: string }) =>
-                                `${detail.field}: ${detail.message}`,
-                        )
-                        .join(', ') ||
-                    data?.error?.message ||
-                    data?.message ||
-                    'Registration failed.';
-                setErrorMessage(apiError);
-                return;
+                if (data?.accessToken) {
+                    localStorage.setItem('accessToken', data.accessToken);
+                }
             }
-
-            if (data?.accessToken) {
-                localStorage.setItem('accessToken', data.accessToken);
-            }
-
-            setCurrentStep(RegisterStep.Success);
         } catch {
             setErrorMessage('Unable to connect to the server.');
         } finally {
@@ -186,11 +235,11 @@ export default function RegisterPage() {
             }
         >
             {/* Server Error Message Display */}
-            {errorMessage && (
+            {/* {errorMessage && (
                 <div className="my-2 rounded-md bg-red-50 p-3 text-sm font-medium text-red-600 border border-red-200">
                     {errorMessage}
                 </div>
-            )}
+            )} */}
 
             {currentStep === RegisterStep.SelectRole && (
                 <RoleStep value={accountType} onChange={setAccountType} />
@@ -200,6 +249,13 @@ export default function RegisterPage() {
                 <CompanyInfoStep
                     value={companyInfo}
                     onChange={setCompanyInfo}
+                    errors={companyInfoError}
+                    onClearError={(field) =>
+                        setCompanyInfoError((prev) => ({
+                            ...prev,
+                            [`${field}Error`]: undefined,
+                        }))
+                    }
                 />
             )}
 
@@ -207,6 +263,7 @@ export default function RegisterPage() {
                 <AccountInfoStep
                     value={accountInfo}
                     onChange={setAccountInfo}
+                    errors={accountInfoError}
                 />
             )}
 
