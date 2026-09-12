@@ -11,7 +11,6 @@ import {
     deleteMyAccount,
     getMyProfile,
 } from '@/lib/companies';
-import { redirectToLogin } from '@/lib/session';
 import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditAccountModal, {
@@ -50,11 +49,22 @@ export default function AccountPage() {
     const [status, setStatus] = useState<string | null>(null);
     const [deletionSuccess, setDeletionSuccess] = useState(false);
 
+    const redirectToLogin = () => {
+        window.addEventListener(
+            'pageshow',
+            (event) => {
+                if (event.persisted) window.location.reload();
+            },
+            { once: true },
+        );
+        window.location.replace('/login');
+    };
+
     useEffect(() => {
         if (!deletionSuccess) return;
         const timer = setTimeout(() => {
             redirectToLogin();
-        }, 5000);
+        }, 2500);
         return () => clearTimeout(timer);
     }, [deletionSuccess]);
 

@@ -49,22 +49,3 @@ export async function logout(): Promise<void> {
         }
     }
 }
-
-// A full page load clears everything this session left in memory. replace(),
-// not href: after a push, the browser's back-forward cache can restore this
-// signed-in page as it was. Chrome skips that cache for replace(), but no spec
-// promises it, so reload if it comes back. once: true — this only needs to
-// fire for the navigation this call is about to start, not linger for the rest
-// of the page's life.
-export function redirectToLogin(): void {
-    if (typeof window === 'undefined') return;
-
-    window.addEventListener(
-        'pageshow',
-        (event) => {
-            if (event.persisted) window.location.reload();
-        },
-        { once: true },
-    );
-    window.location.replace('/login');
-}

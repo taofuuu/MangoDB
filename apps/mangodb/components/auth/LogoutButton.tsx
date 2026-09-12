@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
 import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
-import { logout, redirectToLogin } from '@/lib/session';
+import { logout } from '@/lib/session';
 
 // logout() ends the session on the server — the token is revoked and the
 // cookie cleared on the same response — so this only decides where the user
@@ -25,8 +25,21 @@ export default function LogoutButton() {
         }
 
         // The modal closes itself right after this resolves, but the button
-        // is leaving with the page anyway.
-        redirectToLogin();
+        // is leaving with the page anyway. A full page load clears everything
+        // this session left in memory. replace(), not href: after a push, the
+        // browser's back-forward cache can restore this signed-in page as it
+        // was. Chrome skips that cache for replace(), but no spec promises
+        // it, so reload if it comes back. once: true — this only needs to
+        // fire for the navigation this call is about to start, not linger for
+        // the rest of the page's life.
+        window.addEventListener(
+            'pageshow',
+            (event) => {
+                if (event.persisted) window.location.reload();
+            },
+            { once: true },
+        );
+        window.location.replace('/login');
     };
 
     return (
