@@ -182,7 +182,6 @@ export async function updateCompanyAccount(
     res.json(toCompanyAccountDetail(company));
 }
 
-// written under time-crunch bypass — review later.
 // Checked against the live DB (2026-09-12): project.status is one of
 // 'Delivered', 'In Progress', 'Waiting Deposit', and nothing in code defines
 // them as constants yet. The rule is stated by exclusion on purpose — a
