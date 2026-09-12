@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
-import Button from '@/components/ui/Button';
 import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
 import { logout } from '@/lib/session';
 
@@ -39,11 +38,11 @@ export default function LogoutButton() {
 
     return (
         <>
-            <Button
-                variant="outline"
+            <button
+                type="button"
                 onClick={() => setIsConfirmOpen(true)}
                 aria-label="Log Out"
-                className="px-4 py-2 text-xs font-semibold"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             >
                 <Image
                     src={logoutIcon}
@@ -52,7 +51,7 @@ export default function LogoutButton() {
                     height={18}
                     className="h-[18px] w-[18px] object-contain"
                 />
-            </Button>
+            </button>
 
             <LogoutConfirmationModal
                 isOpen={isConfirmOpen}
