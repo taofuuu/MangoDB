@@ -5,6 +5,7 @@ import type {
     ChangeCredentialsRequest,
     ChangeCredentialsResponse,
     CompanyProfile,
+    DeleteCompanyAccountRequest,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -65,6 +66,19 @@ export function updateCompanyAccount(
 ): Promise<CompanyAccountDetail> {
     return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`, {
         method: 'PATCH',
+        body: JSON.stringify(body),
+    });
+}
+
+// US6-4. 204 on success, so apiFetch resolves with undefined — nothing to
+// return. A wrong password is a 401, which surfaces as an ApiRequestError
+// for the confirm modal to catch and show inline.
+export function deleteCompanyAccount(
+    companyId: number,
+    body: DeleteCompanyAccountRequest,
+): Promise<void> {
+    return apiFetch<void>(`/admin/companies/${companyId}`, {
+        method: 'DELETE',
         body: JSON.stringify(body),
     });
 }

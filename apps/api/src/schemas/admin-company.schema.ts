@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { companyFields } from './company.schema';
 
 // Keep pages bounded so one request cannot pull the full Company table into
 // memory. The defaults also make GET /admin/companies useful without params.
@@ -15,6 +16,12 @@ export const companyAccountListQuerySchema = z.object({
 
 export const companyAccountIdParamSchema = z.object({
     companyId: z.coerce.number().int().positive(),
+});
+
+// US6-4. The admin's own password, same field changeCredentialsSchema takes,
+// confirming intent before this endpoint's irreversible delete.
+export const deleteCompanyAccountBodySchema = z.object({
+    current_password: companyFields.passwordAttempt,
 });
 
 // US6-3's body schema is not here on purpose. The administrator edit accepts
