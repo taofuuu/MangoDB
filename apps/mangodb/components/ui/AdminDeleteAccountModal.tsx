@@ -60,8 +60,10 @@ function AdminDeleteAccountDialog({
                         cannot be undone!
                     </p>
                     <p className="text-xs text-[#171717] mt-[2.2vh] leading-relaxed">
-                        All data, preferences, and activity history associated
-                        with this account will be permanently removed.
+                        This account will lose access immediately and cannot be
+                        restored. Its listings, proposals, projects, and reviews
+                        stay in place, so other companies keep the history that
+                        depends on them.
                     </p>
                 </>
             }
