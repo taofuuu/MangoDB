@@ -29,10 +29,16 @@ export default function LogoutButton() {
         // this session left in memory. replace(), not href: after a push, the
         // browser's back-forward cache can restore this signed-in page as it
         // was. Chrome skips that cache for replace(), but no spec promises
-        // it, so reload if it comes back.
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) window.location.reload();
-        });
+        // it, so reload if it comes back. once: true — this only needs to
+        // fire for the navigation this call is about to start, not linger for
+        // the rest of the page's life.
+        window.addEventListener(
+            'pageshow',
+            (event) => {
+                if (event.persisted) window.location.reload();
+            },
+            { once: true },
+        );
         window.location.replace('/login');
     };
 
