@@ -2,15 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import AddCertificateForm, {
-    CertificateResponse,
-} from '@/components/forms/AddCertificateForm';
+import AddCertificateForm from '@/components/forms/AddCertificateForm';
 import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 import { ApiRequestError } from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
+import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
@@ -109,11 +108,10 @@ export default function CertificatePage() {
     // -------------------------
     // DELETE
     // -------------------------
-    const handleDeleteCertificate = async () => {
+    // DeleteCertificateForm has already called the API by this point; this
+    // only drops the row from the list.
+    const handleDeleteCertificate = () => {
         if (!certificateToDelete) return;
-
-        // Call your DELETE API here.
-        // await deleteCertificate(certificateToDelete.id);
 
         setCertificates((current) =>
             (current ?? []).filter(
@@ -123,6 +121,22 @@ export default function CertificatePage() {
 
         setCertificateToDelete(null);
         setIsDeleteOpen(false);
+    };
+
+    // Every date part is optional, so this collapses to whatever was filled in
+    // rather than rendering a half-empty "Issue  ".
+    const formatPeriod = (certificate: CertificateData) => {
+        const issued = [monthLabel(certificate.month), certificate.year]
+            .filter(Boolean)
+            .join(' ');
+        const expires = [monthLabel(certificate.exMonth), certificate.exYear]
+            .filter(Boolean)
+            .join(' ');
+
+        if (issued && expires) return `Issued ${issued} · Expires ${expires}`;
+        if (issued) return `Issued ${issued}`;
+        if (expires) return `Expires ${expires}`;
+        return '';
     };
 
     return (
@@ -140,9 +154,15 @@ export default function CertificatePage() {
                     {certificates === null && !loadError && (
                         <p className="mt-8">Loading certificates...</p>
                     )}
+                    {/* Empty */}
+                    {certificates !== null && certificates.length === 0 && (
+                        <p className="mt-8">
+                            No certificates yet. Add one with the + button.
+                        </p>
+                    )}
                     {/* Certificate List */}
                     {certificates !== null && (
-                        <div className="">
+                        <div>
                             {certificates.map((certificate) => (
                                 <div key={certificate.id}>
                                     <div className="flex w-full items-center justify-between pt-2 pl-6">
@@ -171,10 +191,19 @@ export default function CertificatePage() {
                                         {certificate.organize}
                                     </p>
 
-                                    <p className="text-md pl-6 pb-2">
-                                        Issue {certificate.month}{' '}
-                                        {certificate.year}
-                                    </p>
+                                    {formatPeriod(certificate) && (
+                                        <p className="text-md pl-6">
+                                            {formatPeriod(certificate)}
+                                        </p>
+                                    )}
+
+                                    {certificate.credID && (
+                                        <p className="text-md pl-6">
+                                            Credential ID: {certificate.credID}
+                                        </p>
+                                    )}
+
+                                    <div className="pb-2" />
 
                                     {/* Show Credential */}
                                     <div className="pl-6 pb-1">

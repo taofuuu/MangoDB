@@ -6,7 +6,7 @@ type MonthDropdownProps = {
     onChange: (value: string) => void;
 };
 
-const months = [
+export const months = [
     { label: 'January', value: '1' },
     { label: 'February', value: '2' },
     { label: 'March', value: '3' },
@@ -20,6 +20,12 @@ const months = [
     { label: 'November', value: '11' },
     { label: 'December', value: '12' },
 ];
+
+// The stored value is the month number, so anything rendering a saved date
+// needs the label back. One list, both directions.
+export function monthLabel(value?: string): string {
+    return months.find((month) => month.value === value)?.label ?? '';
+}
 
 export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
     const [open, setOpen] = useState(false);
