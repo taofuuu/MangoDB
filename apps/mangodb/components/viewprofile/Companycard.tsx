@@ -2,39 +2,44 @@
 
 import React from 'react';
 import Link from 'next/link';
+import type { CompanyProfile } from '@mangodb/shared';
+
+export interface CompanyCardData {
+    name: string;
+    email: string;
+    website: string;
+    phone: string;
+    description: string;
+    address: string;
+    type: string;
+    warrantyPolicy: string;
+    serviceTerm: string;
+}
 
 interface CompanyCardProps {
-    data?: {
-        name: string;
-        subName: string;
-        email: string;
-        website: string;
-        phone: string;
-        description: string;
-        address: string;
-        type: string;
-        warrantyPolicy: string;
-        serviceTerm: string;
+    data: CompanyCardData;
+}
+
+// The profile's nullable columns become "Not provided" here rather than
+// rendering an empty textarea, which reads as a loading glitch.
+export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
+    return {
+        name: profile.company_name,
+        email: profile.contact_email ?? 'Not provided',
+        website: profile.website ?? 'Not provided',
+        phone: profile.phone,
+        description: profile.company_description ?? 'No description provided.',
+        address: profile.address ?? 'Not provided',
+        type:
+            profile.company_type.length > 0
+                ? profile.company_type.join(', ')
+                : 'Not specified',
+        warrantyPolicy: profile.warranty_policy ?? 'Not provided',
+        serviceTerm: profile.service_term ?? 'Not provided',
     };
 }
 
-const defaultMockData = {
-    name: 'MangoDB',
-    subName: 'MangoDB COOP',
-    email: 'mongoDB@org.com',
-    website: 'mangodb.com',
-    phone: '081-234-5678',
-    description:
-        'Leading provider of database solutions and infrastructure services.',
-    address: '123 Tech Park, Tower A, Bangkok, Thailand 10110',
-    type: 'Cooperative / Enterprise',
-    warrantyPolicy: '12-month warranty on all delivered systems.',
-    serviceTerm: 'Standard 6-month engagement, renewable.',
-};
-
-export default function CompanyCard({
-    data = defaultMockData,
-}: CompanyCardProps) {
+export default function CompanyCard({ data }: CompanyCardProps) {
     return (
         <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col relative w-full">
             <div className="flex flex-col md:flex-row gap-8">
@@ -44,12 +49,9 @@ export default function CompanyCard({
                     <div className="w-24 h-24 bg-[#FFC107] rounded-full flex items-center justify-center font-bold text-[#E53E3E] text-3xl shadow-inner mb-4">
                         CP
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
                         {data.name}
                     </h2>
-                    <span className="text-xs text-gray-500 mb-6 font-medium">
-                        {data.subName}
-                    </span>
 
                     {/* Contact Info */}
                     <div className="text-xs text-gray-600 space-y-1">
