@@ -25,7 +25,7 @@ export function toReceiverCompanyCardData(
 ): ReceiverCompanyCardData {
     return {
         name: profile.company_name,
-        email: profile.contact_email ?? profile.email,
+        email: profile.contact_email ?? 'Not provided',
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
         description: profile.company_description ?? 'No description provided.',
