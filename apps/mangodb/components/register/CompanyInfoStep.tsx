@@ -1,6 +1,5 @@
 'use client';
 
-// import { CompanyTypeSelector } from '@/components/sm-detail/CompanyTypeSelector';
 import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
 import { useEffect, useState } from 'react';
 import CompanyTypeField from '../forms/CompanyTypeField';
@@ -31,12 +30,6 @@ type CompanyInfoStepProps = {
     errors?: CompanyInfoError;
     onClearError?: (field: keyof CompanyInfo) => void;
 };
-
-// TODO: Replace with company types from DB/API.
-// export enum CompanyType {
-//     SoftwareHouse = 'Software house',
-//     Consultancy = 'Consultancy',
-// }
 
 export default function CompanyInfoStep({
     value,
@@ -90,16 +83,6 @@ export default function CompanyInfoStep({
         }
     };
 
-    // const validatePhoneNumber = (num: string) => {
-    //     if (Number.isNaN(Number(num))) return false;
-    //     if (num.length > 10) return false;
-    //     if (num[0] !== '0') {
-    //         if (num.length === 0) return true;
-    //         else return false;
-    //     }
-    //     return true;
-    // };
-
     const handleUpdateEmail = (email: string) => {
         setCompanyInfo({ ...companyInfo, email: email });
         if (email.trim()) {
@@ -148,17 +131,6 @@ export default function CompanyInfoStep({
                 error={errors?.companyTypeError || ''}
             />
 
-            {/* <CompanyTypeSelector
-                title="Company Type *"
-                companyTypeList={[
-                    CompanyType.SoftwareHouse,
-                    CompanyType.Consultancy,
-                ]}
-                onChange={handleUpdateCompanyType}
-                initValues={value ? value.companyType : []}
-                error={errors?.companyTypeError || ''}
-                required
-            /> */}
             <div className="flex gap-4">
                 <SimpleTextInput
                     title="Phone Number"
