@@ -49,20 +49,25 @@ export default function AccountInfoStep({
                 onChange={handleUpdateUsername}
                 initValue={value ? value.username : ''}
             />
-            <div className="flex gap-4">
-                <SimpleTextInput
-                    title="Password"
-                    type="password"
-                    onChange={handleUpdatePassword}
-                    initValue={value ? (value.password ?? '') : ''}
-                />
-                <SimpleTextInput
-                    title="Confirm Password"
-                    type="password"
-                    onChange={handleUpdateConfirmPassword}
-                    initValue={value ? (value.confirmPassword ?? '') : ''}
-                />
-            </div>
+            <ul className="mt-[-15px] list-disc pl-5 text-[12px] text-[#497B93]">
+                <li>This will be used as your login username</li>
+                <li>Cannot be changed after registration</li>
+            </ul>
+            <SimpleTextInput
+                title="Password"
+                type="password"
+                onChange={handleUpdatePassword}
+                initValue={value ? (value.password ?? '') : ''}
+            />
+            <ul className="mt-[-15px] list-disc pl-5 text-[12px] text-[#497B93]">
+                <li>Must be at least 8 characters</li>
+            </ul>
+            <SimpleTextInput
+                title="Confirm Password"
+                type="password"
+                onChange={handleUpdateConfirmPassword}
+                initValue={value ? (value.confirmPassword ?? '') : ''}
+            />
         </div>
     );
 }

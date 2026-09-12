@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
+import DecorativePattern from '@/components/auth/Decorate';
 
 type RegisterLayoutProps = {
     children: ReactNode;
@@ -23,18 +24,23 @@ export default function RegisterLayout({
     showBack = false,
 }: RegisterLayoutProps) {
     return (
-        <main className="relative min-h-screen w-full">
+        <main className="relative min-h-screen w-full overflow-hidden bg-[#FCEFD7]">
             {/* background */}
-            <div className="fixed inset-0 -z-10 bg-[#FFF5DC]" />
-
-            <div className="fixed left-0 top-0 h-full w-[38%] overflow-hidden rounded-[0_20px_500px_0]">
-                <Image
-                    src="/images/background-keyboard.png"
-                    alt=""
-                    fill
-                    className="object-cover"
-                />
-            </div>
+            <DecorativePattern
+                className="
+                    pointer-events-none
+                    absolute
+                    left-0
+                    top-0
+                    hidden
+                    h-screen
+                    aspect-[1366/2192]
+                    overflow-hidden
+                    rounded-br-[calc(100vh*1366/2192)]
+                    opacity-80
+                    sm:block
+                "
+            />
 
             {/* MangoDB Cooperation badge */}
             <div
@@ -49,7 +55,7 @@ export default function RegisterLayout({
             >
                 <div className="relative h-[25px] w-[32px] overflow-hidden">
                     <Image
-                        src="/images/mangodblogo.png"
+                        src="/assets/MangoDB_Logo_nobg.png"
                         alt="MangoDB"
                         fill
                         className="object-cover"
@@ -63,20 +69,21 @@ export default function RegisterLayout({
             <div
                 className="
                     absolute left-1/2 top-1/2
-                    flex h-[75%] w-[55%]
+                    flex h-[80vh] w-[55%]
                     -translate-x-1/2 -translate-y-1/2
-                    overflow-hidden rounded-status bg-[#FFFDF9] shadow-lg
+                    overflow-hidden rounded-[32px] bg-[#FFFDF9] shadow-lg
+                    p-4
 
                     max-sm:top-[calc(50%+35px)]
                     max-sm:h-[calc(100%-50px)]
-                    max-sm:w-[calc(100%-32px)]
+                    max-sm:w-[calc(100%-35px)]
                     "
             >
                 {/* left side */}
-                <div className="w-[42%] pl-[20px] py-[20px] max-sm:hidden">
-                    <div className="relative h-full w-full overflow-hidden rounded-[20px_20px_500px_20px] shadow-lg">
+                <div className="w-[42%] max-sm:hidden">
+                    <div className="relative h-full w-full overflow-hidden rounded-3xl rounded-br-[calc(100vh*1366/2192)] shadow-lg">
                         <Image
-                            src="/images/background-keyboard.png"
+                            src="/assets/background.png"
                             alt=""
                             fill
                             className="object-cover"
@@ -85,7 +92,7 @@ export default function RegisterLayout({
                 </div>
 
                 {/* right side */}
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[24px] py-[20px]">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col pl-4">
                     {/* header */}
                     <header className="shrink-0">
                         <h1 className="text-hd">{title}</h1>
@@ -125,13 +132,13 @@ export default function RegisterLayout({
                                 onClick={onNext}
                                 disabled={nextDisabled}
                                 className="
-                    rounded-button
-                    bg-[#3F6B80]
-                    px-[24px] py-[5px]
-                    text-md text-[#FFFDF9]
-                    disabled:cursor-not-allowed
-                    disabled:opacity-50
-                  "
+                                    rounded-button
+                                    bg-[#3F6B80]
+                                    px-[24px] py-[5px]
+                                    text-md text-[#FFFDF9]
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-50
+                                "
                             >
                                 {nextLabel}
                             </button>

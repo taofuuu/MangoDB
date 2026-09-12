@@ -18,27 +18,27 @@ const roles: Array<{
         title: 'Receiver',
         description:
             'Find and hire services for your business.\nค้นหาและว่าจ้างบริการที่ตรงกับธุรกิจของคุณ',
-        image: '/images/register/receiver.png',
+        image: '/assets/register/receiver.png',
     },
     {
         value: 'PROVIDER',
         title: 'Provider',
         description:
             'Offer your services to businesses.\nนำเสนอบริการและเชื่อมต่อกับธุรกิจ',
-        image: '/images/register/provider.png',
+        image: '/assets/register/provider.png',
     },
     {
         value: 'BOTH',
         title: 'Dual Account',
         description:
             'Find and offer services in one account.\nค้นหาและนำเสนอบริการในบัญชีเดียว',
-        image: '/images/register/both.png',
+        image: '/assets/register/both.png',
     },
 ];
 
 export default function RoleStep({ value, onChange }: RoleStepProps) {
     return (
-        <div className="flex flex-col gap-2 pt-2">
+        <div className="flex flex-col gap-2 py-3">
             {roles.map((role) => {
                 const selected = value === role.value;
 
