@@ -334,7 +334,7 @@ duplicates that the old composite primary key made impossible.
 | `GET`    | `/portfolios`              | none — public                                           |
 | `GET`    | `/portfolios/:portfolioId` | none — public                                           |
 | `POST`   | `/portfolios`              | `requireAuth`, `requireRole('provider')`, `uploadImage` |
-| `PATCH`  | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')`                |
+| `PATCH`  | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')`, `uploadImage` |
 | `DELETE` | `/portfolios/:portfolioId` | `requireAuth`, `requireRole('provider')`                |
 
 The two `GET`s are public: a work sample is meant to be seen, and neither
@@ -350,13 +350,15 @@ the rest are text parts. `listing_id` is required and is checked against the
 caller's company _before_ the upload, so a rejected request never leaves a
 file behind; a failed insert afterwards removes the one it just wrote.
 
-`PATCH` is a partial update — send any subset of `portfolio_name`,
-`portfolio_description`, `development_date`, `portfolio_link` and only those
-columns change; an empty body is a `400`. `portfolio_description` is the only
-nullable one. `portfolio_image` is deliberately not editable: changing it
-means another upload, which is a multipart route rather than this one.
-Returns the full row; retargeting a link the listing already carries is a
-`409`. `DELETE` returns `204` and hard-deletes — nothing references a
+`PATCH` is a partial `multipart/form-data` update — send any subset of
+`portfolio_name`, `portfolio_description`, `development_date`,
+`portfolio_link`, and `portfolio_image`, and only those columns change. An
+empty request is a `400`; `portfolio_description` is the only nullable text
+field. A replacement image must be png/jpeg/webp and at most 5 MB. The old
+object is removed after the database points at the replacement, while a
+failed database update removes the new upload. Returns the full row;
+retargeting a link the listing already carries is a `409`. `DELETE` returns
+`204` and hard-deletes — nothing references a
 portfolio row, and a soft-deleted one would keep its slot in the unique
 index, blocking that link from ever being added back. All three writes check
 ownership first, and the two failure cases stay distinct: an id that does not

@@ -1130,10 +1130,9 @@ curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one ro
         <h3>How does a company edit or remove a work sample (portfolio)?</h3>
         <p class="answer"><code>PATCH /portfolios/:portfolioId</code> and <code>DELETE /portfolios/:portfolioId</code>, both <code>requireRole('provider')</code>.</p>
         <pre><code>curl -s -X PATCH localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" \
-  -H 'content-type: application/json' -d '{
-  "portfolio_name": "Inventory dashboard",
-  "development_date": "2026-05-01"
-}'
+  -F 'portfolio_name=Inventory dashboard' \
+  -F 'development_date=2026-05-01' \
+  -F 'portfolio_image=@./replacement.png'
 
 curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN"   <span class="c-dim"># 204</span></code></pre>
         <p class="note">
@@ -1153,8 +1152,9 @@ curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" 
           <code>development_date</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
           fails validation rather than silently shifting the stored day across a timezone.
           <code>portfolio_link</code> accepts only <code>http</code>/<code>https</code> URLs.
-          <code>portfolio_image</code> is not editable here: replacing the picture means uploading another
-          file, which is <a href="#add-portfolio">the multipart <code>POST</code></a>, not this route.
+          The request uses <code>multipart/form-data</code> so it can also carry an optional
+          <code>portfolio_image</code> replacement (png/jpeg/webp, up to 5 MB). Leaving that part out keeps
+          the current image. The old stored object is removed only after the database update succeeds.
         </p>
         <p class="note">
           A duplicate <code>portfolio_link</code> on the same listing is <span class="status s-warn">409</span>

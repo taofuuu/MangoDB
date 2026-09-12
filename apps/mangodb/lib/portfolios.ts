@@ -13,3 +13,13 @@ export function getPortfolios(companyId: number): Promise<ServicePortfolio[]> {
 export function deletePortfolio(portfolioId: number): Promise<void> {
     return apiFetch<void>(`/portfolios/${portfolioId}`, { method: 'DELETE' });
 }
+
+export function updatePortfolio(
+    portfolioId: number,
+    body: FormData,
+): Promise<ServicePortfolio> {
+    return apiFetch<ServicePortfolio>(`/portfolios/${portfolioId}`, {
+        method: 'PATCH',
+        body,
+    });
+}

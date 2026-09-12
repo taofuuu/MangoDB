@@ -7,6 +7,7 @@ import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
+import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import { ApiRequestError } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { getPortfolios, deletePortfolio } from '@/lib/portfolios';
@@ -16,6 +17,9 @@ export default function PortfolioPage() {
     const [items, setItems] = useState<ServicePortfolio[] | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [view, setView] = useState<PortfolioView>('grid');
+    const [pendingEdit, setPendingEdit] = useState<ServicePortfolio | null>(
+        null,
+    );
 
     // The item the user asked to delete. Null means the popup is closed.
     const [pendingDelete, setPendingDelete] = useState<ServicePortfolio | null>(
@@ -53,6 +57,14 @@ export default function PortfolioPage() {
         setItems((current) =>
             (current ?? []).filter(
                 (item) => item.portfolio_id !== pendingDelete.portfolio_id,
+            ),
+        );
+    };
+
+    const handleEdit = (updated: ServicePortfolio) => {
+        setItems((current) =>
+            (current ?? []).map((item) =>
+                item.portfolio_id === updated.portfolio_id ? updated : item,
             ),
         );
     };
@@ -105,6 +117,7 @@ export default function PortfolioPage() {
                         <PortfolioCard
                             key={item.portfolio_id}
                             item={item}
+                            onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
                         />
                     ))}
@@ -117,6 +130,7 @@ export default function PortfolioPage() {
                         <PortfolioRow
                             key={item.portfolio_id}
                             item={item}
+                            onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
                         />
                     ))}
@@ -128,6 +142,15 @@ export default function PortfolioPage() {
                 onClose={() => setPendingDelete(null)}
                 onConfirm={handleDelete}
             />
+
+            {pendingEdit && (
+                <EditPortfolioForm
+                    key={pendingEdit.portfolio_id}
+                    portfolio={pendingEdit}
+                    onClose={() => setPendingEdit(null)}
+                    onSave={handleEdit}
+                />
+            )}
         </main>
     );
 }
