@@ -18,10 +18,10 @@ export default function PortfolioCard({
 }: PortfolioCardProps) {
     return (
         <div className="relative flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
-            {/* Covers the card so any spot but Delete opens it. z-10 keeps it
-                above the image, which is positioned and would swallow clicks.
-                An anchor, not a button: middle-click, copy link and screen
-                readers all expect a link for an external URL. */}
+            {/* Covers the card so any spot but Edit or Delete opens it. z-10
+                keeps it above the image, which is positioned and would
+                swallow clicks. An anchor, not a button: middle-click, copy
+                link and screen readers all expect a link for an external URL. */}
             <a
                 href={item.portfolio_link}
                 target="_blank"

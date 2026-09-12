@@ -15,6 +15,15 @@ type EditPortfolioFormProps = {
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
+function daysInMonth(year: string, month: string): number {
+    const numericYear = Number(year);
+    const numericMonth = Number(month);
+
+    return numericYear > 0 && numericMonth > 0
+        ? new Date(numericYear, numericMonth, 0).getDate()
+        : 31;
+}
+
 function errorMessage(error: unknown): string {
     if (!(error instanceof ApiRequestError)) {
         return 'Unable to connect to the server.';
@@ -53,11 +62,25 @@ export default function EditPortfolioForm({
         { length: latestYear - earliestYear + 1 },
         (_, index) => latestYear - index,
     );
-    const dayCount =
-        Number(year) > 0 && Number(month) > 0
-            ? new Date(Number(year), Number(month), 0).getDate()
-            : 31;
+    const dayCount = daysInMonth(year, month);
     const days = Array.from({ length: dayCount }, (_, index) => index + 1);
+
+    const clampDay = (nextYear: string, nextMonth: string) => {
+        const nextDayCount = daysInMonth(nextYear, nextMonth);
+        setDay((currentDay) =>
+            String(Math.min(Number(currentDay), nextDayCount)),
+        );
+    };
+
+    const handleMonthChange = (nextMonth: string) => {
+        setMonth(nextMonth);
+        clampDay(year, nextMonth);
+    };
+
+    const handleYearChange = (nextYear: string) => {
+        setYear(nextYear);
+        clampDay(nextYear, month);
+    };
 
     const handleImageChange = (file: File | null) => {
         setError(null);
@@ -224,7 +247,9 @@ export default function EditPortfolioForm({
                                         required
                                         value={month}
                                         onChange={(event) =>
-                                            setMonth(event.target.value)
+                                            handleMonthChange(
+                                                event.target.value,
+                                            )
                                         }
                                         className={selectClassName}
                                     >
@@ -244,7 +269,7 @@ export default function EditPortfolioForm({
                                         required
                                         value={year}
                                         onChange={(event) =>
-                                            setYear(event.target.value)
+                                            handleYearChange(event.target.value)
                                         }
                                         className={selectClassName}
                                     >

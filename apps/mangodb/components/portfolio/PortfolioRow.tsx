@@ -18,10 +18,10 @@ export default function PortfolioRow({
 }: PortfolioRowProps) {
     return (
         <div className="relative flex w-full items-center gap-[1.25vw] rounded-[2px] border border-[#EAEAEA] bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
-            {/* Covers the row so any spot but Delete opens it. z-10 keeps it
-                above the image, which is positioned and would swallow clicks.
-                An anchor, not a button: middle-click, copy link and screen
-                readers all expect a link for an external URL. */}
+            {/* Covers the row so any spot but Edit or Delete opens it. z-10
+                keeps it above the image, which is positioned and would
+                swallow clicks. An anchor, not a button: middle-click, copy
+                link and screen readers all expect a link for an external URL. */}
             <a
                 href={item.portfolio_link}
                 target="_blank"
@@ -52,6 +52,7 @@ export default function PortfolioRow({
 
             {/* ml-auto pushes the footer to the far right of the row */}
             <div className="ml-auto flex items-center gap-[1.25vw] pr-[1vw]">
+                {/* z-20 lifts account actions above the row link. */}
                 <div className="relative z-20 flex items-center gap-[1vw]">
                     <button
                         type="button"
