@@ -4,19 +4,20 @@ import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import { apiFetch, ApiRequestError } from '@/lib/api';
+import FileUpload from '../sm-detail/FileUpload';
 
 export type CertificateData = {
-    id?: number | undefined;
-    name?: string | undefined;
-    organize?: string | undefined;
-    month?: string | undefined;
-    year?: string | undefined;
-    exMonth?: string | undefined;
-    exYear?: string | undefined;
-    credID?: string | undefined;
-    credURL?: string | undefined;
-    file?: File | undefined;
-    cert_image?: string | null | undefined;
+    id?: number;
+    name?: string;
+    organize?: string;
+    month?: string;
+    year?: string;
+    exMonth?: string;
+    exYear?: string;
+    credID?: string;
+    credURL?: string;
+    file?: File | null;
+    cert_image?: string | null;
 };
 
 type EditFormModalProps = {
@@ -87,6 +88,7 @@ function EditCertificateDialog({
     const [exYear, setExYear] = useState(initialData?.exYear || '');
     const [credID, setCredID] = useState(initialData?.credID || '');
     const [credURL, setCredURL] = useState(initialData?.credURL || '');
+    const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -107,7 +109,7 @@ function EditCertificateDialog({
         setIsSubmitting(true);
 
         const updatedData: CertificateData = {
-            id: initialData?.id,
+            ...(initialData?.id !== undefined && { id: initialData.id }),
             name,
             organize,
             month,
@@ -116,21 +118,43 @@ function EditCertificateDialog({
             exYear,
             credID,
             credURL,
-            cert_image: initialData?.cert_image,
+            cert_image: initialData?.cert_image ?? null,
         };
-
         try {
             if (initialData?.id) {
-                const payload = {
-                    cert_title: name,
-                    organization: organize,
-                    issue_month: month ? Number(month) : null,
-                    issue_year: year ? Number(year) : null,
-                    expire_month: exMonth ? Number(exMonth) : null,
-                    expire_year: exYear ? Number(exYear) : null,
-                    credential_id: credID || null,
-                    credential_url: credURL || null,
-                };
+                const formData = new FormData();
+
+                formData.append('cert_title', name);
+                formData.append('organization', organize);
+
+                if (month) {
+                    formData.append('issue_month', month);
+                }
+
+                if (year) {
+                    formData.append('issue_year', year);
+                }
+
+                if (exMonth) {
+                    formData.append('expire_month', exMonth);
+                }
+
+                if (exYear) {
+                    formData.append('expire_year', exYear);
+                }
+
+                if (credID) {
+                    formData.append('credential_id', credID);
+                }
+
+                if (credURL) {
+                    formData.append('credential_url', credURL);
+                }
+
+                // Only send cert_image when user selected a new file
+                if (file) {
+                    formData.append('cert_image', file);
+                }
 
                 const res = await apiFetch<{
                     message: string;
@@ -148,7 +172,7 @@ function EditCertificateDialog({
                     };
                 }>(`/certificates/${initialData.id}`, {
                     method: 'PATCH',
-                    body: JSON.stringify(payload),
+                    body: formData,
                 });
 
                 const cert = res?.certificate;
@@ -283,6 +307,8 @@ function EditCertificateDialog({
                                     <YearDropdown
                                         value={year}
                                         onChange={setYear}
+                                        minYear={1990}
+                                        maxYear={new Date().getFullYear()}
                                     />
                                 </div>
                             </div>
@@ -314,6 +340,8 @@ function EditCertificateDialog({
                                     <YearDropdown
                                         value={exYear}
                                         onChange={setExYear}
+                                        minYear={new Date().getFullYear()}
+                                        maxYear={new Date().getFullYear() + 20}
                                     />
                                 </div>
                             </div>
@@ -346,19 +374,25 @@ function EditCertificateDialog({
                                 placeholder="https://learn.microsoft.com/..."
                             />
                         </div>
+                        {initialData?.cert_image && !file && (
+                            <div className="mt-2">
+                                <p className="mb-1 text-sm">
+                                    Current certificate image
+                                </p>
+
+                                <img
+                                    src={initialData.cert_image}
+                                    alt="Current certificate"
+                                    className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
+                                />
+                            </div>
+                        )}
+                        <FileUpload value={file} onChange={setFile} />
                     </div>
 
                     <hr className="border-[#3F6B80]/50 my-4" />
                     {/* -----------------footer----------------- */}
                     <div className="flex justify-end items-center gap-3 pt-1">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            disabled={isSubmitting}
-                            className="rounded-status bg-[#D9D9D9] px-5 h-[4vh] text-[#756D6D] text-sm font-medium hover:bg-[#CBCBCB] transition-colors disabled:opacity-50"
-                        >
-                            Cancel
-                        </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}

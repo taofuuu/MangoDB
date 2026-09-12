@@ -57,6 +57,17 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Validate expiration date against issue date
+        if (year && exYear && month && exMonth) {
+            const issueDate = Number(year) * 12 + Number(month);
+            const expireDate = Number(exYear) * 12 + Number(exMonth);
+
+            if (expireDate < issueDate) {
+                alert('Expiration date cannot be before the issue date');
+                return;
+            }
+        }
+
         try {
             const formData = new FormData();
 
@@ -111,7 +122,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 exYear: cert.expire_year?.toString() ?? '',
                 credID: cert.credential_id ?? '',
                 credURL: cert.credential_url ?? '',
-                file: file ?? undefined,
+                ...(file !== null && { file }),
                 cert_image: cert.cert_image ?? null,
             };
 
@@ -238,6 +249,8 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                     <YearDropdown
                                         value={year}
                                         onChange={setYear}
+                                        minYear={1990}
+                                        maxYear={new Date().getFullYear()}
                                     />
                                 </div>
                             </div>
@@ -269,6 +282,8 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                                     <YearDropdown
                                         value={exYear}
                                         onChange={setExYear}
+                                        minYear={new Date().getFullYear()}
+                                        maxYear={new Date().getFullYear() + 20}
                                     />
                                 </div>
                             </div>

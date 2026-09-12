@@ -89,3 +89,22 @@ body {
 .upload-box {
     border: 1px dashed #3f6b80;
 }
+
+/* Certificate page scrollbar */
+.certificate-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #fec84a;
+}
+
+.certificate-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.certificate-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
+}
+
+.certificate-scrollbar::-webkit-scrollbar-thumb {
+    background: #fec84a;
+    border-radius: 9999px;
+}

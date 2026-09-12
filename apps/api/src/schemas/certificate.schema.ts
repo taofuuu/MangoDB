@@ -9,20 +9,9 @@ export const certificateFields = {
     organization: z.string().trim().max(255),
 
     issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
-    issue_year: z.coerce
-        .number()
-        .int()
-        .min(1990, 'Issue year must be 1990 or later')
-        .max(new Date().getFullYear(), 'Issue year cannot be in the future')
-        .nullable()
-        .optional(),
+    issue_year: z.coerce.number().int().nullable().optional(),
     expire_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
-    expire_year: z.coerce
-        .number()
-        .int()
-        .min(1990, 'Expiration year must be 1990 or later')
-        .nullable()
-        .optional(),
+    expire_year: z.coerce.number().int().nullable().optional(),
     credential_id: z.string().trim().max(255).nullable().optional(),
     credential_url: z.url().nullable().optional(),
 } as const;
@@ -37,9 +26,6 @@ export const createCertificateSchema = z.object(certificateFields).refine(
         ) {
             return true;
         }
-        const issueDate = data.issue_year * 100 + data.issue_month;
-        const expireDate = data.expire_year * 100 + data.expire_month;
-        return expireDate >= issueDate;
     },
     {
         message: 'Expiration date cannot be before the issue date',
