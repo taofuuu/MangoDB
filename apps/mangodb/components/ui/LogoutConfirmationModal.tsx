@@ -13,7 +13,7 @@ export default function LogoutConfirmationModal(props: DeleteModalProps) {
             title="Confirm Logout?"
             description="You will not receive notifications anymore."
             confirmLabel="Logout"
-            confirmVariant="primary"
+            confirmVariant="danger"
             pendingLabel="Logging out…"
             cancelLabel="Cancel"
             icon={
