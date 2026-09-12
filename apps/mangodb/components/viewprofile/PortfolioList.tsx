@@ -1,36 +1,97 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { ServicePortfolio } from '@mangodb/shared';
+import type { CertificateResponse } from '@/components/forms/AddCertificateForm';
+import { getPortfolios } from '@/lib/portfolios';
+import { getCertificates } from '@/lib/certificates';
 
-export interface ListItem {
+// Matches the card's fixed-height design: enough to preview at a glance,
+// the rest lives behind "See more" instead of an in-card scrollbar.
+const MAX_VISIBLE_ITEMS = 3;
+
+const MONTH_NAMES = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+];
+
+function formatPortfolioDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
+function formatCertificateDate(cert: CertificateResponse): string {
+    if (!cert.issue_month || !cert.issue_year) return '—';
+    return `${MONTH_NAMES[cert.issue_month - 1]} ${cert.issue_year}`;
+}
+
+interface DisplayItem {
     id: number;
     title: string;
     date: string;
 }
 
-const portfolioItems: ListItem[] = [
-    { id: 1, title: 'Print Hello world', date: '28 June 2026' },
-    { id: 2, title: 'Java Project', date: '28 June 2026' },
-    { id: 3, title: "Ubuntu's Uwira", date: '28 June 2026' },
-    { id: 4, title: '67 Counter Camera', date: '28 June 2026' },
-    { id: 5, title: 'C++ Project', date: '28 June 2026' },
-    { id: 6, title: 'Autonomous Robot', date: '28 June 2026' },
-    { id: 7, title: 'Evil Eye', date: '28 June 2026' },
-];
+interface PortfolioCertificateListProps {
+    companyId: number;
+}
 
-const certificateItems: ListItem[] = [
-    { id: 1, title: 'AWS Cloud Practitioner', date: '15 Jan 2026' },
-    { id: 2, title: 'Certified Kubernetes Administrator', date: '10 Feb 2026' },
-    { id: 3, title: 'Meta Front-End Developer', date: '01 Mar 2026' },
-    { id: 4, title: 'Cybersecurity Fundamentals', date: '12 Apr 2026' },
-];
-
-export default function PortfolioCertificateList() {
+export default function PortfolioCertificateList({
+    companyId,
+}: PortfolioCertificateListProps) {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'certificates'>(
         'portfolio',
     );
+    const [portfolioItems, setPortfolioItems] = useState<ServicePortfolio[]>(
+        [],
+    );
+    const [certificateItems, setCertificateItems] = useState<
+        CertificateResponse[]
+    >([]);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
-    const currentItems =
-        activeTab === 'portfolio' ? portfolioItems : certificateItems;
+    useEffect(() => {
+        getPortfolios(companyId)
+            .then((items) => setPortfolioItems(items))
+            .catch(() => setLoadError('Could not load portfolio items.'));
+
+        getCertificates()
+            .then((items) => setCertificateItems(items))
+            .catch(() =>
+                setLoadError(
+                    (current) => current ?? 'Could not load certificates.',
+                ),
+            );
+    }, [companyId]);
+
+    const displayItems: DisplayItem[] =
+        activeTab === 'portfolio'
+            ? portfolioItems.map((item) => ({
+                  id: item.portfolio_id,
+                  title: item.portfolio_name,
+                  date: formatPortfolioDate(item.development_date),
+              }))
+            : certificateItems.map((item) => ({
+                  id: item.certificate_id,
+                  title: item.cert_title,
+                  date: formatCertificateDate(item),
+              }));
+
+    const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
+    const seeMoreHref =
+        activeTab === 'portfolio' ? '/portfolio' : '/certificate';
 
     return (
         <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm font-sans">
@@ -65,9 +126,20 @@ export default function PortfolioCertificateList() {
                 {activeTab === 'portfolio' ? 'Portfolio' : 'Certificates'}
             </h3>
 
+            {loadError && (
+                <p className="text-xs text-[#C5483E] mb-2">{loadError}</p>
+            )}
+
             {/* List Display */}
-            <div className="divide-y divide-gray-100 max-h-[220px] overflow-y-auto pr-2">
-                {currentItems.map((item) => (
+            <div className="divide-y divide-gray-100">
+                {visibleItems.length === 0 && !loadError && (
+                    <p className="py-2 text-xs text-gray-400">
+                        {activeTab === 'portfolio'
+                            ? 'No portfolio items yet.'
+                            : 'No certificates yet.'}
+                    </p>
+                )}
+                {visibleItems.map((item) => (
                     <div
                         key={item.id}
                         className="py-2 flex justify-between items-center text-xs"
@@ -86,6 +158,17 @@ export default function PortfolioCertificateList() {
                     </div>
                 ))}
             </div>
+
+            {displayItems.length > MAX_VISIBLE_ITEMS && (
+                <div className="mt-3 text-right">
+                    <Link
+                        href={seeMoreHref}
+                        className="text-xs text-[#497B93] hover:underline font-medium"
+                    >
+                        See more
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }
