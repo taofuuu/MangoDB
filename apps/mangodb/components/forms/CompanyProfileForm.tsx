@@ -331,7 +331,7 @@ export default function CompanyProfileForm({
                     variant="outline"
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-lg"
+                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-md"
                 >
                     Cancel
                 </Button>
@@ -339,7 +339,7 @@ export default function CompanyProfileForm({
                 <Button
                     type="submit"
                     disabled={isSaving}
-                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-lg"
+                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-md"
                 >
                     {isSaving ? 'Saving…' : 'Save Changes'}
                 </Button>
