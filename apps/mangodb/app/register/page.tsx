@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { AccountType } from '@mangodb/shared';
+import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
 import RoleStep from '@/components/register/RoleStep';
@@ -64,21 +65,21 @@ export default function RegisterPage() {
     };
 
     const goToCompanyInfo = () => {
-        setErrorMessage('');
-        setCurrentStep(RegisterStep.CompanyInfo);
-    };
-
-    const goToHome = () => {
-        window.location.href = '/';
-    };
-
-    /* ================= SUBMIT ================= */
-
-    const submitRegister = async () => {
         if (accountInfo.password !== accountInfo.confirmPassword) {
             setErrorMessage('Passwords do not match.');
             return;
         }
+        setErrorMessage('');
+        setCurrentStep(RegisterStep.CompanyInfo);
+    };
+
+    const router = useRouter();
+
+    const goToHome = () => router.push('/');
+
+    /* ================= SUBMIT ================= */
+
+    const submitRegister = async () => {
         setIsSubmitting(true);
         setErrorMessage('');
 
@@ -222,17 +223,13 @@ export default function RegisterPage() {
                     </p>
                     <button
                         type="button"
-                        onClick={() => {
-                            window.location.href = '/';
-                        }}
+                        onClick={goToHome}
                         className="
                             rounded-button
                             bg-[#3F6B80]
                             mt-2
                             px-[24px] py-[5px]
                             text-md text-[#FFFDF9]
-                            disabled:cursor-not-allowed
-                            disabled:opacity-50
                             "
                     >
                         Go to Home

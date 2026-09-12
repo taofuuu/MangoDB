@@ -91,7 +91,7 @@ export default function CompanyInfoStep({
                 initValue={value ? value.companyName : ''}
             />
             <SimpleTextInput
-                title="Company Description *"
+                title="Company Description"
                 onChange={handleUpdateCompanyDescription}
                 initValue={value ? value.companyDescription : ''}
             />
