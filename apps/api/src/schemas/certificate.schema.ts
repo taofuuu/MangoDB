@@ -4,14 +4,35 @@ export const certificateIdParamSchema = z.object({
     certificateId: z.coerce.number().int().positive().max(2147483647),
 });
 
+// A floor on typos, not a real rule: certificates predate the platform, but a
+// year below this is far more likely a mistyped digit than a real issue date.
+const EARLIEST_CERT_YEAR = 1990;
+
 export const certificateFields = {
     cert_title: z.string().trim().max(255),
     organization: z.string().trim().max(255),
 
     issue_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
-    issue_year: z.coerce.number().int().nullable().optional(),
+    issue_year: z.coerce
+        .number()
+        .int()
+        .min(
+            EARLIEST_CERT_YEAR,
+            `Issue year must be ${EARLIEST_CERT_YEAR} or later`,
+        )
+        .max(new Date().getFullYear(), 'Issue year cannot be in the future')
+        .nullable()
+        .optional(),
     expire_month: z.coerce.number().int().min(1).max(12).nullable().optional(),
-    expire_year: z.coerce.number().int().nullable().optional(),
+    expire_year: z.coerce
+        .number()
+        .int()
+        .min(
+            EARLIEST_CERT_YEAR,
+            `Expiration year must be ${EARLIEST_CERT_YEAR} or later`,
+        )
+        .nullable()
+        .optional(),
     credential_id: z.string().trim().max(255).nullable().optional(),
     credential_url: z.url().nullable().optional(),
 } as const;
@@ -26,6 +47,9 @@ export const createCertificateSchema = z.object(certificateFields).refine(
         ) {
             return true;
         }
+        const issueDate = data.issue_year * 100 + data.issue_month;
+        const expireDate = data.expire_year * 100 + data.expire_month;
+        return expireDate >= issueDate;
     },
     {
         message: 'Expiration date cannot be before the issue date',
