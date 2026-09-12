@@ -6,7 +6,7 @@ type RegisterLayoutProps = {
     title: string;
     subtitle: string;
     onBack?: (() => void) | undefined;
-    onNext?: () => void;
+    onNext?: (() => void) | undefined;
     nextLabel?: string;
     nextDisabled?: boolean;
     showBack?: boolean;
