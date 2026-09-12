@@ -62,7 +62,7 @@ export default function ViewProfilePage() {
                         <ProjectTimeline />
                     </div>
                     <div className="lg:col-span-1">
-                        <PortfolioList />
+                        <PortfolioList companyId={profile.company_id} />
                     </div>
                 </main>
             )}
