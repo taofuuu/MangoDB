@@ -52,13 +52,8 @@ export const updatePortfolioSchema = z
         portfolio_description: portfolioFields.portfolio_description.nullable(),
         development_date: portfolioFields.development_date,
         portfolio_link: portfolioFields.portfolio_link,
-        // portfolio_image: portfolioFields.portfolio_image
     })
-    .partial()
-    // An empty body is a client bug, not a no-op worth a 200.
-    .refine((body) => Object.keys(body).length > 0, {
-        message: 'Provide at least one field to update',
-    });
+    .partial();
 
 export type UpdatePortfolioInput = z.infer<typeof updatePortfolioSchema>;
 

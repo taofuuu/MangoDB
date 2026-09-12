@@ -37,17 +37,18 @@ export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
     };
 }
 
-// Authorizes without reading the row's own columns — both callers only need
-// the throw. There is no owner column: the company is three hops away,
+// Authorizes, and hands back portfolio_image so a replacement can clean up
+// the old object. There is no owner column: the company is three hops away,
 // service_portfolio -> service -> listing, so asking for it as a nested
 // select beats walking the chain query by query.
 export async function assertPortfolioOwned(
     portfolioId: number,
     companyId: number,
-): Promise<void> {
+): Promise<{ portfolio_image: string }> {
     const portfolio = await prisma.service_portfolio.findUnique({
         where: { portfolio_id: portfolioId },
         select: {
+            portfolio_image: true,
             service: { select: { listing: { select: { company_id: true } } } },
         },
     });
@@ -62,4 +63,6 @@ export async function assertPortfolioOwned(
     if (portfolio.service.listing.company_id !== companyId) {
         throw ApiError.forbidden('This portfolio belongs to another company');
     }
+
+    return { portfolio_image: portfolio.portfolio_image };
 }

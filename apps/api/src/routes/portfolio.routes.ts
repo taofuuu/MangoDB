@@ -32,6 +32,7 @@ portfolioRoutes.patch(
     '/:portfolioId',
     requireAuth,
     requireRole('provider'),
+    uploadImage('portfolio_image'),
     updatePortfolio,
 );
 
