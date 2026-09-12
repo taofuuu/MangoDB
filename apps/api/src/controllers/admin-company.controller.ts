@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CompanyAccountListResponse } from '@mangodb/shared';
+import { verifyPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
@@ -21,6 +22,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     companyAccountIdParamSchema,
     companyAccountListQuerySchema,
+    deleteCompanyAccountBodySchema,
 } from '../schemas/admin-company.schema';
 import { updateCompanyProfileSchema } from '../schemas/company.schema';
 
@@ -187,9 +189,31 @@ export async function deleteCompanyAccount(
     req: Request,
     res: Response,
 ): Promise<void> {
+    // Params before body, like updateCompanyAccount: a bad id should report
+    // the id, not the password.
+    const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
+
+    // written under time-crunch bypass — review later.
+    // US6-4 re-auth: the confirm modal collects the admin's own password to
+    // prove intent before an irreversible delete. Checked against req.auth's
+    // own row, not the target's — this is "is it really the admin", not
+    // anything about the account being removed. Unlike login's
+    // verifyCredentials, no dummy-hash timing defense is needed: the caller
+    // is already authenticated, so there is no email to enumerate here.
+    const { current_password } = parseBody(
+        deleteCompanyAccountBodySchema,
+        req.body,
+    );
+    const admin = await prisma.company.findUnique({
+        where: { company_id: Number(req.auth!.sub) },
+        select: { password: true },
+    });
+    if (!admin || !(await verifyPassword(current_password, admin.password))) {
+        throw ApiError.unauthorized('Current password is incorrect');
+    }
+
     // Step 1: does the company exist? Same pattern as getCompanyAccountDetail —
     // findUnique, throw ApiError.notFound if null.
-    const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
     const company = await prisma.company.findUnique({
         where: { company_id: companyId },
         select: {

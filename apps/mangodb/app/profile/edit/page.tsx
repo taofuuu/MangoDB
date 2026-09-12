@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api';
 import {
+    deleteCompanyAccount,
     getCompanyAccountDetail,
     getMyProfile,
     updateCompanyAccount,
@@ -129,13 +130,15 @@ function EditProfilePageInner() {
         }
     };
 
-    // US6-4. The confirm popup passes the admin's password to this handler, but
-    // the DELETE request is a separate backend task, so the argument is dropped
-    // for now rather than named and left unused.
-    const handleDeleteAccount = async () => {
-        // TODO(US6-4 backend): take the admin password and call
-        // DELETE /api/admin/companies/:companyId, then throw on failure so the
-        // modal keeps its error line. On success the redirect below stands.
+    // written under time-crunch bypass — review later.
+    // US6-4. The confirm modal collects the admin's own password and hands it
+    // here. Deliberately uncaught: DeleteConfirmationModal's onConfirm already
+    // catches and shows a thrown error's .message as the modal's error line,
+    // so a wrong password (401) surfaces there instead of navigating away.
+    const handleDeleteAccount = async (adminPassword: string) => {
+        await deleteCompanyAccount(Number(targetCompanyId), {
+            current_password: adminPassword,
+        });
         router.push('/companies');
     };
 
