@@ -31,7 +31,7 @@ export default function ReceiverViewPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white p-6 lg:p-8">
+        <div className="min-h-screen bg-[#FFFDF9] p-6 lg:p-8">
             {loadError === 'no-token' && (
                 <p className="text-sm">
                     You are not signed in.{' '}

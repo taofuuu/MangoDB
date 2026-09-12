@@ -43,16 +43,16 @@ export default function JobListing() {
     ];
 
     return (
-        <div className="bg-[#EDEDED] rounded-popup p-6 w-full h-full font-sans">
+        <div className="bg-white rounded-popup p-6 w-full h-full border border-gray-200 shadow-xs font-sans">
             <h3 className="text-md !font-bold text-gray-900 mb-4 px-1">
                 Job Listing
             </h3>
 
-            <div className="flex flex-col gap-3">
+            <div className="bg-gray-100/60 rounded-button p-4 flex flex-col gap-3">
                 {mockJobs.map((job) => (
                     <div
                         key={job.id}
-                        className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-xs border border-gray-100/60"
+                        className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-gray-200"
                     >
                         <div className="flex-1 text-sm !font-bold text-gray-900">
                             {job.title}
