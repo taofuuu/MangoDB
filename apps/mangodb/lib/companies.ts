@@ -97,3 +97,12 @@ export async function changeMyCredentials(
 
     return company;
 }
+
+// US1-6. 204 on success, so apiFetch resolves with undefined. If the company
+// has an ongoing project, the API responds with 409 Conflict, which surfaces
+// as an ApiRequestError for the confirm modal to catch and show inline.
+export function deleteMyAccount(): Promise<void> {
+    return apiFetch<void>('/companies/me', {
+        method: 'DELETE',
+    });
+}
