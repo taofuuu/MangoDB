@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CompanyAccountListResponse } from '@mangodb/shared';
+import { verifyPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
@@ -10,15 +11,18 @@ import {
     toCompanyAccountDetail,
     toCompanyAccountSummary,
 } from '../lib/adminCompany';
+import { softDeleteCompany } from '../lib/companyDeletion';
 import {
     PROVIDER_PROFILE_FIELDS,
     companyProfileUpdateData,
 } from '../lib/companyProfile';
 import { isRecordNotFound, isUniqueViolation } from '../lib/prismaErrors';
+import { hasOngoingProject } from '../lib/projectEligibility';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     companyAccountIdParamSchema,
     companyAccountListQuerySchema,
+    deleteCompanyAccountBodySchema,
 } from '../schemas/admin-company.schema';
 import { updateCompanyProfileSchema } from '../schemas/company.schema';
 
@@ -179,4 +183,76 @@ export async function updateCompanyAccount(
     }
 
     res.json(toCompanyAccountDetail(company));
+}
+
+export async function deleteCompanyAccount(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    // Params before body, like updateCompanyAccount: a bad id should report
+    // the id, not the password.
+    const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
+
+    // US6-4 re-auth: the confirm modal collects the admin's own password to
+    // prove intent before an irreversible delete. Checked against req.auth's
+    // own row, not the target's — this is "is it really the admin", not
+    // anything about the account being removed. Unlike login's
+    // verifyCredentials, no dummy-hash timing defense is needed: the caller
+    // is already authenticated, so there is no email to enumerate here.
+    const { current_password } = parseBody(
+        deleteCompanyAccountBodySchema,
+        req.body,
+    );
+    const admin = await prisma.company.findUnique({
+        where: { company_id: Number(req.auth!.sub) },
+        select: { password: true },
+    });
+    if (!admin || !(await verifyPassword(current_password, admin.password))) {
+        throw ApiError.unauthorized('Current password is incorrect');
+    }
+
+    // Step 1: does the company exist? Same pattern as getCompanyAccountDetail —
+    // findUnique, throw ApiError.notFound if null.
+    const company = await prisma.company.findUnique({
+        where: { company_id: companyId },
+        select: {
+            account_type: true,
+            deleted_at: true,
+        },
+    });
+
+    // Same "deleted = gone" convention as isCompanyDeleted: an already-deleted
+    // company 404s here instead of falling through to the eligibility check.
+    if (!company || company.deleted_at !== null) {
+        throw ApiError.notFound('Company account not found');
+    }
+
+    // softDeleteCompany refuses an administrator on its own, so this check is
+    // here to explain the refusal, not to enforce it — without it an admin
+    // target would fall through to the no-op path below and report a confusing
+    // 404. A 400 rather than a 403 for the same reason the provider check above
+    // uses one: this is a fact about the target, not a permission the caller is
+    // missing.
+    if (company.account_type === 'ADMIN') {
+        throw ApiError.badRequest('Administrator accounts cannot be deleted');
+    }
+
+    // Step 2: is it on an ongoing project? projectEligibility owns that rule
+    // and the definition of "ongoing" (anything not yet Delivered).
+    if (await hasOngoingProject(companyId)) {
+        throw ApiError.badRequest(
+            'Company has active projects and cannot be deleted',
+        );
+    }
+
+    // Step 3 + 4: soft-delete it, then respond. softDeleteCompany's guard
+    // means `false` here only means "already gone" (never existed, or was
+    // deleted between Step 1 and here) — Step 1 already ruled out the first
+    // case, so this is the race-condition case, reported the same way.
+    const wasDeleted = await softDeleteCompany(companyId);
+    if (wasDeleted) {
+        res.status(204).send();
+    } else {
+        throw ApiError.notFound('Company account not found');
+    }
 }

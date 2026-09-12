@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
+    deleteCompanyAccount,
     getCompanyAccountDetail,
     listCompanyAccounts,
     updateCompanyAccount,
@@ -19,6 +20,7 @@ adminRoutes.use(requireAuth, requireRole('admin'));
 adminRoutes.get('/companies', listCompanyAccounts);
 adminRoutes.get('/companies/:companyId', getCompanyAccountDetail);
 adminRoutes.patch('/companies/:companyId', updateCompanyAccount);
+adminRoutes.delete('/companies/:companyId', deleteCompanyAccount);
 
 adminRoutes.get('/ping', (_req, res) => {
     res.json({ status: 'ok' });

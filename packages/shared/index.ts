@@ -169,6 +169,13 @@ export interface ChangeCredentialsRequest {
     new_password?: string;
 }
 
+// US6-4. The admin's own password, confirming intent before an irreversible
+// delete of another company's account. Same current_password shape as
+// ChangeCredentialsRequest, checked against the admin's own row.
+export interface DeleteCompanyAccountRequest {
+    current_password: string;
+}
+
 // Wraps, like register: the token the change was made with is revoked, so the
 // response has to carry the one that replaces it.
 export type ChangeCredentialsResponse = SessionResponse;

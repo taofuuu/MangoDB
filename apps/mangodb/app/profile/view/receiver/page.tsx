@@ -1,23 +1,68 @@
 'use client';
 
-import React from 'react';
-import ReceiverCompanyCard from '@/components/viewprofile/ReceiverCompanyCard';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { CompanyProfile } from '@mangodb/shared';
+import { ApiRequestError } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
+import ReceiverCompanyCard, {
+    toReceiverCompanyCardData,
+} from '@/components/viewprofile/ReceiverCompanyCard';
 import JobListing from '@/components/viewprofile/JobListing';
 
 export default function ReceiverViewPage() {
+    const [profile, setProfile] = useState<CompanyProfile | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    useEffect(() => {
+        getMyProfile()
+            .then(setProfile)
+            .catch((err: unknown) => {
+                if (err instanceof ApiRequestError && err.status === 401) {
+                    setLoadError('no-token');
+                    return;
+                }
+                setLoadError(
+                    err instanceof ApiRequestError
+                        ? err.message
+                        : 'Could not reach the API. Is it running on port 4000?',
+                );
+            });
+    }, []);
+
     return (
         <div className="min-h-screen bg-white p-6 lg:p-8">
-            <main className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
-                {/* Left Receiver Card */}
-                <aside className="w-full lg:w-[320px] flex-shrink-0">
-                    <ReceiverCompanyCard />
-                </aside>
+            {loadError === 'no-token' && (
+                <p className="text-sm">
+                    You are not signed in.{' '}
+                    <Link href="/login" className="underline">
+                        Log in
+                    </Link>
+                    , then come back.
+                </p>
+            )}
 
-                {/* Right Job Listing Container */}
-                <section className="flex-1 w-full">
-                    <JobListing />
-                </section>
-            </main>
+            {loadError && loadError !== 'no-token' && (
+                <p className="text-sm text-red-600">{loadError}</p>
+            )}
+
+            {!loadError && !profile && <p className="text-sm">Loading…</p>}
+
+            {profile && (
+                <main className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
+                    {/* Left Receiver Card */}
+                    <aside className="w-full lg:w-[320px] flex-shrink-0">
+                        <ReceiverCompanyCard
+                            data={toReceiverCompanyCardData(profile)}
+                        />
+                    </aside>
+
+                    {/* Right Job Listing Container */}
+                    <section className="flex-1 w-full">
+                        <JobListing />
+                    </section>
+                </main>
+            )}
         </div>
     );
 }
