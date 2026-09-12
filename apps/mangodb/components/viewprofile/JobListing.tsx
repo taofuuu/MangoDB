@@ -58,7 +58,7 @@ export default function JobListing() {
                             {job.title}
                         </div>
 
-                        <div className="flex gap-10 text-xs text-gray-400 mr-8 mt-2 sm:mt-0">
+                        <div className="flex gap-20 text-xs text-gray-400 mr-8 mt-2 sm:mt-0">
                             <div className="flex flex-col items-start">
                                 <span className="text-xs text-gray-400">
                                     Budget
@@ -67,6 +67,7 @@ export default function JobListing() {
                                     {job.budget}
                                 </span>
                             </div>
+
                             <div className="flex flex-col items-start">
                                 <span className="text-xs text-gray-400">
                                     Deadline
@@ -77,7 +78,7 @@ export default function JobListing() {
                             </div>
                         </div>
 
-                        <button className="text-[#497B93] hover:underline text-xs !font-medium mt-2 sm:mt-0 transition-colors">
+                        <button className="text-[#497B93] hover:underline text-xs !font-medium mt-2 sm:mt-0 transition-colors ml-8">
                             Details
                         </button>
                     </div>
