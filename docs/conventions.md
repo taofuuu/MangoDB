@@ -1,5 +1,10 @@
 # Conventions
 
+> **If you change this page, check `docs/ai-brief.md`.** That file restates
+> parts of this one so it can be sent to a chat AI alongside a zip of the code,
+> where it cannot follow a link. This page stays the authority; the brief is a
+> summary that has to be kept honest.
+
 How this codebase names things. Sprint 2 adds three new resources and a search
 endpoint, written by different people at the same time — this is the page that
 keeps them from arriving in four different shapes.
