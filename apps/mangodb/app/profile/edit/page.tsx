@@ -3,7 +3,12 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ApiRequestError } from '@/lib/api';
+import {
+    ApiRequestError,
+    NOT_SIGNED_IN,
+    describeError,
+    isNotSignedIn,
+} from '@/lib/api';
 import {
     deleteCompanyAccount,
     getCompanyAccountDetail,
@@ -51,15 +56,11 @@ function EditProfilePageInner() {
             setSaved({ ...profile, photoUrl: null });
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
-            if (err instanceof ApiRequestError && err.status === 401) {
-                setLoadError('no-token');
+            if (isNotSignedIn(err)) {
+                setLoadError(NOT_SIGNED_IN);
                 return;
             }
-            setLoadError(
-                err instanceof ApiRequestError
-                    ? err.message
-                    : 'Could not reach the API. Is it running on port 4000?',
-            );
+            setLoadError(describeError(err));
         });
     }, [isAdminEditingOther, targetCompanyId]);
 
@@ -107,11 +108,7 @@ function EditProfilePageInner() {
             });
         } catch (err) {
             if (!(err instanceof ApiRequestError)) {
-                setStatus({
-                    type: 'error',
-                    message:
-                        'Could not reach the API. Is it running on port 4000?',
-                });
+                setStatus({ type: 'error', message: describeError(err) });
                 return;
             }
 
@@ -156,7 +153,7 @@ function EditProfilePageInner() {
         // pt matches the gap the design leaves under the 108px navbar, which
         // is a separate task, so spacing stays right once that lands.
         <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
-            {loadError === 'no-token' && (
+            {loadError === NOT_SIGNED_IN && (
                 <p className="text-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
@@ -166,7 +163,7 @@ function EditProfilePageInner() {
                 </p>
             )}
 
-            {loadError && loadError !== 'no-token' && (
+            {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="text-md !font-[400] text-[#C5483B]">
                     {loadError}
                 </p>

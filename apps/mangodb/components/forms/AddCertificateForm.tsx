@@ -5,7 +5,8 @@ import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import type { CertificateData } from './EditCertificateForm';
 import type { Certificate } from '@mangodb/shared';
-import { apiFetch, ApiRequestError } from '@/lib/api';
+import { ApiRequestError } from '@/lib/api';
+import { createCertificate } from '@/lib/certificate';
 import FileUpload from '../sm-detail/FileUpload';
 
 type FormModalProps = {
@@ -89,12 +90,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 formData.append('certImage', file);
             }
 
-            // The bare resource, not { message, certificate } — see
-            // docs/conventions.md section 3. The status code says it worked.
-            const cert = await apiFetch<Certificate>('/certificates', {
-                method: 'POST',
-                body: formData,
-            });
+            const cert = await createCertificate(formData);
 
             const newData: CertificateData = {
                 id: cert.certificateId,

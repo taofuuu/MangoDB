@@ -5,22 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
 import Button from '@/components/sm-detail/Button';
-import { ApiRequestError } from '@/lib/api';
+import { describeError } from '@/lib/api';
 import { login } from '@/lib/session';
 
 // A wrong password and a malformed email both have to read the same. The API
 // rejects the second as VALIDATION_FAILED, and showing that would tell an
 // attacker the address is not what it is unhappy about.
-function messageFor(err: unknown): string {
-    if (!(err instanceof ApiRequestError)) {
-        return 'Could not reach the server. Try again.';
-    }
-    if (err.status === 400 || err.status === 401) {
-        return 'Invalid email or password';
-    }
-    return err.message;
-}
-
 export default function LoginForm() {
     const router = useRouter();
     const [identifier, setIdentifier] = useState('');
@@ -54,7 +44,12 @@ export default function LoginForm() {
             await login(identifier, password);
             router.push('/');
         } catch (err) {
-            setError(messageFor(err));
+            setError(
+                describeError(err, {
+                    400: 'Invalid email or password',
+                    401: 'Invalid email or password',
+                }),
+            );
         } finally {
             setIsSubmitting(false);
         }

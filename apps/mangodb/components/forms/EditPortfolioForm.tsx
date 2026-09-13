@@ -3,7 +3,7 @@
 import { useId, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import FileUpload from '@/components/sm-detail/FileUpload';
-import { ApiRequestError } from '@/lib/api';
+import { describeError } from '@/lib/api';
 import { updatePortfolio } from '@/lib/portfolios';
 
 type EditPortfolioFormProps = {
@@ -22,14 +22,6 @@ function daysInMonth(year: string, month: string): number {
     return numericYear > 0 && numericMonth > 0
         ? new Date(numericYear, numericMonth, 0).getDate()
         : 31;
-}
-
-function errorMessage(error: unknown): string {
-    if (!(error instanceof ApiRequestError)) {
-        return 'Unable to connect to the server.';
-    }
-
-    return error.details[0]?.message ?? error.message;
 }
 
 export default function EditPortfolioForm({
@@ -124,7 +116,7 @@ export default function EditPortfolioForm({
             onSave(updated);
             onClose();
         } catch (submitError) {
-            setError(errorMessage(submitError));
+            setError(describeError(submitError));
         } finally {
             setIsSaving(false);
         }

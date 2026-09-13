@@ -4,24 +4,8 @@ import { type FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { ApiRequestError } from '@/lib/api';
+import { describeError } from '@/lib/api';
 import { adminLogin } from '@/lib/session';
-
-function describeLoginError(error: unknown): string {
-    if (!(error instanceof ApiRequestError)) {
-        return 'Could not reach the server. Please try again.';
-    }
-
-    if (error.status === 400 || error.status === 401) {
-        return 'Invalid email or password.';
-    }
-
-    if (error.status === 403) {
-        return 'This account does not have administrator access.';
-    }
-
-    return error.message;
-}
 
 export default function AdminLoginForm() {
     const router = useRouter();
@@ -56,7 +40,13 @@ export default function AdminLoginForm() {
             await adminLogin(normalizedEmail, password);
             router.push('/');
         } catch (requestError) {
-            setError(describeLoginError(requestError));
+            setError(
+                describeError(requestError, {
+                    400: 'Invalid email or password.',
+                    401: 'Invalid email or password.',
+                    403: 'This account does not have administrator access.',
+                }),
+            );
         } finally {
             setIsSubmitting(false);
         }

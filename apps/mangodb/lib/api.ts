@@ -50,6 +50,54 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
     }
 }
 
+// The sentinel a page stores instead of a message when the failure was "you are
+// not signed in" — that case renders a sign-in prompt rather than an error. It
+// was the literal string 'no-token' in seventeen places across six pages,
+// which
+// is a typo away from a page that never shows the prompt.
+export const NOT_SIGNED_IN = 'not-signed-in';
+
+// Six pages wrote this comparison inline as part of a longer .catch ladder.
+export function isNotSignedIn(err: unknown): boolean {
+    return err instanceof ApiRequestError && err.status === 401;
+}
+
+// What to show the user when a call fails.
+//
+// This replaces six near-identical functions — toModalMessage, describeError,
+// describe, describeLoginError, messageFor, errorMessage — that differed only
+// in which statuses they gave a friendlier sentence to. Pass those as
+// overrides; everything else is the same everywhere.
+//
+//   describeError(err)
+//   describeError(err, { 401: 'Please log in to view Company accounts.' })
+//
+// A field-level detail beats the envelope's message when there is one: "Invalid
+// email address" is what the user can act on, "Request body is invalid" is not.
+export type ErrorMessages = Partial<Record<number, string>> & {
+    // Shown when the request never reached the API at all — no envelope to read.
+    offline?: string;
+};
+
+const OFFLINE = 'Could not reach the server. Please try again.';
+
+export function describeError(
+    err: unknown,
+    overrides: ErrorMessages = {},
+): string {
+    if (!(err instanceof ApiRequestError)) {
+        return overrides.offline ?? OFFLINE;
+    }
+
+    const override = overrides[err.status];
+    if (override) return override;
+
+    const detail =
+        err.details.find((entry) => entry.field !== '(body)') ?? err.details[0];
+
+    return detail?.message ?? err.message;
+}
+
 export async function apiFetch<T>(
     path: string,
     init: RequestInit = {},

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import CompanyCard, {
     toCompanyCardData,
@@ -20,20 +20,16 @@ export default function ViewProfilePage() {
         getMyProfile()
             .then(setProfile)
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
-            {loadError === 'no-token' && (
+            {loadError === NOT_SIGNED_IN && (
                 <p className="text-sm">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
@@ -43,7 +39,7 @@ export default function ViewProfilePage() {
                 </p>
             )}
 
-            {loadError && loadError !== 'no-token' && (
+            {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="text-sm text-red-600">{loadError}</p>
             )}
 

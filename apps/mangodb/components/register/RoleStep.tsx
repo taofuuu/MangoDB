@@ -1,14 +1,14 @@
 'use client';
 
-import type { AccountType } from '@mangodb/shared';
+import type { RegisterAccountType } from '@mangodb/shared';
 
 type RoleStepProps = {
-    value: AccountType | null;
-    onChange: (value: AccountType) => void;
+    value: RegisterAccountType | null;
+    onChange: (value: RegisterAccountType) => void;
 };
 
 const roles: Array<{
-    value: AccountType;
+    value: RegisterAccountType;
     title: string;
     description: string;
     image: string;

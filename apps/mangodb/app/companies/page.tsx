@@ -10,8 +10,8 @@ import { ChevronDown, LayoutGrid, Menu, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
-import { ApiRequestError } from '@/lib/api';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
+import { describeError } from '@/lib/api';
 
 const PAGE_SIZE = 12;
 
@@ -23,19 +23,6 @@ const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
     { value: 'RECEIVER', label: 'RECEIVER' },
     { value: 'BOTH', label: 'BOTH' },
 ];
-
-function describeError(error: unknown): string {
-    if (error instanceof ApiRequestError) {
-        if (error.status === 401) {
-            return 'Please log in to view Company accounts.';
-        }
-        if (error.status === 403) {
-            return 'Only an administrator can view Company accounts.';
-        }
-        return error.message;
-    }
-    return 'Could not reach the server. Please try again.';
-}
 
 export default function CompaniesPage() {
     const [page, setPage] = useState(1);

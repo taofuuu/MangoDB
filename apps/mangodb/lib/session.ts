@@ -1,5 +1,5 @@
 import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
-import { ApiRequestError, apiFetch } from './api';
+import { apiFetch, isNotSignedIn } from './api';
 
 // Nothing to store: both login endpoints set the session cookie on the
 // response, and the browser carries it from here on. This just reports who
@@ -44,7 +44,7 @@ export async function logout(): Promise<void> {
         // already revoked — so the session is over and there is nothing to
         // retry. Any other failure may leave the token valid on the server, so
         // rethrow rather than let the UI claim a session ended.
-        if (!(err instanceof ApiRequestError) || err.status !== 401) {
+        if (!isNotSignedIn(err)) {
             throw err;
         }
     }

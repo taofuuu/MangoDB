@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ChangeCredentialsRequest, CompanyProfile } from '@mangodb/shared';
 import penIcon from '@/assets/icons/pen.png';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import {
     changeMyCredentials,
     deleteMyAccount,
@@ -30,16 +30,6 @@ const LABELS: Record<EditAccountMode, string> = {
 // are there. Everything else has only a message — including 401, which covers
 // both a wrong current password and an ended session, and only its wording
 // tells those apart.
-function toModalMessage(err: unknown): string {
-    if (!(err instanceof ApiRequestError)) {
-        return 'Could not reach the API. Is it running on port 4000?';
-    }
-
-    const detail =
-        err.details.find((entry) => entry.field !== '(body)') ?? err.details[0];
-    return detail ? detail.message : err.message;
-}
-
 export default function AccountPage() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -65,15 +55,11 @@ export default function AccountPage() {
         getMyProfile()
             .then(setProfile)
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
 
@@ -110,7 +96,7 @@ export default function AccountPage() {
             // Rethrown, not swallowed: the modal only closes on a resolved
             // promise, so this is what keeps it open with the message beside
             // the fields the user still has typed in.
-            throw new Error(toModalMessage(err));
+            throw new Error(describeError(err));
         }
 
         setStatus(`${LABELS[mode]} updated.`);
@@ -121,7 +107,7 @@ export default function AccountPage() {
             await deleteMyAccount();
         } catch (err) {
             // Rethrown so DeleteConfirmationModal catches and displays the error (e.g. 409 ongoing project)
-            throw new Error(toModalMessage(err));
+            throw new Error(describeError(err));
         }
 
         setIsDeleteOpen(false);
@@ -140,7 +126,7 @@ export default function AccountPage() {
                     </p>
                 </header>
 
-                {loadError === 'no-token' && (
+                {loadError === NOT_SIGNED_IN && (
                     <p className="text-xs text-[#666666]">
                         You are not signed in.{' '}
                         <Link href="/login" className="underline">
@@ -150,7 +136,7 @@ export default function AccountPage() {
                     </p>
                 )}
 
-                {loadError && loadError !== 'no-token' && (
+                {loadError && loadError !== NOT_SIGNED_IN && (
                     <p role="alert" className="text-xs text-[#C5483B]">
                         {loadError}
                     </p>

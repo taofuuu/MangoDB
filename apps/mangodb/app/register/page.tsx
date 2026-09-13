@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import type { AccountType, SessionResponse } from '@mangodb/shared';
+import type {
+    RegisterAccountType,
+    RegisterRequest,
+    SessionResponse,
+} from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
@@ -43,7 +47,12 @@ export default function RegisterPage() {
     const [currentStep, setCurrentStep] = useState<RegisterStep>(
         RegisterStep.SelectRole,
     );
-    const [accountType, setAccountType] = useState<AccountType | null>(null);
+    // RegisterAccountType, not AccountType: it excludes ADMIN, which
+    // registerSchema rejects at runtime anyway. The narrow type was built for
+    // exactly this, so the form cannot even assemble a body the API refuses.
+    const [accountType, setAccountType] = useState<RegisterAccountType | null>(
+        null,
+    );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -159,20 +168,19 @@ export default function RegisterPage() {
             email: companyInfo.email,
             address: companyInfo.address.trim() || undefined,
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
-            accountType: accountType,
+            accountType,
             username: accountInfo.username,
             password: accountInfo.password,
         };
 
         try {
-            const data = await apiFetch<SessionResponse>('/auth/register', {
+            // The session is an httpOnly cookie set on this response, so
+            // there is nothing to store. The accessToken in the body is for
+            // callers that are not a browser — curl, Postman.
+            await apiFetch<SessionResponse>('/auth/register', {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
-
-            if (data.accessToken) {
-                localStorage.setItem('accessToken', data.accessToken);
-            }
 
             setCurrentStep(RegisterStep.Success);
         } catch (error) {

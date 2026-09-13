@@ -8,7 +8,7 @@ import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { getPortfolios, deletePortfolio } from '@/lib/portfolios';
 
@@ -35,16 +35,12 @@ export default function PortfolioPage() {
             .then((profile) => getPortfolios(profile.companyId))
             .then(setItems)
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
 
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
 
@@ -85,7 +81,7 @@ export default function PortfolioPage() {
                 {items && <ViewToggle value={view} onChange={setView} />}
             </div>
 
-            {loadError === 'no-token' && (
+            {loadError === NOT_SIGNED_IN && (
                 <p className="mt-[4.5vh] text-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
@@ -95,7 +91,7 @@ export default function PortfolioPage() {
                 </p>
             )}
 
-            {loadError && loadError !== 'no-token' && (
+            {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="mt-[4.5vh] text-md !font-[400] text-[#C5483B]">
                     {loadError}
                 </p>

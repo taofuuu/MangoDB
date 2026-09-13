@@ -7,7 +7,7 @@ import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
@@ -69,16 +69,12 @@ export default function CertificatePage() {
                 setCertificates(mappedCertificates);
             })
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
 
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
 
@@ -288,7 +284,7 @@ export default function CertificatePage() {
             {/* Load error */}
             {loadError && (
                 <p role="alert" className="mt-4 text-sm text-[#C5483E]">
-                    {loadError === 'no-token'
+                    {loadError === NOT_SIGNED_IN
                         ? 'Please log in to view your certificates.'
                         : loadError}
                 </p>

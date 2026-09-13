@@ -4,7 +4,8 @@ import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import type { Certificate } from '@mangodb/shared';
-import { apiFetch, ApiRequestError } from '@/lib/api';
+import { ApiRequestError } from '@/lib/api';
+import { updateCertificate } from '@/lib/certificate';
 import FileUpload from '../sm-detail/FileUpload';
 
 export type CertificateData = {
@@ -143,12 +144,7 @@ function EditCertificateDialog({
                     formData.append('certImage', file);
                 }
 
-                // The bare resource, and the shared Certificate type rather
-                // than a copy of its fields written out here.
-                const cert = await apiFetch<Certificate>(
-                    `/certificates/${initialData.id}`,
-                    { method: 'PATCH', body: formData },
-                );
+                const cert = await updateCertificate(initialData.id, formData);
 
                 updatedData.name = cert.certTitle;
                 updatedData.organize = cert.organization;

@@ -20,7 +20,7 @@ import type {
     CompanyProfile,
     SessionResponse,
 } from '@mangodb/shared';
-import { ApiRequestError, apiFetch } from '@/lib/api';
+import { apiFetch, describeError } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { login } from '@/lib/session';
 
@@ -114,13 +114,6 @@ function uniqueTag(accountType: AccountType): string {
     return `${accountType.toLowerCase()}_${Date.now()}`;
 }
 
-// A failure that never reached the API has no envelope to read a code from.
-function describe(err: unknown): string {
-    return err instanceof ApiRequestError
-        ? `${err.code}: ${err.message}`
-        : 'Could not reach the API. Is it running on port 4000?';
-}
-
 export default function DevSessionPage() {
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [email, setEmail] = useState('');
@@ -169,7 +162,12 @@ export default function DevSessionPage() {
             // instead of leaving another row behind.
             setEmail(result.company.email);
         } catch (err) {
-            setMessage(describe(err));
+            setMessage(
+                describeError(err, {
+                    offline:
+                        'Could not reach the API. Is it running on port 4000?',
+                }),
+            );
         } finally {
             setBusy(false);
         }
@@ -185,7 +183,12 @@ export default function DevSessionPage() {
         try {
             signIn(await login(email.trim(), password));
         } catch (err) {
-            setMessage(describe(err));
+            setMessage(
+                describeError(err, {
+                    offline:
+                        'Could not reach the API. Is it running on port 4000?',
+                }),
+            );
         } finally {
             setBusy(false);
         }
@@ -202,7 +205,12 @@ export default function DevSessionPage() {
             setCompany(null);
             setMessage('Signed out.');
         } catch (err) {
-            setMessage(describe(err));
+            setMessage(
+                describeError(err, {
+                    offline:
+                        'Could not reach the API. Is it running on port 4000?',
+                }),
+            );
         } finally {
             setBusy(false);
         }
