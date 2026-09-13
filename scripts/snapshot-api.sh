@@ -1,0 +1,377 @@
+#!/usr/bin/env bash
+#
+# Records what every endpoint answers, so a refactor that renames a response
+# field shows up as a diff instead of as a bug report.
+#
+#   bash scripts/snapshot-api.sh               # full run: reads + writes + uploads
+#   bash scripts/snapshot-api.sh --read-only   # no rows created or changed
+#   bash scripts/snapshot-api.sh --no-uploads  # skip anything needing Supabase
+#
+# Then:  git diff snapshots/
+#
+# There is no test runner in this project. Prettier, ESLint and tsc cannot tell
+# you that `company_name` became `companyName` on the wire — this can.
+#
+# Needs: a running API, a seeded database, and scripts/.env.snapshot
+# (copy scripts/.env.snapshot.example). See docs/refactor/phase-0-safety-net.md.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT_DIR="$ROOT/snapshots"
+HELPER="$ROOT/scripts/lib/snapshot-json.mjs"
+ENV_FILE="$ROOT/scripts/.env.snapshot"
+
+READ_ONLY=0
+UPLOADS=1
+for arg in "$@"; do
+    case "$arg" in
+        --read-only) READ_ONLY=1 ;;
+        --no-uploads) UPLOADS=0 ;;
+        *)
+            echo "unknown option: $arg" >&2
+            exit 2
+            ;;
+    esac
+done
+
+# --- configuration ----------------------------------------------------------
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "missing $ENV_FILE — copy scripts/.env.snapshot.example and fill it in" >&2
+    exit 1
+fi
+# shellcheck disable=SC1090
+set -a
+. "$ENV_FILE"
+set +a
+
+API_URL="${API_URL:-http://localhost:4000}"
+
+for var in PROVIDER_EMAIL PROVIDER_PASSWORD RECEIVER_EMAIL RECEIVER_PASSWORD \
+    ADMIN_EMAIL ADMIN_PASSWORD; do
+    if [ -z "${!var:-}" ]; then
+        echo "$ENV_FILE is missing $var" >&2
+        exit 1
+    fi
+done
+
+# --- plumbing ---------------------------------------------------------------
+
+WORK="$(mktemp -d)"
+BODY="$WORK/body"
+PNG="$WORK/pixel.png"
+
+# Every value that changes between runs gets replaced with a placeholder, or
+# the diff is unreadable. RUN is the one seed all of them hang off.
+RUN="snap$(date +%s)"
+SUBS=(--text "run=$RUN")
+
+TOKEN_ADMIN=""
+TOKEN_A=""
+TOKEN_B=""
+COMPANY_A_ID=""
+A_LIVE=0
+B_LIVE=0
+
+# The script creates two throwaway companies. If it dies halfway they would sit
+# in the admin list forever and every later run's diff would show them, so
+# cleanup runs on the way out however we got there.
+cleanup() {
+    local code=$?
+    set +e
+    if [ "$B_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_B"
+    fi
+    if [ "$A_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
+            -H "Authorization: Bearer $TOKEN_ADMIN" \
+            -H 'Content-Type: application/json' \
+            -d "{\"current_password\":\"$ADMIN_PASSWORD\"}"
+    fi
+    rm -rf "$WORK"
+    exit $code
+}
+trap cleanup EXIT
+
+# Calls the API, leaves the raw body in $BODY, prints the status code.
+api() {
+    local method=$1 path=$2
+    shift 2
+    curl -sS -X "$method" "$API_URL$path" -o "$BODY" -w '%{http_code}' "$@"
+}
+
+# Calls the API and writes snapshots/<name>.json.
+snap() {
+    local name=$1 method=$2 path=$3
+    shift 3
+    local status
+    status="$(api "$method" "$path" "$@")"
+    node "$HELPER" normalize \
+        --request "$method $path" --status "$status" "${SUBS[@]}" \
+        <"$BODY" >"$OUT_DIR/$name.json"
+    printf '  %-3s %-6s %s\n' "$status" "$method" "$path"
+}
+
+# Reads one field out of the response snap() just made.
+jget() { node "$HELPER" get "$1" <"$BODY"; }
+
+bearer() { printf 'Authorization: Bearer %s' "$1"; }
+
+# Without this the run limps on with an empty token, every later call 401s, and
+# 40 snapshots record the wrong thing. Stop at the first bad login instead.
+require_token() {
+    if [ -z "$1" ]; then
+        echo >&2
+        echo "could not sign in as $2 — check $ENV_FILE, then see snapshots/$3.json" >&2
+        exit 1
+    fi
+}
+
+mkdir -p "$OUT_DIR"
+rm -f "$OUT_DIR"/*.json
+
+echo "API: $API_URL"
+echo
+
+# ---------------------------------------------------------------------------
+# 1. Public, and the error envelopes
+# ---------------------------------------------------------------------------
+
+echo "public"
+snap 01-health GET /health
+snap 02-portfolios-list GET /portfolios
+PORTFOLIO_ID="$(jget 0.portfolio_id)"
+snap 03-error-unauthorized GET /companies/me
+snap 04-error-unknown-route GET /no-such-route
+snap 05-error-bad-path-param GET /portfolios/not-a-number
+snap 06-error-portfolio-not-found GET /portfolios/2147483647
+
+# ---------------------------------------------------------------------------
+# 2. Sessions
+# ---------------------------------------------------------------------------
+
+echo
+echo "sessions"
+snap 07-auth-login-provider POST /auth/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"$PROVIDER_PASSWORD\"}"
+TOKEN_PROVIDER="$(jget accessToken)"
+require_token "$TOKEN_PROVIDER" "the provider" 07-auth-login-provider
+
+snap 08-auth-login-receiver POST /auth/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$RECEIVER_EMAIL\",\"password\":\"$RECEIVER_PASSWORD\"}"
+TOKEN_RECEIVER="$(jget accessToken)"
+require_token "$TOKEN_RECEIVER" "the receiver" 08-auth-login-receiver
+
+snap 09-auth-admin-login POST /auth/admin/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
+TOKEN_ADMIN="$(jget accessToken)"
+require_token "$TOKEN_ADMIN" "the admin" 09-auth-admin-login
+
+snap 10-error-login-wrong-password POST /auth/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"definitely-not-it\"}"
+
+snap 11-error-login-admin-at-company-door POST /auth/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
+
+# ---------------------------------------------------------------------------
+# 3. The caller's own account
+# ---------------------------------------------------------------------------
+
+echo
+echo "companies"
+snap 12-companies-me-provider GET /companies/me -H "$(bearer "$TOKEN_PROVIDER")"
+PROVIDER_ID="$(jget company_id)"
+PROVIDER_USERNAME="$(jget username)"
+
+snap 13-companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+snap 14-error-forbidden-role GET /certificates/provider -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 15-auth-check-availability-free POST /auth/check-availability \
+    -H 'Content-Type: application/json' \
+    -d "{\"username\":\"${RUN}free\",\"email\":\"${RUN}free@example.test\"}"
+
+snap 16-auth-check-availability-taken POST /auth/check-availability \
+    -H 'Content-Type: application/json' \
+    -d "{\"username\":\"$PROVIDER_USERNAME\",\"email\":\"$PROVIDER_EMAIL\"}"
+
+# ---------------------------------------------------------------------------
+# 4. Reads that need a seeded row
+# ---------------------------------------------------------------------------
+
+echo
+echo "portfolios + certificates"
+snap 17-portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
+LISTING_ID="$(jget 0.listing_id)"
+
+if [ -n "$PORTFOLIO_ID" ]; then
+    snap 18-portfolios-one GET "/portfolios/$PORTFOLIO_ID"
+else
+    echo "  --  skip   GET /portfolios/:portfolioId (no seeded portfolio)"
+fi
+
+snap 19-certificates-mine GET /certificates/provider -H "$(bearer "$TOKEN_PROVIDER")"
+
+echo
+echo "admin"
+snap 20-admin-companies GET /admin/companies -H "$(bearer "$TOKEN_ADMIN")"
+snap 21-admin-companies-filtered GET "/admin/companies?page=1&pageSize=2&filter=PROVIDER" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap 22-admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap 23-error-admin-company-not-found GET /admin/companies/2147483647 \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap 24-admin-ping GET /admin/ping -H "$(bearer "$TOKEN_ADMIN")"
+
+if [ "$READ_ONLY" = 1 ]; then
+    echo
+    echo "--read-only: stopping before the write endpoints"
+    echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Writes. Every row created here is removed again before the script ends.
+# ---------------------------------------------------------------------------
+
+echo
+echo "register / profile / credentials"
+snap 25-error-register-validation POST /auth/register \
+    -H 'Content-Type: application/json' \
+    -d '{"company_name":"","username":"A B","email":"nope","password":"short","phone":"12","account_type":"WIZARD","company_type":[]}'
+
+REGISTER_A="{\"company_name\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"account_type\":\"PROVIDER\",\"company_type\":[\"Software House\"]}"
+
+snap 26-auth-register POST /auth/register \
+    -H 'Content-Type: application/json' -d "$REGISTER_A"
+TOKEN_A="$(jget accessToken)"
+COMPANY_A_ID="$(jget company.company_id)"
+A_LIVE=1
+SUBS+=(--id "companyIdA=$COMPANY_A_ID")
+
+snap 27-error-register-conflict POST /auth/register \
+    -H 'Content-Type: application/json' -d "$REGISTER_A"
+
+snap 28-companies-me-patch PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
+    -H 'Content-Type: application/json' \
+    -d '{"company_name":"Snapshot Probe A edited","company_description":"edited by scripts/snapshot-api.sh","address":null,"service_term":"30 days","warranty_policy":"none"}'
+
+snap 29-error-companies-me-patch-empty PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
+    -H 'Content-Type: application/json' -d '{}'
+
+snap 30-companies-me-credentials PATCH /companies/me/credentials \
+    -H "$(bearer "$TOKEN_A")" -H 'Content-Type: application/json' \
+    -d "{\"current_password\":\"snapshot-probe-pw\",\"username\":\"${RUN}a2\"}"
+TOKEN_A="$(jget accessToken)"
+
+snap 31-auth-logout POST /auth/logout -H "$(bearer "$TOKEN_A")"
+snap 32-error-logout-twice POST /auth/logout -H "$(bearer "$TOKEN_A")"
+
+echo
+echo "self-service deletion"
+snap 33-auth-register-receiver POST /auth/register \
+    -H 'Content-Type: application/json' \
+    -d "{\"company_name\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"account_type\":\"RECEIVER\",\"company_type\":[\"SME\"]}"
+TOKEN_B="$(jget accessToken)"
+B_LIVE=1
+SUBS+=(--id "companyIdB=$(jget company.company_id)")
+
+snap 34-companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
+B_LIVE=0
+snap 35-error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
+
+# ---------------------------------------------------------------------------
+# 6. Portfolios and certificates. Both carry an image, so both need Supabase.
+# ---------------------------------------------------------------------------
+
+if [ "$UPLOADS" = 1 ]; then
+    # A 1x1 PNG, written here rather than committed: the smallest file that
+    # gets past multer's mimetype allowlist.
+    node -e 'require("fs").writeFileSync(process.argv[1], Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64"))' "$PNG"
+
+    echo
+    echo "portfolio lifecycle"
+    if [ -n "$LISTING_ID" ]; then
+        # portfolio_image is the multipart field name, and a wire name like any
+        # other — Phase 2 renames it, and only this call would notice.
+        snap 36-portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
+            -F "listing_id=$LISTING_ID" \
+            -F 'portfolio_name=Snapshot Probe portfolio' \
+            -F 'portfolio_description=created by scripts/snapshot-api.sh' \
+            -F 'development_date=2026-01-15' \
+            -F "portfolio_link=https://example.test/$RUN/portfolio" \
+            -F "portfolio_image=@$PNG;type=image/png"
+        NEW_PORTFOLIO_ID="$(jget portfolio_id)"
+
+        if [ -n "$NEW_PORTFOLIO_ID" ]; then
+            SUBS+=(--id "newPortfolioId=$NEW_PORTFOLIO_ID")
+            snap 37-portfolios-update PATCH "/portfolios/$NEW_PORTFOLIO_ID" \
+                -H "$(bearer "$TOKEN_PROVIDER")" \
+                -F 'portfolio_name=Snapshot Probe portfolio edited' \
+                -F "portfolio_image=@$PNG;type=image/png"
+            snap 38-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
+                -H "$(bearer "$TOKEN_PROVIDER")"
+        fi
+    else
+        echo "  --  skip   POST /portfolios (seeded provider owns no service listing)"
+    fi
+
+    echo
+    echo "certificate lifecycle"
+    snap 39-certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
+        -F 'cert_title=Snapshot Probe certificate' \
+        -F 'organization=Snapshot Probe Authority' \
+        -F 'issue_month=1' -F 'issue_year=2025' \
+        -F 'expire_month=1' -F 'expire_year=2030' \
+        -F "credential_id=$RUN" \
+        -F "credential_url=https://example.test/$RUN/cert" \
+        -F "cert_image=@$PNG;type=image/png"
+    NEW_CERT_ID="$(jget certificate.certificate_id)"
+
+    if [ -n "$NEW_CERT_ID" ]; then
+        SUBS+=(--id "newCertificateId=$NEW_CERT_ID")
+        snap 40-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
+            -H "$(bearer "$TOKEN_PROVIDER")" -F 'expire_year=2000'
+        snap 41-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
+            -H "$(bearer "$TOKEN_PROVIDER")" \
+            -F 'cert_title=Snapshot Probe certificate edited' \
+            -F "cert_image=@$PNG;type=image/png"
+        snap 42-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
+            -H "$(bearer "$TOKEN_PROVIDER")"
+    fi
+else
+    echo
+    echo "--no-uploads: skipping the portfolio and certificate lifecycles"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. Admin writes. Last, because the final one deletes company A.
+# ---------------------------------------------------------------------------
+
+echo
+echo "admin writes"
+snap 43-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+
+snap 44-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
+    -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
+    -d '{"company_name":"Snapshot Probe A edited by admin","phone":"0800000000"}'
+
+snap 45-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
+    -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
+    -d '{"current_password":"definitely-not-it"}'
+
+snap 46-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
+    -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
+    -d "{\"current_password\":\"$ADMIN_PASSWORD\"}"
+A_LIVE=0
+
+echo
+echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
+echo "now run: git diff snapshots/"

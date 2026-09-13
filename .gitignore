@@ -13,3 +13,6 @@ apps/api/src/generated/
 
 # Claude Code — machine-local only; apps/*/CLAUDE.md stay tracked
 CLAUDE.local.md
+
+# Real logins for scripts/snapshot-api.sh. The .example next to it is tracked.
+scripts/.env.snapshot
