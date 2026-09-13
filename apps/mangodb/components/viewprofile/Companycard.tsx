@@ -24,18 +24,18 @@ interface CompanyCardProps {
 // rendering an empty textarea, which reads as a loading glitch.
 export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
     return {
-        name: profile.company_name,
-        email: profile.contact_email ?? 'Not provided',
+        name: profile.companyName,
+        email: profile.contactEmail ?? 'Not provided',
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
-        description: profile.company_description ?? 'No description provided.',
+        description: profile.companyDescription ?? 'No description provided.',
         address: profile.address ?? 'Not provided',
         type:
-            profile.company_type.length > 0
-                ? profile.company_type.join(', ')
+            profile.companyType.length > 0
+                ? profile.companyType.join(', ')
                 : 'Not specified',
-        warrantyPolicy: profile.warranty_policy ?? 'Not provided',
-        serviceTerm: profile.service_term ?? 'Not provided',
+        warrantyPolicy: profile.warrantyPolicy ?? 'Not provided',
+        serviceTerm: profile.serviceTerm ?? 'Not provided',
     };
 }
 

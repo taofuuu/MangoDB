@@ -19,8 +19,8 @@ function formatPortfolioDate(dateString: string): string {
 }
 
 function formatCertificateDate(cert: CertificateResponse): string {
-    if (!cert.issue_month || !cert.issue_year) return '—';
-    return `${monthLabel(String(cert.issue_month))} ${cert.issue_year}`;
+    if (!cert.issueMonth || !cert.issueYear) return '—';
+    return `${monthLabel(String(cert.issueMonth))} ${cert.issueYear}`;
 }
 
 interface DisplayItem {
@@ -64,13 +64,13 @@ export default function PortfolioCertificateList({
     const displayItems: DisplayItem[] =
         activeTab === 'portfolio'
             ? portfolioItems.map((item) => ({
-                  id: item.portfolio_id,
-                  title: item.portfolio_name,
-                  date: formatPortfolioDate(item.development_date),
+                  id: item.portfolioId,
+                  title: item.portfolioName,
+                  date: formatPortfolioDate(item.developmentDate),
               }))
             : certificateItems.map((item) => ({
-                  id: item.certificate_id,
-                  title: item.cert_title,
+                  id: item.certificateId,
+                  title: item.certTitle,
                   date: formatCertificateDate(item),
               }));
 

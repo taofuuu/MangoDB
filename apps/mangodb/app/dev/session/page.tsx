@@ -154,13 +154,13 @@ export default function DevSessionPage() {
             const result = await apiFetch<SessionResponse>('/auth/register', {
                 method: 'POST',
                 body: JSON.stringify({
-                    company_name: `Dev ${accountType} Co.`,
+                    companyName: `Dev ${accountType} Co.`,
                     username: `dev_${tag}`,
                     email: `dev_${tag}@example.com`,
                     password: DEV_PASSWORD,
                     phone: '+66 2 000 0000',
-                    account_type: accountType,
-                    company_type: ['SME'],
+                    accountType: accountType,
+                    companyType: ['SME'],
                 }),
             });
 
@@ -306,7 +306,7 @@ export default function DevSessionPage() {
                     and it is not guessable once the profile has been edited. */}
                 <p className="mt-[1vh] text-md !font-[400]">
                     {company
-                        ? `${company.username} · ${company.email} · ${company.account_type} · company_id ${company.company_id}`
+                        ? `${company.username} · ${company.email} · ${company.accountType} · companyId ${company.companyId}`
                         : 'Nobody. Log in or create a company.'}
                 </p>
 

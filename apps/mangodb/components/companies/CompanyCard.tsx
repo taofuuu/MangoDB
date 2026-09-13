@@ -8,16 +8,16 @@ interface CompanyCardProps {
 
 export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
     const isProvider =
-        company.account_type === 'PROVIDER' || company.account_type === 'BOTH';
+        company.accountType === 'PROVIDER' || company.accountType === 'BOTH';
     const isReceiver =
-        company.account_type === 'RECEIVER' || company.account_type === 'BOTH';
-    const roundedRating = Math.round(company.average_rating ?? 0);
+        company.accountType === 'RECEIVER' || company.accountType === 'BOTH';
+    const roundedRating = Math.round(company.averageRating ?? 0);
 
     return (
         <button
             type="button"
-            onClick={() => onSelect(company.company_id)}
-            aria-label={`View details for ${company.company_name}`}
+            onClick={() => onSelect(company.companyId)}
+            aria-label={`View details for ${company.companyName}`}
             className="flex h-[28.70vh] min-h-[28.70vh] w-full flex-col justify-between rounded-input border border-[#E5E5E5] bg-white p-[0.83vw] text-left shadow-sm transition hover:-translate-y-[0.19vh] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#497B93] focus-visible:outline-none"
         >
             <div className="min-w-0">
@@ -35,15 +35,15 @@ export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
                 </div>
 
                 <h2 className="mb-[0.56vh] truncate text-md !font-[700] text-[#171717]">
-                    {company.company_name}
+                    {company.companyName}
                 </h2>
 
                 <div
                     className="mb-[1.48vh] flex items-center gap-[0.16vw]"
                     aria-label={
-                        company.average_rating === null
+                        company.averageRating === null
                             ? 'No ratings yet'
-                            : `${company.average_rating} out of 5 stars from ${company.rating_count} ratings`
+                            : `${company.averageRating} out of 5 stars from ${company.ratingCount} ratings`
                     }
                 >
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -60,7 +60,7 @@ export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
                 </div>
 
                 <p className="line-clamp-4 text-sm leading-relaxed text-[#4B4B4B]">
-                    {company.company_description || 'No company description'}
+                    {company.companyDescription || 'No company description'}
                 </p>
             </div>
 

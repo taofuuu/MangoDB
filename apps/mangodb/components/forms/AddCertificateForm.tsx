@@ -8,17 +8,17 @@ import { apiFetch, ApiRequestError } from '@/lib/api';
 import FileUpload from '../sm-detail/FileUpload';
 
 export type CertificateResponse = {
-    certificate_id: number;
-    provider_id: number;
-    cert_title: string;
+    certificateId: number;
+    providerId: number;
+    certTitle: string;
     organization: string;
-    issue_month: number | null;
-    issue_year: number | null;
-    expire_month: number | null;
-    expire_year: number | null;
-    credential_id: string | null;
-    credential_url: string | null;
-    cert_image: string | null;
+    issueMonth: number | null;
+    issueYear: number | null;
+    expireMonth: number | null;
+    expireYear: number | null;
+    credentialId: string | null;
+    credentialUrl: string | null;
+    certImage: string | null;
 };
 
 type FormModalProps = {
@@ -71,35 +71,35 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         try {
             const formData = new FormData();
 
-            formData.append('cert_title', name);
+            formData.append('certTitle', name);
             formData.append('organization', organize);
 
             if (month) {
-                formData.append('issue_month', month);
+                formData.append('issueMonth', month);
             }
 
             if (year) {
-                formData.append('issue_year', year);
+                formData.append('issueYear', year);
             }
 
             if (exMonth) {
-                formData.append('expire_month', exMonth);
+                formData.append('expireMonth', exMonth);
             }
 
             if (exYear) {
-                formData.append('expire_year', exYear);
+                formData.append('expireYear', exYear);
             }
 
             if (credID) {
-                formData.append('credential_id', credID);
+                formData.append('credentialId', credID);
             }
 
             if (credURL) {
-                formData.append('credential_url', credURL);
+                formData.append('credentialUrl', credURL);
             }
 
             if (file) {
-                formData.append('cert_image', file);
+                formData.append('certImage', file);
             }
 
             const result = await apiFetch<{
@@ -113,17 +113,17 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             const cert = result.certificate;
 
             const newData: CertificateData = {
-                id: cert.certificate_id,
-                name: cert.cert_title,
+                id: cert.certificateId,
+                name: cert.certTitle,
                 organize: cert.organization,
-                month: cert.issue_month?.toString() ?? '',
-                year: cert.issue_year?.toString() ?? '',
-                exMonth: cert.expire_month?.toString() ?? '',
-                exYear: cert.expire_year?.toString() ?? '',
-                credID: cert.credential_id ?? '',
-                credURL: cert.credential_url ?? '',
+                month: cert.issueMonth?.toString() ?? '',
+                year: cert.issueYear?.toString() ?? '',
+                exMonth: cert.expireMonth?.toString() ?? '',
+                exYear: cert.expireYear?.toString() ?? '',
+                credID: cert.credentialId ?? '',
+                credURL: cert.credentialUrl ?? '',
                 ...(file !== null && { file }),
-                cert_image: cert.cert_image ?? null,
+                certImage: cert.certImage ?? null,
             };
 
             onSave(newData);

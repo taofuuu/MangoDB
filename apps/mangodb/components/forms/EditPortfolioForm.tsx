@@ -39,12 +39,12 @@ export default function EditPortfolioForm({
 }: EditPortfolioFormProps) {
     const titleId = useId();
     const [initialYear, initialMonth, initialDay] =
-        portfolio.development_date.split('-');
-    const [name, setName] = useState(portfolio.portfolio_name);
+        portfolio.developmentDate.split('-');
+    const [name, setName] = useState(portfolio.portfolioName);
     const [description, setDescription] = useState(
-        portfolio.portfolio_description ?? '',
+        portfolio.portfolioDescription ?? '',
     );
-    const [link, setLink] = useState(portfolio.portfolio_link);
+    const [link, setLink] = useState(portfolio.portfolioLink);
     const [day, setDay] = useState(String(Number(initialDay) || ''));
     const [month, setMonth] = useState(String(Number(initialMonth) || ''));
     const [year, setYear] = useState(initialYear ?? '');
@@ -110,17 +110,17 @@ export default function EditPortfolioForm({
 
         const developmentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         const body = new FormData();
-        body.append('portfolio_name', name);
-        body.append('portfolio_description', description);
-        body.append('portfolio_link', link);
-        body.append('development_date', developmentDate);
+        body.append('portfolioName', name);
+        body.append('portfolioDescription', description);
+        body.append('portfolioLink', link);
+        body.append('developmentDate', developmentDate);
         if (image) {
-            body.append('portfolio_image', image);
+            body.append('portfolioImage', image);
         }
 
         setIsSaving(true);
         try {
-            const updated = await updatePortfolio(portfolio.portfolio_id, body);
+            const updated = await updatePortfolio(portfolio.portfolioId, body);
             onSave(updated);
             onClose();
         } catch (submitError) {

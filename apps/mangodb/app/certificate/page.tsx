@@ -39,30 +39,30 @@ export default function CertificatePage() {
             .then((data) => {
                 const mappedCertificates: CertificateData[] = data.map(
                     (cert) => ({
-                        id: cert.certificate_id,
-                        name: cert.cert_title,
+                        id: cert.certificateId,
+                        name: cert.certTitle,
                         organize: cert.organization,
 
-                        ...(cert.issue_month != null && {
-                            month: cert.issue_month.toString(),
+                        ...(cert.issueMonth != null && {
+                            month: cert.issueMonth.toString(),
                         }),
-                        ...(cert.issue_year != null && {
-                            year: cert.issue_year.toString(),
+                        ...(cert.issueYear != null && {
+                            year: cert.issueYear.toString(),
                         }),
-                        ...(cert.expire_month != null && {
-                            exMonth: cert.expire_month.toString(),
+                        ...(cert.expireMonth != null && {
+                            exMonth: cert.expireMonth.toString(),
                         }),
-                        ...(cert.expire_year != null && {
-                            exYear: cert.expire_year.toString(),
+                        ...(cert.expireYear != null && {
+                            exYear: cert.expireYear.toString(),
                         }),
-                        ...(cert.credential_id != null && {
-                            credID: cert.credential_id,
+                        ...(cert.credentialId != null && {
+                            credID: cert.credentialId,
                         }),
-                        ...(cert.credential_url != null && {
-                            credURL: cert.credential_url,
+                        ...(cert.credentialUrl != null && {
+                            credURL: cert.credentialUrl,
                         }),
 
-                        cert_image: cert.cert_image ?? null,
+                        certImage: cert.certImage ?? null,
                     }),
                 );
 
@@ -228,10 +228,10 @@ export default function CertificatePage() {
                                     <div className="flex w-full items-center justify-between pt-4 pl-6 pr-6 pb-1">
                                         <div className="flex w-full items-center gap-10">
                                             <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-[#497B93]">
-                                                {certificate.cert_image && (
+                                                {certificate.certImage && (
                                                     <Image
                                                         src={
-                                                            certificate.cert_image
+                                                            certificate.certImage
                                                         }
                                                         alt={
                                                             certificate.name ??

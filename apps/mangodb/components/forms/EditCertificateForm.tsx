@@ -17,7 +17,7 @@ export type CertificateData = {
     credID?: string;
     credURL?: string;
     file?: File | null;
-    cert_image?: string | null;
+    certImage?: string | null;
 };
 
 type EditFormModalProps = {
@@ -118,43 +118,43 @@ function EditCertificateDialog({
             exYear,
             credID,
             credURL,
-            cert_image: initialData?.cert_image ?? null,
+            certImage: initialData?.certImage ?? null,
         };
         try {
             if (initialData?.id) {
                 const formData = new FormData();
 
-                formData.append('cert_title', name);
+                formData.append('certTitle', name);
                 formData.append('organization', organize);
 
                 // Sent even when empty: the API reads '' as null, which is the
                 // only way to clear a field that already has a value. Skipping
                 // them here would make every optional field write-once.
-                formData.append('issue_month', month);
-                formData.append('issue_year', year);
-                formData.append('expire_month', exMonth);
-                formData.append('expire_year', exYear);
-                formData.append('credential_id', credID);
-                formData.append('credential_url', credURL);
+                formData.append('issueMonth', month);
+                formData.append('issueYear', year);
+                formData.append('expireMonth', exMonth);
+                formData.append('expireYear', exYear);
+                formData.append('credentialId', credID);
+                formData.append('credentialUrl', credURL);
 
-                // Only send cert_image when user selected a new file
+                // Only send certImage when user selected a new file
                 if (file) {
-                    formData.append('cert_image', file);
+                    formData.append('certImage', file);
                 }
 
                 const res = await apiFetch<{
                     message: string;
                     certificate?: {
-                        certificate_id: number;
-                        cert_title: string;
+                        certificateId: number;
+                        certTitle: string;
                         organization: string;
-                        issue_month: number | null;
-                        issue_year: number | null;
-                        expire_month: number | null;
-                        expire_year: number | null;
-                        credential_id: string | null;
-                        credential_url: string | null;
-                        cert_image: string | null;
+                        issueMonth: number | null;
+                        issueYear: number | null;
+                        expireMonth: number | null;
+                        expireYear: number | null;
+                        credentialId: string | null;
+                        credentialUrl: string | null;
+                        certImage: string | null;
                     };
                 }>(`/certificates/${initialData.id}`, {
                     method: 'PATCH',
@@ -163,15 +163,15 @@ function EditCertificateDialog({
 
                 const cert = res?.certificate;
                 if (cert) {
-                    updatedData.name = cert.cert_title;
+                    updatedData.name = cert.certTitle;
                     updatedData.organize = cert.organization;
-                    updatedData.month = cert.issue_month?.toString() ?? '';
-                    updatedData.year = cert.issue_year?.toString() ?? '';
-                    updatedData.exMonth = cert.expire_month?.toString() ?? '';
-                    updatedData.exYear = cert.expire_year?.toString() ?? '';
-                    updatedData.credID = cert.credential_id ?? '';
-                    updatedData.credURL = cert.credential_url ?? '';
-                    updatedData.cert_image = cert.cert_image;
+                    updatedData.month = cert.issueMonth?.toString() ?? '';
+                    updatedData.year = cert.issueYear?.toString() ?? '';
+                    updatedData.exMonth = cert.expireMonth?.toString() ?? '';
+                    updatedData.exYear = cert.expireYear?.toString() ?? '';
+                    updatedData.credID = cert.credentialId ?? '';
+                    updatedData.credURL = cert.credentialUrl ?? '';
+                    updatedData.certImage = cert.certImage;
                 }
             }
 
@@ -360,14 +360,14 @@ function EditCertificateDialog({
                                 placeholder="https://learn.microsoft.com/..."
                             />
                         </div>
-                        {initialData?.cert_image && !file && (
+                        {initialData?.certImage && !file && (
                             <div className="mt-2">
                                 <p className="mb-1 text-sm">
                                     Current certificate image
                                 </p>
 
                                 <img
-                                    src={initialData.cert_image}
+                                    src={initialData.certImage}
                                     alt="Current certificate"
                                     className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
                                 />

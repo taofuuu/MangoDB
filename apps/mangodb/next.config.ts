@@ -8,7 +8,7 @@ import type { NextConfig } from 'next';
 const API_URL = process.env.API_URL ?? 'http://localhost:4000';
 
 const nextConfig: NextConfig = {
-    // portfolio_image is a Supabase public URL, and next/image refuses to load
+    // portfolioImage is a Supabase public URL, and next/image refuses to load
     // a host it was not told about.
     images: {
         remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }],

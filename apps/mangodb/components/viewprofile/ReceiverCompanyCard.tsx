@@ -24,14 +24,14 @@ export function toReceiverCompanyCardData(
     profile: CompanyProfile,
 ): ReceiverCompanyCardData {
     return {
-        name: profile.company_name,
-        email: profile.contact_email ?? 'Not provided',
+        name: profile.companyName,
+        email: profile.contactEmail ?? 'Not provided',
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
-        description: profile.company_description ?? 'No description provided.',
+        description: profile.companyDescription ?? 'No description provided.',
         type:
-            profile.company_type.length > 0
-                ? profile.company_type.join(', ')
+            profile.companyType.length > 0
+                ? profile.companyType.join(', ')
                 : 'Not specified',
         address: profile.address ?? 'Not provided',
     };

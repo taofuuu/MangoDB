@@ -23,25 +23,25 @@ export default function PortfolioCard({
                 swallow clicks. An anchor, not a button: middle-click, copy
                 link and screen readers all expect a link for an external URL. */}
             <a
-                href={item.portfolio_link}
+                href={item.portfolioLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`Open ${item.portfolio_name}`}
+                aria-label={`Open ${item.portfolioName}`}
                 className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
             />
 
             <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
-                {item.portfolio_name}
+                {item.portfolioName}
             </h2>
 
             <p className="mt-[0.3vh] text-md leading-snug !font-[400] text-[#757575]">
-                {item.portfolio_description}
+                {item.portfolioDescription}
             </p>
 
             {/* Fixed height so every card lines its image up at the same spot */}
             <div className="relative mx-[1.88vw] mt-[2.2vh] h-[16.39vh] overflow-hidden rounded-[4px] max-lg:mx-0 max-lg:h-[22vh]">
                 <Image
-                    src={portfolioImageSrc(item.portfolio_image)}
+                    src={portfolioImageSrc(item.portfolioImage)}
                     alt=""
                     fill
                     sizes="19vw"

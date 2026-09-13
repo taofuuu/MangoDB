@@ -32,7 +32,7 @@ export default function PortfolioPage() {
     // revoked token lands in the same place.
     useEffect(() => {
         getMyProfile()
-            .then((profile) => getPortfolios(profile.company_id))
+            .then((profile) => getPortfolios(profile.companyId))
             .then(setItems)
             .catch((err: unknown) => {
                 if (err instanceof ApiRequestError && err.status === 401) {
@@ -52,11 +52,11 @@ export default function PortfolioPage() {
     const handleDelete = async () => {
         if (!pendingDelete) return;
 
-        await deletePortfolio(pendingDelete.portfolio_id);
+        await deletePortfolio(pendingDelete.portfolioId);
 
         setItems((current) =>
             (current ?? []).filter(
-                (item) => item.portfolio_id !== pendingDelete.portfolio_id,
+                (item) => item.portfolioId !== pendingDelete.portfolioId,
             ),
         );
     };
@@ -64,7 +64,7 @@ export default function PortfolioPage() {
     const handleEdit = (updated: ServicePortfolio) => {
         setItems((current) =>
             (current ?? []).map((item) =>
-                item.portfolio_id === updated.portfolio_id ? updated : item,
+                item.portfolioId === updated.portfolioId ? updated : item,
             ),
         );
     };
@@ -115,7 +115,7 @@ export default function PortfolioPage() {
                 <div className="mt-[4.5vh] grid grid-cols-4 gap-x-[3.49vw] gap-y-[3.7vh] max-lg:grid-cols-2 max-sm:grid-cols-1">
                     {items.map((item) => (
                         <PortfolioCard
-                            key={item.portfolio_id}
+                            key={item.portfolioId}
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
@@ -128,7 +128,7 @@ export default function PortfolioPage() {
                 <div className="mt-[4.5vh] flex flex-col gap-[2vh]">
                     {items.map((item) => (
                         <PortfolioRow
-                            key={item.portfolio_id}
+                            key={item.portfolioId}
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
@@ -145,7 +145,7 @@ export default function PortfolioPage() {
 
             {pendingEdit && (
                 <EditPortfolioForm
-                    key={pendingEdit.portfolio_id}
+                    key={pendingEdit.portfolioId}
                     portfolio={pendingEdit}
                     onClose={() => setPendingEdit(null)}
                     onSave={handleEdit}

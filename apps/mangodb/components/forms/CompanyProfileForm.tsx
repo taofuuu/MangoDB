@@ -16,18 +16,18 @@ import { normalizePhone, normalizeWebsiteUrl } from '@/lib/validation';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
-    | 'company_name'
-    | 'company_description'
-    | 'contact_email'
+    | 'companyName'
+    | 'companyDescription'
+    | 'contactEmail'
     | 'phone'
     | 'website'
     | 'address'
-    | 'company_type'
-    | 'account_type'
+    | 'companyType'
+    | 'accountType'
     // Provider-only columns. A RECEIVER company reads null for both, which is
     // why the two fields below are not rendered for one.
-    | 'service_term'
-    | 'warranty_policy'
+    | 'serviceTerm'
+    | 'warrantyPolicy'
 > & {
     // The one field with nowhere to go: no upload endpoint, and no column to
     // store the result, so it is lost on reload.
@@ -43,7 +43,7 @@ function orNull(value: string | null): string | null {
 }
 
 // What the form holds is not quite what the endpoint takes. Four fields are
-// absent: account_type is not editable, photoUrl has no column to live in, and
+// absent: accountType is not editable, photoUrl has no column to live in, and
 // username and email belong to Account Settings, which is where a company
 // changes what it signs in with. Everything else goes every time, which also
 // keeps the body from ever being empty — the API rejects {} as a client bug.
@@ -54,25 +54,25 @@ export function toUpdateRequest(
     data: ProfileFormData,
 ): UpdateCompanyProfileRequest {
     const isProvider =
-        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+        data.accountType === 'PROVIDER' || data.accountType === 'BOTH';
 
     return {
         // Not run through orNull: these columns are not nullable, so a cleared
         // one should come back as a field-level 400 rather than be dropped.
-        company_name: data.company_name,
+        companyName: data.companyName,
         phone: normalizePhone(data.phone),
-        company_type: data.company_type,
-        company_description: orNull(data.company_description),
+        companyType: data.companyType,
+        companyDescription: orNull(data.companyDescription),
         address: orNull(data.address),
-        contact_email: orNull(data.contact_email),
+        contactEmail: orNull(data.contactEmail),
         // Normalizes website so formats like www.domain.com prepend https://
         // to satisfy backend z.url() validation while accepting standard domain input.
         website: normalizeWebsiteUrl(data.website),
         // A RECEIVER company owns no provider row, so sending either of these
         // is a deliberate 403. Leave them out rather than send null.
         ...(isProvider && {
-            service_term: orNull(data.service_term),
-            warranty_policy: orNull(data.warranty_policy),
+            serviceTerm: orNull(data.serviceTerm),
+            warrantyPolicy: orNull(data.warrantyPolicy),
         }),
     };
 }
@@ -113,7 +113,7 @@ export default function CompanyProfileForm({
     // Both live on the provider table. A receiver-only company owns no row
     // there, so showing the inputs would offer edits that cannot be saved.
     const isProvider =
-        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+        data.accountType === 'PROVIDER' || data.accountType === 'BOTH';
 
     // A save replaces initialData with what was stored and Cancel resets to
     // the same thing, so the form always edits the last known good profile.
@@ -163,7 +163,7 @@ export default function CompanyProfileForm({
                     <ProfilePhotoPanel
                         photoUrl={data.photoUrl}
                         onPhotoChange={(url) => setField('photoUrl', url)}
-                        accountType={data.account_type}
+                        accountType={data.accountType}
                     />
                 </div>
 
@@ -173,9 +173,9 @@ export default function CompanyProfileForm({
                         email and password, so the column starts here. */}
                     <Textarea
                         label="Company Description"
-                        value={data.company_description ?? ''}
-                        onChange={(v) => setField('company_description', v)}
-                        error={displayErrors.company_description}
+                        value={data.companyDescription ?? ''}
+                        onChange={(v) => setField('companyDescription', v)}
+                        error={displayErrors.companyDescription}
                         maxLength={1000}
                     />
 
@@ -183,9 +183,9 @@ export default function CompanyProfileForm({
                         <div className="mt-[3.09vh]">
                             <Textarea
                                 label="Service Terms"
-                                value={data.service_term ?? ''}
-                                onChange={(v) => setField('service_term', v)}
-                                error={displayErrors.service_term}
+                                value={data.serviceTerm ?? ''}
+                                onChange={(v) => setField('serviceTerm', v)}
+                                error={displayErrors.serviceTerm}
                                 maxLength={2000}
                             />
                         </div>
@@ -195,9 +195,9 @@ export default function CompanyProfileForm({
                         <Input
                             label="Contact Email"
                             type="email"
-                            value={data.contact_email ?? ''}
-                            onChange={(v) => setField('contact_email', v)}
-                            error={displayErrors.contact_email}
+                            value={data.contactEmail ?? ''}
+                            onChange={(v) => setField('contactEmail', v)}
+                            error={displayErrors.contactEmail}
                             maxLength={100}
                         />
                     </div>
@@ -240,18 +240,18 @@ export default function CompanyProfileForm({
                 <div className="ml-[8.97vw] w-[31.13vw] shrink-0">
                     <Input
                         label="Company Name"
-                        value={data.company_name}
-                        onChange={(v) => setField('company_name', v)}
-                        error={displayErrors.company_name}
+                        value={data.companyName}
+                        onChange={(v) => setField('companyName', v)}
+                        error={displayErrors.companyName}
                         maxLength={255}
                     />
 
                     <div className="mt-[3.09vh]">
                         <CompanyTypeField
                             label="Company Type"
-                            value={data.company_type}
-                            onChange={(v) => setField('company_type', v)}
-                            error={displayErrors.company_type}
+                            value={data.companyType}
+                            onChange={(v) => setField('companyType', v)}
+                            error={displayErrors.companyType}
                         />
                     </div>
 
@@ -259,9 +259,9 @@ export default function CompanyProfileForm({
                         <div className="mt-[3.09vh]">
                             <Textarea
                                 label="Company Warranty Policy"
-                                value={data.warranty_policy ?? ''}
-                                onChange={(v) => setField('warranty_policy', v)}
-                                error={displayErrors.warranty_policy}
+                                value={data.warrantyPolicy ?? ''}
+                                onChange={(v) => setField('warrantyPolicy', v)}
+                                error={displayErrors.warrantyPolicy}
                                 maxLength={2000}
                             />
                         </div>
@@ -318,7 +318,7 @@ export default function CompanyProfileForm({
             {onDeleteAccount && (
                 <AdminDeleteAccountModal
                     isOpen={isDeleteModalOpen}
-                    username={deleteAccountUsername ?? data.company_name}
+                    username={deleteAccountUsername ?? data.companyName}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={onDeleteAccount}
                 />

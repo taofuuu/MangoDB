@@ -3,7 +3,7 @@
     "status": 200,
     "body": [
         {
-            "certImage": "https://snapshot.local/certificate.png",
+            "certImage": null,
             "certTitle": "Snapshot seed certificate",
             "certificateId": 50,
             "credentialId": "SNAPSHOT-0001",

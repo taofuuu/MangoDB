@@ -94,12 +94,12 @@ export default function AccountPage() {
     }) => {
         const body: ChangeCredentialsRequest =
             mode === 'username'
-                ? { current_password: currentPassword, username: newValue }
+                ? { currentPassword: currentPassword, username: newValue }
                 : mode === 'email'
-                  ? { current_password: currentPassword, email: newValue }
+                  ? { currentPassword: currentPassword, email: newValue }
                   : {
-                        current_password: currentPassword,
-                        new_password: newValue,
+                        currentPassword: currentPassword,
+                        newPassword: newValue,
                     };
 
         try {

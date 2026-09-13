@@ -137,7 +137,7 @@ function EditProfilePageInner() {
     // so a wrong password (401) surfaces there instead of navigating away.
     const handleDeleteAccount = async (adminPassword: string) => {
         await deleteCompanyAccount(Number(targetCompanyId), {
-            current_password: adminPassword,
+            currentPassword: adminPassword,
         });
         router.push('/companies');
     };

@@ -172,10 +172,10 @@ export default function CompaniesPage() {
 
     const pagination = result?.pagination;
     const visibleCompanies = (result?.items ?? []).filter(
-        (company) => company.account_type !== 'ADMIN',
+        (company) => company.accountType !== 'ADMIN',
     );
     const hasPreviousPage = page > 1;
-    const hasNextPage = Boolean(pagination && page < pagination.total_pages);
+    const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
         <main className="min-h-screen bg-[#FBFBFB] px-[1.67vw] py-[2.96vh]">
@@ -309,7 +309,7 @@ export default function CompaniesPage() {
                             <div className="grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {visibleCompanies.map((company) => (
                                     <CompanyCard
-                                        key={company.company_id}
+                                        key={company.companyId}
                                         company={company}
                                         onSelect={openDetail}
                                     />
@@ -325,18 +325,18 @@ export default function CompaniesPage() {
                     </div>
                 )}
 
-                {!error && pagination && pagination.total_items > 0 && (
+                {!error && pagination && pagination.totalItems > 0 && (
                     <nav
                         aria-label="Company account pages"
                         className="mt-[2.22vh] flex items-center justify-between gap-[1.04vw]"
                     >
                         <p className="text-sm text-[#666666]">
-                            Showing {(page - 1) * pagination.page_size + 1}–
+                            Showing {(page - 1) * pagination.pageSize + 1}–
                             {Math.min(
-                                page * pagination.page_size,
-                                pagination.total_items,
+                                page * pagination.pageSize,
+                                pagination.totalItems,
                             )}{' '}
-                            of {pagination.total_items}
+                            of {pagination.totalItems}
                         </p>
                         <div className="flex items-center gap-[0.63vw]">
                             <Button
@@ -348,7 +348,7 @@ export default function CompaniesPage() {
                                 Previous
                             </Button>
                             <span className="min-w-[5.21vw] text-center text-sm text-[#4B4B4B]">
-                                Page {page} of {pagination.total_pages}
+                                Page {page} of {pagination.totalPages}
                             </span>
                             <Button
                                 variant="outline"

@@ -91,7 +91,7 @@ export default function ProfilePhotoPanel({
                 Change Photo
             </Button>
 
-            {/* Read-only: these come from account_type, which is not editable
+            {/* Read-only: these come from accountType, which is not editable
                 here — it decides which provider/receiver rows a company owns,
                 and no endpoint changes it. So the chips carry no remove
                 button, rather than one that only pretends to work. */}

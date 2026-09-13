@@ -62,11 +62,9 @@ export default function CompanyDetailModal({
     }, [onClose]);
 
     const isProvider =
-        company?.account_type === 'PROVIDER' ||
-        company?.account_type === 'BOTH';
+        company?.accountType === 'PROVIDER' || company?.accountType === 'BOTH';
     const isReceiver =
-        company?.account_type === 'RECEIVER' ||
-        company?.account_type === 'BOTH';
+        company?.accountType === 'RECEIVER' || company?.accountType === 'BOTH';
 
     return (
         <div
@@ -93,7 +91,7 @@ export default function CompanyDetailModal({
                             id="company-detail-title"
                             className="text-lg !font-[700] text-[#171717]"
                         >
-                            {company?.company_name ?? 'Loading company'}
+                            {company?.companyName ?? 'Loading company'}
                         </h2>
                     </div>
                     <button
@@ -148,15 +146,15 @@ export default function CompanyDetailModal({
                                     aria-hidden="true"
                                     className="h-[1.67vh] w-[0.94vw] fill-[#FABC3F] text-[#FABC3F]"
                                 />
-                                {company.average_rating?.toFixed(1) ??
+                                {company.averageRating?.toFixed(1) ??
                                     'No rating'}
-                                {company.rating_count > 0 &&
-                                    ` (${company.rating_count})`}
+                                {company.ratingCount > 0 &&
+                                    ` (${company.ratingCount})`}
                             </span>
                         </div>
 
                         <p className="mb-[1.85vh] text-sm leading-relaxed text-[#4B4B4B]">
-                            {company.company_description ||
+                            {company.companyDescription ||
                                 'No company description provided.'}
                         </p>
 
@@ -171,7 +169,7 @@ export default function CompanyDetailModal({
                             />
                             <DetailRow
                                 label="Contact email"
-                                value={company.contact_email}
+                                value={company.contactEmail}
                             />
                             <DetailRow label="Phone" value={company.phone} />
                             <DetailRow
@@ -184,17 +182,17 @@ export default function CompanyDetailModal({
                             />
                             <DetailRow
                                 label="Company type"
-                                value={company.company_type.join(', ')}
+                                value={company.companyType.join(', ')}
                             />
                             {isProvider && (
                                 <>
                                     <DetailRow
                                         label="Service terms"
-                                        value={company.service_term}
+                                        value={company.serviceTerm}
                                     />
                                     <DetailRow
                                         label="Warranty policy"
-                                        value={company.warranty_policy}
+                                        value={company.warrantyPolicy}
                                     />
                                 </>
                             )}
@@ -214,7 +212,7 @@ export default function CompanyDetailModal({
                             <Button
                                 onClick={() =>
                                     router.push(
-                                        `/profile/edit?companyId=${company.company_id}`,
+                                        `/profile/edit?companyId=${company.companyId}`,
                                     )
                                 }
                                 className="h-[4.63vh] px-[1.25vw] text-sm"

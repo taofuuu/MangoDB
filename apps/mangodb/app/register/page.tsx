@@ -120,7 +120,7 @@ export default function RegisterPage() {
     const submitRegister = async () => {
         setErrorMessage('');
 
-        // contact_email is optional on the profile, but registration needs one
+        // contactEmail is optional on the profile, but registration needs one
         // to sign in with, so the required check belongs here.
         const emailError = companyInfo.email.trim()
             ? validateContactEmail(companyInfo.email) || ''
@@ -151,15 +151,15 @@ export default function RegisterPage() {
         // Optional fields go out as undefined rather than an empty string,
         // which the API would read as a value and reject.
         const payload = {
-            company_name: companyInfo.companyName,
-            company_description:
+            companyName: companyInfo.companyName,
+            companyDescription:
                 companyInfo.companyDescription.trim() || undefined,
-            company_type: companyInfo.companyType,
+            companyType: companyInfo.companyType,
             phone: normalizePhone(companyInfo.phoneNumber),
             email: companyInfo.email,
             address: companyInfo.address.trim() || undefined,
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
-            account_type: accountType,
+            accountType: accountType,
             username: accountInfo.username,
             password: accountInfo.password,
         };

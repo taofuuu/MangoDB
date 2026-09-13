@@ -181,21 +181,34 @@ async function upsertCertificate(providerId: number): Promise<void> {
         select: { certificateId: true },
     });
 
-    if (existing) return;
+    // Written on both paths, like the accounts above: a seed that only creates
+    // cannot repair a row somebody edited, and this one has to stay fixed for
+    // the snapshot baseline to reproduce.
+    const fields = {
+        organization: 'Snapshot Seed Authority',
+        issueMonth: 6,
+        issueYear: 2024,
+        expireMonth: 6,
+        expireYear: 2029,
+        credentialId: 'SNAPSHOT-0001',
+        credentialUrl: 'https://snapshot.local/credential',
+        // Null, not a placeholder URL: next/image throws while rendering
+        // on a host missing from next.config.ts remotePatterns, and the
+        // certificate page has no guard like portfolioImageSrc. A fake
+        // https URL here would take that page down on every seeded run.
+        certImage: null,
+    };
+
+    if (existing) {
+        await prisma.certificate.update({
+            where: { certificateId: existing.certificateId },
+            data: fields,
+        });
+        return;
+    }
 
     await prisma.certificate.create({
-        data: {
-            providerId,
-            certTitle: CERT_TITLE,
-            organization: 'Snapshot Seed Authority',
-            issueMonth: 6,
-            issueYear: 2024,
-            expireMonth: 6,
-            expireYear: 2029,
-            credentialId: 'SNAPSHOT-0001',
-            credentialUrl: 'https://snapshot.local/credential',
-            certImage: 'https://snapshot.local/certificate.png',
-        },
+        data: { providerId, certTitle: CERT_TITLE, ...fields },
     });
 }
 
