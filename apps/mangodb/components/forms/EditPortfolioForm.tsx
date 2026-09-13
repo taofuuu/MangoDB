@@ -5,6 +5,7 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import FileUpload from '@/components/sm-detail/FileUpload';
 import { describeError } from '@/lib/api';
 import { updatePortfolio } from '@/lib/portfolios';
+import ModalShell from '@/components/ui/ModalShell';
 
 type EditPortfolioFormProps = {
     portfolio: ServicePortfolio;
@@ -126,182 +127,176 @@ export default function EditPortfolioForm({
         'h-[4.89vh] w-full rounded-input border border-[#3F6B80] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <section
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
-                className="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl max-md:h-[90vh]"
-            >
-                <header className="flex items-center justify-between">
-                    <h2 id={titleId} className="text-lg">
-                        Edit Portfolio
-                    </h2>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={isSaving}
-                        aria-label="Close edit portfolio"
-                        className="text-[#828282] hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        X
-                    </button>
-                </header>
+        <ModalShell
+            isOpen
+            onClose={onClose}
+            isBusy={isSaving}
+            labelledBy={titleId}
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            panelClassName="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl max-md:h-[90vh]"
+        >
+            <header className="flex items-center justify-between">
+                <h2 id={titleId} className="text-lg">
+                    Edit Portfolio
+                </h2>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={isSaving}
+                    aria-label="Close edit portfolio"
+                    className="text-[#828282] hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    X
+                </button>
+            </header>
+
+            <hr className="border-[#3F6B80]/50" />
+            <p className="my-2 text-xs">*Indicates required</p>
+
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                    <div>
+                        <label
+                            className="block text-sm"
+                            htmlFor="portfolio-name"
+                        >
+                            Name*
+                        </label>
+                        <input
+                            id="portfolio-name"
+                            type="text"
+                            required
+                            maxLength={255}
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            className="block text-sm"
+                            htmlFor="portfolio-description"
+                        >
+                            Description
+                        </label>
+                        <textarea
+                            id="portfolio-description"
+                            maxLength={2000}
+                            value={description}
+                            onChange={(event) =>
+                                setDescription(event.target.value)
+                            }
+                            className="h-[9.65vh] w-full resize-none rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 py-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            className="block text-sm font-medium"
+                            htmlFor="portfolio-link"
+                        >
+                            Link to your portfolio*
+                        </label>
+                        <input
+                            id="portfolio-link"
+                            type="url"
+                            required
+                            maxLength={255}
+                            value={link}
+                            onChange={(event) => setLink(event.target.value)}
+                            className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                        />
+                    </div>
+
+                    <fieldset>
+                        <legend className="text-sm !font-[500]">
+                            Development date
+                        </legend>
+                        <div className="flex gap-2 max-sm:flex-col">
+                            <label className="min-w-0 flex-1 text-sm">
+                                Date
+                                <select
+                                    required
+                                    value={day}
+                                    onChange={(event) =>
+                                        setDay(event.target.value)
+                                    }
+                                    className={selectClassName}
+                                >
+                                    {days.map((value) => (
+                                        <option key={value} value={value}>
+                                            {value}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="min-w-0 flex-1 text-sm">
+                                Month
+                                <select
+                                    required
+                                    value={month}
+                                    onChange={(event) =>
+                                        handleMonthChange(event.target.value)
+                                    }
+                                    className={selectClassName}
+                                >
+                                    {Array.from(
+                                        { length: 12 },
+                                        (_, index) => index + 1,
+                                    ).map((value) => (
+                                        <option key={value} value={value}>
+                                            {value}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="min-w-0 flex-1 text-sm">
+                                Year
+                                <select
+                                    required
+                                    value={year}
+                                    onChange={(event) =>
+                                        handleYearChange(event.target.value)
+                                    }
+                                    className={selectClassName}
+                                >
+                                    {years.map((value) => (
+                                        <option key={value} value={value}>
+                                            {value}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <FileUpload
+                        value={image}
+                        onChange={handleImageChange}
+                        accept="image/png,image/jpeg,image/webp"
+                        label="Upload Image"
+                        className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-[#E3F1F1]/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                    />
+
+                    {error && (
+                        <p role="alert" className="text-sm text-[#C5483E]">
+                            {error}
+                        </p>
+                    )}
+                </div>
 
                 <hr className="border-[#3F6B80]/50" />
-                <p className="my-2 text-xs">*Indicates required</p>
-
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-2">
-                        <div>
-                            <label
-                                className="block text-sm"
-                                htmlFor="portfolio-name"
-                            >
-                                Name*
-                            </label>
-                            <input
-                                id="portfolio-name"
-                                type="text"
-                                required
-                                maxLength={255}
-                                value={name}
-                                onChange={(event) =>
-                                    setName(event.target.value)
-                                }
-                                className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                className="block text-sm"
-                                htmlFor="portfolio-description"
-                            >
-                                Description
-                            </label>
-                            <textarea
-                                id="portfolio-description"
-                                maxLength={2000}
-                                value={description}
-                                onChange={(event) =>
-                                    setDescription(event.target.value)
-                                }
-                                className="h-[9.65vh] w-full resize-none rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 py-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                className="block text-sm font-medium"
-                                htmlFor="portfolio-link"
-                            >
-                                Link to your portfolio*
-                            </label>
-                            <input
-                                id="portfolio-link"
-                                type="url"
-                                required
-                                maxLength={255}
-                                value={link}
-                                onChange={(event) =>
-                                    setLink(event.target.value)
-                                }
-                                className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                            />
-                        </div>
-
-                        <fieldset>
-                            <legend className="text-sm !font-[500]">
-                                Development date
-                            </legend>
-                            <div className="flex gap-2 max-sm:flex-col">
-                                <label className="min-w-0 flex-1 text-sm">
-                                    Date
-                                    <select
-                                        required
-                                        value={day}
-                                        onChange={(event) =>
-                                            setDay(event.target.value)
-                                        }
-                                        className={selectClassName}
-                                    >
-                                        {days.map((value) => (
-                                            <option key={value} value={value}>
-                                                {value}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="min-w-0 flex-1 text-sm">
-                                    Month
-                                    <select
-                                        required
-                                        value={month}
-                                        onChange={(event) =>
-                                            handleMonthChange(
-                                                event.target.value,
-                                            )
-                                        }
-                                        className={selectClassName}
-                                    >
-                                        {Array.from(
-                                            { length: 12 },
-                                            (_, index) => index + 1,
-                                        ).map((value) => (
-                                            <option key={value} value={value}>
-                                                {value}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="min-w-0 flex-1 text-sm">
-                                    Year
-                                    <select
-                                        required
-                                        value={year}
-                                        onChange={(event) =>
-                                            handleYearChange(event.target.value)
-                                        }
-                                        className={selectClassName}
-                                    >
-                                        {years.map((value) => (
-                                            <option key={value} value={value}>
-                                                {value}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
-                        </fieldset>
-
-                        <FileUpload
-                            value={image}
-                            onChange={handleImageChange}
-                            accept="image/png,image/jpeg,image/webp"
-                            label="Upload Image"
-                            className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-[#E3F1F1]/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
-                        />
-
-                        {error && (
-                            <p role="alert" className="text-sm text-[#C5483E]">
-                                {error}
-                            </p>
-                        )}
-                    </div>
-
-                    <hr className="border-[#3F6B80]/50" />
-                    <div className="flex items-center justify-end gap-3 pt-4">
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="h-[4vh] w-[7vw] rounded-status bg-[#3F6B80] text-sm font-[500] text-[#FFFDF9] transition-colors hover:bg-[#497B93] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isSaving ? 'Saving…' : 'Save'}
-                        </button>
-                    </div>
-                </form>
-            </section>
-        </div>
+                <div className="flex items-center justify-end gap-3 pt-4">
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="h-[4vh] w-[7vw] rounded-status bg-[#3F6B80] text-sm font-[500] text-[#FFFDF9] transition-colors hover:bg-[#497B93] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {isSaving ? 'Saving…' : 'Save'}
+                    </button>
+                </div>
+            </form>
+        </ModalShell>
     );
 }

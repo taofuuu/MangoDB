@@ -49,8 +49,6 @@ export default function CompanyInfoStep({
         },
     );
 
-    useEffect(() => {});
-
     const handleUpdateCompanyType = (companyType: string[]) => {
         setCompanyInfo({ ...companyInfo, companyType: companyType });
         if (companyType.length > 0) {
@@ -101,8 +99,6 @@ export default function CompanyInfoStep({
     };
 
     useEffect(() => {
-        console.log('companyInfo is ....');
-        console.log(companyInfo);
         onChange(companyInfo);
     }, [companyInfo]);
 

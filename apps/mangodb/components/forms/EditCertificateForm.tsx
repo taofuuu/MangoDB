@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import type { Certificate } from '@mangodb/shared';
-import { ApiRequestError } from '@/lib/api';
+import { describeError } from '@/lib/api';
 import { updateCertificate } from '@/lib/certificate';
 import FileUpload from '../sm-detail/FileUpload';
+import ModalShell from '@/components/ui/ModalShell';
 
 export type CertificateData = {
     id?: number;
@@ -91,6 +92,7 @@ function EditCertificateDialog({
     const [credID, setCredID] = useState(initialData?.credID || '');
     const [credURL, setCredURL] = useState(initialData?.credURL || '');
     const [file, setFile] = useState<File | null>(null);
+    const titleId = useId();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -163,214 +165,209 @@ function EditCertificateDialog({
 
             onClose();
         } catch (err: unknown) {
-            console.error('Error updating certificate:', err);
-            if (err instanceof ApiRequestError) {
-                if (err.details && err.details.length > 0) {
-                    setError(err.details.map((d) => d.message).join('\n'));
-                } else {
-                    setError(err.message);
-                }
-            } else if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('Failed to update certificate. Please try again.');
-            }
+            setError(describeError(err));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div
-                className="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl
-                    max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
-            >
-                {/* -------------header----------------- */}
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">
-                        Edit license or certification
-                    </h2>
+        <ModalShell
+            isOpen
+            onClose={onClose}
+            isBusy={isSubmitting}
+            labelledBy={titleId}
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            panelClassName="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
+        >
+            {/* -------------header----------------- */}
+            <div className="flex items-center justify-between">
+                <h2 id={titleId} className="text-lg font-semibold">
+                    Edit license or certification
+                </h2>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-[#828282] hover:text-gray-800"
-                    >
-                        ✕
-                    </button>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-[#828282] hover:text-gray-800"
+                >
+                    ✕
+                </button>
+            </div>
+
+            {/* ----------------element-1----------------- */}
+            <hr className="border-[#3F6B80]/50 my-2" />
+            <div>
+                <label className="my-2 block text-sm !text-[12px]">
+                    *Indicates required
+                </label>
+            </div>
+
+            {error && (
+                <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-xs text-[#C5483E] whitespace-pre-line border border-red-200">
+                    {error}
                 </div>
+            )}
 
-                {/* ----------------element-1----------------- */}
-                <hr className="border-[#3F6B80]/50 my-2" />
-                <div>
-                    <label className="my-2 block text-sm !text-[12px]">
-                        *Indicates required
-                    </label>
-                </div>
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-3">
+                    {/* Name */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Name*
+                        </label>
 
-                {error && (
-                    <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-xs text-[#C5483E] whitespace-pre-line border border-red-200">
-                        {error}
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            placeholder="Ex: Microsoft certified network associate security"
+                            required
+                        />
                     </div>
-                )}
+                    {/* Organization */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Issuing organization*
+                        </label>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-3">
-                        {/* Name */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Name*
-                            </label>
+                        <input
+                            type="text"
+                            value={organize}
+                            onChange={(e) => setOrganize(e.target.value)}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            placeholder="Ex: Microsoft"
+                            required
+                        />
+                    </div>
 
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: Microsoft certified network associate security"
-                                required
-                            />
-                        </div>
-                        {/* Organization */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Issuing organization*
-                            </label>
+                    {/* Issue date */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Issue date
+                        </label>
+                        <div className="flex gap-2">
+                            {/* Month */}
+                            <div className="flex-1">
+                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                    Month
+                                </label>
 
-                            <input
-                                type="text"
-                                value={organize}
-                                onChange={(e) => setOrganize(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: Microsoft"
-                                required
-                            />
-                        </div>
-
-                        {/* Issue date */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Issue date
-                            </label>
-                            <div className="flex gap-2">
-                                {/* Month */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Month
-                                    </label>
-
-                                    <MonthDropdown
-                                        value={month}
-                                        onChange={setMonth}
-                                    />
-                                </div>
-
-                                {/* Year */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Year
-                                    </label>
-
-                                    <YearDropdown
-                                        value={year}
-                                        onChange={setYear}
-                                        minYear={1990}
-                                        maxYear={new Date().getFullYear()}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        {/* Expiration date */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Expiration date
-                            </label>
-                            <div className="flex gap-2">
-                                {/* Month */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Month
-                                    </label>
-
-                                    <MonthDropdown
-                                        value={exMonth}
-                                        onChange={setExMonth}
-                                    />
-                                </div>
-
-                                {/* Year */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Year
-                                    </label>
-
-                                    <YearDropdown
-                                        value={exYear}
-                                        onChange={setExYear}
-                                        minYear={1990}
-                                        maxYear={new Date().getFullYear() + 20}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        {/* Credential ID */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Credential ID
-                            </label>
-
-                            <input
-                                type="text"
-                                value={credID}
-                                onChange={(e) => setCredID(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: AZ-900-123456"
-                            />
-                        </div>
-                        {/* Credential URL */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Credential URL
-                            </label>
-
-                            <input
-                                type="url"
-                                value={credURL}
-                                onChange={(e) => setCredURL(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="https://learn.microsoft.com/..."
-                            />
-                        </div>
-                        {initialData?.certImage && !file && (
-                            <div className="mt-2">
-                                <p className="mb-1 text-sm">
-                                    Current certificate image
-                                </p>
-
-                                <img
-                                    src={initialData.certImage}
-                                    alt="Current certificate"
-                                    className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
+                                <MonthDropdown
+                                    value={month}
+                                    onChange={setMonth}
                                 />
                             </div>
-                        )}
-                        <FileUpload value={file} onChange={setFile} />
-                    </div>
 
-                    <hr className="border-[#3F6B80]/50 my-4" />
-                    {/* -----------------footer----------------- */}
-                    <div className="flex justify-end items-center gap-3 pt-1">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="rounded-status bg-[#3F6B80] px-6 h-[4vh] text-[#FFFDF9] text-sm font-medium hover:bg-[#34596b] transition-colors disabled:opacity-50 min-w-[80px]"
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save'}
-                        </button>
+                            {/* Year */}
+                            <div className="flex-1">
+                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                    Year
+                                </label>
+
+                                <YearDropdown
+                                    value={year}
+                                    onChange={setYear}
+                                    minYear={1990}
+                                    maxYear={new Date().getFullYear()}
+                                />
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
+                    {/* Expiration date */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Expiration date
+                        </label>
+                        <div className="flex gap-2">
+                            {/* Month */}
+                            <div className="flex-1">
+                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                    Month
+                                </label>
+
+                                <MonthDropdown
+                                    value={exMonth}
+                                    onChange={setExMonth}
+                                />
+                            </div>
+
+                            {/* Year */}
+                            <div className="flex-1">
+                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                    Year
+                                </label>
+
+                                <YearDropdown
+                                    value={exYear}
+                                    onChange={setExYear}
+                                    minYear={1990}
+                                    maxYear={new Date().getFullYear() + 20}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Credential ID */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Credential ID
+                        </label>
+
+                        <input
+                            type="text"
+                            value={credID}
+                            onChange={(e) => setCredID(e.target.value)}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            placeholder="Ex: AZ-900-123456"
+                        />
+                    </div>
+                    {/* Credential URL */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Credential URL
+                        </label>
+
+                        <input
+                            type="url"
+                            value={credURL}
+                            onChange={(e) => setCredURL(e.target.value)}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            placeholder="https://learn.microsoft.com/..."
+                        />
+                    </div>
+                    {initialData?.certImage && !file && (
+                        <div className="mt-2">
+                            <p className="mb-1 text-sm">
+                                Current certificate image
+                            </p>
+
+                            <img
+                                src={initialData.certImage}
+                                alt="Current certificate"
+                                className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
+                            />
+                        </div>
+                    )}
+                    <FileUpload
+                        onError={setError}
+                        value={file}
+                        onChange={setFile}
+                    />
+                </div>
+
+                <hr className="border-[#3F6B80]/50 my-4" />
+                {/* -----------------footer----------------- */}
+                <div className="flex justify-end items-center gap-3 pt-1">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="rounded-status bg-[#3F6B80] px-6 h-[4vh] text-[#FFFDF9] text-sm font-medium hover:bg-[#34596b] transition-colors disabled:opacity-50 min-w-[80px]"
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save'}
+                    </button>
+                </div>
+            </form>
+        </ModalShell>
     );
 }

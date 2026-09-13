@@ -3,11 +3,6 @@ import Link from 'next/link';
 // Temporary index so pages built so far are reachable by clicking.
 const ROUTES = [
     {
-        href: '/dev/session',
-        title: 'Dev session',
-        detail: 'Get a token — there is no login page yet. Start here.',
-    },
-    {
         href: '/profile/edit',
         title: 'Edit Profile',
         detail: 'US1-5 — the editable company profile form, against the API.',

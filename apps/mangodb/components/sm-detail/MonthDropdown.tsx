@@ -58,6 +58,7 @@ export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
                     <div className="custom-scrollbar h-50 overflow-y-auto">
                         {months.map((month) => (
                             <button
+                                type="button"
                                 key={month.value}
                                 onClick={() => {
                                     onChange(month.value);

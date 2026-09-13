@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
-import Button from '@/components/sm-detail/Button';
+import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 import { login } from '@/lib/session';
 
@@ -100,7 +100,12 @@ export default function LoginForm() {
                 {error || '\u00A0'}
             </p>
 
-            <Button type="submit" isLoading={isSubmitting} className="-mt-2">
+            <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingLabel="Logging in…"
+                className="-mt-2 w-full py-3 text-sm !font-[600]"
+            >
                 log in
             </Button>
 

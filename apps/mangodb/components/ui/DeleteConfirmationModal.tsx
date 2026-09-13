@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import ModalShell from './ModalShell';
 
 export type DeleteModalProps = {
     isOpen: boolean;
@@ -34,7 +35,8 @@ export default function DeleteConfirmationModal({
     isOpen,
     ...props
 }: DeleteConfirmationModalProps) {
-    // A fresh dialog starts with no pending action or error on every opening.
+    // ModalShell unmounts on close, so a fresh dialog starts with no pending
+    // action and no error every time it opens.
     return isOpen ? <DeleteConfirmationDialog {...props} /> : null;
 }
 
@@ -55,44 +57,24 @@ function DeleteConfirmationDialog({
 }: Omit<DeleteConfirmationModalProps, 'isOpen'>) {
     const titleId = useId();
     const descriptionId = useId();
-    const panelRef = useRef<HTMLElement>(null);
     const pendingRef = useRef(false);
     const mountedRef = useRef(false);
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const isBusy = isDeleting || isPending;
 
+    // onConfirm can resolve after this dialog has gone — the caller usually
+    // navigates away on success. Setting state then is a no-op React warns
+    // about, so the handler below checks this first.
     useEffect(() => {
         mountedRef.current = true;
-        const previousFocus = document.activeElement;
-        const previousOverflow = document.body.style.overflow;
-
-        document.body.style.overflow = 'hidden';
-        panelRef.current?.focus();
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && !pendingRef.current && !isDeleting) {
-                onClose();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-
         return () => {
             mountedRef.current = false;
-            document.body.style.overflow = previousOverflow;
-            window.removeEventListener('keydown', handleKeyDown);
-            if (
-                previousFocus instanceof HTMLElement &&
-                previousFocus.isConnected
-            ) {
-                previousFocus.focus();
-            }
         };
-    }, [isDeleting, onClose]);
+    }, []);
 
     const requestClose = () => {
-        if (!pendingRef.current && !isDeleting) onClose();
+        if (!isBusy) onClose();
     };
 
     const handleConfirm = async () => {
@@ -127,22 +109,16 @@ function DeleteConfirmationDialog({
     };
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.6vh]"
-            onMouseDown={(event) => {
-                if (event.target === event.currentTarget) requestClose();
-            }}
+        <ModalShell
+            isOpen
+            onClose={onClose}
+            isBusy={isBusy}
+            role="alertdialog"
+            labelledBy={titleId}
+            describedBy={descriptionId}
+            panelClassName="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] overflow-y-auto bg-[#FFFDF9] text-[#171717] px-[1.8vw] py-[2.6vh] shadow-xl max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
         >
-            <section
-                ref={panelRef}
-                role="alertdialog"
-                tabIndex={-1}
-                aria-modal="true"
-                aria-labelledby={titleId}
-                aria-describedby={descriptionId}
-                aria-busy={isBusy}
-                className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] overflow-y-auto bg-[#FFFDF9] text-[#171717] px-[1.8vw] py-[2.6vh] shadow-xl focus:outline-none max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
-            >
+            <>
                 {layout === 'stacked' ? (
                     <>
                         <div aria-hidden="true" className="flex justify-center">
@@ -223,8 +199,8 @@ function DeleteConfirmationDialog({
                         {isBusy ? pendingLabel : confirmLabel}
                     </button>
                 </div>
-            </section>
-        </div>
+            </>
+        </ModalShell>
     );
 }
 

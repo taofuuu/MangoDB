@@ -4,9 +4,21 @@ import { useRef } from 'react';
 import Image from 'next/image';
 import upload from '../../assets/icons/upload-icon.png';
 
+// The same rules src/middleware/upload.ts enforces on the server. Checking
+// here too is not security — the server's check is — it is so the user finds
+// out before waiting for an upload to be rejected.
+//
+// Not image/*: image/svg+xml is a document the browser executes scripts from
+// when its public URL is opened directly.
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const MAX_BYTES = 5 * 1024 * 1024;
+
 type FileUploadProps = {
     value: File | null;
     onChange: (file: File | null) => void;
+    // Called instead of onChange when the file breaks a rule above, so the
+    // caller shows the message wherever it shows its other errors.
+    onError?: (message: string) => void;
     className?: string;
     accept?: string;
     label?: string;
@@ -15,14 +27,31 @@ type FileUploadProps = {
 export default function FileUpload({
     value,
     onChange,
+    onError,
     className = '',
-    accept = '.pdf,.jpg,.jpeg,.png',
+    // Matches IMAGE_TYPES. The old default offered .pdf, which the API refuses.
+    accept = 'image/png,image/jpeg,image/webp',
     label = 'Upload',
 }: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
+
+        if (file && !IMAGE_TYPES.includes(file.type)) {
+            onError?.('Only PNG, JPEG or WebP images are allowed.');
+            // Clear the input, or picking the same bad file again fires no
+            // change event and the user sees nothing happen.
+            e.target.value = '';
+            return;
+        }
+
+        if (file && file.size > MAX_BYTES) {
+            onError?.('Image must be 5MB or smaller.');
+            e.target.value = '';
+            return;
+        }
+
         onChange(file);
     };
 
