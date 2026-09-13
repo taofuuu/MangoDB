@@ -51,17 +51,17 @@ export default function ViewProfilePage() {
             {!loadError && !profile && <p className="text-sm">Loading…</p>}
 
             {profile && (
-                <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
+                <main className="grid grid-cols-1 lg:grid-cols-5 gap-6 ">
+                    <div className="lg:col-span-3">
                         <CompanyCard data={toCompanyCardData(profile)} />
                     </div>
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-2">
                         <ServicesSection />
                     </div>
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-3">
                         <ProjectTimeline />
                     </div>
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-2">
                         <PortfolioList companyId={profile.company_id} />
                     </div>
                 </main>

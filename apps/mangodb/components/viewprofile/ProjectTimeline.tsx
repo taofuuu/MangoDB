@@ -58,9 +58,9 @@ export default function ProjectTimeline() {
         activeTab === 'history' ? historyEvents : ongoingEvents;
 
     return (
-        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm flex flex-col font-sans">
+        <div className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full h-[420px]">
             {/* Sub Tabs Switcher */}
-            <div className="bg-gray-100 p-1 rounded-xl flex w-60 mb-4 text-xs">
+            <div className="bg-gray-100 p-1 rounded-xl flex w-full mb-4 text-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('history')}
@@ -86,9 +86,9 @@ export default function ProjectTimeline() {
             </div>
 
             {/* Single Visible Container */}
-            <div className="bg-gray-100/60 rounded-xl p-4">
+            <div className="bg-gray-50/70 rounded-[15px] p-4 border border-[#E1E1E1] h-[300px] overflow-hidden">
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-bold text-gray-800 capitalize">
+                    <h3 className="text-sm font-bold text-gray-800 capitalize">
                         {activeTab === 'history'
                             ? 'Project History'
                             : 'Ongoing Projects'}
@@ -106,7 +106,7 @@ export default function ProjectTimeline() {
                             className="relative flex items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs justify-between"
                         >
                             {/* Timeline Node Point */}
-                            <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
+                            <span className="absolute -left-[21px] top-[20px] w-2.5 h-2.5 rounded-full bg-white border-2 border-[#497B93]"></span>
 
                             <div className="flex gap-4 items-center">
                                 <div>

@@ -79,9 +79,9 @@ export default function PortfolioCertificateList({
         activeTab === 'portfolio' ? '/portfolio' : '/certificate';
 
     return (
-        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm font-sans">
+        <div className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
             {/* Tab Switcher */}
-            <div className="bg-gray-100 p-1 rounded-xl flex w-60 mb-4 text-xs">
+            <div className="bg-gray-100 p-1 rounded-xl flex w-full mb-4 text-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}
@@ -116,30 +116,33 @@ export default function PortfolioCertificateList({
             )}
 
             {/* List Display */}
-            <div className="divide-y divide-gray-100">
+            <div className="space-y-3 overflow-y-auto pr-1 flex-1 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full">
                 {visibleItems.length === 0 && !loadError && (
-                    <p className="py-2 text-xs text-gray-400">
+                    <div className="p-3 border border-gray-100 rounded-xl bg-gray-50/50 text-xs text-gray-400">
                         {activeTab === 'portfolio'
                             ? 'No portfolio items yet.'
                             : 'No certificates yet.'}
-                    </p>
+                    </div>
                 )}
+
                 {visibleItems.map((item) => (
                     <div
                         key={item.id}
-                        className="py-2 flex justify-between items-center text-xs"
+                        className="p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition space-y-1"
                     >
-                        <span className="font-medium text-gray-700">
-                            {item.title}
-                        </span>
-                        <div className="flex items-center gap-6">
-                            <span className="text-gray-400 text-[11px]">
-                                {item.date}
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-semibold text-gray-800">
+                                {item.title || 'Untitled Item'}
                             </span>
-                            <button className="text-[#497B93] hover:underline">
+                            <button className="text-xs text-[#497B93] hover:underline font-medium">
                                 Details
                             </button>
                         </div>
+
+                        {/* Description/Body section with date fallback */}
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                            {item.date || 'No description provided.'}
+                        </p>
                     </div>
                 ))}
             </div>

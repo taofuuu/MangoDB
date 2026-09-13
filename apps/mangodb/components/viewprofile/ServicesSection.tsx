@@ -35,9 +35,10 @@ export default function ServicesDashboard() {
 
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-3xl">
-            <main className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full">
+            <main className="bg-white rounded-[30px] p-8 border border-[#C4C4C4] shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+                {' '}
                 {/* Tab Switcher */}
-                <div className="bg-gray-100 p-1 rounded-xl flex mb-4 text-xs">
+                <div className="bg-gray-100 p-1 rounded-xl flex w-full mb-4 text-xs">
                     <button
                         type="button"
                         onClick={() => setActiveTab('services')}
@@ -61,13 +62,12 @@ export default function ServicesDashboard() {
                         Job Listing
                     </button>
                 </div>
-
                 {/* Display Content */}
-                <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 flex-1">
+                <div className="space-y-3 overflow-y-auto max-h-[500px] pr-0 flex-1 view-profile-scrollbar">
                     {/* Item 1 */}
                     <div className="p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-semibold text-gray-800">
+                            <span className="text-sm font-semibold text-gray-800">
                                 {currentTabContent.title1 || 'Untitled Item'}
                             </span>
                             <button className="text-xs text-[#497B93] hover:underline font-medium">
@@ -83,7 +83,7 @@ export default function ServicesDashboard() {
                     {/* Item 2 */}
                     <div className="p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-semibold text-gray-800">
+                            <span className="text-sm font-semibold text-gray-800">
                                 {currentTabContent.title2 || 'Untitled Item'}
                             </span>
                             <button className="text-xs text-[#497B93] hover:underline font-medium">
