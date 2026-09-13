@@ -67,10 +67,10 @@ function flagValue(flag, fallback = '') {
     return flagValues(flag)[0] ?? fallback;
 }
 
-// --text name=value replaces the text anywhere it appears; --id name=42
-// replaces only that exact number. Two flags rather than one because a run id
-// is a substring match and a row id must not be, or an id of 12 would rewrite
-// half of every phone number.
+// --text name=value replaces the text anywhere it appears; --id key=42
+// replaces the number 42, but only where it sits under that key. Two flags
+// rather than one because a run id is a substring match and a row id must not
+// be, or an id of 12 would rewrite half of every phone number.
 function parsePairs(flag) {
     return flagValues(flag).map((pair) => {
         const at = pair.indexOf('=');
@@ -78,24 +78,43 @@ function parsePairs(flag) {
     });
 }
 
-const textSubs = parsePairs('--text').filter(([, value]) => value !== '');
-const idSubs = parsePairs('--id').filter(([, value]) => value !== '');
+// Underscores and case dropped, so an --id written as portfolio_id still
+// matches after Phase 2 renames the field to portfolioId.
+function normalizeKey(key) {
+    return key.toLowerCase().replace(/_/g, '');
+}
 
-function scrub(value) {
-    if (Array.isArray(value)) return value.map(scrub);
+const textSubs = parsePairs('--text').filter(([, value]) => value !== '');
+
+// The key has to match as well as the number. A new portfolio_id of 25 and a
+// seeded listing_id of 25 are the same number meaning two different things,
+// and replacing both would put a placeholder on a value that never changes.
+const idSubs = parsePairs('--id')
+    .filter(([, value]) => value !== '')
+    .map(([key, value]) => ({
+        key: normalizeKey(key),
+        placeholder: `<${key}>`,
+        value: Number(value),
+    }));
+
+function scrub(value, key) {
+    if (Array.isArray(value)) return value.map((item) => scrub(item, key));
 
     if (value !== null && typeof value === 'object') {
         // Sorted so a re-ordered select is not a diff, and a renamed field is.
         return Object.fromEntries(
             Object.keys(value)
                 .sort()
-                .map((key) => [key, scrub(value[key])]),
+                .map((name) => [name, scrub(value[name], name)]),
         );
     }
 
     if (typeof value === 'number') {
-        const hit = idSubs.find(([, raw]) => Number(raw) === value);
-        return hit ? `<${hit[0]}>` : value;
+        const wanted = normalizeKey(key ?? '');
+        const hit = idSubs.find(
+            (sub) => sub.value === value && sub.key === wanted,
+        );
+        return hit ? hit.placeholder : value;
     }
 
     if (typeof value !== 'string') return value;
@@ -112,6 +131,24 @@ function scrub(value) {
     return text;
 }
 
+// The request line carries the same ids the body does — PATCH /portfolios/26 —
+// so it drifts every run unless it gets the same treatment.
+function scrubRequest(text) {
+    let out = text;
+    for (const [name, raw] of textSubs) {
+        out = out.split(raw).join(`<${name}>`);
+    }
+    for (const sub of idSubs) {
+        // Matched as a whole path segment: /27 but not the 27 inside /271,
+        // and not a 27 that happens to sit in a query value.
+        out = out.replace(
+            new RegExp('/' + sub.value + '(?![0-9])', 'g'),
+            '/' + sub.placeholder,
+        );
+    }
+    return out;
+}
+
 function normalize() {
     const raw = readStdin();
     let body;
@@ -121,7 +158,7 @@ function normalize() {
         body = null;
     } else {
         try {
-            body = scrub(JSON.parse(raw));
+            body = scrub(JSON.parse(raw), '');
         } catch {
             // Not JSON. Keep it visible rather than silently dropping it —
             // an endpoint that stops answering JSON is exactly the kind of
@@ -131,7 +168,7 @@ function normalize() {
     }
 
     const snapshot = {
-        request: flagValue('--request'),
+        request: scrubRequest(flagValue('--request')),
         status: Number(flagValue('--status', '0')),
         body,
     };

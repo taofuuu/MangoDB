@@ -64,7 +64,10 @@ PNG="$WORK/pixel.png"
 
 # Every value that changes between runs gets replaced with a placeholder, or
 # the diff is unreadable. RUN is the one seed all of them hang off.
-RUN="snap$(date +%s)"
+# Also the prefix on the two throwaway accounts, so `npm run db:seed -w api`
+# can recognise and prune them later — they are soft-deleted, and nothing in
+# the API can remove a soft-deleted company.
+RUN="snapshot_probe_$(date +%s)"
 SUBS=(--text "run=$RUN")
 
 TOKEN_ADMIN=""
@@ -106,18 +109,37 @@ api() {
 snap() {
     local name=$1 method=$2 path=$3
     shift 3
-    local status
-    status="$(api "$method" "$path" "$@")"
+    LAST_STATUS="$(api "$method" "$path" "$@")"
+    LAST_REQUEST="$method $path"
+    resnap "$name"
+    printf '  %-3s %-6s %s\n' "$LAST_STATUS" "$method" "$path"
+}
+
+# Rewrites the snapshot snap() just made. A created row's id is only known from
+# its own response, so the call that creates one has to be written twice: once
+# to capture the id, then again with that id in SUBS.
+resnap() {
     node "$HELPER" normalize \
-        --request "$method $path" --status "$status" "${SUBS[@]}" \
-        <"$BODY" >"$OUT_DIR/$name.json"
-    printf '  %-3s %-6s %s\n' "$status" "$method" "$path"
+        --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
+        <"$BODY" >"$OUT_DIR/$1.json"
 }
 
 # Reads one field out of the response snap() just made.
 jget() { node "$HELPER" get "$1" <"$BODY"; }
 
 bearer() { printf 'Authorization: Bearer %s' "$1"; }
+
+# curl here is a native Windows build, so under Git Bash it cannot open a path
+# like /tmp/x. Git Bash normally rewrites those on the way in, but not inside
+# curl's -F "field=@path" form, where the @ hides the path from it. cygpath
+# exists only on Windows, so this is a no-op on Linux and macOS.
+winpath() {
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -w "$1"
+    else
+        printf '%s' "$1"
+    fi
+}
 
 # Without this the run limps on with an empty token, every later call 401s, and
 # 40 snapshots record the wrong thing. Stop at the first bad login instead.
@@ -253,7 +275,8 @@ snap 26-auth-register POST /auth/register \
 TOKEN_A="$(jget accessToken)"
 COMPANY_A_ID="$(jget company.company_id)"
 A_LIVE=1
-SUBS+=(--id "companyIdA=$COMPANY_A_ID")
+SUBS+=(--id "company_id=$COMPANY_A_ID")
+resnap 26-auth-register
 
 snap 27-error-register-conflict POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
@@ -280,7 +303,8 @@ snap 33-auth-register-receiver POST /auth/register \
     -d "{\"company_name\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"account_type\":\"RECEIVER\",\"company_type\":[\"SME\"]}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
-SUBS+=(--id "companyIdB=$(jget company.company_id)")
+SUBS+=(--id "company_id=$(jget company.company_id)")
+resnap 33-auth-register-receiver
 
 snap 34-companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
 B_LIVE=0
@@ -293,7 +317,8 @@ snap 35-error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
 if [ "$UPLOADS" = 1 ]; then
     # A 1x1 PNG, written here rather than committed: the smallest file that
     # gets past multer's mimetype allowlist.
-    node -e 'require("fs").writeFileSync(process.argv[1], Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64"))' "$PNG"
+    printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' | base64 -d >"$PNG"
+    IMAGE="$(winpath "$PNG")"
 
     echo
     echo "portfolio lifecycle"
@@ -306,15 +331,16 @@ if [ "$UPLOADS" = 1 ]; then
             -F 'portfolio_description=created by scripts/snapshot-api.sh' \
             -F 'development_date=2026-01-15' \
             -F "portfolio_link=https://example.test/$RUN/portfolio" \
-            -F "portfolio_image=@$PNG;type=image/png"
+            -F "portfolio_image=@$IMAGE;type=image/png"
         NEW_PORTFOLIO_ID="$(jget portfolio_id)"
 
         if [ -n "$NEW_PORTFOLIO_ID" ]; then
-            SUBS+=(--id "newPortfolioId=$NEW_PORTFOLIO_ID")
+            SUBS+=(--id "portfolio_id=$NEW_PORTFOLIO_ID")
+            resnap 36-portfolios-create
             snap 37-portfolios-update PATCH "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")" \
                 -F 'portfolio_name=Snapshot Probe portfolio edited' \
-                -F "portfolio_image=@$PNG;type=image/png"
+                -F "portfolio_image=@$IMAGE;type=image/png"
             snap 38-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")"
         fi
@@ -331,17 +357,18 @@ if [ "$UPLOADS" = 1 ]; then
         -F 'expire_month=1' -F 'expire_year=2030' \
         -F "credential_id=$RUN" \
         -F "credential_url=https://example.test/$RUN/cert" \
-        -F "cert_image=@$PNG;type=image/png"
+        -F "cert_image=@$IMAGE;type=image/png"
     NEW_CERT_ID="$(jget certificate.certificate_id)"
 
     if [ -n "$NEW_CERT_ID" ]; then
-        SUBS+=(--id "newCertificateId=$NEW_CERT_ID")
+        SUBS+=(--id "certificate_id=$NEW_CERT_ID")
+        resnap 39-certificates-create
         snap 40-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" -F 'expire_year=2000'
         snap 41-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" \
             -F 'cert_title=Snapshot Probe certificate edited' \
-            -F "cert_image=@$PNG;type=image/png"
+            -F "cert_image=@$IMAGE;type=image/png"
         snap 42-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")"
     fi
