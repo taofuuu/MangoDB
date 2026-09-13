@@ -16,7 +16,7 @@ const ROLES: Record<AccountType, string[]> = {
 
 const ROLE_FILL: Record<string, string> = {
     Provider: 'bg-brand-light text-white',
-    Receiver: 'bg-danger-soft text-white',
+    Receiver: 'bg-terracotta text-white',
 };
 
 type ProfilePhotoPanelProps = {

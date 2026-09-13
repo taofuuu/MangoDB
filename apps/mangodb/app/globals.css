@@ -38,8 +38,6 @@
        and belonged to #C5483E — a red that no longer exists. */
     --color-danger-hover: #a93b30;
     --color-danger-deep: #8f271d;
-    --color-danger-soft: #d36b60;
-    --color-danger-bright: #e53e3e;
     --color-danger-tint: #f0d1c9;
     --color-danger-wash: #fdf0ee;
 
@@ -51,6 +49,17 @@
     --color-accent-wash: #fcefd7;
 
     --color-orange: #d9603b;
+
+    /* The fill behind a role label — "Provider" on a company card, and the
+       circle behind a profile photo. Named for the colour, not the role, on
+       purpose: CompanyCard paints Provider with this and Receiver with
+       brand-light, while ProfilePhotoPanel does the exact opposite. One of
+       those two is wrong, and a role name here would bake in whichever it is.
+       Decide which way round it goes, then rename this. */
+    --color-terracotta: #d36b60;
+
+    /* The initials in the placeholder avatar, on an accent circle. */
+    --color-avatar-initials: #e53e3e;
 
     --color-surface: #fffdf9;
     --color-surface-white: #ffffff;

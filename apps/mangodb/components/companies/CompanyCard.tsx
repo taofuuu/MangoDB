@@ -23,7 +23,7 @@ export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
             <div className="min-w-0">
                 <div className="mb-[1.11vh] flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                     {isProvider && (
-                        <span className="rounded-status bg-danger-soft px-[0.63vw] py-[0.19vh] type-xs !font-[600] text-white">
+                        <span className="rounded-status bg-terracotta px-[0.63vw] py-[0.19vh] type-xs !font-[600] text-white">
                             Provider
                         </span>
                     )}

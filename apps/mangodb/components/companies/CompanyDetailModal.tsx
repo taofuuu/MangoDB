@@ -132,7 +132,7 @@ export default function CompanyDetailModal({
                     <>
                         <div className="mb-[1.85vh] flex flex-wrap items-center gap-[0.52vw]">
                             {isProvider && (
-                                <span className="rounded-status bg-danger-soft px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
+                                <span className="rounded-status bg-terracotta px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
                                     Provider
                                 </span>
                             )}

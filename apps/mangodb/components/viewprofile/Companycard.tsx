@@ -46,7 +46,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                 {/* Left Profile Info */}
                 <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-gray-200 pr-0 md:pr-8 justify-center py-4">
                     {/* Logo */}
-                    <div className="w-24 h-24 bg-accent-3 rounded-full flex items-center justify-center font-bold text-danger-bright text-3xl shadow-inner mb-4">
+                    <div className="w-24 h-24 bg-accent-3 rounded-full flex items-center justify-center font-bold text-avatar-initials text-3xl shadow-inner mb-4">
                         CP
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
