@@ -4,45 +4,42 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
-import Button from '@/components/sm-detail/Button';
-import { ApiRequestError } from '@/lib/api';
+import Button from '@/components/ui/Button';
+import { describeError } from '@/lib/api';
 import { login } from '@/lib/session';
 
 // A wrong password and a malformed email both have to read the same. The API
 // rejects the second as VALIDATION_FAILED, and showing that would tell an
 // attacker the address is not what it is unhappy about.
-function messageFor(err: unknown): string {
-    if (!(err instanceof ApiRequestError)) {
-        return 'Could not reach the server. Try again.';
-    }
-    if (err.status === 400 || err.status === 401) {
-        return 'Invalid email or password';
-    }
-    return err.message;
-}
-
 export default function LoginForm() {
     const router = useRouter();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [identifierError, setIdentifierError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    // A rejected login is about neither box on its own, so it keeps a line of
+    // its own above the button.
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+        setIdentifierError(null);
+        setPasswordError(null);
 
-        // Client-side guard — catch empty fields before hitting the API.
-        if (!identifier.trim() && !password) {
-            setError('Please enter your email and password.');
-            return;
+        // Client-side guard — catch empty fields before hitting the API. Each
+        // message goes under the box it is about.
+        const missingIdentifier = !identifier.trim();
+        const missingPassword = !password;
+
+        if (missingIdentifier) {
+            setIdentifierError('Please enter your email address.');
         }
-        if (!identifier.trim()) {
-            setError('Please enter your email address.');
-            return;
+        if (missingPassword) {
+            setPasswordError('Please enter your password.');
         }
-        if (!password) {
-            setError('Please enter your password.');
+        if (missingIdentifier || missingPassword) {
             return;
         }
 
@@ -54,7 +51,12 @@ export default function LoginForm() {
             await login(identifier, password);
             router.push('/');
         } catch (err) {
-            setError(messageFor(err));
+            setError(
+                describeError(err, {
+                    400: 'Invalid email or password',
+                    401: 'Invalid email or password',
+                }),
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -72,7 +74,11 @@ export default function LoginForm() {
                 type="text"
                 autoComplete="email"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    setIdentifierError(null);
+                }}
+                error={identifierError ?? undefined}
                 required
             />
 
@@ -83,12 +89,16 @@ export default function LoginForm() {
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError(null);
+                    }}
+                    error={passwordError ?? undefined}
                     required
                 />
                 <Link
                     href="/forgot-password"
-                    className="self-end text-xs text-[#D9603B] hover:underline"
+                    className="self-end type-xs text-orange hover:underline"
                 >
                     Forgot Password ?
                 </Link>
@@ -98,22 +108,27 @@ export default function LoginForm() {
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
-                className={`text-sm text-red-600 min-h-5 -mt-2 ${
+                className={`type-sm text-red-600 min-h-5 -mt-2 ${
                     error ? 'visible' : 'invisible'
                 }`}
             >
                 {error || '\u00A0'}
             </p>
 
-            <Button type="submit" isLoading={isSubmitting} className="-mt-2">
+            <Button
+                type="submit"
+                isLoading={isSubmitting}
+                loadingLabel="Logging in…"
+                className="-mt-2 w-full py-3 type-sm !font-[600]"
+            >
                 log in
             </Button>
 
-            <p className="text-center text-sm text-gray-700">
+            <p className="text-center type-sm text-gray-700">
                 Don&apos;t have an account?{' '}
                 <Link
-                    href="/signup"
-                    className="font-medium text-[#D9603B] hover:underline"
+                    href="/register"
+                    className="font-medium text-orange hover:underline"
                 >
                     Sign Up
                 </Link>

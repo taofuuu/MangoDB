@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /companies/me",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "(body)",
+                    "message": "Provide at least one field to update"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

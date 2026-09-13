@@ -13,26 +13,26 @@ import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
 import { normalizePhone, normalizeWebsiteUrl } from '@/lib/validation';
+import { isProviderAccount } from '@/lib/roles';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
-    | 'company_name'
-    | 'company_description'
-    | 'contact_email'
+    | 'companyName'
+    | 'companyDescription'
+    | 'contactEmail'
     | 'phone'
     | 'website'
     | 'address'
-    | 'company_type'
-    | 'account_type'
+    | 'companyType'
+    | 'accountType'
     // Provider-only columns. A RECEIVER company reads null for both, which is
     // why the two fields below are not rendered for one.
-    | 'service_term'
-    | 'warranty_policy'
-> & {
-    // The one field with nowhere to go: no upload endpoint, and no column to
-    // store the result, so it is lost on reload.
-    photoUrl: string | null;
-};
+    | 'serviceTerm'
+    | 'warrantyPolicy'
+    // The saved photo's URL. Read-only here — the file goes up on its own
+    // request, so nothing in this form writes it.
+    | 'companyPhoto'
+>;
 
 // An empty input means "cleared", and the API spells that null. Sending ''
 // would store an empty string in most columns and fail outright on website,
@@ -43,44 +43,53 @@ function orNull(value: string | null): string | null {
 }
 
 // What the form holds is not quite what the endpoint takes. Four fields are
-// absent: account_type is not editable, photoUrl has no column to live in, and
-// username and email belong to Account Settings, which is where a company
-// changes what it signs in with. Everything else goes every time, which also
-// keeps the body from ever being empty — the API rejects {} as a client bug.
+// absent: accountType is not editable, companyPhoto is written by its own
+// route, and username and email belong to Account Settings, which is where a
+// company changes what it signs in with. Everything else goes every time,
+// which also keeps the body from ever being empty — the API rejects {} as a
+// client bug.
 //
 // It lives beside ProfileFormData rather than in lib/companies.ts so the API
 // layer stays free of anything form-shaped.
 export function toUpdateRequest(
     data: ProfileFormData,
 ): UpdateCompanyProfileRequest {
-    const isProvider =
-        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+    const isProvider = isProviderAccount(data.accountType);
 
     return {
         // Not run through orNull: these columns are not nullable, so a cleared
         // one should come back as a field-level 400 rather than be dropped.
-        company_name: data.company_name,
+        companyName: data.companyName,
         phone: normalizePhone(data.phone),
-        company_type: data.company_type,
-        company_description: orNull(data.company_description),
+        companyType: data.companyType,
+        companyDescription: orNull(data.companyDescription),
         address: orNull(data.address),
-        contact_email: orNull(data.contact_email),
+        contactEmail: orNull(data.contactEmail),
         // Normalizes website so formats like www.domain.com prepend https://
         // to satisfy backend z.url() validation while accepting standard domain input.
         website: normalizeWebsiteUrl(data.website),
         // A RECEIVER company owns no provider row, so sending either of these
         // is a deliberate 403. Leave them out rather than send null.
         ...(isProvider && {
-            service_term: orNull(data.service_term),
-            warranty_policy: orNull(data.warranty_policy),
+            serviceTerm: orNull(data.serviceTerm),
+            warrantyPolicy: orNull(data.warrantyPolicy),
         }),
     };
 }
 
 type CompanyProfileFormProps = {
     initialData: ProfileFormData;
-    onSave: (data: ProfileFormData) => Promise<void> | void;
+    // The picked file rides alongside the fields rather than inside them: it
+    // is not part of the JSON body and goes up on its own request.
+    onSave: (data: ProfileFormData, photo: File | null) => Promise<void> | void;
     onCancel?: (() => void) | undefined;
+    // Left out when an administrator is editing another company: there is no
+    // endpoint for that, so the panel renders read-only instead.
+    canEditPhoto?: boolean | undefined;
+    photoError?: string | undefined;
+    onPhotoError?: ((message: string | undefined) => void) | undefined;
+    onPhotoRemove?: (() => void) | undefined;
+    isRemovingPhoto?: boolean | undefined;
     errors?: Partial<Record<keyof ProfileFormData, string>> | undefined;
     // US6-4. Set only when an administrator is editing another company's
     // account: it turns on the Delete account section below the form fields.
@@ -99,6 +108,11 @@ export default function CompanyProfileForm({
     initialData,
     onSave,
     onCancel,
+    canEditPhoto = false,
+    photoError,
+    onPhotoError,
+    onPhotoRemove,
+    isRemovingPhoto = false,
     errors,
     status,
     onDeleteAccount,
@@ -108,12 +122,14 @@ export default function CompanyProfileForm({
     onDismissStatus,
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
+    // Picked but not uploaded. Held here so Cancel drops it with everything
+    // else, and so a failed save leaves the choice in place to retry.
+    const [photo, setPhoto] = useState<File | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Both live on the provider table. A receiver-only company owns no row
     // there, so showing the inputs would offer edits that cannot be saved.
-    const isProvider =
-        data.account_type === 'PROVIDER' || data.account_type === 'BOTH';
+    const isProvider = isProviderAccount(data.accountType);
 
     // A save replaces initialData with what was stored and Cancel resets to
     // the same thing, so the form always edits the last known good profile.
@@ -123,6 +139,9 @@ export default function CompanyProfileForm({
     if (lastInitial !== initialData) {
         setLastInitial(initialData);
         setData(initialData);
+        // The save that produced this initialData uploaded it, so what is on
+        // screen now comes from initialData.companyPhoto.
+        setPhoto(null);
     }
 
     const setField = <K extends keyof ProfileFormData>(
@@ -137,11 +156,13 @@ export default function CompanyProfileForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSave(data);
+        await onSave(data, photo);
     };
 
     const handleCancel = () => {
         setData(initialData);
+        setPhoto(null);
+        onPhotoError?.(undefined);
         onCancel?.();
     };
 
@@ -156,14 +177,24 @@ export default function CompanyProfileForm({
         // browser's own check on type="email" silently blocks submit and shows
         // its own tooltip, which skips the error slots under each field.
         <form onSubmit={handleSubmit} noValidate>
-            <h1 className="pl-[1.88vw] text-hd leading-none">Edit Profile</h1>
+            <h1 className="pl-[1.88vw] type-hd leading-none">Edit Profile</h1>
 
             <div className="mt-[1.85vh] flex">
                 <div className="w-[17.99vw] shrink-0">
                     <ProfilePhotoPanel
-                        photoUrl={data.photoUrl}
-                        onPhotoChange={(url) => setField('photoUrl', url)}
-                        accountType={data.account_type}
+                        photoUrl={data.companyPhoto}
+                        pendingPhoto={photo}
+                        {...(canEditPhoto && {
+                            onPhotoChange: (file: File) => {
+                                setPhoto(file);
+                                onPhotoError?.(undefined);
+                            },
+                            onPhotoRemove,
+                            onPhotoError,
+                        })}
+                        error={photoError}
+                        isRemoving={isRemovingPhoto}
+                        accountType={data.accountType}
                     />
                 </div>
 
@@ -173,9 +204,9 @@ export default function CompanyProfileForm({
                         email and password, so the column starts here. */}
                     <Textarea
                         label="Company Description"
-                        value={data.company_description ?? ''}
-                        onChange={(v) => setField('company_description', v)}
-                        error={displayErrors.company_description}
+                        value={data.companyDescription ?? ''}
+                        onChange={(v) => setField('companyDescription', v)}
+                        error={displayErrors.companyDescription}
                         maxLength={1000}
                     />
 
@@ -183,9 +214,9 @@ export default function CompanyProfileForm({
                         <div className="mt-[3.09vh]">
                             <Textarea
                                 label="Service Terms"
-                                value={data.service_term ?? ''}
-                                onChange={(v) => setField('service_term', v)}
-                                error={displayErrors.service_term}
+                                value={data.serviceTerm ?? ''}
+                                onChange={(v) => setField('serviceTerm', v)}
+                                error={displayErrors.serviceTerm}
                                 maxLength={2000}
                             />
                         </div>
@@ -195,9 +226,9 @@ export default function CompanyProfileForm({
                         <Input
                             label="Contact Email"
                             type="email"
-                            value={data.contact_email ?? ''}
-                            onChange={(v) => setField('contact_email', v)}
-                            error={displayErrors.contact_email}
+                            value={data.contactEmail ?? ''}
+                            onChange={(v) => setField('contactEmail', v)}
+                            error={displayErrors.contactEmail}
                             maxLength={100}
                         />
                     </div>
@@ -218,17 +249,17 @@ export default function CompanyProfileForm({
                         delete handler for the account being edited. */}
                     {onDeleteAccount && (
                         <div className="mt-[3.09vh]">
-                            <h2 className="border-b border-[#C5483B]/40 pb-[0.74vh] text-md !font-[600] text-[#C5483B]">
+                            <h2 className="border-b border-danger/40 pb-[0.74vh] type-md !font-[600] text-danger">
                                 Delete account
                             </h2>
-                            <p className="mt-[1.11vh] text-sm !font-[400] text-[#666666]">
+                            <p className="mt-[1.11vh] type-sm !font-[400] text-ink-soft">
                                 Once you delete this account, there is no going
                                 back. Please be certain.
                             </p>
                             <Button
                                 variant="danger"
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] text-sm"
+                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] type-sm"
                             >
                                 Delete this account
                             </Button>
@@ -240,18 +271,18 @@ export default function CompanyProfileForm({
                 <div className="ml-[8.97vw] w-[31.13vw] shrink-0">
                     <Input
                         label="Company Name"
-                        value={data.company_name}
-                        onChange={(v) => setField('company_name', v)}
-                        error={displayErrors.company_name}
+                        value={data.companyName}
+                        onChange={(v) => setField('companyName', v)}
+                        error={displayErrors.companyName}
                         maxLength={255}
                     />
 
                     <div className="mt-[3.09vh]">
                         <CompanyTypeField
                             label="Company Type"
-                            value={data.company_type}
-                            onChange={(v) => setField('company_type', v)}
-                            error={displayErrors.company_type}
+                            value={data.companyType}
+                            onChange={(v) => setField('companyType', v)}
+                            error={displayErrors.companyType}
                         />
                     </div>
 
@@ -259,9 +290,9 @@ export default function CompanyProfileForm({
                         <div className="mt-[3.09vh]">
                             <Textarea
                                 label="Company Warranty Policy"
-                                value={data.warranty_policy ?? ''}
-                                onChange={(v) => setField('warranty_policy', v)}
-                                error={displayErrors.warranty_policy}
+                                value={data.warrantyPolicy ?? ''}
+                                onChange={(v) => setField('warrantyPolicy', v)}
+                                error={displayErrors.warrantyPolicy}
                                 maxLength={2000}
                             />
                         </div>
@@ -301,7 +332,7 @@ export default function CompanyProfileForm({
                     variant="outline"
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-md"
+                    className="h-[7.04vh] w-[13.91vw] cursor-pointer type-md"
                 >
                     Cancel
                 </Button>
@@ -309,7 +340,7 @@ export default function CompanyProfileForm({
                 <Button
                     type="submit"
                     disabled={isSaving}
-                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-md"
+                    className="h-[7.13vh] w-[13.96vw] cursor-pointer type-md"
                 >
                     {isSaving ? 'Saving…' : 'Save Changes'}
                 </Button>
@@ -318,7 +349,7 @@ export default function CompanyProfileForm({
             {onDeleteAccount && (
                 <AdminDeleteAccountModal
                     isOpen={isDeleteModalOpen}
-                    username={deleteAccountUsername ?? data.company_name}
+                    username={deleteAccountUsername ?? data.companyName}
                     onClose={() => setIsDeleteModalOpen(false)}
                     onConfirm={onDeleteAccount}
                 />

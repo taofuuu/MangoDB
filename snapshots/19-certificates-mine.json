@@ -1,0 +1,18 @@
+{
+    "request": "GET /certificates/mine",
+    "status": 200,
+    "body": [
+        {
+            "certImage": null,
+            "certTitle": "Snapshot seed certificate",
+            "certificateId": 50,
+            "credentialId": "SNAPSHOT-0001",
+            "credentialUrl": "https://snapshot.local/credential",
+            "expireMonth": 6,
+            "expireYear": 2029,
+            "issueMonth": 6,
+            "issueYear": 2024,
+            "organization": "Snapshot Seed Authority"
+        }
+    ]
+}

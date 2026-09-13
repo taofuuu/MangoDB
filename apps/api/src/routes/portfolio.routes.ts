@@ -9,7 +9,7 @@ import {
     getAllPortfolios,
 } from '../controllers/portfolio.controller';
 
-// Mounted at /portfolios. portfolio_id names the row on its own, so the
+// Mounted at /portfolios. portfolioId names the row on its own, so the
 // listing does not appear in the path.
 export const portfolioRoutes = Router();
 
@@ -24,7 +24,7 @@ portfolioRoutes.post(
     '/',
     requireAuth,
     requireRole('provider'),
-    uploadImage('portfolio_image'),
+    uploadImage('portfolioImage'),
     createPortfolio,
 );
 
@@ -32,7 +32,7 @@ portfolioRoutes.patch(
     '/:portfolioId',
     requireAuth,
     requireRole('provider'),
-    uploadImage('portfolio_image'),
+    uploadImage('portfolioImage'),
     updatePortfolio,
 );
 

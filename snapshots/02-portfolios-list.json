@@ -1,0 +1,123 @@
+{
+    "request": "GET /portfolios",
+    "status": 200,
+    "body": [
+        {
+            "developmentDate": "2026-03-02",
+            "listingId": 23,
+            "portfolioDescription": "Patient self-booking with SMS reminders and a staff rota view.",
+            "portfolioId": 16,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://stinkytoes.example.com/work/clinic-route",
+            "portfolioName": "Clinic booking portal"
+        },
+        {
+            "developmentDate": "2026-01-15",
+            "listingId": 1,
+            "portfolioDescription": "พัฒนาเว็บอีคอมเมิร์ซใหม่ด้วย Next.js และ Tailwind CSS",
+            "portfolioId": 9,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://example.com/projects/ecommerce",
+            "portfolioName": "E-Commerce Website Redesign"
+        },
+        {
+            "developmentDate": "2026-01-15",
+            "listingId": 25,
+            "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+            "portfolioId": 24,
+            "portfolioImage": "https://snapshot.local/portfolio.png",
+            "portfolioLink": "https://snapshot.local/portfolio",
+            "portfolioName": "Snapshot seed portfolio"
+        },
+        {
+            "developmentDate": "2025-11-22",
+            "listingId": 23,
+            "portfolioDescription": "Daily route optimisation for a fleet of twelve vans.",
+            "portfolioId": 17,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://stinkytoes.example.com/work/route-planner",
+            "portfolioName": "Delivery route planner"
+        },
+        {
+            "developmentDate": "2025-08-08",
+            "listingId": 23,
+            "portfolioDescription": null,
+            "portfolioId": 18,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "https://stinkytoes.example.com/work/loyalty-app",
+            "portfolioName": "Loyalty card mobile app"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 16,
+            "portfolioDescription": null,
+            "portfolioId": 6,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.cloudscale.com/aws-case-study",
+            "portfolioName": "aws-case-study"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 6,
+            "portfolioDescription": null,
+            "portfolioId": 1,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.codecrafters.com/portfolio-ecommerce",
+            "portfolioName": "portfolio-ecommerce"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 20,
+            "portfolioDescription": null,
+            "portfolioId": 8,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.globaltech.com/sap-success-story",
+            "portfolioName": "sap-success-story"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 17,
+            "portfolioDescription": null,
+            "portfolioId": 7,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.datamind.com/retail-prediction",
+            "portfolioName": "retail-prediction"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 6,
+            "portfolioDescription": null,
+            "portfolioId": 2,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.codecrafters.com/portfolio-erp",
+            "portfolioName": "portfolio-erp"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 7,
+            "portfolioDescription": null,
+            "portfolioId": 3,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.appsynth.com/showcase-bank-app",
+            "portfolioName": "showcase-bank-app"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 9,
+            "portfolioDescription": null,
+            "portfolioId": 4,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.techconsult.com/audit-report-sample.pdf",
+            "portfolioName": "audit-report-sample.pdf"
+        },
+        {
+            "developmentDate": "2024-01-01",
+            "listingId": 10,
+            "portfolioDescription": null,
+            "portfolioId": 5,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.nextgenai.com/vision-demo",
+            "portfolioName": "vision-demo"
+        }
+    ]
+}

@@ -41,19 +41,19 @@ export async function createPortfolio(
 
     // 2. Parse Text Fields จาก Form-Data
     const data = parseBody(createPortfolioSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // 3. AUTHORIZATION & OWNERSHIP CHECK ก่อนทำการ Upload ไฟล์
     const service = await prisma.service.findUnique({
-        where: { listing_id: data.listing_id },
-        select: { listing: { select: { company_id: true } } },
+        where: { listingId: data.listingId },
+        select: { listing: { select: { companyId: true } } },
     });
 
     if (!service) {
         throw ApiError.notFound('Service listing not found');
     }
 
-    if (service.listing.company_id !== companyId) {
+    if (service.listing.companyId !== companyId) {
         throw ApiError.forbidden('This service belongs to another company');
     }
 
@@ -67,16 +67,16 @@ export async function createPortfolio(
     // 5. บันทึกลง Database
     let created;
     try {
-        created = await prisma.service_portfolio.create({
+        created = await prisma.servicePortfolio.create({
             data: {
-                portfolio_name: data.portfolio_name,
-                portfolio_description: data.portfolio_description ?? null,
-                development_date: data.development_date,
-                portfolio_image: image.url,
-                portfolio_link: data.portfolio_link,
+                portfolioName: data.portfolioName,
+                portfolioDescription: data.portfolioDescription ?? null,
+                developmentDate: data.developmentDate,
+                portfolioImage: image.url,
+                portfolioLink: data.portfolioLink,
                 service: {
                     connect: {
-                        listing_id: data.listing_id,
+                        listingId: data.listingId,
                     },
                 },
             },
@@ -106,7 +106,7 @@ export async function updatePortfolio(
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
     const data = parseBody(updatePortfolioSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // The text body may be empty when the only change is a replacement image.
     if (Object.keys(data).length === 0 && !req.file) {
@@ -124,26 +124,26 @@ export async function updatePortfolio(
         : null;
 
     const updateData = omitUndefined(data);
-    if (updateData.portfolio_description === '') {
-        updateData.portfolio_description = null;
+    if (updateData.portfolioDescription === '') {
+        updateData.portfolioDescription = null;
     }
 
     // No same-value early return here: Postgres unique indexes only compare
-    // against *other* rows, so writing portfolio_link back to its current
+    // against *other* rows, so writing portfolioLink back to its current
     // value can never self-collide. Skipping the write was a micro-
     // optimization, not a correctness need — and with five editable fields
     // now, a check keyed on one of them would silently drop the rest of the
     // PATCH whenever that one field happened to be unchanged.
     let updated;
     try {
-        updated = await prisma.service_portfolio.update({
+        updated = await prisma.servicePortfolio.update({
             where: {
-                portfolio_id: portfolioId,
-                service: { listing: { company_id: companyId } },
+                portfolioId,
+                service: { listing: { companyId } },
             },
             data: {
                 ...updateData,
-                ...(replacement ? { portfolio_image: replacement.url } : {}),
+                ...(replacement ? { portfolioImage: replacement.url } : {}),
             },
             select: portfolioSelect,
         });
@@ -152,7 +152,7 @@ export async function updatePortfolio(
             await removeFromStorage(replacement.path, BUCKETS.PORTFOLIO);
         }
 
-        // @@unique([listing_id, portfolio_link]) — this listing already
+        // @@unique([listingId, portfolioLink]) — this listing already
         // carries that link on some other row.
         const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
         if (fields) {
@@ -172,7 +172,7 @@ export async function updatePortfolio(
     // needed. Cleanup is best-effort, matching portfolio deletion.
     if (replacement) {
         await removeFromStorageByUrl(
-            existing.portfolio_image,
+            existing.portfolioImage,
             BUCKETS.PORTFOLIO,
         );
     }
@@ -188,18 +188,18 @@ export async function deletePortfolio(
     res: Response,
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     await assertPortfolioOwned(portfolioId, companyId);
 
     let deleted;
     try {
-        deleted = await prisma.service_portfolio.delete({
+        deleted = await prisma.servicePortfolio.delete({
             where: {
-                portfolio_id: portfolioId,
-                service: { listing: { company_id: companyId } },
+                portfolioId,
+                service: { listing: { companyId } },
             },
-            select: { portfolio_image: true },
+            select: { portfolioImage: true },
         });
     } catch (err) {
         if (isRecordNotFound(err)) {
@@ -210,7 +210,7 @@ export async function deletePortfolio(
 
     // Best-effort cleanup of the image file: a failed remove logs but won't
     // block the 204, and the DB row is already gone either way.
-    await removeFromStorageByUrl(deleted.portfolio_image, BUCKETS.PORTFOLIO);
+    await removeFromStorageByUrl(deleted.portfolioImage, BUCKETS.PORTFOLIO);
 
     res.status(204).end();
 }
@@ -218,8 +218,8 @@ export async function deletePortfolio(
 export async function getPortfolio(req: Request, res: Response): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
 
-    const portfolio = await prisma.service_portfolio.findUnique({
-        where: { portfolio_id: portfolioId },
+    const portfolio = await prisma.servicePortfolio.findUnique({
+        where: { portfolioId },
         select: portfolioSelect,
     });
 
@@ -243,15 +243,13 @@ export async function getAllPortfolios(
 
     // One where object rather than a conditional spread of the whole key, so
     // the two filters can combine. An empty one matches everything.
-    const portfolios = await prisma.service_portfolio.findMany({
+    const portfolios = await prisma.servicePortfolio.findMany({
         where: {
-            ...(listingId ? { listing_id: listingId } : {}),
-            ...(companyId
-                ? { service: { listing: { company_id: companyId } } }
-                : {}),
+            ...(listingId ? { listingId } : {}),
+            ...(companyId ? { service: { listing: { companyId } } } : {}),
         },
         select: portfolioSelect,
-        orderBy: { development_date: 'desc' },
+        orderBy: { developmentDate: 'desc' },
     });
 
     res.json(portfolios.map(toServicePortfolio));

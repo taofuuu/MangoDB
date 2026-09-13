@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { AccountType, SessionResponse } from '@mangodb/shared';
+import type { RegisterAccountType, SessionResponse } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
@@ -27,8 +27,24 @@ import {
     validatePhone,
     validateUsername,
     validateWebsite,
+    toFormErrors,
 } from '@/lib/validation';
-import { apiFetch, ApiRequestError } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
+
+// Which input each field the API can reject belongs under. Username and
+// password live on the previous step, so their messages are held until the
+// user is sent back to it.
+const REGISTER_FIELDS = {
+    companyName: 'companyName',
+    companyDescription: 'companyDescription',
+    companyType: 'companyType',
+    phone: 'phoneNumber',
+    email: 'email',
+    address: 'address',
+    website: 'website',
+    username: 'username',
+    password: 'password',
+} as const;
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -43,7 +59,12 @@ export default function RegisterPage() {
     const [currentStep, setCurrentStep] = useState<RegisterStep>(
         RegisterStep.SelectRole,
     );
-    const [accountType, setAccountType] = useState<AccountType | null>(null);
+    // RegisterAccountType, not AccountType: it excludes ADMIN, which
+    // registerSchema rejects at runtime anyway. The narrow type was built for
+    // exactly this, so the form cannot even assemble a body the API refuses.
+    const [accountType, setAccountType] = useState<RegisterAccountType | null>(
+        null,
+    );
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -120,7 +141,7 @@ export default function RegisterPage() {
     const submitRegister = async () => {
         setErrorMessage('');
 
-        // contact_email is optional on the profile, but registration needs one
+        // contactEmail is optional on the profile, but registration needs one
         // to sign in with, so the required check belongs here.
         const emailError = companyInfo.email.trim()
             ? validateContactEmail(companyInfo.email) || ''
@@ -151,40 +172,53 @@ export default function RegisterPage() {
         // Optional fields go out as undefined rather than an empty string,
         // which the API would read as a value and reject.
         const payload = {
-            company_name: companyInfo.companyName,
-            company_description:
+            companyName: companyInfo.companyName,
+            companyDescription:
                 companyInfo.companyDescription.trim() || undefined,
-            company_type: companyInfo.companyType,
+            companyType: companyInfo.companyType,
             phone: normalizePhone(companyInfo.phoneNumber),
             email: companyInfo.email,
             address: companyInfo.address.trim() || undefined,
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
-            account_type: accountType,
+            accountType,
             username: accountInfo.username,
             password: accountInfo.password,
         };
 
         try {
-            const data = await apiFetch<SessionResponse>('/auth/register', {
+            // The session is an httpOnly cookie set on this response, so
+            // there is nothing to store. The accessToken in the body is for
+            // callers that are not a browser — curl, Postman.
+            await apiFetch<SessionResponse>('/auth/register', {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
 
-            if (data.accessToken) {
-                localStorage.setItem('accessToken', data.accessToken);
-            }
-
             setCurrentStep(RegisterStep.Success);
         } catch (error) {
-            if (error instanceof ApiRequestError) {
-                const details = error.details
-                    .map(({ field, message }) => `${field}: ${message}`)
-                    .join(', ');
+            const { fields, message } = toFormErrors(error, REGISTER_FIELDS);
 
-                setErrorMessage(details || error.message);
-            } else {
-                setErrorMessage('Unable to connect to the server.');
+            // username and password belong to the account step, so a rejection
+            // there sends the user back to the boxes it is about.
+            const { username, password, ...companyFields } = fields;
+            if (username || password) {
+                setAccountInfoError({
+                    usernameError: username ?? '',
+                    passwordError: password ?? '',
+                });
+                setCurrentStep(RegisterStep.AccountInfo);
             }
+
+            setCompanyInfoError({
+                companyNameError: companyFields.companyName ?? '',
+                companyDescriptionError: companyFields.companyDescription ?? '',
+                companyTypeError: companyFields.companyType ?? '',
+                phoneNumberError: companyFields.phoneNumber ?? '',
+                emailError: companyFields.email ?? '',
+                addressError: companyFields.address ?? '',
+                websiteError: companyFields.website ?? '',
+            });
+            setErrorMessage(message ?? '');
         } finally {
             setIsSubmitting(false);
         }
@@ -240,7 +274,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
+                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 type-sm font-medium text-red-600">
                     {errorMessage}
                 </div>
             )}
@@ -287,10 +321,10 @@ export default function RegisterPage() {
                         onClick={goToHome}
                         className="
                             rounded-button
-                            bg-[#3F6B80]
+                            bg-brand-dark
                             mt-2
                             px-[24px] py-[5px]
-                            text-md text-[#FFFDF9]
+                            type-md text-surface
                             "
                     >
                         Go to Home

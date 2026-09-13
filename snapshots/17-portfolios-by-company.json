@@ -1,0 +1,15 @@
+{
+    "request": "GET /portfolios?companyId=142",
+    "status": 200,
+    "body": [
+        {
+            "developmentDate": "2026-01-15",
+            "listingId": 25,
+            "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+            "portfolioId": 24,
+            "portfolioImage": "https://snapshot.local/portfolio.png",
+            "portfolioLink": "https://snapshot.local/portfolio",
+            "portfolioName": "Snapshot seed portfolio"
+        }
+    ]
+}

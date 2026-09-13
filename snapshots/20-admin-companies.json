@@ -1,0 +1,134 @@
+{
+    "request": "GET /admin/companies",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
+                "deletedAt": null,
+                "phone": "023333333",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 141,
+                "companyName": "ce",
+                "deletedAt": null,
+                "phone": "0967849322",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
+                "companyId": 11,
+                "companyName": "CloudScale Solutions",
+                "deletedAt": null,
+                "phone": "021110011",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": 4.8,
+                "companyDescription": "Edited by admin US6-3",
+                "companyId": 1,
+                "companyName": "CodeCrafters",
+                "deletedAt": null,
+                "phone": "021111111",
+                "ratingCount": 3
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": "Digital Marketing and Advertising",
+                "companyId": 19,
+                "companyName": "Creative Agency TH",
+                "deletedAt": null,
+                "phone": "021110019",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Data Science and Machine Learning Agency",
+                "companyId": 12,
+                "companyName": "DataMind AI",
+                "deletedAt": null,
+                "phone": "021110012",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "BOTH",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 107,
+                "companyName": "Dev BOTH Co.",
+                "deletedAt": null,
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "BOTH",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 109,
+                "companyName": "Dev BOTH Co.",
+                "deletedAt": null,
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Leading provider of database solutions and infrastructure services.",
+                "companyId": 120,
+                "companyName": "Dev PROVIDER Co.",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 121,
+                "companyName": "Dev RECEIVER Co.",
+                "deletedAt": null,
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 131,
+                "companyName": "Dev RECEIVER Co.",
+                "deletedAt": null,
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 132,
+                "companyName": "Dev RECEIVER Co.",
+                "deletedAt": null,
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 44,
+            "totalPages": 4
+        }
+    }
+}

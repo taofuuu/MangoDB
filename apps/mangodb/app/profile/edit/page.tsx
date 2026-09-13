@@ -3,15 +3,18 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import {
     deleteCompanyAccount,
+    deleteMyPhoto,
     getCompanyAccountDetail,
     getMyProfile,
     updateCompanyAccount,
+    updateMyPhoto,
     updateMyProfile,
 } from '@/lib/companies';
 import {
+    PROFILE_FIELDS,
     toFormErrors,
     validateProfile,
     type ProfileErrors,
@@ -34,8 +37,11 @@ function EditProfilePageInner() {
     const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [errors, setErrors] = useState<ProfileErrors>({});
+    // The photo is not a column this form writes, so it is not in ProfileErrors.
+    const [photoError, setPhotoError] = useState<string | undefined>(undefined);
     const [status, setStatus] = useState<StatusMessageData>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
 
     // No token check first: without one the request 401s anyway, and a token
     // that is expired or revoked lands in the same place. One path for "you are
@@ -46,20 +52,14 @@ function EditProfilePageInner() {
             : getMyProfile();
 
         load.then((profile) => {
-            // photoUrl has no column on the server, so it starts empty and
-            // only ever lives in this page's state.
-            setSaved({ ...profile, photoUrl: null });
+            setSaved(profile);
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
-            if (err instanceof ApiRequestError && err.status === 401) {
-                setLoadError('no-token');
+            if (isNotSignedIn(err)) {
+                setLoadError(NOT_SIGNED_IN);
                 return;
             }
-            setLoadError(
-                err instanceof ApiRequestError
-                    ? err.message
-                    : 'Could not reach the API. Is it running on port 4000?',
-            );
+            setLoadError(describeError(err));
         });
     }, [isAdminEditingOther, targetCompanyId]);
 
@@ -73,9 +73,10 @@ function EditProfilePageInner() {
         }
     };
 
-    const handleSave = async (data: ProfileFormData) => {
+    const handleSave = async (data: ProfileFormData, photo: File | null) => {
         setStatus(null);
         setErrors({});
+        setPhotoError(undefined);
 
         // 1. Run frontend validation
         const frontendErrors = validateProfile(data);
@@ -91,43 +92,66 @@ function EditProfilePageInner() {
         setIsSaving(true);
 
         try {
-            const profile = isAdminEditingOther
+            let profile = isAdminEditingOther
                 ? await updateCompanyAccount(
                       Number(targetCompanyId),
                       toUpdateRequest(data),
                   )
                 : await updateMyProfile(toUpdateRequest(data));
+
+            // Second request, because the photo is multipart and the fields
+            // above are JSON. Deliberately after them: if the upload fails the
+            // fields are already stored, and the message says only the photo
+            // did not go — the reverse would lose the typed edits.
+            if (photo) {
+                try {
+                    profile = { ...profile, ...(await updateMyPhoto(photo)) };
+                } catch (uploadError) {
+                    setSaved(profile);
+                    setPhotoError(describeError(uploadError));
+                    setStatus({
+                        type: 'error',
+                        message: 'Profile saved, but the photo did not upload.',
+                    });
+                    return;
+                }
+            }
+
             // Update saved with the newly persisted profile so subsequent Cancel
-            // actions revert to this latest saved baseline. Keep the photoUrl as
-            // the response does not carry one.
-            setSaved({ ...profile, photoUrl: data.photoUrl });
+            // actions revert to this latest saved baseline.
+            setSaved(profile);
             setStatus({
                 type: 'success',
                 message: 'Profile saved successfully.',
             });
         } catch (err) {
-            if (!(err instanceof ApiRequestError)) {
-                setStatus({
-                    type: 'error',
-                    message:
-                        'Could not reach the API. Is it running on port 4000?',
-                });
-                return;
-            }
-
             // VALIDATION_FAILED and CONFLICT both name the fields they rejected,
             // so those go beside the inputs. Anything else has only a message.
-            const fieldErrors = toFormErrors(err.details);
-            setErrors(fieldErrors);
+            const { fields, message } = toFormErrors(err, PROFILE_FIELDS);
+            setErrors(fields);
             setStatus({
                 type: 'error',
-                message:
-                    Object.keys(fieldErrors).length > 0
-                        ? 'Some fields need fixing.'
-                        : err.message,
+                message: message ?? 'Some fields need fixing.',
             });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // Straight away rather than on Save, because there is no "remove this
+    // later" state for the form to hold — and the answer is the whole profile,
+    // so this becomes the new Cancel baseline like any other save.
+    const handleRemovePhoto = async () => {
+        setStatus(null);
+        setPhotoError(undefined);
+        setIsRemovingPhoto(true);
+
+        try {
+            setSaved(await deleteMyPhoto());
+        } catch (err) {
+            setPhotoError(describeError(err));
+        } finally {
+            setIsRemovingPhoto(false);
         }
     };
 
@@ -137,7 +161,7 @@ function EditProfilePageInner() {
     // so a wrong password (401) surfaces there instead of navigating away.
     const handleDeleteAccount = async (adminPassword: string) => {
         await deleteCompanyAccount(Number(targetCompanyId), {
-            current_password: adminPassword,
+            currentPassword: adminPassword,
         });
         router.push('/companies');
     };
@@ -155,9 +179,9 @@ function EditProfilePageInner() {
     return (
         // pt matches the gap the design leaves under the 108px navbar, which
         // is a separate task, so spacing stays right once that lands.
-        <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
-            {loadError === 'no-token' && (
-                <p className="text-md !font-[400]">
+        <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
+            {loadError === NOT_SIGNED_IN && (
+                <p className="type-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -166,14 +190,12 @@ function EditProfilePageInner() {
                 </p>
             )}
 
-            {loadError && loadError !== 'no-token' && (
-                <p className="text-md !font-[400] text-[#C5483B]">
-                    {loadError}
-                </p>
+            {loadError && loadError !== NOT_SIGNED_IN && (
+                <p className="type-md !font-[400] text-danger">{loadError}</p>
             )}
 
             {!loadError && !saved && (
-                <p className="text-md !font-[400]">Loading…</p>
+                <p className="type-md !font-[400]">Loading…</p>
             )}
 
             {saved && (
@@ -181,6 +203,14 @@ function EditProfilePageInner() {
                     initialData={saved}
                     onSave={handleSave}
                     onCancel={handleCancel}
+                    // Only for a company editing itself: PATCH /companies/me/photo
+                    // acts on the caller, so there is nothing behind an
+                    // administrator changing someone else's.
+                    canEditPhoto={!isAdminEditingOther}
+                    photoError={photoError}
+                    onPhotoError={setPhotoError}
+                    onPhotoRemove={handleRemovePhoto}
+                    isRemovingPhoto={isRemovingPhoto}
                     errors={errors}
                     status={status}
                     onDeleteAccount={
@@ -201,8 +231,8 @@ export default function EditProfilePage() {
     return (
         <Suspense
             fallback={
-                <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
-                    <p className="text-md !font-[400]">Loading…</p>
+                <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
+                    <p className="type-md !font-[400]">Loading…</p>
                 </main>
             }
         >

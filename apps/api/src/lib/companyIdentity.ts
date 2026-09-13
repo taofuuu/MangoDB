@@ -1,3 +1,4 @@
+import type { IdentityAvailability } from '@mangodb/shared';
 import { Prisma } from '../generated/prisma/client';
 import { ApiError } from './ApiError';
 import { prisma } from './prisma';
@@ -14,12 +15,9 @@ export interface PartialCompanyIdentityInput {
     email?: string | undefined;
 }
 
-export interface CompanyIdentityAvailability {
-    username: string;
-    email: string;
-    usernameAvailable: boolean;
-    emailAvailable: boolean;
-}
+// The wire shape of POST /auth/check-availability, named once in
+// packages/shared so the frontend codes against the same thing.
+export type CompanyIdentityAvailability = IdentityAvailability;
 
 export function normalizeUsername(username: string): string {
     return username.trim().toLowerCase();
@@ -34,9 +32,26 @@ interface IdentityMatch {
     email: string;
 }
 
+// The comparison both callers make, written once. `wanted` is already
+// normalized; the rows coming back from the database are not, because the
+// query lowercased them for matching and returned the stored spelling.
+// An absent field is never taken — nothing was asked about it.
+function isTaken(
+    matches: IdentityMatch[],
+    field: keyof IdentityMatch,
+    wanted: string | undefined,
+): boolean {
+    if (!wanted) return false;
+    return matches.some((company) => company[field].toLowerCase() === wanted);
+}
+
 // One case-insensitive query for whichever fields were supplied. excludeCompanyId
 // is the caller's own row: keeping your own email is not a collision with
 // yourself. Nothing supplied matches nothing, rather than every company.
+//
+// The one $queryRaw in the codebase, and the one place below the camelCase
+// line: it addresses real columns, so `company_id` here is the column name and
+// not a field name Prisma renamed. See docs/conventions.md section 1.
 async function findIdentityMatches(
     username: string | undefined,
     email: string | undefined,
@@ -66,23 +81,18 @@ export async function checkCompanyIdentityAvailability(
     const email = normalizeEmail(input.email);
 
     if (!username || !email) {
-        throw new TypeError('Username and email must not be empty');
+        // Reachable from POST /auth/check-availability, where a TypeError
+        // left through the 500 branch of errorHandler.
+        throw ApiError.badRequest('Username and email must not be empty');
     }
 
     const matches = await findIdentityMatches(username, email, undefined);
 
-    const usernameTaken = matches.some(
-        (company) => normalizeUsername(company.username) === username,
-    );
-    const emailTaken = matches.some(
-        (company) => normalizeEmail(company.email) === email,
-    );
-
     return {
         username,
         email,
-        usernameAvailable: !usernameTaken,
-        emailAvailable: !emailTaken,
+        usernameAvailable: !isTaken(matches, 'username', username),
+        emailAvailable: !isTaken(matches, 'email', email),
     };
 }
 
@@ -103,22 +113,9 @@ export async function assertCompanyIdentityAvailable(
         excludeCompanyId,
     );
 
-    // A field that was not supplied is never reported as taken.
-    const taken: string[] = [];
-    if (
-        username &&
-        matches.some(
-            (company) => normalizeUsername(company.username) === username,
-        )
-    ) {
-        taken.push('username');
-    }
-    if (
-        email &&
-        matches.some((company) => normalizeEmail(company.email) === email)
-    ) {
-        taken.push('email');
-    }
+    const taken = (['username', 'email'] as const).filter((field) =>
+        isTaken(matches, field, field === 'username' ? username : email),
+    );
 
     if (taken.length > 0) {
         throw ApiError.conflict(

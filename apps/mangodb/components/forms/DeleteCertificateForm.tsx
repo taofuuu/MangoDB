@@ -4,7 +4,7 @@ import DeleteConfirmationModal, {
     type DeleteModalProps,
 } from '@/components/ui/DeleteConfirmationModal';
 import type { CertificateData } from './EditCertificateForm';
-import { apiFetch } from '@/lib/api';
+import { deleteCertificate } from '@/lib/certificate';
 
 export type DeleteCertificateFormProps = Omit<DeleteModalProps, 'onConfirm'> & {
     certificate?: CertificateData | null | undefined;
@@ -23,9 +23,7 @@ export default function DeleteCertificateForm({
 }: DeleteCertificateFormProps) {
     const handleConfirm = async () => {
         if (certificate?.id) {
-            await apiFetch<void>(`/certificates/${certificate.id}`, {
-                method: 'DELETE',
-            });
+            await deleteCertificate(certificate.id);
         }
 
         if (onConfirm) {
@@ -48,7 +46,7 @@ export default function DeleteCertificateForm({
                 certificate?.name ? (
                     <span>
                         Are you sure you want to delete{' '}
-                        <strong className="font-semibold text-[#171717]">
+                        <strong className="font-semibold text-ink">
                             &ldquo;{certificate.name}&rdquo;
                         </strong>
                         ? This action cannot be undone.

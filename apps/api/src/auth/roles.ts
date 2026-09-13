@@ -1,17 +1,18 @@
 import type { AccountType, UserRole } from '@mangodb/shared';
+import { ApiError } from '../lib/ApiError';
 
-// account_type is what the company signed up as; role is what its token says.
+// accountType is what the company signed up as; role is what its token says.
 // The two are the same idea in different cases, except BOTH.
 const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
     PROVIDER: 'provider',
     RECEIVER: 'receiver',
     BOTH: 'both',
     // No signup path produces this: registerSchema rejects ADMIN, and the
-    // profile edit cannot change account_type.
+    // profile edit cannot change accountType.
     ADMIN: 'admin',
 };
 
-// account_type is a VarChar column, not a real Postgres enum (see
+// accountType is a VarChar column, not a real Postgres enum (see
 // CompanyProfileRow), so nothing stops a bad value from reaching here except
 // registerSchema — and only for rows register itself wrote. A row from
 // anywhere else (a seed script, a manual edit, a future bulk-import path)
@@ -20,7 +21,13 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
 export function accountTypeToRole(accountType: AccountType): UserRole {
     const role = ROLE_BY_ACCOUNT_TYPE[accountType];
     if (!role) {
-        throw new Error(`Unknown account_type: ${accountType}`);
+        // 500 rather than a 4xx: the caller did nothing wrong, a row in the
+        // database holds a value no code path can produce.
+        throw new ApiError(
+            500,
+            'INTERNAL',
+            `Unknown accountType: ${accountType}`,
+        );
     }
     return role;
 }
@@ -42,10 +49,17 @@ export function roleGrants(role: UserRole): readonly UserRole[] {
 // Which account types own a row in `provider`, and so have a service term and
 // a warranty policy to edit. roleGrants answers the same question about the
 // caller's own token, which is the wrong company to ask when an administrator
-// is editing someone else's account — so this one takes an account_type.
-// Typed as string, not AccountType: account_type is a VarChar column (see
+// is editing someone else's account — so this one takes an accountType.
+// Typed as string, not AccountType: accountType is a VarChar column (see
 // CompanyProfileRow), so an unrecognised value is possible, and answering
 // false for it refuses the write instead of letting Prisma fail mid-update.
 export function ownsProviderRow(accountType: string): boolean {
     return accountType === 'PROVIDER' || accountType === 'BOTH';
+}
+
+// The mirror of the above, and the only other subtype table. Register uses
+// both to decide which child rows a new company gets; before this, that was a
+// pair of inline comparisons that could drift from ownsProviderRow.
+export function ownsReceiverRow(accountType: string): boolean {
+    return accountType === 'RECEIVER' || accountType === 'BOTH';
 }

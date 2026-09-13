@@ -6,39 +6,41 @@ import { omitUndefined } from './objects';
 // The columns the API may return. Password is absent on purpose: it can't leak
 // from a response if it was never fetched.
 export const companyProfileSelect = {
-    company_id: true,
-    company_name: true,
-    company_description: true,
+    companyId: true,
+    companyName: true,
+    companyDescription: true,
     username: true,
     email: true,
-    contact_email: true,
+    contactEmail: true,
     phone: true,
     address: true,
     website: true,
-    account_type: true,
-    company_type: { select: { company_type: true } },
+    companyPhoto: true,
+    accountType: true,
+    companyType: { select: { companyType: true } },
     // Null for a RECEIVER company, which owns no provider row.
-    provider: { select: { service_term: true, warranty_policy: true } },
+    provider: { select: { serviceTerm: true, warrantyPolicy: true } },
 } as const;
 
 // What that select hands back, before toCompanyProfile tidies it.
 export interface CompanyProfileRow {
-    company_id: number;
-    company_name: string;
-    company_description: string | null;
+    companyId: number;
+    companyName: string;
+    companyDescription: string | null;
     username: string;
     email: string;
-    contact_email: string | null;
+    contactEmail: string | null;
     phone: string;
     address: string | null;
     website: string | null;
+    companyPhoto: string | null;
     // A VarChar column, so Prisma types it as string; registerSchema is what
     // guarantees it's one of the three account types.
-    account_type: string;
-    company_type: { company_type: string }[];
+    accountType: string;
+    companyType: { companyType: string }[];
     provider: {
-        service_term: string | null;
-        warranty_policy: string | null;
+        serviceTerm: string | null;
+        warrantyPolicy: string | null;
     } | null;
 }
 
@@ -51,10 +53,10 @@ export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
 
     return {
         ...rest,
-        account_type: company.account_type as AccountType,
-        company_type: company.company_type.map((tag) => tag.company_type),
-        service_term: provider?.service_term ?? null,
-        warranty_policy: provider?.warranty_policy ?? null,
+        accountType: company.accountType as AccountType,
+        companyType: company.companyType.map((tag) => tag.companyType),
+        serviceTerm: provider?.serviceTerm ?? null,
+        warrantyPolicy: provider?.warrantyPolicy ?? null,
     };
 }
 
@@ -62,8 +64,8 @@ export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
 // Named once so the schema, the write, and the error that reports them cannot
 // disagree about which fields are provider-only.
 export const PROVIDER_PROFILE_FIELDS = [
-    'service_term',
-    'warranty_policy',
+    'serviceTerm',
+    'warrantyPolicy',
 ] as const;
 
 // `in`, not a truthiness check: zod drops absent keys, so this is the one way
@@ -83,8 +85,8 @@ export function editsProviderFields(body: UpdateCompanyProfileInput): boolean {
 // and those are two different questions with two different answers.
 export function companyProfileUpdateData(
     body: UpdateCompanyProfileInput,
-): Prisma.companyUpdateInput {
-    const { company_type, service_term, warranty_policy, ...columns } = body;
+): Prisma.CompanyUpdateInput {
+    const { companyType, serviceTerm, warrantyPolicy, ...columns } = body;
 
     return {
         // omitUndefined, not a plain spread: exactOptionalPropertyTypes is on
@@ -93,18 +95,18 @@ export function companyProfileUpdateData(
         // Tags are a set, not a list to append to: the request carries the
         // whole set, so the rows it replaces go. A nested write is one
         // transaction, so the company is never left untagged.
-        ...(company_type && {
-            company_type: {
+        ...(companyType && {
+            companyType: {
                 deleteMany: {},
-                create: company_type.map((tag) => ({
-                    company_type: tag,
+                create: companyType.map((tag) => ({
+                    companyType: tag,
                 })),
             },
         }),
         // A second table, same transaction. omitUndefined keeps a body that
         // sent only one of the two from clearing the other.
         //
-        // upsert, not update: account_type says the company owns a provider
+        // upsert, not update: accountType says the company owns a provider
         // row, but no constraint enforces it, so an imported or hand-edited
         // company can be missing one. update would throw P2025 there, which
         // both callers translate into "not found" for a company that plainly
@@ -112,8 +114,8 @@ export function companyProfileUpdateData(
         ...(editsProviderFields(body) && {
             provider: {
                 upsert: {
-                    create: omitUndefined({ service_term, warranty_policy }),
-                    update: omitUndefined({ service_term, warranty_policy }),
+                    create: omitUndefined({ serviceTerm, warrantyPolicy }),
+                    update: omitUndefined({ serviceTerm, warrantyPolicy }),
                 },
             },
         }),

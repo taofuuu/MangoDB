@@ -1,0 +1,10 @@
+{
+    "request": "GET /no-such-route",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Cannot GET /no-such-route"
+        }
+    }
+}

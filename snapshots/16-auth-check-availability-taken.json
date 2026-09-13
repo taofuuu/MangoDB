@@ -1,0 +1,10 @@
+{
+    "request": "POST /auth/check-availability",
+    "status": 200,
+    "body": {
+        "email": "provider@snapshot.local",
+        "emailAvailable": false,
+        "username": "snapshot_provider",
+        "usernameAvailable": false
+    }
+}

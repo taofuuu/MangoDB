@@ -1,12 +1,13 @@
 import Link from 'next/link';
 
-// Temporary index so pages built so far are reachable by clicking.
+// Temporary index so the pages built so far are reachable by clicking. It is
+// not the real home page — replace it when there is one, and keep the
+// descriptions true in the meantime: a link list nobody trusts is worse than
+// no link list.
+//
+// Every one of these needs you signed in except /login, /admin/login and
+// /register. `npm run db:seed -w api` makes accounts you can use.
 const ROUTES = [
-    {
-        href: '/dev/session',
-        title: 'Dev session',
-        detail: 'Get a token — there is no login page yet. Start here.',
-    },
     {
         href: '/profile/edit',
         title: 'Edit Profile',
@@ -15,7 +16,7 @@ const ROUTES = [
     {
         href: '/certificate',
         title: 'Certificates',
-        detail: 'Add, edit and delete certificate modals, on mock data.',
+        detail: "Add, edit and delete a provider's certificates.",
     },
     {
         href: '/account-settings',
@@ -35,52 +36,47 @@ const ROUTES = [
     {
         href: '/companies',
         title: 'Companies view for admin',
-        detail: 'list of company that can be viewed by admin',
+        detail: 'US6-2 — the administrator company list, with search, filter and pagination.',
     },
     {
         href: '/profile/edit?companyId=1',
         title: 'Edit account as admin',
-        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
+        detail: 'US6-3/US6-4 — the profile form in admin mode, with Delete account. Change companyId in the URL to a real one.',
     },
     {
         href: '/register',
         title: 'Register',
-        detail: 'Register new user',
+        detail: 'US1-1 — the three-step company registration wizard.',
     },
     {
         href: '/admin/login',
         title: 'Admin Login',
-        detail: 'login for admin role',
+        detail: 'US6-1 — the separate door for administrator accounts.',
     },
     {
-        href: '/profile/view/provider',
-        title: 'View Profile (Provider)',
-        detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
-    },
-    {
-        href: '/profile/view/receiver',
-        title: 'View Profile (Receiver)',
-        detail: 'View profile page for Receiver role (Vertical company card, Job listings).',
+        href: '/profile/view',
+        title: 'View Profile',
+        detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
 ];
 
 export default function Home() {
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-[#FFF5DC] p-8">
-            <div className="w-full max-w-md rounded-2xl bg-[#FFFDF9] p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
-                <h1 className="text-4xl font-bold text-[#171717]">MangoDB</h1>
-                <p className="mt-3 text-[#497B93]">Welcome to MangoDB.</p>
+        <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
+            <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
+                <h1 className="text-4xl font-bold text-ink">MangoDB</h1>
+                <p className="mt-3 text-brand">Welcome to MangoDB.</p>
 
                 <Link
                     href="/register"
-                    className="mt-6 inline-block w-full rounded-[20px] bg-[#497B93] px-8 py-3 font-bold text-white transition hover:bg-[#3a6276]"
+                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-dark"
                 >
                     Sign Up
                 </Link>
 
                 {/* Developer Routes Navigation */}
                 <div className="mt-8 text-left">
-                    <h2 className="text-sm font-semibold text-[#497B93] uppercase tracking-wider">
+                    <h2 className="type-sm font-semibold text-brand uppercase tracking-wider">
                         Pages built so far
                     </h2>
                     <ul className="mt-3 flex flex-col gap-2">
@@ -88,12 +84,12 @@ export default function Home() {
                             <li key={route.href}>
                                 <Link
                                     href={route.href}
-                                    className="block rounded-lg border border-[#497B93]/30 bg-white p-3 text-left transition hover:bg-[#497B93]/10"
+                                    className="block rounded-lg border border-brand/30 bg-white p-3 text-left transition hover:bg-brand/10"
                                 >
-                                    <span className="block text-sm font-bold text-[#171717]">
+                                    <span className="block type-sm font-bold text-ink">
                                         {route.title}
                                     </span>
-                                    <span className="mt-0.5 block text-xs text-gray-600">
+                                    <span className="mt-0.5 block type-xs text-gray-600">
                                         {route.detail}
                                     </span>
                                 </Link>

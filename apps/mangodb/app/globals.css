@@ -2,14 +2,86 @@
 
 :root {
     --background: #ffffff;
+    /* Same value as --color-ink below. Kept because body and Tailwind's
+       defaults read it. */
     --foreground: #171717;
 }
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+    /* Colour tokens. Every value here was already in the code —
+       this names them, it does not change any of them. Two reds that
+       should be one red is a design decision, and now it is a
+       one-line edit here instead of a sweep through 444 call sites. */
+
+    --color-brand: #497b93;
+    /* The hover for brand. 26% darker. */
+    --color-brand-dark: #3f6b80;
+    --color-brand-light: #66a6c5;
+    --color-brand-tint: #edf4f7;
+    --color-brand-mist: #e3f1f1;
+    /* The hover for brand-dark, where a button is already dark at rest.
+       32% darker again. Three other shades used to sit between this and
+       brand-dark — #3B6478, #3A6276 and #386277 — each used once, each
+       within ΔE 4 of brand-dark, which is below what an eye can see. */
+    --color-brand-darker: #34596b;
+    --color-brand-deep: #1e4353;
+
+    /* One danger red. It used to be four — #C5483B, #C5483E, #CE473E and
+       #C6473A — and the delete-account flow alone used three of them: the
+       heading, the button that opens the modal and the warning inside it
+       were each a different one. */
+    --color-danger: #c5483b;
+    /* 30% darker than the base. The other candidate, #B93D35, was only 17%
+       and belonged to #C5483E — a red that no longer exists. */
+    --color-danger-hover: #a93b30;
+    --color-danger-deep: #8f271d;
+    --color-danger-tint: #f0d1c9;
+    --color-danger-wash: #fdf0ee;
+
+    /* Star ratings, and the yellow dot on a portfolio card. #FEC84A used to
+       sit beside this doing the same job. */
+    --color-accent: #fabc3f;
+    /* The pale panel behind the register and login flow. The login page used
+       #FCEFD7 for it and the register page this, ΔE 2.2 apart. */
+    --color-accent-tint: #fff5dc;
+
+    --color-orange: #d9603b;
+
+    /* The fill behind a "Provider" role label, on a company card and behind a
+       profile photo. Its counterpart is brand-light, which fills "Receiver" —
+       that one keeps a colour name because it is also a hover border on the
+       certificate page, where it means nothing about roles. */
+    --color-role-provider: #d36b60;
+
+    /* The page, and every panel on it. #FBFBFB and #FAF9F6 used to be two
+       more of these, within ΔE 2.3. */
+    --color-surface: #fffdf9;
+    /* Pure white, deliberately: an input or a card sitting on the warm
+       surface above, so it reads as on top rather than part of it. */
+    --color-surface-white: #ffffff;
+
+    /* Body text. */
+    --color-ink: #171717;
+    /* Secondary text — labels, helper lines, anything supporting. Three
+       greys used to share this job: #4B4B4B, #757575 and #756D6D. */
+    --color-ink-soft: #666666;
+    /* Placeholder text, which was five greys — #828282, #888888, #8A8A8A,
+       #999999 and #A3A3A3 — depending on which form you were looking at.
+       Two of those pairs were under ΔE 1. */
+    --color-ink-placeholder: #999999;
+
+    /* Every border. There were eight of these — #CBCBCB, #CCCCCC, #E0E0E0,
+       #E5E5E5, #EAEAEA, #EDEDED and #F5F5F5 alongside this one — and every
+       neighbouring pair was within ΔE 4. */
+    --color-line: #d6d6d6;
+    /* A filled block rather than a hairline: the Go Back button, a disabled
+       swatch. Close to line on paper, a different thing on screen. */
+    --color-fill-muted: #d9d9d9;
 }
 
 body {
@@ -18,29 +90,40 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/* font (big -----> small) */
+/* Type scale, big to small.
+ *
+ * .type-*, not .text-*: three of these shadowed Tailwind's own classes of the
+ * same name, so `text-sm` meant one thing in this project and another in the
+ * Tailwind docs, and which one you got depended on stylesheet order.
+ *
+ * The font-weights are still baked in, deliberately for now: they are what
+ * ~40 call sites are undoing with !font-[400] / !font-[600], but they are
+ * also the only thing holding an <h2 class="type-lg"> at 600 instead of the
+ * browser's bold. Splitting weight from size means deciding what each of
+ * those elements should weigh — a per-call-site job with the page open, not
+ * a sweep. */
 
-.text-hd {
+.type-hd {
     font-size: 36px;
     font-weight: 700;
 }
 
-.text-lg {
+.type-lg {
     font-size: 24px;
     font-weight: 600;
 }
 
-.text-md {
+.type-md {
     font-size: 18px;
     font-weight: 500;
 }
 
-.text-sm {
+.type-sm {
     font-size: 14px;
     font-weight: 400;
 }
 
-.text-xs {
+.type-xs {
     font-size: 12px;
     font-weight: 400;
 }
@@ -62,49 +145,60 @@ body {
     border-radius: 30px;
 }
 
-/* scrollbar */
-.modal-scrollbar {
+/* Scrollbar. One rule; the colour is a variable, which is the whole reason
+ * .certificate-scrollbar existed as a second copy of this. */
+.modal-scrollbar,
+.certificate-scrollbar,
+.view-profile-scrollbar {
+    --scrollbar-thumb: var(--color-brand);
+    --scrollbar-thumb-hover: var(--color-brand-dark);
     scrollbar-width: thin;
-    scrollbar-color: #497b93 transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-.modal-scrollbar::-webkit-scrollbar {
+.certificate-scrollbar {
+    --scrollbar-thumb: var(--color-accent);
+    --scrollbar-thumb-hover: var(--color-accent);
+}
+
+/* Grey rather than brand: this one scrolls inside a card that is already
+   busy, so the bar should not be the loudest thing on it. */
+.view-profile-scrollbar {
+    --scrollbar-thumb: var(--color-line);
+    --scrollbar-thumb-hover: var(--color-ink-placeholder);
+    padding-right: 5px;
+}
+
+.modal-scrollbar::-webkit-scrollbar,
+.certificate-scrollbar::-webkit-scrollbar,
+.view-profile-scrollbar::-webkit-scrollbar {
     width: 8px;
 }
 
-.modal-scrollbar::-webkit-scrollbar-track {
+.modal-scrollbar::-webkit-scrollbar-track,
+.certificate-scrollbar::-webkit-scrollbar-track,
+.view-profile-scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.modal-scrollbar::-webkit-scrollbar-thumb {
-    background: #497b93;
+.certificate-scrollbar::-webkit-scrollbar-track {
+    margin: 8px 0;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb,
+.certificate-scrollbar::-webkit-scrollbar-thumb,
+.view-profile-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
     border-radius: 9999px;
 }
 
-.modal-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #3f6b80;
+.modal-scrollbar::-webkit-scrollbar-thumb:hover,
+.certificate-scrollbar::-webkit-scrollbar-thumb:hover,
+.view-profile-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 /* uploadbox */
 .upload-box {
-    border: 1px dashed #3f6b80;
-}
-
-/* Certificate page scrollbar */
-.certificate-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #fec84a;
-}
-
-.certificate-scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.certificate-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 8px 0;
-}
-
-.certificate-scrollbar::-webkit-scrollbar-thumb {
-    background: #fec84a;
-    border-radius: 9999px;
+    border: 1px dashed var(--color-brand-dark);
 }

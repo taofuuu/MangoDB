@@ -7,7 +7,8 @@ import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
-import { ApiRequestError } from '@/lib/api';
+import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
@@ -33,52 +34,53 @@ export default function CertificatePage() {
     const [certificateToDelete, setCertificateToDelete] =
         useState<CertificateData | null>(null);
 
+    // The certificate image open full size. Null means the dialog is closed.
+    const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
+        null,
+    );
+
     // GET certificates
     useEffect(() => {
         getCertificates()
             .then((data) => {
                 const mappedCertificates: CertificateData[] = data.map(
                     (cert) => ({
-                        id: cert.certificate_id,
-                        name: cert.cert_title,
+                        id: cert.certificateId,
+                        name: cert.certTitle,
                         organize: cert.organization,
 
-                        ...(cert.issue_month != null && {
-                            month: cert.issue_month.toString(),
+                        ...(cert.issueMonth != null && {
+                            month: cert.issueMonth.toString(),
                         }),
-                        ...(cert.issue_year != null && {
-                            year: cert.issue_year.toString(),
+                        ...(cert.issueYear != null && {
+                            year: cert.issueYear.toString(),
                         }),
-                        ...(cert.expire_month != null && {
-                            exMonth: cert.expire_month.toString(),
+                        ...(cert.expireMonth != null && {
+                            exMonth: cert.expireMonth.toString(),
                         }),
-                        ...(cert.expire_year != null && {
-                            exYear: cert.expire_year.toString(),
+                        ...(cert.expireYear != null && {
+                            exYear: cert.expireYear.toString(),
                         }),
-                        ...(cert.credential_id != null && {
-                            credID: cert.credential_id,
+                        ...(cert.credentialId != null && {
+                            credID: cert.credentialId,
                         }),
-                        ...(cert.credential_url != null && {
-                            credURL: cert.credential_url,
+                        ...(cert.credentialUrl != null && {
+                            credURL: cert.credentialUrl,
                         }),
 
-                        cert_image: cert.cert_image ?? null,
+                        certImage: cert.certImage ?? null,
                     }),
                 );
 
                 setCertificates(mappedCertificates);
             })
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
 
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
 
@@ -140,20 +142,45 @@ export default function CertificatePage() {
     };
 
     return (
-        <main className="min-h-screen bg-[#FFFDF9] pt-10">
+        <main className="min-h-screen bg-surface pt-10">
             {/* Certificate Box */}
-            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-y-auto certificate-scrollbar rounded-xl border border-[#497B93] bg-white pr-1 pl-6">
+            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-y-auto certificate-scrollbar rounded-xl border border-brand bg-white pr-1 pl-6">
                 <div className="certificate-scrollbar h-full overflow-y-auto pr-1">
                     <div className="flex w-full items-center pt-5">
-                        <Link href="/" className="text-lg pr-4">
+                        <Link href="/" className="type-lg pr-4">
                             ←
                         </Link>
-                        <p className="text-hd">Certificates</p>
+                        <p className="type-hd">Certificates</p>
                     </div>
                     {/* Loading */}
                     {certificates === null && !loadError && (
                         <p className="mt-8">Loading certificates...</p>
                     )}
+
+                    {/* Not signed in. The same prompt /portfolio,
+                        /profile/edit and /account-settings show, so a session
+                        that has ended reads the same wherever it is noticed —
+                        and offers the way back, which a red line did not. */}
+                    {loadError === NOT_SIGNED_IN && (
+                        <p className="mt-8 type-md !font-[400]">
+                            You are not signed in.{' '}
+                            <Link href="/login" className="underline">
+                                Log in
+                            </Link>
+                            , then come back.
+                        </p>
+                    )}
+
+                    {/* Anything else really is an error. */}
+                    {loadError && loadError !== NOT_SIGNED_IN && (
+                        <p
+                            role="alert"
+                            className="mt-8 type-md !font-[400] text-danger"
+                        >
+                            {loadError}
+                        </p>
+                    )}
+
                     {/* Empty */}
                     {certificates !== null && certificates.length === 0 && (
                         <p className="mt-8">
@@ -166,8 +193,29 @@ export default function CertificatePage() {
                             {certificates.map((certificate) => (
                                 <div key={certificate.id}>
                                     <div className="flex w-full items-center justify-between pt-2 pl-6">
-                                        <h2 className="text-lg">
-                                            {certificate.name}
+                                        <h2 className="type-lg">
+                                            {/* An anchor, not a button:
+                                                middle-click, copy link and
+                                                screen readers all expect a
+                                                link for an external URL. A
+                                                certificate with no credential
+                                                URL stays plain text rather
+                                                than a link that goes nowhere,
+                                                which is what the Show
+                                                Credential button below does
+                                                too. */}
+                                            {certificate.credURL ? (
+                                                <a
+                                                    href={certificate.credURL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+                                                >
+                                                    {certificate.name}
+                                                </a>
+                                            ) : (
+                                                certificate.name
+                                            )}
                                         </h2>
                                         <button
                                             type="button"
@@ -187,18 +235,18 @@ export default function CertificatePage() {
                                             />
                                         </button>
                                     </div>
-                                    <p className="text-md pl-6">
+                                    <p className="type-md pl-6">
                                         {certificate.organize}
                                     </p>
 
                                     {formatPeriod(certificate) && (
-                                        <p className="text-md pl-6">
+                                        <p className="type-md pl-6">
                                             {formatPeriod(certificate)}
                                         </p>
                                     )}
 
                                     {certificate.credID && (
-                                        <p className="text-md pl-6">
+                                        <p className="type-md pl-6">
                                             Credential ID: {certificate.credID}
                                         </p>
                                     )}
@@ -213,38 +261,52 @@ export default function CertificatePage() {
                                             rel="noopener noreferrer"
                                             className={`flex h-[4vh] w-[13.8vw] items-center justify-center gap-[0.4vw] rounded-status border transition-colors ${
                                                 certificate.credURL
-                                                    ? 'hover:border-[#66A6C5]'
+                                                    ? 'hover:border-brand-light'
                                                     : 'pointer-events-none opacity-50'
                                             }`}
                                         >
-                                            <span className="text-md">
+                                            <span className="type-md">
                                                 Show Credential
                                             </span>
-                                            <span className="text-md">→</span>
+                                            <span className="type-md">→</span>
                                         </a>
                                     </div>
 
                                     {/* Buttons */}
                                     <div className="flex w-full items-center justify-between pt-4 pl-6 pr-6 pb-1">
                                         <div className="flex w-full items-center gap-10">
-                                            <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-[#497B93]">
-                                                {certificate.cert_image && (
+                                            {/* A button only with an image
+                                                behind it: an empty frame has
+                                                nothing to expand. */}
+                                            {certificate.certImage ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpandedImage({
+                                                            title:
+                                                                certificate.name ??
+                                                                'Certificate',
+                                                            src: certificate.certImage!,
+                                                        })
+                                                    }
+                                                    aria-label={`Expand the image for ${certificate.name ?? 'this certificate'}`}
+                                                    className="flex h-[10vh] w-[9.375vw] cursor-zoom-in items-center justify-center rounded-button border border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+                                                >
                                                     <Image
                                                         src={
-                                                            certificate.cert_image
+                                                            certificate.certImage
                                                         }
-                                                        alt={
-                                                            certificate.name ??
-                                                            'Certificate'
-                                                        }
+                                                        alt=""
                                                         width={200}
                                                         height={150}
                                                         className="h-full w-full rounded-button object-contain"
                                                     />
-                                                )}
-                                            </div>
+                                                </button>
+                                            ) : (
+                                                <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-brand" />
+                                            )}
 
-                                            <p className="text-md">
+                                            <p className="type-md">
                                                 {certificate.name}
                                             </p>
                                         </div>
@@ -268,30 +330,30 @@ export default function CertificatePage() {
                                     </div>
 
                                     {/* Centered divider */}
-                                    <hr className="mx-auto mt-4 w-[95%] border-[#3F6B80]/50" />
+                                    <hr className="mx-auto mt-4 w-[95%] border-brand-dark/50" />
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
             </div>
-            <div className="flex w-full justify-end pr-12">
-                <button
-                    type="button"
-                    onClick={() => setIsAddOpen(true)}
-                    className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-[#497B93] text-hd text-[#FFFDF9] transition-colors hover:bg-[#3F6B80]"
-                >
-                    +
-                </button>
-            </div>
+            {certificates !== null && (
+                <div className="flex w-full justify-end pr-12">
+                    <button
+                        type="button"
+                        onClick={() => setIsAddOpen(true)}
+                        className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-brand type-hd text-surface transition-colors hover:bg-brand-dark"
+                    >
+                        +
+                    </button>
+                </div>
+            )}
 
-            {/* Load error */}
-            {loadError && (
-                <p role="alert" className="mt-4 text-sm text-[#C5483E]">
-                    {loadError === 'no-token'
-                        ? 'Please log in to view your certificates.'
-                        : loadError}
-                </p>
+            {expandedImage && (
+                <ImageModal
+                    image={expandedImage}
+                    onClose={() => setExpandedImage(null)}
+                />
             )}
 
             {/* ADD MODAL */}

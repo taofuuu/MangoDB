@@ -21,7 +21,7 @@ export const companyAccountIdParamSchema = z.object({
 // US6-4. The admin's own password, same field changeCredentialsSchema takes,
 // confirming intent before this endpoint's irreversible delete.
 export const deleteCompanyAccountBodySchema = z.object({
-    current_password: companyFields.passwordAttempt,
+    currentPassword: companyFields.passwordAttempt,
 });
 
 // US6-3's body schema is not here on purpose. The administrator edit accepts
@@ -29,7 +29,3 @@ export const deleteCompanyAccountBodySchema = z.object({
 // updateCompanyProfileSchema from company.schema.ts. A copy here would be one
 // more place to forget when a profile column is added, and a copy that only
 // *nearly* matched would be worse than no copy at all.
-
-export type CompanyAccountListQuery = z.infer<
-    typeof companyAccountListQuerySchema
->;

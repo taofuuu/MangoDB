@@ -1,11 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import FieldError from '@/components/ui/FieldError';
+import { ApiRequestError } from '@/lib/api';
+import { toFormErrors, type FieldErrors } from '@/lib/validation';
 
 export type EditAccountMode = 'username' | 'email' | 'password';
 
-// Only reached when a save rejects with something that is not an Error, which
-// means the caller threw a value rather than the API refusing the change.
+// The four inputs this modal can show, across its three modes. `value` is
+// whichever of username/email the mode is editing.
+type AccountField =
+    'value' | 'newPassword' | 'confirmPassword' | 'currentPassword';
+
+type AccountErrors = FieldErrors<AccountField>;
+
+// Which input an API-rejected field belongs under. currentPassword is what a
+// wrong-password 401 names, and it is the one field every mode shows.
+const ACCOUNT_FIELDS: Record<string, AccountField> = {
+    username: 'value',
+    email: 'value',
+    newPassword: 'newPassword',
+    password: 'newPassword',
+    currentPassword: 'currentPassword',
+};
+
+// The last fallback, for a failure that carries no message of its own.
 const FAILURES: Record<EditAccountMode, string> = {
     username: 'Failed to update username.',
     email: 'Failed to update email.',
@@ -59,8 +78,15 @@ export default function EditAccountModal({
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<AccountErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: AccountField) =>
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
 
     // Reset fields on open or mode switch. Adjusted during render rather than
     // in an effect: an effect would paint the previous mode's values once
@@ -84,7 +110,8 @@ export default function EditAccountModal({
             setShowCurrentPassword(false);
             setShowNewPassword(false);
             setShowConfirmPassword(false);
-            setError(null);
+            setErrors({});
+            setFormError(null);
             setIsSaving(false);
         }
     }
@@ -103,21 +130,28 @@ export default function EditAccountModal({
     const nextValue = (): string | null => {
         if (mode === 'password') {
             if (!newPassword) {
-                setError('Please enter a new password.');
+                setErrors({ newPassword: 'Please enter a new password.' });
                 return null;
             }
             // Matches the API's minimum, so the rule is not first learned from
             // a 400.
             if (newPassword.length < 8) {
-                setError('New password must be at least 8 characters.');
+                setErrors({
+                    newPassword: 'New password must be at least 8 characters.',
+                });
                 return null;
             }
             if (!confirmPassword) {
-                setError('Please confirm your new password.');
+                setErrors({
+                    confirmPassword: 'Please confirm your new password.',
+                });
                 return null;
             }
             if (newPassword !== confirmPassword) {
-                setError('New password and confirmation do not match.');
+                setErrors({
+                    confirmPassword:
+                        'New password and confirmation do not match.',
+                });
                 return null;
             }
             return newPassword;
@@ -127,28 +161,30 @@ export default function EditAccountModal({
 
         if (mode === 'username') {
             if (!trimmed) {
-                setError('Username cannot be empty.');
+                setErrors({ value: 'Username cannot be empty.' });
                 return null;
             }
             if (trimmed === currentValue) {
-                setError(
-                    'New username must be different from current username.',
-                );
+                setErrors({
+                    value: 'New username must be different from current username.',
+                });
                 return null;
             }
             return trimmed;
         }
 
         if (!trimmed) {
-            setError('Email address cannot be empty.');
+            setErrors({ value: 'Email address cannot be empty.' });
             return null;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-            setError('Please enter a valid email address.');
+            setErrors({ value: 'Please enter a valid email address.' });
             return null;
         }
         if (trimmed.toLowerCase() === currentValue.toLowerCase()) {
-            setError('New email must be different from current email.');
+            setErrors({
+                value: 'New email must be different from current email.',
+            });
             return null;
         }
         return trimmed;
@@ -156,12 +192,16 @@ export default function EditAccountModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setErrors({});
+        setFormError(null);
 
         // Required for all three: each one changes what the account signs in
         // with, and the API rejects the request without it.
         if (!currentPassword) {
-            setError('Current password is required to save changes.');
+            setErrors({
+                currentPassword:
+                    'Current password is required to save changes.',
+            });
             return;
         }
 
@@ -176,7 +216,20 @@ export default function EditAccountModal({
             await onSave?.({ mode, newValue, currentPassword });
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : FAILURES[mode]);
+            const { fields, message } = toFormErrors(err, ACCOUNT_FIELDS);
+
+            // A 401 names no field, but on this endpoint it means one thing:
+            // the current password was wrong. So it goes under that box.
+            if (err instanceof ApiRequestError && err.status === 401) {
+                setErrors({ currentPassword: message ?? FAILURES[mode] });
+            } else {
+                setErrors(fields);
+                setFormError(
+                    Object.keys(fields).length > 0
+                        ? null
+                        : (message ?? FAILURES[mode]),
+                );
+            }
             setIsSaving(false);
         }
     };
@@ -192,26 +245,20 @@ export default function EditAccountModal({
                 }
             }}
         >
-            <div className="w-full max-w-[440px] rounded-xl bg-[#FFFDF9] text-[#171717] p-6 shadow-xl border border-gray-100">
+            <div className="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-gray-100">
                 {/* Header */}
                 <div>
-                    <h2 className="text-md font-semibold text-[#171717]">
+                    <h2 className="type-md font-semibold text-ink">
                         {modalTitles[mode]}
                     </h2>
                 </div>
 
-                <hr className="border-[#3F6B80]/30 my-3" />
+                <hr className="border-brand-dark/30 my-3" />
 
-                <p className="text-xs text-[#666666] mb-4">
+                <p className="type-xs text-ink-soft mb-4">
                     Enter your details below. Current password is required to
                     confirm and apply changes.
                 </p>
-
-                {error && (
-                    <div className="mb-4 rounded-lg border border-[#CE473E]/30 bg-red-50 p-3 text-xs font-medium text-[#CE473E]">
-                        {error}
-                    </div>
-                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Username Mode */}
@@ -219,10 +266,9 @@ export default function EditAccountModal({
                         <div>
                             <label
                                 htmlFor="modal-username-input"
-                                className="block text-xs font-medium text-[#171717] mb-1"
+                                className="block type-xs font-medium text-ink mb-1"
                             >
-                                Username{' '}
-                                <span className="text-[#CE473E]">*</span>
+                                Username <span className="text-danger">*</span>
                             </label>
                             <input
                                 id="modal-username-input"
@@ -230,12 +276,13 @@ export default function EditAccountModal({
                                 value={inputValue}
                                 onChange={(e) => {
                                     setInputValue(e.target.value);
-                                    if (error) setError(null);
+                                    clearError('value');
                                 }}
                                 placeholder="Enter username"
-                                className="h-[38px] w-full px-3 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
+                            <FieldError message={errors.value} />
                         </div>
                     )}
 
@@ -244,9 +291,9 @@ export default function EditAccountModal({
                         <div>
                             <label
                                 htmlFor="modal-email-input"
-                                className="block text-xs font-medium text-[#171717] mb-1"
+                                className="block type-xs font-medium text-ink mb-1"
                             >
-                                Email <span className="text-[#CE473E]">*</span>
+                                Email <span className="text-danger">*</span>
                             </label>
                             <input
                                 id="modal-email-input"
@@ -254,12 +301,13 @@ export default function EditAccountModal({
                                 value={inputValue}
                                 onChange={(e) => {
                                     setInputValue(e.target.value);
-                                    if (error) setError(null);
+                                    clearError('value');
                                 }}
                                 placeholder="Enter email address"
-                                className="h-[38px] w-full px-3 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
+                            <FieldError message={errors.value} />
                         </div>
                     )}
 
@@ -269,10 +317,10 @@ export default function EditAccountModal({
                             <div>
                                 <label
                                     htmlFor="modal-new-password-input"
-                                    className="block text-xs font-medium text-[#171717] mb-1"
+                                    className="block type-xs font-medium text-ink mb-1"
                                 >
                                     New Password{' '}
-                                    <span className="text-[#CE473E]">*</span>
+                                    <span className="text-danger">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -285,10 +333,10 @@ export default function EditAccountModal({
                                         value={newPassword}
                                         onChange={(e) => {
                                             setNewPassword(e.target.value);
-                                            if (error) setError(null);
+                                            clearError('newPassword');
                                         }}
                                         placeholder="Enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                         autoFocus
                                     />
                                     <button
@@ -301,26 +349,27 @@ export default function EditAccountModal({
                                                 ? 'Hide password'
                                                 : 'Show password'
                                         }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                                     >
                                         <EyeIcon
                                             className={`w-4 h-4 ${
                                                 showNewPassword
-                                                    ? 'text-[#171717]'
-                                                    : 'text-[#828282]'
+                                                    ? 'text-ink'
+                                                    : 'text-ink-placeholder'
                                             }`}
                                         />
                                     </button>
                                 </div>
+                                <FieldError message={errors.newPassword} />
                             </div>
 
                             <div>
                                 <label
                                     htmlFor="modal-confirm-password-input"
-                                    className="block text-xs font-medium text-[#171717] mb-1"
+                                    className="block type-xs font-medium text-ink mb-1"
                                 >
                                     Confirm New Password{' '}
-                                    <span className="text-[#CE473E]">*</span>
+                                    <span className="text-danger">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -333,10 +382,10 @@ export default function EditAccountModal({
                                         value={confirmPassword}
                                         onChange={(e) => {
                                             setConfirmPassword(e.target.value);
-                                            if (error) setError(null);
+                                            clearError('confirmPassword');
                                         }}
                                         placeholder="Re-enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                     />
                                     <button
                                         type="button"
@@ -350,17 +399,18 @@ export default function EditAccountModal({
                                                 ? 'Hide password'
                                                 : 'Show password'
                                         }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                                     >
                                         <EyeIcon
                                             className={`w-4 h-4 ${
                                                 showConfirmPassword
-                                                    ? 'text-[#171717]'
-                                                    : 'text-[#828282]'
+                                                    ? 'text-ink'
+                                                    : 'text-ink-placeholder'
                                             }`}
                                         />
                                     </button>
                                 </div>
+                                <FieldError message={errors.confirmPassword} />
                             </div>
                         </>
                     )}
@@ -369,10 +419,10 @@ export default function EditAccountModal({
                     <div className="pt-2 border-t border-gray-200">
                         <label
                             htmlFor="modal-current-password-input"
-                            className="block text-xs font-medium text-[#171717] mb-1"
+                            className="block type-xs font-medium text-ink mb-1"
                         >
                             Current Password{' '}
-                            <span className="text-[#CE473E]">*</span>
+                            <span className="text-danger">*</span>
                         </label>
                         <div className="relative">
                             <input
@@ -381,10 +431,10 @@ export default function EditAccountModal({
                                 value={currentPassword}
                                 onChange={(e) => {
                                     setCurrentPassword(e.target.value);
-                                    if (error) setError(null);
+                                    clearError('currentPassword');
                                 }}
                                 placeholder="Enter current password"
-                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                             />
                             <button
                                 type="button"
@@ -396,18 +446,21 @@ export default function EditAccountModal({
                                         ? 'Hide password'
                                         : 'Show password'
                                 }
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                             >
                                 <EyeIcon
                                     className={`w-4 h-4 ${
                                         showCurrentPassword
-                                            ? 'text-[#171717]'
-                                            : 'text-[#828282]'
+                                            ? 'text-ink'
+                                            : 'text-ink-placeholder'
                                     }`}
                                 />
                             </button>
                         </div>
+                        <FieldError message={errors.currentPassword} />
                     </div>
+
+                    <FieldError message={formError} />
 
                     {/* Footer buttons */}
                     <div className="pt-3 flex items-center justify-end gap-2.5">
@@ -415,14 +468,14 @@ export default function EditAccountModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSaving}
-                            className="rounded-status border border-[#497B93] px-5 py-2 text-xs font-semibold text-[#497B93] hover:bg-[#497B93]/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-status border border-brand px-5 py-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="rounded-status bg-[#3F6B80] px-6 py-2 text-xs font-semibold text-[#FFFDF9] hover:bg-[#34596b] transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSaving ? 'Saving…' : 'Save'}
                         </button>

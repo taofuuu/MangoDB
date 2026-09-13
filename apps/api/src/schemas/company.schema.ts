@@ -7,7 +7,7 @@ import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 // match the columns in prisma/schema.prisma; anything longer would be a
 // database error rather than a validation message.
 export const companyFields = {
-    company_name: z.string().trim().min(1).max(255),
+    companyName: z.string().trim().min(1).max(255),
     // Lowercased because the unique index is case-sensitive: without this,
     // "CodeCrafters" would sit alongside "codecrafters".
     username: z
@@ -39,15 +39,15 @@ export const companyFields = {
     phone: thaiPhone,
     // Industry tags — SME, Software House, FinTech. Every seeded company has at
     // least one, so a company can never be left without any.
-    company_type: z.array(z.string().trim().min(1).max(100)).min(1).max(10),
-    company_description: z.string().trim().max(2000),
+    companyType: z.array(z.string().trim().min(1).max(100)).min(1).max(10),
+    companyDescription: z.string().trim().max(2000),
     address: z.string().trim().max(500),
     website: httpUrl,
     // Provider-only, and TEXT columns rather than VarChar, so the cap is a
-    // policy choice rather than the database's — same one company_description
+    // policy choice rather than the database's — same one companyDescription
     // uses.
-    service_term: z.string().trim().max(2000),
-    warranty_policy: z.string().trim().max(2000),
+    serviceTerm: z.string().trim().max(2000),
+    warrantyPolicy: z.string().trim().max(2000),
 } as const;
 
 // The columns a unique index can reject. prismaErrors uses this to decide which
@@ -59,29 +59,29 @@ export const COMPANY_UNIQUE_FIELDS = ['username', 'email'] as const;
 // username, email, password — are not here: changing any of them needs the
 // current password, so they belong to changeCredentialsSchema below. Keeping
 // them here too would leave that gate one request away from being walked
-// around. account_type is absent as well, since it would have to add or remove
+// around. accountType is absent as well, since it would have to add or remove
 // the provider/receiver rows and restamp the token's role claim.
 //
 // strictObject, not object: a plain zod object drops keys it does not know, so
-// { company_name, email } would answer 200 having written only half of what was
+// { companyName, email } would answer 200 having written only half of what was
 // asked for. Rejecting names the key instead. (z.strictObject rather than
 // .strict(), which zod 4 deprecates.)
 export const updateCompanyProfileSchema = z
     .strictObject({
-        company_name: companyFields.company_name,
+        companyName: companyFields.companyName,
         phone: companyFields.phone,
-        company_type: companyFields.company_type,
-        company_description: companyFields.company_description.nullable(),
+        companyType: companyFields.companyType,
+        companyDescription: companyFields.companyDescription.nullable(),
         address: companyFields.address.nullable(),
         website: companyFields.website.nullable(),
         // The address the profile shows so others can get in touch. Same rule
         // as email, a different column: email signs a company in and is
         // unique, this one is neither, so two companies may share it.
-        contact_email: companyFields.email.nullable(),
+        contactEmail: companyFields.email.nullable(),
         // These two land on the provider table, not company, so the controller
         // writes them separately and refuses them from a RECEIVER company.
-        service_term: companyFields.service_term.nullable(),
-        warranty_policy: companyFields.warranty_policy.nullable(),
+        serviceTerm: companyFields.serviceTerm.nullable(),
+        warrantyPolicy: companyFields.warrantyPolicy.nullable(),
     })
     .partial()
     // An empty body is a client bug, not a no-op worth a 200.
@@ -99,19 +99,19 @@ export type UpdateCompanyProfileInput = z.infer<
 // token alone is not enough for that.
 export const changeCredentialsSchema = z
     .object({
-        current_password: companyFields.passwordAttempt,
+        currentPassword: companyFields.passwordAttempt,
         username: companyFields.username,
         email: companyFields.email,
-        new_password: companyFields.password,
+        newPassword: companyFields.password,
     })
-    .partial({ username: true, email: true, new_password: true })
-    // current_password on its own changes nothing, so it is a client bug rather
+    .partial({ username: true, email: true, newPassword: true })
+    // currentPassword on its own changes nothing, so it is a client bug rather
     // than a no-op worth a 200 — the same call updateCompanyProfileSchema makes.
     .refine(
         (body) =>
             body.username !== undefined ||
             body.email !== undefined ||
-            body.new_password !== undefined,
+            body.newPassword !== undefined,
         { message: 'Provide a username, an email, or a new password' },
     );
 

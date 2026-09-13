@@ -2,7 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { CompanyProfile } from '@mangodb/shared';
+import type { AccountType, CompanyProfile } from '@mangodb/shared';
+import RoleTags from '../ui/RoleTags';
+import CompanyAvatar from './CompanyAvatar';
+import Tag from '../ui/Tag';
 
 export interface CompanyCardData {
     name: string;
@@ -11,9 +14,13 @@ export interface CompanyCardData {
     phone: string;
     description: string;
     address: string;
-    type: string;
+    // The tags themselves, not a joined string: they are chips on screen, the
+    // same ones the edit form shows.
+    companyType: string[];
     warrantyPolicy: string;
     serviceTerm: string;
+    accountType: AccountType;
+    photoUrl: string | null;
 }
 
 interface CompanyCardProps {
@@ -21,135 +28,129 @@ interface CompanyCardProps {
 }
 
 // The profile's nullable columns become "Not provided" here rather than
-// rendering an empty textarea, which reads as a loading glitch.
+// rendering an empty line, which reads as a loading glitch.
 export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
     return {
-        name: profile.company_name,
-        email: profile.contact_email ?? 'Not provided',
+        name: profile.companyName,
+        email: profile.contactEmail ?? 'Not provided',
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
-        description: profile.company_description ?? 'No description provided.',
+        description: profile.companyDescription ?? 'No description provided.',
         address: profile.address ?? 'Not provided',
-        type:
-            profile.company_type.length > 0
-                ? profile.company_type.join(', ')
-                : 'Not specified',
-        warrantyPolicy: profile.warranty_policy ?? 'Not provided',
-        serviceTerm: profile.service_term ?? 'Not provided',
+        companyType: profile.companyType,
+        warrantyPolicy: profile.warrantyPolicy ?? 'Not provided',
+        serviceTerm: profile.serviceTerm ?? 'Not provided',
+        accountType: profile.accountType,
+        photoUrl: profile.companyPhoto,
     };
+}
+
+// Plain text under a label, not a read-only textarea. A textarea takes focus,
+// draws an input border and is announced as "textbox", which is what made a
+// page for reading feel like a form for filling in.
+function Field({
+    label,
+    value,
+    className = '',
+}: {
+    label: string;
+    value: string;
+    className?: string;
+}) {
+    return (
+        <div className={className}>
+            <p className="type-xs !font-[600] text-ink-soft">{label}</p>
+            <p className="mt-1 type-sm whitespace-pre-line text-ink">{value}</p>
+        </div>
+    );
 }
 
 export default function CompanyCard({ data }: CompanyCardProps) {
     return (
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm flex flex-col relative w-full">
-            <div className="flex flex-col md:flex-row gap-8">
-                {/* Left Profile Info */}
-                <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-gray-200 pr-0 md:pr-8 justify-center py-4">
-                    {/* Logo */}
-                    <div className="w-24 h-24 bg-[#FFC107] rounded-full flex items-center justify-center font-bold text-[#E53E3E] text-3xl shadow-inner mb-4">
-                        CP
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
-                        {data.name}
-                    </h2>
+        <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm md:flex-row md:gap-8">
+            {/* Who the company is. Fixed rather than scrolled: it is short
+                enough to always fit, and scrolling it along with the details
+                is what pushed the phone number off the card. */}
+            <div className="flex shrink-0 flex-col items-center justify-center border-line py-4 text-center md:w-1/3 md:border-r md:pr-8">
+                <CompanyAvatar
+                    name={data.name}
+                    photoUrl={data.photoUrl}
+                    size={96}
+                    className="mb-4"
+                />
 
-                    {/* Contact Info */}
-                    <div className="text-xs text-gray-600 space-y-1">
-                        <p>{data.email}</p>
-                        <p>{data.website}</p>
-                        <p>{data.phone}</p>
-                    </div>
-                </div>
+                <h2 className="mb-3 text-2xl font-bold tracking-tight text-ink">
+                    {data.name}
+                </h2>
 
-                <div className="w-full md:w-2/3 pb-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
-                        {/* Right Form Field Grids - Match Figma Layout */}
-                        <div>
-                            <label
-                                htmlFor="company-description"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Description
-                            </label>
-                            <textarea
-                                id="company-description"
-                                readOnly
-                                value={data.description}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
+                <RoleTags
+                    accountType={data.accountType}
+                    className="mb-3 gap-2"
+                    tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
+                />
 
-                        <div>
-                            <label
-                                htmlFor="company-type"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Type
-                            </label>
-                            <textarea
-                                id="company-type"
-                                readOnly
-                                value={data.type}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="company-service-term"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Service Term
-                            </label>
-                            <textarea
-                                id="company-service-term"
-                                readOnly
-                                value={data.serviceTerm}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="company-warranty-policy"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Warranty Policy
-                            </label>
-                            <textarea
-                                id="company-warranty-policy"
-                                readOnly
-                                value={data.warrantyPolicy}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label
-                                htmlFor="company-address"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Address
-                            </label>
-                            <textarea
-                                id="company-address"
-                                readOnly
-                                value={data.address}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
-                    </div>
+                <div className="type-xs text-ink-soft space-y-1">
+                    <p>{data.email}</p>
+                    <p>{data.website}</p>
+                    <p>{data.phone}</p>
                 </div>
             </div>
 
-            {/* Edit Button (Bottom Right) */}
-            <div className="flex justify-end absolute bottom-6 right-8">
-                <Link
-                    href="/profile/edit"
-                    className="px-6 py-1.5 bg-[#497B93] hover:bg-[#3b6478] text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
-                >
-                    Edit
-                </Link>
+            {/* The details, and the only thing that scrolls. Edit sits under
+                the scroll rather than inside it, so it is always reachable. */}
+            <div className="flex min-h-0 w-full flex-col md:w-2/3">
+                <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+                    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                        <Field
+                            label="Company Description"
+                            value={data.description}
+                        />
+
+                        <div>
+                            <p className="type-xs !font-[600] text-ink-soft">
+                                Company Type
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                                {data.companyType.length > 0 ? (
+                                    data.companyType.map((type) => (
+                                        <Tag
+                                            key={type}
+                                            label={type}
+                                            className="h-[2.6vh] min-h-[24px] bg-fill-muted px-3 type-xs text-ink"
+                                        />
+                                    ))
+                                ) : (
+                                    <p className="type-sm text-ink">
+                                        Not specified
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <Field
+                            label="Company Service Term"
+                            value={data.serviceTerm}
+                        />
+                        <Field
+                            label="Company Warranty Policy"
+                            value={data.warrantyPolicy}
+                        />
+                        <Field
+                            label="Company Address"
+                            value={data.address}
+                            className="md:col-span-2"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex shrink-0 justify-end pt-4">
+                    <Link
+                        href="/profile/edit"
+                        className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
+                    >
+                        Edit
+                    </Link>
+                </div>
             </div>
         </div>
     );

@@ -1,0 +1,10 @@
+{
+    "request": "POST /auth/check-availability",
+    "status": 200,
+    "body": {
+        "email": "<run>free@example.test",
+        "emailAvailable": true,
+        "username": "<run>free",
+        "usernameAvailable": true
+    }
+}

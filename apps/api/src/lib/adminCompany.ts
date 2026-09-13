@@ -10,96 +10,99 @@ const ratingSelect = {
         select: {
             project: {
                 select: {
-                    rating: { select: { rating_score: true } },
+                    rating: { select: { ratingScore: true } },
                 },
             },
         },
     },
 } as const;
 
+// A strict subset of companyProfileSelect, derived rather than restated: the
+// list card shows less than the detail panel, and picking the columns out by
+// name is what keeps the two from disagreeing about what a column is called.
+const { companyId, companyName, companyDescription, phone, accountType } =
+    companyProfileSelect;
+
 export const adminCompanyListSelect = {
-    company_id: true,
-    company_name: true,
-    company_description: true,
-    phone: true,
-    account_type: true,
-    deleted_at: true,
+    companyId,
+    companyName,
+    companyDescription,
+    phone,
+    accountType,
+    deletedAt: true,
     ...ratingSelect,
 } as const;
 
 export const adminCompanyDetailSelect = {
     ...companyProfileSelect,
     ...ratingSelect,
-    deleted_at: true,
+    deletedAt: true,
 } as const;
 
 interface RatingSource {
     proposal: {
         project: {
-            rating: { rating_score: unknown }[];
+            rating: { ratingScore: unknown }[];
         } | null;
     }[];
 }
 
 function getRating(source: RatingSource): {
-    average_rating: number | null;
-    rating_count: number;
+    averageRating: number | null;
+    ratingCount: number;
 } {
     const scores = source.proposal.flatMap(
         ({ project }) =>
-            project?.rating.map(({ rating_score }) => Number(rating_score)) ??
-            [],
+            project?.rating.map(({ ratingScore }) => Number(ratingScore)) ?? [],
     );
 
     if (scores.length === 0) {
-        return { average_rating: null, rating_count: 0 };
+        return { averageRating: null, ratingCount: 0 };
     }
 
     const average =
         scores.reduce((sum, score) => sum + score, 0) / scores.length;
 
     return {
-        average_rating: Math.round(average * 10) / 10,
-        rating_count: scores.length,
+        averageRating: Math.round(average * 10) / 10,
+        ratingCount: scores.length,
     };
 }
 
 interface CompanyAccountSummaryRow extends RatingSource {
-    company_id: number;
-    company_name: string;
-    company_description: string | null;
+    companyId: number;
+    companyName: string;
+    companyDescription: string | null;
     phone: string;
-    account_type: string;
-    deleted_at: Date | null;
+    accountType: string;
+    deletedAt: Date | null;
 }
 
 export function toCompanyAccountSummary(
     company: CompanyAccountSummaryRow,
 ): CompanyAccountSummary {
     return {
-        company_id: company.company_id,
-        company_name: company.company_name,
-        company_description: company.company_description,
+        companyId: company.companyId,
+        companyName: company.companyName,
+        companyDescription: company.companyDescription,
         phone: company.phone,
-        account_type: company.account_type as AccountType,
-        deleted_at: !company.deleted_at
-            ? null
-            : company.deleted_at.toISOString(),
+        accountType: company.accountType as AccountType,
+        deletedAt: !company.deletedAt ? null : company.deletedAt.toISOString(),
         ...getRating(company),
     };
 }
 
 type CompanyAccountDetailRow = Parameters<typeof toCompanyProfile>[0] &
-    RatingSource & { deleted_at: Date | null };
+    RatingSource & { deletedAt: Date | null };
 
 export function toCompanyAccountDetail(
     company: CompanyAccountDetailRow,
 ): CompanyAccountDetail {
-    const { proposal, deleted_at, ...profile } = company;
+    const { proposal, deletedAt, ...profile } = company;
 
     return {
         ...toCompanyProfile(profile),
         ...getRating({ proposal }),
-        deleted_at: !deleted_at ? null : deleted_at.toISOString(),
+        deletedAt: !deletedAt ? null : deletedAt.toISOString(),
     };
 }

@@ -1,0 +1,34 @@
+{
+    "request": "GET /admin/companies?page=1&pageSize=2&filter=PROVIDER",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
+                "deletedAt": null,
+                "phone": "023333333",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
+                "companyId": 11,
+                "companyName": "CloudScale Solutions",
+                "deletedAt": null,
+                "phone": "021110011",
+                "ratingCount": 0
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 2,
+            "totalItems": 25,
+            "totalPages": 13
+        }
+    }
+}

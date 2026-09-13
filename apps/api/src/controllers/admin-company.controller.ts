@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CompanyAccountListResponse } from '@mangodb/shared';
-import { verifyPassword } from '../auth/password';
+import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
@@ -37,18 +37,18 @@ export async function listCompanyAccounts(
         req.query,
     );
     const skip = (page - 1) * pageSize;
-    // schema.prisma's rule for deleted_at: a discovery query filters it out.
+    // schema.prisma's rule for deletedAt: a discovery query filters it out.
     // includeDeleted is the opt-out, for an admin auditing removed accounts.
-    const where: Prisma.companyWhereInput = {
+    const where: Prisma.CompanyWhereInput = {
         ...(q && {
             OR: [
-                { company_name: { contains: q, mode: 'insensitive' } },
-                { company_description: { contains: q, mode: 'insensitive' } },
+                { companyName: { contains: q, mode: 'insensitive' } },
+                { companyDescription: { contains: q, mode: 'insensitive' } },
                 { phone: { contains: q, mode: 'insensitive' } },
                 { email: { contains: q, mode: 'insensitive' } },
             ],
         }),
-        account_type: filter
+        accountType: filter
             ? {
                   in: [
                       filter,
@@ -59,7 +59,7 @@ export async function listCompanyAccounts(
               }
             : { not: 'ADMIN' },
         ...(!includeDeleted && {
-            deleted_at: null,
+            deletedAt: null,
         }),
     };
     const [totalItems, companies] = await prisma.$transaction([
@@ -68,7 +68,7 @@ export async function listCompanyAccounts(
             skip,
             where,
             take: pageSize,
-            orderBy: [{ company_name: 'asc' }, { company_id: 'asc' }],
+            orderBy: [{ companyName: 'asc' }, { companyId: 'asc' }],
             select: adminCompanyListSelect,
         }),
     ]);
@@ -77,9 +77,9 @@ export async function listCompanyAccounts(
         items: companies.map(toCompanyAccountSummary),
         pagination: {
             page,
-            page_size: pageSize,
-            total_items: totalItems,
-            total_pages: Math.ceil(totalItems / pageSize),
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
         },
     };
 
@@ -94,7 +94,7 @@ export async function getCompanyAccountDetail(
 ): Promise<void> {
     const { companyId } = parseParams(companyAccountIdParamSchema, req.params);
     const company = await prisma.company.findUnique({
-        where: { company_id: companyId },
+        where: { companyId },
         select: adminCompanyDetailSelect,
     });
 
@@ -123,10 +123,10 @@ export async function updateCompanyAccount(
 
     // Read before writing, so an unknown id is a plain 404 rather than a Prisma
     // P2025 surfacing from the middle of the update. It is also the only way to
-    // learn the target's account_type, which the next check needs.
+    // learn the target's accountType, which the next check needs.
     const target = await prisma.company.findUnique({
-        where: { company_id: companyId },
-        select: { account_type: true },
+        where: { companyId },
+        select: { accountType: true },
     });
 
     if (!target) {
@@ -145,9 +145,9 @@ export async function updateCompanyAccount(
     // target row instead. A 400 rather than a 403 because the caller is not
     // refused anything — the two columns simply do not exist on this account,
     // which is a fact about the target, not about the administrator.
-    if (providerEdits.length > 0 && !ownsProviderRow(target.account_type)) {
+    if (providerEdits.length > 0 && !ownsProviderRow(target.accountType)) {
         throw ApiError.badRequest(
-            `${target.account_type} companies have no provider details`,
+            `${target.accountType} companies have no provider details`,
             providerEdits.map((field) => ({
                 field,
                 message: 'Only a provider company has this field',
@@ -158,18 +158,18 @@ export async function updateCompanyAccount(
     let company;
     try {
         company = await prisma.company.update({
-            where: { company_id: companyId },
+            where: { companyId },
             data: companyProfileUpdateData(body),
             select: adminCompanyDetailSelect,
         });
     } catch (err) {
-        // Only one unique constraint is reachable from here: company_type is
-        // keyed on (company_id, company_type), so a tag repeated inside one
+        // Only one unique constraint is reachable from here: companyType is
+        // keyed on (companyId, companyType), so a tag repeated inside one
         // request collides with itself. Username and email are not editable
         // here at all, and nothing else this writes is unique.
         if (isUniqueViolation(err)) {
             throw ApiError.conflict('Company types must not repeat', [
-                { field: 'company_type', message: 'Remove the duplicate tag' },
+                { field: 'companyType', message: 'Remove the duplicate tag' },
             ]);
         }
         // The company was deleted between the lookup above and this write.
@@ -196,34 +196,26 @@ export async function deleteCompanyAccount(
     // US6-4 re-auth: the confirm modal collects the admin's own password to
     // prove intent before an irreversible delete. Checked against req.auth's
     // own row, not the target's — this is "is it really the admin", not
-    // anything about the account being removed. Unlike login's
-    // verifyCredentials, no dummy-hash timing defense is needed: the caller
-    // is already authenticated, so there is no email to enumerate here.
-    const { current_password } = parseBody(
+    // anything about the account being removed.
+    const { currentPassword } = parseBody(
         deleteCompanyAccountBodySchema,
         req.body,
     );
-    const admin = await prisma.company.findUnique({
-        where: { company_id: Number(req.auth!.sub) },
-        select: { password: true },
-    });
-    if (!admin || !(await verifyPassword(current_password, admin.password))) {
-        throw ApiError.unauthorized('Current password is incorrect');
-    }
+    await assertCurrentPassword(req.auth!.companyId, currentPassword);
 
     // Step 1: does the company exist? Same pattern as getCompanyAccountDetail —
     // findUnique, throw ApiError.notFound if null.
     const company = await prisma.company.findUnique({
-        where: { company_id: companyId },
+        where: { companyId },
         select: {
-            account_type: true,
-            deleted_at: true,
+            accountType: true,
+            deletedAt: true,
         },
     });
 
     // Same "deleted = gone" convention as isCompanyDeleted: an already-deleted
     // company 404s here instead of falling through to the eligibility check.
-    if (!company || company.deleted_at !== null) {
+    if (!company || company.deletedAt !== null) {
         throw ApiError.notFound('Company account not found');
     }
 
@@ -233,7 +225,7 @@ export async function deleteCompanyAccount(
     // 404. A 400 rather than a 403 for the same reason the provider check above
     // uses one: this is a fact about the target, not a permission the caller is
     // missing.
-    if (company.account_type === 'ADMIN') {
+    if (company.accountType === 'ADMIN') {
         throw ApiError.badRequest('Administrator accounts cannot be deleted');
     }
 
@@ -251,7 +243,7 @@ export async function deleteCompanyAccount(
     // case, so this is the race-condition case, reported the same way.
     const wasDeleted = await softDeleteCompany(companyId);
     if (wasDeleted) {
-        res.status(204).send();
+        res.status(204).end();
     } else {
         throw ApiError.notFound('Company account not found');
     }

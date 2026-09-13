@@ -1,14 +1,15 @@
 'use client';
 
-import type { AccountType } from '@mangodb/shared';
+import Image from 'next/image';
+import type { RegisterAccountType } from '@mangodb/shared';
 
 type RoleStepProps = {
-    value: AccountType | null;
-    onChange: (value: AccountType) => void;
+    value: RegisterAccountType | null;
+    onChange: (value: RegisterAccountType) => void;
 };
 
 const roles: Array<{
-    value: AccountType;
+    value: RegisterAccountType;
     title: string;
     description: string;
     image: string;
@@ -50,22 +51,27 @@ export default function RoleStep({ value, onChange }: RoleStepProps) {
                         aria-pressed={selected}
                         className={`flex w-full items-center gap-5 rounded-button border p-2 text-left transition ${
                             selected
-                                ? 'border-[#FEC84A] bg-[#FEC84A] shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
-                                : 'border-[#497B93] bg-[#FFFDF9] hover:bg-[#FFF5DC]'
+                                ? 'border-accent bg-accent shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
+                                : 'border-brand bg-surface hover:bg-accent-tint'
                         }`}
                     >
                         <span className="h-20 w-20 shrink-0 overflow-hidden rounded-[6px]">
-                            <img
+                            {/* next/image, not <img>: these are 80px
+                                thumbnails cut from PNGs of 58-89KB each, and
+                                this is the first page a new company sees. */}
+                            <Image
                                 src={role.image}
                                 alt=""
+                                width={80}
+                                height={80}
                                 className="h-full w-full object-cover"
                             />
                         </span>
 
                         <span className="min-w-0">
-                            <span className="block text-md">{role.title}</span>
+                            <span className="block type-md">{role.title}</span>
 
-                            <span className="block whitespace-pre-line text-sm">
+                            <span className="block whitespace-pre-line type-sm">
                                 {role.description}
                             </span>
                         </span>

@@ -1,0 +1,24 @@
+{
+    "request": "GET /admin/companies/142",
+    "status": 200,
+    "body": {
+        "accountType": "PROVIDER",
+        "address": null,
+        "averageRating": null,
+        "companyDescription": null,
+        "companyId": 142,
+        "companyName": "Snapshot Seed Provider",
+        "companyType": [
+            "Software House"
+        ],
+        "contactEmail": null,
+        "deletedAt": null,
+        "email": "provider@snapshot.local",
+        "phone": "0810000001",
+        "ratingCount": 0,
+        "serviceTerm": "Delivery within 30 days of the agreed start.",
+        "username": "snapshot_provider",
+        "warrantyPolicy": "90 days of bug fixes after handover.",
+        "website": null
+    }
+}

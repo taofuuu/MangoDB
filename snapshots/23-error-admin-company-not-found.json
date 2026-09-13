@@ -1,0 +1,10 @@
+{
+    "request": "GET /admin/companies/2147483647",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Company account not found"
+        }
+    }
+}

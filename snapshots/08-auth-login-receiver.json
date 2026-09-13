@@ -1,0 +1,24 @@
+{
+    "request": "POST /auth/login",
+    "status": 200,
+    "body": {
+        "accessToken": "<jwt>",
+        "company": {
+            "accountType": "RECEIVER",
+            "address": null,
+            "companyDescription": null,
+            "companyId": 143,
+            "companyName": "Snapshot Seed Receiver",
+            "companyType": [
+                "SME"
+            ],
+            "contactEmail": null,
+            "email": "receiver@snapshot.local",
+            "phone": "0810000002",
+            "serviceTerm": null,
+            "username": "snapshot_receiver",
+            "warrantyPolicy": null,
+            "website": null
+        }
+    }
+}

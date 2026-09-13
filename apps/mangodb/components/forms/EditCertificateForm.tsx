@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import { apiFetch, ApiRequestError } from '@/lib/api';
+import { updateCertificate } from '@/lib/certificate';
+import { toFormErrors, type FieldErrors } from '@/lib/validation';
 import FileUpload from '../sm-detail/FileUpload';
+import FieldError from '@/components/ui/FieldError';
+import ModalShell from '@/components/ui/ModalShell';
 
 export type CertificateData = {
     id?: number;
@@ -17,8 +20,26 @@ export type CertificateData = {
     credID?: string;
     credURL?: string;
     file?: File | null;
-    cert_image?: string | null;
+    certImage?: string | null;
 };
+
+// Which input on this form each API field belongs under. Month and year share
+// one message because they sit on one row and are wrong together.
+export const CERTIFICATE_FIELDS = {
+    certTitle: 'name',
+    organization: 'organize',
+    issueMonth: 'issueDate',
+    issueYear: 'issueDate',
+    expireMonth: 'expireDate',
+    expireYear: 'expireDate',
+    credentialId: 'credID',
+    credentialUrl: 'credURL',
+    certImage: 'file',
+} as const;
+
+export type CertificateErrors = FieldErrors<
+    (typeof CERTIFICATE_FIELDS)[keyof typeof CERTIFICATE_FIELDS]
+>;
 
 type EditFormModalProps = {
     isOpen: boolean;
@@ -89,19 +110,31 @@ function EditCertificateDialog({
     const [credID, setCredID] = useState(initialData?.credID || '');
     const [credURL, setCredURL] = useState(initialData?.credURL || '');
     const [file, setFile] = useState<File | null>(null);
+    const titleId = useId();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<CertificateErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
+
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: keyof CertificateErrors) =>
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setErrors({});
+        setFormError(null);
 
         // Date validation: expiration date cannot be before issue date
         if (year && month && exYear && exMonth) {
             const issueDate = Number(year) * 100 + Number(month);
             const expireDate = Number(exYear) * 100 + Number(exMonth);
             if (expireDate < issueDate) {
-                setError('Expiration date cannot be before the issue date');
+                setErrors({
+                    expireDate:
+                        'Expiration date cannot be before the issue date',
+                });
                 return;
             }
         }
@@ -118,61 +151,41 @@ function EditCertificateDialog({
             exYear,
             credID,
             credURL,
-            cert_image: initialData?.cert_image ?? null,
+            certImage: initialData?.certImage ?? null,
         };
         try {
             if (initialData?.id) {
                 const formData = new FormData();
 
-                formData.append('cert_title', name);
+                formData.append('certTitle', name);
                 formData.append('organization', organize);
 
                 // Sent even when empty: the API reads '' as null, which is the
                 // only way to clear a field that already has a value. Skipping
                 // them here would make every optional field write-once.
-                formData.append('issue_month', month);
-                formData.append('issue_year', year);
-                formData.append('expire_month', exMonth);
-                formData.append('expire_year', exYear);
-                formData.append('credential_id', credID);
-                formData.append('credential_url', credURL);
+                formData.append('issueMonth', month);
+                formData.append('issueYear', year);
+                formData.append('expireMonth', exMonth);
+                formData.append('expireYear', exYear);
+                formData.append('credentialId', credID);
+                formData.append('credentialUrl', credURL);
 
-                // Only send cert_image when user selected a new file
+                // Only send certImage when user selected a new file
                 if (file) {
-                    formData.append('cert_image', file);
+                    formData.append('certImage', file);
                 }
 
-                const res = await apiFetch<{
-                    message: string;
-                    certificate?: {
-                        certificate_id: number;
-                        cert_title: string;
-                        organization: string;
-                        issue_month: number | null;
-                        issue_year: number | null;
-                        expire_month: number | null;
-                        expire_year: number | null;
-                        credential_id: string | null;
-                        credential_url: string | null;
-                        cert_image: string | null;
-                    };
-                }>(`/certificates/${initialData.id}`, {
-                    method: 'PATCH',
-                    body: formData,
-                });
+                const cert = await updateCertificate(initialData.id, formData);
 
-                const cert = res?.certificate;
-                if (cert) {
-                    updatedData.name = cert.cert_title;
-                    updatedData.organize = cert.organization;
-                    updatedData.month = cert.issue_month?.toString() ?? '';
-                    updatedData.year = cert.issue_year?.toString() ?? '';
-                    updatedData.exMonth = cert.expire_month?.toString() ?? '';
-                    updatedData.exYear = cert.expire_year?.toString() ?? '';
-                    updatedData.credID = cert.credential_id ?? '';
-                    updatedData.credURL = cert.credential_url ?? '';
-                    updatedData.cert_image = cert.cert_image;
-                }
+                updatedData.name = cert.certTitle;
+                updatedData.organize = cert.organization;
+                updatedData.month = cert.issueMonth?.toString() ?? '';
+                updatedData.year = cert.issueYear?.toString() ?? '';
+                updatedData.exMonth = cert.expireMonth?.toString() ?? '';
+                updatedData.exYear = cert.expireYear?.toString() ?? '';
+                updatedData.credID = cert.credentialId ?? '';
+                updatedData.credURL = cert.credentialUrl ?? '';
+                updatedData.certImage = cert.certImage;
             }
 
             if (onSave) {
@@ -181,214 +194,247 @@ function EditCertificateDialog({
 
             onClose();
         } catch (err: unknown) {
-            console.error('Error updating certificate:', err);
-            if (err instanceof ApiRequestError) {
-                if (err.details && err.details.length > 0) {
-                    setError(err.details.map((d) => d.message).join('\n'));
-                } else {
-                    setError(err.message);
-                }
-            } else if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('Failed to update certificate. Please try again.');
-            }
+            const { fields, message } = toFormErrors(err, CERTIFICATE_FIELDS);
+            setErrors(fields);
+            setFormError(message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div
-                className="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl
-                    max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
-            >
-                {/* -------------header----------------- */}
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">
-                        Edit license or certification
-                    </h2>
+        <ModalShell
+            isOpen
+            onClose={onClose}
+            isBusy={isSubmitting}
+            labelledBy={titleId}
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            panelClassName="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
+        >
+            {/* -------------header----------------- */}
+            <div className="flex items-center justify-between">
+                <h2 id={titleId} className="type-lg font-semibold">
+                    Edit license or certification
+                </h2>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="text-[#828282] hover:text-gray-800"
-                    >
-                        ✕
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-ink-placeholder hover:text-gray-800"
+                >
+                    ✕
+                </button>
+            </div>
 
-                {/* ----------------element-1----------------- */}
-                <hr className="border-[#3F6B80]/50 my-2" />
-                <div>
-                    <label className="my-2 block text-sm !text-[12px]">
-                        *Indicates required
-                    </label>
-                </div>
+            {/* ----------------element-1----------------- */}
+            <hr className="border-brand-dark/50 my-2" />
+            <div>
+                <label className="my-2 block type-sm !text-[12px]">
+                    *Indicates required
+                </label>
+            </div>
 
-                {error && (
-                    <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-xs text-[#C5483E] whitespace-pre-line border border-red-200">
-                        {error}
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-3">
+                    {/* Name */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Name*
+                        </label>
+
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                clearError('name');
+                            }}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                            placeholder="Ex: Microsoft certified network associate security"
+                            required
+                        />
+                        <FieldError message={errors.name} />
                     </div>
-                )}
+                    {/* Organization */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Issuing organization*
+                        </label>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="space-y-3">
-                        {/* Name */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Name*
-                            </label>
+                        <input
+                            type="text"
+                            value={organize}
+                            onChange={(e) => {
+                                setOrganize(e.target.value);
+                                clearError('organize');
+                            }}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                            placeholder="Ex: Microsoft"
+                            required
+                        />
+                        <FieldError message={errors.organize} />
+                    </div>
 
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: Microsoft certified network associate security"
-                                required
-                            />
-                        </div>
-                        {/* Organization */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Issuing organization*
-                            </label>
+                    {/* Issue date */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Issue date
+                        </label>
+                        <div className="flex gap-2">
+                            {/* Month */}
+                            <div className="flex-1">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
+                                    Month
+                                </label>
 
-                            <input
-                                type="text"
-                                value={organize}
-                                onChange={(e) => setOrganize(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: Microsoft"
-                                required
-                            />
-                        </div>
-
-                        {/* Issue date */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Issue date
-                            </label>
-                            <div className="flex gap-2">
-                                {/* Month */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Month
-                                    </label>
-
-                                    <MonthDropdown
-                                        value={month}
-                                        onChange={setMonth}
-                                    />
-                                </div>
-
-                                {/* Year */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Year
-                                    </label>
-
-                                    <YearDropdown
-                                        value={year}
-                                        onChange={setYear}
-                                        minYear={1990}
-                                        maxYear={new Date().getFullYear()}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        {/* Expiration date */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Expiration date
-                            </label>
-                            <div className="flex gap-2">
-                                {/* Month */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Month
-                                    </label>
-
-                                    <MonthDropdown
-                                        value={exMonth}
-                                        onChange={setExMonth}
-                                    />
-                                </div>
-
-                                {/* Year */}
-                                <div className="flex-1">
-                                    <label className="block text-xs text-[#757575] mb-1 font-normal">
-                                        Year
-                                    </label>
-
-                                    <YearDropdown
-                                        value={exYear}
-                                        onChange={setExYear}
-                                        minYear={1990}
-                                        maxYear={new Date().getFullYear() + 20}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        {/* Credential ID */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Credential ID
-                            </label>
-
-                            <input
-                                type="text"
-                                value={credID}
-                                onChange={(e) => setCredID(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="Ex: AZ-900-123456"
-                            />
-                        </div>
-                        {/* Credential URL */}
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Credential URL
-                            </label>
-
-                            <input
-                                type="url"
-                                value={credURL}
-                                onChange={(e) => setCredURL(e.target.value)}
-                                className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
-                                placeholder="https://learn.microsoft.com/..."
-                            />
-                        </div>
-                        {initialData?.cert_image && !file && (
-                            <div className="mt-2">
-                                <p className="mb-1 text-sm">
-                                    Current certificate image
-                                </p>
-
-                                <img
-                                    src={initialData.cert_image}
-                                    alt="Current certificate"
-                                    className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
+                                <MonthDropdown
+                                    value={month}
+                                    onChange={(value) => {
+                                        setMonth(value);
+                                        clearError('issueDate');
+                                    }}
                                 />
                             </div>
-                        )}
-                        <FileUpload value={file} onChange={setFile} />
-                    </div>
 
-                    <hr className="border-[#3F6B80]/50 my-4" />
-                    {/* -----------------footer----------------- */}
-                    <div className="flex justify-end items-center gap-3 pt-1">
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="rounded-status bg-[#3F6B80] px-6 h-[4vh] text-[#FFFDF9] text-sm font-medium hover:bg-[#34596b] transition-colors disabled:opacity-50 min-w-[80px]"
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save'}
-                        </button>
+                            {/* Year */}
+                            <div className="flex-1">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
+                                    Year
+                                </label>
+
+                                <YearDropdown
+                                    value={year}
+                                    onChange={(value) => {
+                                        setYear(value);
+                                        clearError('issueDate');
+                                    }}
+                                    minYear={1990}
+                                    maxYear={new Date().getFullYear()}
+                                />
+                            </div>
+                        </div>
+                        <FieldError message={errors.issueDate} />
                     </div>
-                </form>
-            </div>
-        </div>
+                    {/* Expiration date */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Expiration date
+                        </label>
+                        <div className="flex gap-2">
+                            {/* Month */}
+                            <div className="flex-1">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
+                                    Month
+                                </label>
+
+                                <MonthDropdown
+                                    value={exMonth}
+                                    onChange={(value) => {
+                                        setExMonth(value);
+                                        clearError('expireDate');
+                                    }}
+                                />
+                            </div>
+
+                            {/* Year */}
+                            <div className="flex-1">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
+                                    Year
+                                </label>
+
+                                <YearDropdown
+                                    value={exYear}
+                                    onChange={(value) => {
+                                        setExYear(value);
+                                        clearError('expireDate');
+                                    }}
+                                    minYear={1990}
+                                    maxYear={new Date().getFullYear() + 20}
+                                />
+                            </div>
+                        </div>
+                        <FieldError message={errors.expireDate} />
+                    </div>
+                    {/* Credential ID */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Credential ID
+                        </label>
+
+                        <input
+                            type="text"
+                            value={credID}
+                            onChange={(e) => {
+                                setCredID(e.target.value);
+                                clearError('credID');
+                            }}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                            placeholder="Ex: AZ-900-123456"
+                        />
+                        <FieldError message={errors.credID} />
+                    </div>
+                    {/* Credential URL */}
+                    <div>
+                        <label className="block type-sm font-medium">
+                            Credential URL
+                        </label>
+
+                        <input
+                            type="url"
+                            value={credURL}
+                            onChange={(e) => {
+                                setCredURL(e.target.value);
+                                clearError('credURL');
+                            }}
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                            placeholder="https://learn.microsoft.com/..."
+                        />
+                        <FieldError message={errors.credURL} />
+                    </div>
+                    {initialData?.certImage && !file && (
+                        <div className="mt-2">
+                            <p className="mb-1 type-sm">
+                                Current certificate image
+                            </p>
+
+                            <img
+                                src={initialData.certImage}
+                                alt="Current certificate"
+                                className="h-32 w-48 rounded-lg border border-brand object-contain"
+                            />
+                        </div>
+                    )}
+                    <div>
+                        <FileUpload
+                            onError={(message) =>
+                                setErrors((prev) => ({
+                                    ...prev,
+                                    file: message,
+                                }))
+                            }
+                            value={file}
+                            onChange={(next) => {
+                                setFile(next);
+                                clearError('file');
+                            }}
+                        />
+                        <FieldError message={errors.file} />
+                    </div>
+                </div>
+
+                <hr className="border-brand-dark/50 my-4" />
+                {/* -----------------footer----------------- */}
+                <FieldError message={formError} />
+                <div className="flex justify-end items-center gap-3 pt-1">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm font-medium hover:bg-brand-darker transition-colors disabled:opacity-50 min-w-[80px]"
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save'}
+                    </button>
+                </div>
+            </form>
+        </ModalShell>
     );
 }

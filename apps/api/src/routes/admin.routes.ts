@@ -21,7 +21,3 @@ adminRoutes.get('/companies', listCompanyAccounts);
 adminRoutes.get('/companies/:companyId', getCompanyAccountDetail);
 adminRoutes.patch('/companies/:companyId', updateCompanyAccount);
 adminRoutes.delete('/companies/:companyId', deleteCompanyAccount);
-
-adminRoutes.get('/ping', (_req, res) => {
-    res.json({ status: 'ok' });
-});

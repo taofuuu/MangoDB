@@ -1,0 +1,13 @@
+{
+    "request": "PATCH /portfolios/<portfolio_id>",
+    "status": 200,
+    "body": {
+        "developmentDate": "2026-01-15",
+        "listingId": 25,
+        "portfolioDescription": "created by scripts/snapshot-api.sh",
+        "portfolioId": "<portfolio_id>",
+        "portfolioImage": "<storage-url>",
+        "portfolioLink": "https://example.test/<run>/portfolio",
+        "portfolioName": "Snapshot Probe portfolio edited"
+    }
+}

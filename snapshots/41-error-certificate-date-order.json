@@ -1,0 +1,10 @@
+{
+    "request": "PATCH /certificates/<certificate_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "message": "Expiration date cannot be before the issue date"
+        }
+    }
+}

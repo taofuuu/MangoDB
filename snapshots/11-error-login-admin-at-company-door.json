@@ -1,0 +1,10 @@
+{
+    "request": "POST /auth/login",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Administrators must use the administrator login"
+        }
+    }
+}

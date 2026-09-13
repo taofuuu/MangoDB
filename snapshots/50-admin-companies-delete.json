@@ -1,0 +1,5 @@
+{
+    "request": "DELETE /admin/companies/<company_id>",
+    "status": 204,
+    "body": null
+}

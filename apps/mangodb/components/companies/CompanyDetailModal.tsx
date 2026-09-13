@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { CompanyAccountDetail } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 
 interface CompanyDetailModalProps {
     company: CompanyAccountDetail | null;
@@ -20,9 +21,9 @@ interface DetailRowProps {
 
 function DetailRow({ label, value }: DetailRowProps) {
     return (
-        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-[1.04vw] border-b border-[#E5E5E5] py-[1.11vh]">
-            <dt className="text-sm !font-[600] text-[#666666]">{label}</dt>
-            <dd className="min-w-0 break-words text-sm text-[#171717]">
+        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-[1.04vw] border-b border-line py-[1.11vh]">
+            <dt className="type-sm !font-[600] text-ink-soft">{label}</dt>
+            <dd className="min-w-0 break-words type-sm text-ink">
                 {value || 'Not provided'}
             </dd>
         </div>
@@ -61,12 +62,10 @@ export default function CompanyDetailModal({
         };
     }, [onClose]);
 
-    const isProvider =
-        company?.account_type === 'PROVIDER' ||
-        company?.account_type === 'BOTH';
-    const isReceiver =
-        company?.account_type === 'RECEIVER' ||
-        company?.account_type === 'BOTH';
+    // ?? '': the modal renders before the fetch lands, and both predicates
+    // answer false for a type they do not recognise.
+    const isProvider = isProviderAccount(company?.accountType ?? '');
+    const isReceiver = isReceiverAccount(company?.accountType ?? '');
 
     return (
         <div
@@ -82,25 +81,25 @@ export default function CompanyDetailModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="company-detail-title"
-                className="modal-scrollbar max-h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-popup bg-[#FFFDF9] p-[2.08vw] shadow-xl"
+                className="modal-scrollbar max-h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-popup bg-surface p-[2.08vw] shadow-xl"
             >
                 <div className="mb-[1.85vh] flex items-start justify-between gap-[1.04vw]">
                     <div>
-                        <p className="mb-[0.56vh] text-sm text-[#666666]">
+                        <p className="mb-[0.56vh] type-sm text-ink-soft">
                             Company account detail
                         </p>
                         <h2
                             id="company-detail-title"
-                            className="text-lg !font-[700] text-[#171717]"
+                            className="type-lg !font-[700] text-ink"
                         >
-                            {company?.company_name ?? 'Loading company'}
+                            {company?.companyName ?? 'Loading company'}
                         </h2>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
                         aria-label="Close Company details"
-                        className="rounded-button p-[0.52vw] text-[#666666] hover:bg-[#EDEDED] focus-visible:ring-2 focus-visible:ring-[#497B93] focus-visible:outline-none"
+                        className="rounded-button p-[0.52vw] text-ink-soft hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                     >
                         <X
                             aria-hidden="true"
@@ -110,20 +109,20 @@ export default function CompanyDetailModal({
                 </div>
 
                 {isLoading && (
-                    <p className="py-[5.56vh] text-center text-md text-[#666666]">
+                    <p className="py-[5.56vh] text-center type-md text-ink-soft">
                         Loading Company information…
                     </p>
                 )}
 
                 {error && !isLoading && (
                     <div role="alert" className="py-[3.70vh] text-center">
-                        <p className="mb-[1.85vh] text-sm text-[#C5483B]">
+                        <p className="mb-[1.85vh] type-sm text-danger">
                             {error}
                         </p>
                         <Button
                             variant="outline"
                             onClick={onClose}
-                            className="h-[4.63vh] px-[1.25vw] text-sm"
+                            className="h-[4.63vh] px-[1.25vw] type-sm"
                         >
                             Close
                         </Button>
@@ -134,29 +133,29 @@ export default function CompanyDetailModal({
                     <>
                         <div className="mb-[1.85vh] flex flex-wrap items-center gap-[0.52vw]">
                             {isProvider && (
-                                <span className="rounded-status bg-[#D36B60] px-[0.83vw] py-[0.37vh] text-xs !font-[600] text-white">
+                                <span className="rounded-status bg-role-provider px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
                                     Provider
                                 </span>
                             )}
                             {isReceiver && (
-                                <span className="rounded-status bg-[#66A6C5] px-[0.83vw] py-[0.37vh] text-xs !font-[600] text-white">
+                                <span className="rounded-status bg-brand-light px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
                                     Receiver
                                 </span>
                             )}
-                            <span className="ml-auto inline-flex items-center gap-[0.31vw] text-sm text-[#666666]">
+                            <span className="ml-auto inline-flex items-center gap-[0.31vw] type-sm text-ink-soft">
                                 <Star
                                     aria-hidden="true"
-                                    className="h-[1.67vh] w-[0.94vw] fill-[#FABC3F] text-[#FABC3F]"
+                                    className="h-[1.67vh] w-[0.94vw] fill-accent text-accent"
                                 />
-                                {company.average_rating?.toFixed(1) ??
+                                {company.averageRating?.toFixed(1) ??
                                     'No rating'}
-                                {company.rating_count > 0 &&
-                                    ` (${company.rating_count})`}
+                                {company.ratingCount > 0 &&
+                                    ` (${company.ratingCount})`}
                             </span>
                         </div>
 
-                        <p className="mb-[1.85vh] text-sm leading-relaxed text-[#4B4B4B]">
-                            {company.company_description ||
+                        <p className="mb-[1.85vh] type-sm leading-relaxed text-ink-soft">
+                            {company.companyDescription ||
                                 'No company description provided.'}
                         </p>
 
@@ -171,7 +170,7 @@ export default function CompanyDetailModal({
                             />
                             <DetailRow
                                 label="Contact email"
-                                value={company.contact_email}
+                                value={company.contactEmail}
                             />
                             <DetailRow label="Phone" value={company.phone} />
                             <DetailRow
@@ -184,17 +183,17 @@ export default function CompanyDetailModal({
                             />
                             <DetailRow
                                 label="Company type"
-                                value={company.company_type.join(', ')}
+                                value={company.companyType.join(', ')}
                             />
                             {isProvider && (
                                 <>
                                     <DetailRow
                                         label="Service terms"
-                                        value={company.service_term}
+                                        value={company.serviceTerm}
                                     />
                                     <DetailRow
                                         label="Warranty policy"
-                                        value={company.warranty_policy}
+                                        value={company.warrantyPolicy}
                                     />
                                 </>
                             )}
@@ -204,7 +203,7 @@ export default function CompanyDetailModal({
                             <Button
                                 variant="outline"
                                 onClick={onClose}
-                                className="h-[4.63vh] px-[1.25vw] text-sm"
+                                className="h-[4.63vh] px-[1.25vw] type-sm"
                             >
                                 Close
                             </Button>
@@ -214,10 +213,10 @@ export default function CompanyDetailModal({
                             <Button
                                 onClick={() =>
                                     router.push(
-                                        `/profile/edit?companyId=${company.company_id}`,
+                                        `/profile/edit?companyId=${company.companyId}`,
                                     )
                                 }
-                                className="h-[4.63vh] px-[1.25vw] text-sm"
+                                className="h-[4.63vh] px-[1.25vw] type-sm"
                             >
                                 Edit account
                             </Button>

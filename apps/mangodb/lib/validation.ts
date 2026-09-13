@@ -1,24 +1,73 @@
-import type { ApiRequestError } from '@/lib/api';
+import { ApiRequestError, describeError } from '@/lib/api';
+import { isProviderAccount } from '@/lib/roles';
 import type { ProfileFormData } from '@/components/forms/CompanyProfileForm';
 
-export type ProfileErrors = Partial<Record<keyof ProfileFormData, string>>;
+// One message per field, keyed by whatever the form calls that field.
+export type FieldErrors<Field extends string> = Partial<Record<Field, string>>;
 
-// zod reports an array problem as "company_type.0"; the form keys its errors by
-// field, so only the part before the first dot is useful here.
-export function toFormErrors(
-    details: ApiRequestError['details'],
-): ProfileErrors {
-    const errors: ProfileErrors = {};
+export type ProfileErrors = FieldErrors<keyof ProfileFormData & string>;
 
-    for (const detail of details) {
-        const field = detail.field.split('.')[0] as keyof ProfileFormData;
-        if (field && !errors[field]) {
+// What a failed save leaves the form to show.
+export type FormErrors<Field extends string> = {
+    // Goes under the input it names.
+    fields: FieldErrors<Field>;
+    // Everything with no input to sit under: offline, a 500, or a field this
+    // form does not render. Null when every message found a field.
+    message: string | null;
+};
+
+// Sorts an API failure into those two halves. `fields` maps an API field name
+// onto the name the form uses for it — often the same word, but the
+// certificate form calls certTitle "name".
+//
+// zod reports an array problem as "companyType.0", so only the part before the
+// first dot is matched.
+export function toFormErrors<Field extends string>(
+    cause: unknown,
+    fields: Record<string, Field>,
+): FormErrors<Field> {
+    // No envelope to read — a proxy, a crash, no network.
+    if (!(cause instanceof ApiRequestError)) {
+        return { fields: {}, message: describeError(cause) };
+    }
+
+    const errors: FieldErrors<Field> = {};
+    const unplaced: string[] = [];
+
+    for (const detail of cause.details) {
+        const field = fields[detail.field.split('.')[0] ?? ''];
+        if (!field) {
+            unplaced.push(detail.message);
+        } else if (!errors[field]) {
             errors[field] = detail.message;
         }
     }
 
-    return errors;
+    const placedAny = Object.keys(errors).length > 0;
+
+    return {
+        fields: errors,
+        // The envelope's own message is the fallback, but only when nothing
+        // landed on a field — otherwise "Request body is invalid" would
+        // repeat what the inputs already say.
+        message: unplaced[0] ?? (placedAny ? null : cause.message),
+    };
 }
+
+// The profile form names its fields exactly as the API does. Listed anyway, so
+// a field the form has no input for — username, from the admin edit — falls
+// through to the form-level message instead of a box nobody can see.
+export const PROFILE_FIELDS = {
+    companyName: 'companyName',
+    companyDescription: 'companyDescription',
+    contactEmail: 'contactEmail',
+    phone: 'phone',
+    website: 'website',
+    address: 'address',
+    companyType: 'companyType',
+    serviceTerm: 'serviceTerm',
+    warrantyPolicy: 'warrantyPolicy',
+} as const satisfies Record<string, keyof ProfileFormData & string>;
 
 export const PREDEFINED_COMPANY_TYPES = [
     'Technology consultant',
@@ -207,11 +256,11 @@ export function validateWarrantyPolicy(
 function runCommonValidations(data: ProfileFormData): ProfileErrors {
     const errors: ProfileErrors = {};
 
-    const nameErr = validateCompanyName(data.company_name);
-    if (nameErr) errors.company_name = nameErr;
+    const nameErr = validateCompanyName(data.companyName);
+    if (nameErr) errors.companyName = nameErr;
 
-    const emailErr = validateContactEmail(data.contact_email);
-    if (emailErr) errors.contact_email = emailErr;
+    const emailErr = validateContactEmail(data.contactEmail);
+    if (emailErr) errors.contactEmail = emailErr;
 
     const phoneErr = validatePhone(data.phone);
     if (phoneErr) errors.phone = phoneErr;
@@ -219,11 +268,11 @@ function runCommonValidations(data: ProfileFormData): ProfileErrors {
     const webErr = validateWebsite(data.website);
     if (webErr) errors.website = webErr;
 
-    const typeErr = validateCompanyType(data.company_type);
-    if (typeErr) errors.company_type = typeErr;
+    const typeErr = validateCompanyType(data.companyType);
+    if (typeErr) errors.companyType = typeErr;
 
-    const descErr = validateCompanyDescription(data.company_description);
-    if (descErr) errors.company_description = descErr;
+    const descErr = validateCompanyDescription(data.companyDescription);
+    if (descErr) errors.companyDescription = descErr;
 
     const locErr = validateLocation(data.address);
     if (locErr) errors.address = locErr;
@@ -235,11 +284,11 @@ function runCommonValidations(data: ProfileFormData): ProfileErrors {
 export function validateProviderProfile(data: ProfileFormData): ProfileErrors {
     const errors = runCommonValidations(data);
 
-    const termsErr = validateServiceTerms(data.service_term);
-    if (termsErr) errors.service_term = termsErr;
+    const termsErr = validateServiceTerms(data.serviceTerm);
+    if (termsErr) errors.serviceTerm = termsErr;
 
-    const warrantyErr = validateWarrantyPolicy(data.warranty_policy);
-    if (warrantyErr) errors.warranty_policy = warrantyErr;
+    const warrantyErr = validateWarrantyPolicy(data.warrantyPolicy);
+    if (warrantyErr) errors.warrantyPolicy = warrantyErr;
 
     return errors;
 }
@@ -249,14 +298,12 @@ export function validateReceiverProfile(data: ProfileFormData): ProfileErrors {
     return runCommonValidations(data);
 }
 
-// General validator that dispatches to Provider or Receiver validation based on account_type or explicit flag
+// General validator that dispatches to Provider or Receiver validation based on accountType or explicit flag
 export function validateProfile(
     data: ProfileFormData,
     isProvider?: boolean,
 ): ProfileErrors {
-    const providerMode =
-        isProvider ??
-        (data.account_type === 'PROVIDER' || data.account_type === 'BOTH');
+    const providerMode = isProvider ?? isProviderAccount(data.accountType);
 
     return providerMode
         ? validateProviderProfile(data)

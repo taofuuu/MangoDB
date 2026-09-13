@@ -7,6 +7,20 @@ type PrismaError = {
     };
 };
 
+// P2002 without asking which column. For a write where only one unique
+// constraint is reachable, the column name adds nothing the caller can act on.
+export function isUniqueViolation(err: unknown): boolean {
+    if (typeof err !== 'object' || err === null) return false;
+    return (err as PrismaError).code === 'P2002';
+}
+
+// The index name is built from the real column names, so `portfolioLink` has
+// to be compared as `portfolio_link`. Everything above the database is
+// camelCase (docs/conventions.md section 1) and an index name is not.
+function toColumnName(field: string): string {
+    return field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+}
+
 // Which of `known` a unique index rejected, or null if this isn't that kind of
 // error. Duck-typed because the prisma-client generator doesn't export the
 // error class, and the column arrives as the index name (company_username_key)
@@ -15,16 +29,14 @@ export function uniqueViolationFields(
     err: unknown,
     known: readonly string[],
 ): string[] | null {
-    if (typeof err !== 'object' || err === null) return null;
+    if (!isUniqueViolation(err)) return null;
 
-    const { code, meta } = err as PrismaError;
-    if (code !== 'P2002') return null;
-
+    const { meta } = err as PrismaError;
     const index = meta?.driverAdapterError?.cause?.constraint?.index;
     if (typeof index !== 'string') return [];
 
     const name = index.replace(/_key$/, '');
-    return known.filter((field) => name.endsWith(field));
+    return known.filter((field) => name.endsWith(toColumnName(field)));
 }
 
 // One entry per rejected column, so a form can show each beside its input.
@@ -36,13 +48,6 @@ export function uniqueViolationDetails(fields: string[]): ApiErrorDetail[] {
         field,
         message: `This ${field} is already registered`,
     }));
-}
-
-// P2002 without asking which column. For a write where only one unique
-// constraint is reachable, the column name adds nothing the caller can act on.
-export function isUniqueViolation(err: unknown): boolean {
-    if (typeof err !== 'object' || err === null) return false;
-    return (err as PrismaError).code === 'P2002';
 }
 
 // P2025 — the row the write targeted is gone. A company deleted mid-session

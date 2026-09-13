@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { hashPassword, verifyPassword } from '../auth/password';
+import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import { prisma } from '../lib/prisma';
@@ -21,6 +21,12 @@ import {
 } from '../lib/prismaErrors';
 import { hasOngoingProject } from '../lib/projectEligibility';
 import { sendSession } from '../lib/session';
+import {
+    BUCKETS,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    uploadToStorage,
+} from '../lib/storage';
 import { parseBody } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
@@ -31,9 +37,8 @@ import {
 // US1-4. Read fresh, not echoed from the claims: an edit in another session
 // has to show up here.
 export async function getMyProfile(req: Request, res: Response): Promise<void> {
-    // sub is a string in the token; company_id is an int.
     const company = await prisma.company.findUnique({
-        where: { company_id: Number(req.auth!.sub) },
+        where: { companyId: req.auth!.companyId },
         select: companyProfileSelect,
     });
 
@@ -54,7 +59,7 @@ export async function updateMyProfile(
     res: Response,
 ): Promise<void> {
     const body = parseBody(updateCompanyProfileSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // roleGrants rather than role === 'provider': a BOTH company is a provider
     // too, and owns the row these columns live on. US6-3's administrator edit
@@ -72,19 +77,19 @@ export async function updateMyProfile(
     let company;
     try {
         company = await prisma.company.update({
-            where: { company_id: companyId },
+            where: { companyId },
             data: companyProfileUpdateData(body),
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Only one unique constraint is still reachable from here: company_type
-        // is keyed on (company_id, company_type), so a tag repeated inside one
+        // Only one unique constraint is still reachable from here: companyType
+        // is keyed on (companyId, companyType), so a tag repeated inside one
         // request collides with itself. Username and email moved to
         // changeMyCredentials, and nothing else this writes is unique. So the
         // code alone names the constraint — no need to match the index name.
         if (isUniqueViolation(err)) {
             throw ApiError.conflict('Company types must not repeat', [
-                { field: 'company_type', message: 'Remove the duplicate tag' },
+                { field: 'companyType', message: 'Remove the duplicate tag' },
             ]);
         }
         // The company was deleted mid-session — its token is still valid. A
@@ -109,26 +114,10 @@ export async function changeMyCredentials(
     res: Response,
 ): Promise<void> {
     const body = parseBody(changeCredentialsSchema, req.body);
-    const companyId = Number(req.auth!.sub);
-    const { current_password, new_password, ...identity } = body;
+    const companyId = req.auth!.companyId;
+    const { currentPassword, newPassword, ...identity } = body;
 
-    // companyProfileSelect leaves the hash out on purpose, and the check needs
-    // it — ask for it on its own, then never let it past this function.
-    const existing = await prisma.company.findUnique({
-        where: { company_id: companyId },
-        select: { password: true },
-    });
-
-    // Token verified, so the row existed once — a company deleted mid-session.
-    if (!existing) {
-        throw ApiError.notFound('Company not found');
-    }
-
-    // No dummy-hash dance here, unlike login: the caller is already
-    // authenticated, so there is no account to enumerate by timing this.
-    if (!(await verifyPassword(current_password, existing.password))) {
-        throw ApiError.unauthorized('Current password is incorrect');
-    }
+    await assertCurrentPassword(companyId, currentPassword);
 
     // Reports both collisions at once; an index only fails on the first. The
     // caller's own row is excluded, or resubmitting your own email would 409.
@@ -137,12 +126,12 @@ export async function changeMyCredentials(
     let company;
     try {
         company = await prisma.company.update({
-            where: { company_id: companyId },
+            where: { companyId },
             data: {
                 ...omitUndefined(identity),
                 // Hashed on the way in. The plaintext reaches nothing else.
-                ...(new_password
-                    ? { password: await hashPassword(new_password) }
+                ...(newPassword
+                    ? { password: await hashPassword(newPassword) }
                     : {}),
             },
             select: companyProfileSelect,
@@ -175,6 +164,96 @@ export async function changeMyCredentials(
     sendSession(res, toCompanyProfile(company));
 }
 
+// US1-5, the photo half. Its own route rather than a field on PATCH /me,
+// for the same reason /me/credentials is separate: that body is JSON, and a
+// file cannot travel in one. Multipart would also cost /me its three-state
+// body — absent, null, value — because every multipart field is a string.
+//
+// Answers with the whole profile, like PATCH /me, so the page can re-render
+// from one response.
+export async function updateMyPhoto(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const companyId = req.auth!.companyId;
+
+    if (!req.file) {
+        throw ApiError.badRequest('Provide an image to upload', [
+            { field: 'photo', message: 'Choose an image first' },
+        ]);
+    }
+
+    // Read first, for the old URL to clean up afterwards and so a deleted
+    // company is a plain 404 rather than a P2025 out of the update.
+    const existing = await prisma.company.findUnique({
+        where: { companyId },
+        select: { companyPhoto: true },
+    });
+
+    if (!existing) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const uploaded = await uploadToStorage(
+        req.file,
+        BUCKETS.PROFILE,
+        'companies',
+    );
+
+    let company;
+    try {
+        company = await prisma.company.update({
+            where: { companyId },
+            data: { companyPhoto: uploaded.url },
+            select: companyProfileSelect,
+        });
+    } catch (err) {
+        // The row never pointed at it, so the object is an orphan.
+        await removeFromStorage(uploaded.path, BUCKETS.PROFILE);
+        throw err;
+    }
+
+    // The row points at the replacement now. Best-effort, matching the
+    // certificate and portfolio writes.
+    if (existing.companyPhoto) {
+        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
+    }
+
+    res.json(toCompanyProfile(company));
+}
+
+// Clearing the photo, which the upload route cannot express: multipart has no
+// way to send "no file" that is distinguishable from forgetting to attach one.
+export async function deleteMyPhoto(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const companyId = req.auth!.companyId;
+
+    const existing = await prisma.company.findUnique({
+        where: { companyId },
+        select: { companyPhoto: true },
+    });
+
+    if (!existing) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const company = await prisma.company.update({
+        where: { companyId },
+        data: { companyPhoto: null },
+        select: companyProfileSelect,
+    });
+
+    // Only after the column stopped pointing at it. Best-effort, matching the
+    // certificate and portfolio deletes: the row is correct either way.
+    if (existing.companyPhoto) {
+        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
+    }
+
+    res.json(toCompanyProfile(company));
+}
+
 // US1-6. Coordinates the existing eligibility and soft-delete layers without
 // owning either rule. Session invalidation and deleted-account login blocking
 // are integrated by their separately assigned US1-6 task.
@@ -182,7 +261,7 @@ export async function requestMyAccountDeletion(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     if (await hasOngoingProject(companyId)) {
         throw ApiError.conflict(

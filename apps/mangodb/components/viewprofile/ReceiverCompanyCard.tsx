@@ -2,7 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { CompanyProfile } from '@mangodb/shared';
+import type { AccountType, CompanyProfile } from '@mangodb/shared';
+import RoleTags from '../ui/RoleTags';
+import CompanyAvatar from './CompanyAvatar';
+import Tag from '../ui/Tag';
 
 export interface ReceiverCompanyCardData {
     name: string;
@@ -10,8 +13,12 @@ export interface ReceiverCompanyCardData {
     website: string;
     phone: string;
     description: string;
-    type: string;
+    // The tags themselves, not a joined string — chips on screen, like the
+    // provider card and the edit form.
+    companyType: string[];
     address: string;
+    accountType: AccountType;
+    photoUrl: string | null;
 }
 
 interface ReceiverCompanyCardProps {
@@ -19,100 +26,103 @@ interface ReceiverCompanyCardProps {
 }
 
 // The profile's nullable columns become "Not provided" here rather than
-// rendering an empty textarea, which reads as a loading glitch.
+// rendering an empty line, which reads as a loading glitch.
 export function toReceiverCompanyCardData(
     profile: CompanyProfile,
 ): ReceiverCompanyCardData {
     return {
-        name: profile.company_name,
-        email: profile.contact_email ?? 'Not provided',
+        name: profile.companyName,
+        email: profile.contactEmail ?? 'Not provided',
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
-        description: profile.company_description ?? 'No description provided.',
-        type:
-            profile.company_type.length > 0
-                ? profile.company_type.join(', ')
-                : 'Not specified',
+        description: profile.companyDescription ?? 'No description provided.',
+        companyType: profile.companyType,
         address: profile.address ?? 'Not provided',
+        accountType: profile.accountType,
+        photoUrl: profile.companyPhoto,
     };
+}
+
+// Plain text under a label. Same reason as the provider card: a read-only
+// textarea takes focus and draws an input border, so a page for reading looked
+// like a form for filling in.
+function Field({ label, value }: { label: string; value: string }) {
+    return (
+        <div>
+            <p className="type-xs !font-[600] text-ink-soft">{label}</p>
+            <p className="mt-1 type-sm whitespace-pre-line text-ink">{value}</p>
+        </div>
+    );
 }
 
 export default function ReceiverCompanyCard({
     data,
 }: ReceiverCompanyCardProps) {
     return (
-        <div className="bg-white rounded-popup p-6 border border-gray-200 shadow-xs flex flex-col justify-between w-full h-full font-sans">
-            <div>
-                {/* Profile Header */}
-                <div className="flex flex-col items-center text-center mb-5">
-                    <div className="w-20 h-20 bg-[#FFB800] rounded-full flex items-center justify-center !font-bold text-[#E53E3E] text-lg shadow-inner mb-3">
-                        CP
-                    </div>
-                    <h2 className="text-md !font-bold text-gray-900 tracking-tight mb-3">
-                        {data.name}
-                    </h2>
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm">
+            {/* Who the company is. Fixed, like the provider card's. */}
+            <div className="mb-5 flex shrink-0 flex-col items-center text-center">
+                <CompanyAvatar
+                    name={data.name}
+                    photoUrl={data.photoUrl}
+                    size={80}
+                    className="mb-3"
+                />
 
-                    <div className="text-xs text-gray-600 space-y-0.5">
-                        <p>{data.email}</p>
-                        <p>{data.website}</p>
-                        <p>{data.phone}</p>
-                    </div>
-                </div>
+                <h2 className="mb-3 type-md !font-bold tracking-tight text-ink">
+                    {data.name}
+                </h2>
 
-                {/* Form Fields Stack */}
-                <div className="flex flex-col gap-3">
-                    <div>
-                        <label
-                            htmlFor="company-description"
-                            className="block text-xs !font-medium text-gray-700 mb-1"
-                        >
-                            Company Description
-                        </label>
-                        <textarea
-                            id="company-description"
-                            readOnly
-                            value={data.description}
-                            className="w-full h-28 p-3 text-xs border border-[#497B93] rounded-button bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
+                <RoleTags
+                    accountType={data.accountType}
+                    className="mb-3 gap-2"
+                    tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
+                />
 
-                    <div>
-                        <label
-                            htmlFor="company-type"
-                            className="block text-xs !font-medium text-gray-700 mb-1"
-                        >
-                            Company Type
-                        </label>
-                        <textarea
-                            id="company-type"
-                            readOnly
-                            value={data.type}
-                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-button bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="company-address"
-                            className="block text-xs !font-medium text-gray-700 mb-1"
-                        >
-                            Company Address
-                        </label>
-                        <textarea
-                            id="company-address"
-                            readOnly
-                            value={data.address}
-                            className="w-full h-20 p-3 text-xs border border-[#497B93] rounded-button bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
+                <div className="type-xs text-ink-soft space-y-0.5">
+                    <p>{data.email}</p>
+                    <p>{data.website}</p>
+                    <p>{data.phone}</p>
                 </div>
             </div>
 
-            {/* Edit Button */}
-            <div className="flex justify-end mt-4">
+            {/* The details, and the only thing that scrolls. */}
+            <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+                <div className="flex flex-col gap-4">
+                    <Field
+                        label="Company Description"
+                        value={data.description}
+                    />
+
+                    <div>
+                        <p className="type-xs !font-[600] text-ink-soft">
+                            Company Type
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                            {data.companyType.length > 0 ? (
+                                data.companyType.map((type) => (
+                                    <Tag
+                                        key={type}
+                                        label={type}
+                                        className="h-[2.6vh] min-h-[24px] bg-fill-muted px-3 type-xs text-ink"
+                                    />
+                                ))
+                            ) : (
+                                <p className="type-sm text-ink">
+                                    Not specified
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <Field label="Company Address" value={data.address} />
+                </div>
+            </div>
+
+            <div className="flex shrink-0 justify-end pt-4">
                 <Link
                     href="/profile/edit"
-                    className="px-5 py-1.5 bg-[#497B93] hover:bg-[#386277] text-white text-xs !font-medium rounded-button transition-colors shadow-xs"
+                    className="rounded-button bg-brand px-6 py-1.5 type-xs !font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
                 >
                     Edit
                 </Link>

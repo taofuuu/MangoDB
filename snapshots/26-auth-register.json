@@ -1,0 +1,24 @@
+{
+    "request": "POST /auth/register",
+    "status": 201,
+    "body": {
+        "accessToken": "<jwt>",
+        "company": {
+            "accountType": "PROVIDER",
+            "address": null,
+            "companyDescription": null,
+            "companyId": "<company_id>",
+            "companyName": "Snapshot Probe A",
+            "companyType": [
+                "Software House"
+            ],
+            "contactEmail": null,
+            "email": "<run>a@example.test",
+            "phone": "0812345678",
+            "serviceTerm": null,
+            "username": "<run>a",
+            "warrantyPolicy": null,
+            "website": null
+        }
+    }
+}

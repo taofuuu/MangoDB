@@ -5,10 +5,11 @@ import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
+import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
-import { ApiRequestError } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { getPortfolios, deletePortfolio } from '@/lib/portfolios';
 
@@ -26,25 +27,27 @@ export default function PortfolioPage() {
         null,
     );
 
+    // The image open full size. Held here rather than in each card so the
+    // grid and the list share one dialog.
+    const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
+        null,
+    );
+
     // Two hops: /portfolios is public and needs to be told whose rows to
     // return, and /companies/me is the only thing that knows the id. No token
     // check first — without one that call 401s anyway, and an expired or
     // revoked token lands in the same place.
     useEffect(() => {
         getMyProfile()
-            .then((profile) => getPortfolios(profile.company_id))
+            .then((profile) => getPortfolios(profile.companyId))
             .then(setItems)
             .catch((err: unknown) => {
-                if (err instanceof ApiRequestError && err.status === 401) {
-                    setLoadError('no-token');
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
                     return;
                 }
 
-                setLoadError(
-                    err instanceof ApiRequestError
-                        ? err.message
-                        : 'Could not reach the API. Is it running on port 4000?',
-                );
+                setLoadError(describeError(err));
             });
     }, []);
 
@@ -52,11 +55,11 @@ export default function PortfolioPage() {
     const handleDelete = async () => {
         if (!pendingDelete) return;
 
-        await deletePortfolio(pendingDelete.portfolio_id);
+        await deletePortfolio(pendingDelete.portfolioId);
 
         setItems((current) =>
             (current ?? []).filter(
-                (item) => item.portfolio_id !== pendingDelete.portfolio_id,
+                (item) => item.portfolioId !== pendingDelete.portfolioId,
             ),
         );
     };
@@ -64,20 +67,20 @@ export default function PortfolioPage() {
     const handleEdit = (updated: ServicePortfolio) => {
         setItems((current) =>
             (current ?? []).map((item) =>
-                item.portfolio_id === updated.portfolio_id ? updated : item,
+                item.portfolioId === updated.portfolioId ? updated : item,
             ),
         );
     };
 
     return (
-        <main className="min-h-screen bg-[#FFFDF9] px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-[#171717] max-md:px-[5vw]">
+        <main className="min-h-screen bg-surface px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-ink max-md:px-[5vw]">
             <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">
                 <div>
-                    <h1 className="text-hd !text-[48px] leading-none">
+                    <h1 className="type-hd !text-[48px] leading-none">
                         Portfolio
                     </h1>
 
-                    <p className="mt-[1vh] text-lg !font-[400]">
+                    <p className="mt-[1vh] type-lg !font-[400]">
                         List of company&apos;s portfolio
                     </p>
                 </div>
@@ -85,8 +88,8 @@ export default function PortfolioPage() {
                 {items && <ViewToggle value={view} onChange={setView} />}
             </div>
 
-            {loadError === 'no-token' && (
-                <p className="mt-[4.5vh] text-md !font-[400]">
+            {loadError === NOT_SIGNED_IN && (
+                <p className="mt-[4.5vh] type-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -95,18 +98,18 @@ export default function PortfolioPage() {
                 </p>
             )}
 
-            {loadError && loadError !== 'no-token' && (
-                <p className="mt-[4.5vh] text-md !font-[400] text-[#C5483B]">
+            {loadError && loadError !== NOT_SIGNED_IN && (
+                <p className="mt-[4.5vh] type-md !font-[400] text-danger">
                     {loadError}
                 </p>
             )}
 
             {!loadError && !items && (
-                <p className="mt-[4.5vh] text-md !font-[400]">Loading…</p>
+                <p className="mt-[4.5vh] type-md !font-[400]">Loading…</p>
             )}
 
             {items?.length === 0 && (
-                <p className="mt-[4.5vh] text-md !font-[400] text-[#757575]">
+                <p className="mt-[4.5vh] type-md !font-[400] text-ink-soft">
                     No portfolio items yet.
                 </p>
             )}
@@ -115,10 +118,11 @@ export default function PortfolioPage() {
                 <div className="mt-[4.5vh] grid grid-cols-4 gap-x-[3.49vw] gap-y-[3.7vh] max-lg:grid-cols-2 max-sm:grid-cols-1">
                     {items.map((item) => (
                         <PortfolioCard
-                            key={item.portfolio_id}
+                            key={item.portfolioId}
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
+                            onExpandImage={setExpandedImage}
                         />
                     ))}
                 </div>
@@ -128,13 +132,21 @@ export default function PortfolioPage() {
                 <div className="mt-[4.5vh] flex flex-col gap-[2vh]">
                     {items.map((item) => (
                         <PortfolioRow
-                            key={item.portfolio_id}
+                            key={item.portfolioId}
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
+                            onExpandImage={setExpandedImage}
                         />
                     ))}
                 </div>
+            )}
+
+            {expandedImage && (
+                <ImageModal
+                    image={expandedImage}
+                    onClose={() => setExpandedImage(null)}
+                />
             )}
 
             <DeletePortfolioModal
@@ -145,7 +157,7 @@ export default function PortfolioPage() {
 
             {pendingEdit && (
                 <EditPortfolioForm
-                    key={pendingEdit.portfolio_id}
+                    key={pendingEdit.portfolioId}
                     portfolio={pendingEdit}
                     onClose={() => setPendingEdit(null)}
                     onSave={handleEdit}
