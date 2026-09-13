@@ -3,9 +3,10 @@
 import { useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import { describeError } from '@/lib/api';
 import { updateCertificate } from '@/lib/certificate';
+import { toFormErrors, type FieldErrors } from '@/lib/validation';
 import FileUpload from '../sm-detail/FileUpload';
+import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 
 export type CertificateData = {
@@ -21,6 +22,24 @@ export type CertificateData = {
     file?: File | null;
     certImage?: string | null;
 };
+
+// Which input on this form each API field belongs under. Month and year share
+// one message because they sit on one row and are wrong together.
+export const CERTIFICATE_FIELDS = {
+    certTitle: 'name',
+    organization: 'organize',
+    issueMonth: 'issueDate',
+    issueYear: 'issueDate',
+    expireMonth: 'expireDate',
+    expireYear: 'expireDate',
+    credentialId: 'credID',
+    credentialUrl: 'credURL',
+    certImage: 'file',
+} as const;
+
+export type CertificateErrors = FieldErrors<
+    (typeof CERTIFICATE_FIELDS)[keyof typeof CERTIFICATE_FIELDS]
+>;
 
 type EditFormModalProps = {
     isOpen: boolean;
@@ -93,18 +112,29 @@ function EditCertificateDialog({
     const [file, setFile] = useState<File | null>(null);
     const titleId = useId();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<CertificateErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
+
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: keyof CertificateErrors) =>
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        setErrors({});
+        setFormError(null);
 
         // Date validation: expiration date cannot be before issue date
         if (year && month && exYear && exMonth) {
             const issueDate = Number(year) * 100 + Number(month);
             const expireDate = Number(exYear) * 100 + Number(exMonth);
             if (expireDate < issueDate) {
-                setError('Expiration date cannot be before the issue date');
+                setErrors({
+                    expireDate:
+                        'Expiration date cannot be before the issue date',
+                });
                 return;
             }
         }
@@ -164,7 +194,9 @@ function EditCertificateDialog({
 
             onClose();
         } catch (err: unknown) {
-            setError(describeError(err));
+            const { fields, message } = toFormErrors(err, CERTIFICATE_FIELDS);
+            setErrors(fields);
+            setFormError(message);
         } finally {
             setIsSubmitting(false);
         }
@@ -202,12 +234,6 @@ function EditCertificateDialog({
                 </label>
             </div>
 
-            {error && (
-                <div className="mb-3 rounded-lg bg-red-50 p-2.5 type-xs text-danger whitespace-pre-line border border-red-200">
-                    {error}
-                </div>
-            )}
-
             <form onSubmit={handleSubmit}>
                 <div className="space-y-3">
                     {/* Name */}
@@ -219,11 +245,15 @@ function EditCertificateDialog({
                         <input
                             type="text"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                clearError('name');
+                            }}
                             className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft certified network associate security"
                             required
                         />
+                        <FieldError message={errors.name} />
                     </div>
                     {/* Organization */}
                     <div>
@@ -234,11 +264,15 @@ function EditCertificateDialog({
                         <input
                             type="text"
                             value={organize}
-                            onChange={(e) => setOrganize(e.target.value)}
+                            onChange={(e) => {
+                                setOrganize(e.target.value);
+                                clearError('organize');
+                            }}
                             className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft"
                             required
                         />
+                        <FieldError message={errors.organize} />
                     </div>
 
                     {/* Issue date */}
@@ -255,7 +289,10 @@ function EditCertificateDialog({
 
                                 <MonthDropdown
                                     value={month}
-                                    onChange={setMonth}
+                                    onChange={(value) => {
+                                        setMonth(value);
+                                        clearError('issueDate');
+                                    }}
                                 />
                             </div>
 
@@ -267,12 +304,16 @@ function EditCertificateDialog({
 
                                 <YearDropdown
                                     value={year}
-                                    onChange={setYear}
+                                    onChange={(value) => {
+                                        setYear(value);
+                                        clearError('issueDate');
+                                    }}
                                     minYear={1990}
                                     maxYear={new Date().getFullYear()}
                                 />
                             </div>
                         </div>
+                        <FieldError message={errors.issueDate} />
                     </div>
                     {/* Expiration date */}
                     <div>
@@ -288,7 +329,10 @@ function EditCertificateDialog({
 
                                 <MonthDropdown
                                     value={exMonth}
-                                    onChange={setExMonth}
+                                    onChange={(value) => {
+                                        setExMonth(value);
+                                        clearError('expireDate');
+                                    }}
                                 />
                             </div>
 
@@ -300,12 +344,16 @@ function EditCertificateDialog({
 
                                 <YearDropdown
                                     value={exYear}
-                                    onChange={setExYear}
+                                    onChange={(value) => {
+                                        setExYear(value);
+                                        clearError('expireDate');
+                                    }}
                                     minYear={1990}
                                     maxYear={new Date().getFullYear() + 20}
                                 />
                             </div>
                         </div>
+                        <FieldError message={errors.expireDate} />
                     </div>
                     {/* Credential ID */}
                     <div>
@@ -316,10 +364,14 @@ function EditCertificateDialog({
                         <input
                             type="text"
                             value={credID}
-                            onChange={(e) => setCredID(e.target.value)}
+                            onChange={(e) => {
+                                setCredID(e.target.value);
+                                clearError('credID');
+                            }}
                             className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: AZ-900-123456"
                         />
+                        <FieldError message={errors.credID} />
                     </div>
                     {/* Credential URL */}
                     <div>
@@ -330,10 +382,14 @@ function EditCertificateDialog({
                         <input
                             type="url"
                             value={credURL}
-                            onChange={(e) => setCredURL(e.target.value)}
+                            onChange={(e) => {
+                                setCredURL(e.target.value);
+                                clearError('credURL');
+                            }}
                             className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="https://learn.microsoft.com/..."
                         />
+                        <FieldError message={errors.credURL} />
                     </div>
                     {initialData?.certImage && !file && (
                         <div className="mt-2">
@@ -348,15 +404,27 @@ function EditCertificateDialog({
                             />
                         </div>
                     )}
-                    <FileUpload
-                        onError={setError}
-                        value={file}
-                        onChange={setFile}
-                    />
+                    <div>
+                        <FileUpload
+                            onError={(message) =>
+                                setErrors((prev) => ({
+                                    ...prev,
+                                    file: message,
+                                }))
+                            }
+                            value={file}
+                            onChange={(next) => {
+                                setFile(next);
+                                clearError('file');
+                            }}
+                        />
+                        <FieldError message={errors.file} />
+                    </div>
                 </div>
 
                 <hr className="border-brand-dark/50 my-4" />
                 {/* -----------------footer----------------- */}
+                <FieldError message={formError} />
                 <div className="flex justify-end items-center gap-3 pt-1">
                     <button
                         type="submit"

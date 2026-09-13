@@ -3,10 +3,15 @@
 import { useCallback, useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import type { CertificateData } from './EditCertificateForm';
-import { describeError } from '@/lib/api';
+import {
+    CERTIFICATE_FIELDS,
+    type CertificateData,
+    type CertificateErrors,
+} from './EditCertificateForm';
 import { createCertificate } from '@/lib/certificate';
+import { toFormErrors } from '@/lib/validation';
 import FileUpload from '../sm-detail/FileUpload';
+import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 
 type FormModalProps = {
@@ -25,7 +30,14 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
     const [credID, setCredID] = useState('');
     const [credURL, setCredURL] = useState('');
     const [file, setFile] = useState<File | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<CertificateErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
+
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: keyof CertificateErrors) =>
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
 
     const resetForm = () => {
         setName('');
@@ -37,7 +49,8 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         setCredID('');
         setCredURL('');
         setFile(null);
-        setError(null);
+        setErrors({});
+        setFormError(null);
     };
 
     const titleId = useId();
@@ -56,6 +69,8 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrors({});
+        setFormError(null);
 
         // Validate expiration date against issue date
         if (year && exYear && month && exMonth) {
@@ -63,7 +78,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             const expireDate = Number(exYear) * 12 + Number(exMonth);
 
             if (expireDate < issueDate) {
-                setError('Expiration date cannot be before the issue date.');
+                setErrors({
+                    expireDate:
+                        'Expiration date cannot be before the issue date.',
+                });
                 return;
             }
         }
@@ -123,7 +141,9 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             resetForm();
             onClose();
         } catch (cause) {
-            setError(describeError(cause));
+            const { fields, message } = toFormErrors(cause, CERTIFICATE_FIELDS);
+            setErrors(fields);
+            setFormError(message);
         }
     };
     return (
@@ -166,11 +186,15 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                         <input
                             type="text"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                clearError('name');
+                            }}
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft certified network associate security"
                             required
                         />
+                        <FieldError message={errors.name} />
                     </div>
                     {/* Organization */}
                     <div>
@@ -181,11 +205,15 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                         <input
                             type="text"
                             value={organize}
-                            onChange={(e) => setOrganize(e.target.value)}
+                            onChange={(e) => {
+                                setOrganize(e.target.value);
+                                clearError('organize');
+                            }}
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft"
                             required
                         />
+                        <FieldError message={errors.organize} />
                     </div>
 
                     {/* Issue date */}
@@ -202,7 +230,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                                 <MonthDropdown
                                     value={month}
-                                    onChange={setMonth}
+                                    onChange={(value) => {
+                                        setMonth(value);
+                                        clearError('issueDate');
+                                    }}
                                 />
                             </div>
 
@@ -214,12 +245,16 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                                 <YearDropdown
                                     value={year}
-                                    onChange={setYear}
+                                    onChange={(value) => {
+                                        setYear(value);
+                                        clearError('issueDate');
+                                    }}
                                     minYear={1990}
                                     maxYear={new Date().getFullYear()}
                                 />
                             </div>
                         </div>
+                        <FieldError message={errors.issueDate} />
                     </div>
                     {/* Expiration date */}
                     <div>
@@ -235,7 +270,10 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                                 <MonthDropdown
                                     value={exMonth}
-                                    onChange={setExMonth}
+                                    onChange={(value) => {
+                                        setExMonth(value);
+                                        clearError('expireDate');
+                                    }}
                                 />
                             </div>
 
@@ -247,12 +285,16 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                                 <YearDropdown
                                     value={exYear}
-                                    onChange={setExYear}
+                                    onChange={(value) => {
+                                        setExYear(value);
+                                        clearError('expireDate');
+                                    }}
                                     minYear={1990}
                                     maxYear={new Date().getFullYear() + 20}
                                 />
                             </div>
                         </div>
+                        <FieldError message={errors.expireDate} />
                     </div>
                     {/* Credential ID */}
                     <div>
@@ -263,9 +305,13 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                         <input
                             type="text"
                             value={credID}
-                            onChange={(e) => setCredID(e.target.value)}
+                            onChange={(e) => {
+                                setCredID(e.target.value);
+                                clearError('credID');
+                            }}
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
+                        <FieldError message={errors.credID} />
                     </div>
                     {/* Credential URL */}
                     <div>
@@ -276,26 +322,34 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                         <input
                             type="text"
                             value={credURL}
-                            onChange={(e) => setCredURL(e.target.value)}
+                            onChange={(e) => {
+                                setCredURL(e.target.value);
+                                clearError('credURL');
+                            }}
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
+                        <FieldError message={errors.credURL} />
                     </div>
-                    <FileUpload
-                        onError={setError}
-                        value={file}
-                        onChange={setFile}
-                    />
+                    <div>
+                        <FileUpload
+                            onError={(message) =>
+                                setErrors((prev) => ({
+                                    ...prev,
+                                    file: message,
+                                }))
+                            }
+                            value={file}
+                            onChange={(next) => {
+                                setFile(next);
+                                clearError('file');
+                            }}
+                        />
+                        <FieldError message={errors.file} />
+                    </div>
                 </div>
                 <hr className="border-brand-dark/50" />
                 {/* -----------------footer----------------- */}
-                {error && (
-                    <p
-                        role="alert"
-                        className="pt-4 text-right type-sm text-danger"
-                    >
-                        {error}
-                    </p>
-                )}
+                <FieldError message={formError} />
 
                 {/* Save button */}
                 <div className="flex items-center justify-end gap-3 pt-4">
