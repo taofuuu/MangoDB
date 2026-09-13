@@ -18,14 +18,14 @@ export default function ReceiverProfileView({
         <div className="min-h-screen bg-surface p-6 lg:p-8">
             <main className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
                 {/* Left Receiver Card */}
-                <aside className="w-full lg:w-[320px] flex-shrink-0">
+                <aside className="w-full lg:w-[360px] flex-shrink-0 lg:h-[840px]">
                     <ReceiverCompanyCard
                         data={toReceiverCompanyCardData(profile)}
                     />
                 </aside>
 
                 {/* Right Job Listing Container */}
-                <section className="flex-1 w-full">
+                <section className="flex-1 w-full lg:h-[840px]">
                     <JobListing />
                 </section>
             </main>
