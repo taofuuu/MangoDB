@@ -60,24 +60,24 @@ export function validateContactEmail(
     return null;
 }
 
-// 3. Phone Number: Strictly required, 6 to 20 characters, allowing digits and + - ( ) spaces.
-// Must contain at least 6 digits so values like "--------" are rejected.
+// Drops the spaces, hyphens and brackets people type, and turns a +66 prefix
+// back into the leading 0. Mirrors thaiPhone on the API, so what we send is
+// already the shape the column will hold.
+export function normalizePhone(value: string | null | undefined): string {
+    const compact = (value ?? '').trim().replace(/[\s()-]/g, '');
+    return compact.startsWith('+66') ? `0${compact.slice(3)}` : compact;
+}
+
+// 3. Phone Number: Required. Thai only for now — 9 digits for a landline
+// (021234567) or 10 for a mobile (0812345678), both starting with 0.
 export function validatePhone(value: string | undefined): string | null {
-    const trimmed = (value ?? '').trim();
-    if (!trimmed) {
+    // Emptiness is judged before normalizing, or "-----" would normalize to ""
+    // and be reported as a missing field rather than a wrong one.
+    if (!(value ?? '').trim()) {
         return 'Phone number is required.';
     }
-
-    const digitsOnly = trimmed.replace(/\D/g, '');
-
-    if (
-        trimmed.length < 6 ||
-        trimmed.length > 20 ||
-        !/^[0-9+\-\s()]+$/.test(trimmed) ||
-        digitsOnly.length < 6 ||
-        digitsOnly.length > 15
-    ) {
-        return 'Please provide a valid phone number';
+    if (!/^0\d{8,9}$/.test(normalizePhone(value))) {
+        return 'Use a Thai phone number, e.g. 0812345678.';
     }
     return null;
 }

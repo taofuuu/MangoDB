@@ -15,6 +15,7 @@ import AccountInfoStep, {
     type AccountInfo,
 } from '@/components/register/AccountStep';
 import {
+    normalizePhone,
     normalizeWebsiteUrl,
     validateCompanyDescription,
     validateCompanyName,
@@ -154,7 +155,7 @@ export default function RegisterPage() {
             company_description:
                 companyInfo.companyDescription.trim() || undefined,
             company_type: companyInfo.companyType,
-            phone: companyInfo.phoneNumber,
+            phone: normalizePhone(companyInfo.phoneNumber),
             email: companyInfo.email,
             address: companyInfo.address.trim() || undefined,
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
