@@ -13,8 +13,8 @@ in before you touch a file they own.
 | #                          | Phase                             | Owns                                                 | Status  |
 | -------------------------- | --------------------------------- | ---------------------------------------------------- | ------- |
 | [0](phase-0-safety-net.md) | Safety net                        | `scripts/`, `snapshots/`, `apps/api/src/seed.ts`     | done    |
-| 1                          | Agree the vocabulary              | `docs/conventions.md`                                | next    |
-| 2                          | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | planned |
+| [1](phase-1-vocabulary.md) | Agree the vocabulary              | `docs/conventions.md`                                | done    |
+| 2                          | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | next    |
 | 3                          | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | planned |
 | 4                          | Backend: apply the wire rules     | `apps/api/src/routes`, `controllers`, `schemas`      | planned |
 | 5                          | Publish the template              | `docs/adding-a-resource.md`, `apps/api/README.md`    | planned |
@@ -62,10 +62,11 @@ directions.
    this project's history. Whoever takes it announces the date first, and
    everyone else merges or parks their branch that day.
 6. **New Sprint 2 work follows the conventions, not the neighbours.** If the
-   file next to yours contradicts `docs/conventions.md`, the doc wins and the
-   file is somebody's phase.
-7. **Commits go straight to `main`, one concern each**, conventional format,
-   short message. No `Co-Authored-By` trailer.
+   file next to yours contradicts [docs/conventions.md](../conventions.md), the
+   doc wins and the file is somebody's phase.
+7. **The whole refactor lives on `refactor/full-codebase`**, not on `main`.
+   Commits are one concern each, conventional format, short message. `main`
+   stays where Sprint 2 branches off from, until the refactor merges.
 8. **Every phase ships its page in this folder** — the conventions it settled,
    so the next person does not have to re-derive them.
 
