@@ -155,7 +155,8 @@ body {
 /* Scrollbar. One rule; the colour is a variable, which is the whole reason
  * .certificate-scrollbar existed as a second copy of this. */
 .modal-scrollbar,
-.certificate-scrollbar {
+.certificate-scrollbar,
+.view-profile-scrollbar {
     --scrollbar-thumb: var(--color-brand);
     --scrollbar-thumb-hover: var(--color-brand-dark);
     scrollbar-width: thin;
@@ -167,13 +168,23 @@ body {
     --scrollbar-thumb-hover: var(--color-accent);
 }
 
+/* Grey rather than brand: this one scrolls inside a card that is already
+   busy, so the bar should not be the loudest thing on it. */
+.view-profile-scrollbar {
+    --scrollbar-thumb: var(--color-line);
+    --scrollbar-thumb-hover: var(--color-ink-placeholder);
+    padding-right: 5px;
+}
+
 .modal-scrollbar::-webkit-scrollbar,
-.certificate-scrollbar::-webkit-scrollbar {
+.certificate-scrollbar::-webkit-scrollbar,
+.view-profile-scrollbar::-webkit-scrollbar {
     width: 8px;
 }
 
 .modal-scrollbar::-webkit-scrollbar-track,
-.certificate-scrollbar::-webkit-scrollbar-track {
+.certificate-scrollbar::-webkit-scrollbar-track,
+.view-profile-scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
 
@@ -182,13 +193,15 @@ body {
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb,
-.certificate-scrollbar::-webkit-scrollbar-thumb {
+.certificate-scrollbar::-webkit-scrollbar-thumb,
+.view-profile-scrollbar::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 9999px;
 }
 
 .modal-scrollbar::-webkit-scrollbar-thumb:hover,
-.certificate-scrollbar::-webkit-scrollbar-thumb:hover {
+.certificate-scrollbar::-webkit-scrollbar-thumb:hover,
+.view-profile-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
 }
 

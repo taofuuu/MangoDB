@@ -4,24 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { AccountType } from '@mangodb/shared';
 import Button from '../ui/Button';
 import FieldError from '../ui/FieldError';
-import Tag from '../ui/Tag';
-
-const ROLES: Record<AccountType, string[]> = {
-    PROVIDER: ['Provider'],
-    RECEIVER: ['Receiver'],
-    BOTH: ['Provider', 'Receiver'],
-    // An administrator offers and requests nothing, so it wears no tag. The
-    // key still has to be here: Record<AccountType, ...> demands every one.
-    ADMIN: [],
-};
-
-// Matches CompanyCard and CompanyDetailModal. These two used to be the other
-// way round here, so the same company was blue on this page and terracotta on
-// the admin list.
-const ROLE_FILL: Record<string, string> = {
-    Provider: 'bg-role-provider text-white',
-    Receiver: 'bg-brand-light text-white',
-};
+import RoleTags from '../ui/RoleTags';
 
 // Same rules the API enforces. Checking here too is not security — the
 // server's check is — it is so the user finds out before waiting for an
@@ -161,15 +144,11 @@ export default function ProfilePhotoPanel({
                 here — it decides which provider/receiver rows a company owns,
                 and no endpoint changes it. So the chips carry no remove
                 button, rather than one that only pretends to work. */}
-            <div className="mt-[4.49vh] flex gap-[1.04vw]">
-                {ROLES[accountType].map((role) => (
-                    <Tag
-                        key={role}
-                        label={role}
-                        className={`h-[3.33vh] w-[8.48vw] ${ROLE_FILL[role]}`}
-                    />
-                ))}
-            </div>
+            <RoleTags
+                accountType={accountType}
+                className="mt-[4.49vh] gap-[1.04vw]"
+                tagClassName="h-[3.33vh] w-[8.48vw]"
+            />
         </div>
     );
 }
