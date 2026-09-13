@@ -19,14 +19,16 @@
        one-line edit here instead of a sweep through 444 call sites. */
 
     --color-brand: #497b93;
+    /* The hover for brand. 26% darker. */
     --color-brand-dark: #3f6b80;
     --color-brand-light: #66a6c5;
     --color-brand-tint: #edf4f7;
     --color-brand-mist: #e3f1f1;
-    --color-brand-alt-1: #34596b;
-    --color-brand-alt-2: #3b6478;
-    --color-brand-alt-3: #3a6276;
-    --color-brand-alt-4: #386277;
+    /* The hover for brand-dark, where a button is already dark at rest.
+       32% darker again. Three other shades used to sit between this and
+       brand-dark — #3B6478, #3A6276 and #386277 — each used once, each
+       within ΔE 4 of brand-dark, which is below what an eye can see. */
+    --color-brand-darker: #34596b;
     --color-brand-deep: #1e4353;
 
     /* One danger red. It used to be four — #C5483B, #C5483E, #CE473E and

@@ -361,7 +361,7 @@ function EditCertificateDialog({
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm font-medium hover:bg-brand-alt-1 transition-colors disabled:opacity-50 min-w-[80px]"
+                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm font-medium hover:bg-brand-darker transition-colors disabled:opacity-50 min-w-[80px]"
                     >
                         {isSubmitting ? 'Saving...' : 'Save'}
                     </button>

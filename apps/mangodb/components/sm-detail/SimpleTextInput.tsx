@@ -74,7 +74,9 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
                 style={{
                     ...styles.input,
                     height: inputHeight,
-                    borderColor: error ? '#C5483B' : '#497B93',
+                    borderColor: error
+                        ? 'var(--color-danger)'
+                        : 'var(--color-brand)',
                 }}
                 placeholder="Type here..."
             />
@@ -107,6 +109,6 @@ const styles: { [key: string]: React.CSSProperties } = {
             'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         borderStyle: 'solid',
         borderWidth: '1px',
-        borderColor: '#497B93',
+        borderColor: 'var(--color-brand)',
     },
 };

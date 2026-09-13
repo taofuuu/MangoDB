@@ -146,7 +146,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
             <div className="flex justify-end absolute bottom-6 right-8">
                 <Link
                     href="/profile/edit"
-                    className="px-6 py-1.5 bg-brand hover:bg-brand-alt-2 text-white type-xs font-medium rounded-lg transition-colors shadow-sm"
+                    className="px-6 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs font-medium rounded-lg transition-colors shadow-sm"
                 >
                     Edit
                 </Link>

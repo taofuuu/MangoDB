@@ -421,7 +421,7 @@ export default function EditAccountModal({
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-alt-1 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSaving ? 'Saving…' : 'Save'}
                         </button>

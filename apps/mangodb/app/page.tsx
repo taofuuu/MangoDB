@@ -74,7 +74,7 @@ export default function Home() {
 
                 <Link
                     href="/register"
-                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-alt-3"
+                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-dark"
                 >
                     Sign Up
                 </Link>

@@ -112,7 +112,7 @@ export default function ReceiverCompanyCard({
             <div className="flex justify-end mt-4">
                 <Link
                     href="/profile/edit"
-                    className="px-5 py-1.5 bg-brand hover:bg-brand-alt-4 text-white type-xs !font-medium rounded-button transition-colors shadow-xs"
+                    className="px-5 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs !font-medium rounded-button transition-colors shadow-xs"
                 >
                     Edit
                 </Link>
