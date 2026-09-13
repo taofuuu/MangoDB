@@ -4,6 +4,9 @@ package-lock.json
 
 # Generated, never hand-edited.
 apps/api/src/generated
+# Written by scripts/snapshot-api.sh. Reformatting them would make the script's
+# own output a diff against the baseline it is supposed to match.
+snapshots
 apps/mangodb/.next
 apps/mangodb/next-env.d.ts
 graphify-out

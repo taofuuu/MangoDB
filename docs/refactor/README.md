@@ -12,7 +12,7 @@ in before you touch a file they own.
 
 | #                          | Phase                             | Owns                                                 | Status  |
 | -------------------------- | --------------------------------- | ---------------------------------------------------- | ------- |
-| [0](phase-0-safety-net.md) | Safety net                        | `scripts/`, `snapshots/`                             | done    |
+| [0](phase-0-safety-net.md) | Safety net                        | `scripts/`, `snapshots/`, `apps/api/src/seed.ts`     | done    |
 | 1                          | Agree the vocabulary              | `docs/conventions.md`                                | next    |
 | 2                          | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | planned |
 | 3                          | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | planned |

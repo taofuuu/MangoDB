@@ -1,8 +1,7 @@
 # Phase 0 — Safety net
 
-**Status: done.** Ships `scripts/snapshot-api.sh` and its node helper. The
-`snapshots/` baseline is recorded by running it — that is a commit of its own,
-made against a seeded database, and it must land before Phase 1 starts.
+**Status: done.** Ships `scripts/snapshot-api.sh`, its node helper,
+`apps/api/src/seed.ts`, and the 46-file `snapshots/` baseline.
 
 ## What problem this solves
 
@@ -24,13 +23,28 @@ This is the cheap version: `curl` and `node`, no new dependency, no test runner.
 
 1. Have the API running (`npm run dev -w api`) against a database you are
    allowed to write to. **Never point this at production.**
-2. Copy `scripts/.env.snapshot.example` to `scripts/.env.snapshot` and fill in
-   the three logins. That file is gitignored.
-3. The database needs, at minimum:
-    - a provider, a receiver and an admin account,
-    - one service listing owned by that provider, with at least one portfolio
-      on it,
-    - one certificate owned by that provider.
+2. Create the accounts the script signs in as:
+
+    ```bash
+    npm run db:seed -w api
+    ```
+
+    It prints the six lines to paste into `scripts/.env.snapshot` (copy
+    `scripts/.env.snapshot.example` first — that file is gitignored).
+
+Why a seed script rather than the companies already in the database: all 20 of
+those store the literal string `hash123` in `password` instead of a bcrypt
+hash, so `verifyPassword` rejects every one and nothing can sign in as them.
+`src/seed.ts` adds three accounts of its own — a provider, a receiver and an
+admin — plus a service listing with a portfolio and a certificate, which
+`POST /portfolios` and the certificate calls need something to attach to. An
+admin cannot be created through `/auth/register` at all (the enum only takes
+`PROVIDER`, `RECEIVER` and `BOTH`), which is the other reason this exists.
+
+Everything it writes is named `snapshot_`, it upserts rather than inserts, and
+it deletes nothing except spent probe accounts (below). Run it as often as you
+like — a second run repairs the accounts rather than duplicating them, and it
+resets the passwords, so it is also how you recover an account someone broke.
 
 **Every time**
 
@@ -76,8 +90,10 @@ like the session it recorded.
 These are the conventions to keep if you add a call or change the script.
 
 1. **Values that change every run are replaced with a placeholder** — `<jwt>`,
-   `<timestamp>`, `<storage-url>`, `<run>`, `<companyIdA>`. Without this the
-   whole file is a diff every run and nobody reads it.
+   `<timestamp>`, `<storage-url>`, `<run>`, `<company_id>`. Without this the
+   whole file is a diff every run and nobody reads it. The request line gets the
+   same treatment, so `PATCH /portfolios/27` records as
+   `PATCH /portfolios/<portfolio_id>`.
 2. **The placeholders match on the _value_, never on the key name.** A rule
    keyed on `cert_image` would stop working the moment Phase 2 renamed it to
    `certImage`, and the diff would fill with noise. If you add a rule, write it
@@ -89,10 +105,18 @@ These are the conventions to keep if you add a call or change the script.
    renamed field still is.
 5. **Status codes are part of the snapshot.** A 200 that becomes a 204 is a
    breaking change even when the body is identical.
-6. **The script cleans up after itself.** It creates two throwaway companies and
+6. **An id placeholder matches on the key as well as the number.** A new
+   `portfolio_id` of 25 and a seeded `listing_id` of 25 are the same number
+   meaning two different things, and a value-only rule would put a placeholder
+   on the one that never changes. Keys are compared with case and underscores
+   ignored, so the rules survive Phase 2.
+7. **The script cleans up after itself.** It creates two throwaway companies and
    deletes them again, including on failure, via a `trap`. Anything you add that
    creates a row must remove it, or every later run's admin listing drifts.
-7. **Keep the numbering.** New calls get the next free number, or the file order
+   Company deletion is a _soft_ delete, so those rows stay in the table
+   forever — `npm run db:seed -w api` prunes the spent ones, and that is the
+   only thing in this repo that hard-deletes anything.
+8. **Keep the numbering.** New calls get the next free number, or the file order
    stops matching the call order.
 
 ## What it does not cover
@@ -104,8 +128,12 @@ Say so out loud rather than trusting it further than it goes:
 - **Anything the frontend renders.** Same reason.
 - **Concurrency, and anything timing-dependent** — the login timing defence in
   `verifyCredentials`, for one.
-- **Rows other people changed.** If somebody edits the seeded provider between
-  your two runs, that is a diff and it is not yours. Re-run from a known state.
+- **Rows other people changed.** The three `snapshot_` accounts are the script's
+  own, so nobody should be editing them — but `20-admin-companies.json` is the
+  unfiltered first page of every company in the database, so it legitimately
+  changes whenever somebody registers or renames one. Read a diff there as news
+  about the data, not about the code. Everything else is pinned to rows this
+  script or the seed created.
 
 ## What each phase should produce
 
@@ -127,8 +155,17 @@ calls together (`accessToken`, `company_id`, `listing_id`). The `get` helper
 looks a key up in both snake_case and camelCase on purpose, so the script
 survives that flip without a rename commit of its own. Keep that property.
 
-Everything else lives in two files:
+Everything else lives in three files:
 
 - `scripts/snapshot-api.sh` — the list of calls, in order.
 - `scripts/lib/snapshot-json.mjs` — reads one field out of a response (`get`),
   and turns a response into a snapshot file (`normalize`).
+- `apps/api/src/seed.ts` — the accounts and rows the calls run against. It is
+  under `src/` rather than `prisma/` so `npm run typecheck` covers it: Phase 2
+  renames every Prisma field, and a seed the compiler cannot see is a seed that
+  breaks silently.
+
+One Windows note, since most of the team is on it: `winpath` in the shell script
+converts `/tmp/...` to a real Windows path before handing it to curl. Git Bash
+normally does that for you, but not inside curl's `-F "field=@path"` form, where
+the `@` hides the path from it. On Linux and macOS the function is a no-op.
