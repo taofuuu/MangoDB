@@ -24,12 +24,6 @@ const LABELS: Record<EditAccountMode, string> = {
     password: 'Password',
 };
 
-// The modal shows one line and reads nothing but Error.message.
-// VALIDATION_FAILED and CONFLICT put the useful text in details[]; '(body)' is
-// what parseBody calls a whole-object rule, so prefer a real field when both
-// are there. Everything else has only a message — including 401, which covers
-// both a wrong current password and an ended session, and only its wording
-// tells those apart.
 export default function AccountPage() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -88,16 +82,11 @@ export default function AccountPage() {
                         newPassword: newValue,
                     };
 
-        try {
-            // The response is the saved profile, so the card refreshes from it
-            // rather than re-fetching.
-            setProfile(await changeMyCredentials(body));
-        } catch (err) {
-            // Rethrown, not swallowed: the modal only closes on a resolved
-            // promise, so this is what keeps it open with the message beside
-            // the fields the user still has typed in.
-            throw new Error(describeError(err));
-        }
+        // The response is the saved profile, so the card refreshes from it
+        // rather than re-fetching. A failure is left to propagate: the modal
+        // only closes on a resolved promise, and it sorts the rejected fields
+        // under the boxes they name.
+        setProfile(await changeMyCredentials(body));
 
         setStatus(`${LABELS[mode]} updated.`);
     };
