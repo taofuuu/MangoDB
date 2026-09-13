@@ -92,6 +92,10 @@ export interface CompanyProfile {
     phone: string;
     address: string | null;
     website: string | null;
+    // Public URL of the uploaded photo, or null until one is set. Written by
+    // PATCH /companies/me/photo rather than the profile edit, because a file
+    // cannot travel in that endpoint's JSON body.
+    companyPhoto: string | null;
     accountType: AccountType;
     companyType: string[];
     // Both live on the provider table, flattened to here. A RECEIVER company

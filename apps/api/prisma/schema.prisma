@@ -54,6 +54,10 @@ model Company {
   website            String?       @db.VarChar(255)
   accountType        String        @map("account_type") @db.VarChar(100)
   contactEmail       String?       @map("contact_email") @db.VarChar(100)
+  // Public URL of the photo in the `profile` storage bucket. Null until the
+  // company uploads one. Same shape as certImage and portfolioImage: the
+  // bytes live in storage, the column only points at them.
+  companyPhoto       String?       @map("company_photo") @db.VarChar(255)
   // Soft delete. Null means active; a timestamp means the account is gone as
   // far as discovery is concerned, while everything it is attached to -
   // listings, proposals, projects, reviews - stays exactly where it is.

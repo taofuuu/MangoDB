@@ -15,6 +15,7 @@ export const companyProfileSelect = {
     phone: true,
     address: true,
     website: true,
+    companyPhoto: true,
     accountType: true,
     companyType: { select: { companyType: true } },
     // Null for a RECEIVER company, which owns no provider row.
@@ -32,6 +33,7 @@ export interface CompanyProfileRow {
     phone: string;
     address: string | null;
     website: string | null;
+    companyPhoto: string | null;
     // A VarChar column, so Prisma types it as string; registerSchema is what
     // guarantees it's one of the three account types.
     accountType: string;
