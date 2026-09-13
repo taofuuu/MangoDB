@@ -328,6 +328,7 @@
       <a href="#auth">Auth</a>
       <a href="#accounts">Accounts</a>
       <a href="#portfolios">Portfolios</a>
+      <a href="#certificates-group">Certificates</a>
       <a href="#layout">Layout</a>
       <a href="#gotchas">Gotchas</a>
       <a href="#verified">Verified</a>
@@ -361,7 +362,7 @@ npm run typecheck         <span class="c-dim"># must pass before you open a PR</
         <p class="answer">Schema in <code>schemas/</code>, handler in <code>controllers/</code>, path in <code>routes/</code>, mount once in <code>routes/index.ts</code>.</p>
         <pre><code><span class="c-dim">// schemas/company.schema.ts</span>
 export const updateSchema = z.object({
-    company_name: z.string().min(1).max(255),
+    companyName: z.string().min(1).max(255),
     email: z.email().max(100),
 });
 
@@ -370,12 +371,12 @@ export async function updateProfile(req: Request, res: Response) {
     const body = parseBody(updateSchema, req.body);   <span class="c-dim">// typed, or throws</span>
 
     const company = await prisma.company.findUnique({
-        where: { company_id: Number(req.auth!.sub) },
+        where: { companyId: Number(req.auth!.sub) },
     });
     if (!company) throw ApiError.notFound('Company not found');
 
     res.json(await prisma.company.update({
-        where: { company_id: company.company_id }, data: body,
+        where: { companyId: company.companyId }, data: body,
     }));
 }
 
@@ -710,7 +711,7 @@ res.cookie('access_token', session.accessToken, {
         <p class="note">
           There is still no way to <em>create</em> an administrator. No signup path can make one —
           <code>registerSchema</code> rejects <code>ADMIN</code> and the profile edit cannot change
-          <code>account_type</code> — and the script that used to write the first one is not in the
+          <code>accountType</code> — and the script that used to write the first one is not in the
           repo. Ask whoever set up your database.
         </p>
       </article>
@@ -767,15 +768,15 @@ res.cookie('access_token', session.accessToken, {
         <h3>How does a company register?</h3>
         <p class="answer"><code>POST /auth/register</code>, public, returns <code>201</code> with the company and a token.</p>
         <pre><code>curl -s -X POST localhost:4000/auth/register -H 'content-type: application/json' -d '{
-  "company_name": "CodeCrafters", "username": "codecrafters",
+  "companyName": "CodeCrafters", "username": "codecrafters",
   "email": "contact@codecrafters.com", "password": "correct horse battery",
-  "phone": "021111111", "account_type": "PROVIDER",
-  "company_type": ["SME", "Software House"]
+  "phone": "021111111", "accountType": "PROVIDER",
+  "companyType": ["SME", "Software House"]
 }'
 
-<span class="c-dim">{"company":{"company_id":33,"company_name":"CodeCrafters","username":"codecrafters",
- "email":"contact@codecrafters.com","account_type":"PROVIDER",
- "company_type":["SME","Software House"], ...},
+<span class="c-dim">{"company":{"companyId":33,"companyName":"CodeCrafters","username":"codecrafters",
+ "email":"contact@codecrafters.com","accountType":"PROVIDER",
+ "companyType":["SME","Software House"], ...},
  "accessToken":"eyJhbGciOiJIUzI1NiIs..."}</span></code></pre>
         <p class="note">
           This is the one response in the API that wraps its resource. Everything else returns the
@@ -783,18 +784,18 @@ res.cookie('access_token', session.accessToken, {
           returns is the same one <code>/companies/me</code> accepts, so the frontend does not have to call
           login straight after signup — and it sets the session
           <a href="#cookie">cookie</a> as well, so a browser is signed in the moment it registers.
-          <code>company_description</code>, <code>address</code>, and
+          <code>companyDescription</code>, <code>address</code>, and
           <code>website</code> are the only optional fields. The password hash is never in the
           response: the handler names the columns it returns with an explicit <code>select</code>
           rather than deleting the field afterwards.
         </p>
       </article>
 
-      <article class="entry" id="account-type" data-tags="account_type company_type provider receiver both subtype discriminator industry tags">
-        <h3>What is <code>account_type</code>, and how is it different from <code>company_type</code>?</h3>
-        <p class="answer"><code>account_type</code> is one of <code>PROVIDER</code>, <code>RECEIVER</code>, <code>BOTH</code>. <code>company_type</code> is repeatable industry tags.</p>
+      <article class="entry" id="account-type" data-tags="accountType companyType provider receiver both subtype discriminator industry tags">
+        <h3>What is <code>accountType</code>, and how is it different from <code>companyType</code>?</h3>
+        <p class="answer"><code>accountType</code> is one of <code>PROVIDER</code>, <code>RECEIVER</code>, <code>BOTH</code>. <code>companyType</code> is repeatable industry tags.</p>
         <p class="note">
-          They read alike and are not alike. <code>account_type</code> is a single uppercase
+          They read alike and are not alike. <code>accountType</code> is a single uppercase
           discriminator on <code>company</code>, and it decides which subtype row the company gets:
           <code>PROVIDER</code> gets a row in <code>provider</code>, <code>RECEIVER</code> one in
           <code>receiver</code>, and <code>BOTH</code> gets both. The seeded database follows that
@@ -803,7 +804,7 @@ res.cookie('access_token', session.accessToken, {
           <code>create</code>, which is one transaction.
         </p>
         <p class="note">
-          <code>company_type</code> lives in its own table, many rows per company:
+          <code>companyType</code> lives in its own table, many rows per company:
           <code>SME</code>, <code>Software House</code>, <code>FinTech</code>, <code>AI Lab</code>,
           16 distinct values in the seed data. Registration requires at least one. There is no
           <code>ADMIN</code> account type — the enum rejects it, so nobody can register themselves
@@ -818,12 +819,12 @@ res.cookie('access_token', session.accessToken, {
 both: ['provider', 'receiver', 'both'],
 admin: ['admin'],</code></pre>
         <p class="note">
-          The token role comes from <code>account_type</code> — <code>BOTH</code> becomes
+          The token role comes from <code>accountType</code> — <code>BOTH</code> becomes
           <code>'both'</code> — and asking what a role may act as is a separate question from what
           it is. Without this a BOTH company would get <code>403</code> on both kinds of route,
           which is the opposite of what it signed up for. Note that <code>admin</code> grants only
           <code>admin</code>: it is not a superset, and a BOTH token still gets
-          <code>403</code> from <code>/admin/ping</code>.
+          <code>403</code> from <code>/admin/companies</code>.
         </p>
       </article>
 
@@ -853,28 +854,28 @@ admin: ['admin'],</code></pre>
         </p>
       </article>
 
-      <article class="entry" id="edit-profile" data-tags="edit update profile patch companies me partial null clear tags company_type readonly us1-5">
+      <article class="entry" id="edit-profile" data-tags="edit update profile patch companies me partial null clear tags companyType readonly us1-5">
         <h3>How does a company edit its profile?</h3>
         <p class="answer"><code>PATCH /companies/me</code>. Send only what changed; <code>null</code> clears a nullable column.</p>
         <pre><code>curl -s -X PATCH localhost:4000/companies/me -H "Authorization: Bearer $TOKEN" \
   -H 'content-type: application/json' -d '{
-  "company_name": "CodeCrafters Co., Ltd.",
+  "companyName": "CodeCrafters Co., Ltd.",
   "address": null,
-  "company_type": ["SME", "AI Lab"]
+  "companyType": ["SME", "AI Lab"]
 }'</code></pre>
         <p class="note">
           Three states, not two. A field that is <strong>absent</strong> leaves its column alone —
           that is what makes this a <code>PATCH</code>, and it is why the edit form may send one
           input or all of them. A field carrying a <strong>value</strong> overwrites. A field set to
           <strong><code>null</code></strong> clears, and only the six nullable columns accept it —
-          <code>company_description</code>, <code>address</code>, <code>website</code>,
-          <code>contact_email</code>, <code>service_term</code>, and
-          <code>warranty_policy</code>; <code>null</code> anywhere
+          <code>companyDescription</code>, <code>address</code>, <code>website</code>,
+          <code>contactEmail</code>, <code>serviceTerm</code>, and
+          <code>warrantyPolicy</code>; <code>null</code> anywhere
           else is a <code>400</code>. An empty body is a <code>400</code> too — it is a client bug,
           not a no-op worth a <code>200</code>.
         </p>
         <p class="note">
-          <code>company_type</code> is a set, not a list you append to: the request carries the
+          <code>companyType</code> is a set, not a list you append to: the request carries the
           whole set and the tags it replaces are deleted. It is a nested write, so the delete and
           the create are one transaction and the company is never briefly untagged. Note the
           schema's <code>.min(1)</code> — there is no way to spend an edit removing every tag.
@@ -892,20 +893,20 @@ admin: ['admin'],</code></pre>
           <strong>There are two emails, and they are not the same thing.</strong>
           <code>email</code> is what a company signs in with: it is unique, and it is what
           <code>POST /auth/login</code> looks a company up by, so changing it changes the
-          credential. <code>contact_email</code> is the address the profile shows so other
+          credential. <code>contactEmail</code> is the address the profile shows so other
           companies can get in touch — nullable, <em>not</em> unique, and empty until someone
           fills it in, because registration never asks for one. Two companies sharing a contact
           address is a <code>200</code>, not a <code>409</code>. This endpoint writes
-          <code>contact_email</code> only, which is why it needs no password; the account settings
+          <code>contactEmail</code> only, which is why it needs no password; the account settings
           page changes <code>email</code> through
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>.
         </p>
         <p class="note">
-          <code>service_term</code> and <code>warranty_policy</code> are the odd pair: they are
+          <code>serviceTerm</code> and <code>warrantyPolicy</code> are the odd pair: they are
           columns on <code>provider</code>, not on <code>company</code>, so they only exist for a
           company that offers work. The controller writes them through a nested
           <code>provider: { upsert: … }</code> in the same transaction as the rest — an
-          <code>upsert</code> because <code>account_type</code> is not proof the row exists,
+          <code>upsert</code> because <code>accountType</code> is not proof the row exists,
           and creating a missing one beats a <code>P2025</code> surfacing as a
           <span class="status s-warn">404</span> — and a
           <code>RECEIVER</code> company that sends either one gets a <code>403</code> — its account
@@ -921,7 +922,7 @@ admin: ['admin'],</code></pre>
           <code>username</code>, <code>email</code>, and
           <code>password</code> need the current password, so they live on
           <a href="#change-credentials"><code>PATCH /companies/me/credentials</code></a>.
-          <code>account_type</code> decides which subtype rows a company owns and what its token's
+          <code>accountType</code> decides which subtype rows a company owns and what its token's
           <code>role</code> claim says, so changing it means writing
           <code>provider</code>/<code>receiver</code> rows and issuing a new token — still an
           endpoint nobody has written.
@@ -934,21 +935,21 @@ admin: ['admin'],</code></pre>
         </p>
       </article>
 
-      <article class="entry" id="change-credentials" data-tags="password change username email credentials current_password account settings rotate token revoke 401 409 login identity">
+      <article class="entry" id="change-credentials" data-tags="password change username email credentials currentPassword account settings rotate token revoke 401 409 login identity">
         <h3>How does a company change its username, email, or password?</h3>
-        <p class="answer"><code>PATCH /companies/me/credentials</code>, with <code>current_password</code> every time.</p>
+        <p class="answer"><code>PATCH /companies/me/credentials</code>, with <code>currentPassword</code> every time.</p>
         <pre><code>curl -s -X PATCH localhost:4000/companies/me/credentials -H "Authorization: Bearer $TOKEN" \
   -H 'content-type: application/json' -d '{
-  "current_password": "correct horse battery",
+  "currentPassword": "correct horse battery",
   "email": "billing@codecrafters.com"
 }'
-{"company":{"company_id":33, …,"email":"billing@codecrafters.com", …},
+{"company":{"companyId":33, …,"email":"billing@codecrafters.com", …},
  "accessToken":"eyJhbGciOiJIUzI1NiIs…"}</code></pre>
         <p class="note">
           Partial like the profile edit — send any of <code>username</code>, <code>email</code>,
-          and <code>new_password</code>, and an absent one is left alone. There is no
+          and <code>newPassword</code>, and an absent one is left alone. There is no
           <code>null</code> here, because none of the three columns is nullable.
-          <code>current_password</code> on its own is a <code>400</code>: it changes nothing, which
+          <code>currentPassword</code> on its own is a <code>400</code>: it changes nothing, which
           is a client bug rather than a no-op worth a <code>200</code>.
         </p>
         <p class="note">
@@ -961,16 +962,16 @@ admin: ['admin'],</code></pre>
           ungated door beside it is not a gate.
         </p>
         <p class="note">
-          <code>current_password</code> uses the login rule, not the register rule — a length cap
+          <code>currentPassword</code> uses the login rule, not the register rule — a length cap
           and nothing else. A password that predates a policy still has to authenticate, and a
           credential question must be answered with a <code>401</code>, never a <code>400</code>
-          that hands out the policy. <code>new_password</code> uses the register rule, since that
+          that hands out the policy. <code>newPassword</code> uses the register rule, since that
           one is being <em>set</em>: <code>min(8)</code> and the 72-byte bcrypt cap. Both live in
           <code>companyFields</code> as <code>passwordAttempt</code> and <code>password</code>, so
           register, login, and this endpoint cannot drift.
         </p>
         <p class="note">
-          A wrong <code>current_password</code> is <code>401 UNAUTHORIZED</code>, checked before
+          A wrong <code>currentPassword</code> is <code>401 UNAUTHORIZED</code>, checked before
           anything is written, and no <code>dummyPasswordHash</code> dance is needed — the caller is
           already authenticated, so there is no account to enumerate by timing it. A username or
           email another company holds is <code>409 CONFLICT</code> with one
@@ -1004,9 +1005,9 @@ curl -s -H "Authorization: Bearer $ADMIN" \
 
 curl -s -X PATCH localhost:4000/admin/companies/33 \
   -H "Authorization: Bearer $ADMIN" -H 'content-type: application/json' -d '{
-  "company_name": "CodeCrafters Co., Ltd.",
+  "companyName": "CodeCrafters Co., Ltd.",
   "address": null,
-  "company_type": ["SME", "AI Lab"]
+  "companyType": ["SME", "AI Lab"]
 }'</code></pre>
         <p class="note">
           All three sit under one <code>adminRoutes.use(requireAuth, requireRole('admin'))</code>,
@@ -1017,7 +1018,7 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
           private contact details in that window.
         </p>
         <p class="note">
-          Pages are ordered by <code>company_name</code> and then <code>company_id</code> so records
+          Pages are ordered by <code>companyName</code> and then <code>companyId</code> so records
           do not jump between requests. <code>page</code> defaults to <code>1</code>,
           <code>pageSize</code> defaults to <code>12</code> and is capped at <code>50</code>.
           The response contains <code>items</code> plus <code>pagination</code> metadata with the
@@ -1033,16 +1034,16 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
           <a href="#edit-profile"><code>PATCH /companies/me</code></a> takes, so it reuses
           <code>updateCompanyProfileSchema</code> rather than declaring a second one.
           <code>username</code>, <code>email</code>, <code>password</code> and
-          <code>account_type</code> are rejected by the schema, so a body carrying any of them
+          <code>accountType</code> are rejected by the schema, so a body carrying any of them
           is a <span class="status s-warn">400</span> naming the key. That is
           deliberate: each of the three is a way to take an account over, and
           <a href="#change-credentials">the credentials endpoint</a> gates them behind the
           current password — a gate an administrator cannot satisfy for someone else.
         </p>
         <p class="note">
-          <code>service_term</code> and <code>warranty_policy</code> live on
+          <code>serviceTerm</code> and <code>warrantyPolicy</code> live on
           <code>provider</code>, so they are judged against the <em>target's</em>
-          <code>account_type</code>, not the caller's role: a <code>RECEIVER</code> or
+          <code>accountType</code>, not the caller's role: a <code>RECEIVER</code> or
           <code>ADMIN</code> target owns no <code>provider</code> row and gets a
           <span class="status s-warn">400</span> with one <code>details</code> entry per
           offending field. <a href="#edit-profile"><code>PATCH /companies/me</code></a> answers
@@ -1050,10 +1051,10 @@ curl -s -X PATCH localhost:4000/admin/companies/33 \
           <em>is</em> the one refused; here the administrator is not refused anything — the
           columns simply do not exist on that account. The refusal is per-field in the
           <code>details</code> array only — the check runs before the write, so the request
-          stays atomic and a <code>company_name</code> sent in the same body is not saved.
+          stays atomic and a <code>companyName</code> sent in the same body is not saved.
         </p>
         <p class="note">
-          <code>company_type</code> is a <strong>set replacement</strong>, not an append: the
+          <code>companyType</code> is a <strong>set replacement</strong>, not an append: the
           request carries the whole set, and the tags it leaves out are deleted. An edit form
           has to pre-fill every existing tag, or saving quietly drops the rest. A tag repeated
           inside one request collides with itself and is a
@@ -1087,10 +1088,10 @@ curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one ro
           <code>companyId</code> filters through <code>service → listing</code>, the same chain
           <code>assertPortfolioOwned</code> walks, because the row has no owner column of its own. Leave
           both off and you get <em>every</em> row in the table — fine now, worth paginating later. The body
-          is a bare array, ordered by <code>development_date</code> newest first.
+          is a bare array, ordered by <code>developmentDate</code> newest first.
         </p>
         <p class="note">
-          <code>development_date</code> comes back as <code>YYYY-MM-DD</code>, not a timestamp:
+          <code>developmentDate</code> comes back as <code>YYYY-MM-DD</code>, not a timestamp:
           <code>toServicePortfolio</code> in <code>src/lib/portfolio.ts</code> slices the ISO string, so
           every route that returns a portfolio row agrees on the shape. Hand raw Prisma output to
           <code>res.json()</code> and you'd leak a <code>T00:00:00.000Z</code> the client has to strip.
@@ -1101,17 +1102,17 @@ curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one ro
         <h3>How does a company add a work sample?</h3>
         <p class="answer"><code>POST /portfolios</code> — <code>requireRole('provider')</code>, and
           <code>multipart/form-data</code> rather than JSON, because it carries the image.</p>
-        <pre><code>curl -s -X POST localhost:4000/portfolios -H "Authorization: Bearer $TOKEN"   -F 'listing_id=12'   -F 'portfolio_name=Inventory dashboard'   -F 'portfolio_description=Stock tracking for a small warehouse'   -F 'development_date=2026-05-01'   -F 'portfolio_link=https://example.com/work/inventory'   -F 'portfolio_image=@./shot.png'                  <span class="c-dim"># 201</span></code></pre>
+        <pre><code>curl -s -X POST localhost:4000/portfolios -H "Authorization: Bearer $TOKEN"   -F 'listingId=12'   -F 'portfolioName=Inventory dashboard'   -F 'portfolioDescription=Stock tracking for a small warehouse'   -F 'developmentDate=2026-05-01'   -F 'portfolioLink=https://example.com/work/inventory'   -F 'portfolioImage=@./shot.png'                  <span class="c-dim"># 201</span></code></pre>
         <p class="note">
-          Note the <code>-F</code> flags, not <code>-d</code>. The file part is <code>portfolio_image</code>
+          Note the <code>-F</code> flags, not <code>-d</code>. The file part is <code>portfolioImage</code>
           — PNG, JPEG or WebP, 5MB ceiling, enforced by <code>uploadImage</code> in
           <code>src/middleware/upload.ts</code>. The allowlist is deliberate rather than
           <code>image/*</code>: <code>image/svg+xml</code> is a document the browser runs scripts from once
           the public URL is opened. Everything else in the body arrives as a text part, which is why the
-          schema leans on <code>z.coerce</code> for <code>listing_id</code> — form fields are always strings.
+          schema leans on <code>z.coerce</code> for <code>listingId</code> — form fields are always strings.
         </p>
         <p class="note">
-          Ownership is checked <em>before</em> the upload, not after. A <code>listing_id</code> that isn't
+          Ownership is checked <em>before</em> the upload, not after. A <code>listingId</code> that isn't
           yours is <span class="status s-warn">403</span> and an unknown one is
           <span class="status s-warn">404</span>, and in both cases nothing was written to storage yet. If
           the database insert fails afterwards, <code>removeFromStorage</code> deletes the file that was
@@ -1119,8 +1120,8 @@ curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one ro
           points at and nothing cleans up.
         </p>
         <p class="note">
-          A <code>portfolio_link</code> the listing already carries is <span class="status s-warn">409</span>,
-          the same <code>@@unique([listing_id, portfolio_link])</code> that
+          A <code>portfolioLink</code> the listing already carries is <span class="status s-warn">409</span>,
+          the same <code>@@unique([listingId, portfolioLink])</code> that
           <a href="#edit-portfolio"><code>PATCH</code></a> hits. The response is the created row, in the
           same shape the <code>GET</code>s return.
         </p>
@@ -1130,38 +1131,117 @@ curl -s localhost:4000/portfolios/7                 <span class="c-dim"># one ro
         <h3>How does a company edit or remove a work sample (portfolio)?</h3>
         <p class="answer"><code>PATCH /portfolios/:portfolioId</code> and <code>DELETE /portfolios/:portfolioId</code>, both <code>requireRole('provider')</code>.</p>
         <pre><code>curl -s -X PATCH localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN" \
-  -F 'portfolio_name=Inventory dashboard' \
-  -F 'development_date=2026-05-01' \
-  -F 'portfolio_image=@./replacement.png'
+  -F 'portfolioName=Inventory dashboard' \
+  -F 'developmentDate=2026-05-01' \
+  -F 'portfolioImage=@./replacement.png'
 
 curl -s -X DELETE localhost:4000/portfolios/7 -H "Authorization: Bearer $TOKEN"   <span class="c-dim"># 204</span></code></pre>
         <p class="note">
           There is no owner column on <code>service_portfolio</code> — the company is three hops away,
-          <code>service_portfolio → service → listing → company_id</code>, so
+          <code>service_portfolio → service → listing → companyId</code>, so
           <code>assertPortfolioOwned</code> checks it as a nested Prisma select rather than a separate
           lookup. An unknown id is <span class="status s-warn">404</span>; a company checking someone
           else's portfolio is <span class="status s-warn">403</span>. The write itself repeats the same
-          <code>company_id</code> filter in its own <code>where</code>, so a listing that changes hands in
+          <code>companyId</code> filter in its own <code>where</code>, so a listing that changes hands in
           the gap between the check and the write can't slip through — Prisma finds nothing to update and
           the same <span class="status s-warn">404</span> handling covers it.
         </p>
         <p class="note">
           <code>PATCH</code> is a partial update like <a href="#edit-profile"><code>/companies/me</code></a>
-          — send only what changed. <code>portfolio_description</code> is the only nullable field; every
+          — send only what changed. <code>portfolioDescription</code> is the only nullable field; every
           other field is required whenever it's present at all, and none accepts <code>null</code>.
-          <code>development_date</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
+          <code>developmentDate</code> takes a bare <code>YYYY-MM-DD</code> string — a full ISO timestamp
           fails validation rather than silently shifting the stored day across a timezone.
-          <code>portfolio_link</code> accepts only <code>http</code>/<code>https</code> URLs.
+          <code>portfolioLink</code> accepts only <code>http</code>/<code>https</code> URLs.
           The request uses <code>multipart/form-data</code> so it can also carry an optional
-          <code>portfolio_image</code> replacement (png/jpeg/webp, up to 5 MB). Leaving that part out keeps
+          <code>portfolioImage</code> replacement (png/jpeg/webp, up to 5 MB). Leaving that part out keeps
           the current image. The old stored object is removed only after the database update succeeds.
         </p>
         <p class="note">
-          A duplicate <code>portfolio_link</code> on the same listing is <span class="status s-warn">409</span>
-          — <code>@@unique([listing_id, portfolio_link])</code> enforces it, the same P2002 pattern as
+          A duplicate <code>portfolioLink</code> on the same listing is <span class="status s-warn">409</span>
+          — <code>@@unique([listingId, portfolioLink])</code> enforces it, the same P2002 pattern as
           <a href="#duplicates">the username/email conflict</a>. <code>DELETE</code> is a hard delete:
           nothing references a portfolio row, and a soft-deleted one would keep occupying its slot in the
           unique index.
+        </p>
+      </article>
+    </section>
+
+    <!-- ================= CERTIFICATES ================= -->
+    <section class="group" id="certificates-group">
+      <h2>Certificates &amp; account deletion</h2>
+
+      <article class="entry" id="certificates" data-tags="certificate certificates credential provider mine list add create upload image multipart issue expire year month us provider profile">
+        <h3>How do certificates work?</h3>
+        <p class="answer">Four provider-only endpoints under <code>/certificates</code>. A certificate is a credential a provider shows on its profile — it is <em>not</em> attached to a listing, unlike a portfolio.</p>
+<pre><code>GET    /certificates/mine                 <span class="c-dim"># your own, newest first</span>
+POST   /certificates                      <span class="c-dim"># multipart, 201 + the row</span>
+PATCH  /certificates/:certificateId       <span class="c-dim"># multipart, partial, 200 + the row</span>
+DELETE /certificates/:certificateId       <span class="c-dim"># 204</span></code></pre>
+        <p class="note">
+          <code>/mine</code>, not <code>/provider</code>: <code>/me</code> is the singular thing that is
+          you, <code>/mine</code> is a collection filtered to you. That rule and the rest of the naming
+          live in <code>docs/conventions.md</code>.
+        </p>
+        <p class="note">
+          <code>POST</code> and <code>PATCH</code> are <code>multipart/form-data</code>, because they carry
+          the image. The file part is <code>certImage</code> (png/jpeg/webp, 5&nbsp;MB); everything else is
+          a text part. Only <code>certTitle</code> and <code>organization</code> are required — the four
+          date parts, <code>credentialId</code> and <code>credentialUrl</code> are all optional and
+          nullable.
+        </p>
+        <p class="note">
+          Because it is multipart, every field arrives as a <em>string</em>, and a cleared input arrives as
+          <code>''</code>. The schema turns <code>''</code> into <code>null</code> before coercing, or
+          <code>z.coerce.number()</code> would read an empty month as <code>0</code> and store month zero.
+        </p>
+        <p class="note">
+          The expiry-vs-issue rule is one function, <code>expiryIsOnOrAfterIssue</code>, and both the
+          create schema and the update handler call it. <code>POST</code> can check it in a
+          <code>.refine()</code>; <code>PATCH</code> cannot, because <code>.partial()</code> drops
+          refinements and a body sending one half of a date pair only means something merged with the
+          stored row. A half-filled date passes — it says nothing about ordering.
+        </p>
+        <p class="note">
+          Another provider's certificate id answers <code>404</code>, not <code>403</code>. That is the
+          opposite of <code>assertPortfolioOwned</code>, and it is deliberate: certificate ids are not
+          discoverable, so a <code>403</code> would only confirm a guess. The reason is written down in
+          <code>assertCertificateOwned</code> so nobody has to re-derive it.
+        </p>
+        <p class="note">
+          All four responses are bare — the resource, the array, or nothing. They used to wrap in
+          <code>{ message, certificate }</code>; the status code already says it worked, and the message is
+          the front end's to write.
+        </p>
+      </article>
+
+      <article class="entry" id="delete-account" data-tags="delete account remove company us1-6 soft delete deletedAt self service 409 ongoing project history">
+        <h3>What happens when a company deletes its account?</h3>
+        <p class="answer"><code>DELETE /companies/me</code> — no body, <code>204</code>, and nothing the company owns is touched.</p>
+<pre><code>curl -s -X DELETE localhost:4000/companies/me \
+  -H "Authorization: Bearer $TOKEN"           <span class="c-dim"># 204</span></code></pre>
+        <p class="note">
+          No password, unlike the credential change: the caller already holds a valid token for this exact
+          account, so there is nothing here an attacker gains that the token did not already give them.
+        </p>
+        <p class="note">
+          It is a <strong>soft</strong> delete — <code>company.deletedAt</code> gets a timestamp and the
+          listings, proposals, projects and reviews attached to it stay exactly where they are. That is the
+          history the column exists to preserve. The rule it creates: discovery queries (search, browse)
+          filter on <code>deletedAt</code>; history queries (past projects, reviews) must <em>not</em>, or
+          they hide the very history this is protecting.
+        </p>
+        <p class="note">
+          <code>requireAuth</code> re-checks <code>deletedAt</code> on every request, so a token minted
+          before the deletion stops working immediately, with the same "Session has ended" a logout gives.
+          A company with an ongoing project gets <code>409</code> instead — "ongoing" means "not yet
+          Delivered", and the rule lives in <code>src/lib/projectEligibility.ts</code>.
+        </p>
+        <p class="note">
+          An administrator removing someone else's account is a different endpoint,
+          <code>DELETE /admin/companies/:companyId</code>, and it asks for the <em>administrator's own</em>
+          password first. Both paths end in <code>softDeleteCompany</code>, so the two cannot drift on what
+          "deleted" means. Nothing in this codebase undoes one.
         </p>
       </article>
     </section>
@@ -1282,14 +1362,14 @@ apps/api/src/
               <tr><td class="code-cell">/companies/me</td><td>valid signature — unknown role</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>valid provider</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>valid provider — wrong role</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>forged admin claim</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>expired admin</td><td><span class="status s-deny">401</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>valid provider</td><td><span class="status s-ok">204</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>same token, second call</td><td><span class="status s-deny">401</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>admin token — a different session</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/auth/logout</td><td>Bearer garbage</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">password</td><td>same input hashed twice</td><td><span class="status s-ok">two hashes, both verify</span></td></tr>
@@ -1297,48 +1377,48 @@ apps/api/src/
               <tr><td class="code-cell">/auth/register</td><td>BOTH — provider and receiver rows written</td><td><span class="status s-ok">201</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>token straight from register</td><td><span class="status s-ok">200 provider</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>token from a BOTH registration</td><td><span class="status s-ok">200 both</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>BOTH token — grants do not include admin</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>BOTH token — grants do not include admin</td><td><span class="status s-warn">403</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>username already taken</td><td><span class="status s-warn">409 username</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>email differing only in case</td><td><span class="status s-warn">409 email</span></td></tr>
-              <tr><td class="code-cell">/auth/register</td><td>no company_type</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">/auth/register</td><td>account_type ADMIN</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>no companyType</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/auth/register</td><td>accountType ADMIN</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>7-character password</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/auth/register</td><td>username <em>and</em> email both taken</td><td><span class="status s-warn">409 both fields</span></td></tr>
               <tr><td class="code-cell">/auth/check-availability</td><td>fresh username and email</td><td><span class="status s-ok">200 both available</span></td></tr>
               <tr><td class="code-cell">/auth/check-availability</td><td>seeded username, cased differently</td><td><span class="status s-ok">200 username taken</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>one field — company_name only</td><td><span class="status s-ok">200, nothing else moved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>one field — companyName only</td><td><span class="status s-ok">200, nothing else moved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>address: null</td><td><span class="status s-ok">200 address cleared</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_type replaced</td><td><span class="status s-ok">200 old tags gone</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyType replaced</td><td><span class="status s-ok">200 old tags gone</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>password alone in the body</td><td><span class="status s-warn">400 — rejected, not editable here</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>username alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>email alone in the body</td><td><span class="status s-warn">400 — rejected, the gate is not bypassable</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>a key the schema does not know</td><td><span class="status s-warn">400 names the key</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name after that</td><td><span class="status s-ok">200 — the profile edit still works</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>account_type beside a real field</td><td><span class="status s-ok">200, account_type unmoved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyName after that</td><td><span class="status s-ok">200 — the profile edit still works</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>accountType beside a real field</td><td><span class="status s-ok">200, accountType unmoved</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>phone: "abc"</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name: null</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_type: []</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyName: null</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyType: []</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>empty body</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>same token — after logout</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me</td><td>GET afterwards</td><td><span class="status s-ok">200, every change present</span></td></tr>
-              <tr><td class="code-cell">GET /companies/me</td><td>contact_email never set</td><td><span class="status s-ok">200, contact_email: null</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email set</td><td><span class="status s-ok">200 saved</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: null</td><td><span class="status s-ok">200 cleared</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email: ""</td><td><span class="status s-warn">400 on contact_email</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>contact_email another company holds</td><td><span class="status s-ok">200 — not unique, unlike email</span></td></tr>
-              <tr><td class="code-cell">POST /auth/login</td><td>account email, once contact_email is set</td><td><span class="status s-ok">200 — the two are independent</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, provider</td><td><span class="status s-ok">200 both saved</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term: null</td><td><span class="status s-ok">200 cleared, warranty_policy untouched</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, provider</td><td><span class="status s-ok">200, provider columns unmoved</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term + warranty_policy, BOTH</td><td><span class="status s-ok">200 — BOTH grants provider</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>service_term, RECEIVER</td><td><span class="status s-warn">403 — owns no provider row</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me</td><td>company_name only, RECEIVER</td><td><span class="status s-ok">200 — the 403 is per-field, not per-request</span></td></tr>
+              <tr><td class="code-cell">GET /companies/me</td><td>contactEmail never set</td><td><span class="status s-ok">200, contactEmail: null</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contactEmail set</td><td><span class="status s-ok">200 saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contactEmail: null</td><td><span class="status s-ok">200 cleared</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contactEmail: ""</td><td><span class="status s-warn">400 on contactEmail</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>contactEmail another company holds</td><td><span class="status s-ok">200 — not unique, unlike email</span></td></tr>
+              <tr><td class="code-cell">POST /auth/login</td><td>account email, once contactEmail is set</td><td><span class="status s-ok">200 — the two are independent</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>serviceTerm + warrantyPolicy, provider</td><td><span class="status s-ok">200 both saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>serviceTerm: null</td><td><span class="status s-ok">200 cleared, warrantyPolicy untouched</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyName only, provider</td><td><span class="status s-ok">200, provider columns unmoved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>serviceTerm + warrantyPolicy, BOTH</td><td><span class="status s-ok">200 — BOTH grants provider</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>serviceTerm, RECEIVER</td><td><span class="status s-warn">403 — owns no provider row</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me</td><td>companyName only, RECEIVER</td><td><span class="status s-ok">200 — the 403 is per-field, not per-request</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>RECEIVER reading the provider columns</td><td><span class="status s-ok">200 both null, no nested key</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>wrong current_password</td><td><span class="status s-deny">401 Current password is incorrect</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>current_password alone</td><td><span class="status s-warn">400 — nothing to change</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>wrong currentPassword</td><td><span class="status s-deny">401 Current password is incorrect</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>currentPassword alone</td><td><span class="status s-warn">400 — nothing to change</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>username: "Bad Name!"</td><td><span class="status s-warn">400 on username</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>new_password: "short"</td><td><span class="status s-warn">400 on new_password</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>newPassword: "short"</td><td><span class="status s-warn">400 on newPassword</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>email another company holds</td><td><span class="status s-warn">409 email</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>username uppercased</td><td><span class="status s-ok">200 stored lowercase, new token in body</span></td></tr>
@@ -1346,7 +1426,7 @@ apps/api/src/
               <tr><td class="code-cell">GET /companies/me</td><td>the token it returned instead</td><td><span class="status s-ok">200, username updated</span></td></tr>
               <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>email change</td><td><span class="status s-ok">200 saved</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>the old email, after that</td><td><span class="status s-deny">401 — the credential moved</span></td></tr>
-              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>new_password valid</td><td><span class="status s-ok">200 saved</span></td></tr>
+              <tr><td class="code-cell">PATCH /companies/me/credentials</td><td>newPassword valid</td><td><span class="status s-ok">200 saved</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>the old password, after that</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>the new email + the new password</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">POST /auth/admin/login</td><td>administrator credentials</td><td><span class="status s-ok">200 role admin, cookie set</span></td></tr>
@@ -1356,39 +1436,39 @@ apps/api/src/
               <tr><td class="code-cell">POST /auth/admin/login</td><td>empty body</td><td><span class="status s-warn">400 both fields</span></td></tr>
               <tr><td class="code-cell">POST /auth/admin/login</td><td>email but no password</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">POST /auth/login</td><td>administrator credentials</td><td><span class="status s-warn">403 use the administrator login</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>cookie from the admin login, no header</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>cookie from the admin login, no header</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">POST /auth/logout</td><td>admin token</td><td><span class="status s-ok">204</span></td></tr>
-              <tr><td class="code-cell">/admin/ping</td><td>that admin token, after logout</td><td><span class="status s-deny">401 session has ended</span></td></tr>
+              <tr><td class="code-cell">/admin/companies</td><td>that admin token, after logout</td><td><span class="status s-deny">401 session has ended</span></td></tr>
               <tr><td class="code-cell">/admin/companies</td><td>valid provider — after the guard move</td><td><span class="status s-warn">403</span></td></tr>
               <tr><td class="code-cell">/admin/companies</td><td>valid admin</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — no header</td><td><span class="status s-deny">401</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — valid provider</td><td><span class="status s-warn">403</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, company_name</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, companyName</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, <code>address: null</code></td><td><span class="status s-ok">200 cleared</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, new company_type set</td><td><span class="status s-ok">200 replaced</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, new companyType set</td><td><span class="status s-ok">200 replaced</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — admin, tag repeated in one request</td><td><span class="status s-warn">409</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a PROVIDER</td><td><span class="status s-ok">200 warranty untouched</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a RECEIVER</td><td><span class="status s-warn">400 one detail</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — serviceTerm on a PROVIDER</td><td><span class="status s-ok">200 warranty untouched</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — serviceTerm on a RECEIVER</td><td><span class="status s-warn">400 one detail</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — both provider fields on a RECEIVER</td><td><span class="status s-warn">400 two details</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — warranty_policy on an ADMIN row</td><td><span class="status s-warn">400</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — company_name on a RECEIVER</td><td><span class="status s-ok">200 no provider field sent</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a BOTH</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — warrantyPolicy on an ADMIN row</td><td><span class="status s-warn">400</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — companyName on a RECEIVER</td><td><span class="status s-ok">200 no provider field sent</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — serviceTerm on a BOTH</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — empty body</td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>email</code> only</td><td><span class="status s-warn">400 names the key</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>username</code> and <code>password</code></td><td><span class="status s-warn">400 names both</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>email</code> in one body</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>company_name</code> and <code>service_term</code> on a RECEIVER</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
-              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — service_term on a PROVIDER whose <code>provider</code> row was deleted by hand</td><td><span class="status s-ok">200 row recreated</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>companyName</code> and <code>email</code> in one body</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — <code>companyName</code> and <code>serviceTerm</code> on a RECEIVER</td><td><span class="status s-warn">400, the name is not saved</span></td></tr>
+              <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — serviceTerm on a PROVIDER whose <code>provider</code> row was deleted by hand</td><td><span class="status s-ok">200 row recreated</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — phone <code>abc</code></td><td><span class="status s-warn">400 names phone</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>PATCH — website <code>javascript:</code></td><td><span class="status s-warn">400</span></td></tr>
               <tr><td class="code-cell">/admin/companies/999999</td><td>PATCH — unknown id</td><td><span class="status s-warn">404</span></td></tr>
               <tr><td class="code-cell">/admin/companies/abc</td><td>PATCH — non-numeric id</td><td><span class="status s-warn">400 path params</span></td></tr>
               <tr><td class="code-cell">/admin/companies/:id</td><td>GET after the edits above</td><td><span class="status s-ok">200 all present</span></td></tr>
-              <tr><td class="code-cell">/companies/me</td><td>PATCH company_name — after the refactor</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH companyName — after the refactor</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>PATCH <code>address: null</code> — after the refactor</td><td><span class="status s-ok">200 cleared</span></td></tr>
-              <tr><td class="code-cell">/companies/me</td><td>PATCH company_type — after the refactor</td><td><span class="status s-ok">200 replaced</span></td></tr>
-              <tr><td class="code-cell">/companies/me</td><td>PATCH service_term as a RECEIVER</td><td><span class="status s-warn">403</span></td></tr>
-              <tr><td class="code-cell">/companies/me</td><td>PATCH service_term as a PROVIDER</td><td><span class="status s-ok">200</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH companyType — after the refactor</td><td><span class="status s-ok">200 replaced</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH serviceTerm as a RECEIVER</td><td><span class="status s-warn">403</span></td></tr>
+              <tr><td class="code-cell">/companies/me</td><td>PATCH serviceTerm as a PROVIDER</td><td><span class="status s-ok">200</span></td></tr>
               <tr><td class="code-cell">/companies/me</td><td>PATCH tag repeated in one request</td><td><span class="status s-warn">409</span></td></tr>
             </tbody>
           </table>
@@ -1420,7 +1500,7 @@ curl -s localhost:4000/companies/me
   -d '{"email":"you@example.com","password":"…"}' | npx json accessToken)
 
 curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/companies/me   <span class="c-dim"># 200</span>
-curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/ping  <span class="c-dim"># 403</span></code></pre>
+curl -s -H "Authorization: Bearer $TOKEN" localhost:4000/admin/companies  <span class="c-dim"># 403</span></code></pre>
         <p class="note">
           Or skip the token and let curl behave like a browser, with a
           <a href="#cookie">cookie</a> jar. This is the path the web app takes:
@@ -1452,12 +1532,12 @@ TOKEN=$(npx tsx -e "import './src/env';
           <li><strong>No signup <em>page</em>.</strong> The login page landed with US1-2 and signs you in for real — see <a href="#cookie">how the browser stays signed in</a> — but <code>POST /auth/register</code> still has no form in front of it. <code>/dev/session</code> in the web app is the stand-in: register a throwaway company there, then use it anywhere. Delete that route, and its <code>dev_*</code> rows, when <code>/signup</code> ships.</li>
           <li><strong>The seeded companies cannot log in even once login lands.</strong> All 20 carry the literal string <code>hash123</code> in <code>password</code>, not a bcrypt hash, so <code>verifyPassword</code> rejects every one of them. The seed has to be rewritten.</li>
           <li><strong>No test runner.</strong> <code>npm test</code> is an <code>exit 1</code> stub in the root and in <code>apps/api</code>. The table above came from a shell script — evidence, not a regression suite.</li>
-          <li><strong>Nothing creates an administrator.</strong> <code>account_type</code> now accepts <code>ADMIN</code> and <a href="#admin-login"><code>POST /auth/admin/login</code></a> authenticates one, but no signup path can make one and the script that wrote the first is not in the repo. If your database has no admin row, ask whoever set it up.</li>
+          <li><strong>Nothing creates an administrator.</strong> <code>accountType</code> now accepts <code>ADMIN</code> and <a href="#admin-login"><code>POST /auth/admin/login</code></a> authenticates one, but no signup path can make one and the script that wrote the first is not in the repo. If your database has no admin row, ask whoever set it up.</li>
           <li><strong>No “log out everywhere”</strong>, no refresh tokens, no rate limiting, no request logging. Changing a password revokes only the token the change was made with — see <a href="#change-credentials">the credentials endpoint</a> — because revoking every session a company holds needs a per-company token version, and there is no column for one.</li>
           <li><strong>No route guard, and only one logout button.</strong> There is no <code>middleware.ts</code>, so an unauthenticated visitor reaches any page and each one handles its own <span class="status s-deny">401</span> — <code>account-settings</code> and <code>profile/edit</code> hand-roll the same block. Logout exists only on <code>/dev/session</code>.</li>
-          <li><strong><code>/admin/ping</code> is a demonstration route</strong>, alive only until real endpoints replace it. <code>/me</code> is gone — US1-4 replaced it with <code>GET /companies/me</code>, US1-5 added <code>PATCH</code> beside it, and <code>PATCH /companies/me/credentials</code> now sits under both.</li>
-          <li><strong>No way to change an <code>account_type</code>.</strong> <code>PATCH /companies/me</code> edits the profile and <code>PATCH /companies/me/credentials</code> the login identity, but moving a company between <code>PROVIDER</code>, <code>RECEIVER</code>, and <code>BOTH</code> means adding or removing subtype rows and restamping the token's <code>role</code> — still an endpoint nobody has written.</li>
-          <li><strong>Nothing reads <code>company.deleted_at</code>.</strong> The soft-delete
+          <li><strong><code>/admin/ping</code> is gone.</strong> It duplicated <code>/health</code> and sat <em>below</em> the admin guard, so it could never have served as a probe. Use <code>GET /health</code> for liveness and <code>GET /admin/companies</code> when you want to exercise the admin guard.</li>
+          <li><strong>No way to change an <code>accountType</code>.</strong> <code>PATCH /companies/me</code> edits the profile and <code>PATCH /companies/me/credentials</code> the login identity, but moving a company between <code>PROVIDER</code>, <code>RECEIVER</code>, and <code>BOTH</code> means adding or removing subtype rows and restamping the token's <code>role</code> — still an endpoint nobody has written.</li>
+          <li><strong>Nothing reads <code>company.deletedAt</code>.</strong> The soft-delete
           column exists, but no endpoint sets it and none filters on it — the admin list counts
           and returns every row, and <a href="#admin-company-accounts">the admin edit</a> does
           not refuse a soft-deleted company. Whoever writes the delete story settles that policy

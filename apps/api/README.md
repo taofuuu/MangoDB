@@ -54,9 +54,10 @@ supertest; `src/index.ts` is the only place that opens a port.
 ### Adding an endpoint
 
 1. Put the request schema in `src/schemas/<area>.schema.ts`.
-2. Write the handler in `src/controllers/<area>.controller.ts`.
-3. Wire it in `src/routes/<area>.routes.ts`.
-4. Mount the router once in `src/routes/index.ts` if the area is new.
+2. Put the select, the DTO and any ownership check in `src/lib/<area>.ts`.
+3. Write the handler in `src/controllers/<area>.controller.ts`.
+4. Wire it in `src/routes/<area>.routes.ts`.
+5. Mount the router once in `src/routes/index.ts` if the area is new.
 
 A controller should read as handlers and nothing else. Anything reusable — a
 response shape, error translation, a query helper — belongs in `src/lib/`, so
@@ -65,33 +66,30 @@ the next endpoint gets it for free instead of copying it.
 ```ts
 // src/controllers/company.controller.ts
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { parseBody } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
+import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+import { updateCompanyProfileSchema } from '../schemas/company.schema';
 
-const updateProfileSchema = z.object({
-    company_name: z.string().min(1).max(255),
-    email: z.email().max(100),
-    phone: z.string().min(1).max(20),
-});
+export async function updateProfile(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    // Typed from the schema. The schema lives in schemas/, not here.
+    const body = parseBody(updateCompanyProfileSchema, req.body);
 
-export async function updateProfile(req: Request, res: Response) {
-    const body = parseBody(updateProfileSchema, req.body); // typed from the schema
-
-    const company = await prisma.company.findUnique({
-        where: { company_id: Number(req.auth!.sub) },
+    // req.auth!.companyId, already a number — requireAuth coerced it once.
+    const company = await prisma.company.update({
+        where: { companyId: req.auth!.companyId },
+        data: body,
+        // A select, so a column added later does not ship on its own, and a
+        // DTO, so the wire shape is a decision rather than "whatever the row
+        // happened to have".
+        select: companyProfileSelect,
     });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
 
-    res.json(
-        await prisma.company.update({
-            where: { company_id: company.company_id },
-            data: body,
-        }),
-    );
+    res.json(toCompanyProfile(company));
 }
 ```
 
@@ -100,6 +98,10 @@ export async function updateProfile(req: Request, res: Response) {
 export const companyRoutes = Router();
 companyRoutes.patch('/me', requireAuth, updateProfile);
 ```
+
+**A whole new resource — schema, lib, controller, route, shared type, snapshot
+entry — is [docs/adding-a-resource.md](../../docs/adding-a-resource.md),** with
+the administrator company endpoints as the worked example.
 
 ### Rules
 
@@ -112,11 +114,11 @@ companyRoutes.patch('/me', requireAuth, updateProfile);
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
-  delete or logout. Three endpoints are exceptions, all returning
-  `{ company, accessToken }` because all three hand you a session:
-  `POST /auth/register`, `POST /auth/login`, and
+  delete or logout. Four endpoints are exceptions, all returning
+  `{ company, accessToken }` because all four hand you a session:
+  `POST /auth/register`, `POST /auth/login`, `POST /auth/admin/login`, and
   `PATCH /companies/me/credentials`, which _re_-logs you in — it revokes the
-  token it was called with, so it has to return the replacement. All three go
+  token it was called with, so it has to return the replacement. All four go
   through `sendSession` in `src/lib/session.ts`, which also sets the
   `access_token` cookie — see Authentication below.
 - **Guard admin-only routers once** with `router.use(requireAuth, requireRole('admin'))`
@@ -157,20 +159,31 @@ the frontend imports the same definitions.
 `401` means "we do not know who you are", `403` means "we know, and no". A
 missing token is never `403`.
 
+### Field names
+
+camelCase everywhere above the database — request bodies, response bodies,
+query and path params, Prisma fields. `snake_case` stops at the column, and the
+translation is `@map` in `prisma/schema.prisma`, never a mapper function.
+See [docs/conventions.md](../../docs/conventions.md) section 1.
+
 ### Account types and roles
 
-`company.account_type` holds `PROVIDER`, `RECEIVER`, or `BOTH` — uppercase, as
-the seeded rows have it. It is a discriminator: a company with `PROVIDER` has a
-row in `provider`, `RECEIVER` has one in `receiver`, and `BOTH` has both. Every
-endpoint that creates a company must keep that invariant, or later features
-find a company with no subtype row.
+`company.accountType` holds `PROVIDER`, `RECEIVER`, `BOTH`, or `ADMIN` —
+uppercase, as the seeded rows have it. It is a discriminator: a company with
+`PROVIDER` has a row in `provider`, `RECEIVER` has one in `receiver`, and `BOTH`
+has both. Every endpoint that creates a company must keep that invariant, or
+later features find a company with no subtype row.
 
-`account_type` is not the token role. `src/auth/roles.ts` maps one to the other
+`ADMIN` owns neither row. There is no separate admin table — an administrator is
+a company row with `accountType` `ADMIN`, which is why `registerSchema` refuses
+that value and `POST /auth/admin/login` exists as its own door.
+
+`accountType` is not the token role. `src/auth/roles.ts` maps one to the other
 (`BOTH` → `'both'`) and answers the separate question of what a role may act
 as: `both` grants `provider` and `receiver`, so `requireRole('provider')` lets a
 BOTH company through. `admin` grants only `admin` — it is not a superset.
 
-`company_type` is a different thing again: repeatable industry tags (`SME`,
+`companyType` is a different thing again: repeatable industry tags (`SME`,
 `Software House`, `FinTech`), at least one per company.
 
 ### Registration
@@ -200,8 +213,8 @@ inline hint. It is advisory — it reserves nothing, so `register` re-checks.
 ### Account credentials
 
 `PATCH /companies/me/credentials` (`requireAuth`) changes the three fields a
-company signs in with. Send `current_password` plus any of `username`, `email`,
-and `new_password`; `current_password` alone is a `400`, because it changes
+company signs in with. Send `currentPassword` plus any of `username`, `email`,
+and `newPassword`; `currentPassword` alone is a `400`, because it changes
 nothing.
 
 | Method  | Path                        | Middleware    |
@@ -213,9 +226,9 @@ way to take an account over — move the email and you own the login — so a to
 alone is not enough. That is also why **`PATCH /companies/me` no longer accepts
 `username` or `email`**: leaving them there would make the gate decorative,
 since anyone holding a token could walk around it with one request. The profile
-edit still writes `contact_email`, which is a different, non-unique column.
+edit still writes `contactEmail`, which is a different, non-unique column.
 
-A wrong `current_password` is `401`, the same answer login gives, and it is
+A wrong `currentPassword` is `401`, the same answer login gives, and it is
 checked before anything is written. A username or email another company holds
 is `409` with one `details` entry per rejected field — the same
 `assertCompanyIdentityAvailable` pre-check registration uses, passed
@@ -272,11 +285,19 @@ token it is given.
 `adminRoutes` is guarded once at the router, per the rule above — do not repeat
 the middleware per route, and do not register anything above the guard.
 
-| Method  | Path                          | Guard                                         |
-| ------- | ----------------------------- | --------------------------------------------- |
-| `GET`   | `/admin/companies`            | router: `requireAuth`, `requireRole('admin')` |
-| `GET`   | `/admin/companies/:companyId` | same                                          |
-| `PATCH` | `/admin/companies/:companyId` | same                                          |
+| Method   | Path                          | Guard                                         |
+| -------- | ----------------------------- | --------------------------------------------- |
+| `GET`    | `/admin/companies`            | router: `requireAuth`, `requireRole('admin')` |
+| `GET`    | `/admin/companies/:companyId` | same                                          |
+| `PATCH`  | `/admin/companies/:companyId` | same                                          |
+| `DELETE` | `/admin/companies/:companyId` | same                                          |
+
+`DELETE` is US6-4. It takes `{ currentPassword }` — the **administrator's own**
+password, checked against `req.auth`'s row, not the target's: this is "is it
+really the admin", not anything about the account being removed. It soft-deletes
+(`company.deletedAt`), refuses an `ADMIN` target, refuses a company with an
+ongoing project, and answers `204`. Nothing in this codebase undoes a soft
+delete.
 
 The `PATCH` writes **profile columns only** — the same field set
 `PATCH /companies/me` takes — so it reuses `updateCompanyProfileSchema` rather
@@ -290,15 +311,15 @@ key rather than a `200` that quietly ignored half the request.
 shape. Both this endpoint and `updateMyProfile` call it; they differ only in
 their `select`, their serializer and their error messages. Add a profile column
 to `updateCompanyProfileSchema` and both endpoints get it. Its nested provider
-write is an `upsert`: `account_type` is not proof the `provider` row exists —
+write is an `upsert`: `accountType` is not proof the `provider` row exists —
 nothing in the schema enforces that — so a missing one is created rather than
 raising `P2025` and reading as a `404` for a company that plainly exists.
 
-`service_term` and `warranty_policy` live on `provider`, so **who may send them
+`serviceTerm` and `warrantyPolicy` live on `provider`, so **who may send them
 is a different question here**. `PATCH /companies/me` asks `roleGrants` about
 the caller's own token; an admin token says nothing about the company being
 edited, so this endpoint asks `ownsProviderRow` about the target's
-`account_type` instead. A `RECEIVER` or `ADMIN` target owns no `provider` row
+`accountType` instead. A `RECEIVER` or `ADMIN` target owns no `provider` row
 and gets a `400` with one `details` entry per offending field — not a `403`,
 because the administrator is not the one being refused. The refusal is
 per-field in the error response. The request remains atomic, so no fields in
@@ -306,12 +327,72 @@ the same body are saved when any provider-only field is rejected.
 
 The target is read before the write, like `updatePortfolio`: an unknown id is a
 plain `404` rather than a `P2025` surfacing mid-update, and the same lookup
-supplies the `account_type` the check above needs.
+supplies the `accountType` the check above needs.
 
 The response is the full `CompanyAccountDetail` — what the detail `GET`
 returns, ratings included — so the admin UI re-renders without a second fetch.
-Note that `company_type` is a set replacement: the request carries the whole
+Note that `companyType` is a set replacement: the request carries the whole
 set and omitted tags are deleted, so an edit form must pre-fill all of them.
+
+### Account deletion
+
+`DELETE /companies/me` (`requireAuth`, `requireRole('provider', 'receiver')`) is
+US1-6 — a company removing its own account.
+
+| Method   | Path            | Guard                                                |
+| -------- | --------------- | ---------------------------------------------------- |
+| `DELETE` | `/companies/me` | `requireAuth`, `requireRole('provider', 'receiver')` |
+
+No body and no password: the caller already holds a valid token for this exact
+account, and unlike the credential change there is nothing here an attacker
+gains that the token did not already give them.
+
+`requireRole` keeps administrators out of the self-service flow — they have
+their own account-management routes — and understands that `BOTH` grants both
+company roles. A company with an ongoing project is a `409`; the rule lives in
+`src/lib/projectEligibility.ts` and "ongoing" means "not yet Delivered".
+
+The delete is soft: `company.deletedAt` gets a timestamp and **nothing it owns
+is touched** — listings, proposals, projects and reviews stay exactly where they
+are, because that is the history the column exists to preserve. The rule this
+creates: discovery queries filter on `deletedAt`, history queries must not.
+`requireAuth` re-checks it on every request, so a token issued before the
+deletion stops working immediately.
+
+### Certificates
+
+Provider-only, all four. A certificate is a credential a provider shows on its
+profile — it is not attached to a listing.
+
+| Method   | Path                           | Guard                                                   |
+| -------- | ------------------------------ | ------------------------------------------------------- |
+| `GET`    | `/certificates/mine`           | `requireAuth`, `requireRole('provider')`                |
+| `POST`   | `/certificates`                | `requireAuth`, `requireRole('provider')`, `uploadImage` |
+| `PATCH`  | `/certificates/:certificateId` | `requireAuth`, `requireRole('provider')`, `uploadImage` |
+| `DELETE` | `/certificates/:certificateId` | `requireAuth`, `requireRole('provider')`                |
+
+`/mine`, not `/provider`: `/me` is the singular thing that is you, `/mine` is a
+collection filtered to you. See
+[docs/conventions.md](../../docs/conventions.md) section 2.3.
+
+`POST` and `PATCH` are `multipart/form-data`, because they carry the image —
+file part `certImage` (png/jpeg/webp, 5 MB), everything else a text part. Every
+field except `certTitle` and `organization` is optional and nullable, and a
+cleared input arrives as `''`, which the schema turns into `null` rather than
+letting `z.coerce.number()` read it as month zero.
+
+The expiry-vs-issue rule is one function, `expiryIsOnOrAfterIssue`, because
+`POST` can check it in a `.refine()` and `PATCH` cannot: `.partial()` drops
+refinements, and a body sending one half of a date pair only means something
+merged with the stored row.
+
+Ownership folds `403` into `404` here, deliberately, and
+`assertCertificateOwned` says why: a provider cannot discover another provider's
+certificate ids, so a `403` would only confirm a guess. `assertPortfolioOwned`
+keeps them separate for the opposite reason. Both are right; pick on purpose.
+
+`GET` answers with a bare array, `POST` with the created resource and `201`,
+`PATCH` with the updated resource, `DELETE` with `204`. None of them wraps.
 
 ### Portfolio
 
@@ -322,9 +403,9 @@ that chain in a single nested `select`. Reuse it for anything that touches a
 portfolio row — it throws `404` when the id is unknown and `403` when the
 listing belongs to another company.
 
-`portfolio_id` is a surrogate key, added so a row can be named in a URL; the
-table used to be identified by `(listing_id, portfolio_link)`. That pair is
-still unique — `@@unique([listing_id, portfolio_link])` — so a listing cannot
+`portfolioId` is a surrogate key, added so a row can be named in a URL; the
+table used to be identified by `(listingId, portfolioLink)`. That pair is
+still unique — `@@unique([listingId, portfolioLink])` — so a listing cannot
 carry the same link twice. A surrogate key replaces the natural key as
 identity, never as a constraint; dropping the `@@unique` would quietly allow
 duplicates that the old composite primary key made impossible.
@@ -342,18 +423,18 @@ reads anything the profile does not already show. `GET /portfolios` takes
 `listingId` and `companyId`, both optional and combinable — `companyId`
 filters through `service -> listing` because the row itself has no owner
 column. Left off, it answers with every row in the table. Ordered by
-`development_date` desc, no pagination, and the body is a bare array.
+`developmentDate` desc, no pagination, and the body is a bare array.
 
 `POST` is `multipart/form-data`, not JSON: the image is the file part
-`portfolio_image` (png/jpeg/webp, 5 MB, see `src/middleware/upload.ts`) and
-the rest are text parts. `listing_id` is required and is checked against the
+`portfolioImage` (png/jpeg/webp, 5 MB, see `src/middleware/upload.ts`) and
+the rest are text parts. `listingId` is required and is checked against the
 caller's company _before_ the upload, so a rejected request never leaves a
 file behind; a failed insert afterwards removes the one it just wrote.
 
 `PATCH` is a partial `multipart/form-data` update — send any subset of
-`portfolio_name`, `portfolio_description`, `development_date`,
-`portfolio_link`, and `portfolio_image`, and only those columns change. An
-empty request is a `400`; `portfolio_description` is the only nullable text
+`portfolioName`, `portfolioDescription`, `developmentDate`,
+`portfolioLink`, and `portfolioImage`, and only those columns change. An
+empty request is a `400`; `portfolioDescription` is the only nullable text
 field. A replacement image must be png/jpeg/webp and at most 5 MB. The old
 object is removed after the database points at the replacement, while a
 failed database update removes the new upload. Returns the full row;
