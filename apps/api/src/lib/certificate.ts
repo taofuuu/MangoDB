@@ -10,7 +10,6 @@ import { prisma } from './prisma';
 
 export const certificateSelect = {
     certificateId: true,
-    providerId: true,
     certTitle: true,
     certImage: true,
     credentialId: true,
@@ -22,15 +21,11 @@ export const certificateSelect = {
     organization: true,
 } as const;
 
-export interface CertificateRow extends Certificate {
-    providerId: number;
-}
-
-// providerId is still on the wire only because it is on the wire today, and a
-// rename commit is not the place to remove a field. Phase 4 drops it and this
-// type becomes a plain Certificate: it tells the browser nothing it did not
-// already know, since a provider can only ever read its own certificates.
-export type CertificateResponse = Certificate & { providerId: number };
+// The row and the response are the same shape now: the select names exactly
+// the columns the shared type declares, so there is nothing left to map.
+// toCertificate stays as the one place that would change if they diverge.
+export type CertificateRow = Certificate;
+export type CertificateResponse = Certificate;
 
 // The ownership check both the update and the delete handler need, written
 // once. It was inlined twice, byte-identical, and both copies folded 403 into
@@ -61,7 +56,6 @@ export async function assertCertificateOwned(
 export function toCertificate(row: CertificateRow): CertificateResponse {
     return {
         certificateId: row.certificateId,
-        providerId: row.providerId,
         certTitle: row.certTitle,
         certImage: row.certImage,
         credentialId: row.credentialId,

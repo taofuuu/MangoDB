@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
-import type { CertificateResponse } from '@/components/forms/AddCertificateForm';
+import type { Certificate } from '@mangodb/shared';
 import { getPortfolios } from '@/lib/portfolios';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
@@ -18,7 +18,7 @@ function formatPortfolioDate(dateString: string): string {
     return `${Number(day)} ${monthLabel(String(Number(month)))} ${year}`;
 }
 
-function formatCertificateDate(cert: CertificateResponse): string {
+function formatCertificateDate(cert: Certificate): string {
     if (!cert.issueMonth || !cert.issueYear) return '—';
     return `${monthLabel(String(cert.issueMonth))} ${cert.issueYear}`;
 }
@@ -42,9 +42,7 @@ export default function PortfolioCertificateList({
     const [portfolioItems, setPortfolioItems] = useState<ServicePortfolio[]>(
         [],
     );
-    const [certificateItems, setCertificateItems] = useState<
-        CertificateResponse[]
-    >([]);
+    const [certificateItems, setCertificateItems] = useState<Certificate[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {

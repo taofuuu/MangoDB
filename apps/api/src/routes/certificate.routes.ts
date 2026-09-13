@@ -4,17 +4,19 @@ import {
     createCertificate,
     updateCertificate,
     deleteCertificate,
-    getCertificatesByProvider,
+    getMyCertificates,
 } from '../controllers/certificate.controller';
 import { uploadImage } from '../middleware/upload';
 
 export const certificateRoutes = Router();
 
+// /mine, not /provider: conventions 2.3 — /me is the singular thing that is
+// you, /mine is a collection filtered to you.
 certificateRoutes.get(
-    '/provider',
+    '/mine',
     requireAuth,
     requireRole('provider'),
-    getCertificatesByProvider,
+    getMyCertificates,
 );
 
 certificateRoutes.post(

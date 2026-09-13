@@ -71,11 +71,14 @@ RUN="snapshot_probe_$(date +%s)"
 SUBS=(--text "run=$RUN")
 
 TOKEN_ADMIN=""
+TOKEN_PROVIDER=""
 TOKEN_A=""
 TOKEN_B=""
 COMPANY_A_ID=""
 A_LIVE=0
 B_LIVE=0
+NEW_PORTFOLIO_ID=""
+NEW_CERT_ID=""
 
 # The script creates two throwaway companies. If it dies halfway they would sit
 # in the admin list forever and every later run's diff would show them, so
@@ -83,6 +86,19 @@ B_LIVE=0
 cleanup() {
     local code=$?
     set +e
+    # The rows the write stage creates, in case it died before deleting them.
+    # A leftover certificate shows up in every later run's listing, which is
+    # exactly how this got noticed.
+    if [ -n "$NEW_CERT_ID" ]; then
+        curl -sS -o /dev/null -X DELETE \
+            "$API_URL/certificates/$NEW_CERT_ID" \
+            -H "Authorization: Bearer $TOKEN_PROVIDER"
+    fi
+    if [ -n "$NEW_PORTFOLIO_ID" ]; then
+        curl -sS -o /dev/null -X DELETE \
+            "$API_URL/portfolios/$NEW_PORTFOLIO_ID" \
+            -H "Authorization: Bearer $TOKEN_PROVIDER"
+    fi
     if [ "$B_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_B"
@@ -213,7 +229,7 @@ PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
 snap 13-companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
-snap 14-error-forbidden-role GET /certificates/provider -H "$(bearer "$TOKEN_RECEIVER")"
+snap 14-error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap 15-auth-check-availability-free POST /auth/check-availability \
     -H 'Content-Type: application/json' \
@@ -238,7 +254,7 @@ else
     echo "  --  skip   GET /portfolios/:portfolioId (no seeded portfolio)"
 fi
 
-snap 19-certificates-mine GET /certificates/provider -H "$(bearer "$TOKEN_PROVIDER")"
+snap 19-certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
 
 echo
 echo "admin"
@@ -249,7 +265,6 @@ snap 22-admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
     -H "$(bearer "$TOKEN_ADMIN")"
 snap 23-error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
-snap 24-admin-ping GET /admin/ping -H "$(bearer "$TOKEN_ADMIN")"
 
 if [ "$READ_ONLY" = 1 ]; then
     echo
@@ -341,7 +356,16 @@ if [ "$UPLOADS" = 1 ]; then
                 -H "$(bearer "$TOKEN_PROVIDER")" \
                 -F 'portfolioName=Snapshot Probe portfolio edited' \
                 -F "portfolioImage=@$IMAGE;type=image/png"
-            snap 38-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
+            # strictObject: a misspelled key is a 400 naming the key, not a
+            # 200 that wrote nothing. Snapshotted because that is a convention
+            # (docs/conventions.md section 12) and nothing else would catch a
+            # schema quietly going back to z.object.
+            snap 38-error-portfolio-unknown-field PATCH \
+                "/portfolios/$NEW_PORTFOLIO_ID" \
+                -H "$(bearer "$TOKEN_PROVIDER")" \
+                -F 'portfolioNmae=typo'
+
+            snap 39-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")"
         fi
     else
@@ -350,7 +374,7 @@ if [ "$UPLOADS" = 1 ]; then
 
     echo
     echo "certificate lifecycle"
-    snap 39-certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
+    snap 40-certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
         -F 'certTitle=Snapshot Probe certificate' \
         -F 'organization=Snapshot Probe Authority' \
         -F 'issueMonth=1' -F 'issueYear=2025' \
@@ -358,18 +382,19 @@ if [ "$UPLOADS" = 1 ]; then
         -F "credentialId=$RUN" \
         -F "credentialUrl=https://example.test/$RUN/cert" \
         -F "certImage=@$IMAGE;type=image/png"
-    NEW_CERT_ID="$(jget certificate.certificate_id)"
+    # The bare resource now, not { message, certificate } — Phase 4 unwrapped it.
+    NEW_CERT_ID="$(jget certificateId)"
 
     if [ -n "$NEW_CERT_ID" ]; then
         SUBS+=(--id "certificate_id=$NEW_CERT_ID")
-        resnap 39-certificates-create
-        snap 40-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
+        resnap 40-certificates-create
+        snap 41-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" -F 'expireYear=2000'
-        snap 41-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
+        snap 42-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" \
             -F 'certTitle=Snapshot Probe certificate edited' \
             -F "certImage=@$IMAGE;type=image/png"
-        snap 42-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
+        snap 43-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")"
     fi
 else
@@ -383,18 +408,18 @@ fi
 
 echo
 echo "admin writes"
-snap 43-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
+snap 44-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
     -H "$(bearer "$TOKEN_ADMIN")"
 
-snap 44-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
+snap 45-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"companyName":"Snapshot Probe A edited by admin","phone":"0800000000"}'
 
-snap 45-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
+snap 46-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"currentPassword":"definitely-not-it"}'
 
-snap 46-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
+snap 47-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
 A_LIVE=0

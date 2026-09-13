@@ -42,8 +42,11 @@ export const createPortfolioSchema = z.object({
     portfolioLink: portfolioFields.portfolioLink,
 });
 
+// strictObject, like updateCompanyProfileSchema and for the same reason: a
+// plain z.object drops keys it does not know, so `portfolioNmae` would answer
+// 200 having changed nothing. Rejecting names the key instead.
 export const updatePortfolioSchema = z
-    .object({
+    .strictObject({
         portfolioName: portfolioFields.portfolioName,
         portfolioDescription: portfolioFields.portfolioDescription.nullable(),
         developmentDate: portfolioFields.developmentDate,

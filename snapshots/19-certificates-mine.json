@@ -1,5 +1,5 @@
 {
-    "request": "GET /certificates/provider",
+    "request": "GET /certificates/mine",
     "status": 200,
     "body": [
         {
@@ -12,8 +12,7 @@
             "expireYear": 2029,
             "issueMonth": 6,
             "issueYear": 2024,
-            "organization": "Snapshot Seed Authority",
-            "providerId": 142
+            "organization": "Snapshot Seed Authority"
         }
     ]
 }

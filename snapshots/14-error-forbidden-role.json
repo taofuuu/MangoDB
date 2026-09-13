@@ -1,5 +1,5 @@
 {
-    "request": "GET /certificates/provider",
+    "request": "GET /certificates/mine",
     "status": 403,
     "body": {
         "error": {

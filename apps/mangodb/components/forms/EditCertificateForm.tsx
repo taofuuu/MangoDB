@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
+import type { Certificate } from '@mangodb/shared';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 import FileUpload from '../sm-detail/FileUpload';
 
@@ -142,37 +143,22 @@ function EditCertificateDialog({
                     formData.append('certImage', file);
                 }
 
-                const res = await apiFetch<{
-                    message: string;
-                    certificate?: {
-                        certificateId: number;
-                        certTitle: string;
-                        organization: string;
-                        issueMonth: number | null;
-                        issueYear: number | null;
-                        expireMonth: number | null;
-                        expireYear: number | null;
-                        credentialId: string | null;
-                        credentialUrl: string | null;
-                        certImage: string | null;
-                    };
-                }>(`/certificates/${initialData.id}`, {
-                    method: 'PATCH',
-                    body: formData,
-                });
+                // The bare resource, and the shared Certificate type rather
+                // than a copy of its fields written out here.
+                const cert = await apiFetch<Certificate>(
+                    `/certificates/${initialData.id}`,
+                    { method: 'PATCH', body: formData },
+                );
 
-                const cert = res?.certificate;
-                if (cert) {
-                    updatedData.name = cert.certTitle;
-                    updatedData.organize = cert.organization;
-                    updatedData.month = cert.issueMonth?.toString() ?? '';
-                    updatedData.year = cert.issueYear?.toString() ?? '';
-                    updatedData.exMonth = cert.expireMonth?.toString() ?? '';
-                    updatedData.exYear = cert.expireYear?.toString() ?? '';
-                    updatedData.credID = cert.credentialId ?? '';
-                    updatedData.credURL = cert.credentialUrl ?? '';
-                    updatedData.certImage = cert.certImage;
-                }
+                updatedData.name = cert.certTitle;
+                updatedData.organize = cert.organization;
+                updatedData.month = cert.issueMonth?.toString() ?? '';
+                updatedData.year = cert.issueYear?.toString() ?? '';
+                updatedData.exMonth = cert.expireMonth?.toString() ?? '';
+                updatedData.exYear = cert.expireYear?.toString() ?? '';
+                updatedData.credID = cert.credentialId ?? '';
+                updatedData.credURL = cert.credentialUrl ?? '';
+                updatedData.certImage = cert.certImage;
             }
 
             if (onSave) {

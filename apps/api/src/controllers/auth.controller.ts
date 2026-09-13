@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import type { CompanyProfile } from '@mangodb/shared';
-import { z } from 'zod';
 import { revokeToken } from '../auth/tokenDenylist';
 import {
     dummyPasswordHash,
@@ -25,7 +24,11 @@ import {
 import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
 import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
-import { registerSchema, loginSchema } from '../schemas/auth.schema';
+import {
+    checkAvailabilitySchema,
+    loginSchema,
+    registerSchema,
+} from '../schemas/auth.schema';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
 
 // Both login endpoints ask the same question, so they share the answer — and
@@ -117,11 +120,6 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     sendSession(res, toCompanyProfile(company), 201);
 }
-
-const checkAvailabilitySchema = z.object({
-    username: z.string().trim().min(1).max(50),
-    email: z.email().max(100),
-});
 
 // US 1-1.9 checking uniqueness of username and email
 export async function checkAvailability(

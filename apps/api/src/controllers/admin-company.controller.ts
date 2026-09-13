@@ -243,7 +243,7 @@ export async function deleteCompanyAccount(
     // case, so this is the race-condition case, reported the same way.
     const wasDeleted = await softDeleteCompany(companyId);
     if (wasDeleted) {
-        res.status(204).send();
+        res.status(204).end();
     } else {
         throw ApiError.notFound('Company account not found');
     }

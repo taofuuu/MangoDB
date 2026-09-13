@@ -26,7 +26,10 @@ import {
 } from '../lib/certificate';
 import { omitUndefined } from '../lib/objects';
 
-export async function createCertificate(req: Request, res: Response) {
+export async function createCertificate(
+    req: Request,
+    res: Response,
+): Promise<void> {
     const providerId = req.auth!.companyId;
 
     const body = parseBody(createCertificateSchema, req.body);
@@ -68,10 +71,8 @@ export async function createCertificate(req: Request, res: Response) {
             select: certificateSelect,
         });
 
-        return res.status(201).json({
-            message: 'Certificate created successfully',
-            certificate: toCertificate(certificate),
-        });
+        res.status(201).json(toCertificate(certificate));
+        return;
     } catch (error) {
         // Database creation failed, so remove the uploaded file
         if (certImagePath) {
@@ -82,17 +83,23 @@ export async function createCertificate(req: Request, res: Response) {
     }
 }
 
-export async function getCertificatesByProvider(req: Request, res: Response) {
+export async function getMyCertificates(
+    req: Request,
+    res: Response,
+): Promise<void> {
     const providerId = req.auth!.companyId;
     const certificates = await prisma.certificate.findMany({
         where: { providerId },
         orderBy: { certificateId: 'desc' },
         select: certificateSelect,
     });
-    return res.status(200).json(certificates.map(toCertificate));
+    res.json(certificates.map(toCertificate));
 }
 
-export async function updateCertificate(req: Request, res: Response) {
+export async function updateCertificate(
+    req: Request,
+    res: Response,
+): Promise<void> {
     const providerId = req.auth!.companyId;
     const { certificateId } = parseParams(certificateIdParamSchema, req.params);
 
@@ -149,13 +156,13 @@ export async function updateCertificate(req: Request, res: Response) {
         await removeFromStorageByUrl(existing.certImage, BUCKETS.CERTIFICATE);
     }
 
-    return res.status(200).json({
-        message: 'Certificate updated successfully',
-        certificate: toCertificate(updatedCertificate),
-    });
+    res.json(toCertificate(updatedCertificate));
 }
 
-export async function deleteCertificate(req: Request, res: Response) {
+export async function deleteCertificate(
+    req: Request,
+    res: Response,
+): Promise<void> {
     const providerId = req.auth!.companyId;
     const { certificateId } = parseParams(certificateIdParamSchema, req.params);
 
@@ -171,5 +178,5 @@ export async function deleteCertificate(req: Request, res: Response) {
         await removeFromStorageByUrl(certImage, BUCKETS.CERTIFICATE);
     }
 
-    return res.status(204).end();
+    res.status(204).end();
 }

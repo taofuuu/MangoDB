@@ -24,6 +24,14 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 // failing min(8) here would return 400 VALIDATION_FAILED, which answers a
 // credential question with the wrong status and hands an attacker the policy.
 // A wrong credential is always 401, whatever it looks like.
+// US1-1.9. The signup form's inline hint. Deliberately the same field rules
+// registration uses, because a hint that answers a different question than the
+// submit button is worse than no hint.
+export const checkAvailabilitySchema = z.object({
+    username: companyFields.username,
+    email: companyFields.email,
+});
+
 export const loginSchema = z.object({
     email: companyFields.email,
     // passwordAttempt, not password: checking one is deliberately looser than

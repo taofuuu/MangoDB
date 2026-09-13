@@ -9,6 +9,16 @@ export const certificateIdParamSchema = z.object({
 // year below this is far more likely a mistyped digit than a real issue date.
 const EARLIEST_CERT_YEAR = 1990;
 
+// How far ahead an expiry may sit.
+const MAX_YEARS_AHEAD = 50;
+
+// A function, not a constant. Evaluated at module load, `new Date()` freezes
+// the year the process started, so a server left running over New Year starts
+// rejecting certificates issued in January.
+function currentYear(): number {
+    return new Date().getFullYear();
+}
+
 // Both forms post multipart because they carry the image, so every field
 // arrives as a string and a cleared input arrives as ''. Without this,
 // z.coerce.number() reads '' as 0 and a cleared month is stored as month zero.
@@ -30,7 +40,7 @@ export const certificateFields = {
                 EARLIEST_CERT_YEAR,
                 `Issue year must be ${EARLIEST_CERT_YEAR} or later`,
             )
-            .max(new Date().getFullYear(), 'Issue year cannot be in the future')
+            .max(currentYear(), 'Issue year cannot be in the future')
             .nullable()
             .optional(),
     ),
@@ -44,6 +54,12 @@ export const certificateFields = {
             .min(
                 EARLIEST_CERT_YEAR,
                 `Expiration year must be ${EARLIEST_CERT_YEAR} or later`,
+            )
+            // An expiry may be in the future — that is what an expiry is — but
+            // not by a century. Without a ceiling this accepted 999999.
+            .max(
+                currentYear() + MAX_YEARS_AHEAD,
+                `Expiration year cannot be more than ${MAX_YEARS_AHEAD} years away`,
             )
             .nullable()
             .optional(),
@@ -93,5 +109,9 @@ export const createCertificateSchema = z
         path: ['expireYear'],
     });
 
-// All fields optional for partial PATCH operations
-export const updateCertificateSchema = z.object(certificateFields).partial();
+// All fields optional for partial PATCH operations. strictObject for the same
+// reason updateCompanyProfileSchema uses it: a plain object silently drops a
+// misspelled key and answers 200 having written nothing.
+export const updateCertificateSchema = z
+    .strictObject(certificateFields)
+    .partial();

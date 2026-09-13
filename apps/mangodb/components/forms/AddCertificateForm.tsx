@@ -4,22 +4,9 @@ import { useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import type { CertificateData } from './EditCertificateForm';
+import type { Certificate } from '@mangodb/shared';
 import { apiFetch, ApiRequestError } from '@/lib/api';
 import FileUpload from '../sm-detail/FileUpload';
-
-export type CertificateResponse = {
-    certificateId: number;
-    providerId: number;
-    certTitle: string;
-    organization: string;
-    issueMonth: number | null;
-    issueYear: number | null;
-    expireMonth: number | null;
-    expireYear: number | null;
-    credentialId: string | null;
-    credentialUrl: string | null;
-    certImage: string | null;
-};
 
 type FormModalProps = {
     isOpen: boolean;
@@ -102,15 +89,12 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 formData.append('certImage', file);
             }
 
-            const result = await apiFetch<{
-                message: string;
-                certificate: CertificateResponse;
-            }>('/certificates', {
+            // The bare resource, not { message, certificate } — see
+            // docs/conventions.md section 3. The status code says it worked.
+            const cert = await apiFetch<Certificate>('/certificates', {
                 method: 'POST',
                 body: formData,
             });
-
-            const cert = result.certificate;
 
             const newData: CertificateData = {
                 id: cert.certificateId,

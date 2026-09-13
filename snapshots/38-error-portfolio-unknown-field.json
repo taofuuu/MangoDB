@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /portfolios/<portfolio_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "(body)",
+                    "message": "Unrecognized key: \"portfolioNmae\""
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}
