@@ -52,13 +52,11 @@
 
     --color-orange: #d9603b;
 
-    /* The fill behind a role label — "Provider" on a company card, and the
-       circle behind a profile photo. Named for the colour, not the role, on
-       purpose: CompanyCard paints Provider with this and Receiver with
-       brand-light, while ProfilePhotoPanel does the exact opposite. One of
-       those two is wrong, and a role name here would bake in whichever it is.
-       Decide which way round it goes, then rename this. */
-    --color-terracotta: #d36b60;
+    /* The fill behind a "Provider" role label, on a company card and behind a
+       profile photo. Its counterpart is brand-light, which fills "Receiver" —
+       that one keeps a colour name because it is also a hover border on the
+       certificate page, where it means nothing about roles. */
+    --color-role-provider: #d36b60;
 
     /* The initials in the placeholder avatar, on an accent circle. */
     --color-avatar-initials: #e53e3e;

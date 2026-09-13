@@ -14,9 +14,12 @@ const ROLES: Record<AccountType, string[]> = {
     ADMIN: [],
 };
 
+// Matches CompanyCard and CompanyDetailModal. These two used to be the other
+// way round here, so the same company was blue on this page and terracotta on
+// the admin list.
 const ROLE_FILL: Record<string, string> = {
-    Provider: 'bg-brand-light text-white',
-    Receiver: 'bg-terracotta text-white',
+    Provider: 'bg-role-provider text-white',
+    Receiver: 'bg-brand-light text-white',
 };
 
 type ProfilePhotoPanelProps = {
