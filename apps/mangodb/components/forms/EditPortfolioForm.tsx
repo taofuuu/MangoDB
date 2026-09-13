@@ -3,8 +3,9 @@
 import { useId, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import FileUpload from '@/components/sm-detail/FileUpload';
-import { describeError } from '@/lib/api';
+import FieldError from '@/components/ui/FieldError';
 import { updatePortfolio } from '@/lib/portfolios';
+import { toFormErrors, type FieldErrors } from '@/lib/validation';
 import ModalShell from '@/components/ui/ModalShell';
 
 type EditPortfolioFormProps = {
@@ -15,6 +16,19 @@ type EditPortfolioFormProps = {
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+// Which input on this form each API field belongs under.
+const PORTFOLIO_FIELDS = {
+    portfolioName: 'name',
+    portfolioDescription: 'description',
+    portfolioLink: 'link',
+    developmentDate: 'developmentDate',
+    portfolioImage: 'image',
+} as const;
+
+type PortfolioErrors = FieldErrors<
+    (typeof PORTFOLIO_FIELDS)[keyof typeof PORTFOLIO_FIELDS]
+>;
 
 function daysInMonth(year: string, month: string): number {
     const numericYear = Number(year);
@@ -42,8 +56,15 @@ export default function EditPortfolioForm({
     const [month, setMonth] = useState(String(Number(initialMonth) || ''));
     const [year, setYear] = useState(initialYear ?? '');
     const [image, setImage] = useState<File | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [errors, setErrors] = useState<PortfolioErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: keyof PortfolioErrors) =>
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
 
     const currentYear = new Date().getFullYear();
     const latestYear = Math.max(
@@ -68,24 +89,32 @@ export default function EditPortfolioForm({
     const handleMonthChange = (nextMonth: string) => {
         setMonth(nextMonth);
         clampDay(year, nextMonth);
+        clearError('developmentDate');
     };
 
     const handleYearChange = (nextYear: string) => {
         setYear(nextYear);
         clampDay(nextYear, month);
+        clearError('developmentDate');
     };
 
     const handleImageChange = (file: File | null) => {
-        setError(null);
+        clearError('image');
 
         if (file && !IMAGE_TYPES.has(file.type)) {
             setImage(null);
-            setError('Only PNG, JPEG or WebP images are allowed.');
+            setErrors((prev) => ({
+                ...prev,
+                image: 'Only PNG, JPEG or WebP images are allowed.',
+            }));
             return;
         }
         if (file && file.size > MAX_IMAGE_BYTES) {
             setImage(null);
-            setError('Image must be 5MB or smaller.');
+            setErrors((prev) => ({
+                ...prev,
+                image: 'Image must be 5MB or smaller.',
+            }));
             return;
         }
 
@@ -94,10 +123,13 @@ export default function EditPortfolioForm({
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setError(null);
+        setErrors({});
+        setFormError(null);
 
         if (Number(day) > dayCount) {
-            setError('Choose a valid development date.');
+            setErrors({
+                developmentDate: 'Choose a valid development date.',
+            });
             return;
         }
 
@@ -117,7 +149,12 @@ export default function EditPortfolioForm({
             onSave(updated);
             onClose();
         } catch (submitError) {
-            setError(describeError(submitError));
+            const { fields, message } = toFormErrors(
+                submitError,
+                PORTFOLIO_FIELDS,
+            );
+            setErrors(fields);
+            setFormError(message);
         } finally {
             setIsSaving(false);
         }
@@ -168,9 +205,13 @@ export default function EditPortfolioForm({
                             required
                             maxLength={255}
                             value={name}
-                            onChange={(event) => setName(event.target.value)}
+                            onChange={(event) => {
+                                setName(event.target.value);
+                                clearError('name');
+                            }}
                             className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
+                        <FieldError message={errors.name} />
                     </div>
 
                     <div>
@@ -184,11 +225,13 @@ export default function EditPortfolioForm({
                             id="portfolio-description"
                             maxLength={2000}
                             value={description}
-                            onChange={(event) =>
-                                setDescription(event.target.value)
-                            }
+                            onChange={(event) => {
+                                setDescription(event.target.value);
+                                clearError('description');
+                            }}
                             className="h-[9.65vh] w-full resize-none rounded-input border border-brand bg-surface-white/80 px-1.5 py-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
+                        <FieldError message={errors.description} />
                     </div>
 
                     <div>
@@ -204,9 +247,13 @@ export default function EditPortfolioForm({
                             required
                             maxLength={255}
                             value={link}
-                            onChange={(event) => setLink(event.target.value)}
+                            onChange={(event) => {
+                                setLink(event.target.value);
+                                clearError('link');
+                            }}
                             className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
+                        <FieldError message={errors.link} />
                     </div>
 
                     <fieldset>
@@ -219,9 +266,10 @@ export default function EditPortfolioForm({
                                 <select
                                     required
                                     value={day}
-                                    onChange={(event) =>
-                                        setDay(event.target.value)
-                                    }
+                                    onChange={(event) => {
+                                        setDay(event.target.value);
+                                        clearError('developmentDate');
+                                    }}
                                     className={selectClassName}
                                 >
                                     {days.map((value) => (
@@ -269,6 +317,7 @@ export default function EditPortfolioForm({
                                 </select>
                             </label>
                         </div>
+                        <FieldError message={errors.developmentDate} />
                     </fieldset>
 
                     <FileUpload
@@ -278,15 +327,11 @@ export default function EditPortfolioForm({
                         label="Upload Image"
                         className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     />
-
-                    {error && (
-                        <p role="alert" className="type-sm text-danger">
-                            {error}
-                        </p>
-                    )}
+                    <FieldError message={errors.image} />
                 </div>
 
                 <hr className="border-brand-dark/50" />
+                <FieldError message={formError} />
                 <div className="flex items-center justify-end gap-3 pt-4">
                     <button
                         type="submit"
