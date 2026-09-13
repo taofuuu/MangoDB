@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Tag from '../ui/Tag';
+import FieldError from '../ui/FieldError';
 import { PREDEFINED_COMPANY_TYPES } from '@/lib/validation';
 
 type CompanyTypeFieldProps = {
@@ -98,9 +99,7 @@ export default function CompanyTypeField({
                 )}
             </div>
 
-            {error && (
-                <p className="mt-[0.46vh] type-sm text-danger">{error}</p>
-            )}
+            <FieldError message={error} />
         </div>
     );
 }

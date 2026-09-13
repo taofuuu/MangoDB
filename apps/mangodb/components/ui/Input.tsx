@@ -1,5 +1,7 @@
 'use client';
 
+import FieldError from './FieldError';
+
 type InputProps = {
     label: string;
     value: string;
@@ -42,13 +44,13 @@ export default function Input({
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? `${inputId}-error` : undefined}
                 className="h-[4.79vh] w-full rounded-button border-[0.75px] border-black bg-white px-[0.83vw] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none"
                 {...props}
             />
 
-            {error && (
-                <p className="mt-[0.46vh] type-sm text-danger">{error}</p>
-            )}
+            <FieldError message={error} id={`${inputId}-error`} />
         </div>
     );
 }

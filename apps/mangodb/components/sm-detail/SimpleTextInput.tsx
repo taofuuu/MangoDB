@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import FieldError from '@/components/ui/FieldError';
 
 interface SimpleTextInputProps {
     title: string;
@@ -80,7 +81,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
                 }}
                 placeholder="Type here..."
             />
-            {error && <p className="mt-1 type-xs text-danger">{error}</p>}
+            <FieldError message={error} />
         </div>
     );
 };
