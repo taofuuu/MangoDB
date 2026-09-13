@@ -7,6 +7,7 @@ import EditCertificateForm, {
     type CertificateData,
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
+import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
@@ -32,6 +33,11 @@ export default function CertificatePage() {
     // Certificate currently being deleted.
     const [certificateToDelete, setCertificateToDelete] =
         useState<CertificateData | null>(null);
+
+    // The certificate image open full size. Null means the dialog is closed.
+    const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
+        null,
+    );
 
     // GET certificates
     useEffect(() => {
@@ -163,7 +169,28 @@ export default function CertificatePage() {
                                 <div key={certificate.id}>
                                     <div className="flex w-full items-center justify-between pt-2 pl-6">
                                         <h2 className="type-lg">
-                                            {certificate.name}
+                                            {/* An anchor, not a button:
+                                                middle-click, copy link and
+                                                screen readers all expect a
+                                                link for an external URL. A
+                                                certificate with no credential
+                                                URL stays plain text rather
+                                                than a link that goes nowhere,
+                                                which is what the Show
+                                                Credential button below does
+                                                too. */}
+                                            {certificate.credURL ? (
+                                                <a
+                                                    href={certificate.credURL}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+                                                >
+                                                    {certificate.name}
+                                                </a>
+                                            ) : (
+                                                certificate.name
+                                            )}
                                         </h2>
                                         <button
                                             type="button"
@@ -223,22 +250,36 @@ export default function CertificatePage() {
                                     {/* Buttons */}
                                     <div className="flex w-full items-center justify-between pt-4 pl-6 pr-6 pb-1">
                                         <div className="flex w-full items-center gap-10">
-                                            <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-brand">
-                                                {certificate.certImage && (
+                                            {/* A button only with an image
+                                                behind it: an empty frame has
+                                                nothing to expand. */}
+                                            {certificate.certImage ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setExpandedImage({
+                                                            title:
+                                                                certificate.name ??
+                                                                'Certificate',
+                                                            src: certificate.certImage!,
+                                                        })
+                                                    }
+                                                    aria-label={`Expand the image for ${certificate.name ?? 'this certificate'}`}
+                                                    className="flex h-[10vh] w-[9.375vw] cursor-zoom-in items-center justify-center rounded-button border border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
+                                                >
                                                     <Image
                                                         src={
                                                             certificate.certImage
                                                         }
-                                                        alt={
-                                                            certificate.name ??
-                                                            'Certificate'
-                                                        }
+                                                        alt=""
                                                         width={200}
                                                         height={150}
                                                         className="h-full w-full rounded-button object-contain"
                                                     />
-                                                )}
-                                            </div>
+                                                </button>
+                                            ) : (
+                                                <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-brand" />
+                                            )}
 
                                             <p className="type-md">
                                                 {certificate.name}
@@ -288,6 +329,13 @@ export default function CertificatePage() {
                         ? 'Please log in to view your certificates.'
                         : loadError}
                 </p>
+            )}
+
+            {expandedImage && (
+                <ImageModal
+                    image={expandedImage}
+                    onClose={() => setExpandedImage(null)}
+                />
             )}
 
             {/* ADD MODAL */}
