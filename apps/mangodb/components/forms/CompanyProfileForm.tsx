@@ -28,11 +28,10 @@ export type ProfileFormData = Pick<
     // why the two fields below are not rendered for one.
     | 'serviceTerm'
     | 'warrantyPolicy'
-> & {
-    // The one field with nowhere to go: no upload endpoint, and no column to
-    // store the result, so it is lost on reload.
-    photoUrl: string | null;
-};
+    // The saved photo's URL. Read-only here — the file goes up on its own
+    // request, so nothing in this form writes it.
+    | 'companyPhoto'
+>;
 
 // An empty input means "cleared", and the API spells that null. Sending ''
 // would store an empty string in most columns and fail outright on website,
@@ -43,10 +42,11 @@ function orNull(value: string | null): string | null {
 }
 
 // What the form holds is not quite what the endpoint takes. Four fields are
-// absent: accountType is not editable, photoUrl has no column to live in, and
-// username and email belong to Account Settings, which is where a company
-// changes what it signs in with. Everything else goes every time, which also
-// keeps the body from ever being empty — the API rejects {} as a client bug.
+// absent: accountType is not editable, companyPhoto is written by its own
+// route, and username and email belong to Account Settings, which is where a
+// company changes what it signs in with. Everything else goes every time,
+// which also keeps the body from ever being empty — the API rejects {} as a
+// client bug.
 //
 // It lives beside ProfileFormData rather than in lib/companies.ts so the API
 // layer stays free of anything form-shaped.
@@ -79,8 +79,17 @@ export function toUpdateRequest(
 
 type CompanyProfileFormProps = {
     initialData: ProfileFormData;
-    onSave: (data: ProfileFormData) => Promise<void> | void;
+    // The picked file rides alongside the fields rather than inside them: it
+    // is not part of the JSON body and goes up on its own request.
+    onSave: (data: ProfileFormData, photo: File | null) => Promise<void> | void;
     onCancel?: (() => void) | undefined;
+    // Left out when an administrator is editing another company: there is no
+    // endpoint for that, so the panel renders read-only instead.
+    canEditPhoto?: boolean | undefined;
+    photoError?: string | undefined;
+    onPhotoError?: ((message: string | undefined) => void) | undefined;
+    onPhotoRemove?: (() => void) | undefined;
+    isRemovingPhoto?: boolean | undefined;
     errors?: Partial<Record<keyof ProfileFormData, string>> | undefined;
     // US6-4. Set only when an administrator is editing another company's
     // account: it turns on the Delete account section below the form fields.
@@ -99,6 +108,11 @@ export default function CompanyProfileForm({
     initialData,
     onSave,
     onCancel,
+    canEditPhoto = false,
+    photoError,
+    onPhotoError,
+    onPhotoRemove,
+    isRemovingPhoto = false,
     errors,
     status,
     onDeleteAccount,
@@ -108,6 +122,9 @@ export default function CompanyProfileForm({
     onDismissStatus,
 }: CompanyProfileFormProps) {
     const [data, setData] = useState<ProfileFormData>(initialData);
+    // Picked but not uploaded. Held here so Cancel drops it with everything
+    // else, and so a failed save leaves the choice in place to retry.
+    const [photo, setPhoto] = useState<File | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Both live on the provider table. A receiver-only company owns no row
@@ -123,6 +140,9 @@ export default function CompanyProfileForm({
     if (lastInitial !== initialData) {
         setLastInitial(initialData);
         setData(initialData);
+        // The save that produced this initialData uploaded it, so what is on
+        // screen now comes from initialData.companyPhoto.
+        setPhoto(null);
     }
 
     const setField = <K extends keyof ProfileFormData>(
@@ -137,11 +157,13 @@ export default function CompanyProfileForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSave(data);
+        await onSave(data, photo);
     };
 
     const handleCancel = () => {
         setData(initialData);
+        setPhoto(null);
+        onPhotoError?.(undefined);
         onCancel?.();
     };
 
@@ -161,8 +183,18 @@ export default function CompanyProfileForm({
             <div className="mt-[1.85vh] flex">
                 <div className="w-[17.99vw] shrink-0">
                     <ProfilePhotoPanel
-                        photoUrl={data.photoUrl}
-                        onPhotoChange={(url) => setField('photoUrl', url)}
+                        photoUrl={data.companyPhoto}
+                        pendingPhoto={photo}
+                        {...(canEditPhoto && {
+                            onPhotoChange: (file: File) => {
+                                setPhoto(file);
+                                onPhotoError?.(undefined);
+                            },
+                            onPhotoRemove,
+                            onPhotoError,
+                        })}
+                        error={photoError}
+                        isRemoving={isRemovingPhoto}
                         accountType={data.accountType}
                     />
                 </div>

@@ -29,6 +29,27 @@ export function updateMyProfile(
     });
 }
 
+// US1-5, the photo half. Its own request because PATCH /companies/me is JSON
+// and a file cannot travel in one. Answers with the whole profile, so the page
+// re-renders from this rather than guessing what was stored.
+export function updateMyPhoto(photo: File): Promise<CompanyProfile> {
+    const body = new FormData();
+    body.append('photo', photo);
+
+    return apiFetch<CompanyProfile>('/companies/me/photo', {
+        method: 'PATCH',
+        body,
+    });
+}
+
+// Clearing it needs its own method for the same reason: a multipart body has
+// no way to say "no photo" that is not just a forgotten attachment.
+export function deleteMyPhoto(): Promise<CompanyProfile> {
+    return apiFetch<CompanyProfile>('/companies/me/photo', {
+        method: 'DELETE',
+    });
+}
+
 export function getCompanyAccounts(
     page: number,
     pageSize: number,

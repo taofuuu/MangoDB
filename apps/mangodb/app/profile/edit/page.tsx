@@ -6,9 +6,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import {
     deleteCompanyAccount,
+    deleteMyPhoto,
     getCompanyAccountDetail,
     getMyProfile,
     updateCompanyAccount,
+    updateMyPhoto,
     updateMyProfile,
 } from '@/lib/companies';
 import {
@@ -35,8 +37,11 @@ function EditProfilePageInner() {
     const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [errors, setErrors] = useState<ProfileErrors>({});
+    // The photo is not a column this form writes, so it is not in ProfileErrors.
+    const [photoError, setPhotoError] = useState<string | undefined>(undefined);
     const [status, setStatus] = useState<StatusMessageData>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
 
     // No token check first: without one the request 401s anyway, and a token
     // that is expired or revoked lands in the same place. One path for "you are
@@ -47,9 +52,7 @@ function EditProfilePageInner() {
             : getMyProfile();
 
         load.then((profile) => {
-            // photoUrl has no column on the server, so it starts empty and
-            // only ever lives in this page's state.
-            setSaved({ ...profile, photoUrl: null });
+            setSaved(profile);
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
             if (isNotSignedIn(err)) {
@@ -70,9 +73,10 @@ function EditProfilePageInner() {
         }
     };
 
-    const handleSave = async (data: ProfileFormData) => {
+    const handleSave = async (data: ProfileFormData, photo: File | null) => {
         setStatus(null);
         setErrors({});
+        setPhotoError(undefined);
 
         // 1. Run frontend validation
         const frontendErrors = validateProfile(data);
@@ -88,16 +92,34 @@ function EditProfilePageInner() {
         setIsSaving(true);
 
         try {
-            const profile = isAdminEditingOther
+            let profile = isAdminEditingOther
                 ? await updateCompanyAccount(
                       Number(targetCompanyId),
                       toUpdateRequest(data),
                   )
                 : await updateMyProfile(toUpdateRequest(data));
+
+            // Second request, because the photo is multipart and the fields
+            // above are JSON. Deliberately after them: if the upload fails the
+            // fields are already stored, and the message says only the photo
+            // did not go — the reverse would lose the typed edits.
+            if (photo) {
+                try {
+                    profile = { ...profile, ...(await updateMyPhoto(photo)) };
+                } catch (uploadError) {
+                    setSaved(profile);
+                    setPhotoError(describeError(uploadError));
+                    setStatus({
+                        type: 'error',
+                        message: 'Profile saved, but the photo did not upload.',
+                    });
+                    return;
+                }
+            }
+
             // Update saved with the newly persisted profile so subsequent Cancel
-            // actions revert to this latest saved baseline. Keep the photoUrl as
-            // the response does not carry one.
-            setSaved({ ...profile, photoUrl: data.photoUrl });
+            // actions revert to this latest saved baseline.
+            setSaved(profile);
             setStatus({
                 type: 'success',
                 message: 'Profile saved successfully.',
@@ -113,6 +135,23 @@ function EditProfilePageInner() {
             });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // Straight away rather than on Save, because there is no "remove this
+    // later" state for the form to hold — and the answer is the whole profile,
+    // so this becomes the new Cancel baseline like any other save.
+    const handleRemovePhoto = async () => {
+        setStatus(null);
+        setPhotoError(undefined);
+        setIsRemovingPhoto(true);
+
+        try {
+            setSaved(await deleteMyPhoto());
+        } catch (err) {
+            setPhotoError(describeError(err));
+        } finally {
+            setIsRemovingPhoto(false);
         }
     };
 
@@ -164,6 +203,14 @@ function EditProfilePageInner() {
                     initialData={saved}
                     onSave={handleSave}
                     onCancel={handleCancel}
+                    // Only for a company editing itself: PATCH /companies/me/photo
+                    // acts on the caller, so there is nothing behind an
+                    // administrator changing someone else's.
+                    canEditPhoto={!isAdminEditingOther}
+                    photoError={photoError}
+                    onPhotoError={setPhotoError}
+                    onPhotoRemove={handleRemovePhoto}
+                    isRemovingPhoto={isRemovingPhoto}
                     errors={errors}
                     status={status}
                     onDeleteAccount={
