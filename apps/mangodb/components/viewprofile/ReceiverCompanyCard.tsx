@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { AccountType, CompanyProfile } from '@mangodb/shared';
 import RoleTags from '../ui/RoleTags';
+import Tag from '../ui/Tag';
 
 export interface ReceiverCompanyCardData {
     name: string;
@@ -11,7 +12,9 @@ export interface ReceiverCompanyCardData {
     website: string;
     phone: string;
     description: string;
-    companyType: string;
+    // The tags themselves, not a joined string — chips on screen, like the
+    // provider card and the edit form.
+    companyType: string[];
     address: string;
     accountType: AccountType;
 }
@@ -21,7 +24,7 @@ interface ReceiverCompanyCardProps {
 }
 
 // The profile's nullable columns become "Not provided" here rather than
-// rendering an empty textarea, which reads as a loading glitch.
+// rendering an empty line, which reads as a loading glitch.
 export function toReceiverCompanyCardData(
     profile: CompanyProfile,
 ): ReceiverCompanyCardData {
@@ -31,98 +34,89 @@ export function toReceiverCompanyCardData(
         website: profile.website ?? 'Not provided',
         phone: profile.phone,
         description: profile.companyDescription ?? 'No description provided.',
-        companyType:
-            profile.companyType.length > 0
-                ? profile.companyType.join(', ')
-                : 'Not specified',
+        companyType: profile.companyType,
         address: profile.address ?? 'Not provided',
         accountType: profile.accountType,
     };
+}
+
+// Plain text under a label. Same reason as the provider card: a read-only
+// textarea takes focus and draws an input border, so a page for reading looked
+// like a form for filling in.
+function Field({ label, value }: { label: string; value: string }) {
+    return (
+        <div>
+            <p className="type-xs !font-[600] text-ink-soft">{label}</p>
+            <p className="mt-1 type-sm whitespace-pre-line text-ink">{value}</p>
+        </div>
+    );
 }
 
 export default function ReceiverCompanyCard({
     data,
 }: ReceiverCompanyCardProps) {
     return (
-        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col justify-between w-full h-full">
-            <div className="view-profile-scrollbar flex-1 overflow-y-auto pr-2">
-                {/* Profile Header */}
-                <div className="flex flex-col items-center text-center mb-5">
-                    <div className="w-20 h-20 bg-accent-bright rounded-full flex items-center justify-center !font-bold text-avatar-initials type-lg shadow-inner mb-3">
-                        CP
-                    </div>
-                    <h2 className="type-md !font-bold text-gray-900 tracking-tight mb-3">
-                        {data.name}
-                    </h2>
-
-                    <RoleTags
-                        accountType={data.accountType}
-                        className="mb-3 gap-2"
-                        tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
-                    />
-
-                    <div className="type-xs text-gray-600 space-y-0.5">
-                        <p>{data.email}</p>
-                        <p>{data.website}</p>
-                        <p>{data.phone}</p>
-                    </div>
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm">
+            {/* Who the company is. Fixed, like the provider card's. */}
+            <div className="mb-5 flex shrink-0 flex-col items-center text-center">
+                <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-accent-bright type-lg !font-bold text-avatar-initials shadow-inner">
+                    CP
                 </div>
 
-                {/* Form Fields Stack */}
-                <div className="flex flex-col gap-3">
-                    <div>
-                        <label
-                            htmlFor="company-description"
-                            className="block type-sm !font-[600] text-gray-800 mb-1"
-                        >
-                            Company Description
-                        </label>
-                        <textarea
-                            id="company-description"
-                            readOnly
-                            value={data.description}
-                            className="w-full h-28 p-3 type-xs border border-brand/50 rounded-input bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
+                <h2 className="mb-3 type-md !font-bold tracking-tight text-ink">
+                    {data.name}
+                </h2>
 
-                    <div>
-                        <label
-                            htmlFor="company-type"
-                            className="block type-sm !font-[600] text-gray-800 mb-1"
-                        >
-                            Company Type
-                        </label>
-                        <textarea
-                            id="company-type"
-                            readOnly
-                            value={data.companyType}
-                            className="w-full h-20 p-3 type-xs border border-brand/50 rounded-input bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
+                <RoleTags
+                    accountType={data.accountType}
+                    className="mb-3 gap-2"
+                    tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
+                />
 
-                    <div>
-                        <label
-                            htmlFor="company-address"
-                            className="block type-sm !font-[600] text-gray-800 mb-1"
-                        >
-                            Company Address
-                        </label>
-                        <textarea
-                            id="company-address"
-                            readOnly
-                            value={data.address}
-                            className="w-full h-20 p-3 type-xs border border-brand/50 rounded-input bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                        />
-                    </div>
+                <div className="type-xs text-ink-soft space-y-0.5">
+                    <p>{data.email}</p>
+                    <p>{data.website}</p>
+                    <p>{data.phone}</p>
                 </div>
             </div>
 
-            {/* Edit Button. Outside the scroll area, like the provider card's,
-                so it stays on the bottom edge rather than below the fold. */}
+            {/* The details, and the only thing that scrolls. */}
+            <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+                <div className="flex flex-col gap-4">
+                    <Field
+                        label="Company Description"
+                        value={data.description}
+                    />
+
+                    <div>
+                        <p className="type-xs !font-[600] text-ink-soft">
+                            Company Type
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                            {data.companyType.length > 0 ? (
+                                data.companyType.map((type) => (
+                                    <Tag
+                                        key={type}
+                                        label={type}
+                                        className="h-[2.6vh] min-h-[24px] bg-fill-muted px-3 type-xs text-ink"
+                                    />
+                                ))
+                            ) : (
+                                <p className="type-sm text-ink">
+                                    Not specified
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <Field label="Company Address" value={data.address} />
+                </div>
+            </div>
+
             <div className="flex shrink-0 justify-end pt-4">
                 <Link
                     href="/profile/edit"
-                    className="px-6 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs !font-medium rounded-button transition-colors shadow-sm"
+                    className="rounded-button bg-brand px-6 py-1.5 type-xs !font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
                 >
                     Edit
                 </Link>

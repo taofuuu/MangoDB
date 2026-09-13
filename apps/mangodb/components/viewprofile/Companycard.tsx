@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { AccountType, CompanyProfile } from '@mangodb/shared';
 import RoleTags from '../ui/RoleTags';
+import Tag from '../ui/Tag';
 
 export interface CompanyCardData {
     name: string;
@@ -12,7 +13,9 @@ export interface CompanyCardData {
     phone: string;
     description: string;
     address: string;
-    companyType: string;
+    // The tags themselves, not a joined string: they are chips on screen, the
+    // same ones the edit form shows.
+    companyType: string[];
     warrantyPolicy: string;
     serviceTerm: string;
     accountType: AccountType;
@@ -23,7 +26,7 @@ interface CompanyCardProps {
 }
 
 // The profile's nullable columns become "Not provided" here rather than
-// rendering an empty textarea, which reads as a loading glitch.
+// rendering an empty line, which reads as a loading glitch.
 export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
     return {
         name: profile.companyName,
@@ -32,136 +35,112 @@ export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
         phone: profile.phone,
         description: profile.companyDescription ?? 'No description provided.',
         address: profile.address ?? 'Not provided',
-        companyType:
-            profile.companyType.length > 0
-                ? profile.companyType.join(', ')
-                : 'Not specified',
+        companyType: profile.companyType,
         warrantyPolicy: profile.warrantyPolicy ?? 'Not provided',
         serviceTerm: profile.serviceTerm ?? 'Not provided',
         accountType: profile.accountType,
     };
 }
 
-// One class for all five read-only fields.
-const FIELD =
-    'w-full h-20 p-3 type-xs border border-brand/50 rounded-input bg-white text-gray-700 focus:outline-none resize-none cursor-default';
-const LABEL = 'block type-sm !font-[600] text-gray-800 mb-1';
+// Plain text under a label, not a read-only textarea. A textarea takes focus,
+// draws an input border and is announced as "textbox", which is what made a
+// page for reading feel like a form for filling in.
+function Field({
+    label,
+    value,
+    className = '',
+}: {
+    label: string;
+    value: string;
+    className?: string;
+}) {
+    return (
+        <div className={className}>
+            <p className="type-xs !font-[600] text-ink-soft">{label}</p>
+            <p className="mt-1 type-sm whitespace-pre-line text-ink">{value}</p>
+        </div>
+    );
+}
 
 export default function CompanyCard({ data }: CompanyCardProps) {
     return (
-        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
-            {/* A fixed card height with everything scrolling inside, so the
-                four panels on the page line up instead of one stretching the
-                row. Edit is inside the scroll rather than pinned under it:
-                pinning cost 46px of visible height, which was enough to cut
-                the phone number off the left column. */}
-            <div className="view-profile-scrollbar flex flex-1 flex-col justify-between overflow-y-auto pr-2">
-                <div className="flex flex-col md:flex-row gap-8">
-                    {/* Left Profile Info */}
-                    <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-line pr-0 md:pr-8 justify-center py-4">
-                        {/* Logo */}
-                        <div className="w-24 h-24 bg-accent-bright rounded-full flex items-center justify-center font-bold text-avatar-initials text-3xl shadow-inner mb-4">
-                            CP
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">
-                            {data.name}
-                        </h2>
+        <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm md:flex-row md:gap-8">
+            {/* Who the company is. Fixed rather than scrolled: it is short
+                enough to always fit, and scrolling it along with the details
+                is what pushed the phone number off the card. */}
+            <div className="flex shrink-0 flex-col items-center justify-center border-line py-4 text-center md:w-1/3 md:border-r md:pr-8">
+                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-accent-bright text-3xl font-bold text-avatar-initials shadow-inner">
+                    CP
+                </div>
 
-                        <RoleTags
-                            accountType={data.accountType}
-                            className="mb-3 gap-2"
-                            tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
+                <h2 className="mb-3 text-2xl font-bold tracking-tight text-ink">
+                    {data.name}
+                </h2>
+
+                <RoleTags
+                    accountType={data.accountType}
+                    className="mb-3 gap-2"
+                    tagClassName="h-[2.6vh] min-h-[24px] px-3 type-xs"
+                />
+
+                <div className="type-xs text-ink-soft space-y-1">
+                    <p>{data.email}</p>
+                    <p>{data.website}</p>
+                    <p>{data.phone}</p>
+                </div>
+            </div>
+
+            {/* The details, and the only thing that scrolls. Edit sits under
+                the scroll rather than inside it, so it is always reachable. */}
+            <div className="flex min-h-0 w-full flex-col md:w-2/3">
+                <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+                    <div className="grid w-full grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                        <Field
+                            label="Company Description"
+                            value={data.description}
                         />
 
-                        {/* Contact Info */}
-                        <div className="type-xs text-gray-600 space-y-1">
-                            <p>{data.email}</p>
-                            <p>{data.website}</p>
-                            <p>{data.phone}</p>
-                        </div>
-                    </div>
-
-                    <div className="w-full md:w-2/3 pb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
-                            {/* Right Form Field Grids - Match Figma Layout */}
-                            <div>
-                                <label
-                                    htmlFor="company-description"
-                                    className={LABEL}
-                                >
-                                    Company Description
-                                </label>
-                                <textarea
-                                    id="company-description"
-                                    readOnly
-                                    value={data.description}
-                                    className={FIELD}
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="company-type" className={LABEL}>
-                                    Company Type
-                                </label>
-                                <textarea
-                                    id="company-type"
-                                    readOnly
-                                    value={data.companyType}
-                                    className={FIELD}
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="company-service-term"
-                                    className={LABEL}
-                                >
-                                    Company Service Term
-                                </label>
-                                <textarea
-                                    id="company-service-term"
-                                    readOnly
-                                    value={data.serviceTerm}
-                                    className={FIELD}
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="company-warranty-policy"
-                                    className={LABEL}
-                                >
-                                    Company Warranty Policy
-                                </label>
-                                <textarea
-                                    id="company-warranty-policy"
-                                    readOnly
-                                    value={data.warrantyPolicy}
-                                    className={FIELD}
-                                />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <label
-                                    htmlFor="company-address"
-                                    className={LABEL}
-                                >
-                                    Company Address
-                                </label>
-                                <textarea
-                                    id="company-address"
-                                    readOnly
-                                    value={data.address}
-                                    className={FIELD}
-                                />
+                        <div>
+                            <p className="type-xs !font-[600] text-ink-soft">
+                                Company Type
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                                {data.companyType.length > 0 ? (
+                                    data.companyType.map((type) => (
+                                        <Tag
+                                            key={type}
+                                            label={type}
+                                            className="h-[2.6vh] min-h-[24px] bg-fill-muted px-3 type-xs text-ink"
+                                        />
+                                    ))
+                                ) : (
+                                    <p className="type-sm text-ink">
+                                        Not specified
+                                    </p>
+                                )}
                             </div>
                         </div>
+
+                        <Field
+                            label="Company Service Term"
+                            value={data.serviceTerm}
+                        />
+                        <Field
+                            label="Company Warranty Policy"
+                            value={data.warrantyPolicy}
+                        />
+                        <Field
+                            label="Company Address"
+                            value={data.address}
+                            className="md:col-span-2"
+                        />
                     </div>
                 </div>
-                <div className="flex justify-end pt-4">
+
+                <div className="flex shrink-0 justify-end pt-4">
                     <Link
                         href="/profile/edit"
-                        className="px-6 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs font-medium rounded-button transition-colors shadow-sm"
+                        className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
                     >
                         Edit
                     </Link>
