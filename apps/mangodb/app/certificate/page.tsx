@@ -156,6 +156,31 @@ export default function CertificatePage() {
                     {certificates === null && !loadError && (
                         <p className="mt-8">Loading certificates...</p>
                     )}
+
+                    {/* Not signed in. The same prompt /portfolio,
+                        /profile/edit and /account-settings show, so a session
+                        that has ended reads the same wherever it is noticed —
+                        and offers the way back, which a red line did not. */}
+                    {loadError === NOT_SIGNED_IN && (
+                        <p className="mt-8 type-md !font-[400]">
+                            You are not signed in.{' '}
+                            <Link href="/login" className="underline">
+                                Log in
+                            </Link>
+                            , then come back.
+                        </p>
+                    )}
+
+                    {/* Anything else really is an error. */}
+                    {loadError && loadError !== NOT_SIGNED_IN && (
+                        <p
+                            role="alert"
+                            className="mt-8 type-md !font-[400] text-danger"
+                        >
+                            {loadError}
+                        </p>
+                    )}
+
                     {/* Empty */}
                     {certificates !== null && certificates.length === 0 && (
                         <p className="mt-8">
@@ -312,23 +337,16 @@ export default function CertificatePage() {
                     )}
                 </div>
             </div>
-            <div className="flex w-full justify-end pr-12">
-                <button
-                    type="button"
-                    onClick={() => setIsAddOpen(true)}
-                    className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-brand type-hd text-surface transition-colors hover:bg-brand-dark"
-                >
-                    +
-                </button>
-            </div>
-
-            {/* Load error */}
-            {loadError && (
-                <p role="alert" className="mt-4 type-sm text-danger">
-                    {loadError === NOT_SIGNED_IN
-                        ? 'Please log in to view your certificates.'
-                        : loadError}
-                </p>
+            {certificates !== null && (
+                <div className="flex w-full justify-end pr-12">
+                    <button
+                        type="button"
+                        onClick={() => setIsAddOpen(true)}
+                        className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-brand type-hd text-surface transition-colors hover:bg-brand-dark"
+                    >
+                        +
+                    </button>
+                </div>
             )}
 
             {expandedImage && (
