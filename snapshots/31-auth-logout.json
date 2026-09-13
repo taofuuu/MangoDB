@@ -1,0 +1,5 @@
+{
+    "request": "POST /auth/logout",
+    "status": 204,
+    "body": null
+}

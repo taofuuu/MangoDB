@@ -1,0 +1,40 @@
+{
+    "request": "POST /auth/register",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "company_name",
+                    "message": "Too small: expected string to have >=1 characters"
+                },
+                {
+                    "field": "username",
+                    "message": "Use letters, numbers, and underscores only"
+                },
+                {
+                    "field": "email",
+                    "message": "Invalid email address"
+                },
+                {
+                    "field": "password",
+                    "message": "Too small: expected string to have >=8 characters"
+                },
+                {
+                    "field": "phone",
+                    "message": "Use a Thai phone number, e.g. 0812345678"
+                },
+                {
+                    "field": "account_type",
+                    "message": "Invalid option: expected one of \"PROVIDER\"|\"RECEIVER\"|\"BOTH\""
+                },
+                {
+                    "field": "company_type",
+                    "message": "Too small: expected array to have >=1 items"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

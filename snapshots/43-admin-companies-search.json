@@ -1,0 +1,34 @@
+{
+    "request": "GET /admin/companies?q=<run>&includeDeleted=true",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "account_type": "PROVIDER",
+                "average_rating": null,
+                "company_description": "edited by scripts/snapshot-api.sh",
+                "company_id": "<company_id>",
+                "company_name": "Snapshot Probe A edited",
+                "deleted_at": null,
+                "phone": "0812345678",
+                "rating_count": 0
+            },
+            {
+                "account_type": "RECEIVER",
+                "average_rating": null,
+                "company_description": null,
+                "company_id": "<company_id>",
+                "company_name": "Snapshot Probe B",
+                "deleted_at": "<timestamp>",
+                "phone": "0898765432",
+                "rating_count": 0
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "page_size": 12,
+            "total_items": 2,
+            "total_pages": 1
+        }
+    }
+}

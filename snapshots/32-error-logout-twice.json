@@ -1,0 +1,10 @@
+{
+    "request": "POST /auth/logout",
+    "status": 401,
+    "body": {
+        "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Session has ended"
+        }
+    }
+}

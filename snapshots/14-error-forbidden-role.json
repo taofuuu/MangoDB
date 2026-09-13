@@ -1,0 +1,10 @@
+{
+    "request": "GET /certificates/provider",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Insufficient permissions"
+        }
+    }
+}

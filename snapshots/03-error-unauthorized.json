@@ -1,0 +1,10 @@
+{
+    "request": "GET /companies/me",
+    "status": 401,
+    "body": {
+        "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Missing or malformed Authorization header"
+        }
+    }
+}

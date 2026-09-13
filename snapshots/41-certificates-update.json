@@ -1,0 +1,20 @@
+{
+    "request": "PATCH /certificates/<certificate_id>",
+    "status": 200,
+    "body": {
+        "certificate": {
+            "cert_image": "<storage-url>",
+            "cert_title": "Snapshot Probe certificate edited",
+            "certificate_id": "<certificate_id>",
+            "credential_id": "<run>",
+            "credential_url": "https://example.test/<run>/cert",
+            "expire_month": 1,
+            "expire_year": 2030,
+            "issue_month": 1,
+            "issue_year": 2025,
+            "organization": "Snapshot Probe Authority",
+            "provider_id": 142
+        },
+        "message": "Certificate updated successfully"
+    }
+}

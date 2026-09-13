@@ -1,0 +1,20 @@
+{
+    "request": "POST /auth/register",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "details": [
+                {
+                    "field": "username",
+                    "message": "This username is already registered"
+                },
+                {
+                    "field": "email",
+                    "message": "This email is already registered"
+                }
+            ],
+            "message": "Username or email already registered"
+        }
+    }
+}

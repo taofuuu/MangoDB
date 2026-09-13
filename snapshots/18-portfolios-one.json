@@ -1,0 +1,13 @@
+{
+    "request": "GET /portfolios/16",
+    "status": 200,
+    "body": {
+        "development_date": "2026-03-02",
+        "listing_id": 23,
+        "portfolio_description": "Patient self-booking with SMS reminders and a staff rota view.",
+        "portfolio_id": 16,
+        "portfolio_image": "<storage-url>",
+        "portfolio_link": "https://stinkytoes.example.com/work/clinic-route",
+        "portfolio_name": "Clinic booking portal"
+    }
+}

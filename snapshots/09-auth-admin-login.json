@@ -1,0 +1,24 @@
+{
+    "request": "POST /auth/admin/login",
+    "status": 200,
+    "body": {
+        "accessToken": "<jwt>",
+        "company": {
+            "account_type": "ADMIN",
+            "address": null,
+            "company_description": null,
+            "company_id": 144,
+            "company_name": "Snapshot Seed Admin",
+            "company_type": [
+                "Platform"
+            ],
+            "contact_email": null,
+            "email": "admin@snapshot.local",
+            "phone": "0810000003",
+            "service_term": null,
+            "username": "snapshot_admin",
+            "warranty_policy": null,
+            "website": null
+        }
+    }
+}

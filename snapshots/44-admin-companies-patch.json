@@ -1,0 +1,24 @@
+{
+    "request": "PATCH /admin/companies/<company_id>",
+    "status": 200,
+    "body": {
+        "account_type": "PROVIDER",
+        "address": null,
+        "average_rating": null,
+        "company_description": "edited by scripts/snapshot-api.sh",
+        "company_id": "<company_id>",
+        "company_name": "Snapshot Probe A edited by admin",
+        "company_type": [
+            "Software House"
+        ],
+        "contact_email": null,
+        "deleted_at": null,
+        "email": "<run>a@example.test",
+        "phone": "0800000000",
+        "rating_count": 0,
+        "service_term": "30 days",
+        "username": "<run>a2",
+        "warranty_policy": "none",
+        "website": null
+    }
+}

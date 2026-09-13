@@ -1,0 +1,7 @@
+{
+    "request": "GET /admin/ping",
+    "status": 200,
+    "body": {
+        "status": "ok"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "request": "GET /portfolios/not-a-number",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "portfolioId",
+                    "message": "Invalid input: expected number, received NaN"
+                }
+            ],
+            "message": "Path parameters are invalid"
+        }
+    }
+}
