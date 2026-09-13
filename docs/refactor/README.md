@@ -26,6 +26,12 @@ in before you touch a file they own.
 The full plan, with the reasoning behind the order, is in the planning doc the
 phases came from. These pages are the short version you actually work from.
 
+**All ten phases have landed on `refactor/full-codebase`.** Two are marked
+_partly_: Phase 7 merged the primitives and fixed the bugs in them but did not
+convert the 62 raw `<button>` and 27 raw `<input>` elements, and Phase 8 named
+all 51 colours but did not merge the duplicates, which is a design decision.
+Each page says exactly what it left.
+
 ## The one rule that sets the order
 
 Names flow one direction:
