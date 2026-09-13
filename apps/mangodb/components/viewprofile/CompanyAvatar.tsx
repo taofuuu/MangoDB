@@ -16,6 +16,10 @@ type CompanyAvatarProps = {
 // The first letters of the company's name, for when it has no photo. Both
 // cards used to show a hardcoded "CP", so every company on the platform wore
 // the same badge.
+//
+// Grey, on fill-muted: the same circle ProfilePhotoPanel draws for an empty
+// photo, so the view and the edit page agree about what "no photo yet" looks
+// like. It was a red initial on a gold disc, which read as a warning.
 function initials(name: string): string {
     const letters = name
         .trim()
@@ -40,7 +44,7 @@ export default function CompanyAvatar({
     return (
         <div
             style={{ width: size, height: size }}
-            className={`relative shrink-0 overflow-hidden rounded-full bg-accent-bright shadow-inner ${className}`}
+            className={`relative shrink-0 overflow-hidden rounded-full bg-fill-muted shadow-inner ${className}`}
         >
             {src ? (
                 <Image
@@ -54,7 +58,7 @@ export default function CompanyAvatar({
             ) : (
                 <span
                     style={{ fontSize: Math.round(size * 0.34) }}
-                    className="flex h-full w-full items-center justify-center font-bold text-avatar-initials"
+                    className="flex h-full w-full items-center justify-center font-bold text-ink-soft"
                 >
                     {initials(name)}
                 </span>

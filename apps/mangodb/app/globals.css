@@ -46,10 +46,6 @@
     /* Star ratings, and the yellow dot on a portfolio card. #FEC84A used to
        sit beside this doing the same job. */
     --color-accent: #fabc3f;
-    /* A more saturated gold, for the circle behind a placeholder avatar.
-       That circle was #FFC107 on the provider page and #FFB800 on the
-       receiver page — the same component, ΔE 1.4 apart. */
-    --color-accent-bright: #ffc107;
     /* The pale panel behind the register and login flow. The login page used
        #FCEFD7 for it and the register page this, ΔE 2.2 apart. */
     --color-accent-tint: #fff5dc;
@@ -61,9 +57,6 @@
        that one keeps a colour name because it is also a hover border on the
        certificate page, where it means nothing about roles. */
     --color-role-provider: #d36b60;
-
-    /* The initials in the placeholder avatar, on an accent circle. */
-    --color-avatar-initials: #e53e3e;
 
     /* The page, and every panel on it. #FBFBFB and #FAF9F6 used to be two
        more of these, within ΔE 2.3. */
