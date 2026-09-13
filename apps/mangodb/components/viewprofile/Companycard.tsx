@@ -44,12 +44,9 @@ export default function CompanyCard({
                     <div className="w-24 h-24 bg-[#FFC107] rounded-full flex items-center justify-center font-bold text-[#E53E3E] text-3xl shadow-inner mb-4">
                         CP
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
                         {data.name}
                     </h2>
-                    <span className="text-xs text-gray-500 mb-6 font-medium">
-                        {data.subName}
-                    </span>
 
                     {/* Contact Info */}
                     <div className="text-xs text-gray-600 space-y-1">

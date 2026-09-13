@@ -1,12 +1,36 @@
 'use client';
 
-import React from 'react';
-import CompanyCard from '@/components/viewprofile/Companycard';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { CompanyProfile } from '@mangodb/shared';
+import { ApiRequestError } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
+import CompanyCard, {
+    toCompanyCardData,
+} from '@/components/viewprofile/Companycard';
 import ServicesSection from '@/components/viewprofile/ServicesSection';
 import ProjectTimeline from '@/components/viewprofile/ProjectTimeline';
 import PortfolioList from '@/components/viewprofile/PortfolioList';
 
 export default function ViewProfilePage() {
+    const [profile, setProfile] = useState<CompanyProfile | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    useEffect(() => {
+        getMyProfile()
+            .then(setProfile)
+            .catch((err: unknown) => {
+                if (err instanceof ApiRequestError && err.status === 401) {
+                    setLoadError('no-token');
+                    return;
+                }
+                setLoadError(
+                    err instanceof ApiRequestError
+                        ? err.message
+                        : 'Could not reach the API. Is it running on port 4000?',
+                );
+            });
+    }, []);
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
             {loadError === 'no-token' && (
