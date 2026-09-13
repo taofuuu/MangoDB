@@ -249,7 +249,7 @@ function EditCertificateDialog({
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block type-xs text-ink-faint mb-1 font-normal">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
                                     Month
                                 </label>
 
@@ -261,7 +261,7 @@ function EditCertificateDialog({
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="block type-xs text-ink-faint mb-1 font-normal">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
                                     Year
                                 </label>
 
@@ -282,7 +282,7 @@ function EditCertificateDialog({
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block type-xs text-ink-faint mb-1 font-normal">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
                                     Month
                                 </label>
 
@@ -294,7 +294,7 @@ function EditCertificateDialog({
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="block type-xs text-ink-faint mb-1 font-normal">
+                                <label className="block type-xs text-ink-soft mb-1 font-normal">
                                     Year
                                 </label>
 

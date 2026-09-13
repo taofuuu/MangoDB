@@ -17,7 +17,7 @@ export default function PortfolioRow({
     onDelete,
 }: PortfolioRowProps) {
     return (
-        <div className="relative flex w-full items-center gap-[1.25vw] rounded-[2px] border border-line-softer bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
+        <div className="relative flex w-full items-center gap-[1.25vw] rounded-[2px] border border-line bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
             {/* Covers the row so any spot but Edit or Delete opens it. z-10
                 keeps it above the image, which is positioned and would
                 swallow clicks. An anchor, not a button: middle-click, copy
@@ -45,7 +45,7 @@ export default function PortfolioRow({
                     {item.portfolioName}
                 </h2>
 
-                <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-faint">
+                <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-soft">
                     {item.portfolioDescription}
                 </p>
             </div>

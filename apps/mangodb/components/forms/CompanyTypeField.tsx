@@ -78,7 +78,7 @@ export default function CompanyTypeField({
                             }}
                             placeholder="Company type"
                             aria-label="New company type"
-                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-fill-muted px-[0.94vw] type-sm text-ink placeholder:text-ink-placeholder-3 focus:outline-none"
+                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-fill-muted px-[0.94vw] type-sm text-ink placeholder:text-ink-placeholder focus:outline-none"
                         />
                         <datalist id="predefined-company-types">
                             {PREDEFINED_COMPANY_TYPES.map((type) => (
@@ -91,7 +91,7 @@ export default function CompanyTypeField({
                         type="button"
                         onClick={() => setAdding(true)}
                         aria-label="Add company type"
-                        className="h-[3.33vh] cursor-pointer rounded-status bg-fill-muted px-[1.15vw] type-sm text-ink hover:bg-line-strong"
+                        className="h-[3.33vh] cursor-pointer rounded-status bg-fill-muted px-[1.15vw] type-sm text-ink hover:bg-line"
                     >
                         +
                     </button>

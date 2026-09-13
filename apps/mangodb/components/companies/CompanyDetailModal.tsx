@@ -20,7 +20,7 @@ interface DetailRowProps {
 
 function DetailRow({ label, value }: DetailRowProps) {
     return (
-        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-[1.04vw] border-b border-line-soft py-[1.11vh]">
+        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-[1.04vw] border-b border-line py-[1.11vh]">
             <dt className="type-sm !font-[600] text-ink-soft">{label}</dt>
             <dd className="min-w-0 break-words type-sm text-ink">
                 {value || 'Not provided'}
@@ -98,7 +98,7 @@ export default function CompanyDetailModal({
                         type="button"
                         onClick={onClose}
                         aria-label="Close Company details"
-                        className="rounded-button p-[0.52vw] text-ink-soft hover:bg-line-faint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                        className="rounded-button p-[0.52vw] text-ink-soft hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                     >
                         <X
                             aria-hidden="true"
@@ -153,7 +153,7 @@ export default function CompanyDetailModal({
                             </span>
                         </div>
 
-                        <p className="mb-[1.85vh] type-sm leading-relaxed text-ink-muted">
+                        <p className="mb-[1.85vh] type-sm leading-relaxed text-ink-soft">
                             {company.companyDescription ||
                                 'No company description provided.'}
                         </p>

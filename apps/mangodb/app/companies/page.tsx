@@ -181,7 +181,7 @@ export default function CompaniesPage() {
                         <div className="relative flex items-center">
                             <Search
                                 aria-hidden="true"
-                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-ink-placeholder-2"
+                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-ink-placeholder"
                             />
                             <input
                                 type="text"
@@ -192,14 +192,14 @@ export default function CompaniesPage() {
                                 maxLength={100}
                                 placeholder="Search companies..."
                                 aria-label="Search companies by keyword"
-                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-line-soft bg-white pl-[1.88vw] pr-[1.67vw] type-xs text-ink placeholder:text-ink-placeholder-2 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-line bg-white pl-[1.88vw] pr-[1.67vw] type-xs text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                             />
                             {searchQuery && (
                                 <button
                                     type="button"
                                     onClick={clearSearch}
                                     aria-label="Clear search"
-                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-ink-placeholder-2 hover:bg-line-faint hover:text-ink focus-visible:outline-none"
+                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-ink-placeholder hover:bg-line hover:text-ink focus-visible:outline-none"
                                 >
                                     <X
                                         aria-hidden="true"
@@ -216,7 +216,7 @@ export default function CompaniesPage() {
                                 aria-expanded={isFilterOpen}
                                 aria-haspopup="listbox"
                                 aria-label="Filter companies by account type"
-                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-line-soft bg-white px-[0.63vw] type-xs !font-[500] text-ink hover:bg-line-fainter focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-line bg-white px-[0.63vw] type-xs !font-[500] text-ink hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                             >
                                 {filter}
                                 <ChevronDown
@@ -231,7 +231,7 @@ export default function CompaniesPage() {
                                 <div
                                     role="listbox"
                                     aria-label="Account type options"
-                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-line-soft bg-white py-[0.37vh] shadow-md"
+                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-line bg-white py-[0.37vh] shadow-md"
                                 >
                                     {FILTER_OPTIONS.map((option) => (
                                         <button
@@ -244,7 +244,7 @@ export default function CompaniesPage() {
                                             onClick={() =>
                                                 handleFilterSelect(option.value)
                                             }
-                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left type-xs !font-[500] transition-colors hover:bg-line-fainter ${
+                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left type-xs !font-[500] transition-colors hover:bg-line ${
                                                 filter === option.value
                                                     ? 'bg-brand/10 font-semibold text-brand'
                                                     : 'text-ink'
@@ -288,7 +288,7 @@ export default function CompaniesPage() {
                                 {Array.from({ length: 8 }).map((_, index) => (
                                     <div
                                         key={index}
-                                        className="h-[28.70vh] animate-pulse rounded-input bg-line-faint"
+                                        className="h-[28.70vh] animate-pulse rounded-input bg-line"
                                     />
                                 ))}
                             </div>
@@ -334,7 +334,7 @@ export default function CompaniesPage() {
                             >
                                 Previous
                             </Button>
-                            <span className="min-w-[5.21vw] text-center type-sm text-ink-muted">
+                            <span className="min-w-[5.21vw] text-center type-sm text-ink-soft">
                                 Page {page} of {pagination.totalPages}
                             </span>
                             <Button

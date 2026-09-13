@@ -102,7 +102,7 @@ export default function PortfolioPage() {
             )}
 
             {items?.length === 0 && (
-                <p className="mt-[4.5vh] type-md !font-[400] text-ink-faint">
+                <p className="mt-[4.5vh] type-md !font-[400] text-ink-soft">
                     No portfolio items yet.
                 </p>
             )}

@@ -180,8 +180,8 @@ function DeleteConfirmationDialog({
                         disabled={isBusy}
                         className={
                             layout === 'stacked'
-                                ? 'flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] border-0 px-3 bg-fill-muted type-xs text-ink-disabled !font-[600] outline-none transition-colors hover:bg-line-strong-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
-                                : 'rounded-[14px] h-[3.8vh] min-h-[34px] min-w-[105px] border-0 px-3 bg-fill-muted type-xs text-ink-disabled !font-[600] outline-none transition-colors hover:bg-line-strong-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
+                                ? 'flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] border-0 px-3 bg-fill-muted type-xs text-ink-soft !font-[600] outline-none transition-colors hover:bg-line focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+                                : 'rounded-[14px] h-[3.8vh] min-h-[34px] min-w-[105px] border-0 px-3 bg-fill-muted type-xs text-ink-soft !font-[600] outline-none transition-colors hover:bg-line focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
                         }
                     >
                         {cancelLabel}

@@ -232,7 +232,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter username"
-                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
                         </div>
@@ -256,7 +256,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter email address"
-                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
                         </div>
@@ -287,7 +287,7 @@ export default function EditAccountModal({
                                             if (error) setError(null);
                                         }}
                                         placeholder="Enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                         autoFocus
                                     />
                                     <button
@@ -335,7 +335,7 @@ export default function EditAccountModal({
                                             if (error) setError(null);
                                         }}
                                         placeholder="Re-enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                     />
                                     <button
                                         type="button"
@@ -383,7 +383,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter current password"
-                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
+                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                             />
                             <button
                                 type="button"

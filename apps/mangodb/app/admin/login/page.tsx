@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
                 aria-labelledby="admin-login-title"
                 className="w-full max-w-[36.60vw] overflow-hidden rounded-button bg-surface shadow-[0_0.56vh_2.22vh_rgba(0,0,0,0.10)] max-lg:max-w-[52vw] max-md:max-w-[90vw]"
             >
-                <header className="border-b border-line-soft px-[2.08vw] py-[2.04vh] text-center">
+                <header className="border-b border-line px-[2.08vw] py-[2.04vh] text-center">
                     <h1
                         id="admin-login-title"
                         className="type-lg !font-[700] text-ink"

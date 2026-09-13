@@ -47,7 +47,7 @@ export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
                         'Select month'}
                 </span>
 
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 type-md text-ink-faint">
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 type-md text-ink-soft">
                     ▼
                 </span>
             </button>

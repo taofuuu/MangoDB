@@ -85,7 +85,7 @@ function AdminDeleteAccountDialog({
                     onKeyDown={(event) => {
                         if (event.key === 'Enter') event.preventDefault();
                     }}
-                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
+                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>
         </DeleteConfirmationModal>

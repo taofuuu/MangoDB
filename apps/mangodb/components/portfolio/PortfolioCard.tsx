@@ -17,7 +17,7 @@ export default function PortfolioCard({
     onDelete,
 }: PortfolioCardProps) {
     return (
-        <div className="relative flex h-[37.13vh] flex-col rounded-[2px] border border-line-softer bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
+        <div className="relative flex h-[37.13vh] flex-col rounded-[2px] border border-line bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
             {/* Covers the card so any spot but Edit or Delete opens it. z-10
                 keeps it above the image, which is positioned and would
                 swallow clicks. An anchor, not a button: middle-click, copy
@@ -34,7 +34,7 @@ export default function PortfolioCard({
                 {item.portfolioName}
             </h2>
 
-            <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-faint">
+            <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-soft">
                 {item.portfolioDescription}
             </p>
 

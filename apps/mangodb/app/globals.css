@@ -66,26 +66,22 @@
     --color-surface-soft: #fbfbfb;
     --color-surface-warm: #faf9f6;
 
+    /* Body text. */
     --color-ink: #171717;
-    --color-ink-muted: #4b4b4b;
+    /* Secondary text — labels, helper lines, anything supporting. Three
+       greys used to share this job: #4B4B4B, #757575 and #756D6D. */
     --color-ink-soft: #666666;
-    --color-ink-faint: #757575;
-    --color-ink-disabled: #756d6d;
-    --color-ink-placeholder: #828282;
-    --color-ink-placeholder-2: #888888;
-    --color-ink-placeholder-3: #8a8a8a;
-    --color-ink-placeholder-4: #999999;
-    --color-ink-placeholder-5: #a3a3a3;
+    /* Placeholder text, which was five greys — #828282, #888888, #8A8A8A,
+       #999999 and #A3A3A3 — depending on which form you were looking at.
+       Two of those pairs were under ΔE 1. */
+    --color-ink-placeholder: #999999;
 
+    /* Every border. There were eight of these — #CBCBCB, #CCCCCC, #E0E0E0,
+       #E5E5E5, #EAEAEA, #EDEDED and #F5F5F5 alongside this one — and every
+       neighbouring pair was within ΔE 4. */
     --color-line: #d6d6d6;
-    --color-line-soft: #e5e5e5;
-    --color-line-softer: #eaeaea;
-    --color-line-faint: #ededed;
-    --color-line-fainter: #f5f5f5;
-    --color-line-strong: #cccccc;
-    --color-line-strong-2: #cbcbcb;
-    --color-line-strong-3: #e0e0e0;
-
+    /* A filled block rather than a hairline: the Go Back button, a disabled
+       swatch. Close to line on paper, a different thing on screen. */
     --color-fill-muted: #d9d9d9;
 }
 

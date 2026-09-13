@@ -13,7 +13,7 @@ const buttonClass =
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
     const fill = (view: PortfolioView) =>
-        value === view ? 'bg-line-strong-3' : 'bg-transparent hover:bg-black/5';
+        value === view ? 'bg-line' : 'bg-transparent hover:bg-black/5';
 
     return (
         <div className="flex gap-[0.4vw]">

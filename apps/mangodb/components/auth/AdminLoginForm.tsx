@@ -71,7 +71,7 @@ export default function AdminLoginForm() {
                     autoComplete="email"
                     placeholder="Email"
                     required
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] type-sm text-ink outline-none placeholder:text-ink-placeholder-5 focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
                 />
             </div>
 
@@ -88,7 +88,7 @@ export default function AdminLoginForm() {
                     autoComplete="current-password"
                     placeholder="Password"
                     required
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] pr-[3.13vw] type-sm text-ink outline-none placeholder:text-ink-placeholder-5 focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] pr-[3.13vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <button
                     type="button"
@@ -97,7 +97,7 @@ export default function AdminLoginForm() {
                         showPassword ? 'Hide password' : 'Show password'
                     }
                     aria-pressed={showPassword}
-                    className="absolute right-[1.04vw] top-1/2 -translate-y-1/2 rounded-input p-[0.31vw] text-ink-faint hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    className="absolute right-[1.04vw] top-1/2 -translate-y-1/2 rounded-input p-[0.31vw] text-ink-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                     {showPassword ? (
                         <EyeOff className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]" />
