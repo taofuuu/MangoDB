@@ -7,8 +7,6 @@ export const portfolioIdParamSchema = z.object({
     portfolioId: z.coerce.number().int().positive().max(2147483647),
 });
 
-export type PortfolioIdParam = z.infer<typeof portfolioIdParamSchema>;
-
 // One definition per editable column, sizes matching prisma/schema.prisma —
 // same reasoning as companyFields in company.schema.ts. portfolioId and
 // listingId are not here: portfolioId names the row, and moving a sample to
@@ -44,8 +42,6 @@ export const createPortfolioSchema = z.object({
     portfolioLink: portfolioFields.portfolioLink,
 });
 
-export type CreatePortfolioInput = z.infer<typeof createPortfolioSchema>;
-
 export const updatePortfolioSchema = z
     .object({
         portfolioName: portfolioFields.portfolioName,
@@ -54,8 +50,6 @@ export const updatePortfolioSchema = z
         portfolioLink: portfolioFields.portfolioLink,
     })
     .partial();
-
-export type UpdatePortfolioInput = z.infer<typeof updatePortfolioSchema>;
 
 // The columns a unique index can reject. prismaErrors uses this to decide which
 // constraint names are worth reporting back to the caller.
@@ -67,5 +61,3 @@ export const portfolioQuerySchema = z.object({
     // filters through service -> listing, the chain assertPortfolioOwned walks.
     companyId: z.coerce.number().int().positive().max(2147483647).optional(),
 });
-
-export type PortfolioQuery = z.infer<typeof portfolioQuerySchema>;

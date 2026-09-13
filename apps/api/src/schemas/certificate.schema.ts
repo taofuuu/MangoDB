@@ -54,27 +54,44 @@ export const certificateFields = {
     credentialUrl: emptyToNull(httpUrl.nullable().optional()),
 } as const;
 
-export const createCertificateSchema = z.object(certificateFields).refine(
-    (data) => {
-        if (
-            data.issueYear == null ||
-            data.issueMonth == null ||
-            data.expireYear == null ||
-            data.expireMonth == null
-        ) {
-            return true;
-        }
-        const issueDate = data.issueYear * 100 + data.issueMonth;
-        const expireDate = data.expireYear * 100 + data.expireMonth;
-        return expireDate >= issueDate;
-    },
-    {
-        message: 'Expiration date cannot be before the issue date',
+// The one place the expiry-vs-issue rule is written. PATCH cannot use the
+// .refine() below, because .partial() drops refinements and a partial body has
+// to be merged with the stored row before the rule means anything — so the
+// controller calls this with the merged values instead of hand-rolling the
+// comparison a second time.
+export const EXPIRY_BEFORE_ISSUE =
+    'Expiration date cannot be before the issue date';
+
+export interface CertificateDates {
+    issueMonth?: number | null | undefined;
+    issueYear?: number | null | undefined;
+    expireMonth?: number | null | undefined;
+    expireYear?: number | null | undefined;
+}
+
+// A half-filled date says nothing about ordering, so it passes. Comparing
+// year * 100 + month puts the two dates on one number line.
+export function expiryIsOnOrAfterIssue(dates: CertificateDates): boolean {
+    const { issueYear, issueMonth, expireYear, expireMonth } = dates;
+
+    if (
+        issueYear == null ||
+        issueMonth == null ||
+        expireYear == null ||
+        expireMonth == null
+    ) {
+        return true;
+    }
+
+    return expireYear * 100 + expireMonth >= issueYear * 100 + issueMonth;
+}
+
+export const createCertificateSchema = z
+    .object(certificateFields)
+    .refine(expiryIsOnOrAfterIssue, {
+        message: EXPIRY_BEFORE_ISSUE,
         path: ['expireYear'],
-    },
-);
+    });
 
 // All fields optional for partial PATCH operations
 export const updateCertificateSchema = z.object(certificateFields).partial();
-
-export type UpdateCertificateInput = z.infer<typeof updateCertificateSchema>;

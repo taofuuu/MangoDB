@@ -46,8 +46,3 @@ export async function isTokenRevoked(jti: string): Promise<boolean> {
     // An expired row is dead weight, not a revocation. pruneExpired clears it.
     return revoked.expiresAt.getTime() > Date.now();
 }
-
-// Test hook: start from a clean denylist.
-export async function clearRevokedTokens(): Promise<void> {
-    await prisma.revokedToken.deleteMany({});
-}

@@ -1,7 +1,7 @@
-import './env';
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { FRONTEND_URL } from './env';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -10,10 +10,8 @@ export function createApp() {
     const app = express();
 
     // TODO: before deploying, restrict origin to the frontend URL, e.g.:
-    // app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
-    app.use(
-        cors({ origin: process.env.FRONTEND_URL || true, credentials: true }),
-    );
+    // app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+    app.use(cors({ origin: FRONTEND_URL || true, credentials: true }));
     app.use(express.json());
     app.use(cookieParser());
 

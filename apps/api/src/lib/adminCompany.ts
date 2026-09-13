@@ -17,12 +17,18 @@ const ratingSelect = {
     },
 } as const;
 
+// A strict subset of companyProfileSelect, derived rather than restated: the
+// list card shows less than the detail panel, and picking the columns out by
+// name is what keeps the two from disagreeing about what a column is called.
+const { companyId, companyName, companyDescription, phone, accountType } =
+    companyProfileSelect;
+
 export const adminCompanyListSelect = {
-    companyId: true,
-    companyName: true,
-    companyDescription: true,
-    phone: true,
-    accountType: true,
+    companyId,
+    companyName,
+    companyDescription,
+    phone,
+    accountType,
     deletedAt: true,
     ...ratingSelect,
 } as const;

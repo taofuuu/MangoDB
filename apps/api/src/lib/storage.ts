@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { supabaseCredentials } from '../env';
 import { ApiError } from './ApiError';
 
 const BUCKETS = {
@@ -11,17 +12,12 @@ type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 let client: SupabaseClient | undefined;
 
 function getSupabase(): SupabaseClient {
+    // Still lazy, but only to avoid opening a client the process may never
+    // use — env.ts already guaranteed both variables are set.
     if (!client) {
-        const url = process.env.SUPABASE_URL;
-        const key = process.env.SUPABASE_SECRET_KEY;
-
-        if (!url || !key) {
-            throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY are not set');
-        }
-
+        const { url, key } = supabaseCredentials();
         client = createClient(url, key);
     }
-
     return client;
 }
 

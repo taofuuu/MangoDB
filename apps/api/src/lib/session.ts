@@ -1,11 +1,13 @@
 import type { Response } from 'express';
 import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
 import { signAccessToken } from '../auth/jwt';
+import { IS_PRODUCTION, SESSION_TTL_SECONDS } from '../env';
 import { accountTypeToRole } from '../auth/roles';
 
-// Mirrors the 1 h token expiry: a cookie outliving its token would just make
-// requests 401 instead of asking the user to sign in again.
-const COOKIE_MAX_AGE_MS = 60 * 60 * 1000;
+// The same number the token is signed with, not a second copy of it. When
+// these were set separately, JWT_EXPIRES_IN moved the token and left the
+// cookie alone, so an eight-hour token came with a one-hour cookie.
+const COOKIE_MAX_AGE_MS = SESSION_TTL_SECONDS * 1000;
 
 // httpOnly keeps the token out of reach of JS, so an injected script cannot
 // read it. sameSite 'lax' is what stops CSRF: the browser attaches this cookie
@@ -13,7 +15,7 @@ const COOKIE_MAX_AGE_MS = 60 * 60 * 1000;
 const COOKIE_OPTIONS = {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_PRODUCTION,
     maxAge: COOKIE_MAX_AGE_MS,
     path: '/',
 } as const;

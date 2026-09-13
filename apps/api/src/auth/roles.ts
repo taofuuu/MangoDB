@@ -1,4 +1,5 @@
 import type { AccountType, UserRole } from '@mangodb/shared';
+import { ApiError } from '../lib/ApiError';
 
 // accountType is what the company signed up as; role is what its token says.
 // The two are the same idea in different cases, except BOTH.
@@ -20,7 +21,13 @@ const ROLE_BY_ACCOUNT_TYPE: Record<AccountType, UserRole> = {
 export function accountTypeToRole(accountType: AccountType): UserRole {
     const role = ROLE_BY_ACCOUNT_TYPE[accountType];
     if (!role) {
-        throw new Error(`Unknown accountType: ${accountType}`);
+        // 500 rather than a 4xx: the caller did nothing wrong, a row in the
+        // database holds a value no code path can produce.
+        throw new ApiError(
+            500,
+            'INTERNAL',
+            `Unknown accountType: ${accountType}`,
+        );
     }
     return role;
 }
@@ -48,4 +55,11 @@ export function roleGrants(role: UserRole): readonly UserRole[] {
 // false for it refuses the write instead of letting Prisma fail mid-update.
 export function ownsProviderRow(accountType: string): boolean {
     return accountType === 'PROVIDER' || accountType === 'BOTH';
+}
+
+// The mirror of the above, and the only other subtype table. Register uses
+// both to decide which child rows a new company gets; before this, that was a
+// pair of inline comparisons that could drift from ownsProviderRow.
+export function ownsReceiverRow(accountType: string): boolean {
+    return accountType === 'RECEIVER' || accountType === 'BOTH';
 }

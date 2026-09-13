@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CompanyAccountListResponse } from '@mangodb/shared';
-import { verifyPassword } from '../auth/password';
+import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
@@ -196,20 +196,12 @@ export async function deleteCompanyAccount(
     // US6-4 re-auth: the confirm modal collects the admin's own password to
     // prove intent before an irreversible delete. Checked against req.auth's
     // own row, not the target's — this is "is it really the admin", not
-    // anything about the account being removed. Unlike login's
-    // verifyCredentials, no dummy-hash timing defense is needed: the caller
-    // is already authenticated, so there is no email to enumerate here.
+    // anything about the account being removed.
     const { currentPassword } = parseBody(
         deleteCompanyAccountBodySchema,
         req.body,
     );
-    const admin = await prisma.company.findUnique({
-        where: { companyId: Number(req.auth!.sub) },
-        select: { password: true },
-    });
-    if (!admin || !(await verifyPassword(currentPassword, admin.password))) {
-        throw ApiError.unauthorized('Current password is incorrect');
-    }
+    await assertCurrentPassword(req.auth!.companyId, currentPassword);
 
     // Step 1: does the company exist? Same pattern as getCompanyAccountDetail —
     // findUnique, throw ApiError.notFound if null.

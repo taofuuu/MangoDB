@@ -41,7 +41,7 @@ export async function createPortfolio(
 
     // 2. Parse Text Fields จาก Form-Data
     const data = parseBody(createPortfolioSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // 3. AUTHORIZATION & OWNERSHIP CHECK ก่อนทำการ Upload ไฟล์
     const service = await prisma.service.findUnique({
@@ -106,7 +106,7 @@ export async function updatePortfolio(
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
     const data = parseBody(updatePortfolioSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // The text body may be empty when the only change is a replacement image.
     if (Object.keys(data).length === 0 && !req.file) {
@@ -188,7 +188,7 @@ export async function deletePortfolio(
     res: Response,
 ): Promise<void> {
     const { portfolioId } = parseParams(portfolioIdParamSchema, req.params);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     await assertPortfolioOwned(portfolioId, companyId);
 

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { hashPassword, verifyPassword } from '../auth/password';
+import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import { prisma } from '../lib/prisma';
@@ -31,9 +31,8 @@ import {
 // US1-4. Read fresh, not echoed from the claims: an edit in another session
 // has to show up here.
 export async function getMyProfile(req: Request, res: Response): Promise<void> {
-    // sub is a string in the token; companyId is an int.
     const company = await prisma.company.findUnique({
-        where: { companyId: Number(req.auth!.sub) },
+        where: { companyId: req.auth!.companyId },
         select: companyProfileSelect,
     });
 
@@ -54,7 +53,7 @@ export async function updateMyProfile(
     res: Response,
 ): Promise<void> {
     const body = parseBody(updateCompanyProfileSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     // roleGrants rather than role === 'provider': a BOTH company is a provider
     // too, and owns the row these columns live on. US6-3's administrator edit
@@ -109,26 +108,10 @@ export async function changeMyCredentials(
     res: Response,
 ): Promise<void> {
     const body = parseBody(changeCredentialsSchema, req.body);
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
     const { currentPassword, newPassword, ...identity } = body;
 
-    // companyProfileSelect leaves the hash out on purpose, and the check needs
-    // it — ask for it on its own, then never let it past this function.
-    const existing = await prisma.company.findUnique({
-        where: { companyId },
-        select: { password: true },
-    });
-
-    // Token verified, so the row existed once — a company deleted mid-session.
-    if (!existing) {
-        throw ApiError.notFound('Company not found');
-    }
-
-    // No dummy-hash dance here, unlike login: the caller is already
-    // authenticated, so there is no account to enumerate by timing this.
-    if (!(await verifyPassword(currentPassword, existing.password))) {
-        throw ApiError.unauthorized('Current password is incorrect');
-    }
+    await assertCurrentPassword(companyId, currentPassword);
 
     // Reports both collisions at once; an index only fails on the first. The
     // caller's own row is excluded, or resubmitting your own email would 409.
@@ -182,7 +165,7 @@ export async function requestMyAccountDeletion(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const companyId = Number(req.auth!.sub);
+    const companyId = req.auth!.companyId;
 
     if (await hasOngoingProject(companyId)) {
         throw ApiError.conflict(

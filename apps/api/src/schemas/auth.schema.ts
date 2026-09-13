@@ -30,5 +30,3 @@ export const loginSchema = z.object({
     // setting one. See its comment in company.schema.ts.
     password: companyFields.passwordAttempt,
 });
-
-export type LoginInput = z.infer<typeof loginSchema>;

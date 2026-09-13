@@ -55,12 +55,16 @@ export async function requireAuth(
     // jtis to revoke individually — so every authenticated request re-checks
     // the account itself. Same message as a revoked token: this is not the
     // caller's business to distinguish from a plain logout.
-    if (await isCompanyDeleted(Number(claims.sub))) {
+    const companyId = Number(claims.sub);
+
+    if (await isCompanyDeleted(companyId)) {
         next(ApiError.unauthorized('Session has ended'));
         return;
     }
 
-    req.auth = claims;
+    // sub is a string in the token and companyId is an int everywhere else, so
+    // the coercion happens here, once, instead of in every handler below.
+    req.auth = { ...claims, companyId };
     // Outside the try: a handler error further down the chain is not an
     // authentication failure and must not be reported as one.
     next();

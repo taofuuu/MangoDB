@@ -7,7 +7,11 @@ import {
     hashPassword,
     verifyPassword,
 } from '../auth/password';
-import { accountTypeToRole } from '../auth/roles';
+import {
+    accountTypeToRole,
+    ownsProviderRow,
+    ownsReceiverRow,
+} from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import {
@@ -75,8 +79,8 @@ export async function register(req: Request, res: Response): Promise<void> {
     });
 
     // A BOTH company gets both rows, exactly as the seeded companies have them.
-    const isProvider = accountType === 'PROVIDER' || accountType === 'BOTH';
-    const isReceiver = accountType === 'RECEIVER' || accountType === 'BOTH';
+    const isProvider = ownsProviderRow(accountType);
+    const isReceiver = ownsReceiverRow(accountType);
 
     let company;
     try {

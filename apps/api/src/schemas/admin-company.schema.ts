@@ -29,7 +29,3 @@ export const deleteCompanyAccountBodySchema = z.object({
 // updateCompanyProfileSchema from company.schema.ts. A copy here would be one
 // more place to forget when a profile column is added, and a copy that only
 // *nearly* matched would be worse than no copy at all.
-
-export type CompanyAccountListQuery = z.infer<
-    typeof companyAccountListQuerySchema
->;
