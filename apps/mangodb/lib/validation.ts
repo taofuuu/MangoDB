@@ -1,24 +1,72 @@
-import type { ApiRequestError } from '@/lib/api';
+import { ApiRequestError, describeError } from '@/lib/api';
 import type { ProfileFormData } from '@/components/forms/CompanyProfileForm';
 
-export type ProfileErrors = Partial<Record<keyof ProfileFormData, string>>;
+// One message per field, keyed by whatever the form calls that field.
+export type FieldErrors<Field extends string> = Partial<Record<Field, string>>;
 
-// zod reports an array problem as "companyType.0"; the form keys its errors by
-// field, so only the part before the first dot is useful here.
-export function toFormErrors(
-    details: ApiRequestError['details'],
-): ProfileErrors {
-    const errors: ProfileErrors = {};
+export type ProfileErrors = FieldErrors<keyof ProfileFormData & string>;
 
-    for (const detail of details) {
-        const field = detail.field.split('.')[0] as keyof ProfileFormData;
-        if (field && !errors[field]) {
+// What a failed save leaves the form to show.
+export type FormErrors<Field extends string> = {
+    // Goes under the input it names.
+    fields: FieldErrors<Field>;
+    // Everything with no input to sit under: offline, a 500, or a field this
+    // form does not render. Null when every message found a field.
+    message: string | null;
+};
+
+// Sorts an API failure into those two halves. `fields` maps an API field name
+// onto the name the form uses for it — often the same word, but the
+// certificate form calls certTitle "name".
+//
+// zod reports an array problem as "companyType.0", so only the part before the
+// first dot is matched.
+export function toFormErrors<Field extends string>(
+    cause: unknown,
+    fields: Record<string, Field>,
+): FormErrors<Field> {
+    // No envelope to read — a proxy, a crash, no network.
+    if (!(cause instanceof ApiRequestError)) {
+        return { fields: {}, message: describeError(cause) };
+    }
+
+    const errors: FieldErrors<Field> = {};
+    const unplaced: string[] = [];
+
+    for (const detail of cause.details) {
+        const field = fields[detail.field.split('.')[0] ?? ''];
+        if (!field) {
+            unplaced.push(detail.message);
+        } else if (!errors[field]) {
             errors[field] = detail.message;
         }
     }
 
-    return errors;
+    const placedAny = Object.keys(errors).length > 0;
+
+    return {
+        fields: errors,
+        // The envelope's own message is the fallback, but only when nothing
+        // landed on a field — otherwise "Request body is invalid" would
+        // repeat what the inputs already say.
+        message: unplaced[0] ?? (placedAny ? null : cause.message),
+    };
 }
+
+// The profile form names its fields exactly as the API does. Listed anyway, so
+// a field the form has no input for — username, from the admin edit — falls
+// through to the form-level message instead of a box nobody can see.
+export const PROFILE_FIELDS = {
+    companyName: 'companyName',
+    companyDescription: 'companyDescription',
+    contactEmail: 'contactEmail',
+    phone: 'phone',
+    website: 'website',
+    address: 'address',
+    companyType: 'companyType',
+    serviceTerm: 'serviceTerm',
+    warrantyPolicy: 'warrantyPolicy',
+} as const satisfies Record<string, keyof ProfileFormData & string>;
 
 export const PREDEFINED_COMPANY_TYPES = [
     'Technology consultant',

@@ -3,12 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-    ApiRequestError,
-    NOT_SIGNED_IN,
-    describeError,
-    isNotSignedIn,
-} from '@/lib/api';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import {
     deleteCompanyAccount,
     getCompanyAccountDetail,
@@ -17,6 +12,7 @@ import {
     updateMyProfile,
 } from '@/lib/companies';
 import {
+    PROFILE_FIELDS,
     toFormErrors,
     validateProfile,
     type ProfileErrors,
@@ -107,21 +103,13 @@ function EditProfilePageInner() {
                 message: 'Profile saved successfully.',
             });
         } catch (err) {
-            if (!(err instanceof ApiRequestError)) {
-                setStatus({ type: 'error', message: describeError(err) });
-                return;
-            }
-
             // VALIDATION_FAILED and CONFLICT both name the fields they rejected,
             // so those go beside the inputs. Anything else has only a message.
-            const fieldErrors = toFormErrors(err.details);
-            setErrors(fieldErrors);
+            const { fields, message } = toFormErrors(err, PROFILE_FIELDS);
+            setErrors(fields);
             setStatus({
                 type: 'error',
-                message:
-                    Object.keys(fieldErrors).length > 0
-                        ? 'Some fields need fixing.'
-                        : err.message,
+                message: message ?? 'Some fields need fixing.',
             });
         } finally {
             setIsSaving(false);
