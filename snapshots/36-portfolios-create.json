@@ -2,12 +2,12 @@
     "request": "POST /portfolios",
     "status": 201,
     "body": {
-        "development_date": "2026-01-15",
-        "listing_id": 25,
-        "portfolio_description": "created by scripts/snapshot-api.sh",
-        "portfolio_id": "<portfolio_id>",
-        "portfolio_image": "<storage-url>",
-        "portfolio_link": "https://example.test/<run>/portfolio",
-        "portfolio_name": "Snapshot Probe portfolio"
+        "developmentDate": "2026-01-15",
+        "listingId": 25,
+        "portfolioDescription": "created by scripts/snapshot-api.sh",
+        "portfolioId": "<portfolio_id>",
+        "portfolioImage": "<storage-url>",
+        "portfolioLink": "https://example.test/<run>/portfolio",
+        "portfolioName": "Snapshot Probe portfolio"
     }
 }

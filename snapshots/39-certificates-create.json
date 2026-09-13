@@ -3,17 +3,17 @@
     "status": 201,
     "body": {
         "certificate": {
-            "cert_image": "<storage-url>",
-            "cert_title": "Snapshot Probe certificate",
-            "certificate_id": "<certificate_id>",
-            "credential_id": "<run>",
-            "credential_url": "https://example.test/<run>/cert",
-            "expire_month": 1,
-            "expire_year": 2030,
-            "issue_month": 1,
-            "issue_year": 2025,
+            "certImage": "<storage-url>",
+            "certTitle": "Snapshot Probe certificate",
+            "certificateId": "<certificate_id>",
+            "credentialId": "<run>",
+            "credentialUrl": "https://example.test/<run>/cert",
+            "expireMonth": 1,
+            "expireYear": 2030,
+            "issueMonth": 1,
+            "issueYear": 2025,
             "organization": "Snapshot Probe Authority",
-            "provider_id": 142
+            "providerId": 142
         },
         "message": "Certificate created successfully"
     }

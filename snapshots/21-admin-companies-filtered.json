@@ -4,31 +4,31 @@
     "body": {
         "items": [
             {
-                "account_type": "PROVIDER",
-                "average_rating": null,
-                "company_description": "Mobile App Development Agency (iOS/Android)",
-                "company_id": 3,
-                "company_name": "AppSynth",
-                "deleted_at": null,
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
+                "deletedAt": null,
                 "phone": "023333333",
-                "rating_count": 0
+                "ratingCount": 0
             },
             {
-                "account_type": "PROVIDER",
-                "average_rating": null,
-                "company_description": "Cloud Infrastructure and DevOps Consulting",
-                "company_id": 11,
-                "company_name": "CloudScale Solutions",
-                "deleted_at": null,
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
+                "companyId": 11,
+                "companyName": "CloudScale Solutions",
+                "deletedAt": null,
                 "phone": "021110011",
-                "rating_count": 0
+                "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
-            "page_size": 2,
-            "total_items": 25,
-            "total_pages": 13
+            "pageSize": 2,
+            "totalItems": 25,
+            "totalPages": 13
         }
     }
 }

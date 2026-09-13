@@ -4,20 +4,20 @@
     "body": {
         "accessToken": "<jwt>",
         "company": {
-            "account_type": "RECEIVER",
+            "accountType": "RECEIVER",
             "address": null,
-            "company_description": null,
-            "company_id": "<company_id>",
-            "company_name": "Snapshot Probe B",
-            "company_type": [
+            "companyDescription": null,
+            "companyId": "<company_id>",
+            "companyName": "Snapshot Probe B",
+            "companyType": [
                 "SME"
             ],
-            "contact_email": null,
+            "contactEmail": null,
             "email": "<run>b@example.test",
             "phone": "0898765432",
-            "service_term": null,
+            "serviceTerm": null,
             "username": "<run>b",
-            "warranty_policy": null,
+            "warrantyPolicy": null,
             "website": null
         }
     }

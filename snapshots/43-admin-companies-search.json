@@ -4,31 +4,31 @@
     "body": {
         "items": [
             {
-                "account_type": "PROVIDER",
-                "average_rating": null,
-                "company_description": "edited by scripts/snapshot-api.sh",
-                "company_id": "<company_id>",
-                "company_name": "Snapshot Probe A edited",
-                "deleted_at": null,
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "edited by scripts/snapshot-api.sh",
+                "companyId": "<company_id>",
+                "companyName": "Snapshot Probe A edited",
+                "deletedAt": null,
                 "phone": "0812345678",
-                "rating_count": 0
+                "ratingCount": 0
             },
             {
-                "account_type": "RECEIVER",
-                "average_rating": null,
-                "company_description": null,
-                "company_id": "<company_id>",
-                "company_name": "Snapshot Probe B",
-                "deleted_at": "<timestamp>",
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": "<company_id>",
+                "companyName": "Snapshot Probe B",
+                "deletedAt": "<timestamp>",
                 "phone": "0898765432",
-                "rating_count": 0
+                "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
-            "page_size": 12,
-            "total_items": 2,
-            "total_pages": 1
+            "pageSize": 12,
+            "totalItems": 2,
+            "totalPages": 1
         }
     }
 }

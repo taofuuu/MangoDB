@@ -2,20 +2,20 @@
     "request": "GET /companies/me",
     "status": 200,
     "body": {
-        "account_type": "RECEIVER",
+        "accountType": "RECEIVER",
         "address": null,
-        "company_description": null,
-        "company_id": 143,
-        "company_name": "Snapshot Seed Receiver",
-        "company_type": [
+        "companyDescription": null,
+        "companyId": 143,
+        "companyName": "Snapshot Seed Receiver",
+        "companyType": [
             "SME"
         ],
-        "contact_email": null,
+        "contactEmail": null,
         "email": "receiver@snapshot.local",
         "phone": "0810000002",
-        "service_term": null,
+        "serviceTerm": null,
         "username": "snapshot_receiver",
-        "warranty_policy": null,
+        "warrantyPolicy": null,
         "website": null
     }
 }

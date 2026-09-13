@@ -3,17 +3,17 @@
     "status": 200,
     "body": [
         {
-            "cert_image": "https://snapshot.local/certificate.png",
-            "cert_title": "Snapshot seed certificate",
-            "certificate_id": 50,
-            "credential_id": "SNAPSHOT-0001",
-            "credential_url": "https://snapshot.local/credential",
-            "expire_month": 6,
-            "expire_year": 2029,
-            "issue_month": 6,
-            "issue_year": 2024,
+            "certImage": "https://snapshot.local/certificate.png",
+            "certTitle": "Snapshot seed certificate",
+            "certificateId": 50,
+            "credentialId": "SNAPSHOT-0001",
+            "credentialUrl": "https://snapshot.local/credential",
+            "expireMonth": 6,
+            "expireYear": 2029,
+            "issueMonth": 6,
+            "issueYear": 2024,
             "organization": "Snapshot Seed Authority",
-            "provider_id": 142
+            "providerId": 142
         }
     ]
 }

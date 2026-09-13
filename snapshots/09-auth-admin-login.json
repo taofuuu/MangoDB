@@ -4,20 +4,20 @@
     "body": {
         "accessToken": "<jwt>",
         "company": {
-            "account_type": "ADMIN",
+            "accountType": "ADMIN",
             "address": null,
-            "company_description": null,
-            "company_id": 144,
-            "company_name": "Snapshot Seed Admin",
-            "company_type": [
+            "companyDescription": null,
+            "companyId": 144,
+            "companyName": "Snapshot Seed Admin",
+            "companyType": [
                 "Platform"
             ],
-            "contact_email": null,
+            "contactEmail": null,
             "email": "admin@snapshot.local",
             "phone": "0810000003",
-            "service_term": null,
+            "serviceTerm": null,
             "username": "snapshot_admin",
-            "warranty_policy": null,
+            "warrantyPolicy": null,
             "website": null
         }
     }

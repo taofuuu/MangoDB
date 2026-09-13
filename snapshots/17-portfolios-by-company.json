@@ -3,13 +3,13 @@
     "status": 200,
     "body": [
         {
-            "development_date": "2026-01-15",
-            "listing_id": 25,
-            "portfolio_description": "A fixed row for GET /portfolios/:portfolioId to answer with.",
-            "portfolio_id": 24,
-            "portfolio_image": "https://snapshot.local/portfolio.png",
-            "portfolio_link": "https://snapshot.local/portfolio",
-            "portfolio_name": "Snapshot seed portfolio"
+            "developmentDate": "2026-01-15",
+            "listingId": 25,
+            "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+            "portfolioId": 24,
+            "portfolioImage": "https://snapshot.local/portfolio.png",
+            "portfolioLink": "https://snapshot.local/portfolio",
+            "portfolioName": "Snapshot seed portfolio"
         }
     ]
 }

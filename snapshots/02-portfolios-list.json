@@ -3,121 +3,121 @@
     "status": 200,
     "body": [
         {
-            "development_date": "2026-03-02",
-            "listing_id": 23,
-            "portfolio_description": "Patient self-booking with SMS reminders and a staff rota view.",
-            "portfolio_id": 16,
-            "portfolio_image": "<storage-url>",
-            "portfolio_link": "https://stinkytoes.example.com/work/clinic-route",
-            "portfolio_name": "Clinic booking portal"
+            "developmentDate": "2026-03-02",
+            "listingId": 23,
+            "portfolioDescription": "Patient self-booking with SMS reminders and a staff rota view.",
+            "portfolioId": 16,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://stinkytoes.example.com/work/clinic-route",
+            "portfolioName": "Clinic booking portal"
         },
         {
-            "development_date": "2026-01-15",
-            "listing_id": 1,
-            "portfolio_description": "พัฒนาเว็บอีคอมเมิร์ซใหม่ด้วย Next.js และ Tailwind CSS",
-            "portfolio_id": 9,
-            "portfolio_image": "<storage-url>",
-            "portfolio_link": "https://example.com/projects/ecommerce",
-            "portfolio_name": "E-Commerce Website Redesign"
+            "developmentDate": "2026-01-15",
+            "listingId": 1,
+            "portfolioDescription": "พัฒนาเว็บอีคอมเมิร์ซใหม่ด้วย Next.js และ Tailwind CSS",
+            "portfolioId": 9,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://example.com/projects/ecommerce",
+            "portfolioName": "E-Commerce Website Redesign"
         },
         {
-            "development_date": "2026-01-15",
-            "listing_id": 25,
-            "portfolio_description": "A fixed row for GET /portfolios/:portfolioId to answer with.",
-            "portfolio_id": 24,
-            "portfolio_image": "https://snapshot.local/portfolio.png",
-            "portfolio_link": "https://snapshot.local/portfolio",
-            "portfolio_name": "Snapshot seed portfolio"
+            "developmentDate": "2026-01-15",
+            "listingId": 25,
+            "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+            "portfolioId": 24,
+            "portfolioImage": "https://snapshot.local/portfolio.png",
+            "portfolioLink": "https://snapshot.local/portfolio",
+            "portfolioName": "Snapshot seed portfolio"
         },
         {
-            "development_date": "2025-11-22",
-            "listing_id": 23,
-            "portfolio_description": "Daily route optimisation for a fleet of twelve vans.",
-            "portfolio_id": 17,
-            "portfolio_image": "<storage-url>",
-            "portfolio_link": "https://stinkytoes.example.com/work/route-planner",
-            "portfolio_name": "Delivery route planner"
+            "developmentDate": "2025-11-22",
+            "listingId": 23,
+            "portfolioDescription": "Daily route optimisation for a fleet of twelve vans.",
+            "portfolioId": 17,
+            "portfolioImage": "<storage-url>",
+            "portfolioLink": "https://stinkytoes.example.com/work/route-planner",
+            "portfolioName": "Delivery route planner"
         },
         {
-            "development_date": "2025-08-08",
-            "listing_id": 23,
-            "portfolio_description": null,
-            "portfolio_id": 18,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "https://stinkytoes.example.com/work/loyalty-app",
-            "portfolio_name": "Loyalty card mobile app"
+            "developmentDate": "2025-08-08",
+            "listingId": 23,
+            "portfolioDescription": null,
+            "portfolioId": 18,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "https://stinkytoes.example.com/work/loyalty-app",
+            "portfolioName": "Loyalty card mobile app"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 16,
-            "portfolio_description": null,
-            "portfolio_id": 6,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.cloudscale.com/aws-case-study",
-            "portfolio_name": "aws-case-study"
+            "developmentDate": "2024-01-01",
+            "listingId": 16,
+            "portfolioDescription": null,
+            "portfolioId": 6,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.cloudscale.com/aws-case-study",
+            "portfolioName": "aws-case-study"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 6,
-            "portfolio_description": null,
-            "portfolio_id": 1,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.codecrafters.com/portfolio-ecommerce",
-            "portfolio_name": "portfolio-ecommerce"
+            "developmentDate": "2024-01-01",
+            "listingId": 6,
+            "portfolioDescription": null,
+            "portfolioId": 1,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.codecrafters.com/portfolio-ecommerce",
+            "portfolioName": "portfolio-ecommerce"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 20,
-            "portfolio_description": null,
-            "portfolio_id": 8,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.globaltech.com/sap-success-story",
-            "portfolio_name": "sap-success-story"
+            "developmentDate": "2024-01-01",
+            "listingId": 20,
+            "portfolioDescription": null,
+            "portfolioId": 8,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.globaltech.com/sap-success-story",
+            "portfolioName": "sap-success-story"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 17,
-            "portfolio_description": null,
-            "portfolio_id": 7,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.datamind.com/retail-prediction",
-            "portfolio_name": "retail-prediction"
+            "developmentDate": "2024-01-01",
+            "listingId": 17,
+            "portfolioDescription": null,
+            "portfolioId": 7,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.datamind.com/retail-prediction",
+            "portfolioName": "retail-prediction"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 6,
-            "portfolio_description": null,
-            "portfolio_id": 2,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.codecrafters.com/portfolio-erp",
-            "portfolio_name": "portfolio-erp"
+            "developmentDate": "2024-01-01",
+            "listingId": 6,
+            "portfolioDescription": null,
+            "portfolioId": 2,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.codecrafters.com/portfolio-erp",
+            "portfolioName": "portfolio-erp"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 7,
-            "portfolio_description": null,
-            "portfolio_id": 3,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.appsynth.com/showcase-bank-app",
-            "portfolio_name": "showcase-bank-app"
+            "developmentDate": "2024-01-01",
+            "listingId": 7,
+            "portfolioDescription": null,
+            "portfolioId": 3,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.appsynth.com/showcase-bank-app",
+            "portfolioName": "showcase-bank-app"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 9,
-            "portfolio_description": null,
-            "portfolio_id": 4,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.techconsult.com/audit-report-sample.pdf",
-            "portfolio_name": "audit-report-sample.pdf"
+            "developmentDate": "2024-01-01",
+            "listingId": 9,
+            "portfolioDescription": null,
+            "portfolioId": 4,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.techconsult.com/audit-report-sample.pdf",
+            "portfolioName": "audit-report-sample.pdf"
         },
         {
-            "development_date": "2024-01-01",
-            "listing_id": 10,
-            "portfolio_description": null,
-            "portfolio_id": 5,
-            "portfolio_image": "https://placeholder.example.com/no-image.png",
-            "portfolio_link": "www.nextgenai.com/vision-demo",
-            "portfolio_name": "vision-demo"
+            "developmentDate": "2024-01-01",
+            "listingId": 10,
+            "portfolioDescription": null,
+            "portfolioId": 5,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "www.nextgenai.com/vision-demo",
+            "portfolioName": "vision-demo"
         }
     ]
 }

@@ -6,7 +6,7 @@
             "code": "VALIDATION_FAILED",
             "details": [
                 {
-                    "field": "company_name",
+                    "field": "companyName",
                     "message": "Too small: expected string to have >=1 characters"
                 },
                 {
@@ -26,11 +26,11 @@
                     "message": "Use a Thai phone number, e.g. 0812345678"
                 },
                 {
-                    "field": "account_type",
+                    "field": "accountType",
                     "message": "Invalid option: expected one of \"PROVIDER\"|\"RECEIVER\"|\"BOTH\""
                 },
                 {
-                    "field": "company_type",
+                    "field": "companyType",
                     "message": "Too small: expected array to have >=1 items"
                 }
             ],

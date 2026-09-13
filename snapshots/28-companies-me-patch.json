@@ -2,20 +2,20 @@
     "request": "PATCH /companies/me",
     "status": 200,
     "body": {
-        "account_type": "PROVIDER",
+        "accountType": "PROVIDER",
         "address": null,
-        "company_description": "edited by scripts/snapshot-api.sh",
-        "company_id": "<company_id>",
-        "company_name": "Snapshot Probe A edited",
-        "company_type": [
+        "companyDescription": "edited by scripts/snapshot-api.sh",
+        "companyId": "<company_id>",
+        "companyName": "Snapshot Probe A edited",
+        "companyType": [
             "Software House"
         ],
-        "contact_email": null,
+        "contactEmail": null,
         "email": "<run>a@example.test",
         "phone": "0812345678",
-        "service_term": "30 days",
+        "serviceTerm": "30 days",
         "username": "<run>a",
-        "warranty_policy": "none",
+        "warrantyPolicy": "none",
         "website": null
     }
 }
