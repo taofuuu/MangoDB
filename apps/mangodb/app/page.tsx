@@ -54,14 +54,9 @@ const ROUTES = [
         detail: 'US6-1 — the separate door for administrator accounts.',
     },
     {
-        href: '/profile/view/provider',
-        title: 'View Profile (Provider)',
-        detail: 'View profile page for Provider role (Company card, Services, Timeline, Portfolio).',
-    },
-    {
-        href: '/profile/view/receiver',
-        title: 'View Profile (Receiver)',
-        detail: 'View profile page for Receiver role (Vertical company card, Job listings).',
+        href: '/profile/view',
+        title: 'View Profile',
+        detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
 ];
 
