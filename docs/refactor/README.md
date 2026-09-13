@@ -14,8 +14,8 @@ in before you touch a file they own.
 | -------------------------- | --------------------------------- | ---------------------------------------------------- | ------- |
 | [0](phase-0-safety-net.md) | Safety net                        | `scripts/`, `snapshots/`, `apps/api/src/seed.ts`     | done    |
 | [1](phase-1-vocabulary.md) | Agree the vocabulary              | `docs/conventions.md`                                | done    |
-| 2                          | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | next    |
-| 3                          | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | planned |
+| [2](phase-2-camelcase.md)  | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | done    |
+| 3                          | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | next    |
 | 4                          | Backend: apply the wire rules     | `apps/api/src/routes`, `controllers`, `schemas`      | planned |
 | 5                          | Publish the template              | `docs/adding-a-resource.md`, `apps/api/README.md`    | planned |
 | 6                          | Frontend: one way to call the API | `apps/mangodb/lib`                                   | planned |
