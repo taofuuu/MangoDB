@@ -29,6 +29,7 @@ certificateRoutes.patch(
     '/:certificateId',
     requireAuth,
     requireRole('provider'),
+    uploadImage('cert_image'),
     updateCertificate,
 );
 

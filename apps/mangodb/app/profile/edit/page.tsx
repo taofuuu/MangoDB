@@ -11,27 +11,16 @@ import {
     updateCompanyAccount,
     updateMyProfile,
 } from '@/lib/companies';
-import type { ProfileErrors } from '@/lib/validation';
+import {
+    toFormErrors,
+    validateProfile,
+    type ProfileErrors,
+} from '@/lib/validation';
 import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
     ProfileFormData,
     toUpdateRequest,
 } from '@/components/forms/CompanyProfileForm';
-
-// zod reports an array problem as "company_type.0"; the form keys its errors by
-// field, so only the part before the first dot is useful here.
-function toFormErrors(details: ApiRequestError['details']): ProfileErrors {
-    const errors: ProfileErrors = {};
-
-    for (const detail of details) {
-        const field = detail.field.split('.')[0] as keyof ProfileFormData;
-        if (field && !errors[field]) {
-            errors[field] = detail.message;
-        }
-    }
-
-    return errors;
-}
 
 function EditProfilePageInner() {
     const router = useRouter();
@@ -87,6 +76,18 @@ function EditProfilePageInner() {
     const handleSave = async (data: ProfileFormData) => {
         setStatus(null);
         setErrors({});
+
+        // 1. Run frontend validation
+        const frontendErrors = validateProfile(data);
+        if (Object.keys(frontendErrors).length > 0) {
+            setErrors(frontendErrors);
+            setStatus({
+                type: 'error',
+                message: 'Some fields need fixing.',
+            });
+            return; // Halt submission
+        }
+
         setIsSaving(true);
 
         try {
