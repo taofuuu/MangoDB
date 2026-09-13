@@ -27,8 +27,24 @@ import {
     validatePhone,
     validateUsername,
     validateWebsite,
+    toFormErrors,
 } from '@/lib/validation';
-import { apiFetch, ApiRequestError } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
+
+// Which input each field the API can reject belongs under. Username and
+// password live on the previous step, so their messages are held until the
+// user is sent back to it.
+const REGISTER_FIELDS = {
+    companyName: 'companyName',
+    companyDescription: 'companyDescription',
+    companyType: 'companyType',
+    phone: 'phoneNumber',
+    email: 'email',
+    address: 'address',
+    website: 'website',
+    username: 'username',
+    password: 'password',
+} as const;
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -180,15 +196,29 @@ export default function RegisterPage() {
 
             setCurrentStep(RegisterStep.Success);
         } catch (error) {
-            if (error instanceof ApiRequestError) {
-                const details = error.details
-                    .map(({ field, message }) => `${field}: ${message}`)
-                    .join(', ');
+            const { fields, message } = toFormErrors(error, REGISTER_FIELDS);
 
-                setErrorMessage(details || error.message);
-            } else {
-                setErrorMessage('Unable to connect to the server.');
+            // username and password belong to the account step, so a rejection
+            // there sends the user back to the boxes it is about.
+            const { username, password, ...companyFields } = fields;
+            if (username || password) {
+                setAccountInfoError({
+                    usernameError: username ?? '',
+                    passwordError: password ?? '',
+                });
+                setCurrentStep(RegisterStep.AccountInfo);
             }
+
+            setCompanyInfoError({
+                companyNameError: companyFields.companyName ?? '',
+                companyDescriptionError: companyFields.companyDescription ?? '',
+                companyTypeError: companyFields.companyType ?? '',
+                phoneNumberError: companyFields.phoneNumber ?? '',
+                emailError: companyFields.email ?? '',
+                addressError: companyFields.address ?? '',
+                websiteError: companyFields.website ?? '',
+            });
+            setErrorMessage(message ?? '');
         } finally {
             setIsSubmitting(false);
         }

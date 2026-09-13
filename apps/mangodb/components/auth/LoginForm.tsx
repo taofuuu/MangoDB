@@ -16,23 +16,30 @@ export default function LoginForm() {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [identifierError, setIdentifierError] = useState<string | null>(null);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    // A rejected login is about neither box on its own, so it keeps a line of
+    // its own above the button.
     const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
+        setIdentifierError(null);
+        setPasswordError(null);
 
-        // Client-side guard — catch empty fields before hitting the API.
-        if (!identifier.trim() && !password) {
-            setError('Please enter your email and password.');
-            return;
+        // Client-side guard — catch empty fields before hitting the API. Each
+        // message goes under the box it is about.
+        const missingIdentifier = !identifier.trim();
+        const missingPassword = !password;
+
+        if (missingIdentifier) {
+            setIdentifierError('Please enter your email address.');
         }
-        if (!identifier.trim()) {
-            setError('Please enter your email address.');
-            return;
+        if (missingPassword) {
+            setPasswordError('Please enter your password.');
         }
-        if (!password) {
-            setError('Please enter your password.');
+        if (missingIdentifier || missingPassword) {
             return;
         }
 
@@ -67,7 +74,11 @@ export default function LoginForm() {
                 type="text"
                 autoComplete="email"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    setIdentifierError(null);
+                }}
+                error={identifierError ?? undefined}
                 required
             />
 
@@ -78,7 +89,11 @@ export default function LoginForm() {
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError(null);
+                    }}
+                    error={passwordError ?? undefined}
                     required
                 />
                 <Link
