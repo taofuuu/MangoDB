@@ -50,10 +50,12 @@ const LABEL = 'block type-sm !font-[600] text-gray-800 mb-1';
 export default function CompanyCard({ data }: CompanyCardProps) {
     return (
         <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
-            {/* A fixed card height with the fields scrolling inside, so the
+            {/* A fixed card height with everything scrolling inside, so the
                 four panels on the page line up instead of one stretching the
-                row. */}
-            <div className="view-profile-scrollbar flex-1 overflow-y-auto pr-2">
+                row. Edit is inside the scroll rather than pinned under it:
+                pinning cost 46px of visible height, which was enough to cut
+                the phone number off the left column. */}
+            <div className="view-profile-scrollbar flex flex-1 flex-col justify-between overflow-y-auto pr-2">
                 <div className="flex flex-col md:flex-row gap-8">
                     {/* Left Profile Info */}
                     <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-line pr-0 md:pr-8 justify-center py-4">
@@ -156,17 +158,14 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Outside the scroll area on purpose: inside it, Edit sat below
-                the fold on a full card and you had to scroll to find it. */}
-            <div className="flex shrink-0 justify-end pt-4">
-                <Link
-                    href="/profile/edit"
-                    className="px-6 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs font-medium rounded-button transition-colors shadow-sm"
-                >
-                    Edit
-                </Link>
+                <div className="flex justify-end pt-4">
+                    <Link
+                        href="/profile/edit"
+                        className="px-6 py-1.5 bg-brand hover:bg-brand-dark text-white type-xs font-medium rounded-button transition-colors shadow-sm"
+                    >
+                        Edit
+                    </Link>
+                </div>
             </div>
         </div>
     );
