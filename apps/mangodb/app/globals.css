@@ -34,8 +34,9 @@
        heading, the button that opens the modal and the warning inside it
        were each a different one. */
     --color-danger: #c5483b;
-    --color-danger-hover: #b93d35;
-    --color-danger-hover-2: #a93b30;
+    /* 30% darker than the base. The other candidate, #B93D35, was only 17%
+       and belonged to #C5483E — a red that no longer exists. */
+    --color-danger-hover: #a93b30;
     --color-danger-deep: #8f271d;
     --color-danger-soft: #d36b60;
     --color-danger-bright: #e53e3e;

@@ -7,7 +7,7 @@ type ButtonVariant = 'primary' | 'outline' | 'danger';
 const variants: Record<ButtonVariant, string> = {
     primary: 'bg-brand text-surface hover:bg-brand-dark',
     outline: 'border border-brand bg-white text-ink hover:bg-brand/10',
-    danger: 'bg-danger text-surface hover:bg-danger-hover-2',
+    danger: 'bg-danger text-surface hover:bg-danger-hover',
 };
 
 type ButtonProps = {
