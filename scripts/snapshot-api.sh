@@ -79,6 +79,10 @@ A_LIVE=0
 B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
+# 1 between uploading the provider's photo and clearing it again. Unlike the
+# two above there is no id: the column holds one photo per company, so the
+# cleanup is "clear it" rather than "delete row N".
+PHOTO_SET=0
 
 # The script creates two throwaway companies. If it dies halfway they would sit
 # in the admin list forever and every later run's diff would show them, so
@@ -97,6 +101,12 @@ cleanup() {
     if [ -n "$NEW_PORTFOLIO_ID" ]; then
         curl -sS -o /dev/null -X DELETE \
             "$API_URL/portfolios/$NEW_PORTFOLIO_ID" \
+            -H "Authorization: Bearer $TOKEN_PROVIDER"
+    fi
+    # Left set, the seeded provider keeps a photo and every later run's
+    # GET /companies/me diff shows it appear out of nowhere.
+    if [ "$PHOTO_SET" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me/photo" \
             -H "Authorization: Bearer $TOKEN_PROVIDER"
     fi
     if [ "$B_LIVE" = 1 ]; then
@@ -397,6 +407,23 @@ if [ "$UPLOADS" = 1 ]; then
         snap 43-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")"
     fi
+
+    echo
+    echo "profile photo lifecycle"
+    # No file attached. Multer lets that through — nothing was rejected — so
+    # the 400 comes from the handler, and only this call would notice it going
+    # missing.
+    snap 44-error-photo-missing PATCH /companies/me/photo \
+        -H "$(bearer "$TOKEN_PROVIDER")"
+
+    snap 45-companies-me-photo PATCH /companies/me/photo \
+        -H "$(bearer "$TOKEN_PROVIDER")" \
+        -F "photo=@$IMAGE;type=image/png"
+    PHOTO_SET=1
+
+    snap 46-companies-me-photo-delete DELETE /companies/me/photo \
+        -H "$(bearer "$TOKEN_PROVIDER")"
+    PHOTO_SET=0
 else
     echo
     echo "--no-uploads: skipping the portfolio and certificate lifecycles"
@@ -408,18 +435,18 @@ fi
 
 echo
 echo "admin writes"
-snap 44-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
+snap 47-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
     -H "$(bearer "$TOKEN_ADMIN")"
 
-snap 45-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
+snap 48-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"companyName":"Snapshot Probe A edited by admin","phone":"0800000000"}'
 
-snap 46-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
+snap 49-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"currentPassword":"definitely-not-it"}'
 
-snap 47-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
+snap 50-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
 A_LIVE=0
