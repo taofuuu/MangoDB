@@ -9,7 +9,9 @@ interface SimpleTextInputProps {
     initValue?: string;
     error?: string;
     required?: boolean;
-    type?: string;
+    // The four this form actually uses. React's own HTMLInputTypeAttribute ends
+    // in `string & {}`, so it would accept a typo; listing them does not.
+    type?: 'text' | 'password' | 'tel' | 'email';
     maxLength?: number;
 }
 
