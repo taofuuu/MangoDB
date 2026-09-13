@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import CompanyCard, {
     toCompanyCardData,
 } from '@/components/viewprofile/Companycard';
@@ -27,6 +28,14 @@ export default function ViewProfilePage() {
                 setLoadError(describeError(err));
             });
     }, []);
+
+    // This page renders the caller's own profile in a provider's shape —
+    // services, a project timeline, a portfolio. A receiver-only company owns
+    // none of that, so without this it saw an empty provider profile that
+    // looked like its own.
+    const isWrongRole =
+        profile !== null && !isProviderAccount(profile.accountType);
+
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
             {loadError === NOT_SIGNED_IN && (
@@ -45,7 +54,26 @@ export default function ViewProfilePage() {
 
             {!loadError && !profile && <p className="type-sm">Loading…</p>}
 
-            {profile && (
+            {isWrongRole && (
+                <p className="type-sm">
+                    This is the provider view, and your account is not
+                    registered as a provider.
+                    {isReceiverAccount(profile.accountType) && (
+                        <>
+                            {' '}
+                            <Link
+                                href="/profile/view/receiver"
+                                className="underline"
+                            >
+                                View your receiver profile
+                            </Link>{' '}
+                            instead.
+                        </>
+                    )}
+                </p>
+            )}
+
+            {profile && !isWrongRole && (
                 <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                         <CompanyCard data={toCompanyCardData(profile)} />

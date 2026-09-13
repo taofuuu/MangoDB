@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ReceiverCompanyCard, {
     toReceiverCompanyCardData,
 } from '@/components/viewprofile/ReceiverCompanyCard';
@@ -26,6 +27,13 @@ export default function ReceiverViewPage() {
             });
     }, []);
 
+    // This page renders the caller's own profile in a receiver's shape — the
+    // job listings it has posted. A provider-only company owns none of that,
+    // so without this it saw an empty receiver profile that looked like its
+    // own.
+    const isWrongRole =
+        profile !== null && !isReceiverAccount(profile.accountType);
+
     return (
         <div className="min-h-screen bg-surface p-6 lg:p-8">
             {loadError === NOT_SIGNED_IN && (
@@ -44,7 +52,26 @@ export default function ReceiverViewPage() {
 
             {!loadError && !profile && <p className="type-sm">Loading…</p>}
 
-            {profile && (
+            {isWrongRole && (
+                <p className="type-sm">
+                    This is the receiver view, and your account is not
+                    registered as a receiver.
+                    {isProviderAccount(profile.accountType) && (
+                        <>
+                            {' '}
+                            <Link
+                                href="/profile/view/provider"
+                                className="underline"
+                            >
+                                View your provider profile
+                            </Link>{' '}
+                            instead.
+                        </>
+                    )}
+                </p>
+            )}
+
+            {profile && !isWrongRole && (
                 <main className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
                     {/* Left Receiver Card */}
                     <aside className="w-full lg:w-[320px] flex-shrink-0">
