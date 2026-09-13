@@ -2,12 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 
 interface SimpleTextInputProps {
     title: string;
-    type?: 'text' | 'password';
     inputHeight?: string | number;
     debounceTimeout?: number;
     onChange?: (value: string) => void;
     validate?: (value: string) => boolean;
     initValue?: string;
+    error?: string;
+    required?: boolean;
+    // The four this form actually uses. React's own HTMLInputTypeAttribute ends
+    // in `string & {}`, so it would accept a typo; listing them does not.
+    type?: 'text' | 'password' | 'tel' | 'email';
+    maxLength?: number;
 }
 
 export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
@@ -18,6 +23,9 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     onChange,
     validate,
     initValue,
+    error,
+    required,
+    maxLength,
 }) => {
     const [inputValue, setInputValue] = useState<string>(initValue ?? '');
 
@@ -53,17 +61,24 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
 
     return (
         <div style={styles.container}>
-            <label className="text-sm">{title}</label>
+            <label className="text-sm">
+                {title}
+                {required && <span className="ml-1 text-[#C5483B]">*</span>}
+            </label>
+
             <input
                 type={type}
                 value={inputValue}
                 onChange={handleInputChange}
+                maxLength={maxLength}
                 style={{
                     ...styles.input,
                     height: inputHeight,
+                    borderColor: error ? '#C5483B' : '#497B93',
                 }}
                 placeholder="Type here..."
             />
+            {error && <p className="mt-1 text-xs text-[#C5483B]">{error}</p>}
         </div>
     );
 };

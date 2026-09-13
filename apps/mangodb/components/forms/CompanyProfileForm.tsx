@@ -12,7 +12,7 @@ import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
-import { normalizeWebsiteUrl } from '@/lib/validation';
+import { normalizePhone, normalizeWebsiteUrl } from '@/lib/validation';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -60,7 +60,7 @@ export function toUpdateRequest(
         // Not run through orNull: these columns are not nullable, so a cleared
         // one should come back as a field-level 400 rather than be dropped.
         company_name: data.company_name,
-        phone: data.phone,
+        phone: normalizePhone(data.phone),
         company_type: data.company_type,
         company_description: orNull(data.company_description),
         address: orNull(data.address),

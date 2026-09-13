@@ -60,24 +60,24 @@ export function validateContactEmail(
     return null;
 }
 
-// 3. Phone Number: Strictly required, 6 to 20 characters, allowing digits and + - ( ) spaces.
-// Must contain at least 6 digits so values like "--------" are rejected.
+// Drops the spaces, hyphens and brackets people type, and turns a +66 prefix
+// back into the leading 0. Mirrors thaiPhone on the API, so what we send is
+// already the shape the column will hold.
+export function normalizePhone(value: string | null | undefined): string {
+    const compact = (value ?? '').trim().replace(/[\s()-]/g, '');
+    return compact.startsWith('+66') ? `0${compact.slice(3)}` : compact;
+}
+
+// 3. Phone Number: Required. Thai only for now — 9 digits for a landline
+// (021234567) or 10 for a mobile (0812345678), both starting with 0.
 export function validatePhone(value: string | undefined): string | null {
-    const trimmed = (value ?? '').trim();
-    if (!trimmed) {
+    // Emptiness is judged before normalizing, or "-----" would normalize to ""
+    // and be reported as a missing field rather than a wrong one.
+    if (!(value ?? '').trim()) {
         return 'Phone number is required.';
     }
-
-    const digitsOnly = trimmed.replace(/\D/g, '');
-
-    if (
-        trimmed.length < 6 ||
-        trimmed.length > 20 ||
-        !/^[0-9+\-\s()]+$/.test(trimmed) ||
-        digitsOnly.length < 6 ||
-        digitsOnly.length > 15
-    ) {
-        return 'Please provide a valid phone number';
+    if (!/^0\d{8,9}$/.test(normalizePhone(value))) {
+        return 'Use a Thai phone number, e.g. 0812345678.';
     }
     return null;
 }
@@ -261,4 +261,54 @@ export function validateProfile(
     return providerMode
         ? validateProviderProfile(data)
         : validateReceiverProfile(data);
+}
+
+// 10. Username (registration only): required, 3 to 50 characters, letters,
+// numbers and underscores. Same rule as companyFields.username on the API.
+export function validateUsername(value: string | undefined): string | null {
+    const trimmed = (value ?? '').trim();
+    if (!trimmed) {
+        return 'Username is required.';
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return 'Use letters, numbers, and underscores only.';
+    }
+    if (trimmed.length < 3) {
+        return 'Username must be at least 3 characters.';
+    }
+    if (trimmed.length > 50) {
+        return 'Username cannot exceed 50 characters.';
+    }
+    return null;
+}
+
+// 11. Password (registration only): required, at least 8 characters. The byte
+// cap is bcrypt's, so it counts bytes rather than characters — an emoji or a
+// Thai character costs three of them.
+export function validatePassword(value: string | undefined): string | null {
+    const password = value ?? '';
+    if (!password) {
+        return 'Password is required.';
+    }
+    if (password.length < 8) {
+        return 'Password must be at least 8 characters.';
+    }
+    if (new TextEncoder().encode(password).length > 72) {
+        return 'Password must be at most 72 bytes.';
+    }
+    return null;
+}
+
+// 12. Confirm password (registration only): must match the password above.
+export function validateConfirmPassword(
+    password: string | undefined,
+    confirmPassword: string | undefined,
+): string | null {
+    if (!confirmPassword) {
+        return 'Please confirm your password.';
+    }
+    if (password !== confirmPassword) {
+        return 'Passwords do not match.';
+    }
+    return null;
 }
