@@ -27,7 +27,7 @@ type DeleteConfirmationModalProps = DeleteModalProps & {
 };
 
 const CONFIRM_VARIANTS: Record<'danger' | 'primary', string> = {
-    danger: 'bg-danger-2 hover:bg-danger-hover focus-visible:outline-danger-2',
+    danger: 'bg-danger hover:bg-danger-hover focus-visible:outline-danger',
     primary: 'bg-brand hover:bg-brand-dark focus-visible:outline-brand',
 };
 
@@ -156,7 +156,7 @@ function DeleteConfirmationDialog({
 
                 {children}
                 {error && (
-                    <p role="alert" className="mt-4 type-xs text-danger-2">
+                    <p role="alert" className="mt-4 type-xs text-danger">
                         {error}
                     </p>
                 )}

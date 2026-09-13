@@ -63,7 +63,7 @@ export default function PortfolioCard({
                     <button
                         type="button"
                         onClick={() => onDelete(item)}
-                        className="type-sm !font-[600] text-danger-2 transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-2"
+                        className="type-sm !font-[600] text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
                     >
                         Delete
                     </button>

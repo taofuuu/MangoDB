@@ -280,7 +280,7 @@ export default function EditPortfolioForm({
                     />
 
                     {error && (
-                        <p role="alert" className="type-sm text-danger-2">
+                        <p role="alert" className="type-sm text-danger">
                             {error}
                         </p>
                     )}

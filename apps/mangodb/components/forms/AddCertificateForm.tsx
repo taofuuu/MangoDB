@@ -291,7 +291,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 {error && (
                     <p
                         role="alert"
-                        className="pt-4 text-right type-sm text-danger-2"
+                        className="pt-4 text-right type-sm text-danger"
                     >
                         {error}
                     </p>

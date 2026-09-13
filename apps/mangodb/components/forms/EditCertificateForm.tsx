@@ -203,7 +203,7 @@ function EditCertificateDialog({
             </div>
 
             {error && (
-                <div className="mb-3 rounded-lg bg-red-50 p-2.5 type-xs text-danger-2 whitespace-pre-line border border-red-200">
+                <div className="mb-3 rounded-lg bg-red-50 p-2.5 type-xs text-danger whitespace-pre-line border border-red-200">
                     {error}
                 </div>
             )}

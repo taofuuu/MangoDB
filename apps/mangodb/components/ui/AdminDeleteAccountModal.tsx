@@ -53,7 +53,7 @@ function AdminDeleteAccountDialog({
             }
             description={
                 <>
-                    <p className="type-xs text-danger-4 text-center mt-[0.8vh] leading-snug">
+                    <p className="type-xs text-danger text-center mt-[0.8vh] leading-snug">
                         <strong className="!font-[700]">WARNING</strong> this is
                         permanent and
                         <br />

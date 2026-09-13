@@ -283,7 +283,7 @@ export default function CertificatePage() {
 
             {/* Load error */}
             {loadError && (
-                <p role="alert" className="mt-4 type-sm text-danger-2">
+                <p role="alert" className="mt-4 type-sm text-danger">
                     {loadError === NOT_SIGNED_IN
                         ? 'Please log in to view your certificates.'
                         : loadError}

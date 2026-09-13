@@ -29,10 +29,11 @@
     --color-brand-alt-4: #386277;
     --color-brand-deep: #1e4353;
 
+    /* One danger red. It used to be four — #C5483B, #C5483E, #CE473E and
+       #C6473A — and the delete-account flow alone used three of them: the
+       heading, the button that opens the modal and the warning inside it
+       were each a different one. */
     --color-danger: #c5483b;
-    --color-danger-2: #c5483e;
-    --color-danger-3: #ce473e;
-    --color-danger-4: #c6473a;
     --color-danger-hover: #b93d35;
     --color-danger-hover-2: #a93b30;
     --color-danger-deep: #8f271d;

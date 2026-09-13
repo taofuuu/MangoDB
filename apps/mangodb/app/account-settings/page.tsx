@@ -267,7 +267,7 @@ export default function AccountPage() {
 
                         {/* Danger Zone */}
                         <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 shadow-sm">
-                            <h2 className="type-md font-semibold text-danger-4">
+                            <h2 className="type-md font-semibold text-danger">
                                 Danger Zone
                             </h2>
                             <p className="mt-1 type-xs text-ink-soft">
@@ -278,7 +278,7 @@ export default function AccountPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteOpen(true)}
-                                className="mt-4 rounded-lg bg-danger-3 px-4 py-2 type-xs font-semibold text-surface transition-colors hover:bg-danger-hover cursor-pointer"
+                                className="mt-4 rounded-lg bg-danger px-4 py-2 type-xs font-semibold text-surface transition-colors hover:bg-danger-hover cursor-pointer"
                             >
                                 Delete Account
                             </button>
@@ -320,7 +320,7 @@ export default function AccountPage() {
                         aria-describedby="deletion-result-desc"
                         className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-surface text-ink px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
                     >
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger-tint text-danger-2">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger-tint text-danger">
                             <svg
                                 className="h-6 w-6"
                                 fill="none"
@@ -354,7 +354,7 @@ export default function AccountPage() {
                         <button
                             type="button"
                             onClick={redirectToLogin}
-                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-danger-2 type-xs text-surface font-semibold transition-colors hover:bg-danger-hover cursor-pointer"
+                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-danger type-xs text-surface font-semibold transition-colors hover:bg-danger-hover cursor-pointer"
                         >
                             Go to Login
                         </button>

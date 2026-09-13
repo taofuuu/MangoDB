@@ -110,7 +110,7 @@ export default function PortfolioCertificateList({
             </h3>
 
             {loadError && (
-                <p className="type-xs text-danger-2 mb-2">{loadError}</p>
+                <p className="type-xs text-danger mb-2">{loadError}</p>
             )}
 
             {/* List Display */}

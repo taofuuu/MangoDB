@@ -208,7 +208,7 @@ export default function EditAccountModal({
                 </p>
 
                 {error && (
-                    <div className="mb-4 rounded-lg border border-danger-3/30 bg-red-50 p-3 type-xs font-medium text-danger-3">
+                    <div className="mb-4 rounded-lg border border-danger/30 bg-red-50 p-3 type-xs font-medium text-danger">
                         {error}
                     </div>
                 )}
@@ -221,8 +221,7 @@ export default function EditAccountModal({
                                 htmlFor="modal-username-input"
                                 className="block type-xs font-medium text-ink mb-1"
                             >
-                                Username{' '}
-                                <span className="text-danger-3">*</span>
+                                Username <span className="text-danger">*</span>
                             </label>
                             <input
                                 id="modal-username-input"
@@ -246,7 +245,7 @@ export default function EditAccountModal({
                                 htmlFor="modal-email-input"
                                 className="block type-xs font-medium text-ink mb-1"
                             >
-                                Email <span className="text-danger-3">*</span>
+                                Email <span className="text-danger">*</span>
                             </label>
                             <input
                                 id="modal-email-input"
@@ -272,7 +271,7 @@ export default function EditAccountModal({
                                     className="block type-xs font-medium text-ink mb-1"
                                 >
                                     New Password{' '}
-                                    <span className="text-danger-3">*</span>
+                                    <span className="text-danger">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -320,7 +319,7 @@ export default function EditAccountModal({
                                     className="block type-xs font-medium text-ink mb-1"
                                 >
                                     Confirm New Password{' '}
-                                    <span className="text-danger-3">*</span>
+                                    <span className="text-danger">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -372,7 +371,7 @@ export default function EditAccountModal({
                             className="block type-xs font-medium text-ink mb-1"
                         >
                             Current Password{' '}
-                            <span className="text-danger-3">*</span>
+                            <span className="text-danger">*</span>
                         </label>
                         <div className="relative">
                             <input
