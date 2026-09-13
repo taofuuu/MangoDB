@@ -21,6 +21,12 @@ import {
 } from '../lib/prismaErrors';
 import { hasOngoingProject } from '../lib/projectEligibility';
 import { sendSession } from '../lib/session';
+import {
+    BUCKETS,
+    removeFromStorage,
+    removeFromStorageByUrl,
+    uploadToStorage,
+} from '../lib/storage';
 import { parseBody } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
@@ -156,6 +162,96 @@ export async function changeMyCredentials(
     // one the browser is holding, so skipping this would sign the caller out
     // the moment they changed their own email.
     sendSession(res, toCompanyProfile(company));
+}
+
+// US1-5, the photo half. Its own route rather than a field on PATCH /me,
+// for the same reason /me/credentials is separate: that body is JSON, and a
+// file cannot travel in one. Multipart would also cost /me its three-state
+// body — absent, null, value — because every multipart field is a string.
+//
+// Answers with the whole profile, like PATCH /me, so the page can re-render
+// from one response.
+export async function updateMyPhoto(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const companyId = req.auth!.companyId;
+
+    if (!req.file) {
+        throw ApiError.badRequest('Provide an image to upload', [
+            { field: 'photo', message: 'Choose an image first' },
+        ]);
+    }
+
+    // Read first, for the old URL to clean up afterwards and so a deleted
+    // company is a plain 404 rather than a P2025 out of the update.
+    const existing = await prisma.company.findUnique({
+        where: { companyId },
+        select: { companyPhoto: true },
+    });
+
+    if (!existing) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const uploaded = await uploadToStorage(
+        req.file,
+        BUCKETS.PROFILE,
+        'companies',
+    );
+
+    let company;
+    try {
+        company = await prisma.company.update({
+            where: { companyId },
+            data: { companyPhoto: uploaded.url },
+            select: companyProfileSelect,
+        });
+    } catch (err) {
+        // The row never pointed at it, so the object is an orphan.
+        await removeFromStorage(uploaded.path, BUCKETS.PROFILE);
+        throw err;
+    }
+
+    // The row points at the replacement now. Best-effort, matching the
+    // certificate and portfolio writes.
+    if (existing.companyPhoto) {
+        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
+    }
+
+    res.json(toCompanyProfile(company));
+}
+
+// Clearing the photo, which the upload route cannot express: multipart has no
+// way to send "no file" that is distinguishable from forgetting to attach one.
+export async function deleteMyPhoto(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const companyId = req.auth!.companyId;
+
+    const existing = await prisma.company.findUnique({
+        where: { companyId },
+        select: { companyPhoto: true },
+    });
+
+    if (!existing) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const company = await prisma.company.update({
+        where: { companyId },
+        data: { companyPhoto: null },
+        select: companyProfileSelect,
+    });
+
+    // Only after the column stopped pointing at it. Best-effort, matching the
+    // certificate and portfolio deletes: the row is correct either way.
+    if (existing.companyPhoto) {
+        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
+    }
+
+    res.json(toCompanyProfile(company));
 }
 
 // US1-6. Coordinates the existing eligibility and soft-delete layers without

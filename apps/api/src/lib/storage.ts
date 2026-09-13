@@ -5,6 +5,7 @@ import { ApiError } from './ApiError';
 const BUCKETS = {
     CERTIFICATE: 'certificate',
     PORTFOLIO: 'portfolio',
+    PROFILE: 'profile',
 } as const;
 
 type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];

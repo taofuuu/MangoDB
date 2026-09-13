@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
+import { uploadImage } from '../middleware/upload';
 import {
     changeMyCredentials,
+    deleteMyPhoto,
     getMyProfile,
     requestMyAccountDeletion,
+    updateMyPhoto,
     updateMyProfile,
 } from '../controllers/company.controller';
 
@@ -16,6 +19,16 @@ companyRoutes.patch('/me', requireAuth, updateMyProfile);
 // needs the current password, and mixing the two would put a gate on a route
 // that also has an ungated path through it.
 companyRoutes.patch('/me/credentials', requireAuth, changeMyCredentials);
+// The profile photo. Separate from /me because the body is multipart, which
+// PATCH /me is not — see updateMyPhoto. Any company may have one, so no
+// requireRole here.
+companyRoutes.patch(
+    '/me/photo',
+    requireAuth,
+    uploadImage('photo'),
+    updateMyPhoto,
+);
+companyRoutes.delete('/me/photo', requireAuth, deleteMyPhoto);
 // A provider, receiver, or BOTH company may delete itself. Administrators use
 // their own account-management routes and must not enter this self-service
 // flow. requireRole understands that BOTH grants both company roles.
