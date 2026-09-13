@@ -1,6 +1,6 @@
 # The refactor, and the rules while it runs
 
-Fourteen people built this with different AI models, so the same idea exists in
+Nine people built this with different AI models, so the same idea exists in
 three or four shapes. Sprint 2 adds 66 engineering tasks that will be written by
 copying whatever is already in the tree. The point of this refactor is not to
 tidy up — it is to leave **one version of each thing**, so the copy is the right

@@ -50,7 +50,7 @@ migration runs and `prisma migrate diff` still reports no drift.
 Slack use snake_case; Google, Microsoft Graph and GraphQL use camelCase — so
 convention does not settle it. What settles it is that camelCase is what
 TypeScript, React and every code generator produce by default, including the AI
-models fourteen people are using. Fighting that default forever costs more than
+models nine people are using. Fighting that default forever costs more than
 paying the rename once.
 
 The one place this is still being applied is Phase 2 of the refactor. Until that
