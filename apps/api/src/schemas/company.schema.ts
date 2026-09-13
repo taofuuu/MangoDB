@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl } from './common.schema';
+import { httpUrl, thaiPhone } from './common.schema';
 import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 
 // One definition per editable column, shared by registration (US1-1) and the
@@ -34,12 +34,9 @@ export const companyFields = {
     // Judging it here would lock them out, and would answer a credential
     // question with a 400 that hands out the policy instead of a 401.
     passwordAttempt: z.string().min(1).max(72),
-    phone: z
-        .string()
-        .trim()
-        .min(6)
-        .max(20)
-        .regex(/^[0-9+\-\s()]+$/, 'Use digits and + - ( ) only'),
+    // Thai only for now. The normalizing is in thaiPhone, so whatever shape it
+    // arrives in, the column gets 0812345678.
+    phone: thaiPhone,
     // Industry tags — SME, Software House, FinTech. Every seeded company has at
     // least one, so a company can never be left without any.
     company_type: z.array(z.string().trim().min(1).max(100)).min(1).max(10),
