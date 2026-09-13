@@ -1,11 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type {
-    RegisterAccountType,
-    RegisterRequest,
-    SessionResponse,
-} from '@mangodb/shared';
+import type { RegisterAccountType, SessionResponse } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';

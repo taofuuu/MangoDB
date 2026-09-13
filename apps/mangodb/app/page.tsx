@@ -1,6 +1,12 @@
 import Link from 'next/link';
 
-// Temporary index so pages built so far are reachable by clicking.
+// Temporary index so the pages built so far are reachable by clicking. It is
+// not the real home page — replace it when there is one, and keep the
+// descriptions true in the meantime: a link list nobody trusts is worse than
+// no link list.
+//
+// Every one of these needs you signed in except /login, /admin/login and
+// /register. `npm run db:seed -w api` makes accounts you can use.
 const ROUTES = [
     {
         href: '/profile/edit',
@@ -10,7 +16,7 @@ const ROUTES = [
     {
         href: '/certificate',
         title: 'Certificates',
-        detail: 'Add, edit and delete certificate modals, on mock data.',
+        detail: "Add, edit and delete a provider's certificates.",
     },
     {
         href: '/account-settings',
@@ -30,22 +36,22 @@ const ROUTES = [
     {
         href: '/companies',
         title: 'Companies view for admin',
-        detail: 'list of company that can be viewed by admin',
+        detail: 'US6-2 — the administrator company list, with search, filter and pagination.',
     },
     {
         href: '/profile/edit?companyId=1',
         title: 'Edit account as admin',
-        detail: 'US6-4 — profile form in admin mode, with Delete account (sample id 1).',
+        detail: 'US6-3/US6-4 — the profile form in admin mode, with Delete account. Change companyId in the URL to a real one.',
     },
     {
         href: '/register',
         title: 'Register',
-        detail: 'Register new user',
+        detail: 'US1-1 — the three-step company registration wizard.',
     },
     {
         href: '/admin/login',
         title: 'Admin Login',
-        detail: 'login for admin role',
+        detail: 'US6-1 — the separate door for administrator accounts.',
     },
     {
         href: '/profile/view/provider',

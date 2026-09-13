@@ -4,7 +4,6 @@ import { useCallback, useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
 import type { CertificateData } from './EditCertificateForm';
-import type { Certificate } from '@mangodb/shared';
 import { describeError } from '@/lib/api';
 import { createCertificate } from '@/lib/certificate';
 import FileUpload from '../sm-detail/FileUpload';
