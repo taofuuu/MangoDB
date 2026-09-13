@@ -1,19 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import type { AccountType } from '@mangodb/shared';
+import type { AccountType, SessionResponse } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
 import RoleStep from '@/components/register/RoleStep';
 import CompanyInfoStep, {
+    CompanyInfoError,
     type CompanyInfo,
 } from '@/components/register/CompanyInfoStep';
 import AccountInfoStep, {
+    AccountInfoError,
     type AccountInfo,
 } from '@/components/register/AccountStep';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+import {
+    normalizeWebsiteUrl,
+    validateCompanyDescription,
+    validateCompanyName,
+    validateCompanyType,
+    validateConfirmPassword,
+    validateContactEmail,
+    validateLocation,
+    validatePassword,
+    validatePhone,
+    validateUsername,
+    validateWebsite,
+} from '@/lib/validation';
+import { apiFetch, ApiRequestError } from '@/lib/api';
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -48,6 +62,14 @@ export default function RegisterPage() {
         confirmPassword: '',
     });
 
+    const [accountInfoError, setAccountInfoError] = useState<AccountInfoError>(
+        {},
+    );
+
+    const [companyInfoError, setCompanyInfoError] = useState<CompanyInfoError>(
+        {},
+    );
+
     /* ================= NAVIGATION ================= */
 
     const goBack = () => {
@@ -65,12 +87,27 @@ export default function RegisterPage() {
     };
 
     const goToCompanyInfo = () => {
-        if (accountInfo.password !== accountInfo.confirmPassword) {
-            setErrorMessage('Passwords do not match.');
-            return;
-        }
         setErrorMessage('');
-        setCurrentStep(RegisterStep.CompanyInfo);
+
+        const usernameError = validateUsername(accountInfo.username) || '';
+        const passwordError = validatePassword(accountInfo.password) || '';
+        const confirmPasswordError =
+            validateConfirmPassword(
+                accountInfo.password,
+                accountInfo.confirmPassword,
+            ) || '';
+
+        if (usernameError || passwordError || confirmPasswordError) {
+            setAccountInfoError({
+                ...accountInfoError,
+                usernameError,
+                passwordError,
+                confirmPasswordError,
+            });
+        } else {
+            setCurrentStep(RegisterStep.CompanyInfo);
+            setAccountInfoError({});
+        }
     };
 
     const router = useRouter();
@@ -80,58 +117,73 @@ export default function RegisterPage() {
     /* ================= SUBMIT ================= */
 
     const submitRegister = async () => {
-        setIsSubmitting(true);
         setErrorMessage('');
 
-        // Clean empty string values so optional fields aren't validated as invalid URLs or strings
-        const websiteValue = companyInfo.website.trim();
-        const addressValue = companyInfo.address.trim();
-        const descriptionValue = companyInfo.companyDescription.trim();
+        // contact_email is optional on the profile, but registration needs one
+        // to sign in with, so the required check belongs here.
+        const emailError = companyInfo.email.trim()
+            ? validateContactEmail(companyInfo.email) || ''
+            : 'Email is required.';
 
+        const errors: CompanyInfoError = {
+            companyNameError:
+                validateCompanyName(companyInfo.companyName) || '',
+            companyDescriptionError:
+                validateCompanyDescription(companyInfo.companyDescription) ||
+                '',
+            companyTypeError:
+                validateCompanyType(companyInfo.companyType) || '',
+            phoneNumberError: validatePhone(companyInfo.phoneNumber) || '',
+            emailError,
+            addressError: validateLocation(companyInfo.address) || '',
+            websiteError: validateWebsite(companyInfo.website) || '',
+        };
+
+        if (Object.values(errors).some(Boolean)) {
+            setCompanyInfoError(errors);
+            return;
+        }
+
+        setCompanyInfoError({});
+        setIsSubmitting(true);
+
+        // Optional fields go out as undefined rather than an empty string,
+        // which the API would read as a value and reject.
         const payload = {
             company_name: companyInfo.companyName,
-            company_description: descriptionValue || undefined,
+            company_description:
+                companyInfo.companyDescription.trim() || undefined,
             company_type: companyInfo.companyType,
             phone: companyInfo.phoneNumber,
             email: companyInfo.email,
-            address: addressValue || undefined,
-            website: websiteValue !== '' ? websiteValue : undefined,
+            address: companyInfo.address.trim() || undefined,
+            website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
             account_type: accountType,
             username: accountInfo.username,
             password: accountInfo.password,
         };
 
         try {
-            const response = await fetch(`${API_URL}/auth/register`, {
+            const data = await apiFetch<SessionResponse>('/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
 
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                const apiError =
-                    data?.error?.details
-                        ?.map(
-                            (detail: { field: string; message: string }) =>
-                                `${detail.field}: ${detail.message}`,
-                        )
-                        .join(', ') ||
-                    data?.error?.message ||
-                    data?.message ||
-                    'Registration failed.';
-                setErrorMessage(apiError);
-                return;
-            }
-
-            if (data?.accessToken) {
+            if (data.accessToken) {
                 localStorage.setItem('accessToken', data.accessToken);
             }
 
             setCurrentStep(RegisterStep.Success);
-        } catch {
-            setErrorMessage('Unable to connect to the server.');
+        } catch (error) {
+            if (error instanceof ApiRequestError) {
+                const details = error.details
+                    .map(({ field, message }) => `${field}: ${message}`)
+                    .join(', ');
+
+                setErrorMessage(details || error.message);
+            } else {
+                setErrorMessage('Unable to connect to the server.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -187,7 +239,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md bg-red-50 p-3 text-sm font-medium text-red-600 border border-red-200">
+                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
                     {errorMessage}
                 </div>
             )}
@@ -200,6 +252,13 @@ export default function RegisterPage() {
                 <CompanyInfoStep
                     value={companyInfo}
                     onChange={setCompanyInfo}
+                    errors={companyInfoError}
+                    onClearError={(field) =>
+                        setCompanyInfoError((prev) => ({
+                            ...prev,
+                            [`${field}Error`]: undefined,
+                        }))
+                    }
                 />
             )}
 
@@ -207,6 +266,7 @@ export default function RegisterPage() {
                 <AccountInfoStep
                     value={accountInfo}
                     onChange={setAccountInfo}
+                    errors={accountInfoError}
                 />
             )}
 
