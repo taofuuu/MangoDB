@@ -192,23 +192,23 @@ export default function EditAccountModal({
                 }
             }}
         >
-            <div className="w-full max-w-[440px] rounded-xl bg-[#FFFDF9] text-[#171717] p-6 shadow-xl border border-gray-100">
+            <div className="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-gray-100">
                 {/* Header */}
                 <div>
-                    <h2 className="text-md font-semibold text-[#171717]">
+                    <h2 className="type-md font-semibold text-ink">
                         {modalTitles[mode]}
                     </h2>
                 </div>
 
-                <hr className="border-[#3F6B80]/30 my-3" />
+                <hr className="border-brand-dark/30 my-3" />
 
-                <p className="text-xs text-[#666666] mb-4">
+                <p className="type-xs text-ink-soft mb-4">
                     Enter your details below. Current password is required to
                     confirm and apply changes.
                 </p>
 
                 {error && (
-                    <div className="mb-4 rounded-lg border border-[#CE473E]/30 bg-red-50 p-3 text-xs font-medium text-[#CE473E]">
+                    <div className="mb-4 rounded-lg border border-danger-3/30 bg-red-50 p-3 type-xs font-medium text-danger-3">
                         {error}
                     </div>
                 )}
@@ -219,10 +219,10 @@ export default function EditAccountModal({
                         <div>
                             <label
                                 htmlFor="modal-username-input"
-                                className="block text-xs font-medium text-[#171717] mb-1"
+                                className="block type-xs font-medium text-ink mb-1"
                             >
                                 Username{' '}
-                                <span className="text-[#CE473E]">*</span>
+                                <span className="text-danger-3">*</span>
                             </label>
                             <input
                                 id="modal-username-input"
@@ -233,7 +233,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter username"
-                                className="h-[38px] w-full px-3 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
                         </div>
@@ -244,9 +244,9 @@ export default function EditAccountModal({
                         <div>
                             <label
                                 htmlFor="modal-email-input"
-                                className="block text-xs font-medium text-[#171717] mb-1"
+                                className="block type-xs font-medium text-ink mb-1"
                             >
-                                Email <span className="text-[#CE473E]">*</span>
+                                Email <span className="text-danger-3">*</span>
                             </label>
                             <input
                                 id="modal-email-input"
@@ -257,7 +257,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter email address"
-                                className="h-[38px] w-full px-3 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
                                 autoFocus
                             />
                         </div>
@@ -269,10 +269,10 @@ export default function EditAccountModal({
                             <div>
                                 <label
                                     htmlFor="modal-new-password-input"
-                                    className="block text-xs font-medium text-[#171717] mb-1"
+                                    className="block type-xs font-medium text-ink mb-1"
                                 >
                                     New Password{' '}
-                                    <span className="text-[#CE473E]">*</span>
+                                    <span className="text-danger-3">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -288,7 +288,7 @@ export default function EditAccountModal({
                                             if (error) setError(null);
                                         }}
                                         placeholder="Enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
                                         autoFocus
                                     />
                                     <button
@@ -301,13 +301,13 @@ export default function EditAccountModal({
                                                 ? 'Hide password'
                                                 : 'Show password'
                                         }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                                     >
                                         <EyeIcon
                                             className={`w-4 h-4 ${
                                                 showNewPassword
-                                                    ? 'text-[#171717]'
-                                                    : 'text-[#828282]'
+                                                    ? 'text-ink'
+                                                    : 'text-ink-placeholder'
                                             }`}
                                         />
                                     </button>
@@ -317,10 +317,10 @@ export default function EditAccountModal({
                             <div>
                                 <label
                                     htmlFor="modal-confirm-password-input"
-                                    className="block text-xs font-medium text-[#171717] mb-1"
+                                    className="block type-xs font-medium text-ink mb-1"
                                 >
                                     Confirm New Password{' '}
-                                    <span className="text-[#CE473E]">*</span>
+                                    <span className="text-danger-3">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -336,7 +336,7 @@ export default function EditAccountModal({
                                             if (error) setError(null);
                                         }}
                                         placeholder="Re-enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
                                     />
                                     <button
                                         type="button"
@@ -350,13 +350,13 @@ export default function EditAccountModal({
                                                 ? 'Hide password'
                                                 : 'Show password'
                                         }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                                     >
                                         <EyeIcon
                                             className={`w-4 h-4 ${
                                                 showConfirmPassword
-                                                    ? 'text-[#171717]'
-                                                    : 'text-[#828282]'
+                                                    ? 'text-ink'
+                                                    : 'text-ink-placeholder'
                                             }`}
                                         />
                                     </button>
@@ -369,10 +369,10 @@ export default function EditAccountModal({
                     <div className="pt-2 border-t border-gray-200">
                         <label
                             htmlFor="modal-current-password-input"
-                            className="block text-xs font-medium text-[#171717] mb-1"
+                            className="block type-xs font-medium text-ink mb-1"
                         >
                             Current Password{' '}
-                            <span className="text-[#CE473E]">*</span>
+                            <span className="text-danger-3">*</span>
                         </label>
                         <div className="relative">
                             <input
@@ -384,7 +384,7 @@ export default function EditAccountModal({
                                     if (error) setError(null);
                                 }}
                                 placeholder="Enter current password"
-                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-[#497B93] bg-white text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-brand"
                             />
                             <button
                                 type="button"
@@ -396,13 +396,13 @@ export default function EditAccountModal({
                                         ? 'Hide password'
                                         : 'Show password'
                                 }
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#666666] hover:text-[#171717] transition-colors cursor-pointer rounded"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                             >
                                 <EyeIcon
                                     className={`w-4 h-4 ${
                                         showCurrentPassword
-                                            ? 'text-[#171717]'
-                                            : 'text-[#828282]'
+                                            ? 'text-ink'
+                                            : 'text-ink-placeholder'
                                     }`}
                                 />
                             </button>
@@ -415,14 +415,14 @@ export default function EditAccountModal({
                             type="button"
                             onClick={onClose}
                             disabled={isSaving}
-                            className="rounded-status border border-[#497B93] px-5 py-2 text-xs font-semibold text-[#497B93] hover:bg-[#497B93]/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-status border border-brand px-5 py-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSaving}
-                            className="rounded-status bg-[#3F6B80] px-6 py-2 text-xs font-semibold text-[#FFFDF9] hover:bg-[#34596b] transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-alt-1 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {isSaving ? 'Saving…' : 'Save'}
                         </button>

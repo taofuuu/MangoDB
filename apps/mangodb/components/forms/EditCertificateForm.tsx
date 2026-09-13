@@ -178,33 +178,33 @@ function EditCertificateDialog({
             isBusy={isSubmitting}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            panelClassName="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
+            panelClassName="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
         >
             {/* -------------header----------------- */}
             <div className="flex items-center justify-between">
-                <h2 id={titleId} className="text-lg font-semibold">
+                <h2 id={titleId} className="type-lg font-semibold">
                     Edit license or certification
                 </h2>
 
                 <button
                     type="button"
                     onClick={onClose}
-                    className="text-[#828282] hover:text-gray-800"
+                    className="text-ink-placeholder hover:text-gray-800"
                 >
                     ✕
                 </button>
             </div>
 
             {/* ----------------element-1----------------- */}
-            <hr className="border-[#3F6B80]/50 my-2" />
+            <hr className="border-brand-dark/50 my-2" />
             <div>
-                <label className="my-2 block text-sm !text-[12px]">
+                <label className="my-2 block type-sm !text-[12px]">
                     *Indicates required
                 </label>
             </div>
 
             {error && (
-                <div className="mb-3 rounded-lg bg-red-50 p-2.5 text-xs text-[#C5483E] whitespace-pre-line border border-red-200">
+                <div className="mb-3 rounded-lg bg-red-50 p-2.5 type-xs text-danger-2 whitespace-pre-line border border-red-200">
                     {error}
                 </div>
             )}
@@ -213,7 +213,7 @@ function EditCertificateDialog({
                 <div className="space-y-3">
                     {/* Name */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Name*
                         </label>
 
@@ -221,14 +221,14 @@ function EditCertificateDialog({
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft certified network associate security"
                             required
                         />
                     </div>
                     {/* Organization */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Issuing organization*
                         </label>
 
@@ -236,7 +236,7 @@ function EditCertificateDialog({
                             type="text"
                             value={organize}
                             onChange={(e) => setOrganize(e.target.value)}
-                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft"
                             required
                         />
@@ -244,13 +244,13 @@ function EditCertificateDialog({
 
                     {/* Issue date */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Issue date
                         </label>
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                <label className="block type-xs text-ink-faint mb-1 font-normal">
                                     Month
                                 </label>
 
@@ -262,7 +262,7 @@ function EditCertificateDialog({
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                <label className="block type-xs text-ink-faint mb-1 font-normal">
                                     Year
                                 </label>
 
@@ -277,13 +277,13 @@ function EditCertificateDialog({
                     </div>
                     {/* Expiration date */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Expiration date
                         </label>
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                <label className="block type-xs text-ink-faint mb-1 font-normal">
                                     Month
                                 </label>
 
@@ -295,7 +295,7 @@ function EditCertificateDialog({
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="block text-xs text-[#757575] mb-1 font-normal">
+                                <label className="block type-xs text-ink-faint mb-1 font-normal">
                                     Year
                                 </label>
 
@@ -310,7 +310,7 @@ function EditCertificateDialog({
                     </div>
                     {/* Credential ID */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Credential ID
                         </label>
 
@@ -318,13 +318,13 @@ function EditCertificateDialog({
                             type="text"
                             value={credID}
                             onChange={(e) => setCredID(e.target.value)}
-                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: AZ-900-123456"
                         />
                     </div>
                     {/* Credential URL */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Credential URL
                         </label>
 
@@ -332,20 +332,20 @@ function EditCertificateDialog({
                             type="url"
                             value={credURL}
                             onChange={(e) => setCredURL(e.target.value)}
-                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="https://learn.microsoft.com/..."
                         />
                     </div>
                     {initialData?.certImage && !file && (
                         <div className="mt-2">
-                            <p className="mb-1 text-sm">
+                            <p className="mb-1 type-sm">
                                 Current certificate image
                             </p>
 
                             <img
                                 src={initialData.certImage}
                                 alt="Current certificate"
-                                className="h-32 w-48 rounded-lg border border-[#497B93] object-contain"
+                                className="h-32 w-48 rounded-lg border border-brand object-contain"
                             />
                         </div>
                     )}
@@ -356,13 +356,13 @@ function EditCertificateDialog({
                     />
                 </div>
 
-                <hr className="border-[#3F6B80]/50 my-4" />
+                <hr className="border-brand-dark/50 my-4" />
                 {/* -----------------footer----------------- */}
                 <div className="flex justify-end items-center gap-3 pt-1">
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-status bg-[#3F6B80] px-6 h-[4vh] text-[#FFFDF9] text-sm font-medium hover:bg-[#34596b] transition-colors disabled:opacity-50 min-w-[80px]"
+                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm font-medium hover:bg-brand-alt-1 transition-colors disabled:opacity-50 min-w-[80px]"
                     >
                         {isSubmitting ? 'Saving...' : 'Save'}
                     </button>

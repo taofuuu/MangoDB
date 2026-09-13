@@ -83,7 +83,7 @@ export default function LoginForm() {
                 />
                 <Link
                     href="/forgot-password"
-                    className="self-end text-xs text-[#D9603B] hover:underline"
+                    className="self-end type-xs text-orange hover:underline"
                 >
                     Forgot Password ?
                 </Link>
@@ -93,7 +93,7 @@ export default function LoginForm() {
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
-                className={`text-sm text-red-600 min-h-5 -mt-2 ${
+                className={`type-sm text-red-600 min-h-5 -mt-2 ${
                     error ? 'visible' : 'invisible'
                 }`}
             >
@@ -104,16 +104,16 @@ export default function LoginForm() {
                 type="submit"
                 isLoading={isSubmitting}
                 loadingLabel="Logging in…"
-                className="-mt-2 w-full py-3 text-sm !font-[600]"
+                className="-mt-2 w-full py-3 type-sm !font-[600]"
             >
                 log in
             </Button>
 
-            <p className="text-center text-sm text-gray-700">
+            <p className="text-center type-sm text-gray-700">
                 Don&apos;t have an account?{' '}
                 <Link
                     href="/register"
-                    className="font-medium text-[#D9603B] hover:underline"
+                    className="font-medium text-orange hover:underline"
                 >
                     Sign Up
                 </Link>

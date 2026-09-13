@@ -83,7 +83,7 @@ export default function FileUpload({
                     className="ml-1 mt-2"
                 />
 
-                <span className="mt-2 max-w-full truncate px-2 text-sm !font-[500] underline">
+                <span className="mt-2 max-w-full truncate px-2 type-sm !font-[500] underline">
                     {value?.name ?? label}
                 </span>
             </button>

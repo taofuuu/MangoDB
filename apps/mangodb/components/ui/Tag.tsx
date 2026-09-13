@@ -12,7 +12,7 @@ type TagProps = {
 export default function Tag({ label, onRemove, className = '' }: TagProps) {
     return (
         <span
-            className={`inline-flex h-[3.33vh] items-center justify-center gap-[0.42vw] rounded-status px-[0.94vw] text-md whitespace-nowrap ${className}`}
+            className={`inline-flex h-[3.33vh] items-center justify-center gap-[0.42vw] rounded-status px-[0.94vw] type-md whitespace-nowrap ${className}`}
         >
             {label}
 

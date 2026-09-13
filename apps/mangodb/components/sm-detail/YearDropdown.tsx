@@ -27,17 +27,17 @@ export default function YearDropdown({
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="h-[4.89vh] w-[19.79vw] px-1.5 flex w-full items-center justify-between rounded-input border border-[#3F6B80] bg-[#FFFFFF]/80"
+                className="h-[4.89vh] px-1.5 flex w-full items-center justify-between rounded-input border border-brand-dark bg-surface-white/80"
             >
                 <span
                     className={
-                        value ? 'text-black text-sm' : 'text-[#D6D6D6] text-sm'
+                        value ? 'text-black type-sm' : 'text-line type-sm'
                     }
                 >
                     {value || 'Select year'}
                 </span>
 
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-md text-[#757575]">
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 type-md text-ink-faint">
                     ▼
                 </span>
             </button>
@@ -54,7 +54,7 @@ export default function YearDropdown({
                                     onChange(String(year));
                                     setOpen(false);
                                 }}
-                                className="block w-full px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                                className="block w-full px-3 py-2 type-sm text-gray-800 hover:bg-gray-100"
                             >
                                 {year}
                             </button>

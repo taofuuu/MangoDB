@@ -8,15 +8,15 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-[#FBFBFB] px-[4.17vw] py-[5.56vh]">
+        <main className="flex min-h-screen items-center justify-center bg-surface-soft px-[4.17vw] py-[5.56vh]">
             <section
                 aria-labelledby="admin-login-title"
-                className="w-full max-w-[36.60vw] overflow-hidden rounded-button bg-[#FFFDF9] shadow-[0_0.56vh_2.22vh_rgba(0,0,0,0.10)] max-lg:max-w-[52vw] max-md:max-w-[90vw]"
+                className="w-full max-w-[36.60vw] overflow-hidden rounded-button bg-surface shadow-[0_0.56vh_2.22vh_rgba(0,0,0,0.10)] max-lg:max-w-[52vw] max-md:max-w-[90vw]"
             >
-                <header className="border-b border-[#E5E5E5] px-[2.08vw] py-[2.04vh] text-center">
+                <header className="border-b border-line-soft px-[2.08vw] py-[2.04vh] text-center">
                     <h1
                         id="admin-login-title"
-                        className="text-lg !font-[700] text-[#171717]"
+                        className="type-lg !font-[700] text-ink"
                     >
                         Administrator Login
                     </h1>
@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
                                 priority
                                 className="h-[20vh] min-h-[64px] w-auto"
                             />
-                            <p className="text-hd !font-[700] text-[#171717]">
+                            <p className="type-hd !font-[700] text-ink">
                                 MangoDB
                             </p>
                         </div>

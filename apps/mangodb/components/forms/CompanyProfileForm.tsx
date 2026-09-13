@@ -156,7 +156,7 @@ export default function CompanyProfileForm({
         // browser's own check on type="email" silently blocks submit and shows
         // its own tooltip, which skips the error slots under each field.
         <form onSubmit={handleSubmit} noValidate>
-            <h1 className="pl-[1.88vw] text-hd leading-none">Edit Profile</h1>
+            <h1 className="pl-[1.88vw] type-hd leading-none">Edit Profile</h1>
 
             <div className="mt-[1.85vh] flex">
                 <div className="w-[17.99vw] shrink-0">
@@ -218,17 +218,17 @@ export default function CompanyProfileForm({
                         delete handler for the account being edited. */}
                     {onDeleteAccount && (
                         <div className="mt-[3.09vh]">
-                            <h2 className="border-b border-[#C5483B]/40 pb-[0.74vh] text-md !font-[600] text-[#C5483B]">
+                            <h2 className="border-b border-danger/40 pb-[0.74vh] type-md !font-[600] text-danger">
                                 Delete account
                             </h2>
-                            <p className="mt-[1.11vh] text-sm !font-[400] text-[#666666]">
+                            <p className="mt-[1.11vh] type-sm !font-[400] text-ink-soft">
                                 Once you delete this account, there is no going
                                 back. Please be certain.
                             </p>
                             <Button
                                 variant="danger"
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] text-sm"
+                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] type-sm"
                             >
                                 Delete this account
                             </Button>
@@ -301,7 +301,7 @@ export default function CompanyProfileForm({
                     variant="outline"
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="h-[7.04vh] w-[13.91vw] cursor-pointer text-md"
+                    className="h-[7.04vh] w-[13.91vw] cursor-pointer type-md"
                 >
                     Cancel
                 </Button>
@@ -309,7 +309,7 @@ export default function CompanyProfileForm({
                 <Button
                     type="submit"
                     disabled={isSaving}
-                    className="h-[7.13vh] w-[13.96vw] cursor-pointer text-md"
+                    className="h-[7.13vh] w-[13.96vw] cursor-pointer type-md"
                 >
                     {isSaving ? 'Saving…' : 'Save Changes'}
                 </Button>

@@ -46,7 +46,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                 {/* Left Profile Info */}
                 <div className="flex flex-col items-center text-center md:w-1/3 border-r-0 md:border-r border-gray-200 pr-0 md:pr-8 justify-center py-4">
                     {/* Logo */}
-                    <div className="w-24 h-24 bg-[#FFC107] rounded-full flex items-center justify-center font-bold text-[#E53E3E] text-3xl shadow-inner mb-4">
+                    <div className="w-24 h-24 bg-accent-3 rounded-full flex items-center justify-center font-bold text-danger-bright text-3xl shadow-inner mb-4">
                         CP
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
@@ -54,7 +54,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                     </h2>
 
                     {/* Contact Info */}
-                    <div className="text-xs text-gray-600 space-y-1">
+                    <div className="type-xs text-gray-600 space-y-1">
                         <p>{data.email}</p>
                         <p>{data.website}</p>
                         <p>{data.phone}</p>
@@ -67,7 +67,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                         <div>
                             <label
                                 htmlFor="company-description"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
+                                className="block type-xs font-semibold text-gray-800 mb-1"
                             >
                                 Company Description
                             </label>
@@ -75,14 +75,14 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-description"
                                 readOnly
                                 value={data.description}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                                className="w-full h-20 p-3 type-xs border border-brand/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor="company-type"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
+                                className="block type-xs font-semibold text-gray-800 mb-1"
                             >
                                 Company Type
                             </label>
@@ -90,14 +90,14 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-type"
                                 readOnly
                                 value={data.type}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                                className="w-full h-20 p-3 type-xs border border-brand/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor="company-service-term"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
+                                className="block type-xs font-semibold text-gray-800 mb-1"
                             >
                                 Company Service Term
                             </label>
@@ -105,14 +105,14 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-service-term"
                                 readOnly
                                 value={data.serviceTerm}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                                className="w-full h-20 p-3 type-xs border border-brand/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor="company-warranty-policy"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
+                                className="block type-xs font-semibold text-gray-800 mb-1"
                             >
                                 Company Warranty Policy
                             </label>
@@ -120,14 +120,14 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-warranty-policy"
                                 readOnly
                                 value={data.warrantyPolicy}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                                className="w-full h-20 p-3 type-xs border border-brand/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
 
                         <div className="md:col-span-2">
                             <label
                                 htmlFor="company-address"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
+                                className="block type-xs font-semibold text-gray-800 mb-1"
                             >
                                 Company Address
                             </label>
@@ -135,7 +135,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-address"
                                 readOnly
                                 value={data.address}
-                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                                className="w-full h-20 p-3 type-xs border border-brand/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
                     </div>
@@ -146,7 +146,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
             <div className="flex justify-end absolute bottom-6 right-8">
                 <Link
                     href="/profile/edit"
-                    className="px-6 py-1.5 bg-[#497B93] hover:bg-[#3b6478] text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                    className="px-6 py-1.5 bg-brand hover:bg-brand-alt-2 text-white type-xs font-medium rounded-lg transition-colors shadow-sm"
                 >
                     Edit
                 </Link>

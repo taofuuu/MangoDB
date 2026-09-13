@@ -50,8 +50,8 @@ export default function RoleStep({ value, onChange }: RoleStepProps) {
                         aria-pressed={selected}
                         className={`flex w-full items-center gap-5 rounded-button border p-2 text-left transition ${
                             selected
-                                ? 'border-[#FEC84A] bg-[#FEC84A] shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
-                                : 'border-[#497B93] bg-[#FFFDF9] hover:bg-[#FFF5DC]'
+                                ? 'border-accent-2 bg-accent-2 shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
+                                : 'border-brand bg-surface hover:bg-accent-tint'
                         }`}
                     >
                         <span className="h-20 w-20 shrink-0 overflow-hidden rounded-[6px]">
@@ -63,9 +63,9 @@ export default function RoleStep({ value, onChange }: RoleStepProps) {
                         </span>
 
                         <span className="min-w-0">
-                            <span className="block text-md">{role.title}</span>
+                            <span className="block type-md">{role.title}</span>
 
-                            <span className="block whitespace-pre-line text-sm">
+                            <span className="block whitespace-pre-line type-sm">
                                 {role.description}
                             </span>
                         </span>

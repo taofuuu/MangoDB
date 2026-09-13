@@ -66,14 +66,14 @@ export default function PortfolioPage() {
     };
 
     return (
-        <main className="min-h-screen bg-[#FFFDF9] px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-[#171717] max-md:px-[5vw]">
+        <main className="min-h-screen bg-surface px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-ink max-md:px-[5vw]">
             <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">
                 <div>
-                    <h1 className="text-hd !text-[48px] leading-none">
+                    <h1 className="type-hd !text-[48px] leading-none">
                         Portfolio
                     </h1>
 
-                    <p className="mt-[1vh] text-lg !font-[400]">
+                    <p className="mt-[1vh] type-lg !font-[400]">
                         List of company&apos;s portfolio
                     </p>
                 </div>
@@ -82,7 +82,7 @@ export default function PortfolioPage() {
             </div>
 
             {loadError === NOT_SIGNED_IN && (
-                <p className="mt-[4.5vh] text-md !font-[400]">
+                <p className="mt-[4.5vh] type-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -92,17 +92,17 @@ export default function PortfolioPage() {
             )}
 
             {loadError && loadError !== NOT_SIGNED_IN && (
-                <p className="mt-[4.5vh] text-md !font-[400] text-[#C5483B]">
+                <p className="mt-[4.5vh] type-md !font-[400] text-danger">
                     {loadError}
                 </p>
             )}
 
             {!loadError && !items && (
-                <p className="mt-[4.5vh] text-md !font-[400]">Loading…</p>
+                <p className="mt-[4.5vh] type-md !font-[400]">Loading…</p>
             )}
 
             {items?.length === 0 && (
-                <p className="mt-[4.5vh] text-md !font-[400] text-[#757575]">
+                <p className="mt-[4.5vh] type-md !font-[400] text-ink-faint">
                     No portfolio items yet.
                 </p>
             )}

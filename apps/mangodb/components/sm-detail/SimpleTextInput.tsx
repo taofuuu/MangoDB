@@ -61,9 +61,9 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
 
     return (
         <div style={styles.container}>
-            <label className="text-sm">
+            <label className="type-sm">
                 {title}
-                {required && <span className="ml-1 text-[#C5483B]">*</span>}
+                {required && <span className="ml-1 text-danger">*</span>}
             </label>
 
             <input
@@ -78,7 +78,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
                 }}
                 placeholder="Type here..."
             />
-            {error && <p className="mt-1 text-xs text-[#C5483B]">{error}</p>}
+            {error && <p className="mt-1 type-xs text-danger">{error}</p>}
         </div>
     );
 };

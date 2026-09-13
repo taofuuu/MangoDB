@@ -17,7 +17,7 @@ export default function PortfolioCard({
     onDelete,
 }: PortfolioCardProps) {
     return (
-        <div className="relative flex h-[37.13vh] w-[18.23vw] flex-col rounded-[2px] border border-[#EAEAEA] bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
+        <div className="relative flex h-[37.13vh] flex-col rounded-[2px] border border-line-softer bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
             {/* Covers the card so any spot but Edit or Delete opens it. z-10
                 keeps it above the image, which is positioned and would
                 swallow clicks. An anchor, not a button: middle-click, copy
@@ -27,14 +27,14 @@ export default function PortfolioCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${item.portfolioName}`}
-                className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
+                className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
             />
 
-            <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
+            <h2 className="type-lg leading-tight !font-[700] text-ink">
                 {item.portfolioName}
             </h2>
 
-            <p className="mt-[0.3vh] text-md leading-snug !font-[400] text-[#757575]">
+            <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-faint">
                 {item.portfolioDescription}
             </p>
 
@@ -56,14 +56,14 @@ export default function PortfolioCard({
                     <button
                         type="button"
                         onClick={() => onEdit(item)}
-                        className="text-sm !font-[600] text-[#497B93] transition-colors hover:text-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                        className="type-sm !font-[600] text-brand transition-colors hover:text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                         Edit
                     </button>
                     <button
                         type="button"
                         onClick={() => onDelete(item)}
-                        className="text-sm !font-[600] text-[#C5483E] transition-colors hover:text-[#B93D35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5483E]"
+                        className="type-sm !font-[600] text-danger-2 transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-2"
                     >
                         Delete
                     </button>

@@ -46,7 +46,7 @@ export default function DeleteCertificateForm({
                 certificate?.name ? (
                     <span>
                         Are you sure you want to delete{' '}
-                        <strong className="font-semibold text-[#171717]">
+                        <strong className="font-semibold text-ink">
                             &ldquo;{certificate.name}&rdquo;
                         </strong>
                         ? This action cannot be undone.

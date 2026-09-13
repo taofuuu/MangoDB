@@ -17,7 +17,7 @@ export default function PortfolioRow({
     onDelete,
 }: PortfolioRowProps) {
     return (
-        <div className="relative flex w-full items-center gap-[1.25vw] rounded-[2px] border border-[#EAEAEA] bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
+        <div className="relative flex w-full items-center gap-[1.25vw] rounded-[2px] border border-line-softer bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
             {/* Covers the row so any spot but Edit or Delete opens it. z-10
                 keeps it above the image, which is positioned and would
                 swallow clicks. An anchor, not a button: middle-click, copy
@@ -27,7 +27,7 @@ export default function PortfolioRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${item.portfolioName}`}
-                className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]"
+                className="absolute inset-0 z-10 rounded-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
             />
 
             <div className="relative h-[9.26vh] w-[9.9vw] shrink-0 overflow-hidden rounded-[4px]">
@@ -41,11 +41,11 @@ export default function PortfolioRow({
             </div>
 
             <div className="min-w-0">
-                <h2 className="text-lg leading-tight !font-[700] text-[#171717]">
+                <h2 className="type-lg leading-tight !font-[700] text-ink">
                     {item.portfolioName}
                 </h2>
 
-                <p className="mt-[0.3vh] text-md leading-snug !font-[400] text-[#757575]">
+                <p className="mt-[0.3vh] type-md leading-snug !font-[400] text-ink-faint">
                     {item.portfolioDescription}
                 </p>
             </div>
@@ -57,14 +57,14 @@ export default function PortfolioRow({
                     <button
                         type="button"
                         onClick={() => onEdit(item)}
-                        className="text-sm !font-[600] text-[#497B93] transition-colors hover:text-[#3F6B80] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                        className="type-sm !font-[600] text-brand transition-colors hover:text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                         Edit
                     </button>
                     <button
                         type="button"
                         onClick={() => onDelete(item)}
-                        className="text-sm !font-[600] text-[#C5483E] transition-colors hover:text-[#B93D35] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5483E]"
+                        className="type-sm !font-[600] text-danger-2 transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-2"
                     >
                         Delete
                     </button>

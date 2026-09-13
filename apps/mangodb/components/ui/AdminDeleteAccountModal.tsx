@@ -43,7 +43,7 @@ function AdminDeleteAccountDialog({
             confirmDisabled={!canConfirm}
             onConfirm={onConfirm ? () => onConfirm(password) : undefined}
             icon={
-                <div className="w-[4.8vw] h-[4.8vw] min-w-[56px] min-h-[56px] max-w-[72px] max-h-[72px] rounded-full bg-[#F0D1C9] flex items-center justify-center">
+                <div className="w-[4.8vw] h-[4.8vw] min-w-[56px] min-h-[56px] max-w-[72px] max-h-[72px] rounded-full bg-danger-tint flex items-center justify-center">
                     <Image
                         src={binIcon}
                         alt=""
@@ -53,13 +53,13 @@ function AdminDeleteAccountDialog({
             }
             description={
                 <>
-                    <p className="text-xs text-[#C6473A] text-center mt-[0.8vh] leading-snug">
+                    <p className="type-xs text-danger-4 text-center mt-[0.8vh] leading-snug">
                         <strong className="!font-[700]">WARNING</strong> this is
                         permanent and
                         <br />
                         cannot be undone!
                     </p>
-                    <p className="text-xs text-[#171717] mt-[2.2vh] leading-relaxed">
+                    <p className="type-xs text-ink mt-[2.2vh] leading-relaxed">
                         This account will lose access immediately and cannot be
                         restored. Its listings, proposals, projects, and reviews
                         stay in place, so other companies keep the history that
@@ -71,7 +71,7 @@ function AdminDeleteAccountDialog({
             <div className="mt-[2.2vh]">
                 <label
                     htmlFor={passwordId}
-                    className="block text-xs font-medium text-[#171717] mb-[0.8vh]"
+                    className="block type-xs font-medium text-ink mb-[0.8vh]"
                 >
                     Enter your admin password to confirm
                 </label>
@@ -85,7 +85,7 @@ function AdminDeleteAccountDialog({
                     onKeyDown={(event) => {
                         if (event.key === 'Enter') event.preventDefault();
                     }}
-                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-[#171717] bg-transparent text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#171717] disabled:opacity-60"
+                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>
         </DeleteConfirmationModal>

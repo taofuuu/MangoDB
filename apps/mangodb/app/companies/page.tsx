@@ -165,14 +165,14 @@ export default function CompaniesPage() {
     const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
-        <main className="min-h-screen bg-[#FBFBFB] px-[1.67vw] py-[2.96vh]">
+        <main className="min-h-screen bg-surface-soft px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto max-w-[93.75vw]">
                 <header className="mb-[2.96vh] flex flex-wrap items-start justify-between gap-[1.67vw]">
                     <div>
-                        <h1 className="text-hd leading-tight text-[#171717]">
+                        <h1 className="type-hd leading-tight text-ink">
                             Companies
                         </h1>
-                        <p className="mt-[0.37vh] text-lg !font-[400] text-[#666666]">
+                        <p className="mt-[0.37vh] type-lg !font-[400] text-ink-soft">
                             List of companies on the platform
                         </p>
                     </div>
@@ -181,7 +181,7 @@ export default function CompaniesPage() {
                         <div className="relative flex items-center">
                             <Search
                                 aria-hidden="true"
-                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-[#888888]"
+                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-ink-placeholder-2"
                             />
                             <input
                                 type="text"
@@ -192,14 +192,14 @@ export default function CompaniesPage() {
                                 maxLength={100}
                                 placeholder="Search companies..."
                                 aria-label="Search companies by keyword"
-                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-[#E5E5E5] bg-white pl-[1.88vw] pr-[1.67vw] text-xs text-[#171717] placeholder:text-[#888888] focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93] focus:outline-none"
+                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-line-soft bg-white pl-[1.88vw] pr-[1.67vw] type-xs text-ink placeholder:text-ink-placeholder-2 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                             />
                             {searchQuery && (
                                 <button
                                     type="button"
                                     onClick={clearSearch}
                                     aria-label="Clear search"
-                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-[#888888] hover:bg-[#EDEDED] hover:text-[#171717] focus-visible:outline-none"
+                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-ink-placeholder-2 hover:bg-line-faint hover:text-ink focus-visible:outline-none"
                                 >
                                     <X
                                         aria-hidden="true"
@@ -216,12 +216,12 @@ export default function CompaniesPage() {
                                 aria-expanded={isFilterOpen}
                                 aria-haspopup="listbox"
                                 aria-label="Filter companies by account type"
-                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-[#E5E5E5] bg-white px-[0.63vw] text-xs !font-[500] text-[#171717] hover:bg-[#F5F5F5] focus-visible:ring-2 focus-visible:ring-[#497B93] focus-visible:outline-none"
+                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-line-soft bg-white px-[0.63vw] type-xs !font-[500] text-ink hover:bg-line-fainter focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                             >
                                 {filter}
                                 <ChevronDown
                                     aria-hidden="true"
-                                    className={`h-[1.30vh] w-[0.73vw] text-[#666666] transition-transform duration-200 ${
+                                    className={`h-[1.30vh] w-[0.73vw] text-ink-soft transition-transform duration-200 ${
                                         isFilterOpen ? 'rotate-180' : ''
                                     }`}
                                 />
@@ -231,7 +231,7 @@ export default function CompaniesPage() {
                                 <div
                                     role="listbox"
                                     aria-label="Account type options"
-                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-[#E5E5E5] bg-white py-[0.37vh] shadow-md"
+                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-line-soft bg-white py-[0.37vh] shadow-md"
                                 >
                                     {FILTER_OPTIONS.map((option) => (
                                         <button
@@ -244,10 +244,10 @@ export default function CompaniesPage() {
                                             onClick={() =>
                                                 handleFilterSelect(option.value)
                                             }
-                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left text-xs !font-[500] transition-colors hover:bg-[#F5F5F5] ${
+                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left type-xs !font-[500] transition-colors hover:bg-line-fainter ${
                                                 filter === option.value
-                                                    ? 'bg-[#497B93]/10 font-semibold text-[#497B93]'
-                                                    : 'text-[#171717]'
+                                                    ? 'bg-brand/10 font-semibold text-brand'
+                                                    : 'text-ink'
                                             }`}
                                         >
                                             {option.label}
@@ -262,13 +262,13 @@ export default function CompaniesPage() {
                 {error && (
                     <div
                         role="alert"
-                        className="rounded-button border border-[#C5483B]/30 bg-[#C5483B]/5 px-[1.25vw] py-[1.48vh] text-sm text-[#C5483B]"
+                        className="rounded-button border border-danger/30 bg-danger/5 px-[1.25vw] py-[1.48vh] type-sm text-danger"
                     >
                         <p>{error}</p>
                         <Button
                             variant="outline"
                             onClick={retryList}
-                            className="mt-[1.11vh] h-[4.07vh] px-[1.04vw] text-sm"
+                            className="mt-[1.11vh] h-[4.07vh] px-[1.04vw] type-sm"
                         >
                             Try again
                         </Button>
@@ -288,7 +288,7 @@ export default function CompaniesPage() {
                                 {Array.from({ length: 8 }).map((_, index) => (
                                     <div
                                         key={index}
-                                        className="h-[28.70vh] animate-pulse rounded-input bg-[#EDEDED]"
+                                        className="h-[28.70vh] animate-pulse rounded-input bg-line-faint"
                                     />
                                 ))}
                             </div>
@@ -303,7 +303,7 @@ export default function CompaniesPage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="py-[9.26vh] text-center text-md text-[#666666]">
+                            <p className="py-[9.26vh] text-center type-md text-ink-soft">
                                 {debouncedSearch || filter !== 'ALL'
                                     ? 'No Company accounts found matching your search or filter.'
                                     : 'No Company accounts found.'}
@@ -317,7 +317,7 @@ export default function CompaniesPage() {
                         aria-label="Company account pages"
                         className="mt-[2.22vh] flex items-center justify-between gap-[1.04vw]"
                     >
-                        <p className="text-sm text-[#666666]">
+                        <p className="type-sm text-ink-soft">
                             Showing {(page - 1) * pagination.pageSize + 1}–
                             {Math.min(
                                 page * pagination.pageSize,
@@ -330,18 +330,18 @@ export default function CompaniesPage() {
                                 variant="outline"
                                 disabled={!hasPreviousPage || isLoading}
                                 onClick={() => changePage(page - 1)}
-                                className="h-[4.63vh] px-[1.04vw] text-sm"
+                                className="h-[4.63vh] px-[1.04vw] type-sm"
                             >
                                 Previous
                             </Button>
-                            <span className="min-w-[5.21vw] text-center text-sm text-[#4B4B4B]">
+                            <span className="min-w-[5.21vw] text-center type-sm text-ink-muted">
                                 Page {page} of {pagination.totalPages}
                             </span>
                             <Button
                                 variant="outline"
                                 disabled={!hasNextPage || isLoading}
                                 onClick={() => changePage(page + 1)}
-                                className="h-[4.63vh] px-[1.04vw] text-sm"
+                                className="h-[4.63vh] px-[1.04vw] type-sm"
                             >
                                 Next
                             </Button>

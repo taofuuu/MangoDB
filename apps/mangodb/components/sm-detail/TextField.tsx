@@ -8,13 +8,13 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
     ({ label, id, className = '', ...rest }, ref) => {
         return (
             <div className="flex flex-col gap-1.5">
-                <label htmlFor={id} className="text-sm text-gray-800">
+                <label htmlFor={id} className="type-sm text-gray-800">
                     {label}
                 </label>
                 <input
                     ref={ref}
                     id={id}
-                    className={`h-[4.89vh] w-[19.79vw] px-1.5 flex w-full items-center justify-between rounded-input border border-[#3F6B80] bg-[#FFFFFF]/80`}
+                    className={`h-[4.89vh] px-1.5 flex w-full items-center justify-between rounded-input border border-brand-dark bg-surface-white/80`}
                     {...rest}
                 />
             </div>

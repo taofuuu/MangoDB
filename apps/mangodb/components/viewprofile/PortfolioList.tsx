@@ -79,13 +79,13 @@ export default function PortfolioCertificateList({
     return (
         <div className="bg-white rounded-button p-5 border border-gray-200 shadow-sm font-sans">
             {/* Tab Switcher */}
-            <div className="bg-gray-100 p-1 rounded-button flex w-60 mb-4 text-xs">
+            <div className="bg-gray-100 p-1 rounded-button flex w-60 mb-4 type-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'portfolio'
-                            ? 'bg-white shadow text-[#497B93]'
+                            ? 'bg-white shadow text-brand'
                             : 'text-gray-500 hover:text-gray-700'
                     }`}
                 >
@@ -96,7 +96,7 @@ export default function PortfolioCertificateList({
                     onClick={() => setActiveTab('certificates')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'certificates'
-                            ? 'bg-white shadow text-[#497B93]'
+                            ? 'bg-white shadow text-brand'
                             : 'text-gray-500 hover:text-gray-700'
                     }`}
                 >
@@ -105,18 +105,18 @@ export default function PortfolioCertificateList({
             </div>
 
             {/* Title Header */}
-            <h3 className="text-sm !font-bold text-gray-800 mb-3 capitalize">
+            <h3 className="type-sm !font-bold text-gray-800 mb-3 capitalize">
                 {activeTab === 'portfolio' ? 'Portfolio' : 'Certificates'}
             </h3>
 
             {loadError && (
-                <p className="text-xs text-[#C5483E] mb-2">{loadError}</p>
+                <p className="type-xs text-danger-2 mb-2">{loadError}</p>
             )}
 
             {/* List Display */}
             <div className="divide-y divide-gray-100">
                 {visibleItems.length === 0 && !loadError && (
-                    <p className="py-2 text-xs text-gray-400">
+                    <p className="py-2 type-xs text-gray-400">
                         {activeTab === 'portfolio'
                             ? 'No portfolio items yet.'
                             : 'No certificates yet.'}
@@ -125,16 +125,16 @@ export default function PortfolioCertificateList({
                 {visibleItems.map((item) => (
                     <div
                         key={item.id}
-                        className="py-2 flex justify-between items-center text-xs"
+                        className="py-2 flex justify-between items-center type-xs"
                     >
                         <span className="font-medium text-gray-700">
                             {item.title}
                         </span>
                         <div className="flex items-center gap-6">
-                            <span className="text-gray-400 text-xs">
+                            <span className="text-gray-400 type-xs">
                                 {item.date}
                             </span>
-                            <button className="text-[#497B93] hover:underline">
+                            <button className="text-brand hover:underline">
                                 Details
                             </button>
                         </div>
@@ -146,7 +146,7 @@ export default function PortfolioCertificateList({
                 <div className="mt-3 text-right">
                     <Link
                         href={seeMoreHref}
-                        className="text-xs text-[#497B93] hover:underline font-medium"
+                        className="type-xs text-brand hover:underline font-medium"
                     >
                         See more
                     </Link>

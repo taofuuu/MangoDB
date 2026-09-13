@@ -15,8 +15,8 @@ const ROLES: Record<AccountType, string[]> = {
 };
 
 const ROLE_FILL: Record<string, string> = {
-    Provider: 'bg-[#66A6C5] text-white',
-    Receiver: 'bg-[#D36B60] text-white',
+    Provider: 'bg-brand-light text-white',
+    Receiver: 'bg-danger-soft text-white',
 };
 
 type ProfilePhotoPanelProps = {
@@ -62,7 +62,7 @@ export default function ProfilePhotoPanel({
 
     return (
         <div className="flex flex-col items-center">
-            <div className="mt-[2.78vh] size-[15.63vw] overflow-hidden rounded-full bg-[#D9D9D9]">
+            <div className="mt-[2.78vh] size-[15.63vw] overflow-hidden rounded-full bg-fill-muted">
                 {photoUrl && (
                     // A blob: URL cannot go through next/image without turning
                     // off optimisation for it, which buys nothing here.
@@ -86,7 +86,7 @@ export default function ProfilePhotoPanel({
             <Button
                 variant="outline"
                 onClick={() => fileRef.current?.click()}
-                className="mt-[5.6vh] h-[5.46vh] w-[12.66vw] cursor-pointer text-md !font-[600]"
+                className="mt-[5.6vh] h-[5.46vh] w-[12.66vw] cursor-pointer type-md !font-[600]"
             >
                 Change Photo
             </Button>

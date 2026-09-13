@@ -28,7 +28,7 @@ export default function Textarea({
         <div>
             <label
                 htmlFor={inputId}
-                className="mb-[0.93vh] block text-md leading-[1.15]"
+                className="mb-[0.93vh] block type-md leading-[1.15]"
             >
                 {label}
             </label>
@@ -37,12 +37,12 @@ export default function Textarea({
                 id={inputId}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className={`custom-scrollbar block w-full resize-none rounded-button border-[0.75px] border-black bg-white px-[0.83vw] py-[1vh] text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:ring-1 focus:ring-[#497B93] focus:outline-none ${className}`}
+                className={`custom-scrollbar block w-full resize-none rounded-button border-[0.75px] border-black bg-white px-[0.83vw] py-[1vh] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none ${className}`}
                 {...props}
             />
 
             {error && (
-                <p className="mt-[0.46vh] text-sm text-[#C5483B]">{error}</p>
+                <p className="mt-[0.46vh] type-sm text-danger">{error}</p>
             )}
         </div>
     );

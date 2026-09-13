@@ -30,7 +30,7 @@ export default function ViewProfilePage() {
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
             {loadError === NOT_SIGNED_IN && (
-                <p className="text-sm">
+                <p className="type-sm">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -40,10 +40,10 @@ export default function ViewProfilePage() {
             )}
 
             {loadError && loadError !== NOT_SIGNED_IN && (
-                <p className="text-sm text-red-600">{loadError}</p>
+                <p className="type-sm text-red-600">{loadError}</p>
             )}
 
-            {!loadError && !profile && <p className="text-sm">Loading…</p>}
+            {!loadError && !profile && <p className="type-sm">Loading…</p>}
 
             {profile && (
                 <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">

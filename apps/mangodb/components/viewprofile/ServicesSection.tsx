@@ -37,13 +37,13 @@ export default function ServicesDashboard() {
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
             <main className="flex-1 bg-white rounded-button p-4 border border-gray-200 shadow-sm flex flex-col font-sans">
                 {/* Tab Switcher */}
-                <div className="bg-gray-100 p-1 rounded-button flex mb-4 text-xs">
+                <div className="bg-gray-100 p-1 rounded-button flex mb-4 type-xs">
                     <button
                         type="button"
                         onClick={() => setActiveTab('services')}
                         className={`flex-1 py-1.5 rounded-button font-medium transition ${
                             activeTab === 'services'
-                                ? 'bg-white shadow text-[#497B93]'
+                                ? 'bg-white shadow text-brand'
                                 : 'text-gray-500 hover:text-gray-700'
                         }`}
                     >
@@ -54,7 +54,7 @@ export default function ServicesDashboard() {
                         onClick={() => setActiveTab('jobs')}
                         className={`flex-1 py-1.5 rounded-button font-medium transition ${
                             activeTab === 'jobs'
-                                ? 'bg-white shadow text-[#497B93]'
+                                ? 'bg-white shadow text-brand'
                                 : 'text-gray-500 hover:text-gray-700'
                         }`}
                     >
@@ -67,14 +67,14 @@ export default function ServicesDashboard() {
                     {/* Item 1 */}
                     <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs !font-semibold text-gray-800">
+                            <span className="type-xs !font-semibold text-gray-800">
                                 {currentTabContent.title1 || 'Untitled Item'}
                             </span>
-                            <button className="text-xs text-[#497B93] hover:underline !font-medium">
+                            <button className="type-xs text-brand hover:underline !font-medium">
                                 Details
                             </button>
                         </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
+                        <p className="type-xs text-gray-600 leading-relaxed">
                             {currentTabContent.body1 ||
                                 'No description provided.'}
                         </p>
@@ -83,14 +83,14 @@ export default function ServicesDashboard() {
                     {/* Item 2 */}
                     <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs !font-semibold text-gray-800">
+                            <span className="type-xs !font-semibold text-gray-800">
                                 {currentTabContent.title2 || 'Untitled Item'}
                             </span>
-                            <button className="text-xs text-[#497B93] hover:underline !font-medium">
+                            <button className="type-xs text-brand hover:underline !font-medium">
                                 Details
                             </button>
                         </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
+                        <p className="type-xs text-gray-600 leading-relaxed">
                             {currentTabContent.body2 ||
                                 'No description provided.'}
                         </p>

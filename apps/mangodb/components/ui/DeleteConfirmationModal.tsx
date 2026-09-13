@@ -27,8 +27,8 @@ type DeleteConfirmationModalProps = DeleteModalProps & {
 };
 
 const CONFIRM_VARIANTS: Record<'danger' | 'primary', string> = {
-    danger: 'bg-[#C5483E] hover:bg-[#B93D35] focus-visible:outline-[#C5483E]',
-    primary: 'bg-[#497B93] hover:bg-[#3F6B80] focus-visible:outline-[#497B93]',
+    danger: 'bg-danger-2 hover:bg-danger-hover focus-visible:outline-danger-2',
+    primary: 'bg-brand hover:bg-brand-dark focus-visible:outline-brand',
 };
 
 export default function DeleteConfirmationModal({
@@ -116,7 +116,7 @@ function DeleteConfirmationDialog({
             role="alertdialog"
             labelledBy={titleId}
             describedBy={descriptionId}
-            panelClassName="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] overflow-y-auto bg-[#FFFDF9] text-[#171717] px-[1.8vw] py-[2.6vh] shadow-xl max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
+            panelClassName="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] overflow-y-auto bg-surface text-ink px-[1.8vw] py-[2.6vh] shadow-xl max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
         >
             <>
                 {layout === 'stacked' ? (
@@ -126,7 +126,7 @@ function DeleteConfirmationDialog({
                         </div>
                         <h2
                             id={titleId}
-                            className="text-md text-[#171717] !font-[600] text-center mt-[1.4vh]"
+                            className="type-md text-ink !font-[600] text-center mt-[1.4vh]"
                         >
                             {title}
                         </h2>
@@ -140,13 +140,13 @@ function DeleteConfirmationDialog({
                         <div>
                             <h2
                                 id={titleId}
-                                className="text-md text-[#171717] !font-[600]"
+                                className="type-md text-ink !font-[600]"
                             >
                                 {title}
                             </h2>
                             <p
                                 id={descriptionId}
-                                className="mt-[1.2vh] text-xs text-[#171717] !font-[400]"
+                                className="mt-[1.2vh] type-xs text-ink !font-[400]"
                             >
                                 {description}
                             </p>
@@ -156,15 +156,15 @@ function DeleteConfirmationDialog({
 
                 {children}
                 {error && (
-                    <p role="alert" className="mt-4 text-xs text-[#C5483E]">
+                    <p role="alert" className="mt-4 type-xs text-danger-2">
                         {error}
                     </p>
                 )}
                 <hr
                     className={
                         layout === 'stacked'
-                            ? 'my-[2.2vh] border-[#3F6B80]/20'
-                            : 'my-[2.6vh] border-[#3F6B80]/20'
+                            ? 'my-[2.2vh] border-brand-dark/20'
+                            : 'my-[2.6vh] border-brand-dark/20'
                     }
                 />
                 <div
@@ -180,8 +180,8 @@ function DeleteConfirmationDialog({
                         disabled={isBusy}
                         className={
                             layout === 'stacked'
-                                ? 'flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] border-0 px-3 bg-[#D9D9D9] text-xs text-[#756D6D] !font-[600] outline-none transition-colors hover:bg-[#CBCBCB] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
-                                : 'rounded-[14px] h-[3.8vh] min-h-[34px] w-[6.8vw] min-w-[105px] border-0 px-3 bg-[#D9D9D9] text-xs text-[#756D6D] !font-[600] outline-none transition-colors hover:bg-[#CBCBCB] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
+                                ? 'flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] border-0 px-3 bg-fill-muted type-xs text-ink-disabled !font-[600] outline-none transition-colors hover:bg-line-strong-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+                                : 'rounded-[14px] h-[3.8vh] min-h-[34px] min-w-[105px] border-0 px-3 bg-fill-muted type-xs text-ink-disabled !font-[600] outline-none transition-colors hover:bg-line-strong-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full'
                         }
                     >
                         {cancelLabel}
@@ -192,8 +192,8 @@ function DeleteConfirmationDialog({
                         disabled={isBusy || confirmDisabled}
                         className={
                             layout === 'stacked'
-                                ? `flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] px-2 text-xs text-[#FFFDF9] !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap ${CONFIRM_VARIANTS[confirmVariant]}`
-                                : `rounded-[14px] h-[3.8vh] min-h-[34px] w-[6.8vw] min-w-[105px] px-3 text-xs text-[#FFFDF9] !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full ${CONFIRM_VARIANTS[confirmVariant]}`
+                                ? `flex-1 rounded-[14px] h-[3.8vh] min-h-[34px] px-2 type-xs text-surface !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap ${CONFIRM_VARIANTS[confirmVariant]}`
+                                : `rounded-[14px] h-[3.8vh] min-h-[34px] min-w-[105px] px-3 type-xs text-surface !font-[600] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 max-sm:w-full ${CONFIRM_VARIANTS[confirmVariant]}`
                         }
                     >
                         {isBusy ? pendingLabel : confirmLabel}

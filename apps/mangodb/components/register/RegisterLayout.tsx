@@ -25,7 +25,7 @@ export default function RegisterLayout({
     return (
         <main className="relative min-h-screen w-full">
             {/* background */}
-            <div className="fixed inset-0 -z-10 bg-[#FFF5DC]" />
+            <div className="fixed inset-0 -z-10 bg-accent-tint" />
 
             <div className="fixed left-0 top-0 h-full w-[38%] overflow-hidden rounded-[0_20px_500px_0]">
                 <Image
@@ -42,7 +42,7 @@ export default function RegisterLayout({
                     fixed right-[16px] top-[10px] z-50
                     flex items-center gap-[8px]
                     rounded-full
-                    bg-[#FFFDF9]
+                    bg-surface
                     px-[12px] py-[8px]
                     shadow-[0_1px_3px_rgba(0,0,0,0.25)]
                 "
@@ -56,7 +56,7 @@ export default function RegisterLayout({
                     />
                 </div>
 
-                <span className="text-sm">MangoDB Cooperation</span>
+                <span className="type-sm">MangoDB Cooperation</span>
             </div>
 
             {/* register card */}
@@ -65,7 +65,7 @@ export default function RegisterLayout({
                     absolute left-1/2 top-1/2
                     flex h-[75%] w-[55%]
                     -translate-x-1/2 -translate-y-1/2
-                    overflow-hidden rounded-status bg-[#FFFDF9] shadow-lg
+                    overflow-hidden rounded-status bg-surface shadow-lg
 
                     max-sm:top-[calc(50%+35px)]
                     max-sm:h-[calc(100%-50px)]
@@ -88,11 +88,11 @@ export default function RegisterLayout({
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[24px] py-[20px]">
                     {/* header */}
                     <header className="shrink-0">
-                        <h1 className="text-hd">{title}</h1>
+                        <h1 className="type-hd">{title}</h1>
 
-                        <h2 className="text-lg">{subtitle}</h2>
+                        <h2 className="type-lg">{subtitle}</h2>
 
-                        <div className="mt-[5px] h-px bg-[#497B93]" />
+                        <div className="mt-[5px] h-px bg-brand" />
                     </header>
 
                     {/* content */}
@@ -108,9 +108,9 @@ export default function RegisterLayout({
                                 onClick={onBack}
                                 className="
                     rounded-button
-                    border border-[#3F6B80]
+                    border border-brand-dark
                     px-[24px] py-[5px]
-                    text-md text-[#3F6B80]
+                    type-md text-brand-dark
                   "
                             >
                                 Back
@@ -126,9 +126,9 @@ export default function RegisterLayout({
                                 disabled={nextDisabled}
                                 className="
                     rounded-button
-                    bg-[#3F6B80]
+                    bg-brand-dark
                     px-[24px] py-[5px]
-                    text-md text-[#FFFDF9]
+                    type-md text-surface
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "

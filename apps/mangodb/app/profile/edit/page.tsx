@@ -152,9 +152,9 @@ function EditProfilePageInner() {
     return (
         // pt matches the gap the design leaves under the 108px navbar, which
         // is a separate task, so spacing stays right once that lands.
-        <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
+        <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
             {loadError === NOT_SIGNED_IN && (
-                <p className="text-md !font-[400]">
+                <p className="type-md !font-[400]">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -164,13 +164,11 @@ function EditProfilePageInner() {
             )}
 
             {loadError && loadError !== NOT_SIGNED_IN && (
-                <p className="text-md !font-[400] text-[#C5483B]">
-                    {loadError}
-                </p>
+                <p className="type-md !font-[400] text-danger">{loadError}</p>
             )}
 
             {!loadError && !saved && (
-                <p className="text-md !font-[400]">Loading…</p>
+                <p className="type-md !font-[400]">Loading…</p>
             )}
 
             {saved && (
@@ -198,8 +196,8 @@ export default function EditProfilePage() {
     return (
         <Suspense
             fallback={
-                <main className="min-h-screen bg-[#FFFDF9] px-[2.19vw] pt-[6.25vh] text-[#171717]">
-                    <p className="text-md !font-[400]">Loading…</p>
+                <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
+                    <p className="type-md !font-[400]">Loading…</p>
                 </main>
             }
         >

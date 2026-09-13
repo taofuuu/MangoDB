@@ -61,21 +61,21 @@ const ROUTES = [
 
 export default function Home() {
     return (
-        <main className="flex min-h-screen flex-col items-center justify-center bg-[#FFF5DC] p-8">
-            <div className="w-full max-w-md rounded-2xl bg-[#FFFDF9] p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
-                <h1 className="text-4xl font-bold text-[#171717]">MangoDB</h1>
-                <p className="mt-3 text-[#497B93]">Welcome to MangoDB.</p>
+        <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
+            <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
+                <h1 className="text-4xl font-bold text-ink">MangoDB</h1>
+                <p className="mt-3 text-brand">Welcome to MangoDB.</p>
 
                 <Link
                     href="/register"
-                    className="mt-6 inline-block w-full rounded-[20px] bg-[#497B93] px-8 py-3 font-bold text-white transition hover:bg-[#3a6276]"
+                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-alt-3"
                 >
                     Sign Up
                 </Link>
 
                 {/* Developer Routes Navigation */}
                 <div className="mt-8 text-left">
-                    <h2 className="text-sm font-semibold text-[#497B93] uppercase tracking-wider">
+                    <h2 className="type-sm font-semibold text-brand uppercase tracking-wider">
                         Pages built so far
                     </h2>
                     <ul className="mt-3 flex flex-col gap-2">
@@ -83,12 +83,12 @@ export default function Home() {
                             <li key={route.href}>
                                 <Link
                                     href={route.href}
-                                    className="block rounded-lg border border-[#497B93]/30 bg-white p-3 text-left transition hover:bg-[#497B93]/10"
+                                    className="block rounded-lg border border-brand/30 bg-white p-3 text-left transition hover:bg-brand/10"
                                 >
-                                    <span className="block text-sm font-bold text-[#171717]">
+                                    <span className="block type-sm font-bold text-ink">
                                         {route.title}
                                     </span>
-                                    <span className="mt-0.5 block text-xs text-gray-600">
+                                    <span className="mt-0.5 block type-xs text-gray-600">
                                         {route.detail}
                                     </span>
                                 </Link>

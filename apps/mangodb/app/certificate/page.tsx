@@ -136,15 +136,15 @@ export default function CertificatePage() {
     };
 
     return (
-        <main className="min-h-screen bg-[#FFFDF9] pt-10">
+        <main className="min-h-screen bg-surface pt-10">
             {/* Certificate Box */}
-            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-y-auto certificate-scrollbar rounded-xl border border-[#497B93] bg-white pr-1 pl-6">
+            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-y-auto certificate-scrollbar rounded-xl border border-brand bg-white pr-1 pl-6">
                 <div className="certificate-scrollbar h-full overflow-y-auto pr-1">
                     <div className="flex w-full items-center pt-5">
-                        <Link href="/" className="text-lg pr-4">
+                        <Link href="/" className="type-lg pr-4">
                             ←
                         </Link>
-                        <p className="text-hd">Certificates</p>
+                        <p className="type-hd">Certificates</p>
                     </div>
                     {/* Loading */}
                     {certificates === null && !loadError && (
@@ -162,7 +162,7 @@ export default function CertificatePage() {
                             {certificates.map((certificate) => (
                                 <div key={certificate.id}>
                                     <div className="flex w-full items-center justify-between pt-2 pl-6">
-                                        <h2 className="text-lg">
+                                        <h2 className="type-lg">
                                             {certificate.name}
                                         </h2>
                                         <button
@@ -183,18 +183,18 @@ export default function CertificatePage() {
                                             />
                                         </button>
                                     </div>
-                                    <p className="text-md pl-6">
+                                    <p className="type-md pl-6">
                                         {certificate.organize}
                                     </p>
 
                                     {formatPeriod(certificate) && (
-                                        <p className="text-md pl-6">
+                                        <p className="type-md pl-6">
                                             {formatPeriod(certificate)}
                                         </p>
                                     )}
 
                                     {certificate.credID && (
-                                        <p className="text-md pl-6">
+                                        <p className="type-md pl-6">
                                             Credential ID: {certificate.credID}
                                         </p>
                                     )}
@@ -209,21 +209,21 @@ export default function CertificatePage() {
                                             rel="noopener noreferrer"
                                             className={`flex h-[4vh] w-[13.8vw] items-center justify-center gap-[0.4vw] rounded-status border transition-colors ${
                                                 certificate.credURL
-                                                    ? 'hover:border-[#66A6C5]'
+                                                    ? 'hover:border-brand-light'
                                                     : 'pointer-events-none opacity-50'
                                             }`}
                                         >
-                                            <span className="text-md">
+                                            <span className="type-md">
                                                 Show Credential
                                             </span>
-                                            <span className="text-md">→</span>
+                                            <span className="type-md">→</span>
                                         </a>
                                     </div>
 
                                     {/* Buttons */}
                                     <div className="flex w-full items-center justify-between pt-4 pl-6 pr-6 pb-1">
                                         <div className="flex w-full items-center gap-10">
-                                            <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-[#497B93]">
+                                            <div className="flex h-[10vh] w-[9.375vw] items-center justify-center rounded-button border border-brand">
                                                 {certificate.certImage && (
                                                     <Image
                                                         src={
@@ -240,7 +240,7 @@ export default function CertificatePage() {
                                                 )}
                                             </div>
 
-                                            <p className="text-md">
+                                            <p className="type-md">
                                                 {certificate.name}
                                             </p>
                                         </div>
@@ -264,7 +264,7 @@ export default function CertificatePage() {
                                     </div>
 
                                     {/* Centered divider */}
-                                    <hr className="mx-auto mt-4 w-[95%] border-[#3F6B80]/50" />
+                                    <hr className="mx-auto mt-4 w-[95%] border-brand-dark/50" />
                                 </div>
                             ))}
                         </div>
@@ -275,7 +275,7 @@ export default function CertificatePage() {
                 <button
                     type="button"
                     onClick={() => setIsAddOpen(true)}
-                    className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-[#497B93] text-hd text-[#FFFDF9] transition-colors hover:bg-[#3F6B80]"
+                    className="flex h-[9vh] w-[9vh] items-center justify-center rounded-full bg-brand type-hd text-surface transition-colors hover:bg-brand-dark"
                 >
                     +
                 </button>
@@ -283,7 +283,7 @@ export default function CertificatePage() {
 
             {/* Load error */}
             {loadError && (
-                <p role="alert" className="mt-4 text-sm text-[#C5483E]">
+                <p role="alert" className="mt-4 type-sm text-danger-2">
                     {loadError === NOT_SIGNED_IN
                         ? 'Please log in to view your certificates.'
                         : loadError}

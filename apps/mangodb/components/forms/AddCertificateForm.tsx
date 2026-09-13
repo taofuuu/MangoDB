@@ -49,7 +49,6 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
         resetForm();
         onClose();
         // resetForm only touches setters, which React keeps stable.
-         
     }, [onClose]);
 
     if (!isOpen) {
@@ -134,11 +133,11 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             onClose={handleClose}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName="modal-scrollbar w-full max-w-[45vw] h-[92vh] max-h-[calc(100vh-2rem)] rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl overflow-y-auto"
+            panelClassName="modal-scrollbar w-full max-w-[45vw] h-[92vh] max-h-[calc(100vh-2rem)] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl overflow-y-auto"
         >
             {/* -------------header----------------- */}
             <div className=" flex items-center justify-between">
-                <h2 id={titleId} className="text-lg">
+                <h2 id={titleId} className="type-lg">
                     Add license or certification
                 </h2>
 
@@ -146,16 +145,16 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                     type="button"
                     onClick={handleClose}
                     aria-label="Close"
-                    className="text-[#828282] hover:text-gray-800"
+                    className="text-ink-placeholder hover:text-gray-800"
                 >
                     X
                 </button>
             </div>
 
             {/* ----------------element-1----------------- */}
-            <hr className="border-[#3F6B80]/50" />
+            <hr className="border-brand-dark/50" />
             <div>
-                <label className="my-2 block text-sm !text-[12px]">
+                <label className="my-2 block type-sm !text-[12px]">
                     *Indicates required
                 </label>
             </div>
@@ -163,20 +162,20 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 <div className="space-y-2">
                     {/* Name */}
                     <div>
-                        <label className="block text-sm">Name*</label>
+                        <label className="block type-sm">Name*</label>
 
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft certified network associate security"
                             required
                         />
                     </div>
                     {/* Organization */}
                     <div>
-                        <label className="block text-sm">
+                        <label className="block type-sm">
                             Issuing organization*
                         </label>
 
@@ -184,7 +183,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                             type="text"
                             value={organize}
                             onChange={(e) => setOrganize(e.target.value)}
-                            className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                             placeholder="Ex: Microsoft"
                             required
                         />
@@ -192,13 +191,13 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                     {/* Issue date */}
                     <div>
-                        <label className="block text-sm !font-[500]">
+                        <label className="block type-sm !font-[500]">
                             Issue date
                         </label>
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block text-sm font-normal">
+                                <label className="block type-sm font-normal">
                                     Month
                                 </label>
 
@@ -210,7 +209,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="block text-sm font-normal">
+                                <label className="block type-sm font-normal">
                                     Year
                                 </label>
 
@@ -225,13 +224,13 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                     </div>
                     {/* Expiration date */}
                     <div>
-                        <label className="block text-sm !font-[500]">
+                        <label className="block type-sm !font-[500]">
                             Expiration date
                         </label>
                         <div className="flex gap-2">
                             {/* Month */}
                             <div className="flex-1">
-                                <label className="block text-sm font-normal">
+                                <label className="block type-sm font-normal">
                                     Month
                                 </label>
 
@@ -243,7 +242,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
 
                             {/* Year */}
                             <div className="flex-1">
-                                <label className="mb block text-sm font-normal">
+                                <label className="mb block type-sm font-normal">
                                     Year
                                 </label>
 
@@ -258,7 +257,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                     </div>
                     {/* Credential ID */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Credential ID
                         </label>
 
@@ -266,12 +265,12 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                             type="text"
                             value={credID}
                             onChange={(e) => setCredID(e.target.value)}
-                            className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
                     {/* Credential URL */}
                     <div>
-                        <label className="block text-sm font-medium">
+                        <label className="block type-sm font-medium">
                             Credential URL
                         </label>
 
@@ -279,7 +278,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                             type="text"
                             value={credURL}
                             onChange={(e) => setCredURL(e.target.value)}
-                            className="h-[4.07vh] w-[40.94vw] px-1.5 w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 text-sm text-[#171717] placeholder:text-[#D6D6D6] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
                     <FileUpload
@@ -288,12 +287,12 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                         onChange={setFile}
                     />
                 </div>
-                <hr className="border-[#3F6B80]/50" />
+                <hr className="border-brand-dark/50" />
                 {/* -----------------footer----------------- */}
                 {error && (
                     <p
                         role="alert"
-                        className="pt-4 text-right text-sm text-[#C5483E]"
+                        className="pt-4 text-right type-sm text-danger-2"
                     >
                         {error}
                     </p>
@@ -303,7 +302,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
                 <div className="flex items-center justify-end gap-3 pt-4">
                     <button
                         type="submit"
-                        className="h-[4vh] w-[7vw] rounded-status bg-[#3F6B80] text-sm font-[500] text-[#FFFDF9] transition-colors hover:bg-[#497B93]"
+                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand"
                     >
                         Save
                     </button>

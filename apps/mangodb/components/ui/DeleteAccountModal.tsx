@@ -46,7 +46,7 @@ function DeleteAccountDialog({
                 onConfirm ? () => onConfirm(confirmEmail.trim()) : undefined
             }
             icon={
-                <div className="w-[4.8vw] h-[4.8vw] min-w-[56px] min-h-[56px] max-w-[72px] max-h-[72px] rounded-full bg-[#F0D1C9] flex items-center justify-center">
+                <div className="w-[4.8vw] h-[4.8vw] min-w-[56px] min-h-[56px] max-w-[72px] max-h-[72px] rounded-full bg-danger-tint flex items-center justify-center">
                     <Image
                         src={binIcon}
                         alt=""
@@ -56,13 +56,13 @@ function DeleteAccountDialog({
             }
             description={
                 <>
-                    <p className="text-xs text-[#C6473A] text-center mt-[0.8vh] leading-snug">
+                    <p className="type-xs text-danger-4 text-center mt-[0.8vh] leading-snug">
                         <strong className="!font-[700]">WARNING</strong> this is
                         permanent and
                         <br />
                         cannot be undone!
                     </p>
-                    <p className="text-xs text-[#171717] mt-[2.2vh] leading-relaxed">
+                    <p className="type-xs text-ink mt-[2.2vh] leading-relaxed">
                         All of your personal data, preferences, and history will
                         be immediately and permanently deleted.
                     </p>
@@ -72,7 +72,7 @@ function DeleteAccountDialog({
             <div className="mt-[2.2vh]">
                 <label
                     htmlFor={emailId}
-                    className="block text-xs font-medium text-[#171717] mb-[0.8vh]"
+                    className="block type-xs font-medium text-ink mb-[0.8vh]"
                 >
                     Confirm email
                 </label>
@@ -87,7 +87,7 @@ function DeleteAccountDialog({
                         if (event.key === 'Enter') event.preventDefault();
                     }}
                     placeholder={`Type "${expectedEmail}" to confirm`}
-                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-[#171717] bg-transparent text-xs text-[#171717] placeholder:text-[#999999] focus:outline-none focus:ring-1 focus:ring-[#171717] disabled:opacity-60"
+                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder-4 focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>
         </DeleteConfirmationModal>

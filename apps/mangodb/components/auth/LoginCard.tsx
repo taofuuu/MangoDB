@@ -21,7 +21,7 @@ export default function LoginCard() {
                     <h1 className="text-2xl font-bold text-gray-900 sm:text-[36px]">
                         MangoDB Cooperation
                     </h1>
-                    <p className="text-sm text-gray-600">
+                    <p className="type-sm text-gray-600">
                         Welcome to B-B Business
                     </p>
                 </div>

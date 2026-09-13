@@ -248,7 +248,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600">
+                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 type-sm font-medium text-red-600">
                     {errorMessage}
                 </div>
             )}
@@ -295,10 +295,10 @@ export default function RegisterPage() {
                         onClick={goToHome}
                         className="
                             rounded-button
-                            bg-[#3F6B80]
+                            bg-brand-dark
                             mt-2
                             px-[24px] py-[5px]
-                            text-md text-[#FFFDF9]
+                            type-md text-surface
                             "
                     >
                         Go to Home

@@ -9,11 +9,11 @@ type ViewToggleProps = {
 
 // Same box for both buttons, only the fill changes with the active view.
 const buttonClass =
-    'flex h-[4.17vh] min-h-[36px] w-[2.29vw] min-w-[40px] items-center justify-center rounded-[6px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F6B80]';
+    'flex h-[4.17vh] min-h-[36px] w-[2.29vw] min-w-[40px] items-center justify-center rounded-[6px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark';
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
     const fill = (view: PortfolioView) =>
-        value === view ? 'bg-[#E0E0E0]' : 'bg-transparent hover:bg-black/5';
+        value === view ? 'bg-line-strong-3' : 'bg-transparent hover:bg-black/5';
 
     return (
         <div className="flex gap-[0.4vw]">

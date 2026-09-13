@@ -2,6 +2,8 @@
 
 :root {
     --background: #ffffff;
+    /* Same value as --color-ink below. Kept because body and Tailwind's
+       defaults read it. */
     --foreground: #171717;
 }
 
@@ -12,35 +14,112 @@
     --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+    /* Colour tokens. Every value here was already in the code —
+       this names them, it does not change any of them. Two reds that
+       should be one red is a design decision, and now it is a
+       one-line edit here instead of a sweep through 444 call sites. */
+
+    --color-brand: #497b93;
+    --color-brand-dark: #3f6b80;
+    --color-brand-light: #66a6c5;
+    --color-brand-tint: #edf4f7;
+    --color-brand-mist: #e3f1f1;
+    --color-brand-alt-1: #34596b;
+    --color-brand-alt-2: #3b6478;
+    --color-brand-alt-3: #3a6276;
+    --color-brand-alt-4: #386277;
+    --color-brand-deep: #1e4353;
+
+    --color-danger: #c5483b;
+    --color-danger-2: #c5483e;
+    --color-danger-3: #ce473e;
+    --color-danger-4: #c6473a;
+    --color-danger-hover: #b93d35;
+    --color-danger-hover-2: #a93b30;
+    --color-danger-deep: #8f271d;
+    --color-danger-soft: #d36b60;
+    --color-danger-bright: #e53e3e;
+    --color-danger-tint: #f0d1c9;
+    --color-danger-wash: #fdf0ee;
+
+    --color-accent: #fabc3f;
+    --color-accent-2: #fec84a;
+    --color-accent-3: #ffc107;
+    --color-accent-4: #ffb800;
+    --color-accent-tint: #fff5dc;
+    --color-accent-wash: #fcefd7;
+
+    --color-orange: #d9603b;
+
+    --color-surface: #fffdf9;
+    --color-surface-white: #ffffff;
+    --color-surface-soft: #fbfbfb;
+    --color-surface-warm: #faf9f6;
+
+    --color-ink: #171717;
+    --color-ink-muted: #4b4b4b;
+    --color-ink-soft: #666666;
+    --color-ink-faint: #757575;
+    --color-ink-disabled: #756d6d;
+    --color-ink-placeholder: #828282;
+    --color-ink-placeholder-2: #888888;
+    --color-ink-placeholder-3: #8a8a8a;
+    --color-ink-placeholder-4: #999999;
+    --color-ink-placeholder-5: #a3a3a3;
+
+    --color-line: #d6d6d6;
+    --color-line-soft: #e5e5e5;
+    --color-line-softer: #eaeaea;
+    --color-line-faint: #ededed;
+    --color-line-fainter: #f5f5f5;
+    --color-line-strong: #cccccc;
+    --color-line-strong-2: #cbcbcb;
+    --color-line-strong-3: #e0e0e0;
+
+    --color-fill-muted: #d9d9d9;
+}
+
 body {
     background: var(--background);
     color: var(--foreground);
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/* font (big -----> small) */
+/* Type scale, big to small.
+ *
+ * .type-*, not .text-*: three of these shadowed Tailwind's own classes of the
+ * same name, so `text-sm` meant one thing in this project and another in the
+ * Tailwind docs, and which one you got depended on stylesheet order.
+ *
+ * The font-weights are still baked in, deliberately for now: they are what
+ * ~40 call sites are undoing with !font-[400] / !font-[600], but they are
+ * also the only thing holding an <h2 class="type-lg"> at 600 instead of the
+ * browser's bold. Splitting weight from size means deciding what each of
+ * those elements should weigh — a per-call-site job with the page open, not
+ * a sweep. */
 
-.text-hd {
+.type-hd {
     font-size: 36px;
     font-weight: 700;
 }
 
-.text-lg {
+.type-lg {
     font-size: 24px;
     font-weight: 600;
 }
 
-.text-md {
+.type-md {
     font-size: 18px;
     font-weight: 500;
 }
 
-.text-sm {
+.type-sm {
     font-size: 14px;
     font-weight: 400;
 }
 
-.text-xs {
+.type-xs {
     font-size: 12px;
     font-weight: 400;
 }
@@ -62,49 +141,47 @@ body {
     border-radius: 30px;
 }
 
-/* scrollbar */
-.modal-scrollbar {
+/* Scrollbar. One rule; the colour is a variable, which is the whole reason
+ * .certificate-scrollbar existed as a second copy of this. */
+.modal-scrollbar,
+.certificate-scrollbar {
+    --scrollbar-thumb: var(--color-brand);
+    --scrollbar-thumb-hover: var(--color-brand-dark);
     scrollbar-width: thin;
-    scrollbar-color: #497b93 transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-.modal-scrollbar::-webkit-scrollbar {
-    width: 8px;
+.certificate-scrollbar {
+    --scrollbar-thumb: var(--color-accent-2);
+    --scrollbar-thumb-hover: var(--color-accent-2);
 }
 
-.modal-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb {
-    background: #497b93;
-    border-radius: 9999px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #3f6b80;
-}
-
-/* uploadbox */
-.upload-box {
-    border: 1px dashed #3f6b80;
-}
-
-/* Certificate page scrollbar */
-.certificate-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #fec84a;
-}
-
+.modal-scrollbar::-webkit-scrollbar,
 .certificate-scrollbar::-webkit-scrollbar {
     width: 8px;
 }
 
+.modal-scrollbar::-webkit-scrollbar-track,
 .certificate-scrollbar::-webkit-scrollbar-track {
     background: transparent;
+}
+
+.certificate-scrollbar::-webkit-scrollbar-track {
     margin: 8px 0;
 }
 
+.modal-scrollbar::-webkit-scrollbar-thumb,
 .certificate-scrollbar::-webkit-scrollbar-thumb {
-    background: #fec84a;
+    background: var(--scrollbar-thumb);
     border-radius: 9999px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover,
+.certificate-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* uploadbox */
+.upload-box {
+    border: 1px dashed var(--color-brand-dark);
 }

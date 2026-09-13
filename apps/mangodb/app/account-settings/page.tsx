@@ -115,19 +115,19 @@ export default function AccountPage() {
     };
 
     return (
-        <main className="min-h-screen p-10 bg-[#FAF9F6]">
+        <main className="min-h-screen p-10 bg-surface-warm">
             <div className="max-w-xl mx-auto space-y-6">
                 <header className="border-b border-gray-200 pb-4">
-                    <h1 className="text-lg font-bold text-[#171717]">
+                    <h1 className="type-lg font-bold text-ink">
                         Account Settings
                     </h1>
-                    <p className="text-xs text-[#666666] mt-1">
+                    <p className="type-xs text-ink-soft mt-1">
                         Manage your profile, credentials, and account settings.
                     </p>
                 </header>
 
                 {loadError === NOT_SIGNED_IN && (
-                    <p className="text-xs text-[#666666]">
+                    <p className="type-xs text-ink-soft">
                         You are not signed in.{' '}
                         <Link href="/login" className="underline">
                             Log in
@@ -137,13 +137,13 @@ export default function AccountPage() {
                 )}
 
                 {loadError && loadError !== NOT_SIGNED_IN && (
-                    <p role="alert" className="text-xs text-[#C5483B]">
+                    <p role="alert" className="type-xs text-danger">
                         {loadError}
                     </p>
                 )}
 
                 {!loadError && !profile && (
-                    <p className="text-xs text-[#666666]">Loading…</p>
+                    <p className="type-xs text-ink-soft">Loading…</p>
                 )}
 
                 {profile && (
@@ -151,7 +151,7 @@ export default function AccountPage() {
                         {status && (
                             <p
                                 role="status"
-                                className="text-xs font-medium text-[#497B93]"
+                                className="type-xs font-medium text-brand"
                             >
                                 {status}
                             </p>
@@ -160,7 +160,7 @@ export default function AccountPage() {
                         {/* Account Information Card with Segmented Rows */}
                         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                             <div className="p-6 pb-4 border-b border-gray-100">
-                                <h2 className="text-md font-semibold text-[#171717]">
+                                <h2 className="type-md font-semibold text-ink">
                                     Account Information
                                 </h2>
                             </div>
@@ -169,10 +169,10 @@ export default function AccountPage() {
                                 {/* 1. Username Row */}
                                 <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
                                     <div>
-                                        <span className="block text-xs text-[#666666]">
+                                        <span className="block type-xs text-ink-soft">
                                             Username
                                         </span>
-                                        <span className="block text-sm font-medium text-[#171717] mt-0.5">
+                                        <span className="block type-sm font-medium text-ink mt-0.5">
                                             {profile.username}
                                         </span>
                                     </div>
@@ -197,10 +197,10 @@ export default function AccountPage() {
                                 {/* 2. Email Row */}
                                 <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
                                     <div>
-                                        <span className="block text-xs text-[#666666]">
+                                        <span className="block type-xs text-ink-soft">
                                             Email
                                         </span>
-                                        <span className="block text-sm font-medium text-[#171717] mt-0.5">
+                                        <span className="block type-sm font-medium text-ink mt-0.5">
                                             {profile.email}
                                         </span>
                                     </div>
@@ -223,10 +223,10 @@ export default function AccountPage() {
                                 {/* 3. Change Password Row */}
                                 <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
                                     <div>
-                                        <span className="block text-xs text-[#666666]">
+                                        <span className="block type-xs text-ink-soft">
                                             Password
                                         </span>
-                                        <span className="block text-sm font-medium text-[#171717] mt-0.5 tracking-wider">
+                                        <span className="block type-sm font-medium text-ink mt-0.5 tracking-wider">
                                             ••••••••
                                         </span>
                                     </div>
@@ -253,10 +253,10 @@ export default function AccountPage() {
                         {/* Session */}
                         <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                             <div>
-                                <h2 className="text-md font-semibold text-[#171717]">
+                                <h2 className="type-md font-semibold text-ink">
                                     Logout
                                 </h2>
-                                <p className="mt-1 text-xs text-[#666666]">
+                                <p className="mt-1 type-xs text-ink-soft">
                                     Logging out revokes the token this session
                                     is using. You will need to log in again.
                                 </p>
@@ -267,10 +267,10 @@ export default function AccountPage() {
 
                         {/* Danger Zone */}
                         <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 shadow-sm">
-                            <h2 className="text-md font-semibold text-[#C6473A]">
+                            <h2 className="type-md font-semibold text-danger-4">
                                 Danger Zone
                             </h2>
-                            <p className="mt-1 text-xs text-[#666666]">
+                            <p className="mt-1 type-xs text-ink-soft">
                                 Once you delete your account, there is no going
                                 back. Please be certain.
                             </p>
@@ -278,7 +278,7 @@ export default function AccountPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteOpen(true)}
-                                className="mt-4 rounded-lg bg-[#CE473E] px-4 py-2 text-xs font-semibold text-[#FFFDF9] transition-colors hover:bg-[#B93D35] cursor-pointer"
+                                className="mt-4 rounded-lg bg-danger-3 px-4 py-2 type-xs font-semibold text-surface transition-colors hover:bg-danger-hover cursor-pointer"
                             >
                                 Delete Account
                             </button>
@@ -318,9 +318,9 @@ export default function AccountPage() {
                         aria-modal="true"
                         aria-labelledby="deletion-result-title"
                         aria-describedby="deletion-result-desc"
-                        className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-[#FFFDF9] text-[#171717] px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
+                        className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-surface text-ink px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
                     >
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#F0D1C9] text-[#C5483E]">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger-tint text-danger-2">
                             <svg
                                 className="h-6 w-6"
                                 fill="none"
@@ -338,13 +338,13 @@ export default function AccountPage() {
                         </div>
                         <h2
                             id="deletion-result-title"
-                            className="text-md font-semibold text-[#171717] mt-3"
+                            className="type-md font-semibold text-ink mt-3"
                         >
                             Account Deleted
                         </h2>
                         <p
                             id="deletion-result-desc"
-                            className="text-xs text-[#666666] mt-2 leading-relaxed"
+                            className="type-xs text-ink-soft mt-2 leading-relaxed"
                         >
                             Your account has been successfully deleted. Please
                             note that records of your past projects and reviews
@@ -354,7 +354,7 @@ export default function AccountPage() {
                         <button
                             type="button"
                             onClick={redirectToLogin}
-                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-[#C5483E] text-xs text-[#FFFDF9] font-semibold transition-colors hover:bg-[#B93D35] cursor-pointer"
+                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-danger-2 type-xs text-surface font-semibold transition-colors hover:bg-danger-hover cursor-pointer"
                         >
                             Go to Login
                         </button>

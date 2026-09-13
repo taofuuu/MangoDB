@@ -71,7 +71,7 @@ export default function AdminLoginForm() {
                     autoComplete="email"
                     placeholder="Email"
                     required
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-[#D6D6D6] bg-white px-[1.04vw] text-sm text-[#171717] outline-none placeholder:text-[#A3A3A3] focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93]"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] type-sm text-ink outline-none placeholder:text-ink-placeholder-5 focus:border-brand focus:ring-1 focus:ring-brand"
                 />
             </div>
 
@@ -88,7 +88,7 @@ export default function AdminLoginForm() {
                     autoComplete="current-password"
                     placeholder="Password"
                     required
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-[#D6D6D6] bg-white px-[1.04vw] pr-[3.13vw] text-sm text-[#171717] outline-none placeholder:text-[#A3A3A3] focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93]"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] pr-[3.13vw] type-sm text-ink outline-none placeholder:text-ink-placeholder-5 focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <button
                     type="button"
@@ -97,7 +97,7 @@ export default function AdminLoginForm() {
                         showPassword ? 'Hide password' : 'Show password'
                     }
                     aria-pressed={showPassword}
-                    className="absolute right-[1.04vw] top-1/2 -translate-y-1/2 rounded-input p-[0.31vw] text-[#757575] hover:text-[#497B93] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                    className="absolute right-[1.04vw] top-1/2 -translate-y-1/2 rounded-input p-[0.31vw] text-ink-faint hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                     {showPassword ? (
                         <EyeOff className="h-[1.85vh] min-h-[18px] w-[1.04vw] min-w-[18px]" />
@@ -111,7 +111,7 @@ export default function AdminLoginForm() {
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
-                className={`min-h-[2.22vh] text-sm text-[#C5483B] ${
+                className={`min-h-[2.22vh] type-sm text-danger ${
                     error ? 'visible' : 'invisible'
                 }`}
             >
@@ -122,7 +122,7 @@ export default function AdminLoginForm() {
                 type="submit"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
-                className="h-[4.89vh] min-h-[44px] w-full text-sm !font-[600] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                className="h-[4.89vh] min-h-[44px] w-full type-sm !font-[600] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
                 {isSubmitting ? 'Logging in…' : 'Login'}
             </Button>

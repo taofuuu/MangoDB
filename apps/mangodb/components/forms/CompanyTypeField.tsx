@@ -43,7 +43,7 @@ export default function CompanyTypeField({
 
     return (
         <div>
-            <span className="mb-[0.93vh] block text-md leading-[1.15]">
+            <span className="mb-[0.93vh] block type-md leading-[1.15]">
                 {label}
             </span>
 
@@ -53,7 +53,7 @@ export default function CompanyTypeField({
                         key={tag}
                         label={tag}
                         onRemove={() => remove(tag)}
-                        className="bg-[#D9D9D9] text-[#171717]"
+                        className="bg-fill-muted text-ink"
                     />
                 ))}
 
@@ -78,7 +78,7 @@ export default function CompanyTypeField({
                             }}
                             placeholder="Company type"
                             aria-label="New company type"
-                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-[#D9D9D9] px-[0.94vw] text-sm text-[#171717] placeholder:text-[#8A8A8A] focus:outline-none"
+                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-fill-muted px-[0.94vw] type-sm text-ink placeholder:text-ink-placeholder-3 focus:outline-none"
                         />
                         <datalist id="predefined-company-types">
                             {PREDEFINED_COMPANY_TYPES.map((type) => (
@@ -91,7 +91,7 @@ export default function CompanyTypeField({
                         type="button"
                         onClick={() => setAdding(true)}
                         aria-label="Add company type"
-                        className="h-[3.33vh] cursor-pointer rounded-status bg-[#D9D9D9] px-[1.15vw] text-sm text-[#171717] hover:bg-[#CCCCCC]"
+                        className="h-[3.33vh] cursor-pointer rounded-status bg-fill-muted px-[1.15vw] type-sm text-ink hover:bg-line-strong"
                     >
                         +
                     </button>
@@ -99,7 +99,7 @@ export default function CompanyTypeField({
             </div>
 
             {error && (
-                <p className="mt-[0.46vh] text-sm text-[#C5483B]">{error}</p>
+                <p className="mt-[0.46vh] type-sm text-danger">{error}</p>
             )}
         </div>
     );

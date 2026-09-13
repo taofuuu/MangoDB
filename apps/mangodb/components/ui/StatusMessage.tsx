@@ -46,13 +46,13 @@ export default function StatusMessage({
             aria-live={isSuccess ? 'polite' : 'assertive'}
             className={`fixed top-6 left-1/2 z-50 flex -translate-x-1/2 items-center justify-between gap-4 rounded-xl px-5 py-3.5 shadow-md transition-all duration-300 min-w-[320px] max-w-[90vw] md:max-w-[520px] ${
                 isSuccess
-                    ? 'border border-[#497B93]/35 bg-[#EDF4F7] text-[#1E4353]'
-                    : 'border border-[#C5483B]/35 bg-[#FDF0EE] text-[#8F271D]'
+                    ? 'border border-brand/35 bg-brand-tint text-brand-deep'
+                    : 'border border-danger/35 bg-danger-wash text-danger-deep'
             } ${className}`}
         >
             <div className="flex items-center gap-3">
                 {isSuccess ? (
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#497B93] text-white">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-white">
                         <svg
                             className="size-3.5"
                             fill="none"
@@ -70,13 +70,13 @@ export default function StatusMessage({
                     </span>
                 ) : (
                     <span
-                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#C5483B] text-white font-bold text-sm font-sans"
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-danger text-white font-bold type-sm font-sans"
                         aria-hidden="true"
                     >
                         !
                     </span>
                 )}
-                <span className="text-md font-medium">{status.message}</span>
+                <span className="type-md font-medium">{status.message}</span>
             </div>
 
             {onDismiss && (
@@ -84,7 +84,7 @@ export default function StatusMessage({
                     type="button"
                     onClick={onDismiss}
                     aria-label="Dismiss notification"
-                    className="ml-2 cursor-pointer p-1 text-sm font-semibold opacity-60 transition-opacity hover:opacity-100"
+                    className="ml-2 cursor-pointer p-1 type-sm font-semibold opacity-60 transition-opacity hover:opacity-100"
                 >
                     ✕
                 </button>

@@ -124,7 +124,7 @@ export default function EditPortfolioForm({
     };
 
     const selectClassName =
-        'h-[4.89vh] w-full rounded-input border border-[#3F6B80] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]';
+        'h-[4.89vh] w-full rounded-input border border-brand-dark bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand';
 
     return (
         <ModalShell
@@ -133,10 +133,10 @@ export default function EditPortfolioForm({
             isBusy={isSaving}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-[#FFFDF9] p-[1.5vw] text-[#171717] shadow-xl max-md:h-[90vh]"
+            panelClassName="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-md:h-[90vh]"
         >
             <header className="flex items-center justify-between">
-                <h2 id={titleId} className="text-lg">
+                <h2 id={titleId} className="type-lg">
                     Edit Portfolio
                 </h2>
                 <button
@@ -144,20 +144,20 @@ export default function EditPortfolioForm({
                     onClick={onClose}
                     disabled={isSaving}
                     aria-label="Close edit portfolio"
-                    className="text-[#828282] hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-ink-placeholder hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     X
                 </button>
             </header>
 
-            <hr className="border-[#3F6B80]/50" />
-            <p className="my-2 text-xs">*Indicates required</p>
+            <hr className="border-brand-dark/50" />
+            <p className="my-2 type-xs">*Indicates required</p>
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-2">
                     <div>
                         <label
-                            className="block text-sm"
+                            className="block type-sm"
                             htmlFor="portfolio-name"
                         >
                             Name*
@@ -169,13 +169,13 @@ export default function EditPortfolioForm({
                             maxLength={255}
                             value={name}
                             onChange={(event) => setName(event.target.value)}
-                            className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
 
                     <div>
                         <label
-                            className="block text-sm"
+                            className="block type-sm"
                             htmlFor="portfolio-description"
                         >
                             Description
@@ -187,13 +187,13 @@ export default function EditPortfolioForm({
                             onChange={(event) =>
                                 setDescription(event.target.value)
                             }
-                            className="h-[9.65vh] w-full resize-none rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 py-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[9.65vh] w-full resize-none rounded-input border border-brand bg-surface-white/80 px-1.5 py-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
 
                     <div>
                         <label
-                            className="block text-sm font-medium"
+                            className="block type-sm font-medium"
                             htmlFor="portfolio-link"
                         >
                             Link to your portfolio*
@@ -205,16 +205,16 @@ export default function EditPortfolioForm({
                             maxLength={255}
                             value={link}
                             onChange={(event) => setLink(event.target.value)}
-                            className="h-[4.07vh] w-full rounded-input border border-[#497B93] bg-[#FFFFFF]/80 px-1.5 text-sm text-[#171717] focus:outline-none focus:ring-1 focus:ring-[#497B93]"
+                            className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
 
                     <fieldset>
-                        <legend className="text-sm !font-[500]">
+                        <legend className="type-sm !font-[500]">
                             Development date
                         </legend>
                         <div className="flex gap-2 max-sm:flex-col">
-                            <label className="min-w-0 flex-1 text-sm">
+                            <label className="min-w-0 flex-1 type-sm">
                                 Date
                                 <select
                                     required
@@ -231,7 +231,7 @@ export default function EditPortfolioForm({
                                     ))}
                                 </select>
                             </label>
-                            <label className="min-w-0 flex-1 text-sm">
+                            <label className="min-w-0 flex-1 type-sm">
                                 Month
                                 <select
                                     required
@@ -251,7 +251,7 @@ export default function EditPortfolioForm({
                                     ))}
                                 </select>
                             </label>
-                            <label className="min-w-0 flex-1 text-sm">
+                            <label className="min-w-0 flex-1 type-sm">
                                 Year
                                 <select
                                     required
@@ -276,22 +276,22 @@ export default function EditPortfolioForm({
                         onChange={handleImageChange}
                         accept="image/png,image/jpeg,image/webp"
                         label="Upload Image"
-                        className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-[#E3F1F1]/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#497B93]"
+                        className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     />
 
                     {error && (
-                        <p role="alert" className="text-sm text-[#C5483E]">
+                        <p role="alert" className="type-sm text-danger-2">
                             {error}
                         </p>
                     )}
                 </div>
 
-                <hr className="border-[#3F6B80]/50" />
+                <hr className="border-brand-dark/50" />
                 <div className="flex items-center justify-end gap-3 pt-4">
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className="h-[4vh] w-[7vw] rounded-status bg-[#3F6B80] text-sm font-[500] text-[#FFFDF9] transition-colors hover:bg-[#497B93] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isSaving ? 'Saving…' : 'Save'}
                     </button>

@@ -27,9 +27,9 @@ export default function ReceiverViewPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#FFFDF9] p-6 lg:p-8">
+        <div className="min-h-screen bg-surface p-6 lg:p-8">
             {loadError === NOT_SIGNED_IN && (
-                <p className="text-sm">
+                <p className="type-sm">
                     You are not signed in.{' '}
                     <Link href="/login" className="underline">
                         Log in
@@ -39,10 +39,10 @@ export default function ReceiverViewPage() {
             )}
 
             {loadError && loadError !== NOT_SIGNED_IN && (
-                <p className="text-sm text-red-600">{loadError}</p>
+                <p className="type-sm text-red-600">{loadError}</p>
             )}
 
-            {!loadError && !profile && <p className="text-sm">Loading…</p>}
+            {!loadError && !profile && <p className="type-sm">Loading…</p>}
 
             {profile && (
                 <main className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">

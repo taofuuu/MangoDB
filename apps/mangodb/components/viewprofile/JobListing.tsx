@@ -44,7 +44,7 @@ export default function JobListing() {
 
     return (
         <div className="bg-white rounded-popup p-6 w-full h-full border border-gray-200 shadow-xs font-sans">
-            <h3 className="text-md !font-bold text-gray-900 mb-4 px-1">
+            <h3 className="type-md !font-bold text-gray-900 mb-4 px-1">
                 Job Listing
             </h3>
 
@@ -54,13 +54,13 @@ export default function JobListing() {
                         key={job.id}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-gray-200"
                     >
-                        <div className="flex-1 text-sm !font-bold text-gray-900">
+                        <div className="flex-1 type-sm !font-bold text-gray-900">
                             {job.title}
                         </div>
 
-                        <div className="flex gap-20 text-xs text-gray-400 mr-8 mt-2 sm:mt-0">
+                        <div className="flex gap-20 type-xs text-gray-400 mr-8 mt-2 sm:mt-0">
                             <div className="flex flex-col items-start">
-                                <span className="text-xs text-gray-400">
+                                <span className="type-xs text-gray-400">
                                     Budget
                                 </span>
                                 <span className="font-semibold text-gray-800">
@@ -69,7 +69,7 @@ export default function JobListing() {
                             </div>
 
                             <div className="flex flex-col items-start">
-                                <span className="text-xs text-gray-400">
+                                <span className="type-xs text-gray-400">
                                     Deadline
                                 </span>
                                 <span className="font-semibold text-gray-800">
@@ -78,7 +78,7 @@ export default function JobListing() {
                             </div>
                         </div>
 
-                        <button className="text-[#497B93] hover:underline text-xs !font-medium mt-2 sm:mt-0 transition-colors ml-8">
+                        <button className="text-brand hover:underline type-xs !font-medium mt-2 sm:mt-0 transition-colors ml-8">
                             Details
                         </button>
                     </div>
