@@ -1,27 +1,12 @@
-// next/image throws while rendering when the src host is missing from
-// remotePatterns in next.config.ts, which would take the whole page down for
-// one bad row. portfolioImage is a plain varchar, so a row can hold anything —
-// only our own uploads are safe to hand over, the rest get the placeholder.
-// One label, matching next.config.ts's '*.supabase.co': a bare supabase.co or
-// a deeper a.b.supabase.co would pass a looser check and then throw anyway.
-const STORAGE_HOST = /^[^.]+\.supabase\.co$/;
+import { isStorageImage } from '@/lib/images';
 
 const PLACEHOLDER = '/portfolio-placeholder.svg';
 
+// Anything that is not one of our own uploads gets the placeholder, rather
+// than being handed to next/image to throw on. The host rule itself lives in
+// lib/images.ts, because the profile photo needs the same answer.
 export function portfolioImageSrc(url: string): string {
-    try {
-        const parsed = new URL(url);
-
-        // remotePatterns pins the protocol too, so http on the right host
-        // still throws.
-        return parsed.protocol === 'https:' &&
-            STORAGE_HOST.test(parsed.hostname)
-            ? url
-            : PLACEHOLDER;
-    } catch {
-        // Not a URL at all.
-        return PLACEHOLDER;
-    }
+    return isStorageImage(url) ? url : PLACEHOLDER;
 }
 
 // Whether the row points at an image worth expanding. The placeholder has

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { AccountType, CompanyProfile } from '@mangodb/shared';
 import RoleTags from '../ui/RoleTags';
+import CompanyAvatar from './CompanyAvatar';
 import Tag from '../ui/Tag';
 
 export interface CompanyCardData {
@@ -19,6 +20,7 @@ export interface CompanyCardData {
     warrantyPolicy: string;
     serviceTerm: string;
     accountType: AccountType;
+    photoUrl: string | null;
 }
 
 interface CompanyCardProps {
@@ -39,6 +41,7 @@ export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
         warrantyPolicy: profile.warrantyPolicy ?? 'Not provided',
         serviceTerm: profile.serviceTerm ?? 'Not provided',
         accountType: profile.accountType,
+        photoUrl: profile.companyPhoto,
     };
 }
 
@@ -69,9 +72,12 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                 enough to always fit, and scrolling it along with the details
                 is what pushed the phone number off the card. */}
             <div className="flex shrink-0 flex-col items-center justify-center border-line py-4 text-center md:w-1/3 md:border-r md:pr-8">
-                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-accent-bright text-3xl font-bold text-avatar-initials shadow-inner">
-                    CP
-                </div>
+                <CompanyAvatar
+                    name={data.name}
+                    photoUrl={data.photoUrl}
+                    size={96}
+                    className="mb-4"
+                />
 
                 <h2 className="mb-3 text-2xl font-bold tracking-tight text-ink">
                     {data.name}

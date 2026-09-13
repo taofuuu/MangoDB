@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { AccountType, CompanyProfile } from '@mangodb/shared';
 import RoleTags from '../ui/RoleTags';
+import CompanyAvatar from './CompanyAvatar';
 import Tag from '../ui/Tag';
 
 export interface ReceiverCompanyCardData {
@@ -17,6 +18,7 @@ export interface ReceiverCompanyCardData {
     companyType: string[];
     address: string;
     accountType: AccountType;
+    photoUrl: string | null;
 }
 
 interface ReceiverCompanyCardProps {
@@ -37,6 +39,7 @@ export function toReceiverCompanyCardData(
         companyType: profile.companyType,
         address: profile.address ?? 'Not provided',
         accountType: profile.accountType,
+        photoUrl: profile.companyPhoto,
     };
 }
 
@@ -59,9 +62,12 @@ export default function ReceiverCompanyCard({
         <div className="flex h-full w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm">
             {/* Who the company is. Fixed, like the provider card's. */}
             <div className="mb-5 flex shrink-0 flex-col items-center text-center">
-                <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-accent-bright type-lg !font-bold text-avatar-initials shadow-inner">
-                    CP
-                </div>
+                <CompanyAvatar
+                    name={data.name}
+                    photoUrl={data.photoUrl}
+                    size={80}
+                    className="mb-3"
+                />
 
                 <h2 className="mb-3 type-md !font-bold tracking-tight text-ink">
                     {data.name}
