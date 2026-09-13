@@ -994,6 +994,50 @@ admin: ['admin'],</code></pre>
         </p>
       </article>
 
+      <article class="entry" id="profile-photo" data-tags="profile photo picture avatar logo upload image multipart form-data supabase storage bucket companyPhoto us1-5 remove delete">
+        <h3>How does a company set or remove its profile photo?</h3>
+        <p class="answer"><code>PATCH /companies/me/photo</code> uploads one; <code>DELETE /companies/me/photo</code> clears it. Both answer with the whole profile.</p>
+        <pre><code>curl -s -X PATCH localhost:4000/companies/me/photo -H "Authorization: Bearer $TOKEN" \
+  -F 'photo=@logo.png;type=image/png'
+{"companyId":33, …,"companyPhoto":"https://&lt;project&gt;.supabase.co/storage/v1/object/public/profile/companies/1757…-k3f9.png", …}
+
+curl -s -X DELETE localhost:4000/companies/me/photo -H "Authorization: Bearer $TOKEN"
+{"companyId":33, …,"companyPhoto":null, …}</code></pre>
+        <p class="note">
+          <strong>Why this is not just a field on <a href="#edit-profile"><code>PATCH /companies/me</code></a>.</strong>
+          That body is JSON, and a file cannot travel in one. Turning the whole profile edit into
+          multipart would cost it the three states it depends on — a field absent means "leave it",
+          <code>null</code> means "clear it", a value means "set it" — because every multipart field
+          arrives as a string and there is no way to write <code>null</code>. So the photo gets its
+          own route, for the same reason
+          <a href="#change-credentials"><code>/me/credentials</code></a> has one.
+        </p>
+        <p class="note">
+          The multipart field is named <code>photo</code>. Same rules as the other two uploads,
+          enforced by the shared <code>uploadImage</code> middleware: <strong>PNG, JPEG or WebP
+          only, 5&nbsp;MB maximum.</strong> Not <code>image/*</code> — an SVG is a document the
+          browser runs scripts from when its public URL is opened directly. A wrong type or an
+          oversized file is a <code>400</code>; sending no file at all is also a <code>400</code>,
+          named on the <code>photo</code> field, because multer lets an empty body through and
+          only the handler can tell that nothing was attached.
+        </p>
+        <p class="note">
+          The bytes go to the <code>profile</code> Supabase bucket under
+          <code>companies/</code>, and the <code>company.company_photo</code> column holds the
+          public URL — the same shape as <code>certImage</code> and <code>portfolioImage</code>.
+          Replacing a photo deletes the old object after the column points at the new one, and
+          clearing it deletes the object after the column reads <code>null</code>. Both cleanups
+          are best-effort and logged: the row is correct either way, and an orphaned file is
+          cheaper than a column pointing at something that is gone.
+        </p>
+        <p class="note">
+          <strong>There is no administrator version.</strong> The route acts on
+          <code>req.auth.companyId</code>, so a company can only change its own. The profile-edit
+          page hides the control when an administrator is editing someone else, rather than showing
+          a button with nothing behind it.
+        </p>
+      </article>
+
       <article class="entry" id="admin-company-accounts" data-tags="admin company accounts list detail edit patch pagination private contact email phone us6-2 us6-3">
         <h3>How does an administrator list, inspect, and edit Company accounts?</h3>
         <p class="answer"><code>GET /admin/companies?page=1&amp;pageSize=12</code> returns one page; <code>GET /admin/companies/:companyId</code> returns the selected account's full profile; <code>PATCH /admin/companies/:companyId</code> edits it.</p>

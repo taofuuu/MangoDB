@@ -32,6 +32,28 @@ If the team shares one Supabase instance, a migration changes everyone's
 database the moment it runs. Say so before running one, and have people pull
 the new migration folder afterwards.
 
+## Image storage
+
+Certificates, portfolios and profile photos keep their bytes in Supabase
+Storage and only the public URL in Postgres. One bucket per kind, named in
+`src/lib/storage.ts`:
+
+| Bucket        | Folder          | Column                              |
+| ------------- | --------------- | ----------------------------------- |
+| `certificate` | `certificates/` | `certificate.cert_image`            |
+| `portfolio`   | `portfolios/`   | `service_portfolio.portfolio_image` |
+| `profile`     | `companies/`    | `company.company_photo`             |
+
+All three are **public** buckets: the URL in the column is served straight to
+an `<img>`, with no signing step. Create a missing one in the Supabase
+dashboard under Storage -> New bucket, with "Public bucket" on. Nothing in the
+app creates buckets, so an upload into one that does not exist fails with
+`Failed to upload image: Bucket not found`.
+
+Uploads are capped at 5 MB and limited to PNG, JPEG and WebP by
+`src/middleware/upload.ts` — not `image/*`, because an SVG is a document the
+browser executes scripts from when its public URL is opened directly.
+
 ## Endpoint conventions
 
 Read this before adding an endpoint. Every endpoint follows the same shape so
