@@ -13,6 +13,7 @@ import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
 import { normalizePhone, normalizeWebsiteUrl } from '@/lib/validation';
+import { isProviderAccount } from '@/lib/roles';
 
 export type ProfileFormData = Pick<
     CompanyProfile,
@@ -53,8 +54,7 @@ function orNull(value: string | null): string | null {
 export function toUpdateRequest(
     data: ProfileFormData,
 ): UpdateCompanyProfileRequest {
-    const isProvider =
-        data.accountType === 'PROVIDER' || data.accountType === 'BOTH';
+    const isProvider = isProviderAccount(data.accountType);
 
     return {
         // Not run through orNull: these columns are not nullable, so a cleared
@@ -129,8 +129,7 @@ export default function CompanyProfileForm({
 
     // Both live on the provider table. A receiver-only company owns no row
     // there, so showing the inputs would offer edits that cannot be saved.
-    const isProvider =
-        data.accountType === 'PROVIDER' || data.accountType === 'BOTH';
+    const isProvider = isProviderAccount(data.accountType);
 
     // A save replaces initialData with what was stored and Cancel resets to
     // the same thing, so the form always edits the last known good profile.

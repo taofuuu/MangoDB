@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { CompanyAccountDetail } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 
 interface CompanyDetailModalProps {
     company: CompanyAccountDetail | null;
@@ -61,10 +62,10 @@ export default function CompanyDetailModal({
         };
     }, [onClose]);
 
-    const isProvider =
-        company?.accountType === 'PROVIDER' || company?.accountType === 'BOTH';
-    const isReceiver =
-        company?.accountType === 'RECEIVER' || company?.accountType === 'BOTH';
+    // ?? '': the modal renders before the fetch lands, and both predicates
+    // answer false for a type they do not recognise.
+    const isProvider = isProviderAccount(company?.accountType ?? '');
+    const isReceiver = isReceiverAccount(company?.accountType ?? '');
 
     return (
         <div

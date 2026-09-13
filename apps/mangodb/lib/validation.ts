@@ -1,4 +1,5 @@
 import { ApiRequestError, describeError } from '@/lib/api';
+import { isProviderAccount } from '@/lib/roles';
 import type { ProfileFormData } from '@/components/forms/CompanyProfileForm';
 
 // One message per field, keyed by whatever the form calls that field.
@@ -302,9 +303,7 @@ export function validateProfile(
     data: ProfileFormData,
     isProvider?: boolean,
 ): ProfileErrors {
-    const providerMode =
-        isProvider ??
-        (data.accountType === 'PROVIDER' || data.accountType === 'BOTH');
+    const providerMode = isProvider ?? isProviderAccount(data.accountType);
 
     return providerMode
         ? validateProviderProfile(data)

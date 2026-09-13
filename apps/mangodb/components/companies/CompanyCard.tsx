@@ -1,5 +1,6 @@
 import type { CompanyAccountSummary } from '@mangodb/shared';
 import { Star } from 'lucide-react';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 
 interface CompanyCardProps {
     company: CompanyAccountSummary;
@@ -7,10 +8,8 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
-    const isProvider =
-        company.accountType === 'PROVIDER' || company.accountType === 'BOTH';
-    const isReceiver =
-        company.accountType === 'RECEIVER' || company.accountType === 'BOTH';
+    const isProvider = isProviderAccount(company.accountType);
+    const isReceiver = isReceiverAccount(company.accountType);
     const roundedRating = Math.round(company.averageRating ?? 0);
 
     return (
