@@ -77,9 +77,9 @@ export default function PortfolioCertificateList({
         activeTab === 'portfolio' ? '/portfolio' : '/certificate';
 
     return (
-        <div className="bg-white rounded-button p-5 border border-gray-200 shadow-sm font-sans">
-            {/* Tab Switcher */}
-            <div className="bg-gray-100 p-1 rounded-button flex w-60 mb-4 type-xs">
+        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+            {/* Tab Switcher. Full width, matching the other three cards. */}
+            <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}

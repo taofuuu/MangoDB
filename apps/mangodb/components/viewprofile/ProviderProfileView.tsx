@@ -18,18 +18,20 @@ export default function ProviderProfileView({
     profile: CompanyProfile;
 }) {
     return (
-        <div className="min-h-screen bg-stone-50 p-6 font-sans">
-            <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+        <div className="min-h-screen bg-surface p-6">
+            {/* Five columns split 3/2, not three split 2/1: the narrow
+                column was too tight for a tab switcher and a list. */}
+            <main className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-3">
                     <CompanyCard data={toCompanyCardData(profile)} />
                 </div>
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-2">
                     <ServicesSection />
                 </div>
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-3">
                     <ProjectTimeline />
                 </div>
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-2">
                     <PortfolioList companyId={profile.companyId} />
                 </div>
             </main>

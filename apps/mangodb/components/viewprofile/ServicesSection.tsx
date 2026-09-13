@@ -35,9 +35,10 @@ export default function ServicesDashboard() {
 
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
-            <main className="flex-1 bg-white rounded-button p-4 border border-gray-200 shadow-sm flex flex-col font-sans">
-                {/* Tab Switcher */}
-                <div className="bg-gray-100 p-1 rounded-button flex mb-4 type-xs">
+            <main className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+                {/* Tab Switcher. Full width, so the two tabs split the card
+                    rather than huddling in one corner of it. */}
+                <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
                     <button
                         type="button"
                         onClick={() => setActiveTab('services')}
@@ -63,11 +64,11 @@ export default function ServicesDashboard() {
                 </div>
 
                 {/* Display Content */}
-                <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 flex-1">
+                <div className="view-profile-scrollbar space-y-3 overflow-y-auto max-h-[500px] flex-1">
                     {/* Item 1 */}
                     <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="type-xs !font-semibold text-gray-800">
+                            <span className="type-sm !font-semibold text-gray-800">
                                 {currentTabContent.title1 || 'Untitled Item'}
                             </span>
                             <button className="type-xs text-brand hover:underline !font-medium">
@@ -83,7 +84,7 @@ export default function ServicesDashboard() {
                     {/* Item 2 */}
                     <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">
-                            <span className="type-xs !font-semibold text-gray-800">
+                            <span className="type-sm !font-semibold text-gray-800">
                                 {currentTabContent.title2 || 'Untitled Item'}
                             </span>
                             <button className="type-xs text-brand hover:underline !font-medium">

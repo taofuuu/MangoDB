@@ -58,9 +58,9 @@ export default function ProjectTimeline() {
         activeTab === 'history' ? historyEvents : ongoingEvents;
 
     return (
-        <div className="bg-white rounded-button p-5 border border-gray-200 shadow-sm flex flex-col font-sans">
-            {/* Sub Tabs Switcher */}
-            <div className="bg-gray-100 p-1 rounded-button flex w-60 mb-4 type-xs">
+        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px]">
+            {/* Sub Tabs Switcher. Full width, matching the other three cards. */}
+            <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('history')}
@@ -86,9 +86,9 @@ export default function ProjectTimeline() {
             </div>
 
             {/* Single Visible Container */}
-            <div className="bg-gray-100/60 rounded-button p-4">
+            <div className="bg-gray-50/70 rounded-button p-4 border border-line h-[300px] overflow-hidden">
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="type-xs !font-bold text-gray-800 capitalize">
+                    <h3 className="type-sm !font-bold text-gray-800 capitalize">
                         {activeTab === 'history'
                             ? 'Project History'
                             : 'Ongoing Projects'}
@@ -106,7 +106,7 @@ export default function ProjectTimeline() {
                             className="relative flex items-center bg-white p-3 rounded-button border border-gray-100 shadow-sm type-xs justify-between"
                         >
                             {/* Timeline Node Point */}
-                            <span className="absolute -left-6 w-2.5 h-2.5 rounded-full bg-white border-2 border-brand"></span>
+                            <span className="absolute -left-[21px] top-[20px] w-2.5 h-2.5 rounded-full bg-white border-2 border-brand"></span>
 
                             <div className="flex gap-4 items-center">
                                 <div>
