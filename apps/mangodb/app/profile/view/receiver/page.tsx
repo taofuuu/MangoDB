@@ -31,7 +31,7 @@ export default function ReceiverViewPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white p-6 lg:p-8">
+        <div className="min-h-screen bg-[#FFFDF9] p-6 lg:p-8">
             {loadError === 'no-token' && (
                 <p className="text-sm">
                     You are not signed in.{' '}
@@ -49,7 +49,7 @@ export default function ReceiverViewPage() {
             {!loadError && !profile && <p className="text-sm">Loading…</p>}
 
             {profile && (
-                <main className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
+                <main className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
                     {/* Left Receiver Card */}
                     <aside className="w-full lg:w-[320px] flex-shrink-0">
                         <ReceiverCompanyCard

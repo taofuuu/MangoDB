@@ -31,7 +31,6 @@ export default function ViewProfilePage() {
                 );
             });
     }, []);
-
     return (
         <div className="min-h-screen bg-stone-50 p-6 font-sans">
             {loadError === 'no-token' && (

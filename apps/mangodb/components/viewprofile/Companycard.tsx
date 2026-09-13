@@ -61,10 +61,9 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                     </div>
                 </div>
 
-                {/* Right Form Field Grids - Match Figma Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 pb-8">
-                    {/* Column 1 (Left) */}
-                    <div className="flex flex-col gap-4">
+                <div className="w-full md:w-2/3 pb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
+                        {/* Right Form Field Grids - Match Figma Layout */}
                         <div>
                             <label
                                 htmlFor="company-description"
@@ -76,27 +75,10 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 id="company-description"
                                 readOnly
                                 value={data.description}
-                                className="w-full h-44 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
-                            />
-                        </div>
-                        <div>
-                            <label
-                                htmlFor="company-address"
-                                className="block text-xs font-semibold text-gray-800 mb-1"
-                            >
-                                Company Address
-                            </label>
-                            <textarea
-                                id="company-address"
-                                readOnly
-                                value={data.address}
                                 className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
-                    </div>
 
-                    {/* Column 2 (Right) */}
-                    <div className="flex flex-col gap-4">
                         <div>
                             <label
                                 htmlFor="company-type"
@@ -111,6 +93,22 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
+
+                        <div>
+                            <label
+                                htmlFor="company-service-term"
+                                className="block text-xs font-semibold text-gray-800 mb-1"
+                            >
+                                Company Service Term
+                            </label>
+                            <textarea
+                                id="company-service-term"
+                                readOnly
+                                value={data.serviceTerm}
+                                className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
+                            />
+                        </div>
+
                         <div>
                             <label
                                 htmlFor="company-warranty-policy"
@@ -125,17 +123,18 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                                 className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>
-                        <div>
+
+                        <div className="md:col-span-2">
                             <label
-                                htmlFor="company-service-term"
+                                htmlFor="company-address"
                                 className="block text-xs font-semibold text-gray-800 mb-1"
                             >
-                                Company Service Term
+                                Company Address
                             </label>
                             <textarea
-                                id="company-service-term"
+                                id="company-address"
                                 readOnly
-                                value={data.serviceTerm}
+                                value={data.address}
                                 className="w-full h-20 p-3 text-xs border border-[#497B93]/50 rounded-xl bg-white text-gray-700 focus:outline-none resize-none cursor-default"
                             />
                         </div>

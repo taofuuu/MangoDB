@@ -79,13 +79,13 @@ export default function PortfolioCertificateList({
         activeTab === 'portfolio' ? '/portfolio' : '/certificate';
 
     return (
-        <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm font-sans">
+        <div className="bg-white rounded-button p-5 border border-gray-200 shadow-sm font-sans">
             {/* Tab Switcher */}
-            <div className="bg-gray-100 p-1 rounded-xl flex w-60 mb-4 text-xs">
+            <div className="bg-gray-100 p-1 rounded-button flex w-60 mb-4 text-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}
-                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${
+                    className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'portfolio'
                             ? 'bg-white shadow text-[#497B93]'
                             : 'text-gray-500 hover:text-gray-700'
@@ -96,7 +96,7 @@ export default function PortfolioCertificateList({
                 <button
                     type="button"
                     onClick={() => setActiveTab('certificates')}
-                    className={`flex-1 py-1.5 rounded-lg font-medium transition ${
+                    className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'certificates'
                             ? 'bg-white shadow text-[#497B93]'
                             : 'text-gray-500 hover:text-gray-700'
@@ -107,7 +107,7 @@ export default function PortfolioCertificateList({
             </div>
 
             {/* Title Header */}
-            <h3 className="text-sm font-bold text-gray-800 mb-3 capitalize">
+            <h3 className="text-sm !font-bold text-gray-800 mb-3 capitalize">
                 {activeTab === 'portfolio' ? 'Portfolio' : 'Certificates'}
             </h3>
 
@@ -133,7 +133,7 @@ export default function PortfolioCertificateList({
                             {item.title}
                         </span>
                         <div className="flex items-center gap-6">
-                            <span className="text-gray-400 text-[11px]">
+                            <span className="text-gray-400 text-xs">
                                 {item.date}
                             </span>
                             <button className="text-[#497B93] hover:underline">
