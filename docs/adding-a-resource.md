@@ -1,5 +1,10 @@
 # Adding a resource
 
+> **If you change this page, check `docs/ai-brief.md`.** That file restates
+> parts of this one so it can be sent to a chat AI alongside a zip of the code,
+> where it cannot follow a link. This page stays the authority; the brief is a
+> summary that has to be kept honest.
+
 Sprint 2 adds three of these — services, job postings, proposals — written by
 different people at the same time. This is the shape to copy, so they arrive
 looking like one API instead of three.
@@ -27,9 +32,9 @@ Work outwards from the database. Each step depends on the one before it, and
 doing them out of order means redoing them.
 
 ```
-1. schema.prisma   →  2. schemas/  →  3. lib/  →  4. controllers/
-                                                        ↓
-7. api-guide.html  ←  6. snapshot  ←  5. routes/ + packages/shared
+1. schema.prisma  →  2. schemas/  →  3. lib/  →  4. controllers/
+                                                       ↓
+                          6. snapshot  ←  5. routes/ + packages/shared
 ```
 
 ---
@@ -298,10 +303,15 @@ See [refactor/phase-0-safety-net.md](refactor/phase-0-safety-net.md).
 
 ---
 
-## 7. The docs
+## 7. Say it exists
 
-`docs/api-guide.html` is the page the rest of the team reads. An endpoint that
-is not in it is an endpoint someone will write a second time.
+There is no separate endpoint catalogue to update — `src/routes/` is the list,
+which is the point: a hand-written copy of it goes stale the first week nobody
+remembers to edit it. What a route file cannot say is _why_, so put the reason
+in a comment beside the route or the handler, the way the existing ones do.
+
+Then tell the team in the group chat. An endpoint nobody knows about is an
+endpoint someone writes a second time.
 
 ---
 
@@ -315,6 +325,5 @@ is not in it is an endpoint someone will write a second time.
 [ ] route with guards, mounted once in routes/index.ts
 [ ] shared type in packages/shared, asserted in schemas/contract.ts
 [ ] snapshot calls added, with cleanup, and the baseline re-recorded
-[ ] docs/api-guide.html updated
 [ ] npm run verify passes
 ```
