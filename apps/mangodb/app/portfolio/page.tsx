@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
+import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
 import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
@@ -23,6 +24,12 @@ export default function PortfolioPage() {
 
     // The item the user asked to delete. Null means the popup is closed.
     const [pendingDelete, setPendingDelete] = useState<ServicePortfolio | null>(
+        null,
+    );
+
+    // The image open full size. Held here rather than in each card so the
+    // grid and the list share one dialog.
+    const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
         null,
     );
 
@@ -115,6 +122,7 @@ export default function PortfolioPage() {
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
+                            onExpandImage={setExpandedImage}
                         />
                     ))}
                 </div>
@@ -128,9 +136,17 @@ export default function PortfolioPage() {
                             item={item}
                             onEdit={setPendingEdit}
                             onDelete={setPendingDelete}
+                            onExpandImage={setExpandedImage}
                         />
                     ))}
                 </div>
+            )}
+
+            {expandedImage && (
+                <ImageModal
+                    image={expandedImage}
+                    onClose={() => setExpandedImage(null)}
+                />
             )}
 
             <DeletePortfolioModal
