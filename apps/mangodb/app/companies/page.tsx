@@ -165,7 +165,7 @@ export default function CompaniesPage() {
     const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
-        <main className="min-h-screen bg-surface-soft px-[1.67vw] py-[2.96vh]">
+        <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto max-w-[93.75vw]">
                 <header className="mb-[2.96vh] flex flex-wrap items-start justify-between gap-[1.67vw]">
                     <div>

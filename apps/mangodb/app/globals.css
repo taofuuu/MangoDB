@@ -43,12 +43,16 @@
     --color-danger-tint: #f0d1c9;
     --color-danger-wash: #fdf0ee;
 
+    /* Star ratings, and the yellow dot on a portfolio card. #FEC84A used to
+       sit beside this doing the same job. */
     --color-accent: #fabc3f;
-    --color-accent-2: #fec84a;
-    --color-accent-3: #ffc107;
-    --color-accent-4: #ffb800;
+    /* A more saturated gold, for the circle behind a placeholder avatar.
+       That circle was #FFC107 on the provider page and #FFB800 on the
+       receiver page — the same component, ΔE 1.4 apart. */
+    --color-accent-bright: #ffc107;
+    /* The pale panel behind the register and login flow. The login page used
+       #FCEFD7 for it and the register page this, ΔE 2.2 apart. */
     --color-accent-tint: #fff5dc;
-    --color-accent-wash: #fcefd7;
 
     --color-orange: #d9603b;
 
@@ -61,10 +65,12 @@
     /* The initials in the placeholder avatar, on an accent circle. */
     --color-avatar-initials: #e53e3e;
 
+    /* The page, and every panel on it. #FBFBFB and #FAF9F6 used to be two
+       more of these, within ΔE 2.3. */
     --color-surface: #fffdf9;
+    /* Pure white, deliberately: an input or a card sitting on the warm
+       surface above, so it reads as on top rather than part of it. */
     --color-surface-white: #ffffff;
-    --color-surface-soft: #fbfbfb;
-    --color-surface-warm: #faf9f6;
 
     /* Body text. */
     --color-ink: #171717;
@@ -157,8 +163,8 @@ body {
 }
 
 .certificate-scrollbar {
-    --scrollbar-thumb: var(--color-accent-2);
-    --scrollbar-thumb-hover: var(--color-accent-2);
+    --scrollbar-thumb: var(--color-accent);
+    --scrollbar-thumb-hover: var(--color-accent);
 }
 
 .modal-scrollbar::-webkit-scrollbar,

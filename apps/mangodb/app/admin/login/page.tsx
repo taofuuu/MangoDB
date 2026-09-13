@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
     return (
-        <main className="flex min-h-screen items-center justify-center bg-surface-soft px-[4.17vw] py-[5.56vh]">
+        <main className="flex min-h-screen items-center justify-center bg-surface px-[4.17vw] py-[5.56vh]">
             <section
                 aria-labelledby="admin-login-title"
                 className="w-full max-w-[36.60vw] overflow-hidden rounded-button bg-surface shadow-[0_0.56vh_2.22vh_rgba(0,0,0,0.10)] max-lg:max-w-[52vw] max-md:max-w-[90vw]"

@@ -115,7 +115,7 @@ export default function AccountPage() {
     };
 
     return (
-        <main className="min-h-screen p-10 bg-surface-warm">
+        <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">
                 <header className="border-b border-gray-200 pb-4">
                     <h1 className="type-lg font-bold text-ink">

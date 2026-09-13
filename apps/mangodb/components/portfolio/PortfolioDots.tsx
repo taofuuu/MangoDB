@@ -1,10 +1,10 @@
 // Decorative dots from the design - they carry no data and are not clickable.
 // var(), not hex: a style object cannot use a Tailwind class, but it can read
 // the same tokens. #C5483E here was one of the four reds the danger merge
-// removed, and #F5C24C was a fifth yellow within ΔE 4 of accent-2.
+// removed, and #F5C24C was a fifth yellow within ΔE 4 of accent.
 const DOT_COLORS = [
     'var(--color-brand)',
-    'var(--color-accent-2)',
+    'var(--color-accent)',
     'var(--color-danger)',
 ];
 

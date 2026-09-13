@@ -3,7 +3,7 @@ import DecorativePattern from '@/components/auth/Decorate';
 
 export default function LoginPage() {
     return (
-        <main className="relative min-h-screen w-full overflow-hidden bg-accent-wash">
+        <main className="relative min-h-screen w-full overflow-hidden bg-accent-tint">
             <DecorativePattern
                 className="
           pointer-events-none

@@ -45,7 +45,7 @@ export default function ReceiverCompanyCard({
             <div>
                 {/* Profile Header */}
                 <div className="flex flex-col items-center text-center mb-5">
-                    <div className="w-20 h-20 bg-accent-4 rounded-full flex items-center justify-center !font-bold text-avatar-initials type-lg shadow-inner mb-3">
+                    <div className="w-20 h-20 bg-accent-bright rounded-full flex items-center justify-center !font-bold text-avatar-initials type-lg shadow-inner mb-3">
                         CP
                     </div>
                     <h2 className="type-md !font-bold text-gray-900 tracking-tight mb-3">

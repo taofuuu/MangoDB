@@ -50,7 +50,7 @@ export default function RoleStep({ value, onChange }: RoleStepProps) {
                         aria-pressed={selected}
                         className={`flex w-full items-center gap-5 rounded-button border p-2 text-left transition ${
                             selected
-                                ? 'border-accent-2 bg-accent-2 shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
+                                ? 'border-accent bg-accent shadow-[2px_4px_4px_rgba(0,0,0,0.25)]'
                                 : 'border-brand bg-surface hover:bg-accent-tint'
                         }`}
                     >
