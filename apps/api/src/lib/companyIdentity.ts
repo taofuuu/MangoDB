@@ -37,6 +37,10 @@ interface IdentityMatch {
 // One case-insensitive query for whichever fields were supplied. excludeCompanyId
 // is the caller's own row: keeping your own email is not a collision with
 // yourself. Nothing supplied matches nothing, rather than every company.
+//
+// The one $queryRaw in the codebase, and the one place below the camelCase
+// line: it addresses real columns, so `company_id` here is the column name and
+// not a field name Prisma renamed. See docs/conventions.md section 1.
 async function findIdentityMatches(
     username: string | undefined,
     email: string | undefined,

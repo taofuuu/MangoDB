@@ -36,11 +36,11 @@ async function verifyCredentials(
 ): Promise<CompanyProfile> {
     // companyProfileSelect leaves password out on purpose, but verifying needs
     // the stored hash. Ask for it alongside and drop it before returning —
-    // one round trip instead of a second lookup. deleted_at rides along the
+    // one round trip instead of a second lookup. deletedAt rides along the
     // same way, for the login-blocking check below.
     const company = await prisma.company.findUnique({
         where: { email },
-        select: { ...companyProfileSelect, password: true, deleted_at: true },
+        select: { ...companyProfileSelect, password: true, deletedAt: true },
     });
 
     const storedHash = company?.password ?? (await dummyPasswordHash());
@@ -51,12 +51,12 @@ async function verifyCredentials(
     // always ran against this row's real stored hash — the same timing. A
     // distinct "this account was deleted" response would hand a prober a way
     // to enumerate deleted accounts that a wrong-password response does not.
-    if (!company || company.deleted_at || !passwordMatches) {
+    if (!company || company.deletedAt || !passwordMatches) {
         throw ApiError.unauthorized('Invalid email or password');
     }
 
     // The hash never leaves this function: split it off, return the rest.
-    const { password: _hash, deleted_at: _deletedAt, ...row } = company;
+    const { password: _hash, deletedAt: _deletedAt, ...row } = company;
 
     return toCompanyProfile(row);
 }
@@ -82,16 +82,19 @@ export async function register(req: Request, res: Response): Promise<void> {
     try {
         company = await prisma.company.create({
             data: {
-                ...rest,
+                companyName: rest.company_name,
+                username: rest.username,
+                email: rest.email,
+                phone: rest.phone,
                 // exactOptionalPropertyTypes: a missing optional is undefined
                 // here, but a nullable column wants null.
-                company_description: rest.company_description ?? null,
+                companyDescription: rest.company_description ?? null,
                 address: rest.address ?? null,
                 website: rest.website ?? null,
-                account_type,
+                accountType: account_type,
                 password: await hashPassword(password),
-                company_type: {
-                    create: company_type.map((tag) => ({ company_type: tag })),
+                companyType: {
+                    create: company_type.map((tag) => ({ companyType: tag })),
                 },
                 ...(isProvider ? { provider: { create: {} } } : {}),
                 ...(isReceiver ? { receiver: { create: {} } } : {}),

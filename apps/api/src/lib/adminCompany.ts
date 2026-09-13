@@ -10,7 +10,7 @@ const ratingSelect = {
         select: {
             project: {
                 select: {
-                    rating: { select: { rating_score: true } },
+                    rating: { select: { ratingScore: true } },
                 },
             },
         },
@@ -18,25 +18,25 @@ const ratingSelect = {
 } as const;
 
 export const adminCompanyListSelect = {
-    company_id: true,
-    company_name: true,
-    company_description: true,
+    companyId: true,
+    companyName: true,
+    companyDescription: true,
     phone: true,
-    account_type: true,
-    deleted_at: true,
+    accountType: true,
+    deletedAt: true,
     ...ratingSelect,
 } as const;
 
 export const adminCompanyDetailSelect = {
     ...companyProfileSelect,
     ...ratingSelect,
-    deleted_at: true,
+    deletedAt: true,
 } as const;
 
 interface RatingSource {
     proposal: {
         project: {
-            rating: { rating_score: unknown }[];
+            rating: { ratingScore: unknown }[];
         } | null;
     }[];
 }
@@ -47,8 +47,7 @@ function getRating(source: RatingSource): {
 } {
     const scores = source.proposal.flatMap(
         ({ project }) =>
-            project?.rating.map(({ rating_score }) => Number(rating_score)) ??
-            [],
+            project?.rating.map(({ ratingScore }) => Number(ratingScore)) ?? [],
     );
 
     if (scores.length === 0) {
@@ -65,41 +64,39 @@ function getRating(source: RatingSource): {
 }
 
 interface CompanyAccountSummaryRow extends RatingSource {
-    company_id: number;
-    company_name: string;
-    company_description: string | null;
+    companyId: number;
+    companyName: string;
+    companyDescription: string | null;
     phone: string;
-    account_type: string;
-    deleted_at: Date | null;
+    accountType: string;
+    deletedAt: Date | null;
 }
 
 export function toCompanyAccountSummary(
     company: CompanyAccountSummaryRow,
 ): CompanyAccountSummary {
     return {
-        company_id: company.company_id,
-        company_name: company.company_name,
-        company_description: company.company_description,
+        company_id: company.companyId,
+        company_name: company.companyName,
+        company_description: company.companyDescription,
         phone: company.phone,
-        account_type: company.account_type as AccountType,
-        deleted_at: !company.deleted_at
-            ? null
-            : company.deleted_at.toISOString(),
+        account_type: company.accountType as AccountType,
+        deleted_at: !company.deletedAt ? null : company.deletedAt.toISOString(),
         ...getRating(company),
     };
 }
 
 type CompanyAccountDetailRow = Parameters<typeof toCompanyProfile>[0] &
-    RatingSource & { deleted_at: Date | null };
+    RatingSource & { deletedAt: Date | null };
 
 export function toCompanyAccountDetail(
     company: CompanyAccountDetailRow,
 ): CompanyAccountDetail {
-    const { proposal, deleted_at, ...profile } = company;
+    const { proposal, deletedAt, ...profile } = company;
 
     return {
         ...toCompanyProfile(profile),
         ...getRating({ proposal }),
-        deleted_at: !deleted_at ? null : deleted_at.toISOString(),
+        deleted_at: !deletedAt ? null : deletedAt.toISOString(),
     };
 }

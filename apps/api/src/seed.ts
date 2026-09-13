@@ -33,36 +33,36 @@ const CERT_TITLE = 'Snapshot seed certificate';
 interface SeedAccount {
     username: string;
     email: string;
-    company_name: string;
-    account_type: 'PROVIDER' | 'RECEIVER' | 'ADMIN';
+    companyName: string;
+    accountType: 'PROVIDER' | 'RECEIVER' | 'ADMIN';
     phone: string;
-    company_type: string[];
+    companyType: string[];
 }
 
 const ACCOUNTS: SeedAccount[] = [
     {
         username: `${PREFIX}_provider`,
         email: `provider@${PREFIX}.local`,
-        company_name: 'Snapshot Seed Provider',
-        account_type: 'PROVIDER',
+        companyName: 'Snapshot Seed Provider',
+        accountType: 'PROVIDER',
         phone: '0810000001',
-        company_type: ['Software House'],
+        companyType: ['Software House'],
     },
     {
         username: `${PREFIX}_receiver`,
         email: `receiver@${PREFIX}.local`,
-        company_name: 'Snapshot Seed Receiver',
-        account_type: 'RECEIVER',
+        companyName: 'Snapshot Seed Receiver',
+        accountType: 'RECEIVER',
         phone: '0810000002',
-        company_type: ['SME'],
+        companyType: ['SME'],
     },
     {
         username: `${PREFIX}_admin`,
         email: `admin@${PREFIX}.local`,
-        company_name: 'Snapshot Seed Admin',
-        account_type: 'ADMIN',
+        companyName: 'Snapshot Seed Admin',
+        accountType: 'ADMIN',
         phone: '0810000003',
-        company_type: ['Platform'],
+        companyType: ['Platform'],
     },
 ];
 
@@ -71,46 +71,46 @@ const ACCOUNTS: SeedAccount[] = [
 // to an account you can sign in as.
 async function upsertAccount(account: SeedAccount): Promise<number> {
     const password = await hashPassword(PASSWORD);
-    const { company_type, ...columns } = account;
+    const { companyType, ...columns } = account;
 
     const company = await prisma.company.upsert({
         where: { username: account.username },
-        update: { ...columns, password, deleted_at: null },
+        update: { ...columns, password, deletedAt: null },
         create: { ...columns, password },
-        select: { company_id: true },
+        select: { companyId: true },
     });
 
-    await prisma.company_type.createMany({
-        data: company_type.map((tag) => ({
-            company_id: company.company_id,
-            company_type: tag,
+    await prisma.companyType.createMany({
+        data: companyType.map((tag) => ({
+            companyId: company.companyId,
+            companyType: tag,
         })),
         skipDuplicates: true,
     });
 
     // PROVIDER and RECEIVER are discriminators: the row on the side table is
     // what the API actually reads. ADMIN owns neither.
-    if (account.account_type === 'PROVIDER') {
+    if (account.accountType === 'PROVIDER') {
         await prisma.provider.upsert({
-            where: { company_id: company.company_id },
+            where: { companyId: company.companyId },
             update: {},
             create: {
-                company_id: company.company_id,
-                service_term: 'Delivery within 30 days of the agreed start.',
-                warranty_policy: '90 days of bug fixes after handover.',
+                companyId: company.companyId,
+                serviceTerm: 'Delivery within 30 days of the agreed start.',
+                warrantyPolicy: '90 days of bug fixes after handover.',
             },
         });
     }
 
-    if (account.account_type === 'RECEIVER') {
+    if (account.accountType === 'RECEIVER') {
         await prisma.receiver.upsert({
-            where: { company_id: company.company_id },
+            where: { companyId: company.companyId },
             update: {},
-            create: { company_id: company.company_id },
+            create: { companyId: company.companyId },
         });
     }
 
-    return company.company_id;
+    return company.companyId;
 }
 
 // POST /portfolios refuses anything that is not attached to a service listing
@@ -119,82 +119,82 @@ async function upsertAccount(account: SeedAccount): Promise<number> {
 async function upsertListing(providerId: number): Promise<number> {
     // No unique column to key on, so match the title this script writes.
     const existing = await prisma.listing.findFirst({
-        where: { company_id: providerId, listing_title: LISTING_TITLE },
-        select: { listing_id: true },
+        where: { companyId: providerId, listingTitle: LISTING_TITLE },
+        select: { listingId: true },
     });
 
     const listing =
         existing ??
         (await prisma.listing.create({
             data: {
-                company_id: providerId,
-                listing_title: LISTING_TITLE,
-                listing_desc:
+                companyId: providerId,
+                listingTitle: LISTING_TITLE,
+                listingDesc:
                     'Owned by src/seed.ts so the snapshot script has a listing to post against.',
-                min_budget: 50000,
-                max_budget: 200000,
-                // Free text today. Phase 1d of the refactor turns this into
-                // DRAFT | OPEN | CLOSED — update this line when it does.
-                listing_status: 'OPEN',
+                minBudget: 50000,
+                maxBudget: 200000,
+                // Free text today. docs/conventions.md section 6 turns this
+                // into DRAFT | OPEN | CLOSED — update this line when it does.
+                listingStatus: 'OPEN',
             },
-            select: { listing_id: true },
+            select: { listingId: true },
         }));
 
     // The child row is what makes this listing a service rather than a job
     // posting — see Phase 1e, nothing else distinguishes the two today.
     await prisma.service.upsert({
-        where: { listing_id: listing.listing_id },
+        where: { listingId: listing.listingId },
         update: {},
-        create: { listing_id: listing.listing_id },
+        create: { listingId: listing.listingId },
     });
 
-    return listing.listing_id;
+    return listing.listingId;
 }
 
 async function upsertPortfolio(listingId: number): Promise<void> {
-    await prisma.service_portfolio.upsert({
+    await prisma.servicePortfolio.upsert({
         where: {
-            listing_id_portfolio_link: {
-                listing_id: listingId,
-                portfolio_link: PORTFOLIO_LINK,
+            listingId_portfolioLink: {
+                listingId,
+                portfolioLink: PORTFOLIO_LINK,
             },
         },
         update: {},
         create: {
-            listing_id: listingId,
-            portfolio_name: 'Snapshot seed portfolio',
-            portfolio_description:
+            listingId,
+            portfolioName: 'Snapshot seed portfolio',
+            portfolioDescription:
                 'A fixed row for GET /portfolios/:portfolioId to answer with.',
-            development_date: new Date('2026-01-15T00:00:00Z'),
+            developmentDate: new Date('2026-01-15T00:00:00Z'),
             // Not a Supabase URL on purpose: the snapshot script replaces real
             // storage URLs with a placeholder because they change every upload,
             // and this one should stay visible and stable in the baseline.
-            portfolio_image: 'https://snapshot.local/portfolio.png',
-            portfolio_link: PORTFOLIO_LINK,
+            portfolioImage: 'https://snapshot.local/portfolio.png',
+            portfolioLink: PORTFOLIO_LINK,
         },
     });
 }
 
 async function upsertCertificate(providerId: number): Promise<void> {
     const existing = await prisma.certificate.findFirst({
-        where: { provider_id: providerId, cert_title: CERT_TITLE },
-        select: { certificate_id: true },
+        where: { providerId, certTitle: CERT_TITLE },
+        select: { certificateId: true },
     });
 
     if (existing) return;
 
     await prisma.certificate.create({
         data: {
-            provider_id: providerId,
-            cert_title: CERT_TITLE,
+            providerId,
+            certTitle: CERT_TITLE,
             organization: 'Snapshot Seed Authority',
-            issue_month: 6,
-            issue_year: 2024,
-            expire_month: 6,
-            expire_year: 2029,
-            credential_id: 'SNAPSHOT-0001',
-            credential_url: 'https://snapshot.local/credential',
-            cert_image: 'https://snapshot.local/certificate.png',
+            issueMonth: 6,
+            issueYear: 2024,
+            expireMonth: 6,
+            expireYear: 2029,
+            credentialId: 'SNAPSHOT-0001',
+            credentialUrl: 'https://snapshot.local/credential',
+            certImage: 'https://snapshot.local/certificate.png',
         },
     });
 }
@@ -210,7 +210,7 @@ async function pruneProbeAccounts(): Promise<number> {
     const { count } = await prisma.company.deleteMany({
         where: {
             username: { startsWith: PROBE_PREFIX },
-            deleted_at: { not: null },
+            deletedAt: { not: null },
         },
     });
     return count;
@@ -224,8 +224,8 @@ async function main(): Promise<void> {
 
     const ids = new Map<string, number>();
     for (const account of ACCOUNTS) {
-        ids.set(account.account_type, await upsertAccount(account));
-        console.log(`ok  ${account.account_type.padEnd(8)} ${account.email}`);
+        ids.set(account.accountType, await upsertAccount(account));
+        console.log(`ok  ${account.accountType.padEnd(8)} ${account.email}`);
     }
 
     const providerId = ids.get('PROVIDER');
@@ -245,8 +245,8 @@ async function main(): Promise<void> {
 
     console.log('\nPut these in scripts/.env.snapshot:\n');
     for (const account of ACCOUNTS) {
-        console.log(`${account.account_type}_EMAIL=${account.email}`);
-        console.log(`${account.account_type}_PASSWORD=${PASSWORD}`);
+        console.log(`${account.accountType}_EMAIL=${account.email}`);
+        console.log(`${account.accountType}_PASSWORD=${PASSWORD}`);
     }
 }
 

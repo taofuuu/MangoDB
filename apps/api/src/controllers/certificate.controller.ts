@@ -17,6 +17,7 @@ import {
     BUCKETS,
 } from '../lib/storage';
 import { ApiError } from '../lib/ApiError';
+import { certificateSelect, toCertificate } from '../lib/certificate';
 import { omitUndefined } from '../lib/objects';
 
 export async function createCertificate(req: Request, res: Response) {
@@ -42,27 +43,28 @@ export async function createCertificate(req: Request, res: Response) {
     try {
         const certificate = await prisma.certificate.create({
             data: {
-                provider_id: providerId,
+                providerId,
 
-                cert_title: body.cert_title,
+                certTitle: body.cert_title,
                 organization: body.organization,
 
-                issue_month: body.issue_month ?? null,
-                issue_year: body.issue_year ?? null,
+                issueMonth: body.issue_month ?? null,
+                issueYear: body.issue_year ?? null,
 
-                expire_month: body.expire_month ?? null,
-                expire_year: body.expire_year ?? null,
+                expireMonth: body.expire_month ?? null,
+                expireYear: body.expire_year ?? null,
 
-                credential_id: body.credential_id ?? null,
-                credential_url: body.credential_url ?? null,
+                credentialId: body.credential_id ?? null,
+                credentialUrl: body.credential_url ?? null,
 
-                cert_image: certImage,
+                certImage,
             },
+            select: certificateSelect,
         });
 
         return res.status(201).json({
             message: 'Certificate created successfully',
-            certificate,
+            certificate: toCertificate(certificate),
         });
     } catch (error) {
         // Database creation failed, so remove the uploaded file
@@ -77,10 +79,11 @@ export async function createCertificate(req: Request, res: Response) {
 export async function getCertificatesByProvider(req: Request, res: Response) {
     const providerId = Number(req.auth!.sub);
     const certificates = await prisma.certificate.findMany({
-        where: { provider_id: providerId },
-        orderBy: { certificate_id: 'desc' },
+        where: { providerId },
+        orderBy: { certificateId: 'desc' },
+        select: certificateSelect,
     });
-    return res.status(200).json(certificates);
+    return res.status(200).json(certificates.map(toCertificate));
 }
 
 export async function updateCertificate(req: Request, res: Response) {
@@ -97,9 +100,10 @@ export async function updateCertificate(req: Request, res: Response) {
     // Fetch existing certificate for ownership and date merging
     const existingCertificate = await prisma.certificate.findFirst({
         where: {
-            certificate_id: certificateId,
-            provider_id: providerId,
+            certificateId,
+            providerId,
         },
+        select: certificateSelect,
     });
 
     if (!existingCertificate) {
@@ -110,19 +114,19 @@ export async function updateCertificate(req: Request, res: Response) {
     const issueYear =
         body.issue_year !== undefined
             ? body.issue_year
-            : existingCertificate.issue_year;
+            : existingCertificate.issueYear;
     const issueMonth =
         body.issue_month !== undefined
             ? body.issue_month
-            : existingCertificate.issue_month;
+            : existingCertificate.issueMonth;
     const expireYear =
         body.expire_year !== undefined
             ? body.expire_year
-            : existingCertificate.expire_year;
+            : existingCertificate.expireYear;
     const expireMonth =
         body.expire_month !== undefined
             ? body.expire_month
-            : existingCertificate.expire_month;
+            : existingCertificate.expireMonth;
 
     if (
         issueYear != null &&
@@ -149,11 +153,24 @@ export async function updateCertificate(req: Request, res: Response) {
     let updatedCertificate;
     try {
         updatedCertificate = await prisma.certificate.update({
-            where: { certificate_id: certificateId },
+            where: { certificateId },
             data: {
-                ...omitUndefined(body),
-                ...(replacement ? { cert_image: replacement.url } : {}),
+                // Listed rather than spread, because the request body is still
+                // snake_case and Prisma is now camelCase. This disappears in
+                // the commit that flips the wire.
+                ...omitUndefined({
+                    certTitle: body.cert_title,
+                    organization: body.organization,
+                    issueMonth: body.issue_month,
+                    issueYear: body.issue_year,
+                    expireMonth: body.expire_month,
+                    expireYear: body.expire_year,
+                    credentialId: body.credential_id,
+                    credentialUrl: body.credential_url,
+                }),
+                ...(replacement ? { certImage: replacement.url } : {}),
             },
+            select: certificateSelect,
         });
     } catch (error) {
         if (replacement) {
@@ -165,16 +182,16 @@ export async function updateCertificate(req: Request, res: Response) {
 
     // The row points at the replacement now, so the old object is unreferenced.
     // Cleanup is best-effort, matching certificate deletion.
-    if (replacement && existingCertificate.cert_image) {
+    if (replacement && existingCertificate.certImage) {
         await removeFromStorageByUrl(
-            existingCertificate.cert_image,
+            existingCertificate.certImage,
             BUCKETS.CERTIFICATE,
         );
     }
 
     return res.status(200).json({
         message: 'Certificate updated successfully',
-        certificate: updatedCertificate,
+        certificate: toCertificate(updatedCertificate),
     });
 }
 
@@ -184,9 +201,10 @@ export async function deleteCertificate(req: Request, res: Response) {
 
     const existingCertificate = await prisma.certificate.findFirst({
         where: {
-            certificate_id: certificateId,
-            provider_id: providerId,
+            certificateId,
+            providerId,
         },
+        select: { certImage: true },
     });
 
     if (!existingCertificate) {
@@ -194,13 +212,13 @@ export async function deleteCertificate(req: Request, res: Response) {
     }
 
     await prisma.certificate.delete({
-        where: { certificate_id: certificateId },
+        where: { certificateId },
     });
 
     // Best-effort cleanup: the row is gone either way.
-    if (existingCertificate.cert_image) {
+    if (existingCertificate.certImage) {
         await removeFromStorageByUrl(
-            existingCertificate.cert_image,
+            existingCertificate.certImage,
             BUCKETS.CERTIFICATE,
         );
     }

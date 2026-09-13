@@ -33,7 +33,7 @@ import {
 export async function getMyProfile(req: Request, res: Response): Promise<void> {
     // sub is a string in the token; company_id is an int.
     const company = await prisma.company.findUnique({
-        where: { company_id: Number(req.auth!.sub) },
+        where: { companyId: Number(req.auth!.sub) },
         select: companyProfileSelect,
     });
 
@@ -72,13 +72,13 @@ export async function updateMyProfile(
     let company;
     try {
         company = await prisma.company.update({
-            where: { company_id: companyId },
+            where: { companyId },
             data: companyProfileUpdateData(body),
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Only one unique constraint is still reachable from here: company_type
-        // is keyed on (company_id, company_type), so a tag repeated inside one
+        // Only one unique constraint is still reachable from here: companyType
+        // is keyed on (companyId, companyType), so a tag repeated inside one
         // request collides with itself. Username and email moved to
         // changeMyCredentials, and nothing else this writes is unique. So the
         // code alone names the constraint — no need to match the index name.
@@ -115,7 +115,7 @@ export async function changeMyCredentials(
     // companyProfileSelect leaves the hash out on purpose, and the check needs
     // it — ask for it on its own, then never let it past this function.
     const existing = await prisma.company.findUnique({
-        where: { company_id: companyId },
+        where: { companyId },
         select: { password: true },
     });
 
@@ -137,7 +137,7 @@ export async function changeMyCredentials(
     let company;
     try {
         company = await prisma.company.update({
-            where: { company_id: companyId },
+            where: { companyId },
             data: {
                 ...omitUndefined(identity),
                 // Hashed on the way in. The plaintext reaches nothing else.

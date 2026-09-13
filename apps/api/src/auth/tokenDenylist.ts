@@ -15,8 +15,8 @@ function toDate(unixSeconds: number): Date {
 // Only where a token is revoked. Revocations are rare, authenticated requests
 // are not, so this cost never lands on a read.
 async function pruneExpired(now: number): Promise<void> {
-    await prisma.revoked_token.deleteMany({
-        where: { expires_at: { lte: toDate(now) } },
+    await prisma.revokedToken.deleteMany({
+        where: { expiresAt: { lte: toDate(now) } },
     });
 }
 
@@ -31,23 +31,23 @@ export async function revokeToken(jti: string, exp: number): Promise<void> {
 
     // upsert: two logouts can race the same token, and that is not an error.
     const expiresAt = toDate(exp);
-    await prisma.revoked_token.upsert({
+    await prisma.revokedToken.upsert({
         where: { jti },
-        create: { jti, expires_at: expiresAt },
-        update: { expires_at: expiresAt },
+        create: { jti, expiresAt },
+        update: { expiresAt },
     });
 }
 
 export async function isTokenRevoked(jti: string): Promise<boolean> {
-    const revoked = await prisma.revoked_token.findUnique({ where: { jti } });
+    const revoked = await prisma.revokedToken.findUnique({ where: { jti } });
     if (!revoked) {
         return false;
     }
     // An expired row is dead weight, not a revocation. pruneExpired clears it.
-    return revoked.expires_at.getTime() > Date.now();
+    return revoked.expiresAt.getTime() > Date.now();
 }
 
 // Test hook: start from a clean denylist.
 export async function clearRevokedTokens(): Promise<void> {
-    await prisma.revoked_token.deleteMany({});
+    await prisma.revokedToken.deleteMany({});
 }
