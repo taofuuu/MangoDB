@@ -32,6 +32,7 @@ export default function RegisterLayout({
                     src="/images/background-keyboard.png"
                     alt=""
                     fill
+                    sizes="38vw"
                     className="object-cover"
                 />
             </div>
@@ -52,6 +53,7 @@ export default function RegisterLayout({
                         src="/images/mangodblogo.png"
                         alt="MangoDB"
                         fill
+                        sizes="32px"
                         className="object-cover"
                     />
                 </div>
@@ -79,6 +81,7 @@ export default function RegisterLayout({
                             src="/images/background-keyboard.png"
                             alt=""
                             fill
+                            sizes="23vw"
                             className="object-cover"
                         />
                     </div>

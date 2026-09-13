@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { RegisterAccountType } from '@mangodb/shared';
 
 type RoleStepProps = {
@@ -55,9 +56,14 @@ export default function RoleStep({ value, onChange }: RoleStepProps) {
                         }`}
                     >
                         <span className="h-20 w-20 shrink-0 overflow-hidden rounded-[6px]">
-                            <img
+                            {/* next/image, not <img>: these are 80px
+                                thumbnails cut from PNGs of 58-89KB each, and
+                                this is the first page a new company sees. */}
+                            <Image
                                 src={role.image}
                                 alt=""
+                                width={80}
+                                height={80}
                                 className="h-full w-full object-cover"
                             />
                         </span>

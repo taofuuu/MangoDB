@@ -6,7 +6,10 @@ export default function LoginCard() {
     return (
         <div className="relative z-10 flex w-full max-w-4xl overflow-hidden rounded-[32px] bg-white p-4 shadow-2xl shadow-black/10">
             {/* Decorative inset panel — echoes the page's background pattern, floating inside the card */}
-            <DecorativePattern className="hidden shrink-0 rounded-3xl rounded-br-[calc(100vh*1366/2192)] md:block md:w-[300px] lg:w-[340px]" />
+            <DecorativePattern
+                className="hidden shrink-0 rounded-3xl rounded-br-[calc(100vh*1366/2192)] md:block md:w-[300px] lg:w-[340px]"
+                sizes="(min-width: 1024px) 340px, (min-width: 768px) 300px, 1px"
+            />
 
             {/* Form panel */}
             <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-14 sm:px-14">

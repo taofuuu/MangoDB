@@ -18,6 +18,9 @@ export default function LoginPage() {
           opacity-80
           sm:block
         "
+                /* h-screen at aspect 1366/2192, so the width is
+                   100vh x 1366/2192 = 62vh. Hidden below sm. */
+                sizes="(min-width: 640px) 62vh, 1px"
             />
 
             <div className="absolute inset-0 flex items-center justify-center p-6">
