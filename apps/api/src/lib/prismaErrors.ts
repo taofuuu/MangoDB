@@ -7,6 +7,13 @@ type PrismaError = {
     };
 };
 
+// The index name is built from the real column names, so `portfolioLink` has
+// to be compared as `portfolio_link`. Everything above the database is
+// camelCase (docs/conventions.md section 1) and an index name is not.
+function toColumnName(field: string): string {
+    return field.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+}
+
 // Which of `known` a unique index rejected, or null if this isn't that kind of
 // error. Duck-typed because the prisma-client generator doesn't export the
 // error class, and the column arrives as the index name (company_username_key)
@@ -24,7 +31,7 @@ export function uniqueViolationFields(
     if (typeof index !== 'string') return [];
 
     const name = index.replace(/_key$/, '');
-    return known.filter((field) => name.endsWith(field));
+    return known.filter((field) => name.endsWith(toColumnName(field)));
 }
 
 // One entry per rejected column, so a form can show each beside its input.

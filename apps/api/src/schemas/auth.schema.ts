@@ -4,16 +4,16 @@ import { companyFields } from './company.schema';
 // The company columns come from companyFields, so registration and the profile
 // edit cannot drift apart on what a valid phone number or username looks like.
 export const registerSchema = z.object({
-    company_name: companyFields.company_name,
+    companyName: companyFields.companyName,
     username: companyFields.username,
     email: companyFields.email,
     password: companyFields.password,
     phone: companyFields.phone,
-    account_type: z.enum(['PROVIDER', 'RECEIVER', 'BOTH']),
-    company_type: companyFields.company_type,
+    accountType: z.enum(['PROVIDER', 'RECEIVER', 'BOTH']),
+    companyType: companyFields.companyType,
     // The three nullable columns. Optional here, since registration has nothing
     // to clear; the edit schema makes them nullable instead.
-    company_description: companyFields.company_description.optional(),
+    companyDescription: companyFields.companyDescription.optional(),
     address: companyFields.address.optional(),
     website: companyFields.website.optional(),
 });

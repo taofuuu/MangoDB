@@ -66,7 +66,7 @@ async function verifyCredentials(
 // token as well as the company, which is why this response wraps.
 export async function register(req: Request, res: Response): Promise<void> {
     const body = parseBody(registerSchema, req.body);
-    const { company_type, account_type, password, ...rest } = body;
+    const { companyType, accountType, password, ...rest } = body;
 
     // Reports both collisions at once; an index only fails on the first.
     await assertCompanyIdentityAvailable({
@@ -75,26 +75,23 @@ export async function register(req: Request, res: Response): Promise<void> {
     });
 
     // A BOTH company gets both rows, exactly as the seeded companies have them.
-    const isProvider = account_type === 'PROVIDER' || account_type === 'BOTH';
-    const isReceiver = account_type === 'RECEIVER' || account_type === 'BOTH';
+    const isProvider = accountType === 'PROVIDER' || accountType === 'BOTH';
+    const isReceiver = accountType === 'RECEIVER' || accountType === 'BOTH';
 
     let company;
     try {
         company = await prisma.company.create({
             data: {
-                companyName: rest.company_name,
-                username: rest.username,
-                email: rest.email,
-                phone: rest.phone,
+                ...rest,
                 // exactOptionalPropertyTypes: a missing optional is undefined
                 // here, but a nullable column wants null.
-                companyDescription: rest.company_description ?? null,
+                companyDescription: rest.companyDescription ?? null,
                 address: rest.address ?? null,
                 website: rest.website ?? null,
-                accountType: account_type,
+                accountType,
                 password: await hashPassword(password),
                 companyType: {
-                    create: company_type.map((tag) => ({ companyType: tag })),
+                    create: companyType.map((tag) => ({ companyType: tag })),
                 },
                 ...(isProvider ? { provider: { create: {} } } : {}),
                 ...(isReceiver ? { receiver: { create: {} } } : {}),
@@ -151,7 +148,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     // get a working token and land on the company dashboard, reading its own
     // row as if it were a company — so send it to the door built for it.
     // 403, not 401: the password checked out, so we know who this is.
-    if (accountTypeToRole(company.account_type) === 'admin') {
+    if (accountTypeToRole(company.accountType) === 'admin') {
         throw ApiError.forbidden(
             'Administrators must use the administrator login',
         );
@@ -167,7 +164,7 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
     const { email, password } = parseBody(loginSchema, req.body);
     const company = await verifyCredentials(email, password);
 
-    if (accountTypeToRole(company.account_type) !== 'admin') {
+    if (accountTypeToRole(company.accountType) !== 'admin') {
         throw ApiError.forbidden('This is not an administrator account');
     }
 

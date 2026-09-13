@@ -77,9 +77,9 @@ export async function listCompanyAccounts(
         items: companies.map(toCompanyAccountSummary),
         pagination: {
             page,
-            page_size: pageSize,
-            total_items: totalItems,
-            total_pages: Math.ceil(totalItems / pageSize),
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
         },
     };
 
@@ -123,7 +123,7 @@ export async function updateCompanyAccount(
 
     // Read before writing, so an unknown id is a plain 404 rather than a Prisma
     // P2025 surfacing from the middle of the update. It is also the only way to
-    // learn the target's account_type, which the next check needs.
+    // learn the target's accountType, which the next check needs.
     const target = await prisma.company.findUnique({
         where: { companyId },
         select: { accountType: true },
@@ -169,7 +169,7 @@ export async function updateCompanyAccount(
         // here at all, and nothing else this writes is unique.
         if (isUniqueViolation(err)) {
             throw ApiError.conflict('Company types must not repeat', [
-                { field: 'company_type', message: 'Remove the duplicate tag' },
+                { field: 'companyType', message: 'Remove the duplicate tag' },
             ]);
         }
         // The company was deleted between the lookup above and this write.
@@ -199,7 +199,7 @@ export async function deleteCompanyAccount(
     // anything about the account being removed. Unlike login's
     // verifyCredentials, no dummy-hash timing defense is needed: the caller
     // is already authenticated, so there is no email to enumerate here.
-    const { current_password } = parseBody(
+    const { currentPassword } = parseBody(
         deleteCompanyAccountBodySchema,
         req.body,
     );
@@ -207,7 +207,7 @@ export async function deleteCompanyAccount(
         where: { companyId: Number(req.auth!.sub) },
         select: { password: true },
     });
-    if (!admin || !(await verifyPassword(current_password, admin.password))) {
+    if (!admin || !(await verifyPassword(currentPassword, admin.password))) {
         throw ApiError.unauthorized('Current password is incorrect');
     }
 

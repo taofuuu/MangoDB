@@ -45,7 +45,7 @@ export async function createPortfolio(
 
     // 3. AUTHORIZATION & OWNERSHIP CHECK ก่อนทำการ Upload ไฟล์
     const service = await prisma.service.findUnique({
-        where: { listingId: data.listing_id },
+        where: { listingId: data.listingId },
         select: { listing: { select: { companyId: true } } },
     });
 
@@ -69,14 +69,14 @@ export async function createPortfolio(
     try {
         created = await prisma.servicePortfolio.create({
             data: {
-                portfolioName: data.portfolio_name,
-                portfolioDescription: data.portfolio_description ?? null,
-                developmentDate: data.development_date,
+                portfolioName: data.portfolioName,
+                portfolioDescription: data.portfolioDescription ?? null,
+                developmentDate: data.developmentDate,
                 portfolioImage: image.url,
-                portfolioLink: data.portfolio_link,
+                portfolioLink: data.portfolioLink,
                 service: {
                     connect: {
-                        listingId: data.listing_id,
+                        listingId: data.listingId,
                     },
                 },
             },
@@ -123,21 +123,13 @@ export async function updatePortfolio(
         ? await uploadToStorage(req.file, BUCKETS.PORTFOLIO, 'portfolios')
         : null;
 
-    // Listed rather than spread, because the request body is still snake_case
-    // and Prisma is now camelCase. This disappears in the commit that flips
-    // the wire.
-    const updateData = omitUndefined({
-        portfolioName: data.portfolio_name,
-        portfolioDescription:
-            data.portfolio_description === ''
-                ? null
-                : data.portfolio_description,
-        developmentDate: data.development_date,
-        portfolioLink: data.portfolio_link,
-    });
+    const updateData = omitUndefined(data);
+    if (updateData.portfolioDescription === '') {
+        updateData.portfolioDescription = null;
+    }
 
     // No same-value early return here: Postgres unique indexes only compare
-    // against *other* rows, so writing portfolio_link back to its current
+    // against *other* rows, so writing portfolioLink back to its current
     // value can never self-collide. Skipping the write was a micro-
     // optimization, not a correctness need — and with five editable fields
     // now, a check keyed on one of them would silently drop the rest of the

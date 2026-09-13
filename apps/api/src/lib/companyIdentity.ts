@@ -1,3 +1,4 @@
+import type { IdentityAvailability } from '@mangodb/shared';
 import { Prisma } from '../generated/prisma/client';
 import { ApiError } from './ApiError';
 import { prisma } from './prisma';
@@ -14,12 +15,9 @@ export interface PartialCompanyIdentityInput {
     email?: string | undefined;
 }
 
-export interface CompanyIdentityAvailability {
-    username: string;
-    email: string;
-    usernameAvailable: boolean;
-    emailAvailable: boolean;
-}
+// The wire shape of POST /auth/check-availability, named once in
+// packages/shared so the frontend codes against the same thing.
+export type CompanyIdentityAvailability = IdentityAvailability;
 
 export function normalizeUsername(username: string): string {
     return username.trim().toLowerCase();

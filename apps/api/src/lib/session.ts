@@ -23,8 +23,8 @@ const COOKIE_OPTIONS = {
 // cannot drift on the claims they mint.
 export function issueSession(company: CompanyProfile): SessionResponse {
     const accessToken = signAccessToken({
-        sub: String(company.company_id),
-        role: accountTypeToRole(company.account_type),
+        sub: String(company.companyId),
+        role: accountTypeToRole(company.accountType),
     });
 
     return { company, accessToken };

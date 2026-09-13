@@ -21,7 +21,7 @@ certificateRoutes.post(
     '/',
     requireAuth,
     requireRole('provider'),
-    uploadImage('cert_image'),
+    uploadImage('certImage'),
     createCertificate,
 );
 
@@ -29,7 +29,7 @@ certificateRoutes.patch(
     '/:certificateId',
     requireAuth,
     requireRole('provider'),
-    uploadImage('cert_image'),
+    uploadImage('certImage'),
     updateCertificate,
 );
 

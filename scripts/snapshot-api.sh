@@ -10,7 +10,7 @@
 # Then:  git diff snapshots/
 #
 # There is no test runner in this project. Prettier, ESLint and tsc cannot tell
-# you that `company_name` became `companyName` on the wire — this can.
+# you that a response field changed name on the wire — this can.
 #
 # Needs: a running API, a seeded database, and scripts/.env.snapshot
 # (copy scripts/.env.snapshot.example). See docs/refactor/phase-0-safety-net.md.
@@ -91,7 +91,7 @@ cleanup() {
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
             -H "Authorization: Bearer $TOKEN_ADMIN" \
             -H 'Content-Type: application/json' \
-            -d "{\"current_password\":\"$ADMIN_PASSWORD\"}"
+            -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
     fi
     rm -rf "$WORK"
     exit $code
@@ -230,7 +230,7 @@ snap 16-auth-check-availability-taken POST /auth/check-availability \
 echo
 echo "portfolios + certificates"
 snap 17-portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
-LISTING_ID="$(jget 0.listing_id)"
+LISTING_ID="$(jget 0.listingId)"
 
 if [ -n "$PORTFOLIO_ID" ]; then
     snap 18-portfolios-one GET "/portfolios/$PORTFOLIO_ID"
@@ -266,9 +266,9 @@ echo
 echo "register / profile / credentials"
 snap 25-error-register-validation POST /auth/register \
     -H 'Content-Type: application/json' \
-    -d '{"company_name":"","username":"A B","email":"nope","password":"short","phone":"12","account_type":"WIZARD","company_type":[]}'
+    -d '{"companyName":"","username":"A B","email":"nope","password":"short","phone":"12","accountType":"WIZARD","companyType":[]}'
 
-REGISTER_A="{\"company_name\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"account_type\":\"PROVIDER\",\"company_type\":[\"Software House\"]}"
+REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}"
 
 snap 26-auth-register POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
@@ -283,14 +283,14 @@ snap 27-error-register-conflict POST /auth/register \
 
 snap 28-companies-me-patch PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
     -H 'Content-Type: application/json' \
-    -d '{"company_name":"Snapshot Probe A edited","company_description":"edited by scripts/snapshot-api.sh","address":null,"service_term":"30 days","warranty_policy":"none"}'
+    -d '{"companyName":"Snapshot Probe A edited","companyDescription":"edited by scripts/snapshot-api.sh","address":null,"serviceTerm":"30 days","warrantyPolicy":"none"}'
 
 snap 29-error-companies-me-patch-empty PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
     -H 'Content-Type: application/json' -d '{}'
 
 snap 30-companies-me-credentials PATCH /companies/me/credentials \
     -H "$(bearer "$TOKEN_A")" -H 'Content-Type: application/json' \
-    -d "{\"current_password\":\"snapshot-probe-pw\",\"username\":\"${RUN}a2\"}"
+    -d "{\"currentPassword\":\"snapshot-probe-pw\",\"username\":\"${RUN}a2\"}"
 TOKEN_A="$(jget accessToken)"
 
 snap 31-auth-logout POST /auth/logout -H "$(bearer "$TOKEN_A")"
@@ -300,7 +300,7 @@ echo
 echo "self-service deletion"
 snap 33-auth-register-receiver POST /auth/register \
     -H 'Content-Type: application/json' \
-    -d "{\"company_name\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"account_type\":\"RECEIVER\",\"company_type\":[\"SME\"]}"
+    -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"]}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
 SUBS+=(--id "company_id=$(jget company.company_id)")
@@ -323,15 +323,15 @@ if [ "$UPLOADS" = 1 ]; then
     echo
     echo "portfolio lifecycle"
     if [ -n "$LISTING_ID" ]; then
-        # portfolio_image is the multipart field name, and a wire name like any
+        # portfolioImage is the multipart field name, and a wire name like any
         # other — Phase 2 renames it, and only this call would notice.
         snap 36-portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
-            -F "listing_id=$LISTING_ID" \
-            -F 'portfolio_name=Snapshot Probe portfolio' \
-            -F 'portfolio_description=created by scripts/snapshot-api.sh' \
-            -F 'development_date=2026-01-15' \
-            -F "portfolio_link=https://example.test/$RUN/portfolio" \
-            -F "portfolio_image=@$IMAGE;type=image/png"
+            -F "listingId=$LISTING_ID" \
+            -F 'portfolioName=Snapshot Probe portfolio' \
+            -F 'portfolioDescription=created by scripts/snapshot-api.sh' \
+            -F 'developmentDate=2026-01-15' \
+            -F "portfolioLink=https://example.test/$RUN/portfolio" \
+            -F "portfolioImage=@$IMAGE;type=image/png"
         NEW_PORTFOLIO_ID="$(jget portfolio_id)"
 
         if [ -n "$NEW_PORTFOLIO_ID" ]; then
@@ -339,8 +339,8 @@ if [ "$UPLOADS" = 1 ]; then
             resnap 36-portfolios-create
             snap 37-portfolios-update PATCH "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")" \
-                -F 'portfolio_name=Snapshot Probe portfolio edited' \
-                -F "portfolio_image=@$IMAGE;type=image/png"
+                -F 'portfolioName=Snapshot Probe portfolio edited' \
+                -F "portfolioImage=@$IMAGE;type=image/png"
             snap 38-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")"
         fi
@@ -351,24 +351,24 @@ if [ "$UPLOADS" = 1 ]; then
     echo
     echo "certificate lifecycle"
     snap 39-certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
-        -F 'cert_title=Snapshot Probe certificate' \
+        -F 'certTitle=Snapshot Probe certificate' \
         -F 'organization=Snapshot Probe Authority' \
-        -F 'issue_month=1' -F 'issue_year=2025' \
-        -F 'expire_month=1' -F 'expire_year=2030' \
-        -F "credential_id=$RUN" \
-        -F "credential_url=https://example.test/$RUN/cert" \
-        -F "cert_image=@$IMAGE;type=image/png"
+        -F 'issueMonth=1' -F 'issueYear=2025' \
+        -F 'expireMonth=1' -F 'expireYear=2030' \
+        -F "credentialId=$RUN" \
+        -F "credentialUrl=https://example.test/$RUN/cert" \
+        -F "certImage=@$IMAGE;type=image/png"
     NEW_CERT_ID="$(jget certificate.certificate_id)"
 
     if [ -n "$NEW_CERT_ID" ]; then
         SUBS+=(--id "certificate_id=$NEW_CERT_ID")
         resnap 39-certificates-create
         snap 40-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
-            -H "$(bearer "$TOKEN_PROVIDER")" -F 'expire_year=2000'
+            -H "$(bearer "$TOKEN_PROVIDER")" -F 'expireYear=2000'
         snap 41-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" \
-            -F 'cert_title=Snapshot Probe certificate edited' \
-            -F "cert_image=@$IMAGE;type=image/png"
+            -F 'certTitle=Snapshot Probe certificate edited' \
+            -F "certImage=@$IMAGE;type=image/png"
         snap 42-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")"
     fi
@@ -388,15 +388,15 @@ snap 43-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true"
 
 snap 44-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
-    -d '{"company_name":"Snapshot Probe A edited by admin","phone":"0800000000"}'
+    -d '{"companyName":"Snapshot Probe A edited by admin","phone":"0800000000"}'
 
 snap 45-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
-    -d '{"current_password":"definitely-not-it"}'
+    -d '{"currentPassword":"definitely-not-it"}'
 
 snap 46-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
-    -d "{\"current_password\":\"$ADMIN_PASSWORD\"}"
+    -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
 A_LIVE=0
 
 echo

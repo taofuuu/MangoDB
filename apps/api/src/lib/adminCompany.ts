@@ -42,8 +42,8 @@ interface RatingSource {
 }
 
 function getRating(source: RatingSource): {
-    average_rating: number | null;
-    rating_count: number;
+    averageRating: number | null;
+    ratingCount: number;
 } {
     const scores = source.proposal.flatMap(
         ({ project }) =>
@@ -51,15 +51,15 @@ function getRating(source: RatingSource): {
     );
 
     if (scores.length === 0) {
-        return { average_rating: null, rating_count: 0 };
+        return { averageRating: null, ratingCount: 0 };
     }
 
     const average =
         scores.reduce((sum, score) => sum + score, 0) / scores.length;
 
     return {
-        average_rating: Math.round(average * 10) / 10,
-        rating_count: scores.length,
+        averageRating: Math.round(average * 10) / 10,
+        ratingCount: scores.length,
     };
 }
 
@@ -76,12 +76,12 @@ export function toCompanyAccountSummary(
     company: CompanyAccountSummaryRow,
 ): CompanyAccountSummary {
     return {
-        company_id: company.companyId,
-        company_name: company.companyName,
-        company_description: company.companyDescription,
+        companyId: company.companyId,
+        companyName: company.companyName,
+        companyDescription: company.companyDescription,
         phone: company.phone,
-        account_type: company.accountType as AccountType,
-        deleted_at: !company.deletedAt ? null : company.deletedAt.toISOString(),
+        accountType: company.accountType as AccountType,
+        deletedAt: !company.deletedAt ? null : company.deletedAt.toISOString(),
         ...getRating(company),
     };
 }
@@ -97,6 +97,6 @@ export function toCompanyAccountDetail(
     return {
         ...toCompanyProfile(profile),
         ...getRating({ proposal }),
-        deleted_at: !deletedAt ? null : deletedAt.toISOString(),
+        deletedAt: !deletedAt ? null : deletedAt.toISOString(),
     };
 }

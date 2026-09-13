@@ -31,7 +31,7 @@ import {
 // US1-4. Read fresh, not echoed from the claims: an edit in another session
 // has to show up here.
 export async function getMyProfile(req: Request, res: Response): Promise<void> {
-    // sub is a string in the token; company_id is an int.
+    // sub is a string in the token; companyId is an int.
     const company = await prisma.company.findUnique({
         where: { companyId: Number(req.auth!.sub) },
         select: companyProfileSelect,
@@ -84,7 +84,7 @@ export async function updateMyProfile(
         // code alone names the constraint — no need to match the index name.
         if (isUniqueViolation(err)) {
             throw ApiError.conflict('Company types must not repeat', [
-                { field: 'company_type', message: 'Remove the duplicate tag' },
+                { field: 'companyType', message: 'Remove the duplicate tag' },
             ]);
         }
         // The company was deleted mid-session — its token is still valid. A
@@ -110,7 +110,7 @@ export async function changeMyCredentials(
 ): Promise<void> {
     const body = parseBody(changeCredentialsSchema, req.body);
     const companyId = Number(req.auth!.sub);
-    const { current_password, new_password, ...identity } = body;
+    const { currentPassword, newPassword, ...identity } = body;
 
     // companyProfileSelect leaves the hash out on purpose, and the check needs
     // it — ask for it on its own, then never let it past this function.
@@ -126,7 +126,7 @@ export async function changeMyCredentials(
 
     // No dummy-hash dance here, unlike login: the caller is already
     // authenticated, so there is no account to enumerate by timing this.
-    if (!(await verifyPassword(current_password, existing.password))) {
+    if (!(await verifyPassword(currentPassword, existing.password))) {
         throw ApiError.unauthorized('Current password is incorrect');
     }
 
@@ -141,8 +141,8 @@ export async function changeMyCredentials(
             data: {
                 ...omitUndefined(identity),
                 // Hashed on the way in. The plaintext reaches nothing else.
-                ...(new_password
-                    ? { password: await hashPassword(new_password) }
+                ...(newPassword
+                    ? { password: await hashPassword(newPassword) }
                     : {}),
             },
             select: companyProfileSelect,

@@ -67,7 +67,7 @@ const ACCOUNTS: SeedAccount[] = [
 ];
 
 // update as well as create: a run that found the account already there still
-// resets the password and clears deleted_at, so reseeding always gets you back
+// resets the password and clears deletedAt, so reseeding always gets you back
 // to an account you can sign in as.
 async function upsertAccount(account: SeedAccount): Promise<number> {
     const password = await hashPassword(PASSWORD);

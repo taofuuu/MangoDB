@@ -32,17 +32,12 @@ type SelectedPortfolio = {
 // plain YYYY-MM-DD with no timezone drift.
 export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
     return {
-        portfolio_id: row.portfolioId,
-        listing_id: row.listingId,
-        portfolio_name: row.portfolioName,
-        portfolio_description: row.portfolioDescription,
-        development_date: row.developmentDate.toISOString().slice(0, 10),
-        portfolio_image: row.portfolioImage,
-        portfolio_link: row.portfolioLink,
+        ...row,
+        developmentDate: row.developmentDate.toISOString().slice(0, 10),
     };
 }
 
-// Authorizes, and hands back portfolio_image so a replacement can clean up
+// Authorizes, and hands back portfolioImage so a replacement can clean up
 // the old object. There is no owner column: the company is three hops away,
 // service_portfolio -> service -> listing, so asking for it as a nested
 // select beats walking the chain query by query.

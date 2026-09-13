@@ -16,13 +16,13 @@ const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
     z.preprocess((value) => (value === '' ? null : value), schema);
 
 export const certificateFields = {
-    cert_title: z.string().trim().max(255),
+    certTitle: z.string().trim().max(255),
     organization: z.string().trim().max(255),
 
-    issue_month: emptyToNull(
+    issueMonth: emptyToNull(
         z.coerce.number().int().min(1).max(12).nullable().optional(),
     ),
-    issue_year: emptyToNull(
+    issueYear: emptyToNull(
         z.coerce
             .number()
             .int()
@@ -34,10 +34,10 @@ export const certificateFields = {
             .nullable()
             .optional(),
     ),
-    expire_month: emptyToNull(
+    expireMonth: emptyToNull(
         z.coerce.number().int().min(1).max(12).nullable().optional(),
     ),
-    expire_year: emptyToNull(
+    expireYear: emptyToNull(
         z.coerce
             .number()
             .int()
@@ -48,31 +48,29 @@ export const certificateFields = {
             .nullable()
             .optional(),
     ),
-    credential_id: emptyToNull(
-        z.string().trim().max(255).nullable().optional(),
-    ),
+    credentialId: emptyToNull(z.string().trim().max(255).nullable().optional()),
     // httpUrl, not z.url(): the certificate page renders this as an href, and
     // z.url() accepts javascript: — stored XSS the moment someone clicks it.
-    credential_url: emptyToNull(httpUrl.nullable().optional()),
+    credentialUrl: emptyToNull(httpUrl.nullable().optional()),
 } as const;
 
 export const createCertificateSchema = z.object(certificateFields).refine(
     (data) => {
         if (
-            data.issue_year == null ||
-            data.issue_month == null ||
-            data.expire_year == null ||
-            data.expire_month == null
+            data.issueYear == null ||
+            data.issueMonth == null ||
+            data.expireYear == null ||
+            data.expireMonth == null
         ) {
             return true;
         }
-        const issueDate = data.issue_year * 100 + data.issue_month;
-        const expireDate = data.expire_year * 100 + data.expire_month;
+        const issueDate = data.issueYear * 100 + data.issueMonth;
+        const expireDate = data.expireYear * 100 + data.expireMonth;
         return expireDate >= issueDate;
     },
     {
         message: 'Expiration date cannot be before the issue date',
-        path: ['expire_year'],
+        path: ['expireYear'],
     },
 );
 

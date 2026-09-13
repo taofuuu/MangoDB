@@ -45,17 +45,17 @@ export async function createCertificate(req: Request, res: Response) {
             data: {
                 providerId,
 
-                certTitle: body.cert_title,
+                certTitle: body.certTitle,
                 organization: body.organization,
 
-                issueMonth: body.issue_month ?? null,
-                issueYear: body.issue_year ?? null,
+                issueMonth: body.issueMonth ?? null,
+                issueYear: body.issueYear ?? null,
 
-                expireMonth: body.expire_month ?? null,
-                expireYear: body.expire_year ?? null,
+                expireMonth: body.expireMonth ?? null,
+                expireYear: body.expireYear ?? null,
 
-                credentialId: body.credential_id ?? null,
-                credentialUrl: body.credential_url ?? null,
+                credentialId: body.credentialId ?? null,
+                credentialUrl: body.credentialUrl ?? null,
 
                 certImage,
             },
@@ -112,20 +112,20 @@ export async function updateCertificate(req: Request, res: Response) {
 
     // Merge state for date validation
     const issueYear =
-        body.issue_year !== undefined
-            ? body.issue_year
+        body.issueYear !== undefined
+            ? body.issueYear
             : existingCertificate.issueYear;
     const issueMonth =
-        body.issue_month !== undefined
-            ? body.issue_month
+        body.issueMonth !== undefined
+            ? body.issueMonth
             : existingCertificate.issueMonth;
     const expireYear =
-        body.expire_year !== undefined
-            ? body.expire_year
+        body.expireYear !== undefined
+            ? body.expireYear
             : existingCertificate.expireYear;
     const expireMonth =
-        body.expire_month !== undefined
-            ? body.expire_month
+        body.expireMonth !== undefined
+            ? body.expireMonth
             : existingCertificate.expireMonth;
 
     if (
@@ -155,19 +155,7 @@ export async function updateCertificate(req: Request, res: Response) {
         updatedCertificate = await prisma.certificate.update({
             where: { certificateId },
             data: {
-                // Listed rather than spread, because the request body is still
-                // snake_case and Prisma is now camelCase. This disappears in
-                // the commit that flips the wire.
-                ...omitUndefined({
-                    certTitle: body.cert_title,
-                    organization: body.organization,
-                    issueMonth: body.issue_month,
-                    issueYear: body.issue_year,
-                    expireMonth: body.expire_month,
-                    expireYear: body.expire_year,
-                    credentialId: body.credential_id,
-                    credentialUrl: body.credential_url,
-                }),
+                ...omitUndefined(body),
                 ...(replacement ? { certImage: replacement.url } : {}),
             },
             select: certificateSelect,

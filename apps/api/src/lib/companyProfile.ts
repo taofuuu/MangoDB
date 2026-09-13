@@ -45,22 +45,16 @@ export interface CompanyProfileRow {
 // Flattens the tag join rows to plain strings and the provider row to two
 // columns, so callers get one flat object rather than a shape to walk.
 export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
-    const { provider } = company;
+    // provider is pulled out of the spread on purpose: leaving it in would put
+    // the nested row in the response alongside the flattened columns.
+    const { provider, ...rest } = company;
 
     return {
-        company_id: company.companyId,
-        company_name: company.companyName,
-        company_description: company.companyDescription,
-        username: company.username,
-        email: company.email,
-        contact_email: company.contactEmail,
-        phone: company.phone,
-        address: company.address,
-        website: company.website,
-        account_type: company.accountType as AccountType,
-        company_type: company.companyType.map((tag) => tag.companyType),
-        service_term: provider?.serviceTerm ?? null,
-        warranty_policy: provider?.warrantyPolicy ?? null,
+        ...rest,
+        accountType: company.accountType as AccountType,
+        companyType: company.companyType.map((tag) => tag.companyType),
+        serviceTerm: provider?.serviceTerm ?? null,
+        warrantyPolicy: provider?.warrantyPolicy ?? null,
     };
 }
 
@@ -68,8 +62,8 @@ export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
 // Named once so the schema, the write, and the error that reports them cannot
 // disagree about which fields are provider-only.
 export const PROVIDER_PROFILE_FIELDS = [
-    'service_term',
-    'warranty_policy',
+    'serviceTerm',
+    'warrantyPolicy',
 ] as const;
 
 // `in`, not a truthiness check: zod drops absent keys, so this is the one way
@@ -90,29 +84,19 @@ export function editsProviderFields(body: UpdateCompanyProfileInput): boolean {
 export function companyProfileUpdateData(
     body: UpdateCompanyProfileInput,
 ): Prisma.CompanyUpdateInput {
-    const { company_type, service_term, warranty_policy } = body;
+    const { companyType, serviceTerm, warrantyPolicy, ...columns } = body;
 
     return {
-        // Listed rather than spread, because the request body is still
-        // snake_case and Prisma is now camelCase. This block disappears in the
-        // commit that flips the wire — after that a spread works again.
-        // omitUndefined, not a plain object: exactOptionalPropertyTypes is on
+        // omitUndefined, not a plain spread: exactOptionalPropertyTypes is on
         // and Prisma's update input declares its columns without `| undefined`.
-        ...omitUndefined({
-            companyName: body.company_name,
-            companyDescription: body.company_description,
-            phone: body.phone,
-            address: body.address,
-            website: body.website,
-            contactEmail: body.contact_email,
-        }),
+        ...omitUndefined(columns),
         // Tags are a set, not a list to append to: the request carries the
         // whole set, so the rows it replaces go. A nested write is one
         // transaction, so the company is never left untagged.
-        ...(company_type && {
+        ...(companyType && {
             companyType: {
                 deleteMany: {},
-                create: company_type.map((tag) => ({
+                create: companyType.map((tag) => ({
                     companyType: tag,
                 })),
             },
@@ -128,14 +112,8 @@ export function companyProfileUpdateData(
         ...(editsProviderFields(body) && {
             provider: {
                 upsert: {
-                    create: omitUndefined({
-                        serviceTerm: service_term,
-                        warrantyPolicy: warranty_policy,
-                    }),
-                    update: omitUndefined({
-                        serviceTerm: service_term,
-                        warrantyPolicy: warranty_policy,
-                    }),
+                    create: omitUndefined({ serviceTerm, warrantyPolicy }),
+                    update: omitUndefined({ serviceTerm, warrantyPolicy }),
                 },
             },
         }),
