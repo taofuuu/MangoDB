@@ -1,36 +1,37 @@
-# The refactor, and the rules while it runs
+# The refactor, and the rules it left behind
 
-Nine people built this with different AI models, so the same idea exists in
+Nine people built this with different AI models, so the same idea existed in
 three or four shapes. Sprint 2 adds 66 engineering tasks that will be written by
-copying whatever is already in the tree. The point of this refactor is not to
-tidy up — it is to leave **one version of each thing**, so the copy is the right
-one.
+copying whatever is already in the tree. The point of the refactor was not to
+tidy up — it was to leave **one version of each thing**, so the copy is the
+right one.
 
-Each phase gets a page in this folder. Read the page for the phase you are
-working in before you start, and read the pages for phases you are _not_ working
-in before you touch a file they own.
+Each phase has a page in this folder. They are reference now rather than
+instructions: a page says what its phase settled and what it deliberately left,
+so read the one that owns a file before you change how that file works.
 
-| #                                  | Phase                             | Owns                                                 | Status  |
-| ---------------------------------- | --------------------------------- | ---------------------------------------------------- | ------- |
-| [0](phase-0-safety-net.md)         | Safety net                        | `scripts/`, `snapshots/`, `apps/api/src/seed.ts`     | done    |
-| [1](phase-1-vocabulary.md)         | Agree the vocabulary              | `docs/conventions.md`                                | done    |
-| [2](phase-2-camelcase.md)          | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | done    |
-| [3](phase-3-one-of-each-helper.md) | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | done    |
-| 4                                  | Backend: apply the wire rules     | `apps/api/src/routes`, `controllers`, `schemas`      | next    |
-| 5                                  | Publish the template              | `docs/adding-a-resource.md`, `apps/api/README.md`    | planned |
-| 6                                  | Frontend: one way to call the API | `apps/mangodb/lib`                                   | planned |
-| 7                                  | Frontend: one set of primitives   | `apps/mangodb/components/ui`                         | planned |
-| 8                                  | Design tokens                     | `globals.css` and every colour literal               | planned |
-| 9                                  | Docs                              | both READMEs, `CLAUDE.md`, `.env.example`            | planned |
+| #                                       | Phase                             | Owns                                                 | Status |
+| --------------------------------------- | --------------------------------- | ---------------------------------------------------- | ------ |
+| [0](phase-0-safety-net.md)              | Safety net                        | `scripts/`, `snapshots/`, `apps/api/src/seed.ts`     | done   |
+| [1](phase-1-vocabulary.md)              | Agree the vocabulary              | `docs/conventions.md`                                | done   |
+| [2](phase-2-camelcase.md)               | Flip to camelCase                 | `prisma/schema.prisma`, `packages/shared`, both apps | done   |
+| [3](phase-3-one-of-each-helper.md)      | Backend: one of each helper       | `apps/api/src/lib`, `apps/api/src/auth`              | done   |
+| [4](phase-4-wire-rules.md)              | Backend: apply the wire rules     | `apps/api/src/routes`, `controllers`, `schemas`      | done   |
+| [5](phase-5-template.md)                | Publish the template              | `docs/adding-a-resource.md`, `apps/api/README.md`    | done   |
+| [6](phase-6-one-way-to-call-the-api.md) | Frontend: one way to call the API | `apps/mangodb/lib`                                   | done   |
+| [7](phase-7-primitives.md)              | Frontend: one set of primitives   | `apps/mangodb/components/ui`                         | partly |
+| [8](phase-8-design-tokens.md)           | Design tokens                     | `globals.css` and every colour literal               | partly |
+| [9](phase-9-docs.md)                    | Docs                              | both READMEs, `CLAUDE.md`, `.env.example`            | done   |
 
 The full plan, with the reasoning behind the order, is in the planning doc the
 phases came from. These pages are the short version you actually work from.
 
-**All ten phases have landed on `refactor/full-codebase`.** Two are marked
-_partly_: Phase 7 merged the primitives and fixed the bugs in them but did not
-convert the 62 raw `<button>` and 27 raw `<input>` elements, and Phase 8 named
-all 51 colours but did not merge the duplicates, which is a design decision.
-Each page says exactly what it left.
+**All ten phases have landed on `main`**, as one commit — `refactor: leave one
+version of each thing` (#82). Two are marked _partly_: Phase 7 merged the
+primitives and fixed the bugs in them but did not convert the 62 raw `<button>`
+and 27 raw `<input>` elements, and Phase 8 named all 51 colours but did not
+merge the duplicates, which is a design decision. Each page says exactly what it
+left.
 
 ## The one rule that sets the order
 
@@ -48,36 +49,44 @@ components merge — and you pay for it twice.
 Second rule: **structure before cosmetics.** A colour sweep touches 491 places.
 Do it while anything structural is still moving and you redo it.
 
-## Rules for everybody, for as long as this runs
+## Rules that outlived the refactor
 
-These exist to keep two people from refactoring the same file in two
-directions.
+These two are about new work, not about the refactor, so they still apply.
 
-1. **One phase at a time, one person per phase.** Say in the group chat which
-   phase you have picked up before your first commit.
-2. **Do not start a phase before the one above it has landed on `main`.** The
-   order is the whole design; out of order means renaming twice.
-3. **Check the "Owns" column before editing a file.** If a later phase owns it,
-   leave it alone — even if you can see the problem. Write it down in that
-   phase's page instead.
-4. **Run the snapshot script before and after every phase**, and put the diff in
-   your PR description. [Phase 0](phase-0-safety-net.md) explains how, and says
-   which phases must produce an _empty_ diff.
-5. **Phase 2 must not be half-done.** A partial case flip does not compile, and
-   landing it on top of an in-flight Sprint 2 branch would be the worst merge in
-   this project's history. Whoever takes it announces the date first, and
-   everyone else merges or parks their branch that day.
-6. **New Sprint 2 work follows the conventions, not the neighbours.** If the
-   file next to yours contradicts [docs/conventions.md](../conventions.md), the
-   doc wins and the file is somebody's phase.
-7. **The whole refactor lives on `refactor/full-codebase`**, not on `main`.
-   Commits are one concern each, conventional format, short message. `main`
-   stays where Sprint 2 branches off from, until the refactor merges.
-8. **Every phase ships its page in this folder** — the conventions it settled,
-   so the next person does not have to re-derive them.
+1. **Run the snapshot script before and after anything that touches the API**,
+   and put the diff in your PR description.
+   [Phase 0](phase-0-safety-net.md) explains how, and says which kinds of change
+   must produce an _empty_ diff.
+2. **New work follows the conventions, not the neighbours.** If the file next to
+   yours contradicts [docs/conventions.md](../conventions.md), the doc wins.
+   Phases 7 and 8 each left a list of places that have not caught up yet — those
+   pages say which, so a file disagreeing with the doc is a known gap rather
+   than a second convention.
+
+## How it ran
+
+Kept for the record, and in case a phase is ever reopened to finish what it
+left.
+
+1. One phase at a time, one person per phase, announced in the group chat
+   before the first commit.
+2. No phase started before the one above it had landed. The order is the whole
+   design; out of order means renaming twice.
+3. The "Owns" column decided who touched a file. A problem visible inside
+   someone else's phase got written down on that phase's page instead of fixed
+   in passing.
+4. Phase 2 was never half-done — a partial case flip does not compile, so the
+   date was announced up front and everybody merged or parked their branch that
+   day.
+5. The work happened on `refactor/full-codebase` and merged to `main` in one
+   commit. That branch is behind `main` now; it is kept only as history.
+6. Every phase shipped its page in this folder — the conventions it settled, so
+   the next person does not have to re-derive them.
 
 ## When you disagree with a convention
 
-Say so before the phase starts, not during. Once a phase has landed, its page is
-the answer and re-litigating it costs more than the convention is worth. Open
-the discussion for the _next_ phase instead.
+Once a phase has landed, its page is the answer, and re-litigating it costs more
+than the convention is worth. If a convention is genuinely wrong, say so and
+change the page — deliberately, and in one place. Writing one file that
+disagrees with it is how this codebase got four versions of everything the first
+time.
