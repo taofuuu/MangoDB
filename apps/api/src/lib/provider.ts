@@ -49,8 +49,10 @@ export function toProviderSummary(row: ProviderSummaryRow): ProviderSummary {
         companyDescription: row.companyDescription,
         companyPhoto: row.companyPhoto,
         accountType: row.accountType as AccountType,
-        categories: [...categories],
-        techStack:
-            row.provider?.providerTechStack.map((t) => t.techStackName) ?? [],
+        // Sorted: Prisma returns related rows in no fixed order.
+        categories: [...categories].sort(),
+        techStack: (
+            row.provider?.providerTechStack.map((t) => t.techStackName) ?? []
+        ).sort(),
     };
 }
