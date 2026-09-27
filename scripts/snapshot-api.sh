@@ -276,6 +276,11 @@ snap 22-admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
 snap 23-error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
 
+echo
+echo "providers"
+snap 24-providers-list GET "/providers?page=1&pageSize=2" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 if [ "$READ_ONLY" = 1 ]; then
     echo
     echo "--read-only: stopping before the write endpoints"

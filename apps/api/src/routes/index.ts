@@ -4,6 +4,7 @@ import { adminRoutes } from './admin.routes';
 import { companyRoutes } from './company.routes';
 import { portfolioRoutes } from './portfolio.routes';
 import { certificateRoutes } from './certificate.routes';
+import { providerRoutes } from './provider.routes';
 
 export const routes = Router();
 
@@ -12,3 +13,4 @@ routes.use('/admin', adminRoutes);
 routes.use('/companies', companyRoutes);
 routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
+routes.use('/providers', providerRoutes);

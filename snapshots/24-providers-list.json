@@ -1,0 +1,44 @@
+{
+    "request": "GET /providers?page=1&pageSize=2",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "categories": [
+                    "Mobile App Development"
+                ],
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
+                "companyPhoto": null,
+                "techStack": [
+                    "Flutter",
+                    "Kotlin",
+                    "Swift"
+                ]
+            },
+            {
+                "accountType": "PROVIDER",
+                "categories": [
+                    "IT Consulting & Security"
+                ],
+                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
+                "companyId": 11,
+                "companyName": "CloudScale Solutions",
+                "companyPhoto": null,
+                "techStack": [
+                    "AWS Cloud",
+                    "Docker",
+                    "Kubernetes"
+                ]
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 2,
+            "totalItems": 26,
+            "totalPages": 13
+        }
+    }
+}
