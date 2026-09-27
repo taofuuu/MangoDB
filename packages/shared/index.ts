@@ -138,6 +138,23 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
+// US3-1. One Provider search result card. categories come from the company's
+// service listings; techStack is company-wide, not per service.
+export interface ProviderSummary {
+    companyId: number;
+    companyName: string;
+    companyDescription: string | null;
+    companyPhoto: string | null;
+    accountType: AccountType;
+    categories: string[];
+    techStack: string[];
+}
+
+export interface ProviderListResponse {
+    items: ProviderSummary[];
+    pagination: PaginationMeta;
+}
+
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {
