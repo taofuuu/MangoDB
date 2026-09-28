@@ -43,16 +43,58 @@ function matchesKeyword(word: string): Prisma.CompanyWhereInput {
     };
 }
 
+// US3-2. Picking two names in one group finds Providers with either of them,
+// so Web + Mobile widens the list. Each group used narrows it. Case is ignored:
+// tech stack is free text, and one Provider types "react", another "React".
+function matchesFilters(
+    category: string[],
+    techStack: string[],
+): Prisma.CompanyWhereInput[] {
+    const filters: Prisma.CompanyWhereInput[] = [];
+    if (category.length > 0) {
+        filters.push({
+            listing: {
+                some: {
+                    // Same rule as the result card: job postings don't count.
+                    service: { isNot: null },
+                    listingCategory: {
+                        some: {
+                            category: {
+                                catName: { in: category, mode: 'insensitive' },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+    if (techStack.length > 0) {
+        filters.push({
+            provider: {
+                providerTechStack: {
+                    some: {
+                        techStackName: { in: techStack, mode: 'insensitive' },
+                    },
+                },
+            },
+        });
+    }
+    return filters;
+}
+
 // US3-1. One page of Providers for the search screen. count and findMany run
 // in one transaction so the pagination metadata describes the returned page.
 export async function listProviders(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { q, page, pageSize } = parseQuery(
-        providerListQuerySchema,
-        req.query,
-    );
+    const {
+        q,
+        category = [],
+        techStack = [],
+        page,
+        pageSize,
+    } = parseQuery(providerListQuerySchema, req.query);
     // Each word is matched on its own, so "flutter kotlin" finds a Provider
     // whose stack has both, even though they are two separate rows.
     const words = q?.split(/\s+/).filter(Boolean) ?? [];
@@ -62,7 +104,12 @@ export async function listProviders(
     const where: Prisma.CompanyWhereInput = {
         accountType: { in: ['PROVIDER', 'BOTH'] },
         deletedAt: null,
-        ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
+        // T3.2.6. Keyword words and filters share one AND list, so a Provider
+        // must pass all of them. Two AND keys would let one replace the other.
+        AND: [
+            ...words.map(matchesKeyword),
+            ...matchesFilters(category, techStack),
+        ],
     };
     const [totalItems, companies] = await prisma.$transaction([
         prisma.company.count({ where }),
