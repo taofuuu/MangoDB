@@ -280,6 +280,14 @@ echo
 echo "providers"
 snap 24-providers-list GET "/providers?page=1&pageSize=2" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+snap 55-providers-filtered \
+    GET "/providers?category=IT%20Consulting%20%26%20Security&techStack=AWS%20Cloud" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+# "cloud" alone finds two Providers, Cybersecurity alone two more. Only the one
+# in both should come back, so neither side can have replaced the other.
+snap 56-providers-keyword-and-filter \
+    GET "/providers?q=cloud&techStack=Cybersecurity" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ "$READ_ONLY" = 1 ]; then
     echo

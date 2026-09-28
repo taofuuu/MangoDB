@@ -1,0 +1,28 @@
+{
+    "request": "GET /providers?q=cloud&techStack=Cybersecurity",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "categories": [
+                    "IT Consulting & Security"
+                ],
+                "companyDescription": "IT, Security, and Cloud Consulting Firm",
+                "companyId": 5,
+                "companyName": "TechConsult Pro",
+                "companyPhoto": null,
+                "techStack": [
+                    "AWS Cloud",
+                    "Cybersecurity"
+                ]
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 1,
+            "totalPages": 1
+        }
+    }
+}
