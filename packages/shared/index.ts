@@ -241,3 +241,33 @@ export interface Certificate {
     expireMonth: number | null;
     expireYear: number | null;
 }
+
+// US2-6. A Receiver's job posting. jobPostingId matches listing.listingId.
+export interface JobPosting {
+    jobPostingId: number;
+    companyId: number;
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number;
+    listingStatus: ListingStatus;
+    locationPref: string | null;
+    duration: string | null;
+    // YYYY-MM-DD date string per conventions section 10
+    deadline: string | null;
+    categoryIds: number[];
+    categories: string[];
+    createdAt?: string | undefined;
+}
+
+// What POST /job-postings accepts. Validated by createJobPostingSchema.
+export interface CreateJobPostingRequest {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null | undefined;
+    maxBudget: number;
+    locationPref?: string | null | undefined;
+    duration?: string | null | undefined;
+    deadline?: string | null | undefined;
+    categoryIds?: number[] | undefined;
+}

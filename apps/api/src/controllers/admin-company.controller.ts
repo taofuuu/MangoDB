@@ -18,6 +18,7 @@ import {
 } from '../lib/companyProfile';
 import { isRecordNotFound, isUniqueViolation } from '../lib/prismaErrors';
 import { hasOngoingProject } from '../lib/projectEligibility';
+import { escapeLike } from '../lib/search';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     companyAccountIdParamSchema,
@@ -37,15 +38,21 @@ export async function listCompanyAccounts(
         req.query,
     );
     const skip = (page - 1) * pageSize;
+    const keyword = q ? escapeLike(q) : undefined;
     // schema.prisma's rule for deletedAt: a discovery query filters it out.
     // includeDeleted is the opt-out, for an admin auditing removed accounts.
     const where: Prisma.CompanyWhereInput = {
-        ...(q && {
+        ...(keyword && {
             OR: [
-                { companyName: { contains: q, mode: 'insensitive' } },
-                { companyDescription: { contains: q, mode: 'insensitive' } },
-                { phone: { contains: q, mode: 'insensitive' } },
-                { email: { contains: q, mode: 'insensitive' } },
+                { companyName: { contains: keyword, mode: 'insensitive' } },
+                {
+                    companyDescription: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                    },
+                },
+                { phone: { contains: keyword, mode: 'insensitive' } },
+                { email: { contains: keyword, mode: 'insensitive' } },
             ],
         }),
         accountType: filter

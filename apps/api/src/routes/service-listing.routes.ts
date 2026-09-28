@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
-import { createListing } from '../controllers/listing.controller';
+import { createListing } from '../controllers/service-listing.controller';
 
 // Mounted at /listings.
 export const listingRoutes = Router();

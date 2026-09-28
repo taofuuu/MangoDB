@@ -1,0 +1,10 @@
+{
+    "request": "POST /job-postings",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Insufficient permissions"
+        }
+    }
+}

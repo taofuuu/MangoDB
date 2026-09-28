@@ -5,9 +5,9 @@ import {
     DEFAULT_LISTING_STATUS,
     listingSelect,
     toListing,
-} from '../lib/listing';
+} from '../lib/servicelisting';
 import { parseBody } from '../middleware/validate';
-import { createListingSchema } from '../schemas/listing.schema';
+import { createListingSchema } from '../schemas/service-listing.schema';
 
 export async function createListing(
     req: Request,
