@@ -3,6 +3,7 @@ import type { ProviderListResponse } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { providerSummarySelect, toProviderSummary } from '../lib/provider';
+import { escapeLike } from '../lib/search';
 import { parseQuery } from '../middleware/validate';
 import { providerListQuerySchema } from '../schemas/provider.schema';
 
@@ -10,10 +11,10 @@ import { providerListQuerySchema } from '../schemas/provider.schema';
 // stack, ignoring case. Job postings are left out: they say what the company
 // wants to hire, not what it offers.
 function matchesKeyword(word: string): Prisma.CompanyWhereInput {
-    // Prisma passes % and _ through as LIKE wildcards, so "%" alone would
-    // match every Provider. The backslash makes them plain characters.
-    const literal = word.replace(/[\\%_]/g, '\\$&');
-    const contains = { contains: literal, mode: 'insensitive' } as const;
+    const contains = {
+        contains: escapeLike(word),
+        mode: 'insensitive',
+    } as const;
     return {
         OR: [
             { companyName: contains },
