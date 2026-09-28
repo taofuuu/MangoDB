@@ -109,9 +109,7 @@ model Listing {
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]
   proposal        Proposal[]
-  service         Service?
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  listingType     String @map("listing_type") @db.VarChar(20)                
+  service         Service?     
 
   @@map("listing")
 }
