@@ -108,6 +108,8 @@ model Listing {
   listingCategory ListingCategory[]
   proposal        Proposal[]
   service         Service?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6) 
+  listingType     String   @map("listing_type") @db.VarChar(50)                    
 
   @@map("listing")
 }
