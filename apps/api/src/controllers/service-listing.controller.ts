@@ -15,26 +15,7 @@ export async function createListing(
 ): Promise<void> {
     // 1. Validate body
     const data = parseBody(createListingSchema, req.body);
-    let companyId = req.auth?.companyId;
-
-    // Fallback: If companyId is not in JWT payload, resolve from DB via sub
-    if (!companyId && req.auth?.sub) {
-        const targetId = Number(req.auth.sub);
-        if (!isNaN(targetId)) {
-            const existingCompany = await prisma.company.findUnique({
-                where: { companyId: targetId },
-                select: { companyId: true },
-            });
-            if (existingCompany) {
-                companyId = existingCompany.companyId;
-            }
-        }
-    }
-
-    // Ensure companyId is found before attempting DB creation
-    if (!companyId) {
-        throw ApiError.unauthorized('Company ID could not be identified');
-    }
+    const { companyId } = req.auth!;
 
     // 2. Validate categories
     const catIds = [...new Set(data.categoryIds)];
@@ -55,9 +36,6 @@ export async function createListing(
         }
     }
 
-    // Safe fallback for status if DEFAULT_LISTING_STATUS is undefined
-    const status = DEFAULT_LISTING_STATUS || 'OPEN';
-
     // 3. Sequential creation inside explicit transaction
     const created = await prisma.$transaction(async (tx) => {
         // Step 3a: Create Listing
@@ -68,7 +46,7 @@ export async function createListing(
                 listingDesc: data.listingDesc,
                 minBudget: data.minBudget ?? null,
                 maxBudget: data.maxBudget,
-                listingStatus: status,
+                listingStatus: DEFAULT_LISTING_STATUS,
                 listingType: data.type,
             },
         });

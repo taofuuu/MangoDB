@@ -1,7 +1,15 @@
-// ASSUMPTION: schema.prisma has no free-form enum for listing_status, so this
-// is the value a new listing starts with. Change it to whatever the rest of
-// the app (browse filters, proposals) expects.
-export const DEFAULT_LISTING_STATUS = 'ACTIVE';
+// listing_status is a plain VarChar(50) column with no DB enum, so this is the
+// single source of truth for its values. Browse filters and proposal logic
+// should import from here instead of hardcoding strings.
+export const LISTING_STATUS = {
+    ACTIVE: 'ACTIVE',
+    CLOSED: 'CLOSED',
+} as const;
+
+export type ListingStatus =
+    (typeof LISTING_STATUS)[keyof typeof LISTING_STATUS];
+
+export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUS.ACTIVE;
 
 // The columns a listing response may carry, reusable by GET later. `type` is
 // not a column: a listing is a SERVICE when it has a service row and a JOB
