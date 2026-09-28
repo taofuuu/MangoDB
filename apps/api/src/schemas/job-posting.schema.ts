@@ -82,3 +82,17 @@ export const createJobPostingSchema = z
 export const jobPostingIdParamSchema = z.object({
     jobPostingId: z.coerce.number().int().positive().max(2147483647),
 });
+
+// Query parameters for GET /job-postings.
+// Supports status filtering (DRAFT | OPEN | CLOSED) and filtering by companyId.
+// Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
+export const jobPostingListQuerySchema = z.object({
+    status: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.enum(['DRAFT', 'OPEN', 'CLOSED']).optional(),
+    ),
+    companyId: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.coerce.number().int().positive().max(2147483647).optional(),
+    ),
+});
