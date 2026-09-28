@@ -103,6 +103,8 @@ model Listing {
   minBudget       Int?              @map("min_budget")
   maxBudget       Int               @map("max_budget")
   listingStatus   String            @map("listing_status") @db.VarChar(50)
+  listingType     String            @map("listing_type") @db.VarChar(20)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   jobRequirement  JobRequirement?
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]

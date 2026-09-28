@@ -79,6 +79,7 @@ A_LIVE=0
 B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
+NEW_JOB_POSTING_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -90,6 +91,15 @@ PHOTO_SET=0
 cleanup() {
     local code=$?
     set +e
+    if [ -n "$NEW_JOB_POSTING_ID" ]; then
+        npx tsx -e "
+            import { prisma } from './apps/api/src/lib/prisma';
+            async function main() {
+                await prisma.listing.delete({ where: { listingId: $NEW_JOB_POSTING_ID } }).catch(() => {});
+            }
+            main().finally(() => prisma.\$disconnect());
+        " >/dev/null 2>&1 || true
+    fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
     # exactly how this got noticed.
@@ -456,6 +466,38 @@ snap 50-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
     -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
 A_LIVE=0
 
+# ---------------------------------------------------------------------------
+# 8. Job postings (US2-6)
+# ---------------------------------------------------------------------------
+
+echo
+echo "job postings"
+snap 51-error-job-postings-unauthorized POST /job-postings \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Unauthorized"}'
+
+snap 52-error-job-postings-forbidden-provider POST /job-postings \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Provider cannot post job","listingDesc":"desc","maxBudget":10000}'
+
+snap 53-error-job-postings-validation POST /job-postings \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"","listingDesc":"","minBudget":20000,"maxBudget":10000,"deadline":"2020-01-01","categoryIds":[99999]}'
+
+snap 54-job-postings-create POST /job-postings \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe job posting\",\"listingDesc\":\"Looking for developer team\",\"minBudget\":50000,\"maxBudget\":150000,\"locationPref\":\"Remote\",\"duration\":\"2 Months\",\"deadline\":\"2028-12-31\",\"categoryIds\":[1]}"
+NEW_JOB_POSTING_ID="$(jget jobPostingId)"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    SUBS+=(--id "job_posting_id=$NEW_JOB_POSTING_ID")
+    resnap 54-job-postings-create
+fi
+
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
+

@@ -136,6 +136,7 @@ async function upsertListing(providerId: number): Promise<number> {
                 // Free text today. docs/conventions.md section 6 turns this
                 // into DRAFT | OPEN | CLOSED — update this line when it does.
                 listingStatus: 'OPEN',
+                listingType: 'SERVICE',
             },
             select: { listingId: true },
         }));
