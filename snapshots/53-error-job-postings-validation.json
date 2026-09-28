@@ -1,0 +1,28 @@
+{
+    "request": "POST /job-postings",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "listingTitle",
+                    "message": "Title is required"
+                },
+                {
+                    "field": "listingDesc",
+                    "message": "Description is required"
+                },
+                {
+                    "field": "deadline",
+                    "message": "Deadline cannot be in the past"
+                },
+                {
+                    "field": "minBudget",
+                    "message": "Minimum budget cannot exceed maximum budget"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}
