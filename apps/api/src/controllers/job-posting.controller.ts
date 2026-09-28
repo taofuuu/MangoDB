@@ -1,8 +1,12 @@
 import type { Request, Response } from 'express';
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { parseBody } from '../middleware/validate';
+import { parseBody, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
-import { createJobPostingSchema } from '../schemas/job-posting.schema';
+import {
+    createJobPostingSchema,
+    jobPostingListQuerySchema,
+} from '../schemas/job-posting.schema';
 import { jobPostingSelect, toJobPosting } from '../lib/jobPosting';
 
 // US2-6. Create and publish a job posting.
@@ -65,4 +69,52 @@ export async function createJobPosting(
     });
 
     res.status(201).json(toJobPosting(created));
+}
+
+// US2-7. List job postings filtered by status with visibility rules:
+// - OPEN postings are visible to all authenticated companies.
+// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
+// - Admin role bypasses visibility restrictions.
+export async function listJobPostings(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { status, companyId } = parseQuery(
+        jobPostingListQuerySchema,
+        req.query,
+    );
+    const callerCompanyId = req.auth!.companyId;
+    const isAdmin = req.auth!.role === 'admin';
+
+    const where: Prisma.ListingWhereInput = {
+        AND: [
+            // 1. Base rule: only query job postings, never services
+            { listingType: 'JOB' },
+
+            // 2. Query filters
+            ...(status ? [{ listingStatus: status }] : []),
+            ...(companyId ? [{ companyId }] : []),
+
+            // 3. Visibility rules: non-admin callers can only see OPEN postings
+            // or postings they created themselves
+            ...(!isAdmin
+                ? [
+                      {
+                          OR: [
+                              { listingStatus: 'OPEN' },
+                              { companyId: callerCompanyId },
+                          ],
+                      },
+                  ]
+                : []),
+        ],
+    };
+
+    const postings = await prisma.listing.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+        select: jobPostingSelect,
+    });
+
+    res.json(postings.map(toJobPosting));
 }
