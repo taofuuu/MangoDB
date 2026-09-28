@@ -58,7 +58,7 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
-        listingStatus: row.listingStatus as ListingStatus,
+        listingStatus: row.listingStatus.toUpperCase() as ListingStatus,
         locationPref: row.jobRequirement?.locationPref ?? null,
         duration: row.jobRequirement?.duration ?? null,
         deadline: row.jobRequirement?.deadline

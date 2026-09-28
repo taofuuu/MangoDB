@@ -92,7 +92,16 @@ export async function listJobPostings(
             { listingType: 'JOB' },
 
             // 2. Query filters
-            ...(status ? [{ listingStatus: status }] : []),
+            ...(status
+                ? [
+                      {
+                          listingStatus: {
+                              equals: status,
+                              mode: 'insensitive' as const,
+                          },
+                      },
+                  ]
+                : []),
             ...(companyId ? [{ companyId }] : []),
 
             // 3. Visibility rules: non-admin callers can only see OPEN postings
@@ -101,7 +110,12 @@ export async function listJobPostings(
                 ? [
                       {
                           OR: [
-                              { listingStatus: 'OPEN' },
+                              {
+                                  listingStatus: {
+                                      equals: 'OPEN',
+                                      mode: 'insensitive' as const,
+                                  },
+                              },
                               { companyId: callerCompanyId },
                           ],
                       },
