@@ -11,20 +11,17 @@ export type ListingStatus =
 
 export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUS.ACTIVE;
 
-// The columns a listing response may carry, reusable by GET later. `type` is
-// not a column: a listing is a SERVICE when it has a service row and a JOB
-// when it has a job_requirement row, so both relations are selected and
-// toListing derives the type from them.
+// The columns a listing response may carry, reusable by GET later.
 export const listingSelect = {
     listingId: true,
     companyId: true,
+    listingType: true,
     listingTitle: true,
     listingDesc: true,
     minBudget: true,
     maxBudget: true,
     listingStatus: true,
     listingCategory: { select: { catId: true } },
-    service: { select: { listingId: true } },
     jobRequirement: {
         select: { locationPref: true, duration: true, deadline: true },
     },
@@ -33,13 +30,13 @@ export const listingSelect = {
 type SelectedListing = {
     listingId: number;
     companyId: number | null;
+    listingType: string;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
     maxBudget: number;
     listingStatus: string;
     listingCategory: { catId: number }[];
-    service: { listingId: number } | null;
     jobRequirement: {
         locationPref: string | null;
         duration: string | null;
@@ -80,11 +77,16 @@ export function toListing(row: SelectedListing): Listing {
         categoryIds: row.listingCategory.map((c) => c.catId),
     };
 
-    if (row.jobRequirement) {
+    // listingType is the persisted source of truth; don't infer it from
+    // which child row happens to exist.
+    const type: 'SERVICE' | 'JOB' =
+        row.listingType === 'JOB' ? 'JOB' : 'SERVICE';
+
+    if (type === 'JOB' && row.jobRequirement) {
         const { locationPref, duration, deadline } = row.jobRequirement;
         return {
             ...base,
-            type: 'JOB',
+            type,
             jobRequirement: {
                 locationPref,
                 duration,
@@ -93,5 +95,5 @@ export function toListing(row: SelectedListing): Listing {
         };
     }
 
-    return { ...base, type: 'SERVICE' };
+    return { ...base, type };
 }
