@@ -109,7 +109,7 @@ model Listing {
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]
   proposal        Proposal[]
-  service         Service?
+  service         Service?     
 
   @@map("listing")
 }

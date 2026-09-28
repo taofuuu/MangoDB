@@ -34,7 +34,7 @@ export async function createPortfolio(
     req: Request,
     res: Response,
 ): Promise<void> {
-    // 1. ตรวจสอบว่าส่งไฟล์รูปมาหรือไม่
+    // 1. Validate image file
     if (!req.file) {
         throw ApiError.badRequest('Portfolio image file is required');
     }
@@ -43,7 +43,7 @@ export async function createPortfolio(
     const data = parseBody(createPortfolioSchema, req.body);
     const companyId = req.auth!.companyId;
 
-    // 3. AUTHORIZATION & OWNERSHIP CHECK ก่อนทำการ Upload ไฟล์
+    // 3. AUTHORIZATION & OWNERSHIP CHECK before Upload file
     const service = await prisma.service.findUnique({
         where: { listingId: data.listingId },
         select: { listing: { select: { companyId: true } } },
@@ -57,14 +57,14 @@ export async function createPortfolio(
         throw ApiError.forbidden('This service belongs to another company');
     }
 
-    // 4. เมื่อผ่านการตรวจสิทธิ์แล้ว จึงสั่ง Upload ไฟล์ขึ้น Supabase Storage (bucket: portfolio)
+    // 4. after authorization, Upload file in Supabase Storage (bucket: portfolio)
     const image = await uploadToStorage(
         req.file,
         BUCKETS.PORTFOLIO,
         'portfolios',
     );
 
-    // 5. บันทึกลง Database
+    // 5. store in Database
     let created;
     try {
         created = await prisma.servicePortfolio.create({
