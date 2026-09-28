@@ -9,7 +9,10 @@ import {
 import { parseBody } from '../middleware/validate';
 import { createListingSchema } from '../schemas/listing.schema';
 
-export async function createListing(req: Request, res: Response): Promise {
+export async function createListing(
+    req: Request,
+    res: Response,
+): Promise<void> {
     // 1. Validate body
     const data = parseBody(createListingSchema, req.body);
     let companyId = req.auth?.companyId;
