@@ -31,13 +31,16 @@ export const jobPostingFields = {
         .trim()
         .min(1, 'Description is required')
         .max(10000, 'Description cannot exceed 10000 characters'),
-    minBudget: z.coerce
-        .number()
-        .int('Minimum budget must be an integer')
-        .min(0, 'Minimum budget cannot be negative')
-        .max(2147483647, 'Minimum budget exceeds maximum allowed')
-        .nullable()
-        .optional(),
+    minBudget: z.preprocess(
+        (val) => (val === '' ? null : val),
+        z.coerce
+            .number()
+            .int('Minimum budget must be an integer')
+            .min(0, 'Minimum budget cannot be negative')
+            .max(2147483647, 'Minimum budget exceeds maximum allowed')
+            .nullable()
+            .optional(),
+    ),
     maxBudget: z.coerce
         .number()
         .int('Maximum budget must be an integer')
