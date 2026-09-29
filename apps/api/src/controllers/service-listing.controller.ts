@@ -90,7 +90,10 @@ export async function createListing(
 }
 
 export async function getMine(req: Request, res: Response): Promise<void> {
-    const { companyId } = req.auth!;
+    if (!req.auth?.companyId) {
+        throw ApiError.unauthorized('Company ID is required');
+    }
+    const { companyId } = req.auth;
 
     const listings = await prisma.listing.findMany({
         where: { companyId },
