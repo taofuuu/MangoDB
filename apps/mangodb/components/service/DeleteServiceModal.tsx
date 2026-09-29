@@ -29,6 +29,7 @@ export default function DeleteServiceForm({
 }: DeleteServiceFormProps) {
     const handleConfirm = async () => {
         if (service?.listingId) {
+            // TO EDIT: Waiting for fixing in lib
             // await deleteService(service.listingId);
         }
 
