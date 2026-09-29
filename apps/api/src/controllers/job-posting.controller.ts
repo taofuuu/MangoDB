@@ -97,6 +97,7 @@ export async function listJobPostings(
                       {
                           listingStatus: {
                               equals: status,
+                              // TODO: remove after listing_status data fix
                               mode: 'insensitive' as const,
                           },
                       },
@@ -111,6 +112,7 @@ export async function listJobPostings(
                     {
                         listingStatus: {
                             equals: 'OPEN' satisfies ListingStatus,
+                            // TODO: remove after listing_status data fix
                             mode: 'insensitive' as const,
                         },
                     },
@@ -154,6 +156,7 @@ export async function getJobPosting(
 
     const callerCompanyId = req.auth!.companyId;
     const isOwner = posting.companyId === callerCompanyId;
+    // TODO: remove after listing_status data fix
     const normalizedStatus = posting.listingStatus.toUpperCase();
 
     if (normalizedStatus !== ('OPEN' satisfies ListingStatus) && !isOwner) {
