@@ -271,3 +271,17 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// US2-6. A Provider's servie. serviceId matches listing.listingId.
+export interface Service {
+    serviceId: number;
+    companyId: number;
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    listingStatus: ListingStatus;
+    categoryIds: number[];
+    categories: string[];
+    createdAt?: string | undefined;
+}

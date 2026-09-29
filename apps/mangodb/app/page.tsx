@@ -59,7 +59,7 @@ const ROUTES = [
         detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
     {
-        href: '/service/delete',
+        href: '/service',
         title: 'Delete Service',
         detail: 'US2.4.2',
     },
