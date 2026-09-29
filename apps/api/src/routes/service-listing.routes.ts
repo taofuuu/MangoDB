@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import {
     createListing,
     getMine,
+    getService,
 } from '../controllers/service-listing.controller';
 
 // Mounted at /listings.
@@ -12,3 +13,9 @@ export const listingRoutes = Router();
 // later and must not inherit requireRole('provider').
 listingRoutes.post('/', requireAuth, requireRole('provider'), createListing);
 listingRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
+listingRoutes.get(
+    '/:listingId',
+    requireAuth,
+    requireRole('provider'),
+    getService,
+);

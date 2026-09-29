@@ -100,3 +100,26 @@ export async function getMine(req: Request, res: Response): Promise<void> {
 
     res.status(200).json(listings.map(toListing));
 }
+
+export async function getService(req: Request, res: Response): Promise<void> {
+    const { companyId } = req.auth!;
+    const listingId = Number(req.params.listingId);
+
+    if (isNaN(listingId)) {
+        throw ApiError.badRequest('Invalid listing ID format');
+    }
+
+    const listing = await prisma.listing.findFirst({
+        where: {
+            listingId,
+            companyId,
+        },
+        select: listingSelect,
+    });
+
+    if (!listing) {
+        throw ApiError.notFound('Listing not found');
+    }
+
+    res.status(200).json(toListing(listing));
+}
