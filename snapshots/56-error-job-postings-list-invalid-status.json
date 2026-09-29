@@ -1,0 +1,16 @@
+{
+    "request": "GET /job-postings?status=INVALID",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "status",
+                    "message": "Invalid option: expected one of \"DRAFT\"|\"OPEN\"|\"CLOSED\""
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

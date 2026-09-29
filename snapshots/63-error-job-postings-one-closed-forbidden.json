@@ -1,0 +1,10 @@
+{
+    "request": "GET /job-postings/<job_posting_id>",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Insufficient permissions to access this resource"
+        }
+    }
+}

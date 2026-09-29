@@ -1,0 +1,164 @@
+{
+    "request": "GET /job-postings?status=OPEN",
+    "status": 200,
+    "body": [
+        {
+            "categories": [
+                "Web Development"
+            ],
+            "categoryIds": [
+                1
+            ],
+            "companyId": 143,
+            "createdAt": "<timestamp>",
+            "deadline": "2028-12-31",
+            "duration": "2 Months",
+            "jobPostingId": "<job_posting_id>",
+            "listingDesc": "Looking for developer team",
+            "listingStatus": "OPEN",
+            "listingTitle": "Snapshot Probe job posting",
+            "locationPref": "Remote",
+            "maxBudget": 150000,
+            "minBudget": 50000
+        },
+        {
+            "categories": [
+                "Digital Marketing & SEO"
+            ],
+            "categoryIds": [
+                8
+            ],
+            "companyId": 19,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-04-25",
+            "duration": "1 Month",
+            "jobPostingId": 15,
+            "listingDesc": "Seeking consultant to audit technical SEO.",
+            "listingStatus": "OPEN",
+            "listingTitle": "SEO Optimization for Client Websites",
+            "locationPref": "Remote",
+            "maxBudget": 100000,
+            "minBudget": 30000
+        },
+        {
+            "categories": [
+                "Mobile App Development",
+                "Hardware & IoT"
+            ],
+            "categoryIds": [
+                2,
+                3
+            ],
+            "companyId": 18,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-05-20",
+            "duration": "4 Months",
+            "jobPostingId": 14,
+            "listingDesc": "App to control lighting and AC via WiFi.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Smart Home App Development",
+            "locationPref": "Remote / Chonburi",
+            "maxBudget": 400000,
+            "minBudget": 150000
+        },
+        {
+            "categories": [
+                "Web Development",
+                "Mobile App Development"
+            ],
+            "categoryIds": [
+                1,
+                2
+            ],
+            "companyId": 16,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-06-01",
+            "duration": "6 Months",
+            "jobPostingId": 12,
+            "listingDesc": "Need a web dashboard to track 500 delivery trucks.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Fleet Tracking System (GPS)",
+            "locationPref": "On-site Bangkok",
+            "maxBudget": 800000,
+            "minBudget": 300000
+        },
+        {
+            "categories": [
+                "Hardware & IoT"
+            ],
+            "categoryIds": [
+                3
+            ],
+            "companyId": 15,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-05-10",
+            "duration": "1 Month",
+            "jobPostingId": 11,
+            "listingDesc": "Looking for IoT sensors to monitor soil moisture.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Need Smart Sensors for Greenhouse",
+            "locationPref": "Delivery to Khon Kaen",
+            "maxBudget": 80000,
+            "minBudget": 20000
+        },
+        {
+            "categories": [
+                "Hardware & IoT"
+            ],
+            "categoryIds": [
+                3
+            ],
+            "companyId": 10,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-04-25",
+            "duration": "15 Days",
+            "jobPostingId": 5,
+            "listingDesc": "Required for assembling AI robots.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Seeking Supplier for 100 Jetson Nano Boards",
+            "locationPref": "Delivery to Bangkok",
+            "maxBudget": 600000,
+            "minBudget": 400000
+        },
+        {
+            "categories": [
+                "Web Development"
+            ],
+            "categoryIds": [
+                1
+            ],
+            "companyId": 9,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-05-20",
+            "duration": "3 Months",
+            "jobPostingId": 4,
+            "listingDesc": "Video streaming, quiz system, and certificate generation.",
+            "listingStatus": "OPEN",
+            "listingTitle": "E-Learning Web Portal",
+            "locationPref": "Remote",
+            "maxBudget": 200000,
+            "minBudget": 80000
+        },
+        {
+            "categories": [
+                "Mobile App Development",
+                "UI/UX Design"
+            ],
+            "categoryIds": [
+                2,
+                6
+            ],
+            "companyId": 7,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-06-15",
+            "duration": "6 Months",
+            "jobPostingId": 2,
+            "listingDesc": "Highly secure financial app with face scan needed.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Mobile Banking App (iOS/Android)",
+            "locationPref": "Remote / Bangkok",
+            "maxBudget": 1200000,
+            "minBudget": 500000
+        }
+    ]
+}

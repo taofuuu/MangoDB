@@ -1,0 +1,5 @@
+{
+    "request": "GET /job-postings?status=CLOSED",
+    "status": 200,
+    "body": []
+}

@@ -92,13 +92,18 @@ cleanup() {
     local code=$?
     set +e
     if [ -n "$NEW_JOB_POSTING_ID" ]; then
-        npx tsx -e "
-            import { prisma } from './apps/api/src/lib/prisma';
-            async function main() {
-                await prisma.listing.delete({ where: { listingId: $NEW_JOB_POSTING_ID } }).catch(() => {});
-            }
-            main().finally(() => prisma.\$disconnect());
-        " >/dev/null 2>&1 || true
+        (
+            set -a
+            [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
+            set +a
+            npx tsx -e "
+                import { prisma } from './apps/api/src/lib/prisma';
+                async function main() {
+                    await prisma.listing.delete({ where: { listingId: $NEW_JOB_POSTING_ID } }).catch(() => {});
+                }
+                main().finally(() => prisma.\$disconnect());
+            "
+        ) >/dev/null 2>&1 || true
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -496,6 +501,71 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     SUBS+=(--id "job_posting_id=$NEW_JOB_POSTING_ID")
     resnap 54-job-postings-create
 fi
+
+# ---------------------------------------------------------------------------
+# 9. View job postings and visibility rules (US2-7)
+# ---------------------------------------------------------------------------
+
+snap 55-error-job-postings-list-unauthorized GET /job-postings
+
+snap 56-error-job-postings-list-invalid-status GET /job-postings?status=INVALID \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 57-job-postings-list-open GET /job-postings?status=OPEN \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    (
+        set -a
+        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
+        set +a
+        npx tsx -e "
+            import { prisma } from './apps/api/src/lib/prisma';
+            async function main() {
+                await prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } });
+            }
+            main().finally(() => prisma.\$disconnect());
+        "
+    ) >/dev/null 2>&1 || true
+fi
+
+snap 58-job-postings-list-closed-provider GET /job-postings?status=CLOSED \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap 59-job-postings-list-closed-receiver GET /job-postings?status=CLOSED \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 60-error-job-postings-one-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID"
+
+snap 61-error-job-postings-one-invalid-id GET /job-postings/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 62-error-job-postings-one-not-found GET /job-postings/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 63-error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap 64-job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    (
+        set -a
+        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
+        set +a
+        npx tsx -e "
+            import { prisma } from './apps/api/src/lib/prisma';
+            async function main() {
+                await prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } });
+            }
+            main().finally(() => prisma.\$disconnect());
+        "
+    ) >/dev/null 2>&1 || true
+fi
+
+snap 65-job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
