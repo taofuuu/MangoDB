@@ -13,8 +13,4 @@ export const listingRoutes = Router();
 // later and must not inherit requireRole('provider').
 listingRoutes.post('/', requireAuth, requireRole('provider'), createListing);
 listingRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
-listingRoutes.get(
-    '/:listingId',
-    requireAuth,
-    getService,
-);
+listingRoutes.get('/:listingId', requireAuth, getService);
