@@ -95,11 +95,7 @@ export async function listJobPostings(
             ...(status
                 ? [
                       {
-                          listingStatus: {
-                              equals: status,
-                              // TODO: remove after listing_status data fix
-                              mode: 'insensitive' as const,
-                          },
+                          listingStatus: status,
                       },
                   ]
                 : []),
@@ -110,11 +106,7 @@ export async function listJobPostings(
             {
                 OR: [
                     {
-                        listingStatus: {
-                            equals: 'OPEN' satisfies ListingStatus,
-                            // TODO: remove after listing_status data fix
-                            mode: 'insensitive' as const,
-                        },
+                        listingStatus: 'OPEN' satisfies ListingStatus,
                     },
                     { companyId: callerCompanyId },
                 ],
@@ -156,10 +148,11 @@ export async function getJobPosting(
 
     const callerCompanyId = req.auth!.companyId;
     const isOwner = posting.companyId === callerCompanyId;
-    // TODO: remove after listing_status data fix
-    const normalizedStatus = posting.listingStatus.toUpperCase();
 
-    if (normalizedStatus !== ('OPEN' satisfies ListingStatus) && !isOwner) {
+    if (
+        posting.listingStatus !== ('OPEN' satisfies ListingStatus) &&
+        !isOwner
+    ) {
         throw ApiError.forbidden(
             'Insufficient permissions to access this resource',
         );

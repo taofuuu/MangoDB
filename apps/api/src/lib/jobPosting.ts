@@ -58,8 +58,7 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
-        // TODO: remove after listing_status data fix
-        listingStatus: row.listingStatus.toUpperCase() as ListingStatus,
+        listingStatus: row.listingStatus as ListingStatus,
         locationPref: row.jobRequirement?.locationPref ?? null,
         duration: row.jobRequirement?.duration ?? null,
         deadline: row.jobRequirement?.deadline
