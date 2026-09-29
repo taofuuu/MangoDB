@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { parseBody, parseQuery } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
 import {
     createJobPostingSchema,
+    jobPostingIdParamSchema,
     jobPostingListQuerySchema,
 } from '../schemas/job-posting.schema';
 import { jobPostingSelect, toJobPosting } from '../lib/jobPosting';
@@ -131,4 +132,41 @@ export async function listJobPostings(
     });
 
     res.json(postings.map(toJobPosting));
+}
+
+// US2-7. Fetch a single job posting by ID with visibility rules:
+// - OPEN postings are visible to all authenticated companies and admins.
+// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId) or admins.
+// - Attempting to view another company's CLOSED or DRAFT posting returns 403 Forbidden.
+// - Non-existent ID or listing with listingType !== 'JOB' returns 404 Not Found.
+export async function getJobPosting(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+
+    const posting = await prisma.listing.findUnique({
+        where: { listingId: jobPostingId },
+        select: {
+            ...jobPostingSelect,
+            listingType: true,
+        },
+    });
+
+    if (!posting || posting.listingType !== 'JOB') {
+        throw ApiError.notFound('Job posting not found');
+    }
+
+    const callerCompanyId = req.auth!.companyId;
+    const isAdmin = req.auth!.role === 'admin';
+    const isOwner = posting.companyId === callerCompanyId;
+    const normalizedStatus = posting.listingStatus.toUpperCase();
+
+    if (normalizedStatus !== 'OPEN' && !isOwner && !isAdmin) {
+        throw ApiError.forbidden(
+            'Insufficient permissions to access this resource',
+        );
+    }
+
+    res.json(toJobPosting(posting));
 }
