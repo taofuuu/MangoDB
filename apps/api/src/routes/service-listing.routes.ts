@@ -11,6 +11,16 @@ export const serviceListingRoutes = Router();
 
 // Guarded per route, like portfolio.routes.ts: public GETs will be added here
 // later and must not inherit requireRole('provider').
-listingRoutes.post('/', requireAuth, requireRole('provider'), createListing);
-listingRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
-listingRoutes.get('/:listingId', requireAuth, getService);
+serviceListingRoutes.post(
+    '/',
+    requireAuth,
+    requireRole('provider'),
+    createListing,
+);
+serviceListingRoutes.get(
+    '/mine',
+    requireAuth,
+    requireRole('provider'),
+    getMine,
+);
+serviceListingRoutes.get('/:listingId', requireAuth, getService);
