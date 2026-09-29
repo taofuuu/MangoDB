@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LISTING_STATUSES } from '@mangodb/shared';
 
 function todayUtcString(): string {
     return new Date().toISOString().slice(0, 10);
@@ -89,7 +90,7 @@ export const jobPostingIdParamSchema = z.object({
 export const jobPostingListQuerySchema = z.object({
     status: z.preprocess(
         (val) => (val === '' ? undefined : val),
-        z.enum(['DRAFT', 'OPEN', 'CLOSED']).optional(),
+        z.enum(LISTING_STATUSES).optional(),
     ),
     companyId: z.preprocess(
         (val) => (val === '' ? undefined : val),

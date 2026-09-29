@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { ListingStatus } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
@@ -113,7 +114,7 @@ export async function listJobPostings(
                           OR: [
                               {
                                   listingStatus: {
-                                      equals: 'OPEN',
+                                      equals: 'OPEN' satisfies ListingStatus,
                                       mode: 'insensitive' as const,
                                   },
                               },
@@ -162,7 +163,11 @@ export async function getJobPosting(
     const isOwner = posting.companyId === callerCompanyId;
     const normalizedStatus = posting.listingStatus.toUpperCase();
 
-    if (normalizedStatus !== 'OPEN' && !isOwner && !isAdmin) {
+    if (
+        normalizedStatus !== ('OPEN' satisfies ListingStatus) &&
+        !isOwner &&
+        !isAdmin
+    ) {
         throw ApiError.forbidden(
             'Insufficient permissions to access this resource',
         );

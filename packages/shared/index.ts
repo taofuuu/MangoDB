@@ -33,7 +33,8 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // VarChar(50) in the database with nothing enforcing them, so these types are
 // the enforcement — see docs/conventions.md section 6. The label a user reads
 // ("Open for Proposals") is the frontend's; the column stores the value here.
-export type ListingStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
+export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
+export type ListingStatus = (typeof LISTING_STATUSES)[number];
 export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
