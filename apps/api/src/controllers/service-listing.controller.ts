@@ -88,3 +88,15 @@ export async function createListing(
 
     res.status(201).json(toListing(created));
 }
+
+export async function getMine(req: Request, res: Response): Promise<void> {
+    const { companyId } = req.auth!;
+
+    const listings = await prisma.listing.findMany({
+        where: { companyId },
+        orderBy: { createdAt: 'desc' },
+        select: listingSelect,
+    });
+
+    res.status(200).json(listings.map(toListing));
+}
