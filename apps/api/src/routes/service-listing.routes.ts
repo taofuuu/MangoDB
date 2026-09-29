@@ -16,6 +16,5 @@ listingRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
 listingRoutes.get(
     '/:listingId',
     requireAuth,
-    requireRole('provider'),
     getService,
 );
