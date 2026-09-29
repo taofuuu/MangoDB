@@ -535,6 +535,38 @@ snap 58-job-postings-list-closed-provider GET /job-postings?status=CLOSED \
 snap 59-job-postings-list-closed-receiver GET /job-postings?status=CLOSED \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+snap 60-error-job-postings-one-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID"
+
+snap 61-error-job-postings-one-invalid-id GET /job-postings/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 62-error-job-postings-one-not-found GET /job-postings/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap 63-error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap 64-job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    (
+        set -a
+        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
+        set +a
+        npx tsx -e "
+            import { prisma } from './apps/api/src/lib/prisma';
+            async function main() {
+                await prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } });
+            }
+            main().finally(() => prisma.\$disconnect());
+        "
+    ) >/dev/null 2>&1 || true
+fi
+
+snap 65-job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
