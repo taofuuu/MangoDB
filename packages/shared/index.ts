@@ -35,7 +35,8 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
-export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
 // The frontend switches on these; a rename is a breaking change for both sides.
@@ -271,4 +272,23 @@ export interface CreateJobPostingRequest {
     duration?: string | null | undefined;
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
+}
+
+// US2-8. A Provider's proposal on a job posting.
+export interface Proposal {
+    proposalId: number;
+    jobPostingId: number;
+    providerId: number;
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
+    proposalStatus: ProposalStatus;
+    createdAt: string;
+}
+
+// What POST /job-postings/:jobPostingId/proposals accepts.
+export interface CreateProposalRequest {
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
 }
