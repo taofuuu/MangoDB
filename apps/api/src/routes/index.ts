@@ -13,7 +13,7 @@ export const routes = Router();
 routes.use('/auth', authRoutes);
 routes.use('/admin', adminRoutes);
 routes.use('/companies', companyRoutes);
-routes.use('/service-listings', serviceRoutes);
+routes.use('/services', serviceRoutes);
 routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
 routes.use('/providers', providerRoutes);

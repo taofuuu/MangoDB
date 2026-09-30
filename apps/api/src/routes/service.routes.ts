@@ -6,7 +6,7 @@ import {
     getService,
 } from '../controllers/service.controller';
 
-// Mounted at /listings.
+// Mounted at /services.
 export const serviceRoutes = Router();
 
 // Guarded per route, like portfolio.routes.ts: public GETs will be added here
