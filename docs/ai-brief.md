@@ -297,7 +297,7 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   verified and what you did not.
 - If you changed an API response shape, say so — there is a recorded snapshot
   baseline that has to be re-recorded.
-- Migrations run against a database nine people share. Never bare
+- Migrations run against a database nine people share. Never
   `prisma migrate dev`, never the Supabase dashboard. Flag that a migration is
   needed rather than assuming it can just be applied.
 
