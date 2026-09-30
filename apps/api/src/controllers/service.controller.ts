@@ -7,7 +7,7 @@ import {
     toListing,
 } from '../lib/service';
 import { parseBody } from '../middleware/validate';
-import { createListingSchema } from '../schemas/service.shcema';
+import { createListingSchema } from '../schemas/service.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
