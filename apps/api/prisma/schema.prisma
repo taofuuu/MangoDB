@@ -154,15 +154,18 @@ model ProjectContract {
 
 model Proposal {
   proposalId     Int      @id @default(autoincrement()) @map("proposal_id")
-  listingId      Int?     @map("listing_id")
-  senderId       Int?     @map("sender_id")
+  listingId      Int      @map("listing_id")
+  senderId       Int      @map("sender_id")
   proposalBudget Decimal  @map("proposal_budget") @db.Decimal(12, 2)
   proposalTerms  String   @map("proposal_terms")
+  duration       Decimal  @db.Decimal(4, 1)
   proposalStatus String   @map("proposal_status") @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   project        Project?
-  listing        Listing? @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
-  company        Company? @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
+  company        Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([listingId, senderId])
   @@map("proposal")
 }
 
