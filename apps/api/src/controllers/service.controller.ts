@@ -5,9 +5,9 @@ import {
     DEFAULT_LISTING_STATUS,
     listingSelect,
     toListing,
-} from '../lib/servicelisting';
+} from '../lib/service';
 import { parseBody } from '../middleware/validate';
-import { createListingSchema } from '../schemas/service-listing.schema';
+import { createListingSchema } from '../schemas/service.shcema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
