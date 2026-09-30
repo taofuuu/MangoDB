@@ -4,7 +4,7 @@
 import type { ListingStatus } from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 
-export const DEFAULT_LISTING_STATUS: ListingStatus = 'OPEN';
+export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUSES.OPEN;
 
 // The columns a service listing response may carry.
 export const listingSelect = {
