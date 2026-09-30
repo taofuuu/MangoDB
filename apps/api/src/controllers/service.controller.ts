@@ -68,7 +68,7 @@ export async function getMine(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth;
 
     const listings = await prisma.listing.findMany({
-        where: { companyId },
+        where: { companyId, listingType: 'SERVICE' }, // Defensive: explicit type filter
         orderBy: { createdAt: 'desc' },
         select: listingSelect,
     });
@@ -88,6 +88,7 @@ export async function getService(req: Request, res: Response): Promise<void> {
         where: {
             listingId,
             companyId,
+            listingType: 'SERVICE', // Defensive: explicit type filter
         },
         select: listingSelect,
     });

@@ -6,10 +6,10 @@ export const LISTING_STATUS = {
     CLOSED: 'CLOSED',
 } as const;
 
-export type ListingStatus =
-    (typeof LISTING_STATUS)[keyof typeof LISTING_STATUS];
+import type { ListingStatus } from '@mangodb/shared';
+import { LISTING_STATUSES } from '@mangodb/shared';
 
-export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUS.ACTIVE;
+export const DEFAULT_LISTING_STATUS: ListingStatus = 'OPEN';
 
 // The columns a service listing response may carry.
 export const listingSelect = {
