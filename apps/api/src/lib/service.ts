@@ -1,11 +1,6 @@
 // listing_status is a plain VarChar(50) column with no DB enum, so this is the
 // single source of truth for its values. Browse filters and proposal logic
 // should import from here instead of hardcoding strings.
-export const LISTING_STATUS = {
-    ACTIVE: 'ACTIVE',
-    CLOSED: 'CLOSED',
-} as const;
-
 import type { ListingStatus } from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 
