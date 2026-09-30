@@ -283,8 +283,9 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `/forgot-password` — linked from the login form, no route behind it
 - `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
   mock data, no API
-- Provider search — undecided
-- Several Sprint 2 columns are not in the schema yet
+- Provider search filters and sorting — `GET /providers` takes only `q`, `page`
+  and `pageSize`
+- A price or delivery duration on a service — `service` holds only `listing_id`
 
 ---
 
