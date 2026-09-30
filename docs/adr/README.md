@@ -52,6 +52,11 @@ record at all.
 
 ## Index
 
-| #                                     | Title                                                                    | Status   |
-| ------------------------------------- | ------------------------------------------------------------------------ | -------- |
-| [0000](0000-camelcase-wire-format.md) | _(example)_ camelCase above the database, snake_case stops at the column | Accepted |
+| #                                            | Title                                                                    | Status   |
+| -------------------------------------------- | ------------------------------------------------------------------------ | -------- |
+| [0000](0000-camelcase-wire-format.md)        | _(example)_ camelCase above the database, snake_case stops at the column | Accepted |
+| [0001](0001-listing-first-search-results.md) | Search results are listings, shown with the owner's company profile      | Accepted |
+| [0002](0002-fixed-categories-with-other.md)  | Categories are a fixed list, with an "Other" row for the rest            | Accepted |
+| [0003](0003-nullable-listing-budgets.md)     | Both listing budgets are nullable                                        | Accepted |
+| [0004](0004-full-epic-3-this-sprint.md)      | This sprint takes all of Epic 3, not three of its stories                | Accepted |
+| [0005](0005-service-and-job-naming.md)       | "Service" and "job" are the names for the two kinds of listing           | Accepted |
