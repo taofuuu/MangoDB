@@ -29,7 +29,7 @@ have.
 Which budget a listing must have is checked by the Zod schema for that kind
 of listing, not by the database.
 
-Migration: `apps/api/prisma/migrations/20260930120000_nullable_max_budget/`.
+Migration: `apps/api/prisma/migrations/20260930130000_nullable_max_budget/`.
 
 **Alternative considered: move the budgets to the child tables** (`min_budget`
 on `service`, `max_budget` on `job_requirement`). This is the more correct
@@ -49,9 +49,9 @@ supersedes this one.
   schemas are the only guard, so each one must decide which budget its kind
   of listing requires.
 - **`schema.prisma` must change with the SQL:** `maxBudget Int?` at
-  `apps/api/prisma/schema.prisma:104`. Without it, Prisma's type says
+  `apps/api/prisma/schema.prisma`. Without it, Prisma's type says
   `number` but the value can be `null`.
 - **Code that assumes `maxBudget: number` must handle `null`:**
-  `lib/servicelisting.ts`, `lib/jobPosting.ts`, `schemas/service-listing.schema.ts`
+  `lib/service.ts`, `lib/jobPosting.ts`, `schemas/service.schema.ts`
   (the `minBudget <= maxBudget` check), and `JobPosting` in
   `packages/shared`.

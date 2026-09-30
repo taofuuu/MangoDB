@@ -22,6 +22,9 @@ the same mix today:
 - `lib/servicelisting.ts` and `lib/jobPosting.ts` use two different casing
   styles for the same idea.
 
+(PR #93 has since renamed the service files to `service.*` and the route to
+`/services`, in line with this decision. The job side is unchanged.)
+
 "Listing" alone was the worst case: people used it for a service, but it is
 the name of the parent of both.
 
