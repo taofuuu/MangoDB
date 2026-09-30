@@ -250,7 +250,7 @@ export interface JobPosting {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: ListingStatus;
     locationPref: string | null;
     duration: string | null;

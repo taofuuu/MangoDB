@@ -34,7 +34,7 @@ type SelectedListing = {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: string;
     listingCategory: { catId: number }[];
     jobRequirement: {
@@ -53,7 +53,7 @@ export type Listing = {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: string;
     categoryIds: number[];
     jobRequirement?: {

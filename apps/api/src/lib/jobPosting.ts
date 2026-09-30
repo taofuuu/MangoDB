@@ -34,7 +34,7 @@ export type SelectedJobPosting = {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: string;
     createdAt: Date;
     jobRequirement: {
