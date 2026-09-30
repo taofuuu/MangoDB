@@ -60,3 +60,6 @@ record at all.
 | [0003](0003-nullable-listing-budgets.md)     | Both listing budgets are nullable                                        | Accepted |
 | [0004](0004-full-epic-3-this-sprint.md)      | Sprint 2 takes all of Epic 3, not three of its stories                   | Accepted |
 | [0005](0005-service-and-job-naming.md)       | "Service" and "job" are the names for the two kinds of listing           | Accepted |
+| [0006](0006-proposal-text-only-no-upload.md) | A proposal is text only, with no file upload                             | Accepted |
+| [0007](0007-proposal-duration-in-months.md)  | Proposal duration is a number of months: whole months, or 0.5            | Accepted |
+| [0008](0008-one-search-bar-per-page.md)      | No search bar in the navbar; one search bar per page, one thing per bar  | Accepted |
