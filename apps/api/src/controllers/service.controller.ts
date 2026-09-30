@@ -5,19 +5,20 @@ import {
     DEFAULT_LISTING_STATUS,
     listingSelect,
     toListing,
-} from '../lib/servicelisting';
+} from '../lib/service';
 import { parseBody } from '../middleware/validate';
-import { createListingSchema } from '../schemas/service-listing.schema';
+import { createListingSchema } from '../schemas/service.schema';
 
+// Create and publish a service listing (provider-only; see routes).
+// Validates body, verifies category existence, and creates listing + service
+// atomically in one nested write.
 export async function createListing(
     req: Request,
     res: Response,
 ): Promise<void> {
-    // 1. Validate body
     const data = parseBody(createListingSchema, req.body);
     const { companyId } = req.auth!;
 
-    // 2. Validate categories
     const catIds = [...new Set(data.categoryIds)];
     if (catIds.length > 0) {
         const found = await prisma.category.findMany({
@@ -36,54 +37,25 @@ export async function createListing(
         }
     }
 
-    // 3. Sequential creation inside explicit transaction
-    const created = await prisma.$transaction(async (tx) => {
-        // Step 3a: Create Listing
-        const listing = await tx.listing.create({
-            data: {
-                companyId: companyId,
-                listingTitle: data.listingTitle,
-                listingDesc: data.listingDesc,
-                minBudget: data.minBudget ?? null,
-                maxBudget: data.maxBudget,
-                listingStatus: DEFAULT_LISTING_STATUS,
-                listingType: data.type,
-            },
-        });
-
-        // Step 3b: Create ListingCategory relations
-        if (catIds.length > 0) {
-            await tx.listingCategory.createMany({
-                data: catIds.map((catId) => ({
-                    listingId: listing.listingId,
-                    catId,
-                })),
-            });
-        }
-
-        // Step 3c: Create Service or JobRequirement
-        if (data.type === 'SERVICE') {
-            await tx.service.create({
-                data: {
-                    listingId: listing.listingId,
-                },
-            });
-        } else {
-            await tx.jobRequirement.create({
-                data: {
-                    listingId: listing.listingId,
-                    locationPref: data.jobRequirement?.locationPref ?? null,
-                    duration: data.jobRequirement?.duration ?? null,
-                    deadline: data.jobRequirement?.deadline ?? null,
-                },
-            });
-        }
-
-        // Step 3d: Return fully mapped listing
-        return tx.listing.findUniqueOrThrow({
-            where: { listingId: listing.listingId },
-            select: listingSelect,
-        });
+    const created = await prisma.listing.create({
+        data: {
+            companyId,
+            listingTitle: data.listingTitle,
+            listingDesc: data.listingDesc,
+            minBudget: data.minBudget ?? null,
+            maxBudget: data.maxBudget,
+            listingStatus: DEFAULT_LISTING_STATUS,
+            listingType: 'SERVICE',
+            service: { create: {} },
+            ...(catIds.length > 0
+                ? {
+                      listingCategory: {
+                          create: catIds.map((catId) => ({ catId })),
+                      },
+                  }
+                : {}),
+        },
+        select: listingSelect,
     });
 
     res.status(201).json(toListing(created));
@@ -96,7 +68,7 @@ export async function getMine(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth;
 
     const listings = await prisma.listing.findMany({
-        where: { companyId },
+        where: { companyId, listingType: 'SERVICE' }, // Defensive: explicit type filter
         orderBy: { createdAt: 'desc' },
         select: listingSelect,
     });
@@ -116,6 +88,7 @@ export async function getService(req: Request, res: Response): Promise<void> {
         where: {
             listingId,
             companyId,
+            listingType: 'SERVICE', // Defensive: explicit type filter
         },
         select: listingSelect,
     });

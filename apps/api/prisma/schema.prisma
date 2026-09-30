@@ -66,6 +66,10 @@ model Company {
   // provider) filter on deletedAt; history queries (past projects, reviews)
   // must NOT, or they hide the very history this column exists to keep.
   deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  // When the company accepted the Terms of Service at registration. Nullable
+  // because accounts created before the ToS existed never accepted it; new
+  // registrations set it (T1.13.5).
+  tosAcceptedAt      DateTime?     @map("tos_accepted_at") @db.Timestamptz(6)
   companyType        CompanyType[]
   listing            Listing[]
   proposal           Proposal[]
