@@ -293,3 +293,13 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
+export interface Project {
+    projId: number;
+    proposalId: number;
+    totalBudget: number;
+    // YYYY-MM-DD date string per conventions section 10
+    startDate: string;
+    status: ProjectStatus;
+}
