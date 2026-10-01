@@ -1,13 +1,21 @@
 import type { Request, Response } from 'express';
+import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
+import { escapeLike } from '../lib/search';
 import {
     DEFAULT_LISTING_STATUS,
     listingSelect,
+    serviceSummarySelect,
     toListing,
+    toServiceSummary,
 } from '../lib/service';
-import { parseBody } from '../middleware/validate';
-import { createListingSchema } from '../schemas/service.schema';
+import { parseBody, parseQuery } from '../middleware/validate';
+import {
+    createListingSchema,
+    serviceListQuerySchema,
+} from '../schemas/service.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -59,6 +67,77 @@ export async function createListing(
     });
 
     res.status(201).json(toListing(created));
+}
+
+// US3-1. One word matches the service's title, description or category, or
+// its company's name or tech stack, ignoring case.
+function matchesKeyword(word: string): Prisma.ListingWhereInput {
+    const contains = {
+        contains: escapeLike(word),
+        mode: 'insensitive',
+    } as const;
+    return {
+        OR: [
+            { listingTitle: contains },
+            { listingDesc: contains },
+            {
+                listingCategory: {
+                    some: { category: { catName: contains } },
+                },
+            },
+            { company: { companyName: contains } },
+            {
+                company: {
+                    provider: {
+                        providerTechStack: {
+                            some: { techStackName: contains },
+                        },
+                    },
+                },
+            },
+        ],
+    };
+}
+
+// US3-1. One page of open services for the search screen, newest first. count
+// and findMany run in one transaction so the pagination matches the page.
+export async function listServices(req: Request, res: Response): Promise<void> {
+    const { q, page, pageSize } = parseQuery(serviceListQuerySchema, req.query);
+    // Each word is matched on its own, so "react payment" finds a service
+    // whose title says payment and whose company's stack has React.
+    const words = q?.split(/\s+/).filter(Boolean) ?? [];
+    // Search is discovery, so services of soft-deleted companies stay hidden.
+    // A soft delete leaves their listings OPEN, so this filter is what does it.
+    const where: Prisma.ListingWhereInput = {
+        listingType: 'SERVICE',
+        listingStatus: 'OPEN' satisfies ListingStatus,
+        company: { deletedAt: null },
+        ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
+    };
+    const [totalItems, listings] = await prisma.$transaction([
+        prisma.listing.count({ where }),
+        prisma.listing.findMany({
+            where,
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            // listingId breaks ties, so two services created in the same
+            // instant never swap places between pages.
+            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+            select: serviceSummarySelect,
+        }),
+    ]);
+
+    const body: ServiceListResponse = {
+        items: listings.map(toServiceSummary),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+        },
+    };
+
+    res.json(body);
 }
 
 export async function getMine(req: Request, res: Response): Promise<void> {
