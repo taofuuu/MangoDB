@@ -80,6 +80,12 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+# Service search: the probe service, and probe C, a Provider that deletes
+# itself while its service stays OPEN.
+NEW_SERVICE_ID=""
+DELETED_SERVICE_ID=""
+TOKEN_C=""
+C_LIVE=0
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -99,14 +105,19 @@ run_db() {
     ) >/dev/null
 }
 
-# The script creates two throwaway companies. If it dies halfway they would sit
+# The script creates three throwaway companies. If it dies halfway they would sit
 # in the admin list forever and every later run's diff would show them, so
 # cleanup runs on the way out however we got there.
 cleanup() {
     local code=$?
     set +e
-    if [ -n "$NEW_JOB_POSTING_ID" ]; then
-        run_db "prisma.listing.deleteMany({ where: { listingId: $NEW_JOB_POSTING_ID } })"
+    # The listings the script created. Unquoted on purpose: echo drops the
+    # ids that were never set, so only real ones reach the query.
+    local listing_ids
+    # shellcheck disable=SC2086
+    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID)"
+    if [ -n "$listing_ids" ]; then
+        run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -130,6 +141,10 @@ cleanup() {
     if [ "$B_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_B"
+    fi
+    if [ "$C_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_C"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -547,6 +562,64 @@ fi
 
 snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
+
+# ---------------------------------------------------------------------------
+# 10. Service search (US3-1)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service search"
+# The probe: the newest open service, and the only one with $RUN in its title.
+# Created with api, not snap: POST /services has its own tests (US2-1).
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1]}" >/dev/null
+NEW_SERVICE_ID="$(jget listingId)"
+if [ -z "$NEW_SERVICE_ID" ]; then
+    echo "could not create the probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
+
+# Probe C: a Provider that deletes itself. A soft delete leaves its service
+# OPEN, so only the deletedAt filter can keep it out of the results below.
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}" >/dev/null
+TOKEN_C="$(jget accessToken)"
+if [ -z "$TOKEN_C" ]; then
+    echo "could not register probe C:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+C_LIVE=1
+api POST /services -H "$(bearer "$TOKEN_C")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETED_SERVICE_ID="$(jget listingId)"
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
+
+# T3.1.8 and T3.1.10: the probe comes first; probe C's service, though newer,
+# does not appear.
+snap services-search-default GET "/services?page=1&pageSize=3" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.9 and T3.1.10: only the probe matches; probe C's service is hidden.
+snap services-search-keyword GET "/services?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.11: no match is a 200 with an empty page, not an error.
+snap services-search-no-match GET "/services?q=${RUN}_none" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.10: a closed service is hidden, with and without a keyword.
+run_db "prisma.listing.update({ where: { listingId: $NEW_SERVICE_ID }, data: { listingStatus: 'CLOSED' } })"
+
+snap services-search-closed GET "/services?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-search-closed-default GET "/services?page=1&pageSize=3" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
