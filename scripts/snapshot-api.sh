@@ -95,14 +95,24 @@ PHOTO_SET=0
 # can set (closing a listing, deleting one). Pass one promise, on one line: on
 # Windows npx goes through cmd.exe, which drops everything after the first
 # newline of an argument, so a multi-line script ran nothing and exited 0.
+# --env-file, not `. .env`: a shell reads an unquoted value with a space in it
+# as a command, and under set -e that ended the whole run.
 run_db() {
     (
         cd "$ROOT"
-        set -a
-        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
-        set +a
-        npx tsx -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
     ) >/dev/null
+}
+
+# Like run_db, but prints what the promise resolves to, for a row no endpoint
+# can create yet and whose id the calls after it need. Last line only: tsx and
+# Prisma may print their own lines first. stdout.write, not console.log, which
+# colours a number and puts escape codes in the id.
+db_value() {
+    (
+        cd "$ROOT"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.then((v) => process.stdout.write(String(v))).finally(() => prisma.\$disconnect());"
+    ) | tail -n 1
 }
 
 # The script creates three throwaway companies. If it dies halfway they would sit
@@ -620,6 +630,47 @@ snap services-search-closed GET "/services?q=$RUN" \
 
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 11. Reject a proposal
+# ---------------------------------------------------------------------------
+
+echo
+echo "proposals"
+# The probe proposal: the seeded provider on the receiver's probe job posting,
+# which is OPEN again by now. Inserted straight into the database because no
+# endpoint submits a proposal yet (US2-8). Raw SQL, because the shared database
+# has a NOT NULL duration column that schema.prisma does not know about yet.
+# Deleting the job posting in cleanup deletes this row too (onDelete: Cascade).
+PROPOSAL_ID=""
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    PROPOSAL_ID="$(db_value "prisma.\$queryRawUnsafe('INSERT INTO proposal (listing_id, sender_id, proposal_budget, proposal_terms, proposal_status, duration) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING proposal_id', $NEW_JOB_POSTING_ID, $PROVIDER_ID, 1000, 'Snapshot Probe proposal $RUN', 'PENDING', 1).then((rows) => rows[0].proposal_id)")"
+fi
+
+if [ -n "$PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$PROPOSAL_ID")
+
+    snap error-proposals-reject-unauthorized POST "/proposals/$PROPOSAL_ID/reject"
+
+    snap error-proposals-reject-invalid-id POST /proposals/not-a-number/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    snap error-proposals-reject-not-found POST /proposals/2147483647/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # The provider sent the proposal but does not own the listing.
+    snap error-proposals-reject-forbidden POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_PROVIDER")"
+
+    snap proposals-reject POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # Now REJECTED, so a second reject is a state conflict.
+    snap error-proposals-reject-conflict POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+else
+    echo "  --  skip   POST /proposals/:proposalId/reject (no probe proposal)"
+fi
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
