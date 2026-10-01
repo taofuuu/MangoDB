@@ -115,3 +115,40 @@ export async function acceptProposal(
         return toProject(project);
     });
 }
+export async function rejectProposal(
+    proposalId: number,
+    callerId: number,
+): Promise<void> {
+    const proposal = await prisma.proposal.findUnique({
+        where: {
+            proposalId: proposalId,
+        },
+        select: {
+            proposalStatus: true,
+            listing: {
+                select: {
+                    companyId: true,
+                },
+            },
+        },
+    });
+    if (!proposal) throw ApiError.notFound('Proposal not found');
+    if (!proposal.listing) throw ApiError.notFound('Listing not found');
+    if (callerId !== proposal.listing.companyId)
+        throw ApiError.forbidden('You do not own this listing');
+    if (proposal.proposalStatus !== ('PENDING' satisfies ProposalStatus))
+        throw ApiError.conflict('Proposal is not pending');
+    const { count: rejectedCount } = await prisma.proposal.updateMany({
+        where: {
+            proposalId: proposalId,
+            proposalStatus: 'PENDING' satisfies ProposalStatus,
+        },
+        data: {
+            proposalStatus: 'REJECTED' satisfies ProposalStatus,
+        },
+    });
+    if (rejectedCount === 0)
+        throw ApiError.conflict(
+            'Proposal has already been accepted or rejected',
+        );
+}
