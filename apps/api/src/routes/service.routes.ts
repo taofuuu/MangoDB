@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
     createListing,
+    deleteListing,
     getMine,
     getService,
     listServices,
@@ -23,3 +24,9 @@ serviceRoutes.get(
 serviceRoutes.post('/', requireAuth, requireRole('provider'), createListing);
 serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
 serviceRoutes.get('/:listingId', requireAuth, getService);
+serviceRoutes.delete(
+    '/:listingId',
+    requireAuth,
+    requireRole('provider'),
+    deleteListing,
+);

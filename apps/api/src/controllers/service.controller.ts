@@ -1,19 +1,19 @@
-import type { Request, Response } from 'express';
-import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
-import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { escapeLike } from '../lib/search';
+import { isRecordNotFound } from '../lib/prismaErrors';
 import {
     DEFAULT_LISTING_STATUS,
+    assertListingOwned,
     listingSelect,
     serviceSummarySelect,
     toListing,
     toServiceSummary,
 } from '../lib/service';
-import { parseBody, parseQuery } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createListingSchema,
+    listingIdParamSchema,
     serviceListQuerySchema,
 } from '../schemas/service.schema';
 
@@ -177,4 +177,35 @@ export async function getService(req: Request, res: Response): Promise<void> {
     }
 
     res.status(200).json(toListing(listing));
+}
+
+// DELETE /services/:listingId. Hard delete: nothing in the schema needs a
+// service listing row to still exist, and listingCategory / the service row
+// cascade with it (prisma/schema.prisma onDelete: Cascade), so there is
+// nothing else to clean up — unlike portfolio there is no stored image to
+// remove either.
+export async function deleteListing(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
+    const { companyId } = req.auth!;
+
+    // Checked before the write, same split as deletePortfolio: 404 for an
+    // unknown/non-SERVICE id, 403 for another company's.
+    await assertListingOwned(listingId, companyId);
+
+    try {
+        await prisma.listing.delete({
+            where: { listingId, companyId, listingType: 'SERVICE' },
+        });
+    } catch (err) {
+        // Deleted between assertListingOwned and here.
+        if (isRecordNotFound(err)) {
+            throw ApiError.notFound('Service listing not found');
+        }
+        throw err;
+    }
+
+    res.status(204).end();
 }
