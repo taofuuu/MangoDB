@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
+import { isUniqueViolation } from '../lib/prismaErrors';
 import { parseParams, parseBody } from '../middleware/validate';
 import {
     createProposalSchema,
@@ -21,6 +22,8 @@ export async function createProposal(
         select: {
             listingId: true,
             listingType: true,
+            companyId: true,
+            listingStatus: true,
         },
     });
 
@@ -28,17 +31,36 @@ export async function createProposal(
         throw ApiError.notFound('Job posting not found');
     }
 
-    const proposal = await prisma.proposal.create({
-        data: {
-            listingId: jobPostingId,
-            senderId: callerCompanyId,
-            proposalBudget: body.proposalBudget,
-            proposalTerms: body.proposalTerms,
-            duration: body.duration,
-            proposalStatus: 'PENDING',
-        },
-        select: proposalSelect,
-    });
+    if (posting.companyId === callerCompanyId) {
+        throw ApiError.forbidden(
+            'Cannot submit a proposal to your own job posting',
+        );
+    }
 
-    res.status(201).json(toProposal(proposal));
+    if (posting.listingStatus !== 'OPEN') {
+        throw ApiError.conflict('Job posting is not open for proposals');
+    }
+
+    try {
+        const proposal = await prisma.proposal.create({
+            data: {
+                listingId: jobPostingId,
+                senderId: callerCompanyId,
+                proposalBudget: body.proposalBudget,
+                proposalTerms: body.proposalTerms,
+                duration: body.duration,
+                proposalStatus: 'PENDING',
+            },
+            select: proposalSelect,
+        });
+
+        res.status(201).json(toProposal(proposal));
+    } catch (err) {
+        if (isUniqueViolation(err)) {
+            throw ApiError.conflict(
+                'You have already submitted a proposal for this job posting',
+            );
+        }
+        throw err;
+    }
 }
