@@ -38,18 +38,34 @@ const nameList = z.preprocess(
         .transform((names) => names.filter(Boolean)),
 );
 
+// A price slider end: whole baht, same ceiling as the budget columns.
+const price = z.coerce.number().int().nonnegative().max(INT_MAX).optional();
+
 // US3-1. Same paging bounds as GET /companies, so one request cannot pull
 // every service into memory. US3-2 adds the filters.
-export const serviceListQuerySchema = z.object({
-    // Trimmed, so a keyword of only spaces reads as no keyword. The cap also
-    // bounds how many words one request can split into.
-    q: z.string().trim().max(100).optional(),
-    // Exact names, as the result card shows them.
-    category: nameList.optional(),
-    techStack: nameList.optional(),
-    page: z.coerce.number().int().positive().default(1),
-    pageSize: z.coerce.number().int().min(1).max(50).default(12),
-});
+export const serviceListQuerySchema = z
+    .object({
+        // Trimmed, so a keyword of only spaces reads as no keyword. The cap
+        // also bounds how many words one request can split into.
+        q: z.string().trim().max(100).optional(),
+        // Exact names, as the result card shows them.
+        category: nameList.optional(),
+        techStack: nameList.optional(),
+        minPrice: price,
+        maxPrice: price,
+        page: z.coerce.number().int().positive().default(1),
+        pageSize: z.coerce.number().int().min(1).max(50).default(12),
+    })
+    .refine(
+        (q) =>
+            q.minPrice === undefined ||
+            q.maxPrice === undefined ||
+            q.minPrice <= q.maxPrice,
+        {
+            message: 'minPrice must be less than or equal to maxPrice',
+            path: ['minPrice'],
+        },
+    );
 
 // Path params arrive as strings, so this coerces before the integer check —
 // same reason portfolioIdParamSchema needs z.coerce. Used by DELETE

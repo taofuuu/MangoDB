@@ -127,8 +127,10 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
 function matchesFilters(filters: {
     category: string[];
     techStack: string[];
+    minPrice: number | undefined;
+    maxPrice: number | undefined;
 }): Prisma.ListingWhereInput[] {
-    const { category, techStack } = filters;
+    const { category, techStack, minPrice, maxPrice } = filters;
     const where: Prisma.ListingWhereInput[] = [];
     if (category.length > 0) {
         where.push({
@@ -158,6 +160,21 @@ function matchesFilters(filters: {
             },
         });
     }
+    // Price keeps a service whose range overlaps the slider's, so a deal is
+    // possible somewhere inside both. An empty budget counts as open-ended,
+    // so it never rules a service out on its own.
+    if (maxPrice !== undefined) {
+        // Its lowest price fits under the slider's max.
+        where.push({
+            OR: [{ minBudget: null }, { minBudget: { lte: maxPrice } }],
+        });
+    }
+    if (minPrice !== undefined) {
+        // Its highest price reaches the slider's min.
+        where.push({
+            OR: [{ maxBudget: null }, { maxBudget: { gte: minPrice } }],
+        });
+    }
     return where;
 }
 
@@ -168,6 +185,8 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         q,
         category = [],
         techStack = [],
+        minPrice,
+        maxPrice,
         page,
         pageSize,
     } = parseQuery(serviceListQuerySchema, req.query);
@@ -184,7 +203,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         // must pass all of them. Two AND keys would let one replace the other.
         AND: [
             ...words.map(matchesKeyword),
-            ...matchesFilters({ category, techStack }),
+            ...matchesFilters({ category, techStack, minPrice, maxPrice }),
         ],
     };
     const [totalItems, listings] = await prisma.$transaction([
