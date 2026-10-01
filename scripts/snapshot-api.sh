@@ -85,6 +85,20 @@ NEW_JOB_POSTING_ID=""
 # cleanup is "clear it" rather than "delete row N".
 PHOTO_SET=0
 
+# Runs one Prisma call straight against the database, for the state no endpoint
+# can set (closing a listing, deleting one). Pass one promise, on one line: on
+# Windows npx goes through cmd.exe, which drops everything after the first
+# newline of an argument, so a multi-line script ran nothing and exited 0.
+run_db() {
+    (
+        cd "$ROOT"
+        set -a
+        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
+        set +a
+        npx tsx -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
+    ) >/dev/null
+}
+
 # The script creates two throwaway companies. If it dies halfway they would sit
 # in the admin list forever and every later run's diff would show them, so
 # cleanup runs on the way out however we got there.
@@ -92,18 +106,7 @@ cleanup() {
     local code=$?
     set +e
     if [ -n "$NEW_JOB_POSTING_ID" ]; then
-        (
-            set -a
-            [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
-            set +a
-            npx tsx -e "
-                import { prisma } from './apps/api/src/lib/prisma';
-                async function main() {
-                    await prisma.listing.delete({ where: { listingId: $NEW_JOB_POSTING_ID } }).catch(() => {});
-                }
-                main().finally(() => prisma.\$disconnect());
-            "
-        ) >/dev/null 2>&1 || true
+        run_db "prisma.listing.deleteMany({ where: { listingId: $NEW_JOB_POSTING_ID } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -515,18 +518,7 @@ snap job-postings-list-open GET /job-postings?status=OPEN \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    (
-        set -a
-        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
-        set +a
-        npx tsx -e "
-            import { prisma } from './apps/api/src/lib/prisma';
-            async function main() {
-                await prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } });
-            }
-            main().finally(() => prisma.\$disconnect());
-        "
-    ) >/dev/null 2>&1 || true
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
 fi
 
 snap job-postings-list-closed-provider GET /job-postings?status=CLOSED \
@@ -550,18 +542,7 @@ snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    (
-        set -a
-        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
-        set +a
-        npx tsx -e "
-            import { prisma } from './apps/api/src/lib/prisma';
-            async function main() {
-                await prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } });
-            }
-            main().finally(() => prisma.\$disconnect());
-        "
-    ) >/dev/null 2>&1 || true
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } })"
 fi
 
 snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
