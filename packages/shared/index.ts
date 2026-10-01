@@ -162,7 +162,7 @@ export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     categories: string[];
     company: {
         companyId: number;

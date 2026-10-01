@@ -85,7 +85,7 @@ interface ServiceSummaryRow {
     listingId: number;
     listingTitle: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingCategory: { category: { catName: string } }[];
     company: {
         companyId: number;
