@@ -20,3 +20,10 @@ export const createListingSchema = z
     });
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
+
+// US3-1. Same paging bounds as GET /providers, so one request cannot pull
+// every service into memory.
+export const serviceListQuerySchema = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(12),
+});
