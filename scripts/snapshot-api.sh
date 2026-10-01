@@ -95,6 +95,10 @@ C_LIVE=0
 # tech names starting with the run id may exist in tech_stack.
 REUSE_SERVICE_ID=""
 TECH_STACK_SET=0
+# Service filters: three probe services, each with a tech named after the run.
+FILTER_WEB_ID=""
+FILTER_MOBILE_ID=""
+FILTER_WIDE_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -135,7 +139,8 @@ cleanup() {
     local listing_ids
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
-        $REUSE_SERVICE_ID $DELETE_PROBE_ID)"
+        $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
+        $FILTER_WIDE_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -820,6 +825,61 @@ if [ -n "$PROPOSAL_ID" ]; then
 else
     echo "  --  skip   POST /proposals/:proposalId/reject (no probe proposal)"
 fi
+
+# ---------------------------------------------------------------------------
+# 13. Service filters (US3-2)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service filters"
+# Three probe services, each with a tech named exactly after the run. Every
+# query below adds techStack=$RUN, so it only ever sees these three: section
+# 11's "<run>-React" is a different name.
+probe_service() {
+    api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+        -H 'Content-Type: application/json' \
+        -d "{\"listingTitle\":\"Snapshot Probe $1 service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":$2,\"maxBudget\":$3,\"categoryIds\":[$4],\"techStack\":[\"$RUN\"]}" >/dev/null
+    jget listingId
+}
+FILTER_WEB_ID="$(probe_service web 10000 50000 1)"
+FILTER_MOBILE_ID="$(probe_service mobile 80000 120000 2)"
+FILTER_WIDE_ID="$(probe_service wide 50000 200000 '')"
+if [ -z "$FILTER_WEB_ID" ] || [ -z "$FILTER_MOBILE_ID" ] || [ -z "$FILTER_WIDE_ID" ]; then
+    echo "could not create the filter probe services:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
+    --id "listing_id=$FILTER_WIDE_ID")
+
+# T3.2.7: the web probe only. The mobile probe is in another category, and the
+# wide one has none.
+snap services-filter-category-and-stack GET \
+    "/services?techStack=$RUN&category=Web%20Development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.8: nothing matches, so 200 with an empty page, not an error.
+snap services-filter-no-match GET \
+    "/services?techStack=$RUN&category=Hardware%20%26%20IoT" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.9: the mobile probe only. The keyword alone matches many services, the
+# filter alone all three.
+snap services-filter-keyword-and-filter GET \
+    "/services?techStack=$RUN&q=mobile" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: overlap. The mobile (80000-120000) and wide (50000-200000) probes
+# both reach into 60000-100000; the web probe tops out at 50000.
+snap services-filter-price GET \
+    "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: only the web probe starts at or under 20000; the wide probe starts
+# at 50000.
+snap services-filter-price-max GET \
+    "/services?techStack=$RUN&maxPrice=20000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"

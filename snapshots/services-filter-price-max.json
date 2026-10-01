@@ -1,0 +1,31 @@
+{
+    "request": "GET /services?techStack=<run>&maxPrice=20000",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "company": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "listingId": "<listing_id>",
+                "listingTitle": "Snapshot Probe web service <run>",
+                "maxBudget": 50000,
+                "minBudget": 10000,
+                "techStack": [
+                    "<run>"
+                ]
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 1,
+            "totalPages": 1
+        }
+    }
+}

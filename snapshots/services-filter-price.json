@@ -1,0 +1,46 @@
+{
+    "request": "GET /services?techStack=<run>&minPrice=60000&maxPrice=100000",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [],
+                "company": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "listingId": "<listing_id>",
+                "listingTitle": "Snapshot Probe wide service <run>",
+                "maxBudget": 200000,
+                "minBudget": 50000,
+                "techStack": [
+                    "<run>"
+                ]
+            },
+            {
+                "categories": [
+                    "Mobile App Development"
+                ],
+                "company": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "listingId": "<listing_id>",
+                "listingTitle": "Snapshot Probe mobile service <run>",
+                "maxBudget": 120000,
+                "minBudget": 80000,
+                "techStack": [
+                    "<run>"
+                ]
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 2,
+            "totalPages": 1
+        }
+    }
+}
