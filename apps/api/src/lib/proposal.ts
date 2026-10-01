@@ -36,7 +36,10 @@ function toProject(row: ProjectRow): Project {
     };
 }
 
-export async function acceptProposal(proposalId: number, callerId: number) {
+export async function acceptProposal(
+    proposalId: number,
+    callerId: number,
+): Promise<Project> {
     return prisma.$transaction(async (tx) => {
         const proposal = await tx.proposal.findUnique({
             where: {
