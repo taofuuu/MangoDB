@@ -25,3 +25,7 @@ export const createProposalSchema = z.strictObject(proposalFields);
 export const proposalParamsSchema = z.strictObject({
     jobPostingId: z.coerce.number().int().positive('Invalid job posting ID'),
 });
+
+export const proposalIdParamSchema = z.object({
+    proposalId: z.coerce.number().int().positive().max(2147483647),
+});

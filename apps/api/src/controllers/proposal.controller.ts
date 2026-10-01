@@ -6,8 +6,14 @@ import { parseParams, parseBody } from '../middleware/validate';
 import {
     createProposalSchema,
     proposalParamsSchema,
+    proposalIdParamSchema,
 } from '../schemas/proposal.schema';
-import { proposalSelect, toProposal } from '../lib/proposal';
+import {
+    proposalSelect,
+    toProposal,
+    acceptProposal,
+    rejectProposal,
+} from '../lib/proposal';
 
 export async function createProposal(
     req: Request,
@@ -63,4 +69,24 @@ export async function createProposal(
         }
         throw err;
     }
+}
+
+export async function acceptProposalHandler(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const callerId = req.auth!.companyId;
+    const { proposalId } = parseParams(proposalIdParamSchema, req.params);
+    const project = await acceptProposal(proposalId, callerId);
+    res.status(201).json(project);
+}
+
+export async function rejectProposalHandler(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const callerId = req.auth!.companyId;
+    const { proposalId } = parseParams(proposalIdParamSchema, req.params);
+    await rejectProposal(proposalId, callerId);
+    res.status(204).end();
 }

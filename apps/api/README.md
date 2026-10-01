@@ -372,7 +372,7 @@ gains that the token did not already give them.
 `requireRole` keeps administrators out of the self-service flow — they have
 their own account-management routes — and understands that `BOTH` grants both
 company roles. A company with an ongoing project is a `409`; the rule lives in
-`src/lib/projectEligibility.ts` and "ongoing" means "not yet Delivered".
+`src/lib/projectEligibility.ts` and "ongoing" means status `ACTIVE`.
 
 The delete is soft: `company.deletedAt` gets a timestamp and **nothing it owns
 is touched** — listings, proposals, projects and reviews stay exactly where they

@@ -294,7 +294,6 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
-
 // US2-8. A Provider's proposal on a job posting.
 export interface Proposal {
     proposalId: number;
@@ -312,4 +311,14 @@ export interface CreateProposalRequest {
     proposalBudget: number;
     proposalTerms: string;
     duration: number;
+}
+
+// The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
+export interface Project {
+    projId: number;
+    proposalId: number;
+    totalBudget: number;
+    // YYYY-MM-DD date string per conventions section 10
+    startDate: string;
+    status: ProjectStatus;
 }

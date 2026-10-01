@@ -130,13 +130,13 @@ model ListingCategory {
 
 model Project {
   projId          Int               @id @default(autoincrement()) @map("proj_id")
-  proposalId      Int?              @unique @map("proposal_id")
+  proposalId      Int               @unique @map("proposal_id")
   totalBudget     Decimal           @map("total_budget") @db.Decimal(12, 2)
   startDate       DateTime          @map("start_date") @db.Date
   endDate         DateTime?         @map("end_date") @db.Date
   comment         String?
   status          String            @db.VarChar(50)
-  proposal        Proposal?         @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
+  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
   projectContract ProjectContract[]
   rating          Rating[]
 

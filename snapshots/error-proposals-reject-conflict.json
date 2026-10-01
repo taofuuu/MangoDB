@@ -1,0 +1,10 @@
+{
+    "request": "POST /proposals/<proposal_id>/reject",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Proposal is not pending"
+        }
+    }
+}
