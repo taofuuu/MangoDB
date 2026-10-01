@@ -100,18 +100,16 @@ export async function acceptProposal(
                 proposalStatus: 'REJECTED' satisfies ProposalStatus,
             },
         });
-const todayUtc = new Date();
-todayUtc.setUTCHours(0, 0, 0, 0);
+        const todayUtc = new Date();
+        todayUtc.setUTCHours(0, 0, 0, 0);
 
-const project = await tx.project.create({
-    data: {
-        proposalId,
-        totalBudget: proposal.proposalBudget,
-        startDate: todayUtc,
-        status: 'ACTIVE' satisfies ProjectStatus,
-    },
-    select: projectSelect,
-});
+        const project = await tx.project.create({
+            data: {
+                proposalId,
+                totalBudget: proposal.proposalBudget,
+                startDate: todayUtc,
+                status: 'ACTIVE' satisfies ProjectStatus,
+            },
             select: projectSelect,
         });
         return toProject(project);
