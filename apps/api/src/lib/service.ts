@@ -24,7 +24,7 @@ type SelectedListing = {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: string;
     listingCategory: { catId: number }[];
 };
@@ -38,7 +38,7 @@ export type Listing = {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: string;
     categoryIds: number[];
 };
@@ -85,7 +85,7 @@ interface ServiceSummaryRow {
     listingId: number;
     listingTitle: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingCategory: { category: { catName: string } }[];
     company: {
         companyId: number;
