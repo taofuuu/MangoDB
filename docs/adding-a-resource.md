@@ -220,15 +220,16 @@ and the shared type disagree.
 ## 6. The snapshot
 
 Add your calls to `scripts/snapshot-api.sh` — the happy path, plus any error
-the frontend branches on. `NN` is the next free number:
+the frontend branches on. Name it `<area>-<what>`:
 
 ```bash
-snap NN-services-mine GET /services/mine -H "$(bearer "$TOKEN_PROVIDER")"
+snap services-mine GET /services/mine -H "$(bearer "$TOKEN_PROVIDER")"
 ```
 
 - **Delete anything you create**, in the `cleanup` trap, so it runs on failure
   too.
-- **Keep the numbering in call order.**
+- **No numbers in the name.** A rejection is `error-<area>-<what>`. The script
+  holds the call order, so two PRs never fight over the next number.
 
 Run it and commit the new files:
 

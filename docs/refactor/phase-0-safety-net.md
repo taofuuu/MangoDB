@@ -116,8 +116,9 @@ These are the conventions to keep if you add a call or change the script.
    Company deletion is a _soft_ delete, so those rows stay in the table
    forever — `npm run db:seed -w api` prunes the spent ones, and that is the
    only thing in this repo that hard-deletes anything.
-8. **Keep the numbering.** New calls get the next free number, or the file order
-   stops matching the call order.
+8. **Name, don't number.** A snapshot is `<area>-<what>`, or
+   `error-<area>-<what>` for a rejection. The numbers were dropped after two
+   PRs took the same ones; the script holds the call order.
 
 ## What it does not cover
 
@@ -129,7 +130,7 @@ Say so out loud rather than trusting it further than it goes:
 - **Concurrency, and anything timing-dependent** — the login timing defence in
   `verifyCredentials`, for one.
 - **Rows other people changed.** The three `snapshot_` accounts are the script's
-  own, so nobody should be editing them — but `20-admin-companies.json` is the
+  own, so nobody should be editing them — but `admin-companies.json` is the
   unfiltered first page of every company in the database, so it legitimately
   changes whenever somebody registers or renames one. Read a diff there as news
   about the data, not about the code. Everything else is pinned to rows this
