@@ -5,6 +5,7 @@ import {
     getJobPosting,
     listJobPostings,
 } from '../controllers/job-posting.controller';
+import { createProposal } from '../controllers/proposal.controller';
 
 export const jobPostingRoutes = Router();
 
@@ -23,4 +24,13 @@ jobPostingRoutes.post(
     requireAuth,
     requireRole('receiver'),
     createJobPosting,
+);
+
+// US2-8. Submit a proposal to an open job posting.
+// Guards: authenticated and holding Provider role (BOTH accounts also qualify).
+jobPostingRoutes.post(
+    '/:jobPostingId/proposals',
+    requireAuth,
+    requireRole('provider'),
+    createProposal,
 );
