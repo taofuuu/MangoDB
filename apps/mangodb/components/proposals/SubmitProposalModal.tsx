@@ -1,7 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import type { JobPosting } from '@mangodb/shared';
 import ModalShell from '@/components/ui/ModalShell';
 
@@ -10,6 +9,7 @@ import ModalShell from '@/components/ui/ModalShell';
 export type ProposalFormDraft = {
     proposalTerms: string;
     proposalBudget: string;
+    estimatedDurationMonths: string;
 };
 
 // JobPosting is the shared API shape. companyName is display-only information
@@ -25,9 +25,8 @@ type SubmitProposalModalProps = {
     isOpen: boolean;
     jobPosting: ProposalJobPosting;
     onClose: () => void;
-    // The parent decides what submit means. Keeping this callback synchronous
-    // prevents this field-layout task from adding API, loading, error, or
-    // confirmation behavior owned by T2.8.3 and T2.8.5.
+    // The parent decides what submit means. T2.8.3 and T2.8.5 add validation,
+    // API submission, and result handling.
     onSubmit: (draft: ProposalFormDraft) => void;
 };
 
@@ -71,70 +70,84 @@ function formatDeadline(deadline: string | null): string {
 
 export default function SubmitProposalModal({
     isOpen,
-    ...props
-}: SubmitProposalModalProps) {
-    // ModalShell unmounts its dialog on close; returning nothing here also
-    // resets this form's local field state each time it opens.
-    return isOpen ? <SubmitProposalDialog {...props} /> : null;
-}
-
-function SubmitProposalDialog({
     jobPosting,
     onClose,
     onSubmit,
-}: Omit<SubmitProposalModalProps, 'isOpen'>) {
-    const titleId = useId();
-    const descriptionId = useId();
+}: SubmitProposalModalProps) {
     const [proposalTerms, setProposalTerms] = useState('');
     const [proposalBudget, setProposalBudget] = useState('');
+    const [estimatedDurationMonths, setEstimatedDurationMonths] = useState('');
+    const titleId = useId();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const resetForm = () => {
+        setProposalTerms('');
+        setProposalBudget('');
+        setEstimatedDurationMonths('');
+    };
+
+    // One close path, so Escape and the backdrop clear the form in the same
+    // way as the X button, matching AddCertificateForm.
+    const handleClose = useCallback(() => {
+        resetForm();
+        onClose();
+        // resetForm only touches setters, which React keeps stable.
+    }, [onClose]);
+
+    if (!isOpen) {
+        return null;
+    }
+
+    const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         onSubmit({
             proposalTerms,
             proposalBudget,
+            estimatedDurationMonths,
         });
     };
 
     return (
         <ModalShell
             isOpen
-            onClose={onClose}
+            onClose={handleClose}
             labelledBy={titleId}
-            describedBy={descriptionId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-ink/10 p-4 sm:p-[2.6vh]"
-            panelClassName="modal-scrollbar max-h-[72.22vh] w-full max-w-[44.58vw] overflow-y-auto rounded-popup bg-surface px-5 py-5 text-ink sm:px-7 sm:py-6"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            panelClassName="modal-scrollbar h-[72.2222vh] w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
         >
-            <div className="flex items-center justify-between gap-4">
-                <h2 id={titleId} className="type-hd">
+            {/* -------------header----------------- */}
+            <div className="flex items-center justify-between">
+                <h2 id={titleId} className="type-lg">
                     Submit a proposal
                 </h2>
+
                 <button
                     type="button"
-                    onClick={onClose}
-                    aria-label="Close proposal form"
-                    className="flex size-8 shrink-0 items-center justify-center border-0 bg-transparent p-0 text-ink-placeholder transition-colors hover:text-ink"
+                    onClick={handleClose}
+                    aria-label="Close"
+                    className="text-ink-placeholder hover:text-gray-800"
                 >
-                    <X aria-hidden="true" className="size-5" />
+                    X
                 </button>
             </div>
 
-            <hr className="my-3 border-line" />
+            <hr className="border-brand-dark/50" />
 
-            <p id={descriptionId} className="type-md">
-                You are submitting a proposal to this job posting.
+            <p className="my-2 type-sm">
+                You are submitting a proposal to this job posting:
             </p>
 
-            <section aria-label="Job posting summary" className="mt-4">
-                <h3 className="type-lg">{jobPosting.listingTitle}</h3>
-                <p className="mt-1 type-md">
+            <section aria-label="Job posting summary">
+                <h3 className="type-sm !font-[600]">
+                    {jobPosting.listingTitle}
+                </h3>
+                <p className="mt-1 type-sm">
                     Posted by {jobPosting.companyName}
                 </p>
 
-                <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-4">
+                <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <div>
-                        <dt className="type-md text-ink-placeholder">Budget</dt>
-                        <dd className="mt-1 type-md !font-[500] text-ink">
+                        <dt className="type-xs text-ink-placeholder">Budget</dt>
+                        <dd className="type-xs text-ink">
                             {formatBudget(
                                 jobPosting.minBudget,
                                 jobPosting.maxBudget,
@@ -142,71 +155,95 @@ function SubmitProposalDialog({
                         </dd>
                     </div>
                     <div>
-                        <dt className="type-md text-ink-placeholder">
+                        <dt className="type-xs text-ink-placeholder">
                             Deadline
                         </dt>
-                        <dd className="mt-1 type-md !font-[500] text-ink">
+                        <dd className="type-xs text-ink">
                             {formatDeadline(jobPosting.deadline)}
                         </dd>
                     </div>
-                    <div className="col-span-2">
-                        <dt className="type-md text-ink-placeholder">
+                    <div>
+                        <dt className="type-xs text-ink-placeholder">
                             Location
                         </dt>
-                        <dd className="mt-1 type-md !font-[500] text-ink">
+                        <dd className="type-xs text-ink">
                             {jobPosting.locationPref ?? 'Not specified'}
                         </dd>
                     </div>
                 </dl>
-
-                <p className="mt-4 type-md text-ink-soft">
-                    <span className="text-ink">*</span> Indicates required
-                </p>
             </section>
 
-            <form onSubmit={handleSubmit} className="mt-4">
-                <div className="space-y-4">
+            <div>
+                <label className="my-2 block type-sm !text-[12px]">
+                    *Indicates required
+                </label>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-2">
                     <div>
                         <label
                             htmlFor="proposal-terms"
-                            className="mb-[0.93vh] block type-md leading-[1.15]"
+                            className="block type-sm"
                         >
                             Proposal terms*
                         </label>
+
                         <textarea
                             id="proposal-terms"
                             value={proposalTerms}
                             onChange={(event) =>
                                 setProposalTerms(event.target.value)
                             }
-                            className="custom-scrollbar block h-36 w-full resize-none rounded-input border-[0.75px] border-brand bg-surface-white px-[0.83vw] py-[1vh] type-sm text-ink focus:ring-1 focus:ring-brand focus:outline-none"
+                            className="h-[13.36vh] px-1.5 py-1.5 w-full resize-none rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
 
                     <div>
                         <label
                             htmlFor="proposal-budget"
-                            className="mb-[0.93vh] block type-md leading-[1.15]"
+                            className="block type-sm"
                         >
                             Your quoted price*
                         </label>
+
                         <input
                             id="proposal-budget"
+                            type="text"
+                            inputMode="decimal"
                             value={proposalBudget}
                             onChange={(event) =>
                                 setProposalBudget(event.target.value)
                             }
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="proposal-estimated-duration-months"
+                            className="block type-sm font-normal"
+                        >
+                            Estimated duration (months)*
+                        </label>
+
+                        <input
+                            id="proposal-estimated-duration-months"
                             type="text"
-                            inputMode="decimal"
-                            className="h-[4.79vh] w-full rounded-input border-[0.75px] border-brand bg-surface-white px-[0.83vw] type-sm text-ink focus:ring-1 focus:ring-brand focus:outline-none"
+                            inputMode="numeric"
+                            value={estimatedDurationMonths}
+                            onChange={(event) =>
+                                setEstimatedDurationMonths(event.target.value)
+                            }
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                     </div>
                 </div>
 
-                <div className="mt-5 flex justify-end">
+                <div className="flex items-center justify-end gap-3 pt-4">
                     <button
                         type="submit"
-                        className="h-10 min-w-28 rounded-button bg-brand px-5 type-xs !font-[600] text-surface transition-colors hover:bg-brand-dark"
+                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand"
                     >
                         Add
                     </button>
