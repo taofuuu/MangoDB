@@ -22,7 +22,7 @@ letting users create their own categories, or keeping the list fixed.
 The list stays **fixed**. A new row, **`Other`**, is added to `category`. A
 listing whose work is not in the pre-set list links to `Other`.
 
-Migration: `apps/api/prisma/migrations/20260930130100_add_other_category/`.
+Migration: `apps/api/prisma/migrations/20260930140100_add_other_category/`.
 
 **Alternative considered: users add their own categories.** Rejected. A
 category only helps search if many listings share it. Free input gives

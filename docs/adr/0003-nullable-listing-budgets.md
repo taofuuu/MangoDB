@@ -29,7 +29,7 @@ have.
 Which budget a listing must have is checked by the Zod schema for that kind
 of listing, not by the database.
 
-Migration: `apps/api/prisma/migrations/20260930130000_nullable_max_budget/`.
+Migration: `apps/api/prisma/migrations/20260930140000_nullable_max_budget/`.
 
 **Alternative considered: move the budgets to the child tables** (`min_budget`
 on `service`, `max_budget` on `job_requirement`). This is the more correct

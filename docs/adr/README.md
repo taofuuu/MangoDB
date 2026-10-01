@@ -61,5 +61,5 @@ record at all.
 | [0004](0004-swap-epic-3-stories-into-sprint-2.md) | Sprint 2 swaps some Epic 3 stories in, and other stories out             | Accepted |
 | [0005](0005-service-and-job-naming.md)            | "Service" and "job" are the names for the two kinds of listing           | Accepted |
 | [0006](0006-proposal-text-only-no-upload.md)      | A proposal is text only, with no file upload                             | Accepted |
-| [0007](0007-proposal-duration-in-months.md)       | Proposal duration is a number of months: whole months, or 0.5            | Accepted |
+| [0007](0007-proposal-duration-in-months.md)       | Proposal duration is a number of months, in steps of 0.5                 | Accepted |
 | [0008](0008-one-search-bar-per-page.md)           | No search bar in the navbar; one search bar per page, one thing per bar  | Accepted |

@@ -1,4 +1,4 @@
-# 0007. Proposal duration is a number of months: whole months, or 0.5
+# 0007. Proposal duration is a number of months, in steps of 0.5
 
 **Date:** 2026-09-30
 
@@ -24,16 +24,14 @@ There is no duration on `proposal` yet. It needs a new column.
 A proposal's duration is **a number, and the unit is always months**. The
 user cannot change the unit to days, weeks or years.
 
-The number is a **whole number of months**, with **one exception: 0.5** (half
-a month) is allowed for short work. No other fraction is allowed.
+The number is a **multiple of 0.5**: half months and whole months are
+allowed, and the smallest value is 0.5. No other fraction is allowed.
 
-| Value                | Allowed? |
-| -------------------- | -------- |
-| `0.5`                | yes      |
-| `1`, `2`, `3`, …     | yes      |
-| `0`                  | no       |
-| `0.1`, `0.2`, `0.25` | no       |
-| `1.5`, `2.5`         | no       |
+| Value                         | Allowed? |
+| ----------------------------- | -------- |
+| `0.5`, `1`, `1.5`, `2`, `2.5` | yes      |
+| `0`                           | no       |
+| `0.1`, `0.2`, `0.25`, `1.3`   | no       |
 
 The Zod schema at the API boundary enforces this. The frontend shows the
 unit as the fixed word "months" next to the number input.
@@ -54,7 +52,7 @@ Validation is one rule in one Zod schema.
 - **A new column on `proposal` is needed.** It must be able to store 0.5, so
   it cannot be a plain `INTEGER` of months. How it is stored (a decimal, or
   a count of half-months) is a schema decision for whoever adds the column.
-  The database will not enforce the "0.5 or whole" rule by itself, so the Zod
-  schema is the guard.
+  The database will not enforce the "multiple of 0.5" rule by itself, so the
+  Zod schema is the guard.
 - **This rule is for proposals only.** `job_requirement.duration` stays free
   text. If jobs should follow the same rule, that is a separate decision.
