@@ -1,18 +1,12 @@
 # Adding a resource
 
-> **If you change this page, check `docs/ai-brief.md`.** That file restates
-> parts of this one so it can be sent to a chat AI alongside a zip of the code,
-> where it cannot follow a link. This page stays the authority; the brief is a
-> summary that has to be kept honest.
+> **If you change this page, check `docs/ai-brief.md`.** It restates parts of
+> this page for chat AIs that cannot follow a link.
 
-Sprint 2 adds three of these — services, job postings, proposals — written by
-different people at the same time. This is the shape to copy, so they arrive
-looking like one API instead of three.
+How to add an endpoint so it looks like the rest of the API. The rules are in
+[conventions.md](conventions.md); this page is the order to apply them in.
 
-The worked example throughout is the **administrator company endpoints**. They
-are the reference because they are the only part of the API that already does
-every one of these things: `ApiError` throughout, schemas in `schemas/`, DTO
-mappers in `lib/`, routes with no logic, and the one paginated endpoint.
+**Worked example:** the admin company endpoints. They use every piece below.
 
 ```
 apps/api/src/schemas/admin-company.schema.ts
@@ -21,30 +15,23 @@ apps/api/src/routes/admin.routes.ts
 apps/api/src/lib/adminCompany.ts
 ```
 
-Read [conventions.md](conventions.md) first. This page is how to apply it; that
-page is what the rules are.
-
----
-
 ## The order
 
-Work outwards from the database. Each step depends on the one before it, and
-doing them out of order means redoing them.
+Work outwards from the database. Each step depends on the one before it.
 
 ```
-1. schema.prisma  →  2. schemas/  →  3. lib/  →  4. controllers/
-                                                       ↓
-                          6. snapshot  ←  5. routes/ + packages/shared
+1. schema.prisma → 2. schemas/ → 3. lib/ → 4. controllers/
+                                                ↓
+                   6. snapshot ← 5. routes/ + packages/shared
 ```
 
 ---
 
 ## 1. The table
 
-If the table exists, you are adding columns. **Check first** — `listing`,
-`service`, `job_requirement`, `proposal` and `project` all already exist, and
-three Sprint 2 tasks are worded as if they do not. See
-[conventions §7](conventions.md#7-what-a-listing-is).
+**Check first that it does not exist.** `listing`, `service`,
+`job_requirement`, `proposal` and `project` are all there — usually you are
+adding columns, not a table ([conventions §7](conventions.md#7-what-a-listing-is)).
 
 In `apps/api/prisma/schema.prisma`, camelCase the field and `@map` the column:
 
@@ -60,33 +47,15 @@ model Service {
 }
 ```
 
-Then:
-
-```bash
-npx prisma migrate dev --create-only --name add_service_price
-```
-
-…to write the migration file **without applying it**, read the SQL it produced,
-and apply it with:
-
-```bash
-npm run db:migrate -w api
-```
-
-> Never plain `prisma migrate dev`, and never the Supabase dashboard. Both
-> leave the database different from what is committed, and the next person to
-> run `db:migrate` finds out the hard way.
-
-```bash
-npm run db:generate -w api
-```
+Then write and apply the migration as in
+[CONTRIBUTING.md](../CONTRIBUTING.md#database). Never `prisma migrate dev`.
 
 ---
 
 ## 2. The schema — what a valid request looks like
 
 `src/schemas/<resource>.schema.ts`. One definition per column, shared by every
-schema that touches it, exactly as `companyFields` does:
+schema that uses it, like `companyFields`:
 
 ```ts
 export const serviceFields = {
@@ -94,14 +63,10 @@ export const serviceFields = {
     deliveryDurationDays: z.coerce.number().int().positive().max(3650),
 } as const;
 
-export const createServiceSchema = z.object({
-    listingTitle: listingFields.listingTitle,
-    estimatedPrice: serviceFields.estimatedPrice,
-    deliveryDurationDays: serviceFields.deliveryDurationDays,
-});
+export const createServiceSchema = z.object(serviceFields);
 
-// strictObject for an update body — a plain z.object drops a key it does not
-// know, so a typo answers 200 having written nothing.
+// strictObject: a plain z.object drops unknown keys, so a typo answers 200
+// having written nothing.
 export const updateServiceSchema = z
     .strictObject(serviceFields)
     .partial()
@@ -110,29 +75,25 @@ export const updateServiceSchema = z
     });
 
 export const serviceIdParamSchema = z.object({
-    // Path and query values arrive as strings, so these need z.coerce.
+    // Path and query values arrive as strings, so z.coerce.
     serviceId: z.coerce.number().int().positive().max(2147483647),
 });
 ```
 
-Rules that bite here:
-
 - **Every number gets both bounds.** A `.min()` with no `.max()` accepts
   `999999`.
-- **No `new Date()` at module scope.** It is evaluated once, at import, so a
-  long-running server judges against a stale year. Wrap it in a function.
+- **No `new Date()` at module scope.** It runs once, at import. Wrap it in a
+  function.
 - **A rule a PATCH also needs cannot live only in `.refine()`.** `.partial()`
-  drops refinements, and a partial body has to be merged with the stored row
-  first. Export the predicate — see `expiryIsOnOrAfterIssue`.
+  drops refinements. Export the check instead — see `expiryIsOnOrAfterIssue`.
 
 ---
 
-## 3. The lib — the select, the DTO, the shared checks
+## 3. The lib — the select, the DTO, the ownership check
 
-`src/lib/<resource>.ts`. Three things live here.
+`src/lib/<resource>.ts`.
 
-**The select.** Name the columns. Without one, a column added later ships to
-the browser without anyone deciding to send it.
+**The select** names the columns, so a new column never ships by accident:
 
 ```ts
 export const serviceSelect = {
@@ -143,8 +104,7 @@ export const serviceSelect = {
 } as const;
 ```
 
-**The DTO.** One function that turns a row into the wire shape, typed as the
-shared type. Every handler returning this resource goes through it.
+**The DTO** turns a row into the wire shape. Every handler goes through it:
 
 ```ts
 export function toService(row: SelectedService): Service {
@@ -157,8 +117,7 @@ export function toService(row: SelectedService): Service {
 }
 ```
 
-**The ownership check.** Never three lines inlined in a handler, and never
-twice.
+**The ownership check** lives here once, never inlined in a handler:
 
 ```ts
 export async function assertServiceOwned(
@@ -177,20 +136,18 @@ export async function assertServiceOwned(
 }
 ```
 
-There are two right shapes for that last one, and the choice is deliberate:
+Pick one of two shapes, and say why in a comment:
 
-| Shape                                          | When                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------ |
-| 404 and 403 separate (`assertPortfolioOwned`)  | The ids are discoverable, so hiding existence buys nothing   |
-| 403 folded into 404 (`assertCertificateOwned`) | The ids are not discoverable, so a 403 only confirms a guess |
-
-Whichever you pick, say why in a comment, or the next person picks the other.
+| Shape                                          | When                                   |
+| ---------------------------------------------- | -------------------------------------- |
+| 404 and 403 separate (`assertPortfolioOwned`)  | ids are discoverable anyway            |
+| 403 folded into 404 (`assertCertificateOwned`) | ids are not, so a 403 confirms a guess |
 
 ---
 
 ## 4. The controller — what happens
 
-`src/controllers/<resource>.controller.ts`.
+`src/controllers/<resource>.controller.ts`:
 
 ```ts
 export async function createService(
@@ -209,22 +166,16 @@ export async function createService(
 }
 ```
 
-The shape, line by line:
-
-- `Promise<void>`, and `res.json(...)` — **not** `return res.json(...)`.
-- `parseBody` / `parseQuery` / `parseParams` from `middleware/validate.ts`. No
-  hand-written `if (!body.x)` chains, and no schema declared inline here.
-- `req.auth!.companyId` — already a number. Never coerce `sub` yourself.
-- Read before you write, so an unknown id is a plain 404 rather than a Prisma
-  P2025 surfacing from the middle of an update.
-- Params before body: a request with both a bad id and a bad body should report
-  the id, or you debug the wrong half.
-- `throw ApiError.…` — never `throw new Error`, which is a 500 with no message.
-- Every query names a `select`; every response goes through the DTO.
+- `Promise<void>` and `res.json(...)` — **not** `return res.json(...)`.
+- `parseBody` / `parseQuery` / `parseParams` — no hand-written `if (!body.x)`.
+- `req.auth!.companyId` is already a number. Never convert `sub` yourself.
+- Read before you write, so an unknown id is a clean 404.
+- Parse params before the body, so a bad id is the error reported.
+- `throw ApiError.…` — never `throw new Error`.
 
 ---
 
-## 5. The route, and the shared type
+## 5. The route and the shared type
 
 `src/routes/<resource>.routes.ts` — paths and guards, no logic:
 
@@ -239,26 +190,18 @@ serviceRoutes.patch(
     requireRole('provider'),
     updateService,
 );
-serviceRoutes.delete(
-    '/:serviceId',
-    requireAuth,
-    requireRole('provider'),
-    deleteService,
-);
 ```
 
-Mounted once, in `src/routes/index.ts`:
+Mount it once in `src/routes/index.ts`:
 
 ```ts
 routes.use('/services', serviceRoutes);
 ```
 
-> Guard per route, like `portfolio.routes.ts`, when some routes are public.
-> Guard once with `router.use`, like `admin.routes.ts`, when the whole router
-> is. A router with a guarded half and an unguarded half is a router someone
-> will add a route to on the wrong side of the line.
+> Some routes public → guard per route, like `portfolio.routes.ts`. Whole
+> router private → guard once with `router.use`, like `admin.routes.ts`.
 
-In `packages/shared/index.ts`, the wire type and any status union:
+In `packages/shared/index.ts`, add the wire type:
 
 ```ts
 export interface Service {
@@ -269,53 +212,43 @@ export interface Service {
 }
 ```
 
-Then add a line to `src/schemas/contract.ts` so `tsc` checks the Zod schema and
-the shared type agree. Nothing else does.
+Then add a line to `src/schemas/contract.ts`, so `tsc` fails if the Zod schema
+and the shared type disagree.
 
 ---
 
 ## 6. The snapshot
 
-Add your calls to `scripts/snapshot-api.sh` — the happy path plus whatever
-error shapes the frontend branches on:
+Add your calls to `scripts/snapshot-api.sh` — the happy path, plus any error
+the frontend branches on. Name it `<area>-<what>`:
 
 ```bash
-snap 48-services-mine GET /services/mine -H "$(bearer "$TOKEN_PROVIDER")"
-snap 49-services-create POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
-    -H 'Content-Type: application/json' \
-    -d '{"listingTitle":"Snapshot Probe service","estimatedPrice":5000,"deliveryDurationDays":14}'
+snap services-mine GET /services/mine -H "$(bearer "$TOKEN_PROVIDER")"
 ```
 
-Two rules, both learned the hard way:
+- **Delete anything you create**, in the `cleanup` trap, so it runs on failure
+  too.
+- **No numbers in the name.** A rejection is `error-<area>-<what>`. The script
+  holds the call order, so two PRs never fight over the next number.
 
-- **Anything you create, delete again — including on failure.** Add it to the
-  `cleanup` trap. A row left behind shows up in every later run's diff.
-- **Keep the numbering.** New calls take the next free number, or file order
-  stops matching call order.
-
-Then run it and commit the new files:
+Run it and commit the new files:
 
 ```bash
 bash scripts/snapshot-api.sh && git diff snapshots/
 ```
 
-See [refactor/phase-0-safety-net.md](refactor/phase-0-safety-net.md).
+More: [refactor/phase-0-safety-net.md](refactor/phase-0-safety-net.md).
 
 ---
 
 ## 7. Say it exists
 
-There is no separate endpoint catalogue to update — `src/routes/` is the list,
-which is the point: a hand-written copy of it goes stale the first week nobody
-remembers to edit it. What a route file cannot say is _why_, so put the reason
-in a comment beside the route or the handler, the way the existing ones do.
-
-Then tell the team in the group chat. An endpoint nobody knows about is an
-endpoint someone writes a second time.
+`src/routes/` is the endpoint list — there is no separate catalogue. Put the
+_why_ in a comment next to the route, then tell the team in the group chat.
 
 ---
 
-## The checklist
+## Checklist
 
 ```
 [ ] table/columns exist, camelCase + @map, migration file committed

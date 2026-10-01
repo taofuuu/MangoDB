@@ -1,0 +1,16 @@
+{
+    "request": "GET /job-postings/not-a-number",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "jobPostingId",
+                    "message": "Invalid input: expected number, received NaN"
+                }
+            ],
+            "message": "Path parameters are invalid"
+        }
+    }
+}

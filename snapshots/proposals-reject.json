@@ -1,0 +1,5 @@
+{
+    "request": "POST /proposals/<proposal_id>/reject",
+    "status": 204,
+    "body": null
+}

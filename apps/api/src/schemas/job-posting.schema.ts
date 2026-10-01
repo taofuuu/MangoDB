@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LISTING_STATUSES } from '@mangodb/shared';
 
 function todayUtcString(): string {
     return new Date().toISOString().slice(0, 10);
@@ -31,18 +32,25 @@ export const jobPostingFields = {
         .trim()
         .min(1, 'Description is required')
         .max(10000, 'Description cannot exceed 10000 characters'),
-    minBudget: z.coerce
-        .number()
-        .int('Minimum budget must be an integer')
-        .min(0, 'Minimum budget cannot be negative')
-        .max(2147483647, 'Minimum budget exceeds maximum allowed')
-        .nullable()
-        .optional(),
-    maxBudget: z.coerce
-        .number()
-        .int('Maximum budget must be an integer')
-        .positive('Maximum budget must be greater than zero')
-        .max(2147483647, 'Maximum budget exceeds maximum allowed'),
+    minBudget: z.preprocess(
+        (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
+        z.coerce
+            .number()
+            .int('Minimum budget must be an integer')
+            .min(0, 'Minimum budget cannot be negative')
+            .max(2147483647, 'Minimum budget exceeds maximum allowed')
+            .nullable()
+            .optional(),
+    ),
+    maxBudget: z.preprocess(
+        (val) =>
+            typeof val === 'string' && val.trim() === '' ? undefined : val,
+        z.coerce
+            .number({ message: 'Maximum budget is required' })
+            .int('Maximum budget must be an integer')
+            .positive('Maximum budget must be greater than zero')
+            .max(2147483647, 'Maximum budget exceeds maximum allowed'),
+    ),
     locationPref: z
         .string()
         .trim()
@@ -78,4 +86,18 @@ export const createJobPostingSchema = z
 
 export const jobPostingIdParamSchema = z.object({
     jobPostingId: z.coerce.number().int().positive().max(2147483647),
+});
+
+// Query parameters for GET /job-postings.
+// Supports status filtering (DRAFT | OPEN | CLOSED) and filtering by companyId.
+// Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
+export const jobPostingListQuerySchema = z.object({
+    status: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.enum(LISTING_STATUSES).optional(),
+    ),
+    companyId: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.coerce.number().int().positive().max(2147483647).optional(),
+    ),
 });

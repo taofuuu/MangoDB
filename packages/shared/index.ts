@@ -33,7 +33,8 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // VarChar(50) in the database with nothing enforcing them, so these types are
 // the enforcement — see docs/conventions.md section 6. The label a user reads
 // ("Open for Proposals") is the frontend's; the column stores the value here.
-export type ListingStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
+export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
+export type ListingStatus = (typeof LISTING_STATUSES)[number];
 export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
@@ -155,6 +156,27 @@ export interface ProviderListResponse {
     pagination: PaginationMeta;
 }
 
+// US3-1. One service search result card: the service, with a short profile of
+// the company that offers it (ADR 0001). techStack is company-wide.
+export interface ServiceSummary {
+    listingId: number;
+    listingTitle: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    categories: string[];
+    company: {
+        companyId: number;
+        companyName: string;
+        companyPhoto: string | null;
+        techStack: string[];
+    };
+}
+
+export interface ServiceListResponse {
+    items: ServiceSummary[];
+    pagination: PaginationMeta;
+}
+
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {
@@ -249,7 +271,7 @@ export interface JobPosting {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number;
+    maxBudget: number | null;
     listingStatus: ListingStatus;
     locationPref: string | null;
     duration: string | null;
@@ -270,4 +292,14 @@ export interface CreateJobPostingRequest {
     duration?: string | null | undefined;
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
+}
+
+// The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
+export interface Project {
+    projId: number;
+    proposalId: number;
+    totalBudget: number;
+    // YYYY-MM-DD date string per conventions section 10
+    startDate: string;
+    status: ProjectStatus;
 }

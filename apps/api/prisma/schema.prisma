@@ -66,6 +66,10 @@ model Company {
   // provider) filter on deletedAt; history queries (past projects, reviews)
   // must NOT, or they hide the very history this column exists to keep.
   deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  // When the company accepted the Terms of Service at registration. Nullable
+  // because accounts created before the ToS existed never accepted it; new
+  // registrations set it (T1.13.5).
+  tosAcceptedAt      DateTime?     @map("tos_accepted_at") @db.Timestamptz(6)
   companyType        CompanyType[]
   listing            Listing[]
   proposal           Proposal[]
@@ -101,7 +105,7 @@ model Listing {
   listingTitle    String            @map("listing_title") @db.VarChar(255)
   listingDesc     String            @map("listing_desc")
   minBudget       Int?              @map("min_budget")
-  maxBudget       Int               @map("max_budget")
+  maxBudget       Int?              @map("max_budget")
   listingStatus   String            @map("listing_status") @db.VarChar(50)
   listingType     String            @map("listing_type") @db.VarChar(20)
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -126,13 +130,13 @@ model ListingCategory {
 
 model Project {
   projId          Int               @id @default(autoincrement()) @map("proj_id")
-  proposalId      Int?              @unique @map("proposal_id")
+  proposalId      Int               @unique @map("proposal_id")
   totalBudget     Decimal           @map("total_budget") @db.Decimal(12, 2)
   startDate       DateTime          @map("start_date") @db.Date
   endDate         DateTime?         @map("end_date") @db.Date
   comment         String?
   status          String            @db.VarChar(50)
-  proposal        Proposal?         @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
+  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
   projectContract ProjectContract[]
   rating          Rating[]
 

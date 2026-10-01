@@ -80,25 +80,54 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+# Service search: the probe service, and probe C, a Provider that deletes
+# itself while its service stays OPEN.
+NEW_SERVICE_ID=""
+DELETED_SERVICE_ID=""
+TOKEN_C=""
+C_LIVE=0
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
 PHOTO_SET=0
 
-# The script creates two throwaway companies. If it dies halfway they would sit
+# Runs one Prisma call straight against the database, for the state no endpoint
+# can set (closing a listing, deleting one). Pass one promise, on one line: on
+# Windows npx goes through cmd.exe, which drops everything after the first
+# newline of an argument, so a multi-line script ran nothing and exited 0.
+# --env-file, not `. .env`: a shell reads an unquoted value with a space in it
+# as a command, and under set -e that ended the whole run.
+run_db() {
+    (
+        cd "$ROOT"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
+    ) >/dev/null
+}
+
+# Like run_db, but prints what the promise resolves to, for a row no endpoint
+# can create yet and whose id the calls after it need. Last line only: tsx and
+# Prisma may print their own lines first. stdout.write, not console.log, which
+# colours a number and puts escape codes in the id.
+db_value() {
+    (
+        cd "$ROOT"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.then((v) => process.stdout.write(String(v))).finally(() => prisma.\$disconnect());"
+    ) | tail -n 1
+}
+
+# The script creates three throwaway companies. If it dies halfway they would sit
 # in the admin list forever and every later run's diff would show them, so
 # cleanup runs on the way out however we got there.
 cleanup() {
     local code=$?
     set +e
-    if [ -n "$NEW_JOB_POSTING_ID" ]; then
-        npx tsx -e "
-            import { prisma } from './apps/api/src/lib/prisma';
-            async function main() {
-                await prisma.listing.delete({ where: { listingId: $NEW_JOB_POSTING_ID } }).catch(() => {});
-            }
-            main().finally(() => prisma.\$disconnect());
-        " >/dev/null 2>&1 || true
+    # The listings the script created. Unquoted on purpose: echo drops the
+    # ids that were never set, so only real ones reach the query.
+    local listing_ids
+    # shellcheck disable=SC2086
+    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID)"
+    if [ -n "$listing_ids" ]; then
+        run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -122,6 +151,10 @@ cleanup() {
     if [ "$B_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_B"
+    fi
+    if [ "$C_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_C"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -198,13 +231,13 @@ echo
 # ---------------------------------------------------------------------------
 
 echo "public"
-snap 01-health GET /health
-snap 02-portfolios-list GET /portfolios
+snap health GET /health
+snap portfolios-list GET /portfolios
 PORTFOLIO_ID="$(jget 0.portfolio_id)"
-snap 03-error-unauthorized GET /companies/me
-snap 04-error-unknown-route GET /no-such-route
-snap 05-error-bad-path-param GET /portfolios/not-a-number
-snap 06-error-portfolio-not-found GET /portfolios/2147483647
+snap error-unauthorized GET /companies/me
+snap error-unknown-route GET /no-such-route
+snap error-bad-path-param GET /portfolios/not-a-number
+snap error-portfolio-not-found GET /portfolios/2147483647
 
 # ---------------------------------------------------------------------------
 # 2. Sessions
@@ -212,29 +245,29 @@ snap 06-error-portfolio-not-found GET /portfolios/2147483647
 
 echo
 echo "sessions"
-snap 07-auth-login-provider POST /auth/login \
+snap auth-login-provider POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"$PROVIDER_PASSWORD\"}"
 TOKEN_PROVIDER="$(jget accessToken)"
-require_token "$TOKEN_PROVIDER" "the provider" 07-auth-login-provider
+require_token "$TOKEN_PROVIDER" "the provider" auth-login-provider
 
-snap 08-auth-login-receiver POST /auth/login \
+snap auth-login-receiver POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$RECEIVER_EMAIL\",\"password\":\"$RECEIVER_PASSWORD\"}"
 TOKEN_RECEIVER="$(jget accessToken)"
-require_token "$TOKEN_RECEIVER" "the receiver" 08-auth-login-receiver
+require_token "$TOKEN_RECEIVER" "the receiver" auth-login-receiver
 
-snap 09-auth-admin-login POST /auth/admin/login \
+snap auth-admin-login POST /auth/admin/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 TOKEN_ADMIN="$(jget accessToken)"
-require_token "$TOKEN_ADMIN" "the admin" 09-auth-admin-login
+require_token "$TOKEN_ADMIN" "the admin" auth-admin-login
 
-snap 10-error-login-wrong-password POST /auth/login \
+snap error-login-wrong-password POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"definitely-not-it\"}"
 
-snap 11-error-login-admin-at-company-door POST /auth/login \
+snap error-login-admin-at-company-door POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 
@@ -244,18 +277,18 @@ snap 11-error-login-admin-at-company-door POST /auth/login \
 
 echo
 echo "companies"
-snap 12-companies-me-provider GET /companies/me -H "$(bearer "$TOKEN_PROVIDER")"
+snap companies-me-provider GET /companies/me -H "$(bearer "$TOKEN_PROVIDER")"
 PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
-snap 13-companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
-snap 14-error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap 15-auth-check-availability-free POST /auth/check-availability \
+snap auth-check-availability-free POST /auth/check-availability \
     -H 'Content-Type: application/json' \
     -d "{\"username\":\"${RUN}free\",\"email\":\"${RUN}free@example.test\"}"
 
-snap 16-auth-check-availability-taken POST /auth/check-availability \
+snap auth-check-availability-taken POST /auth/check-availability \
     -H 'Content-Type: application/json' \
     -d "{\"username\":\"$PROVIDER_USERNAME\",\"email\":\"$PROVIDER_EMAIL\"}"
 
@@ -265,30 +298,30 @@ snap 16-auth-check-availability-taken POST /auth/check-availability \
 
 echo
 echo "portfolios + certificates"
-snap 17-portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
+snap portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
 LISTING_ID="$(jget 0.listingId)"
 
 if [ -n "$PORTFOLIO_ID" ]; then
-    snap 18-portfolios-one GET "/portfolios/$PORTFOLIO_ID"
+    snap portfolios-one GET "/portfolios/$PORTFOLIO_ID"
 else
     echo "  --  skip   GET /portfolios/:portfolioId (no seeded portfolio)"
 fi
 
-snap 19-certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
+snap certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
 
 echo
 echo "admin"
-snap 20-admin-companies GET /admin/companies -H "$(bearer "$TOKEN_ADMIN")"
-snap 21-admin-companies-filtered GET "/admin/companies?page=1&pageSize=2&filter=PROVIDER" \
+snap admin-companies GET /admin/companies -H "$(bearer "$TOKEN_ADMIN")"
+snap admin-companies-filtered GET "/admin/companies?page=1&pageSize=2&filter=PROVIDER" \
     -H "$(bearer "$TOKEN_ADMIN")"
-snap 22-admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
+snap admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
     -H "$(bearer "$TOKEN_ADMIN")"
-snap 23-error-admin-company-not-found GET /admin/companies/2147483647 \
+snap error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
 
 echo
 echo "providers"
-snap 24-providers-list GET "/providers?page=1&pageSize=2" \
+snap providers-list GET "/providers?page=1&pageSize=2" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ "$READ_ONLY" = 1 ]; then
@@ -304,51 +337,51 @@ fi
 
 echo
 echo "register / profile / credentials"
-snap 25-error-register-validation POST /auth/register \
+snap error-register-validation POST /auth/register \
     -H 'Content-Type: application/json' \
     -d '{"companyName":"","username":"A B","email":"nope","password":"short","phone":"12","accountType":"WIZARD","companyType":[]}'
 
 REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}"
 
-snap 26-auth-register POST /auth/register \
+snap auth-register POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
 TOKEN_A="$(jget accessToken)"
 COMPANY_A_ID="$(jget company.company_id)"
 A_LIVE=1
 SUBS+=(--id "company_id=$COMPANY_A_ID")
-resnap 26-auth-register
+resnap auth-register
 
-snap 27-error-register-conflict POST /auth/register \
+snap error-register-conflict POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
 
-snap 28-companies-me-patch PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
+snap companies-me-patch PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
     -H 'Content-Type: application/json' \
     -d '{"companyName":"Snapshot Probe A edited","companyDescription":"edited by scripts/snapshot-api.sh","address":null,"serviceTerm":"30 days","warrantyPolicy":"none"}'
 
-snap 29-error-companies-me-patch-empty PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
+snap error-companies-me-patch-empty PATCH /companies/me -H "$(bearer "$TOKEN_A")" \
     -H 'Content-Type: application/json' -d '{}'
 
-snap 30-companies-me-credentials PATCH /companies/me/credentials \
+snap companies-me-credentials PATCH /companies/me/credentials \
     -H "$(bearer "$TOKEN_A")" -H 'Content-Type: application/json' \
     -d "{\"currentPassword\":\"snapshot-probe-pw\",\"username\":\"${RUN}a2\"}"
 TOKEN_A="$(jget accessToken)"
 
-snap 31-auth-logout POST /auth/logout -H "$(bearer "$TOKEN_A")"
-snap 32-error-logout-twice POST /auth/logout -H "$(bearer "$TOKEN_A")"
+snap auth-logout POST /auth/logout -H "$(bearer "$TOKEN_A")"
+snap error-logout-twice POST /auth/logout -H "$(bearer "$TOKEN_A")"
 
 echo
 echo "self-service deletion"
-snap 33-auth-register-receiver POST /auth/register \
+snap auth-register-receiver POST /auth/register \
     -H 'Content-Type: application/json' \
     -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"]}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
 SUBS+=(--id "company_id=$(jget company.company_id)")
-resnap 33-auth-register-receiver
+resnap auth-register-receiver
 
-snap 34-companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
+snap companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
 B_LIVE=0
-snap 35-error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
+snap error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
 
 # ---------------------------------------------------------------------------
 # 6. Portfolios and certificates. Both carry an image, so both need Supabase.
@@ -365,7 +398,7 @@ if [ "$UPLOADS" = 1 ]; then
     if [ -n "$LISTING_ID" ]; then
         # portfolioImage is the multipart field name, and a wire name like any
         # other — Phase 2 renames it, and only this call would notice.
-        snap 36-portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
+        snap portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
             -F "listingId=$LISTING_ID" \
             -F 'portfolioName=Snapshot Probe portfolio' \
             -F 'portfolioDescription=created by scripts/snapshot-api.sh' \
@@ -376,8 +409,8 @@ if [ "$UPLOADS" = 1 ]; then
 
         if [ -n "$NEW_PORTFOLIO_ID" ]; then
             SUBS+=(--id "portfolio_id=$NEW_PORTFOLIO_ID")
-            resnap 36-portfolios-create
-            snap 37-portfolios-update PATCH "/portfolios/$NEW_PORTFOLIO_ID" \
+            resnap portfolios-create
+            snap portfolios-update PATCH "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")" \
                 -F 'portfolioName=Snapshot Probe portfolio edited' \
                 -F "portfolioImage=@$IMAGE;type=image/png"
@@ -385,12 +418,12 @@ if [ "$UPLOADS" = 1 ]; then
             # 200 that wrote nothing. Snapshotted because that is a convention
             # (docs/conventions.md section 12) and nothing else would catch a
             # schema quietly going back to z.object.
-            snap 38-error-portfolio-unknown-field PATCH \
+            snap error-portfolio-unknown-field PATCH \
                 "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")" \
                 -F 'portfolioNmae=typo'
 
-            snap 39-portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
+            snap portfolios-delete DELETE "/portfolios/$NEW_PORTFOLIO_ID" \
                 -H "$(bearer "$TOKEN_PROVIDER")"
         fi
     else
@@ -399,7 +432,7 @@ if [ "$UPLOADS" = 1 ]; then
 
     echo
     echo "certificate lifecycle"
-    snap 40-certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
+    snap certificates-create POST /certificates -H "$(bearer "$TOKEN_PROVIDER")" \
         -F 'certTitle=Snapshot Probe certificate' \
         -F 'organization=Snapshot Probe Authority' \
         -F 'issueMonth=1' -F 'issueYear=2025' \
@@ -412,14 +445,14 @@ if [ "$UPLOADS" = 1 ]; then
 
     if [ -n "$NEW_CERT_ID" ]; then
         SUBS+=(--id "certificate_id=$NEW_CERT_ID")
-        resnap 40-certificates-create
-        snap 41-error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
+        resnap certificates-create
+        snap error-certificate-date-order PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" -F 'expireYear=2000'
-        snap 42-certificates-update PATCH "/certificates/$NEW_CERT_ID" \
+        snap certificates-update PATCH "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")" \
             -F 'certTitle=Snapshot Probe certificate edited' \
             -F "certImage=@$IMAGE;type=image/png"
-        snap 43-certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
+        snap certificates-delete DELETE "/certificates/$NEW_CERT_ID" \
             -H "$(bearer "$TOKEN_PROVIDER")"
     fi
 
@@ -428,15 +461,15 @@ if [ "$UPLOADS" = 1 ]; then
     # No file attached. Multer lets that through — nothing was rejected — so
     # the 400 comes from the handler, and only this call would notice it going
     # missing.
-    snap 44-error-photo-missing PATCH /companies/me/photo \
+    snap error-photo-missing PATCH /companies/me/photo \
         -H "$(bearer "$TOKEN_PROVIDER")"
 
-    snap 45-companies-me-photo PATCH /companies/me/photo \
+    snap companies-me-photo PATCH /companies/me/photo \
         -H "$(bearer "$TOKEN_PROVIDER")" \
         -F "photo=@$IMAGE;type=image/png"
     PHOTO_SET=1
 
-    snap 46-companies-me-photo-delete DELETE /companies/me/photo \
+    snap companies-me-photo-delete DELETE /companies/me/photo \
         -H "$(bearer "$TOKEN_PROVIDER")"
     PHOTO_SET=0
 else
@@ -450,18 +483,18 @@ fi
 
 echo
 echo "admin writes"
-snap 47-admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
+snap admin-companies-search GET "/admin/companies?q=$RUN&includeDeleted=true" \
     -H "$(bearer "$TOKEN_ADMIN")"
 
-snap 48-admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
+snap admin-companies-patch PATCH "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"companyName":"Snapshot Probe A edited by admin","phone":"0800000000"}'
 
-snap 49-error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
+snap error-admin-delete-wrong-password DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d '{"currentPassword":"definitely-not-it"}'
 
-snap 50-admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
+snap admin-companies-delete DELETE "/admin/companies/$COMPANY_A_ID" \
     -H "$(bearer "$TOKEN_ADMIN")" -H 'Content-Type: application/json' \
     -d "{\"currentPassword\":\"$ADMIN_PASSWORD\"}"
 A_LIVE=0
@@ -472,21 +505,21 @@ A_LIVE=0
 
 echo
 echo "job postings"
-snap 51-error-job-postings-unauthorized POST /job-postings \
+snap error-job-postings-unauthorized POST /job-postings \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Unauthorized"}'
 
-snap 52-error-job-postings-forbidden-provider POST /job-postings \
+snap error-job-postings-forbidden-provider POST /job-postings \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Provider cannot post job","listingDesc":"desc","maxBudget":10000}'
 
-snap 53-error-job-postings-validation POST /job-postings \
+snap error-job-postings-validation POST /job-postings \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"","listingDesc":"","minBudget":20000,"maxBudget":10000,"deadline":"2020-01-01","categoryIds":[99999]}'
 
-snap 54-job-postings-create POST /job-postings \
+snap job-postings-create POST /job-postings \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe job posting\",\"listingDesc\":\"Looking for developer team\",\"minBudget\":50000,\"maxBudget\":150000,\"locationPref\":\"Remote\",\"duration\":\"2 Months\",\"deadline\":\"2028-12-31\",\"categoryIds\":[1]}"
@@ -494,7 +527,149 @@ NEW_JOB_POSTING_ID="$(jget jobPostingId)"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
     SUBS+=(--id "job_posting_id=$NEW_JOB_POSTING_ID")
-    resnap 54-job-postings-create
+    resnap job-postings-create
+fi
+
+# ---------------------------------------------------------------------------
+# 9. View job postings and visibility rules (US2-7)
+# ---------------------------------------------------------------------------
+
+snap error-job-postings-list-unauthorized GET /job-postings
+
+snap error-job-postings-list-invalid-status GET /job-postings?status=INVALID \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap job-postings-list-open GET /job-postings?status=OPEN \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+fi
+
+snap job-postings-list-closed-provider GET /job-postings?status=CLOSED \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap job-postings-list-closed-receiver GET /job-postings?status=CLOSED \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-job-postings-one-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID"
+
+snap error-job-postings-one-invalid-id GET /job-postings/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-job-postings-one-not-found GET /job-postings/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } })"
+fi
+
+snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# ---------------------------------------------------------------------------
+# 10. Service search (US3-1)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service search"
+# The probe: the newest open service, and the only one with $RUN in its title.
+# Created with api, not snap: POST /services has its own tests (US2-1).
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1]}" >/dev/null
+NEW_SERVICE_ID="$(jget listingId)"
+if [ -z "$NEW_SERVICE_ID" ]; then
+    echo "could not create the probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
+
+# Probe C: a Provider that deletes itself. A soft delete leaves its service
+# OPEN, so only the deletedAt filter can keep it out of the results below.
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}" >/dev/null
+TOKEN_C="$(jget accessToken)"
+if [ -z "$TOKEN_C" ]; then
+    echo "could not register probe C:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+C_LIVE=1
+api POST /services -H "$(bearer "$TOKEN_C")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETED_SERVICE_ID="$(jget listingId)"
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
+
+# T3.1.8 and T3.1.10: the probe comes first; probe C's service, though newer,
+# does not appear.
+snap services-search-default GET "/services?page=1&pageSize=3" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.9 and T3.1.10: only the probe matches; probe C's service is hidden.
+snap services-search-keyword GET "/services?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.11: no match is a 200 with an empty page, not an error.
+snap services-search-no-match GET "/services?q=${RUN}_none" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.1.10: a closed service is hidden, with and without a keyword.
+run_db "prisma.listing.update({ where: { listingId: $NEW_SERVICE_ID }, data: { listingStatus: 'CLOSED' } })"
+
+snap services-search-closed GET "/services?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-search-closed-default GET "/services?page=1&pageSize=3" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 11. Reject a proposal
+# ---------------------------------------------------------------------------
+
+echo
+echo "proposals"
+# The probe proposal: the seeded provider on the receiver's probe job posting,
+# which is OPEN again by now. Inserted straight into the database because no
+# endpoint submits a proposal yet (US2-8). Raw SQL, because the shared database
+# has a NOT NULL duration column that schema.prisma does not know about yet.
+# Deleting the job posting in cleanup deletes this row too (onDelete: Cascade).
+PROPOSAL_ID=""
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    PROPOSAL_ID="$(db_value "prisma.\$queryRawUnsafe('INSERT INTO proposal (listing_id, sender_id, proposal_budget, proposal_terms, proposal_status, duration) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING proposal_id', $NEW_JOB_POSTING_ID, $PROVIDER_ID, 1000, 'Snapshot Probe proposal $RUN', 'PENDING', 1).then((rows) => rows[0].proposal_id)")"
+fi
+
+if [ -n "$PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$PROPOSAL_ID")
+
+    snap error-proposals-reject-unauthorized POST "/proposals/$PROPOSAL_ID/reject"
+
+    snap error-proposals-reject-invalid-id POST /proposals/not-a-number/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    snap error-proposals-reject-not-found POST /proposals/2147483647/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # The provider sent the proposal but does not own the listing.
+    snap error-proposals-reject-forbidden POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_PROVIDER")"
+
+    snap proposals-reject POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # Now REJECTED, so a second reject is a state conflict.
+    snap error-proposals-reject-conflict POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+else
+    echo "  --  skip   POST /proposals/:proposalId/reject (no probe proposal)"
 fi
 
 echo

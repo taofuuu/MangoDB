@@ -2,19 +2,21 @@ import { Router } from 'express';
 import { authRoutes } from './auth.routes';
 import { adminRoutes } from './admin.routes';
 import { companyRoutes } from './company.routes';
-import { listingRoutes } from './service-listing.routes';
+import { serviceRoutes } from './service.routes';
 import { portfolioRoutes } from './portfolio.routes';
 import { certificateRoutes } from './certificate.routes';
 import { providerRoutes } from './provider.routes';
 import { jobPostingRoutes } from './job-posting.routes';
+import { proposalRoutes } from './proposal.routes';
 
 export const routes = Router();
 
 routes.use('/auth', authRoutes);
 routes.use('/admin', adminRoutes);
 routes.use('/companies', companyRoutes);
-routes.use('/listings', listingRoutes);
+routes.use('/services', serviceRoutes);
 routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
 routes.use('/providers', providerRoutes);
 routes.use('/job-postings', jobPostingRoutes);
+routes.use('/proposals', proposalRoutes);
