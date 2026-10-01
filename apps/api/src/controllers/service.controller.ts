@@ -1,3 +1,4 @@
+import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { escapeLike } from '../lib/search';
