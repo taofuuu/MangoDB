@@ -7,9 +7,9 @@ import { escapeLike } from '../lib/search';
 import { parseQuery } from '../middleware/validate';
 import { providerListQuerySchema } from '../schemas/provider.schema';
 
-// T3.1.8. One word matches the company, one of its services, or its tech
-// stack, ignoring case. Job postings are left out: they say what the company
-// wants to hire, not what it offers.
+// T3.1.8. One word matches the company, or one of its services by title,
+// description, category or tech stack, ignoring case. Job postings are left
+// out: they say what the company wants to hire, not what it offers.
 function matchesKeyword(word: string): Prisma.CompanyWhereInput {
     const contains = {
         contains: escapeLike(word),
@@ -31,13 +31,19 @@ function matchesKeyword(word: string): Prisma.CompanyWhereInput {
                                     some: { category: { catName: contains } },
                                 },
                             },
+                            {
+                                service: {
+                                    serviceTechStack: {
+                                        some: {
+                                            techStack: {
+                                                techStackName: contains,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
                         ],
                     },
-                },
-            },
-            {
-                provider: {
-                    providerTechStack: { some: { techStackName: contains } },
                 },
             },
         ],

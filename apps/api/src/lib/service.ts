@@ -57,6 +57,28 @@ export function toListing(row: SelectedListing): Listing {
     };
 }
 
+// ADR 0009. A service's tech names, read through its join table. Used as
+// `service: serviceTechStackSelect` wherever a response shows a stack.
+export const serviceTechStackSelect = {
+    select: {
+        serviceTechStack: {
+            select: { techStack: { select: { techStackName: true } } },
+        },
+    },
+} as const;
+
+export type ServiceTechStackRow = {
+    serviceTechStack: { techStack: { techStackName: string } }[];
+} | null;
+
+// Sorted: Prisma returns related rows in no fixed order. A listing with no
+// service row has no stack.
+export function toTechStackNames(service: ServiceTechStackRow): string[] {
+    return (
+        service?.serviceTechStack.map((t) => t.techStack.techStackName) ?? []
+    ).sort();
+}
+
 // US3-1. What one service search card needs. Only these company fields, never
 // the whole row: it holds the sign-in email and password hash (ADR 0001).
 export const serviceSummarySelect = {
@@ -67,16 +89,12 @@ export const serviceSummarySelect = {
     listingCategory: {
         select: { category: { select: { catName: true } } },
     },
+    service: serviceTechStackSelect,
     company: {
         select: {
             companyId: true,
             companyName: true,
             companyPhoto: true,
-            provider: {
-                select: {
-                    providerTechStack: { select: { techStackName: true } },
-                },
-            },
         },
     },
 } as const;
@@ -87,11 +105,11 @@ interface ServiceSummaryRow {
     minBudget: number | null;
     maxBudget: number | null;
     listingCategory: { category: { catName: string } }[];
+    service: ServiceTechStackRow;
     company: {
         companyId: number;
         companyName: string;
         companyPhoto: string | null;
-        provider: { providerTechStack: { techStackName: string }[] } | null;
     } | null;
 }
 
@@ -109,15 +127,11 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
         categories: row.listingCategory
             .map(({ category }) => category.catName)
             .sort(),
+        techStack: toTechStackNames(row.service),
         company: {
             companyId: company.companyId,
             companyName: company.companyName,
             companyPhoto: company.companyPhoto,
-            techStack: (
-                company.provider?.providerTechStack.map(
-                    (t) => t.techStackName,
-                ) ?? []
-            ).sort(),
         },
     };
 }

@@ -69,8 +69,8 @@ export async function createListing(
     res.status(201).json(toListing(created));
 }
 
-// US3-1. One word matches the service's title, description or category, or
-// its company's name or tech stack, ignoring case.
+// US3-1. One word matches the service's title, description, category or tech
+// stack, or its company's name, ignoring case.
 function matchesKeyword(word: string): Prisma.ListingWhereInput {
     const contains = {
         contains: escapeLike(word),
@@ -85,16 +85,14 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
                     some: { category: { catName: contains } },
                 },
             },
-            { company: { companyName: contains } },
             {
-                company: {
-                    provider: {
-                        providerTechStack: {
-                            some: { techStackName: contains },
-                        },
+                service: {
+                    serviceTechStack: {
+                        some: { techStack: { techStackName: contains } },
                     },
                 },
             },
+            { company: { companyName: contains } },
         ],
     };
 }
