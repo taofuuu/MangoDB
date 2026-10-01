@@ -80,6 +80,9 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+NEW_PROPOSAL_ID=""
+PROVIDER_ID=""
+RECEIVER_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
@@ -118,6 +121,9 @@ cleanup() {
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
+    fi
+    if [ -n "$NEW_PROPOSAL_ID" ]; then
+        run_db "prisma.proposal.deleteMany({ where: { proposalId: $NEW_PROPOSAL_ID } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -272,6 +278,7 @@ PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
 snap companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+RECEIVER_ID="$(jget company_id)"
 snap error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap auth-check-availability-free POST /auth/check-availability \
@@ -564,7 +571,79 @@ snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
-# 10. Service search (US3-1)
+# 10. Submit proposals to open job postings (US2-8)
+# ---------------------------------------------------------------------------
+
+echo
+echo "submit proposals"
+
+snap error-proposals-unauthorized POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-forbidden-receiver POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-invalid-id POST /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-not-found POST /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-validation POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-proposals-own-posting POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Restore owner back to Receiver immediately after own-posting probe
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+fi
+
+snap error-proposals-closed POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Ensure posting is OPEN and owned by Receiver before creating valid proposal
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID, listingStatus: 'OPEN' } })"
+fi
+
+snap proposals-create POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+NEW_PROPOSAL_ID="$(jget proposalId)"
+
+if [ -n "$NEW_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$NEW_PROPOSAL_ID")
+    resnap proposals-create
+fi
+
+snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+
+# ---------------------------------------------------------------------------
+# 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
 
 echo
