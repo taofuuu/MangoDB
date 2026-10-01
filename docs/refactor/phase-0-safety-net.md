@@ -82,8 +82,8 @@ Each file is one call:
 }
 ```
 
-Files are numbered in call order, so `git diff snapshots/` reads top to bottom
-like the session it recorded.
+Each file is named after the call it records, like `auth-register.json` above,
+so a diff tells you which endpoint changed.
 
 ## The rules that make the diff readable
 
