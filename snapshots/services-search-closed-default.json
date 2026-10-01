@@ -1,0 +1,62 @@
+{
+    "request": "GET /services?page=1&pageSize=3",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "company": {
+                    "companyId": 231,
+                    "companyName": "Acme Solutions Ltd.",
+                    "companyPhoto": null,
+                    "techStack": []
+                },
+                "listingId": 61,
+                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
+                "maxBudget": 50000,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "company": {
+                    "companyId": 231,
+                    "companyName": "Acme Solutions Ltd.",
+                    "companyPhoto": null,
+                    "techStack": []
+                },
+                "listingId": 60,
+                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
+                "maxBudget": 50000,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "company": {
+                    "companyId": 231,
+                    "companyName": "Acme Solutions Ltd.",
+                    "companyPhoto": null,
+                    "techStack": []
+                },
+                "listingId": 59,
+                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
+                "maxBudget": 50000,
+                "minBudget": 15000
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 3,
+            "totalItems": 19,
+            "totalPages": 7
+        }
+    }
+}

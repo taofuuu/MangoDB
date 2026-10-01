@@ -156,6 +156,27 @@ export interface ProviderListResponse {
     pagination: PaginationMeta;
 }
 
+// US3-1. One service search result card: the service, with a short profile of
+// the company that offers it (ADR 0001). techStack is company-wide.
+export interface ServiceSummary {
+    listingId: number;
+    listingTitle: string;
+    minBudget: number | null;
+    maxBudget: number;
+    categories: string[];
+    company: {
+        companyId: number;
+        companyName: string;
+        companyPhoto: string | null;
+        techStack: string[];
+    };
+}
+
+export interface ServiceListResponse {
+    items: ServiceSummary[];
+    pagination: PaginationMeta;
+}
+
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {
