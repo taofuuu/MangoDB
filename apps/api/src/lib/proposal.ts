@@ -97,13 +97,18 @@ export async function acceptProposal(proposalId: number, callerId: number) {
                 proposalStatus: 'REJECTED' satisfies ProposalStatus,
             },
         });
-        const project = await tx.project.create({
-            data: {
-                proposalId: proposalId,
-                totalBudget: proposal.proposalBudget,
-                startDate: new Date(),
-                status: 'ACTIVE' satisfies ProjectStatus,
-            },
+const todayUtc = new Date();
+todayUtc.setUTCHours(0, 0, 0, 0);
+
+const project = await tx.project.create({
+    data: {
+        proposalId,
+        totalBudget: proposal.proposalBudget,
+        startDate: todayUtc,
+        status: 'ACTIVE' satisfies ProjectStatus,
+    },
+    select: projectSelect,
+});
             select: projectSelect,
         });
         return toProject(project);
