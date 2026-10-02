@@ -13,6 +13,12 @@ export const createListingSchema = z
         categoryIds: z
             .array(z.number().int().positive().max(INT_MAX))
             .default([]),
+        // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
+        // name is a mistake in the body, so it is a 400 rather than dropped.
+        techStack: z
+            .array(z.string().trim().min(1).max(100))
+            .max(20)
+            .default([]),
     })
     .refine((b) => b.minBudget === undefined || b.minBudget <= b.maxBudget, {
         message: 'minBudget must be less than or equal to maxBudget',
