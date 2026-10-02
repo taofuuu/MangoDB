@@ -38,8 +38,13 @@ const nameList = z.preprocess(
         .transform((names) => names.filter(Boolean)),
 );
 
-// A price slider end: whole baht, same ceiling as the budget columns.
-const price = z.coerce.number().int().nonnegative().max(INT_MAX).optional();
+// A price slider end: whole baht, same ceiling as the budget columns. A blank
+// value (?maxPrice=) means no limit; coerce alone would read it as 0.
+const price = z.preprocess(
+    (value) =>
+        typeof value === 'string' && value.trim() === '' ? undefined : value,
+    z.coerce.number().int().nonnegative().max(INT_MAX).optional(),
+);
 
 // US3-1. Same paging bounds as GET /companies, so one request cannot pull
 // every service into memory. US3-2 adds the filters.
