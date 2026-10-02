@@ -26,9 +26,9 @@ export type SelectedProposal = {
     proposalId: number;
     listingId: number;
     senderId: number;
-    proposalBudget: { toNumber(): number } | number | string;
+    proposalBudget: Prisma.Decimal;
     proposalTerms: string;
-    duration: { toNumber(): number } | number | string | null;
+    duration: Prisma.Decimal;
     proposalStatus: string;
     createdAt: Date;
 };
@@ -42,7 +42,7 @@ export function toProposal(row: SelectedProposal): Proposal {
         providerId: row.senderId,
         proposalBudget: Number(row.proposalBudget),
         proposalTerms: row.proposalTerms,
-        duration: row.duration != null ? Number(row.duration) : 0,
+        duration: Number(row.duration),
         proposalStatus: row.proposalStatus as ProposalStatus,
         createdAt: row.createdAt.toISOString(),
     };

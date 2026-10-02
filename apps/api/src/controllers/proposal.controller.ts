@@ -5,9 +5,9 @@ import { isUniqueViolation } from '../lib/prismaErrors';
 import { parseParams, parseBody } from '../middleware/validate';
 import {
     createProposalSchema,
-    proposalParamsSchema,
     proposalIdParamSchema,
 } from '../schemas/proposal.schema';
+import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
 import {
     proposalSelect,
     toProposal,
@@ -19,7 +19,7 @@ export async function createProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(proposalParamsSchema, req.params);
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 

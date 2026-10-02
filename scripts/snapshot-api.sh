@@ -132,9 +132,6 @@ cleanup() {
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
-    if [ -n "$NEW_PROPOSAL_ID" ]; then
-        run_db "prisma.proposal.deleteMany({ where: { proposalId: $NEW_PROPOSAL_ID } })"
-    fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
     # exactly how this got noticed.
