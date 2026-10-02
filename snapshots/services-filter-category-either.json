@@ -1,19 +1,21 @@
 {
-    "request": "GET /services?techStack=<run>&maxPrice=20000",
+    "request": "GET /services?techStack=<run>&category=Web%20Development&category=Mobile%20App%20Development",
     "status": 200,
     "body": {
         "items": [
             {
-                "categories": [],
+                "categories": [
+                    "Mobile App Development"
+                ],
                 "company": {
                     "companyId": 142,
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
                 "listingId": "<listing_id>",
-                "listingTitle": "Snapshot Probe no-min service <run>",
-                "maxBudget": 30000,
-                "minBudget": null,
+                "listingTitle": "Snapshot Probe mobile service <run>",
+                "maxBudget": 120000,
+                "minBudget": 80000,
                 "techStack": [
                     "<run>"
                 ]

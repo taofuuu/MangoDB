@@ -1,0 +1,16 @@
+{
+    "request": "GET /services?minPrice=200000&maxPrice=1000",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "minPrice",
+                    "message": "minPrice must be less than or equal to maxPrice"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}
