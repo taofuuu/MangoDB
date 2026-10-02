@@ -4,6 +4,7 @@
 import type { ListingStatus, ServiceSummary } from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 import { prisma } from './prisma';
+import { ApiError } from './ApiError';
 
 export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUSES[1];
 
