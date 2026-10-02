@@ -1,4 +1,4 @@
-import type { AccountType, ProviderSummary } from '@mangodb/shared';
+import type { AccountType, CompanySummary } from '@mangodb/shared';
 import {
     type ServiceTechStackRow,
     serviceTechStackSelect,
@@ -7,7 +7,7 @@ import {
 
 // What one search result card needs. Kept apart from the query itself: when
 // sorting by price arrives, only the step that picks the page of ids changes.
-export const providerSummarySelect = {
+export const companySummarySelect = {
     companyId: true,
     companyName: true,
     companyDescription: true,
@@ -26,7 +26,7 @@ export const providerSummarySelect = {
     },
 } as const;
 
-interface ProviderSummaryRow {
+interface CompanySummaryRow {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
@@ -38,7 +38,7 @@ interface ProviderSummaryRow {
     }[];
 }
 
-export function toProviderSummary(row: ProviderSummaryRow): ProviderSummary {
+export function toCompanySummary(row: CompanySummaryRow): CompanySummary {
     // Two services in the same category, or with the same tech, should show
     // it once.
     const categories = new Set(
