@@ -9,6 +9,7 @@ import {
     DEFAULT_LISTING_STATUS,
     assertListingOwned,
     listingSelect,
+    resolveTechStack,
     serviceSummarySelect,
     toListing,
     toServiceSummary,
@@ -48,6 +49,17 @@ export async function createListing(
         }
     }
 
+    const techNames = await resolveTechStack(data.techStack);
+
+    // ADR 0009. Add any new names first. skipDuplicates is ON CONFLICT DO
+    // NOTHING, so two requests adding the same new name at once both succeed.
+    if (techNames.length > 0) {
+        await prisma.techStack.createMany({
+            data: techNames.map((techStackName) => ({ techStackName })),
+            skipDuplicates: true,
+        });
+    }
+
     const created = await prisma.listing.create({
         data: {
             companyId,
@@ -57,7 +69,16 @@ export async function createListing(
             maxBudget: data.maxBudget,
             listingStatus: DEFAULT_LISTING_STATUS,
             listingType: 'SERVICE',
-            service: { create: {} },
+            // ADR 0009. Each tech links to its tech_stack row, added above.
+            service: {
+                create: {
+                    serviceTechStack: {
+                        create: techNames.map((techStackName) => ({
+                            techStack: { connect: { techStackName } },
+                        })),
+                    },
+                },
+            },
             ...(catIds.length > 0
                 ? {
                       listingCategory: {
@@ -72,8 +93,8 @@ export async function createListing(
     res.status(201).json(toListing(created));
 }
 
-// US3-1. One word matches the service's title, description or category, or
-// its company's name or tech stack, ignoring case.
+// US3-1. One word matches the service's title, description, category or tech
+// stack, or its company's name, ignoring case.
 function matchesKeyword(word: string): Prisma.ListingWhereInput {
     const contains = {
         contains: escapeLike(word),
@@ -88,16 +109,14 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
                     some: { category: { catName: contains } },
                 },
             },
-            { company: { companyName: contains } },
             {
-                company: {
-                    provider: {
-                        providerTechStack: {
-                            some: { techStackName: contains },
-                        },
+                service: {
+                    serviceTechStack: {
+                        some: { techStack: { techStackName: contains } },
                     },
                 },
             },
+            { company: { companyName: contains } },
         ],
     };
 }

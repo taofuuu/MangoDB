@@ -1,0 +1,10 @@
+{
+    "request": "POST /proposals/<proposal_id>/reject",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "You do not own this listing"
+        }
+    }
+}

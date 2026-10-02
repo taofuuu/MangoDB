@@ -14,6 +14,7 @@ import type { z } from 'zod';
 import type {
     ChangeCredentialsRequest,
     CreateJobPostingRequest,
+    CreateProposalRequest,
     DeleteCompanyAccountRequest,
     RegisterRequest,
     UpdateCompanyProfileRequest,
@@ -25,6 +26,7 @@ import type {
 } from './company.schema';
 import type { deleteCompanyAccountBodySchema } from './admin-company.schema';
 import type { createJobPostingSchema } from './job-posting.schema';
+import type { createProposalSchema } from './proposal.schema';
 
 // Fails to compile unless T is assignable to U. Both directions are asserted
 // below, so neither side may carry a field the other does not.
@@ -72,4 +74,14 @@ type _CreateJobPostingMatchesContract = Assert<
 type _ContractMatchesCreateJobPosting = Assert<
     CreateJobPostingRequest,
     CreateJobPostingInput
+>;
+
+type CreateProposalInput = z.infer<typeof createProposalSchema>;
+type _CreateProposalMatchesContract = Assert<
+    CreateProposalInput,
+    CreateProposalRequest
+>;
+type _ContractMatchesCreateProposal = Assert<
+    CreateProposalRequest,
+    CreateProposalInput
 >;

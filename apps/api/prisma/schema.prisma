@@ -113,7 +113,7 @@ model Listing {
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]
   proposal        Proposal[]
-  service         Service?     
+  service         Service?
 
   @@map("listing")
 }
@@ -130,13 +130,13 @@ model ListingCategory {
 
 model Project {
   projId          Int               @id @default(autoincrement()) @map("proj_id")
-  proposalId      Int?              @unique @map("proposal_id")
+  proposalId      Int               @unique @map("proposal_id")
   totalBudget     Decimal           @map("total_budget") @db.Decimal(12, 2)
   startDate       DateTime          @map("start_date") @db.Date
   endDate         DateTime?         @map("end_date") @db.Date
   comment         String?
   status          String            @db.VarChar(50)
-  proposal        Proposal?         @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
+  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
   projectContract ProjectContract[]
   rating          Rating[]
 
@@ -154,36 +154,29 @@ model ProjectContract {
 
 model Proposal {
   proposalId     Int      @id @default(autoincrement()) @map("proposal_id")
-  listingId      Int?     @map("listing_id")
-  senderId       Int?     @map("sender_id")
+  listingId      Int      @map("listing_id")
+  senderId       Int      @map("sender_id")
   proposalBudget Decimal  @map("proposal_budget") @db.Decimal(12, 2)
   proposalTerms  String   @map("proposal_terms")
+  duration       Decimal  @db.Decimal(4, 1)
   proposalStatus String   @map("proposal_status") @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   project        Project?
-  listing        Listing? @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
-  company        Company? @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
+  company        Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([listingId, senderId])
   @@map("proposal")
 }
 
 model Provider {
-  companyId         Int                 @id @map("company_id")
-  warrantyPolicy    String?             @map("warranty_policy")
-  serviceTerm       String?             @map("service_term")
-  certificate       Certificate[]
-  company           Company             @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
-  providerTechStack ProviderTechStack[]
+  companyId      Int           @id @map("company_id")
+  warrantyPolicy String?       @map("warranty_policy")
+  serviceTerm    String?       @map("service_term")
+  certificate    Certificate[]
+  company        Company       @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("provider")
-}
-
-model ProviderTechStack {
-  companyId     Int      @map("company_id")
-  techStackName String   @map("tech_stack_name") @db.VarChar(100)
-  provider      Provider @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([companyId, techStackName])
-  @@map("provider_tech_stack")
 }
 
 model Rating {
@@ -207,8 +200,31 @@ model Service {
   listingId        Int                @id @map("listing_id")
   listing          Listing            @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
   servicePortfolio ServicePortfolio[]
+  serviceTechStack ServiceTechStack[]
 
   @@map("service")
+}
+
+// ADR 0009. A service's tech stack, linked like listing_category: one row per
+// service and tech. Points at service, so a job can never carry one.
+model ServiceTechStack {
+  listingId   Int       @map("listing_id")
+  techStackId Int       @map("tech_stack_id")
+  service     Service   @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
+  techStack   TechStack @relation(fields: [techStackId], references: [techStackId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([listingId, techStackId])
+  @@map("service_tech_stack")
+}
+
+// ADR 0009. Every tech name any service has used. Unlike category this list
+// is open: a new name is added the first time a service sends it.
+model TechStack {
+  techStackId      Int                @id @default(autoincrement()) @map("tech_stack_id")
+  techStackName    String             @unique @map("tech_stack_name") @db.VarChar(100)
+  serviceTechStack ServiceTechStack[]
+
+  @@map("tech_stack")
 }
 
 model ServicePortfolio {

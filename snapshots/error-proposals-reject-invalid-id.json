@@ -1,0 +1,16 @@
+{
+    "request": "POST /proposals/not-a-number/reject",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "proposalId",
+                    "message": "Invalid input: expected number, received NaN"
+                }
+            ],
+            "message": "Path parameters are invalid"
+        }
+    }
+}

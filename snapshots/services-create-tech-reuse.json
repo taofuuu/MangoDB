@@ -1,0 +1,18 @@
+{
+    "request": "POST /services",
+    "status": 201,
+    "body": {
+        "categoryIds": [],
+        "companyId": 142,
+        "listingDesc": "created by scripts/snapshot-api.sh",
+        "listingId": "<listing_id>",
+        "listingStatus": "OPEN",
+        "listingTitle": "Snapshot Probe reuse service",
+        "maxBudget": 50000,
+        "minBudget": null,
+        "techStack": [
+            "<run>-React"
+        ],
+        "type": "SERVICE"
+    }
+}
