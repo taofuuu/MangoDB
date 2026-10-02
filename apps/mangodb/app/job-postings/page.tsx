@@ -36,8 +36,8 @@ export default function JobPostingsPage() {
                 isOpen={isProposalOpen}
                 onClose={() => setIsProposalOpen(false)}
                 jobPosting={previewPosting}
-                // T2.8.3 adds validation and result feedback; T2.8.5 calls
-                // POST /job-postings/:jobPostingId/proposals.
+                // Validation is handled inside the modal. T2.8.5 replaces
+                // this preview callback with the proposal POST request.
                 onSubmit={() => undefined}
             />
         </main>

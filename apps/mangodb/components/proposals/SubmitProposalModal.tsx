@@ -2,10 +2,12 @@
 
 import { useCallback, useId, useState } from 'react';
 import type { JobPosting } from '@mangodb/shared';
+import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
+import { validateProposalForm, type ProposalErrors } from '@/lib/validation';
 
-// This is a UI draft, not the API request shape. T2.8.3 owns validation and
-// T2.8.5 owns translating a valid draft into the proposal endpoint's body.
+// This is a validated UI draft, not the API request shape. T2.8.5 owns
+// translating it into the proposal endpoint's body.
 export type ProposalFormDraft = {
     proposalTerms: string;
     proposalBudget: string;
@@ -25,8 +27,8 @@ type SubmitProposalModalProps = {
     isOpen: boolean;
     jobPosting: ProposalJobPosting;
     onClose: () => void;
-    // The parent decides what submit means. T2.8.3 and T2.8.5 add validation,
-    // API submission, and result handling.
+    // The parent decides what submit means. T2.8.5 adds API submission and
+    // result handling.
     onSubmit: (draft: ProposalFormDraft) => void;
 };
 
@@ -49,7 +51,16 @@ const MONTHS = [
     'Dec',
 ] as const;
 
-function formatBudget(minBudget: number | null, maxBudget: number): string {
+function formatBudget(
+    minBudget: number | null,
+    maxBudget: number | null,
+): string {
+    if (maxBudget === null) {
+        return minBudget === null
+            ? 'Not specified'
+            : NUMBER_FORMATTER.format(minBudget);
+    }
+
     if (minBudget !== null && minBudget !== maxBudget) {
         return `${NUMBER_FORMATTER.format(minBudget)} – ${NUMBER_FORMATTER.format(maxBudget)}`;
     }
@@ -77,12 +88,19 @@ export default function SubmitProposalModal({
     const [proposalTerms, setProposalTerms] = useState('');
     const [proposalBudget, setProposalBudget] = useState('');
     const [estimatedDurationMonths, setEstimatedDurationMonths] = useState('');
+    const [errors, setErrors] = useState<ProposalErrors>({});
     const titleId = useId();
+
+    // As in the certificate forms, editing a field clears its old error. The
+    // next submit will validate the new value.
+    const clearError = (field: keyof ProposalErrors) =>
+        setErrors((previous) => ({ ...previous, [field]: undefined }));
 
     const resetForm = () => {
         setProposalTerms('');
         setProposalBudget('');
         setEstimatedDurationMonths('');
+        setErrors({});
     };
 
     // One close path, so Escape and the backdrop clear the form in the same
@@ -99,11 +117,18 @@ export default function SubmitProposalModal({
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        onSubmit({
-            proposalTerms,
-            proposalBudget,
-            estimatedDurationMonths,
-        });
+
+        const draft = {
+            proposalTerms: proposalTerms.trim(),
+            proposalBudget: proposalBudget.trim(),
+            estimatedDurationMonths: estimatedDurationMonths.trim(),
+        };
+        const nextErrors = validateProposalForm(draft);
+
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
+
+        onSubmit(draft);
     };
 
     return (
@@ -179,7 +204,7 @@ export default function SubmitProposalModal({
                 </label>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-2">
                     <div>
                         <label
@@ -192,10 +217,24 @@ export default function SubmitProposalModal({
                         <textarea
                             id="proposal-terms"
                             value={proposalTerms}
-                            onChange={(event) =>
-                                setProposalTerms(event.target.value)
+                            onChange={(event) => {
+                                setProposalTerms(event.target.value);
+                                clearError('proposalTerms');
+                            }}
+                            required
+                            aria-invalid={
+                                errors.proposalTerms ? true : undefined
+                            }
+                            aria-describedby={
+                                errors.proposalTerms
+                                    ? 'proposal-terms-error'
+                                    : undefined
                             }
                             className="h-[13.36vh] px-1.5 py-1.5 w-full resize-none rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                        <FieldError
+                            message={errors.proposalTerms}
+                            id="proposal-terms-error"
                         />
                     </div>
 
@@ -212,10 +251,24 @@ export default function SubmitProposalModal({
                             type="text"
                             inputMode="decimal"
                             value={proposalBudget}
-                            onChange={(event) =>
-                                setProposalBudget(event.target.value)
+                            onChange={(event) => {
+                                setProposalBudget(event.target.value);
+                                clearError('proposalBudget');
+                            }}
+                            required
+                            aria-invalid={
+                                errors.proposalBudget ? true : undefined
+                            }
+                            aria-describedby={
+                                errors.proposalBudget
+                                    ? 'proposal-budget-error'
+                                    : undefined
                             }
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                        <FieldError
+                            message={errors.proposalBudget}
+                            id="proposal-budget-error"
                         />
                     </div>
 
@@ -230,12 +283,28 @@ export default function SubmitProposalModal({
                         <input
                             id="proposal-estimated-duration-months"
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             value={estimatedDurationMonths}
-                            onChange={(event) =>
-                                setEstimatedDurationMonths(event.target.value)
+                            onChange={(event) => {
+                                setEstimatedDurationMonths(event.target.value);
+                                clearError('estimatedDurationMonths');
+                            }}
+                            required
+                            aria-invalid={
+                                errors.estimatedDurationMonths
+                                    ? true
+                                    : undefined
+                            }
+                            aria-describedby={
+                                errors.estimatedDurationMonths
+                                    ? 'proposal-estimated-duration-months-error'
+                                    : undefined
                             }
                             className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                        <FieldError
+                            message={errors.estimatedDurationMonths}
+                            id="proposal-estimated-duration-months-error"
                         />
                     </div>
                 </div>
