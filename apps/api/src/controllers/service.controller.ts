@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { Prisma } from '../generated/prisma/client';
+import type { Prisma } from '../generated/prisma/client';
 import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
@@ -182,11 +182,12 @@ export async function getService(req: Request, res: Response): Promise<void> {
     res.status(200).json(toListing(listing));
 }
 
-// DELETE /services/:listingId. Hard delete: nothing in the schema needs a
-// service listing row to still exist, and listingCategory / the service row
-// cascade with it (prisma/schema.prisma onDelete: Cascade), so there is
-// nothing else to clean up — unlike portfolio there is no stored image to
-// remove either.
+// DELETE /services/:listingId. Hard delete. listingCategory, the service row
+// and any proposals on the listing cascade with it (prisma/schema.prisma
+// onDelete: Cascade). A project blocks the delete instead (project ->
+// proposal is onDelete: Restrict), so a service with projects is refused with
+// 409 before the write (US2-4). Unlike portfolio there is no stored image to
+// remove.
 export async function deleteListing(
     req: Request,
     res: Response,
@@ -197,6 +198,15 @@ export async function deleteListing(
     // Checked before the write, same split as deletePortfolio: 404 for an
     // unknown/non-SERVICE id, 403 for another company's.
     await assertListingOwned(listingId, companyId);
+
+    // US2-4: a service with at least one project linked to it can't be
+    // deleted. A project links to the listing through its proposal.
+    const projectCount = await prisma.project.count({
+        where: { proposal: { listingId } },
+    });
+    if (projectCount > 0) {
+        throw ApiError.conflict('A service with projects cannot be deleted');
+    }
 
     try {
         await prisma.listing.delete({
