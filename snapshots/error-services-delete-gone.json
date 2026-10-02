@@ -1,0 +1,10 @@
+{
+    "request": "DELETE /services/<delete_probe_id>",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Service listing not found"
+        }
+    }
+}
