@@ -1,5 +1,5 @@
 {
-    "request": "GET /providers?q=<run>",
+    "request": "GET /companies?q=<run>",
     "status": 200,
     "body": {
         "items": [

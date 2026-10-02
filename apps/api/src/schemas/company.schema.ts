@@ -116,3 +116,13 @@ export const changeCredentialsSchema = z
     );
 
 export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;
+
+// US3-6. Same paging bounds as GET /admin/companies, so one request cannot
+// pull every company into memory. Filter and sort params come later.
+export const companyListQuerySchema = z.object({
+    // Trimmed, so a keyword of only spaces reads as no keyword. The cap also
+    // bounds how many words one request can split into.
+    q: z.string().trim().max(100).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(12),
+});

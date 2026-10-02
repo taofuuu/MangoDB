@@ -336,8 +336,12 @@ snap error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
 
 echo
-echo "providers"
-snap providers-list GET "/providers?page=1&pageSize=2" \
+echo "companies"
+snap companies-list GET "/companies?page=1&pageSize=2" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+# T3.6.13: the seeded Provider and Receiver share "Snapshot Seed", so both come
+# back. The seeded admin shares it too, and stays out.
+snap companies-search-both-types GET "/companies?q=Snapshot%20Seed" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ "$READ_ONLY" = 1 ]; then
@@ -754,9 +758,9 @@ snap services-search-default GET "/services?page=1&pageSize=3" \
 snap services-search-keyword GET "/services?q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# ADR 0009: a Provider card lists every tech its services use. providers-list
+# ADR 0009: a company card lists every tech its services use. companies-list
 # runs before the probe exists, so this is where the stack shows.
-snap providers-search-service-stack GET "/providers?q=$RUN" \
+snap companies-search-service-stack GET "/companies?q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T3.1.11: no match is a 200 with an empty page, not an error.

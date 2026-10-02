@@ -1,5 +1,5 @@
 {
-    "request": "GET /providers?page=1&pageSize=2",
+    "request": "GET /companies?page=1&pageSize=2",
     "status": 200,
     "body": {
         "items": [
@@ -30,8 +30,8 @@
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 30,
-            "totalPages": 15
+            "totalItems": 52,
+            "totalPages": 26
         }
     }
 }
