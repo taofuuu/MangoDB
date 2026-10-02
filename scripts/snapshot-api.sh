@@ -708,20 +708,13 @@ snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
-# 11. Reject a proposal
+# 12. Reject a proposal
 # ---------------------------------------------------------------------------
 
 echo
 echo "proposals"
-# The probe proposal: the seeded provider on the receiver's probe job posting,
-# which is OPEN again by now. Inserted straight into the database because no
-# endpoint submits a proposal yet (US2-8). Raw SQL, because the shared database
-# has a NOT NULL duration column that schema.prisma does not know about yet.
-# Deleting the job posting in cleanup deletes this row too (onDelete: Cascade).
-PROPOSAL_ID=""
-if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    PROPOSAL_ID="$(db_value "prisma.\$queryRawUnsafe('INSERT INTO proposal (listing_id, sender_id, proposal_budget, proposal_terms, proposal_status, duration) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING proposal_id', $NEW_JOB_POSTING_ID, $PROVIDER_ID, 1000, 'Snapshot Probe proposal $RUN', 'PENDING', 1).then((rows) => rows[0].proposal_id)")"
-fi
+PROPOSAL_ID="$NEW_PROPOSAL_ID"
+
 
 if [ -n "$PROPOSAL_ID" ]; then
     SUBS+=(--id "proposal_id=$PROPOSAL_ID")
