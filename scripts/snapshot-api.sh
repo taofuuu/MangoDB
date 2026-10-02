@@ -87,6 +87,8 @@ RECEIVER_ID=""
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
 DELETED_SERVICE_ID=""
+# Service delete (US2-4): the probe the delete section removes.
+DELETE_PROBE_ID=""
 TOKEN_C=""
 C_LIVE=0
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
@@ -133,7 +135,7 @@ cleanup() {
     local listing_ids
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
-        $REUSE_SERVICE_ID)"
+        $REUSE_SERVICE_ID $DELETE_PROBE_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -490,6 +492,52 @@ else
     echo
     echo "--no-uploads: skipping the portfolio and certificate lifecycles"
 fi
+
+# ---------------------------------------------------------------------------
+# 6b. Delete a service (US2-4). Before section 7, because probe A is the
+# "other Provider" for the 403 and section 7 deletes it.
+# ---------------------------------------------------------------------------
+
+echo
+echo "service delete"
+# Its own probe, so the search snapshots later never see it.
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe delete $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETE_PROBE_ID="$(jget listingId)"
+if [ -z "$DELETE_PROBE_ID" ]; then
+    echo "could not create the delete probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID")
+
+snap error-services-delete-unauthorized DELETE "/services/$DELETE_PROBE_ID"
+
+snap error-services-delete-invalid-id DELETE /services/not-a-number \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-services-delete-not-found DELETE /services/2147483647 \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# requireRole('provider') stops a Receiver before the ownership check.
+snap error-services-delete-wrong-role DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Probe A is a Provider, but not the owner. It logged out in section 5, so
+# it signs in again first.
+api POST /auth/login -H 'Content-Type: application/json' \
+    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
+TOKEN_A="$(jget accessToken)"
+snap error-services-delete-forbidden DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_A")"
+
+snap services-delete DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Hard delete, so a second try is a 404.
+snap error-services-delete-gone DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
 # 7. Admin writes. Last, because the final one deletes company A.

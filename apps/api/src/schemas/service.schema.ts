@@ -36,3 +36,10 @@ export const serviceListQuerySchema = z.object({
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });
+
+// Path params arrive as strings, so this coerces before the integer check —
+// same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
+// /services/:listingId.
+export const listingIdParamSchema = z.object({
+    listingId: z.coerce.number().int().positive().max(INT_MAX),
+});

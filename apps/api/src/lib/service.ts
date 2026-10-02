@@ -4,6 +4,7 @@
 import type { ListingStatus, ServiceSummary } from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 import { prisma } from './prisma';
+import { ApiError } from './ApiError';
 
 export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUSES[1];
 
@@ -104,6 +105,31 @@ export function toListing(row: SelectedListing): Listing {
         categoryIds: row.listingCategory.map((c) => c.catId),
         techStack: toTechStackNames(row.service),
     };
+}
+
+// Checked before any write, same split as assertPortfolioOwned (lib/
+// portfolio.ts): 404 for an id that doesn't exist or isn't a SERVICE
+// listing, 403 for one that exists but belongs to another company. A JOB
+// listing with this id is treated as not-found here — it isn't this
+// endpoint's resource, and 403 would wrongly confirm it exists.
+export async function assertListingOwned(
+    listingId: number,
+    companyId: number,
+): Promise<void> {
+    const listing = await prisma.listing.findUnique({
+        where: { listingId },
+        select: { companyId: true, listingType: true },
+    });
+
+    if (!listing || listing.listingType !== 'SERVICE') {
+        throw ApiError.notFound('Service listing not found');
+    }
+
+    // companyId is nullable on an orphaned listing, which never equals a
+    // real companyId, so that case lands on 403 without a branch of its own.
+    if (listing.companyId !== companyId) {
+        throw ApiError.forbidden('This listing belongs to another company');
+    }
 }
 
 // US3-1. What one service search card needs. Only these company fields, never
