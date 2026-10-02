@@ -4,6 +4,12 @@ import { z } from 'zod';
 // and fails at the database as a 500. Same ceiling portfolio uses for ids.
 const INT_MAX = 2147483647;
 
+// One category or tech name. cat_name and tech_stack_name are both
+// VarChar(100), so one rule fits both (conventions §12).
+const nameField = z.string().trim().max(100);
+// How many names one listing or one filter may carry.
+const NAME_LIST_MAX = 20;
+
 export const createListingSchema = z
     .object({
         listingTitle: z.string().trim().min(1).max(255),
@@ -15,10 +21,7 @@ export const createListingSchema = z
             .default([]),
         // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
         // name is a mistake in the body, so it is a 400 rather than dropped.
-        techStack: z
-            .array(z.string().trim().min(1).max(100))
-            .max(20)
-            .default([]),
+        techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX).default([]),
     })
     .refine((b) => b.minBudget === undefined || b.minBudget <= b.maxBudget, {
         message: 'minBudget must be less than or equal to maxBudget',
@@ -33,8 +36,8 @@ export type CreateListingInput = z.infer<typeof createListingSchema>;
 const nameList = z.preprocess(
     (value) => (typeof value === 'string' ? [value] : value),
     z
-        .array(z.string().trim().max(100))
-        .max(20)
+        .array(nameField)
+        .max(NAME_LIST_MAX)
         .transform((names) => names.filter(Boolean)),
 );
 
@@ -71,6 +74,8 @@ export const serviceListQuerySchema = z
             path: ['minPrice'],
         },
     );
+
+export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
 
 // Path params arrive as strings, so this coerces before the integer check —
 // same reason portfolioIdParamSchema needs z.coerce. Used by DELETE

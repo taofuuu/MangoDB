@@ -18,6 +18,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createListingSchema,
     listingIdParamSchema,
+    type ServiceListQuery,
     serviceListQuerySchema,
 } from '../schemas/service.schema';
 
@@ -121,16 +122,19 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
     };
 }
 
+// Everything in the query but the keyword and paging, typed from the schema
+// so a new filter is added in one place.
+type ServiceFilters = Omit<ServiceListQuery, 'q' | 'page' | 'pageSize'>;
+
 // US3-2. Picking two names in one group finds services with either of them,
 // so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
 // so a filter for "react" still finds a service that stored "React".
-function matchesFilters(filters: {
-    category: string[];
-    techStack: string[];
-    minPrice: number | undefined;
-    maxPrice: number | undefined;
-}): Prisma.ListingWhereInput[] {
-    const { category, techStack, minPrice, maxPrice } = filters;
+function matchesFilters({
+    category = [],
+    techStack = [],
+    minPrice,
+    maxPrice,
+}: ServiceFilters): Prisma.ListingWhereInput[] {
     const where: Prisma.ListingWhereInput[] = [];
     if (category.length > 0) {
         where.push({
@@ -181,15 +185,10 @@ function matchesFilters(filters: {
 // US3-1. One page of open services for the search screen, newest first. count
 // and findMany run in one transaction so the pagination matches the page.
 export async function listServices(req: Request, res: Response): Promise<void> {
-    const {
-        q,
-        category = [],
-        techStack = [],
-        minPrice,
-        maxPrice,
-        page,
-        pageSize,
-    } = parseQuery(serviceListQuerySchema, req.query);
+    const { q, page, pageSize, ...filters } = parseQuery(
+        serviceListQuerySchema,
+        req.query,
+    );
     // Each word is matched on its own, so "react payment" finds a service
     // whose title says payment and whose company's stack has React.
     const words = q?.split(/\s+/).filter(Boolean) ?? [];
@@ -201,10 +200,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         company: { deletedAt: null },
         // T3.2.6. Keyword words and filters share one AND list, so a service
         // must pass all of them. Two AND keys would let one replace the other.
-        AND: [
-            ...words.map(matchesKeyword),
-            ...matchesFilters({ category, techStack, minPrice, maxPrice }),
-        ],
+        AND: [...words.map(matchesKeyword), ...matchesFilters(filters)],
     };
     const [totalItems, listings] = await prisma.$transaction([
         prisma.listing.count({ where }),
