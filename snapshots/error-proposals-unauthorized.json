@@ -1,0 +1,10 @@
+{
+    "request": "POST /job-postings/<job_posting_id>/proposals",
+    "status": 401,
+    "body": {
+        "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Missing or malformed Authorization header"
+        }
+    }
+}

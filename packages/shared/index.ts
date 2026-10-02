@@ -35,7 +35,8 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
-export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
 // The frontend switches on these; a rename is a breaking change for both sides.
@@ -139,8 +140,8 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-1. One Provider search result card. categories come from the company's
-// service listings; techStack is company-wide, not per service.
+// US3-1. One Provider search result card. categories and techStack are every
+// one used by the company's services (ADR 0009: tech stack is per service).
 export interface ProviderSummary {
     companyId: number;
     companyName: string;
@@ -157,18 +158,18 @@ export interface ProviderListResponse {
 }
 
 // US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is company-wide.
+// the company that offers it (ADR 0001). techStack is this service's own.
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
+    techStack: string[];
     company: {
         companyId: number;
         companyName: string;
         companyPhoto: string | null;
-        techStack: string[];
     };
 }
 
@@ -292,6 +293,24 @@ export interface CreateJobPostingRequest {
     duration?: string | null | undefined;
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
+}
+// US2-8. A Provider's proposal on a job posting.
+export interface Proposal {
+    proposalId: number;
+    jobPostingId: number;
+    providerId: number;
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
+    proposalStatus: ProposalStatus;
+    createdAt: string;
+}
+
+// What POST /job-postings/:jobPostingId/proposals accepts.
+export interface CreateProposalRequest {
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
 }
 
 // The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).

@@ -6,39 +6,32 @@
             {
                 "accountType": "PROVIDER",
                 "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "companyDescription": null,
+                "companyId": 231,
+                "companyName": "Acme Solutions Ltd.",
+                "companyPhoto": null,
+                "techStack": []
+            },
+            {
+                "accountType": "PROVIDER",
+                "categories": [
                     "Mobile App Development"
                 ],
                 "companyDescription": "Mobile App Development Agency (iOS/Android)",
                 "companyId": 3,
                 "companyName": "AppSynth",
                 "companyPhoto": null,
-                "techStack": [
-                    "Flutter",
-                    "Kotlin",
-                    "Swift"
-                ]
-            },
-            {
-                "accountType": "PROVIDER",
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
-                "companyId": 11,
-                "companyName": "CloudScale Solutions",
-                "companyPhoto": null,
-                "techStack": [
-                    "AWS Cloud",
-                    "Docker",
-                    "Kubernetes"
-                ]
+                "techStack": []
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 26,
-            "totalPages": 13
+            "totalItems": 30,
+            "totalPages": 15
         }
     }
 }

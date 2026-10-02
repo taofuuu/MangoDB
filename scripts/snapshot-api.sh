@@ -80,12 +80,19 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+NEW_PROPOSAL_ID=""
+PROVIDER_ID=""
+RECEIVER_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
 DELETED_SERVICE_ID=""
 TOKEN_C=""
 C_LIVE=0
+# ADR 0009: a second probe whose tech name differs only in case, and 1 once
+# tech names starting with the run id may exist in tech_stack.
+REUSE_SERVICE_ID=""
+TECH_STACK_SET=0
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -125,9 +132,15 @@ cleanup() {
     # ids that were never set, so only real ones reach the query.
     local listing_ids
     # shellcheck disable=SC2086
-    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID)"
+    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
+        $REUSE_SERVICE_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
+    fi
+    # Deleting the services removed their links, but not the tech names. Only
+    # names this run made start with its id, so no real service loses a tech.
+    if [ "$TECH_STACK_SET" = 1 ]; then
+        run_db "prisma.techStack.deleteMany({ where: { techStackName: { startsWith: '$RUN' } } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -282,6 +295,7 @@ PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
 snap companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+RECEIVER_ID="$(jget company_id)"
 snap error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap auth-check-availability-free POST /auth/check-availability \
@@ -574,16 +588,90 @@ snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
-# 10. Service search (US3-1)
+# 10. Submit proposals to open job postings (US2-8)
+# ---------------------------------------------------------------------------
+
+echo
+echo "submit proposals"
+
+snap error-proposals-unauthorized POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-forbidden-receiver POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-invalid-id POST /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-not-found POST /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-validation POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-proposals-own-posting POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Restore owner back to Receiver immediately after own-posting probe
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+fi
+
+snap error-proposals-closed POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Ensure posting is OPEN and owned by Receiver before creating valid proposal
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID, listingStatus: 'OPEN' } })"
+fi
+
+snap proposals-create POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+NEW_PROPOSAL_ID="$(jget proposalId)"
+
+if [ -n "$NEW_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$NEW_PROPOSAL_ID")
+    resnap proposals-create
+fi
+
+snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+
+# ---------------------------------------------------------------------------
+# 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
 
 echo
 echo "service search"
 # The probe: the newest open service, and the only one with $RUN in its title.
-# Created with api, not snap: POST /services has its own tests (US2-1).
+# Created with api, not snap: POST /services has its own tests (US2-1). Its
+# tech names start with the run id, so cleanup can delete them safely.
+TECH_STACK_SET=1
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
-    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1]}" >/dev/null
+    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1],\"techStack\":[\"${RUN}-React\",\"${RUN}-Node.js\"]}" >/dev/null
 NEW_SERVICE_ID="$(jget listingId)"
 if [ -z "$NEW_SERVICE_ID" ]; then
     echo "could not create the probe service:" >&2
@@ -618,6 +706,11 @@ snap services-search-default GET "/services?page=1&pageSize=3" \
 snap services-search-keyword GET "/services?q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# ADR 0009: a Provider card lists every tech its services use. providers-list
+# runs before the probe exists, so this is where the stack shows.
+snap providers-search-service-stack GET "/providers?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.1.11: no match is a 200 with an empty page, not an error.
 snap services-search-no-match GET "/services?q=${RUN}_none" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -631,21 +724,25 @@ snap services-search-closed GET "/services?q=$RUN" \
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# ADR 0009: "<run>-react" links to the probe's "<run>-React" instead of
+# adding a second tech, so the answer shows the stored spelling.
+snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe reuse service\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000,\"techStack\":[\"${RUN}-react\"]}"
+REUSE_SERVICE_ID="$(jget listingId)"
+if [ -n "$REUSE_SERVICE_ID" ]; then
+    SUBS+=(--id "listing_id=$REUSE_SERVICE_ID")
+    resnap services-create-tech-reuse
+fi
+
 # ---------------------------------------------------------------------------
-# 11. Reject a proposal
+# 12. Reject a proposal
 # ---------------------------------------------------------------------------
 
 echo
 echo "proposals"
-# The probe proposal: the seeded provider on the receiver's probe job posting,
-# which is OPEN again by now. Inserted straight into the database because no
-# endpoint submits a proposal yet (US2-8). Raw SQL, because the shared database
-# has a NOT NULL duration column that schema.prisma does not know about yet.
-# Deleting the job posting in cleanup deletes this row too (onDelete: Cascade).
-PROPOSAL_ID=""
-if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    PROPOSAL_ID="$(db_value "prisma.\$queryRawUnsafe('INSERT INTO proposal (listing_id, sender_id, proposal_budget, proposal_terms, proposal_status, duration) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING proposal_id', $NEW_JOB_POSTING_ID, $PROVIDER_ID, 1000, 'Snapshot Probe proposal $RUN', 'PENDING', 1).then((rows) => rows[0].proposal_id)")"
-fi
+PROPOSAL_ID="$NEW_PROPOSAL_ID"
+
 
 if [ -n "$PROPOSAL_ID" ]; then
     SUBS+=(--id "proposal_id=$PROPOSAL_ID")

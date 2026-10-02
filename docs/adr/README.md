@@ -63,3 +63,4 @@ record at all.
 | [0006](0006-proposal-text-only-no-upload.md)      | A proposal is text only, with no file upload                             | Accepted |
 | [0007](0007-proposal-duration-in-months.md)       | Proposal duration is a number of months, in steps of 0.5                 | Accepted |
 | [0008](0008-one-search-bar-per-page.md)           | No search bar in the navbar; one search bar per page, one thing per bar  | Accepted |
+| [0009](0009-tech-stack-belongs-to-a-service.md)   | Tech stack belongs to a service, not to the Provider                     | Accepted |
