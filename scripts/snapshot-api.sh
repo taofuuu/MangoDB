@@ -80,6 +80,9 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+NEW_PROPOSAL_ID=""
+PROVIDER_ID=""
+RECEIVER_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
@@ -282,6 +285,7 @@ PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
 snap companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+RECEIVER_ID="$(jget company_id)"
 snap error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap auth-check-availability-free POST /auth/check-availability \
@@ -574,7 +578,79 @@ snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
-# 10. Service search (US3-1)
+# 10. Submit proposals to open job postings (US2-8)
+# ---------------------------------------------------------------------------
+
+echo
+echo "submit proposals"
+
+snap error-proposals-unauthorized POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-forbidden-receiver POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-invalid-id POST /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-not-found POST /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-validation POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-proposals-own-posting POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Restore owner back to Receiver immediately after own-posting probe
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+fi
+
+snap error-proposals-closed POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Ensure posting is OPEN and owned by Receiver before creating valid proposal
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID, listingStatus: 'OPEN' } })"
+fi
+
+snap proposals-create POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+NEW_PROPOSAL_ID="$(jget proposalId)"
+
+if [ -n "$NEW_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$NEW_PROPOSAL_ID")
+    resnap proposals-create
+fi
+
+snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+
+# ---------------------------------------------------------------------------
+# 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
 
 echo
@@ -632,20 +708,13 @@ snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
-# 11. Reject a proposal
+# 12. Reject a proposal
 # ---------------------------------------------------------------------------
 
 echo
 echo "proposals"
-# The probe proposal: the seeded provider on the receiver's probe job posting,
-# which is OPEN again by now. Inserted straight into the database because no
-# endpoint submits a proposal yet (US2-8). Raw SQL, because the shared database
-# has a NOT NULL duration column that schema.prisma does not know about yet.
-# Deleting the job posting in cleanup deletes this row too (onDelete: Cascade).
-PROPOSAL_ID=""
-if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    PROPOSAL_ID="$(db_value "prisma.\$queryRawUnsafe('INSERT INTO proposal (listing_id, sender_id, proposal_budget, proposal_terms, proposal_status, duration) VALUES (\$1, \$2, \$3, \$4, \$5, \$6) RETURNING proposal_id', $NEW_JOB_POSTING_ID, $PROVIDER_ID, 1000, 'Snapshot Probe proposal $RUN', 'PENDING', 1).then((rows) => rows[0].proposal_id)")"
-fi
+PROPOSAL_ID="$NEW_PROPOSAL_ID"
+
 
 if [ -n "$PROPOSAL_ID" ]; then
     SUBS+=(--id "proposal_id=$PROPOSAL_ID")

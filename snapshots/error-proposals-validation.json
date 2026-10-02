@@ -1,0 +1,24 @@
+{
+    "request": "POST /job-postings/<job_posting_id>/proposals",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "proposalBudget",
+                    "message": "Proposal budget must be greater than zero"
+                },
+                {
+                    "field": "proposalTerms",
+                    "message": "Proposal terms are required"
+                },
+                {
+                    "field": "duration",
+                    "message": "Duration must be in half-month increments (e.g. 0.5, 1, 1.5)"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}
