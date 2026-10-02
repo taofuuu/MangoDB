@@ -13,10 +13,11 @@ export const companySummarySelect = {
     companyDescription: true,
     companyPhoto: true,
     accountType: true,
-    // Only listings with a service row; a job posting's categories say what
-    // the company wants to hire, not what it offers.
+    // Services only; a job posting's categories say what the company wants
+    // to hire, not what it offers. A Receiver has none, so both lists are
+    // empty on its card.
     listing: {
-        where: { service: { isNot: null } },
+        where: { listingType: 'SERVICE' },
         select: {
             listingCategory: {
                 select: { category: { select: { catName: true } } },

@@ -278,9 +278,10 @@ export async function requestMyAccountDeletion(
     res.status(204).end();
 }
 
-// T3.1.8. One word matches the company, or one of its services by title,
+// US3-6. One word matches the company, or one of its services by title,
 // description, category or tech stack, ignoring case. Job postings are left
-// out: they say what the company wants to hire, not what it offers.
+// out: they say what the company wants to hire, not what it offers. So a
+// Receiver matches on its name or description only.
 function matchesKeyword(word: string): Prisma.CompanyWhereInput {
     const contains = {
         contains: escapeLike(word),
@@ -293,7 +294,7 @@ function matchesKeyword(word: string): Prisma.CompanyWhereInput {
             {
                 listing: {
                     some: {
-                        service: { isNot: null },
+                        listingType: 'SERVICE',
                         OR: [
                             { listingTitle: contains },
                             { listingDesc: contains },
@@ -321,8 +322,9 @@ function matchesKeyword(word: string): Prisma.CompanyWhereInput {
     };
 }
 
-// US3-1. One page of Providers for the search screen. count and findMany run
-// in one transaction so the pagination metadata describes the returned page.
+// T3.6.7. One page of companies for the search screen, Providers and Receivers
+// alike. count and findMany run in one transaction so the pagination metadata
+// describes the returned page.
 export async function listCompanies(
     req: Request,
     res: Response,
@@ -331,11 +333,10 @@ export async function listCompanies(
     // Each word is matched on its own, so "flutter kotlin" finds a Provider
     // whose stack has both, even though they are two separate rows.
     const words = q?.split(/\s+/).filter(Boolean) ?? [];
-    // Same rule as ownsProviderRow, by accountType rather than "has a provider
-    // row": the shared DB has an ADMIN company that owns one anyway.
-    // Search is discovery, so soft-deleted companies stay hidden.
+    // Every company but admins, same rule as GET /admin/companies. Search is
+    // discovery, so soft-deleted companies stay hidden.
     const where: Prisma.CompanyWhereInput = {
-        accountType: { in: ['PROVIDER', 'BOTH'] },
+        accountType: { not: 'ADMIN' },
         deletedAt: null,
         ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
     };
