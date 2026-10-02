@@ -369,8 +369,8 @@ export function validateConfirmPassword(
 }
 
 // Proposal validation mirrors the API boundary while keeping the form usable
-// before the submit endpoint is connected. Numeric fields stay as strings in
-// the UI so an unfinished value such as "1." is not rewritten while typing.
+// during editing. Numeric fields stay as strings in the UI so an unfinished
+// value such as "1." is not rewritten while typing.
 export function validateProposalForm(
     values: ProposalFormValues,
 ): ProposalErrors {

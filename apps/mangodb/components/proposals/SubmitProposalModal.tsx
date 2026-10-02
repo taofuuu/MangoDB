@@ -31,6 +31,16 @@ type SubmitProposalModalProps = {
     isOpen: boolean;
     jobPosting: ProposalJobPosting;
     onClose: () => void;
+    // The preview page supplies a local adapter until the T2.7 job page exists.
+    // Production callers omit this and use the real proposal API helper.
+    submitProposal?: typeof createProposal | undefined;
+};
+
+type ProposalSubmissionConfirmationModalProps = {
+    isOpen: boolean;
+    jobPosting: ProposalJobPosting;
+    proposal: Proposal;
+    onClose: () => void;
 };
 
 // Which visible input owns each validation detail returned by the API.
@@ -87,10 +97,76 @@ function formatDeadline(deadline: string | null): string {
     return `${day} ${MONTHS[month - 1]} ${year}`;
 }
 
+function ProposalSubmissionConfirmationModal({
+    isOpen,
+    jobPosting,
+    proposal,
+    onClose,
+}: ProposalSubmissionConfirmationModalProps) {
+    const titleId = useId();
+
+    return (
+        <ModalShell
+            isOpen={isOpen}
+            onClose={onClose}
+            labelledBy={titleId}
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            panelClassName="modal-scrollbar w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
+        >
+            <div className="flex items-center gap-2">
+                <MailCheck className="size-6 text-ink" aria-hidden="true" />
+                <h2 id={titleId} className="type-md">
+                    Proposal submitted
+                </h2>
+            </div>
+
+            <p className="my-[2.22vh] type-md !font-[600]">
+                Your proposal for {jobPosting.listingTitle} has been sent to{' '}
+                {jobPosting.companyName ?? 'the company'}.
+            </p>
+
+            <div>
+                <p className="type-sm text-ink">Proposal term</p>
+                <p className="mt-1 whitespace-pre-wrap type-sm text-ink">
+                    {proposal.proposalTerms}
+                </p>
+            </div>
+
+            <dl className="mt-[2.22vh] grid grid-cols-2 gap-[3vw]">
+                <div>
+                    <dt className="type-sm text-ink">Your quoted price</dt>
+                    <dd className="mt-1 type-sm text-ink">
+                        {NUMBER_FORMATTER.format(proposal.proposalBudget)}
+                    </dd>
+                </div>
+                <div>
+                    <dt className="type-sm text-ink">Estimated duration</dt>
+                    <dd className="mt-1 type-sm text-ink">
+                        {NUMBER_FORMATTER.format(proposal.duration)} months
+                    </dd>
+                </div>
+            </dl>
+
+            <hr className="mt-[2.22vh] border-line" />
+
+            <div className="flex justify-end pt-4">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="h-[4vh] w-[7vw] rounded-status bg-[var(--color-fill-muted)] type-sm font-[500] text-ink transition-colors hover:bg-[var(--color-line)]"
+                >
+                    Close
+                </button>
+            </div>
+        </ModalShell>
+    );
+}
+
 export default function SubmitProposalModal({
     isOpen,
     jobPosting,
     onClose,
+    submitProposal = createProposal,
 }: SubmitProposalModalProps) {
     const [proposalTerms, setProposalTerms] = useState('');
     const [proposalBudget, setProposalBudget] = useState('');
@@ -130,6 +206,17 @@ export default function SubmitProposalModal({
         return null;
     }
 
+    if (submittedProposal) {
+        return (
+            <ProposalSubmissionConfirmationModal
+                isOpen
+                jobPosting={jobPosting}
+                proposal={submittedProposal}
+                onClose={handleClose}
+            />
+        );
+    }
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (isSubmitting) return;
@@ -149,7 +236,7 @@ export default function SubmitProposalModal({
 
         setIsSubmitting(true);
         try {
-            const proposal = await createProposal(jobPosting.jobPostingId, {
+            const proposal = await submitProposal(jobPosting.jobPostingId, {
                 proposalTerms: draft.proposalTerms,
                 proposalBudget: Number(draft.proposalBudget),
                 duration: Number(draft.estimatedDurationMonths),
@@ -171,262 +258,190 @@ export default function SubmitProposalModal({
             isBusy={isSubmitting}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName={`modal-scrollbar w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl ${submittedProposal ? '' : 'h-[72.2222vh]'}`}
+            panelClassName="modal-scrollbar h-[72.2222vh] w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
         >
-            {submittedProposal ? (
-                <>
-                    <div className="flex items-center gap-2">
-                        <MailCheck
-                            className="size-5 text-ink"
-                            aria-hidden="true"
+            {/* -------------header----------------- */}
+            <div className="flex items-center justify-between">
+                <h2 id={titleId} className="type-lg">
+                    Submit a proposal
+                </h2>
+
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isSubmitting}
+                    aria-label="Close"
+                    className="inline-flex size-11 items-center justify-center text-ink-placeholder hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    X
+                </button>
+            </div>
+
+            <hr className="border-brand-dark/50" />
+
+            <p className="my-2 type-sm">
+                You are submitting a proposal to this job posting:
+            </p>
+
+            <section aria-label="Job posting summary">
+                <h3 className="type-sm !font-[600]">
+                    {jobPosting.listingTitle}
+                </h3>
+                {jobPosting.companyName && (
+                    <p className="mt-1 type-sm">
+                        Posted by {jobPosting.companyName}
+                    </p>
+                )}
+
+                <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <div>
+                        <dt className="type-xs text-ink-placeholder">Budget</dt>
+                        <dd className="type-xs text-ink">
+                            {formatBudget(
+                                jobPosting.minBudget,
+                                jobPosting.maxBudget,
+                            )}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="type-xs text-ink-placeholder">
+                            Deadline
+                        </dt>
+                        <dd className="type-xs text-ink">
+                            {formatDeadline(jobPosting.deadline)}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="type-xs text-ink-placeholder">
+                            Location
+                        </dt>
+                        <dd className="type-xs text-ink">
+                            {jobPosting.locationPref ?? 'Not specified'}
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+
+            <p className="my-2 type-sm !text-[12px]">*Indicates required</p>
+
+            <form onSubmit={handleSubmit} noValidate>
+                <div className="space-y-2">
+                    <div>
+                        <label
+                            htmlFor="proposal-terms"
+                            className="block type-sm"
+                        >
+                            Proposal terms*
+                        </label>
+
+                        <textarea
+                            id="proposal-terms"
+                            value={proposalTerms}
+                            onChange={(event) => {
+                                setProposalTerms(event.target.value);
+                                clearError('proposalTerms');
+                            }}
+                            required
+                            maxLength={10_000}
+                            aria-invalid={
+                                errors.proposalTerms ? true : undefined
+                            }
+                            aria-describedby={
+                                errors.proposalTerms
+                                    ? 'proposal-terms-error'
+                                    : undefined
+                            }
+                            className="h-[13.36vh] px-1.5 py-1.5 w-full resize-none rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
                         />
-                        <h2 id={titleId} className="type-sm !font-[600]">
-                            Proposal submitted
-                        </h2>
+                        <FieldError
+                            message={errors.proposalTerms}
+                            id="proposal-terms-error"
+                        />
                     </div>
-
-                    <p className="my-2 type-sm">
-                        Your proposal for {jobPosting.listingTitle} has been
-                        sent to {jobPosting.companyName ?? 'the company'}.
-                    </p>
-
-                    <div className="space-y-2">
-                        <div>
-                            <p className="type-xs text-ink-placeholder">
-                                Proposal term
-                            </p>
-                            <p className="whitespace-pre-wrap type-xs text-ink">
-                                {submittedProposal.proposalTerms}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p className="type-xs text-ink-placeholder">
-                                Your quoted price
-                            </p>
-                            <p className="type-xs text-ink">
-                                {NUMBER_FORMATTER.format(
-                                    submittedProposal.proposalBudget,
-                                )}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p className="type-xs text-ink-placeholder">
-                                Estimated duration
-                            </p>
-                            <p className="type-xs text-ink">
-                                {NUMBER_FORMATTER.format(
-                                    submittedProposal.duration,
-                                )}{' '}
-                                months
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end pt-4">
-                        <button
-                            type="button"
-                            onClick={handleClose}
-                            className="h-[4vh] w-[7vw] rounded-status bg-fill-muted type-sm font-[500] text-ink transition-colors hover:bg-line"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </>
-            ) : (
-                <>
-                    {/* -------------header----------------- */}
-                    <div className="flex items-center justify-between">
-                        <h2 id={titleId} className="type-lg">
-                            Submit a proposal
-                        </h2>
-
-                        <button
-                            type="button"
-                            onClick={handleClose}
-                            disabled={isSubmitting}
-                            aria-label="Close"
-                            className="text-ink-placeholder hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            X
-                        </button>
-                    </div>
-
-                    <hr className="border-brand-dark/50" />
-
-                    <p className="my-2 type-sm">
-                        You are submitting a proposal to this job posting:
-                    </p>
-
-                    <section aria-label="Job posting summary">
-                        <h3 className="type-sm !font-[600]">
-                            {jobPosting.listingTitle}
-                        </h3>
-                        {jobPosting.companyName && (
-                            <p className="mt-1 type-sm">
-                                Posted by {jobPosting.companyName}
-                            </p>
-                        )}
-
-                        <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            <div>
-                                <dt className="type-xs text-ink-placeholder">
-                                    Budget
-                                </dt>
-                                <dd className="type-xs text-ink">
-                                    {formatBudget(
-                                        jobPosting.minBudget,
-                                        jobPosting.maxBudget,
-                                    )}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="type-xs text-ink-placeholder">
-                                    Deadline
-                                </dt>
-                                <dd className="type-xs text-ink">
-                                    {formatDeadline(jobPosting.deadline)}
-                                </dd>
-                            </div>
-                            <div>
-                                <dt className="type-xs text-ink-placeholder">
-                                    Location
-                                </dt>
-                                <dd className="type-xs text-ink">
-                                    {jobPosting.locationPref ?? 'Not specified'}
-                                </dd>
-                            </div>
-                        </dl>
-                    </section>
 
                     <div>
-                        <label className="my-2 block type-sm !text-[12px]">
-                            *Indicates required
+                        <label
+                            htmlFor="proposal-budget"
+                            className="block type-sm"
+                        >
+                            Your quoted price*
                         </label>
+
+                        <input
+                            id="proposal-budget"
+                            type="text"
+                            inputMode="decimal"
+                            value={proposalBudget}
+                            onChange={(event) => {
+                                setProposalBudget(event.target.value);
+                                clearError('proposalBudget');
+                            }}
+                            required
+                            aria-invalid={
+                                errors.proposalBudget ? true : undefined
+                            }
+                            aria-describedby={
+                                errors.proposalBudget
+                                    ? 'proposal-budget-error'
+                                    : undefined
+                            }
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                        <FieldError
+                            message={errors.proposalBudget}
+                            id="proposal-budget-error"
+                        />
                     </div>
 
-                    <form onSubmit={handleSubmit} noValidate>
-                        <div className="space-y-2">
-                            <div>
-                                <label
-                                    htmlFor="proposal-terms"
-                                    className="block type-sm"
-                                >
-                                    Proposal terms*
-                                </label>
+                    <div>
+                        <label
+                            htmlFor="proposal-estimated-duration-months"
+                            className="block type-sm font-normal"
+                        >
+                            Estimated duration (months)*
+                        </label>
 
-                                <textarea
-                                    id="proposal-terms"
-                                    value={proposalTerms}
-                                    onChange={(event) => {
-                                        setProposalTerms(event.target.value);
-                                        clearError('proposalTerms');
-                                    }}
-                                    required
-                                    aria-invalid={
-                                        errors.proposalTerms ? true : undefined
-                                    }
-                                    aria-describedby={
-                                        errors.proposalTerms
-                                            ? 'proposal-terms-error'
-                                            : undefined
-                                    }
-                                    className="h-[13.36vh] px-1.5 py-1.5 w-full resize-none rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
-                                />
-                                <FieldError
-                                    message={errors.proposalTerms}
-                                    id="proposal-terms-error"
-                                />
-                            </div>
+                        <input
+                            id="proposal-estimated-duration-months"
+                            type="text"
+                            inputMode="decimal"
+                            value={estimatedDurationMonths}
+                            onChange={(event) => {
+                                setEstimatedDurationMonths(event.target.value);
+                                clearError('estimatedDurationMonths');
+                            }}
+                            required
+                            aria-invalid={
+                                errors.estimatedDurationMonths
+                                    ? true
+                                    : undefined
+                            }
+                            aria-describedby={
+                                errors.estimatedDurationMonths
+                                    ? 'proposal-estimated-duration-months-error'
+                                    : undefined
+                            }
+                            className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
+                        <FieldError
+                            message={errors.estimatedDurationMonths}
+                            id="proposal-estimated-duration-months-error"
+                        />
+                    </div>
+                </div>
 
-                            <div>
-                                <label
-                                    htmlFor="proposal-budget"
-                                    className="block type-sm"
-                                >
-                                    Your quoted price*
-                                </label>
+                <FieldError message={formError} />
 
-                                <input
-                                    id="proposal-budget"
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={proposalBudget}
-                                    onChange={(event) => {
-                                        setProposalBudget(event.target.value);
-                                        clearError('proposalBudget');
-                                    }}
-                                    required
-                                    aria-invalid={
-                                        errors.proposalBudget ? true : undefined
-                                    }
-                                    aria-describedby={
-                                        errors.proposalBudget
-                                            ? 'proposal-budget-error'
-                                            : undefined
-                                    }
-                                    className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
-                                />
-                                <FieldError
-                                    message={errors.proposalBudget}
-                                    id="proposal-budget-error"
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="proposal-estimated-duration-months"
-                                    className="block type-sm font-normal"
-                                >
-                                    Estimated duration (months)*
-                                </label>
-
-                                <input
-                                    id="proposal-estimated-duration-months"
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={estimatedDurationMonths}
-                                    onChange={(event) => {
-                                        setEstimatedDurationMonths(
-                                            event.target.value,
-                                        );
-                                        clearError('estimatedDurationMonths');
-                                    }}
-                                    required
-                                    aria-invalid={
-                                        errors.estimatedDurationMonths
-                                            ? true
-                                            : undefined
-                                    }
-                                    aria-describedby={
-                                        errors.estimatedDurationMonths
-                                            ? 'proposal-estimated-duration-months-error'
-                                            : undefined
-                                    }
-                                    className="h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
-                                />
-                                <FieldError
-                                    message={errors.estimatedDurationMonths}
-                                    id="proposal-estimated-duration-months-error"
-                                />
-                            </div>
-                        </div>
-
-                        <FieldError message={formError} />
-
-                        <div className="flex items-center justify-end gap-3 pt-4">
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {isSubmitting ? 'Submitting…' : 'Submit'}
-                            </button>
-                        </div>
-                    </form>
-                </>
-            )}
+                <div className="flex items-center justify-end gap-3 pt-4">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand"
+                    >
+                        {isSubmitting ? 'Submitting…' : 'Submit'}
+                    </button>
+                </div>
+            </form>
         </ModalShell>
     );
 }
