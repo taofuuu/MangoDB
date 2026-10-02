@@ -1,21 +1,17 @@
 {
-    "request": "GET /services?q=<run>",
+    "request": "GET /providers?q=<run>",
     "status": 200,
     "body": {
         "items": [
             {
+                "accountType": "PROVIDER",
                 "categories": [
                     "Web Development"
                 ],
-                "company": {
-                    "companyId": 142,
-                    "companyName": "Snapshot Seed Provider",
-                    "companyPhoto": null
-                },
-                "listingId": "<listing_id>",
-                "listingTitle": "Snapshot Probe service <run>",
-                "maxBudget": 50000,
-                "minBudget": 10000,
+                "companyDescription": null,
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null,
                 "techStack": [
                     "<run>-Node.js",
                     "<run>-React"
