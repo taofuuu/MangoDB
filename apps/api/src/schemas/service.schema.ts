@@ -27,7 +27,7 @@ export const createListingSchema = z
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 
-// US3-1. Same paging bounds as GET /providers, so one request cannot pull
+// US3-1. Same paging bounds as GET /companies, so one request cannot pull
 // every service into memory.
 export const serviceListQuerySchema = z.object({
     // Trimmed, so a keyword of only spaces reads as no keyword. The cap also
