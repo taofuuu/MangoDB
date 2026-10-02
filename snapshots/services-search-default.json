@@ -10,13 +10,16 @@
                 "company": {
                     "companyId": 142,
                     "companyName": "Snapshot Seed Provider",
-                    "companyPhoto": null,
-                    "techStack": []
+                    "companyPhoto": null
                 },
                 "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe service <run>",
                 "maxBudget": 50000,
-                "minBudget": 10000
+                "minBudget": 10000,
+                "techStack": [
+                    "<run>-Node.js",
+                    "<run>-React"
+                ]
             },
             {
                 "categories": [
@@ -26,36 +29,36 @@
                 "company": {
                     "companyId": 231,
                     "companyName": "Acme Solutions Ltd.",
-                    "companyPhoto": null,
-                    "techStack": []
-                },
-                "listingId": 61,
-                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
-                "maxBudget": 50000,
-                "minBudget": null
-            },
-            {
-                "categories": [
-                    "Mobile App Development",
-                    "Web Development"
-                ],
-                "company": {
-                    "companyId": 231,
-                    "companyName": "Acme Solutions Ltd.",
-                    "companyPhoto": null,
-                    "techStack": []
+                    "companyPhoto": null
                 },
                 "listingId": 60,
                 "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
                 "maxBudget": 50000,
-                "minBudget": null
+                "minBudget": null,
+                "techStack": []
+            },
+            {
+                "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "company": {
+                    "companyId": 231,
+                    "companyName": "Acme Solutions Ltd.",
+                    "companyPhoto": null
+                },
+                "listingId": 59,
+                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
+                "maxBudget": 50000,
+                "minBudget": 15000,
+                "techStack": []
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 3,
-            "totalItems": 20,
-            "totalPages": 7
+            "totalItems": 36,
+            "totalPages": 12
         }
     }
 }
