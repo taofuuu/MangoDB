@@ -726,6 +726,22 @@ snap error-posting-proposals-invalid-id GET /job-postings/not-a-number/proposals
 snap error-posting-proposals-not-found GET /job-postings/2147483647/proposals \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+snap error-posting-proposals-forbidden-provider GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Another Receiver: hand the posting to a different company for one call, so the
+# seeded Receiver is signed in but no longer its owner.
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-posting-proposals-forbidden-receiver GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+fi
+
 snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
