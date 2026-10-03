@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /companies/me/photo",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "photo",
+                    "message": "Choose an image first"
+                }
+            ],
+            "message": "Provide an image to upload"
+        }
+    }
+}

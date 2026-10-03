@@ -1,5 +1,5 @@
 {
-    "request": "GET /companies/me",
+    "request": "DELETE /companies/me/photo",
     "status": 200,
     "body": {
         "accountType": "PROVIDER",

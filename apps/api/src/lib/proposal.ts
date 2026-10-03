@@ -1,6 +1,8 @@
 import { ApiError } from './ApiError';
 import { prisma } from './prisma';
 import type {
+    CompanyBrief,
+    PostingProposal,
     Proposal,
     ProposalStatus,
     ListingStatus,
@@ -45,6 +47,33 @@ export function toProposal(row: SelectedProposal): Proposal {
         duration: Number(row.duration),
         proposalStatus: row.proposalStatus as ProposalStatus,
         createdAt: row.createdAt.toISOString(),
+    };
+}
+
+// US2-10. A proposal as the posting's owner sees it in the proposal list: the
+// proposal plus the sender's name and photo, so the list needs no second call
+// per row to show who each Provider is.
+export const postingProposalSelect = {
+    ...proposalSelect,
+    company: {
+        select: { companyId: true, companyName: true, companyPhoto: true },
+    },
+} as const;
+
+export type SelectedPostingProposal = SelectedProposal & {
+    company: CompanyBrief;
+};
+
+export function toPostingProposal(
+    row: SelectedPostingProposal,
+): PostingProposal {
+    return {
+        ...toProposal(row),
+        provider: {
+            companyId: row.company.companyId,
+            companyName: row.company.companyName,
+            companyPhoto: row.company.companyPhoto,
+        },
     };
 }
 
