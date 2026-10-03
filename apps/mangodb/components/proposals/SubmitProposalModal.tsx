@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useId, useState } from 'react';
-import { MailCheck } from 'lucide-react';
+import { MailCheck, X } from 'lucide-react';
 import type { JobPosting, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
@@ -31,9 +31,6 @@ type SubmitProposalModalProps = {
     isOpen: boolean;
     jobPosting: ProposalJobPosting;
     onClose: () => void;
-    // The preview page supplies a local adapter until the T2.7 job page exists.
-    // Production callers omit this and use the real proposal API helper.
-    submitProposal?: typeof createProposal | undefined;
 };
 
 type ProposalSubmissionConfirmationModalProps = {
@@ -153,7 +150,7 @@ function ProposalSubmissionConfirmationModal({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="h-[4vh] w-[7vw] rounded-status bg-[var(--color-fill-muted)] type-sm font-[500] text-ink transition-colors hover:bg-[var(--color-line)]"
+                    className="h-[4vh] min-w-[80px] rounded-status bg-fill-muted px-6 type-sm font-[500] text-ink transition-colors hover:bg-line"
                 >
                     Close
                 </button>
@@ -166,7 +163,6 @@ export default function SubmitProposalModal({
     isOpen,
     jobPosting,
     onClose,
-    submitProposal = createProposal,
 }: SubmitProposalModalProps) {
     const [proposalTerms, setProposalTerms] = useState('');
     const [proposalBudget, setProposalBudget] = useState('');
@@ -236,7 +232,7 @@ export default function SubmitProposalModal({
 
         setIsSubmitting(true);
         try {
-            const proposal = await submitProposal(jobPosting.jobPostingId, {
+            const proposal = await createProposal(jobPosting.jobPostingId, {
                 proposalTerms: draft.proposalTerms,
                 proposalBudget: Number(draft.proposalBudget),
                 duration: Number(draft.estimatedDurationMonths),
@@ -273,7 +269,7 @@ export default function SubmitProposalModal({
                     aria-label="Close"
                     className="inline-flex size-11 items-center justify-center text-ink-placeholder hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    X
+                    <X className="size-5" aria-hidden="true" />
                 </button>
             </div>
 
@@ -436,7 +432,7 @@ export default function SubmitProposalModal({
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand"
+                        className="h-[4vh] min-w-[80px] rounded-status bg-brand-dark px-6 type-sm font-[500] text-surface transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isSubmitting ? 'Submitting…' : 'Submit'}
                     </button>
