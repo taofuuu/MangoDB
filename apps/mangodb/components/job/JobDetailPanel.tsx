@@ -62,7 +62,7 @@ export default function JobDetailPanel({
 
             {/* Loading */}
             {isLoading && (
-                <div className="flex flex-1 flex-col gap-[2.5vh]">
+                <div className="flex flex-1 flex-col gap-[1vh] max-h-[72.63vh] max-w-[34vw]">
                     {/* Company */}
                     <div className="flex flex-col gap-[0.6vh]">
                         <div className="h-[2vh] w-[5vw] animate-pulse rounded bg-line" />
@@ -146,7 +146,7 @@ export default function JobDetailPanel({
                             Company
                         </span>
 
-                        <p className="type-md text-ink">
+                        <p className="type-md text-ink pl-[0.5vw]">
                             {job.companyName}
                         </p>
                     </div>
@@ -157,7 +157,7 @@ export default function JobDetailPanel({
                             Categories
                         </span>
 
-                        <div className="flex flex-wrap gap-[0.42vw]">
+                        <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
                             {job.categories?.length ? (
                                 job.categories.map((category) => (
                                     <span
@@ -189,7 +189,7 @@ export default function JobDetailPanel({
                             Description
                         </span>
 
-                        <p className="type-sm leading-relaxed text-ink">
+                        <p className="type-sm leading-relaxed text-ink pl-[0.5vw]">
                             {job.listingDesc}
                         </p>
                     </div>
@@ -200,7 +200,7 @@ export default function JobDetailPanel({
                             Budget
                         </span>
 
-                        <p className="type-md text-ink">
+                        <p className="type-md text-ink pl-[0.5vw]">
                             {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
                         </p>
                     </div>
@@ -211,7 +211,7 @@ export default function JobDetailPanel({
                             Location
                         </span>
 
-                        <p className="type-md text-ink">
+                        <p className="type-md text-ink pl-[0.5vw]">
                             {job.locationPref ?? 'No location preference'}
                         </p>
                     </div>
@@ -222,7 +222,7 @@ export default function JobDetailPanel({
                             Duration
                         </span>
 
-                        <p className="type-md text-ink">
+                        <p className="type-md text-ink pl-[0.5vw]">
                             {job.duration ?? 'Not specified'}
                         </p>
                     </div>
@@ -233,7 +233,7 @@ export default function JobDetailPanel({
                             Deadline
                         </span>
 
-                        <p className="type-md text-ink">
+                        <p className="type-md text-ink pl-[0.5vw]">
                             {job.deadline ?? 'No deadline'}
                         </p>
                     </div>

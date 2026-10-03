@@ -5,7 +5,7 @@ import {
     createJobPosting,
     getJobPosting,
     listJobPostings,
-    listMyJobPostings
+    listMyJobPostings,
     updateJobPosting,
 } from '../controllers/job-posting.controller';
 import { createProposal } from '../controllers/proposal.controller';
