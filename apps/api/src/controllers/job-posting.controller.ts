@@ -4,13 +4,18 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
+import { omitUndefined } from '../lib/objects';
 import {
     createJobPostingSchema,
     jobPostingIdParamSchema,
     jobPostingListQuerySchema,
+    MIN_BUDGET_EXCEEDS_MAX,
+    minBudgetDoesNotExceedMax,
+    updateJobPostingSchema,
 } from '../schemas/job-posting.schema';
 import {
     assertCategoriesExist,
+    assertJobPostingOwned,
     jobPostingSelect,
     toJobPosting,
 } from '../lib/jobPosting';
@@ -148,4 +153,74 @@ export async function getJobPosting(
     }
 
     res.json(toJobPosting(posting));
+}
+
+// US2-13. Edit a job posting. Only the owner may, and only while it is Open.
+// Send only the fields that change; categoryIds replaces the whole set.
+export async function updateJobPosting(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const body = parseBody(updateJobPostingSchema, req.body);
+
+    // 404 if no such posting, 403 if it is someone else's.
+    const existing = await assertJobPostingOwned(
+        jobPostingId,
+        req.auth!.companyId,
+    );
+    // Once closed, Providers' proposals were written against the old details.
+    if (existing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
+        throw ApiError.conflict('Only an open job posting can be edited');
+    }
+
+    // A PATCH may send one budget only, so the rule is checked against the
+    // stored row with the body laid over it.
+    if (!minBudgetDoesNotExceedMax({ ...existing, ...omitUndefined(body) })) {
+        throw ApiError.validationFailed([
+            { field: 'minBudget', message: MIN_BUDGET_EXCEEDS_MAX },
+        ]);
+    }
+
+    if (body.categoryIds) await assertCategoriesExist(body.categoryIds);
+
+    // listing holds the scalars. job_requirement and listing_category are
+    // child rows, written only when the body touches them.
+    const { locationPref, duration, deadline, categoryIds, ...listingFields } =
+        body;
+    const requirement = omitUndefined({
+        locationPref,
+        duration,
+        deadline:
+            deadline == null ? deadline : new Date(`${deadline}T00:00:00Z`),
+    });
+
+    const updated = await prisma.listing.update({
+        where: { listingId: jobPostingId },
+        data: {
+            ...omitUndefined(listingFields),
+            // upsert, not update: an older row may have no requirement row.
+            ...(Object.keys(requirement).length > 0
+                ? {
+                      jobRequirement: {
+                          upsert: { create: requirement, update: requirement },
+                      },
+                  }
+                : {}),
+            // Delete then create swaps the whole set; [] clears it.
+            ...(categoryIds
+                ? {
+                      listingCategory: {
+                          deleteMany: {},
+                          create: [...new Set(categoryIds)].map((catId) => ({
+                              catId,
+                          })),
+                      },
+                  }
+                : {}),
+        },
+        select: jobPostingSelect,
+    });
+
+    res.json(toJobPosting(updated));
 }

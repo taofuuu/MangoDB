@@ -4,6 +4,7 @@ import {
     createJobPosting,
     getJobPosting,
     listJobPostings,
+    updateJobPosting,
 } from '../controllers/job-posting.controller';
 import { createProposal } from '../controllers/proposal.controller';
 
@@ -25,6 +26,11 @@ jobPostingRoutes.post(
     requireRole('receiver'),
     createJobPosting,
 );
+
+// US2-13. Edit a job posting: only the owner, only while it is Open.
+// Guards: authenticated only. No requireRole: owning the posting already means
+// a Receiver, and the ownership check lives in lib/jobPosting.ts.
+jobPostingRoutes.patch('/:jobPostingId', requireAuth, updateJobPosting);
 
 // US2-8. Submit a proposal to an open job posting.
 // Guards: authenticated and holding Provider role (BOTH accounts also qualify).

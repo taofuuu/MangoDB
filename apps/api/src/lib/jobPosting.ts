@@ -95,13 +95,25 @@ export async function assertCategoriesExist(
 
 // Ownership verification helper: 404 and 403 stay separate because job postings
 // are discoverable in public listings, so hiding existence buys nothing.
+// Returns the row it read, so edit can check the status and budgets without a
+// second query.
 export async function assertJobPostingOwned(
     jobPostingId: number,
     companyId: number,
-): Promise<void> {
+): Promise<{
+    listingStatus: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+}> {
     const posting = await prisma.listing.findUnique({
         where: { listingId: jobPostingId },
-        select: { companyId: true, listingType: true },
+        select: {
+            companyId: true,
+            listingType: true,
+            listingStatus: true,
+            minBudget: true,
+            maxBudget: true,
+        },
     });
 
     if (!posting || posting.listingType !== 'JOB') {
@@ -112,4 +124,6 @@ export async function assertJobPostingOwned(
             'Insufficient permissions to access this resource',
         );
     }
+
+    return posting;
 }
