@@ -9,7 +9,9 @@ import {
 } from '../schemas/proposal.schema';
 import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
 import {
+    postingProposalSelect,
     proposalSelect,
+    toPostingProposal,
     toProposal,
     acceptProposal,
     rejectProposal,
@@ -69,6 +71,33 @@ export async function createProposal(
         }
         throw err;
     }
+}
+
+// US2-11. Every proposal on one job posting, newest first, each with a short
+// profile of its Provider. Soft-deleted Providers are kept: a proposal is
+// history, not discovery (see Company.deletedAt).
+export async function listPostingProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+
+    const posting = await prisma.listing.findUnique({
+        where: { listingId: jobPostingId },
+        select: { listingType: true },
+    });
+
+    if (!posting || posting.listingType !== 'JOB') {
+        throw ApiError.notFound('Job posting not found');
+    }
+
+    const proposals = await prisma.proposal.findMany({
+        where: { listingId: jobPostingId },
+        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+        select: postingProposalSelect,
+    });
+
+    res.json(proposals.map(toPostingProposal));
 }
 
 export async function acceptProposalHandler(

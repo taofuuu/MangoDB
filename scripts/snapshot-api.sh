@@ -717,6 +717,18 @@ snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
 
+# US2-11. The proposals on the posting: the one just created, with its Provider.
+snap error-posting-proposals-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID/proposals"
+
+snap error-posting-proposals-invalid-id GET /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-posting-proposals-not-found GET /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
 # ---------------------------------------------------------------------------

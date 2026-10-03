@@ -306,6 +306,16 @@ export interface Proposal {
     createdAt: string;
 }
 
+// US2-11. One row of GET /job-postings/:jobPostingId/proposals: the proposal,
+// with a short profile of the Provider that sent it so the Receiver can choose.
+export interface PostingProposal extends Proposal {
+    provider: {
+        companyId: number;
+        companyName: string;
+        companyPhoto: string | null;
+    };
+}
+
 // What POST /job-postings/:jobPostingId/proposals accepts.
 export interface CreateProposalRequest {
     proposalBudget: number;
