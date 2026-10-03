@@ -100,6 +100,8 @@ FILTER_WEB_ID=""
 FILTER_MOBILE_ID=""
 FILTER_WIDE_ID=""
 FILTER_NO_MIN_ID=""
+# Close job postings (US2-14): a second probe posting, with one pending proposal.
+CLOSE_POSTING_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -141,7 +143,7 @@ cleanup() {
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
-        $FILTER_WIDE_ID $FILTER_NO_MIN_ID)"
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -982,6 +984,60 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
 else
     echo "  --  skip   PATCH /job-postings/:jobPostingId (no probe posting)"
 fi
+
+# ---------------------------------------------------------------------------
+# 15. Close job postings (US2-14)
+# ---------------------------------------------------------------------------
+
+echo
+echo "close job postings"
+# A fresh posting, because section 8's has only a rejected proposal and the
+# provider cannot send it a second one. Created with api, not snap: POST
+# /job-postings has its own tests (US2-6).
+api POST /job-postings -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Snapshot Probe job posting to close","listingDesc":"created by scripts/snapshot-api.sh","maxBudget":100000}' >/dev/null
+CLOSE_POSTING_ID="$(jget jobPostingId)"
+if [ -z "$CLOSE_POSTING_ID" ]; then
+    echo "could not create the close probe posting:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "job_posting_id=$CLOSE_POSTING_ID")
+
+api POST "/job-postings/$CLOSE_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":90000,"proposalTerms":"Pending until the posting closes.","duration":1}' >/dev/null
+CLOSE_PROPOSAL_ID="$(jget proposalId)"
+if [ -z "$CLOSE_PROPOSAL_ID" ]; then
+    echo "could not create the close probe proposal:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "proposal_id=$CLOSE_PROPOSAL_ID")
+
+snap error-job-postings-close-unauthorized POST "/job-postings/$CLOSE_POSTING_ID/close"
+
+snap error-job-postings-close-not-found POST /job-postings/2147483647/close \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T2.14.8: the provider can see the posting but does not own it.
+snap error-job-postings-close-forbidden POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# T2.14.6: the answer is the posting, now CLOSED.
+snap job-postings-close POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T2.14.6: the proposal was rejected along with it. Nothing reads a proposal's
+# status yet, so accept stands in: it checks the proposal before the posting,
+# and a still-pending one would fail on the closed posting instead.
+snap error-job-postings-close-rejected-proposal POST "/proposals/$CLOSE_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Closing twice is a state conflict, not a second success.
+snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
