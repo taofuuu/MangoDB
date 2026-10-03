@@ -74,7 +74,7 @@ export async function createProposal(
     }
 }
 
-// US2-11. Every proposal on one job posting, newest first, each with a short
+// US2-10. Every proposal on one job posting, newest first, each with a short
 // profile of its Provider. Soft-deleted Providers are kept: a proposal is
 // history, not discovery (see Company.deletedAt).
 // Only the posting's owner may read them: the list carries every competing
