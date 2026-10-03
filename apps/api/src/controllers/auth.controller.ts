@@ -73,7 +73,15 @@ async function verifyCredentials(
 // token as well as the company, which is why this response wraps.
 export async function register(req: Request, res: Response): Promise<void> {
     const body = parseBody(registerSchema, req.body);
-    const { companyType, accountType, password, ...rest } = body;
+    // tosAccepted is pulled out so it is not spread into the row: the schema
+    // has already guaranteed it is true, and what gets stored is when.
+    const {
+        companyType,
+        accountType,
+        password,
+        tosAccepted: _tosAccepted,
+        ...rest
+    } = body;
 
     // Reports both collisions at once; an index only fails on the first.
     await assertCompanyIdentityAvailable({
@@ -97,6 +105,9 @@ export async function register(req: Request, res: Response): Promise<void> {
                 website: rest.website ?? null,
                 accountType,
                 password: await hashPassword(password),
+                // Set here, inside the same create as the company, so a
+                // registration that fails stores no consent either.
+                tosAcceptedAt: new Date(),
                 companyType: {
                     create: companyType.map((tag) => ({ companyType: tag })),
                 },

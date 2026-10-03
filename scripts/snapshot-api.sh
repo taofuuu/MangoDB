@@ -367,7 +367,7 @@ snap error-register-validation POST /auth/register \
     -H 'Content-Type: application/json' \
     -d '{"companyName":"","username":"A B","email":"nope","password":"short","phone":"12","accountType":"WIZARD","companyType":[]}'
 
-REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}"
+REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}"
 
 snap auth-register POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
@@ -399,7 +399,7 @@ echo
 echo "self-service deletion"
 snap auth-register-receiver POST /auth/register \
     -H 'Content-Type: application/json' \
-    -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"]}"
+    -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
 SUBS+=(--id "company_id=$(jget company.company_id)")
@@ -741,7 +741,7 @@ SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
 # Probe C: a Provider that deletes itself. A soft delete leaves its service
 # OPEN, so only the deletedAt filter can keep it out of the results below.
 api POST /auth/register -H 'Content-Type: application/json' \
-    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}" >/dev/null
+    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}" >/dev/null
 TOKEN_C="$(jget accessToken)"
 if [ -z "$TOKEN_C" ]; then
     echo "could not register probe C:" >&2

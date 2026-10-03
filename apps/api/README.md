@@ -217,6 +217,11 @@ password: `companyProfileSelect` in `src/lib/companyProfile.ts` names the
 columns that may be returned, and `toCompanyProfile` flattens the tag rows.
 Reuse both for any endpoint that returns a company — US1-4 included.
 
+Consent to the Terms of Service is part of the body: `tosAccepted` must be
+`true` or the request is a `400`. On success the handler writes
+`tos_accepted_at` in the same `create`, so a stored timestamp always means a
+company that registered and consented.
+
 Duplicate usernames and emails are caught twice, on purpose.
 `assertCompanyIdentityAvailable` in `src/lib/companyIdentity.ts` runs the
 case-insensitive pre-check before the insert, so a caller colliding on both
