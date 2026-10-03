@@ -1,0 +1,24 @@
+{
+    "request": "PATCH /job-postings/<job_posting_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "listingTitle",
+                    "message": "Title is required"
+                },
+                {
+                    "field": "maxBudget",
+                    "message": "Maximum budget must be greater than zero"
+                },
+                {
+                    "field": "deadline",
+                    "message": "Deadline cannot be in the past"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

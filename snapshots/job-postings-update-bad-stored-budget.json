@@ -1,0 +1,23 @@
+{
+    "request": "PATCH /job-postings/<job_posting_id>",
+    "status": 200,
+    "body": {
+        "categories": [
+            "Mobile App Development"
+        ],
+        "categoryIds": [
+            2
+        ],
+        "companyId": 143,
+        "createdAt": "<timestamp>",
+        "deadline": "2029-06-30",
+        "duration": "2 Months",
+        "jobPostingId": "<job_posting_id>",
+        "listingDesc": "Edited while the stored budgets are wrong",
+        "listingStatus": "OPEN",
+        "listingTitle": "Snapshot Probe job posting edited",
+        "locationPref": "Remote",
+        "maxBudget": 200000,
+        "minBudget": 300000
+    }
+}

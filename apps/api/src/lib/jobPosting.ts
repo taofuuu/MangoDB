@@ -70,15 +70,50 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
     };
 }
 
+// Create and edit both take categoryIds, so both check them here: an unknown
+// id is a 400 on the field rather than a foreign key error from the database.
+export async function assertCategoriesExist(
+    categoryIds: number[],
+): Promise<void> {
+    const uniqueCatIds = [...new Set(categoryIds)];
+    if (uniqueCatIds.length === 0) return;
+
+    const existingCats = await prisma.category.findMany({
+        where: { catId: { in: uniqueCatIds } },
+        select: { catId: true },
+    });
+
+    if (existingCats.length !== uniqueCatIds.length) {
+        throw ApiError.validationFailed([
+            {
+                field: 'categoryIds',
+                message: 'One or more selected categories do not exist',
+            },
+        ]);
+    }
+}
+
 // Ownership verification helper: 404 and 403 stay separate because job postings
 // are discoverable in public listings, so hiding existence buys nothing.
+// Returns the row it read, so edit can check the status and budgets without a
+// second query.
 export async function assertJobPostingOwned(
     jobPostingId: number,
     companyId: number,
-): Promise<void> {
+): Promise<{
+    listingStatus: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+}> {
     const posting = await prisma.listing.findUnique({
         where: { listingId: jobPostingId },
-        select: { companyId: true, listingType: true },
+        select: {
+            companyId: true,
+            listingType: true,
+            listingStatus: true,
+            minBudget: true,
+            maxBudget: true,
+        },
     });
 
     if (!posting || posting.listingType !== 'JOB') {
@@ -89,4 +124,6 @@ export async function assertJobPostingOwned(
             'Insufficient permissions to access this resource',
         );
     }
+
+    return posting;
 }
