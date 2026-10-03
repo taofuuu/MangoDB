@@ -29,7 +29,7 @@ jobPostingRoutes.post(
     createJobPosting,
 );
 
-// US2-11. List the proposals on one job posting, so its Receiver can pick one.
+// US2-10. List the proposals on one job posting, so its Receiver can pick one.
 // Guards: authenticated and holding Receiver role (BOTH accounts also qualify),
 // so a Provider is turned away before any lookup. Owning the posting is checked
 // in the controller; another Receiver gets 403.
