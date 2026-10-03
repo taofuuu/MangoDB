@@ -22,6 +22,89 @@
             "minBudget": 50000
         },
         {
+            "categories": [],
+            "categoryIds": [],
+            "companyId": 248,
+            "createdAt": "<timestamp>",
+            "deadline": null,
+            "duration": null,
+            "jobPostingId": 170,
+            "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Mobile Application Development",
+            "locationPref": null,
+            "maxBudget": 200000,
+            "minBudget": 100000
+        },
+        {
+            "categories": [],
+            "categoryIds": [],
+            "companyId": 248,
+            "createdAt": "<timestamp>",
+            "deadline": null,
+            "duration": null,
+            "jobPostingId": 169,
+            "listingDesc": "Develop a responsive e-commerce website with product management and payment integration.",
+            "listingStatus": "OPEN",
+            "listingTitle": "E-Commerce Website Development",
+            "locationPref": null,
+            "maxBudget": 150000,
+            "minBudget": 80000
+        },
+        {
+            "categories": [],
+            "categoryIds": [],
+            "companyId": 248,
+            "createdAt": "<timestamp>",
+            "deadline": null,
+            "duration": null,
+            "jobPostingId": 168,
+            "listingDesc": "Looking for a developer to build an AI-powered chatbot for customer support.",
+            "listingStatus": "OPEN",
+            "listingTitle": "AI Chatbot Development",
+            "locationPref": null,
+            "maxBudget": 100000,
+            "minBudget": 50000
+        },
+        {
+            "categories": [
+                "ERP & CRM Systems"
+            ],
+            "categoryIds": [
+                7
+            ],
+            "companyId": 106,
+            "createdAt": "<timestamp>",
+            "deadline": "2026-12-31",
+            "duration": "6 เดือน",
+            "jobPostingId": 157,
+            "listingDesc": "ต้องการผู้เชี่ยวชาญ/ทีมพัฒนาเพื่อช่วยวางระบบ ปรับแต่งโมดูล (FI/CO/MM/SD) และเชื่อมต่อ API ระบบ SAP ERP S/4HANA เข้ากับระบบภายในองค์กร",
+            "listingStatus": "OPEN",
+            "listingTitle": "ผู้เชี่ยวชาญการพัฒนาระบบ SAP ERP (SAP S/4HANA Implementation & Customization)",
+            "locationPref": "Hybrid / Bangkok",
+            "maxBudget": 500000,
+            "minBudget": 200000
+        },
+        {
+            "categories": [
+                "Web Development"
+            ],
+            "categoryIds": [
+                1
+            ],
+            "companyId": 143,
+            "createdAt": "<timestamp>",
+            "deadline": "2028-12-31",
+            "duration": "2 Months",
+            "jobPostingId": 73,
+            "listingDesc": "Looking for developer team",
+            "listingStatus": "OPEN",
+            "listingTitle": "Snapshot Probe job posting",
+            "locationPref": "Remote",
+            "maxBudget": 150000,
+            "minBudget": 50000
+        },
+        {
             "categories": [
                 "Digital Marketing & SEO"
             ],
