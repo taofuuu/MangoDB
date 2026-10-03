@@ -27,7 +27,7 @@ export const createListingSchema = z
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 
-// US3-1. Same paging bounds as GET /providers, so one request cannot pull
+// US3-1. Same paging bounds as GET /companies, so one request cannot pull
 // every service into memory.
 export const serviceListQuerySchema = z.object({
     // Trimmed, so a keyword of only spaces reads as no keyword. The cap also
@@ -35,4 +35,11 @@ export const serviceListQuerySchema = z.object({
     q: z.string().trim().max(100).optional(),
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().min(1).max(50).default(12),
+});
+
+// Path params arrive as strings, so this coerces before the integer check —
+// same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
+// /services/:listingId.
+export const listingIdParamSchema = z.object({
+    listingId: z.coerce.number().int().positive().max(INT_MAX),
 });

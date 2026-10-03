@@ -52,7 +52,7 @@ account is **`register`** — never `signup`.
 ### 2.2 Plural kebab-case nouns for collections
 
 `/companies`, `/portfolios`, `/certificates`, `/services`, `/job-postings`,
-`/proposals`, `/providers`. Not `/jobPostings`, not `/job_postings`.
+`/proposals`. Not `/jobPostings`, not `/job_postings`.
 
 ### 2.3 `/me` is one thing that is you. `/mine` is a list of yours
 
@@ -107,7 +107,7 @@ No `/search` segment. Filters and paging go in the query string, the way
 `GET /admin/companies` already works:
 
 ```
-GET /providers?q=&page=&pageSize=
+GET /companies?q=&page=&pageSize=
 ```
 
 ---

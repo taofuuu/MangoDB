@@ -140,9 +140,9 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-1. One Provider search result card. categories and techStack are every
+// US3-6. One company search result card. categories and techStack are every
 // one used by the company's services (ADR 0009: tech stack is per service).
-export interface ProviderSummary {
+export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
@@ -152,8 +152,8 @@ export interface ProviderSummary {
     techStack: string[];
 }
 
-export interface ProviderListResponse {
-    items: ProviderSummary[];
+export interface CompanyListResponse {
+    items: CompanySummary[];
     pagination: PaginationMeta;
 }
 

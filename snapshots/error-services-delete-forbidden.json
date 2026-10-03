@@ -1,0 +1,10 @@
+{
+    "request": "DELETE /services/<delete_probe_id>",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "This listing belongs to another company"
+        }
+    }
+}

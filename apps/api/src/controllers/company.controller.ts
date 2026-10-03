@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
+import type { CompanyListResponse } from '@mangodb/shared';
 import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { softDeleteCompany } from '../lib/companyDeletion';
@@ -12,6 +14,7 @@ import {
     toCompanyProfile,
 } from '../lib/companyProfile';
 import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
+import { companySummarySelect, toCompanySummary } from '../lib/companySearch';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
@@ -20,6 +23,7 @@ import {
     uniqueViolationFields,
 } from '../lib/prismaErrors';
 import { hasOngoingProject } from '../lib/projectEligibility';
+import { escapeLike } from '../lib/search';
 import { sendSession } from '../lib/session';
 import {
     BUCKETS,
@@ -27,10 +31,11 @@ import {
     removeFromStorageByUrl,
     uploadToStorage,
 } from '../lib/storage';
-import { parseBody } from '../middleware/validate';
+import { parseBody, parseQuery } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
     changeCredentialsSchema,
+    companyListQuerySchema,
     updateCompanyProfileSchema,
 } from '../schemas/company.schema';
 
@@ -271,4 +276,92 @@ export async function requestMyAccountDeletion(
 
     await softDeleteCompany(companyId);
     res.status(204).end();
+}
+
+// US3-6. One word matches the company, or one of its services by title,
+// description, category or tech stack, ignoring case. Job postings are left
+// out: they say what the company wants to hire, not what it offers. So a
+// Receiver matches on its name or description only.
+function matchesKeyword(word: string): Prisma.CompanyWhereInput {
+    const contains = {
+        contains: escapeLike(word),
+        mode: 'insensitive',
+    } as const;
+    return {
+        OR: [
+            { companyName: contains },
+            { companyDescription: contains },
+            {
+                listing: {
+                    some: {
+                        listingType: 'SERVICE',
+                        OR: [
+                            { listingTitle: contains },
+                            { listingDesc: contains },
+                            {
+                                listingCategory: {
+                                    some: { category: { catName: contains } },
+                                },
+                            },
+                            {
+                                service: {
+                                    serviceTechStack: {
+                                        some: {
+                                            techStack: {
+                                                techStackName: contains,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            },
+        ],
+    };
+}
+
+// T3.6.7. One page of companies for the search screen, Providers and Receivers
+// alike. count and findMany run in one transaction so the pagination metadata
+// describes the returned page.
+export async function listCompanies(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { q, page, pageSize } = parseQuery(companyListQuerySchema, req.query);
+    // Each word is matched on its own, so "flutter kotlin" finds a Provider
+    // whose stack has both, even though they are two separate rows.
+    const words = q?.split(/\s+/).filter(Boolean) ?? [];
+    // Every company but admins, same rule as GET /admin/companies. Search is
+    // discovery, so soft-deleted companies stay hidden.
+    const where: Prisma.CompanyWhereInput = {
+        accountType: { not: 'ADMIN' },
+        deletedAt: null,
+        ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
+    };
+    const [totalItems, companies] = await prisma.$transaction([
+        prisma.company.count({ where }),
+        prisma.company.findMany({
+            where,
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            // companyId breaks ties, so two same-named companies never swap
+            // places between pages.
+            orderBy: [{ companyName: 'asc' }, { companyId: 'asc' }],
+            select: companySummarySelect,
+        }),
+    ]);
+
+    const body: CompanyListResponse = {
+        items: companies.map(toCompanySummary),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+        },
+    };
+
+    res.json(body);
 }
