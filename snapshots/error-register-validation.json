@@ -32,10 +32,6 @@
                 {
                     "field": "companyType",
                     "message": "Too small: expected array to have >=1 items"
-                },
-                {
-                    "field": "tosAccepted",
-                    "message": "Accept the Terms of Service to register"
                 }
             ],
             "message": "Request body is invalid"
