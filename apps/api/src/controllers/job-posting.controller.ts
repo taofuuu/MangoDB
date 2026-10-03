@@ -9,7 +9,11 @@ import {
     jobPostingIdParamSchema,
     jobPostingListQuerySchema,
 } from '../schemas/job-posting.schema';
-import { jobPostingSelect, toJobPosting } from '../lib/jobPosting';
+import {
+    assertCategoriesExist,
+    jobPostingSelect,
+    toJobPosting,
+} from '../lib/jobPosting';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + jobRequirement atomically.
@@ -20,22 +24,7 @@ export async function createJobPosting(
     const body = parseBody(createJobPostingSchema, req.body);
     const companyId = req.auth!.companyId;
 
-    if (body.categoryIds && body.categoryIds.length > 0) {
-        const uniqueCatIds = [...new Set(body.categoryIds)];
-        const existingCats = await prisma.category.findMany({
-            where: { catId: { in: uniqueCatIds } },
-            select: { catId: true },
-        });
-
-        if (existingCats.length !== uniqueCatIds.length) {
-            throw ApiError.validationFailed([
-                {
-                    field: 'categoryIds',
-                    message: 'One or more selected categories do not exist',
-                },
-            ]);
-        }
-    }
+    if (body.categoryIds) await assertCategoriesExist(body.categoryIds);
 
     const created = await prisma.listing.create({
         data: {

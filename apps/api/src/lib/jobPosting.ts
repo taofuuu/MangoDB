@@ -70,6 +70,29 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
     };
 }
 
+// Create and edit both take categoryIds, so both check them here: an unknown
+// id is a 400 on the field rather than a foreign key error from the database.
+export async function assertCategoriesExist(
+    categoryIds: number[],
+): Promise<void> {
+    const uniqueCatIds = [...new Set(categoryIds)];
+    if (uniqueCatIds.length === 0) return;
+
+    const existingCats = await prisma.category.findMany({
+        where: { catId: { in: uniqueCatIds } },
+        select: { catId: true },
+    });
+
+    if (existingCats.length !== uniqueCatIds.length) {
+        throw ApiError.validationFailed([
+            {
+                field: 'categoryIds',
+                message: 'One or more selected categories do not exist',
+            },
+        ]);
+    }
+}
+
 // Ownership verification helper: 404 and 403 stay separate because job postings
 // are discoverable in public listings, so hiding existence buys nothing.
 export async function assertJobPostingOwned(
