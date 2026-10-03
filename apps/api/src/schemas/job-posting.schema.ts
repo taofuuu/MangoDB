@@ -108,4 +108,8 @@ export const jobPostingListQuerySchema = z.object({
         (val) => (val === '' ? undefined : val),
         z.coerce.number().int().positive().max(2147483647).optional(),
     ),
+    q: z.preprocess(
+        (value) => (value === '' ? undefined : value),
+        z.string().trim().max(100).optional(),
+    ),
 });

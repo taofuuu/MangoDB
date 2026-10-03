@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+
 import type { JobPosting } from '@mangodb/shared';
+
 import { X, Hourglass, Building2 } from 'lucide-react';
+
 import Link from 'next/link';
+
 import Image from 'next/image';
+
+import { createPortal } from 'react-dom';
 
 interface JobDetailModalProps {
     job: JobPosting | null;
@@ -14,45 +19,45 @@ interface JobDetailModalProps {
     onClose: () => void;
 }
 
-interface DetailRowProps {
-    label: string;
-    value: string | null;
-}
-
-function DetailRow({ label, value }: DetailRowProps) {
-    return (
-        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-[1.04vw] border-b border-line py-[1.11vh]">
-            <dt className="type-sm !font-[600] text-ink-soft">{label}</dt>
-            <dd className="min-w-0 break-words type-sm text-ink">
-                {value || 'Not provided'}
-            </dd>
-        </div>
-    );
-}
-
 export default function JobDetailModal({
     job,
     isLoading,
     error,
     onClose,
 }: JobDetailModalProps) {
-    const router = useRouter();
     const panelRef = useRef<HTMLElement>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+
         const previousFocus = document.activeElement;
         const previousOverflow = document.body.style.overflow;
+
         document.body.style.overflow = 'hidden';
+
         panelRef.current?.focus();
 
         const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') onClose();
+            if (event.key === 'Escape') {
+                onClose();
+            }
         };
+
         window.addEventListener('keydown', closeOnEscape);
 
         return () => {
             document.body.style.overflow = previousOverflow;
-            window.removeEventListener('keydown', closeOnEscape);
+
+            window.removeEventListener(
+                'keydown',
+                closeOnEscape,
+            );
+
             if (
                 previousFocus instanceof HTMLElement &&
                 previousFocus.isConnected
@@ -60,14 +65,29 @@ export default function JobDetailModal({
                 previousFocus.focus();
             }
         };
-    }, [onClose]);
+    }, [mounted, onClose]);
 
-    return (
+    if (!mounted) {
+        return null;
+    }
+
+    return createPortal(
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
+            className="
+                fixed
+                inset-0
+                z-[9999]
+                flex
+                items-center
+                justify-center
+                bg-black/35
+                p-[2.08vw]
+            "
             role="presentation"
             onMouseDown={(event) => {
-                if (event.target === event.currentTarget) onClose();
+                if (event.target === event.currentTarget) {
+                    onClose();
+                }
             }}
         >
             <section
@@ -75,39 +95,74 @@ export default function JobDetailModal({
                 tabIndex={-1}
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="company-detail-title"
-                className="flex flex-col max-h-[92vh] w-[54.68vw] gap-[3.425vh] rounded-popup bg-surface pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[3.33vh] leading-relaxed shadow-xl"
+                aria-labelledby="job-detail-title"
+                className="
+                    flex
+                    max-h-[92vh]
+                    w-[54.68vw]
+                    flex-col
+                    gap-[3.425vh]
+                    overflow-y-auto
+                    rounded-popup
+                    bg-surface
+                    pl-[2.29vw]
+                    pr-[2.29vw]
+                    pt-[3.33vh]
+                    pb-[3.33vh]
+                    leading-relaxed
+                    shadow-xl
+                    outline-none
+                "
             >
+                {/* Header */}
                 <div className="flex items-start justify-between gap-[1.04vw]">
                     <div className="flex flex-col gap-[1vh]">
                         {/* Categories */}
                         <div className="flex items-center gap-[0.52vw]">
-
                             <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                                 {job?.categories &&
                                 job.categories.length > 0 ? (
-                                    job.categories.map((category) => (
-                                        <span
-                                            key={category}
-                                            className="rounded-status bg-[#FEC84A] px-[0.63vw] py-[0.19vh]"
-                                        >
-                                            {category}
-                                        </span>
-                                    ))
+                                    job.categories.map(
+                                        (category) => (
+                                            <span
+                                                key={category}
+                                                className="
+                                                    rounded-status
+                                                    bg-[#FEC84A]
+                                                    px-[0.63vw]
+                                                    py-[0.19vh]
+                                                "
+                                            >
+                                                {category}
+                                            </span>
+                                        ),
+                                    )
                                 ) : (
-                                    <span className="rounded-status bg-[#F3F4F6] px-[0.63vw] py-[0.19vh]">
+                                    <span
+                                        className="
+                                            rounded-status
+                                            bg-[#F3F4F6]
+                                            px-[0.63vw]
+                                            py-[0.19vh]
+                                        "
+                                    >
                                         General
                                     </span>
                                 )}
                             </div>
                         </div>
 
-                        {/* Listing title */}
+                        {/* Title */}
                         <h2
                             id="job-detail-title"
-                            className="type-lg !font-[700] text-ink"
+                            className="
+                                type-lg
+                                !font-[700]
+                                text-ink
+                            "
                         >
-                            {job?.listingTitle ?? 'Loading job'}
+                            {job?.listingTitle ??
+                                'Loading job'}
                         </h2>
                     </div>
 
@@ -115,37 +170,109 @@ export default function JobDetailModal({
                         type="button"
                         onClick={onClose}
                         aria-label="Close Job details"
-                        className="rounded-button p-[0.52vw] text-ink-soft hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                        className="
+                            rounded-button
+                            p-[0.52vw]
+                            text-ink-soft
+                            hover:bg-line
+                            focus-visible:ring-2
+                            focus-visible:ring-brand
+                            focus-visible:outline-none
+                        "
                     >
                         <X
                             aria-hidden="true"
-                            className="h-[2.22vh] w-[1.25vw]"
+                            className="
+                                h-[2.22vh]
+                                w-[1.25vw]
+                            "
                         />
                     </button>
                 </div>
 
                 {isLoading && (
-                    <p className="py-[5.56vh] text-center type-md text-ink-soft">
-                        Loading Company information…
+                    <p
+                        className="
+                            py-[5.56vh]
+                            text-center
+                            type-md
+                            text-ink-soft
+                        "
+                    >
+                        Loading Job information…
+                    </p>
+                )}
+
+                {error && !isLoading && (
+                    <p
+                        className="
+                            py-[5.56vh]
+                            text-center
+                            type-md
+                            text-danger
+                        "
+                    >
+                        {error}
                     </p>
                 )}
 
                 {job && !isLoading && !error && (
-                    <div className="flex flex-col gap-[3.425vh] justify-center items-center">
-                        <div className="flex flex-col pl-[2vw] pr-[2vw] type-sm items-center gap-[1.48vh]">
+                    <div
+                        className="
+                            flex
+                            flex-col
+                            items-center
+                            justify-center
+                            gap-[3.425vh]
+                        "
+                    >
+                        <div
+                            className="
+                                flex
+                                w-full
+                                flex-col
+                                gap-[1.48vh]
+                                pl-[2vw]
+                                pr-[2vw]
+                                type-sm
+                            "
+                        >
+                            {/* Description */}
                             <div className="w-full text-left">
                                 <span className="type-sm text-[#497B93]">
                                     Description :
                                 </span>
-                                <p className="mt-[1vh] mb-[1vh] ml-[1vw] text-[#000000] leading-relaxed">
+
+                                <p
+                                    className="
+                                        mt-[1vh]
+                                        mb-[1vh]
+                                        ml-[1vw]
+                                        leading-relaxed
+                                        text-[#000000]
+                                    "
+                                >
                                     {job.listingDesc ||
                                         'No job description provided.'}
                                 </p>
                             </div>
+
                             {/* Budget */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-between items-center pr-[0.5vw]">
-                                Budget
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
+                                <span>Budget</span>
+
                                 <div className="text-[#000000]">
                                     {job.minBudget != null
                                         ? job.minBudget.toLocaleString()
@@ -155,6 +282,7 @@ export default function JobDetailModal({
                                         ? job.maxBudget.toLocaleString()
                                         : '-'}
                                 </div>
+
                                 <Image
                                     src="/images/Budget.png"
                                     alt="Budget"
@@ -164,30 +292,63 @@ export default function JobDetailModal({
                             </div>
 
                             {/* Duration */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-between items-center pr-[0.5vw]">
-                                Duration
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
+                                <span>Duration</span>
+
                                 <div className="text-[#000000]">
-                                    {job.duration || 'No job duration provided'}
+                                    {job.duration ||
+                                        'No job duration provided'}
                                 </div>
-                                <Hourglass size={20} color="black" />
+
+                                <Hourglass
+                                    size={20}
+                                    color="black"
+                                />
                             </div>
 
                             {/* Deadline */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-between items-center pr-[0.5vw]">
-                                Deadline
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
+                                <span>Deadline</span>
+
                                 <div className="text-[#000000]">
                                     {job.deadline
                                         ? new Date(
                                               job.deadline,
-                                          ).toLocaleDateString('en-GB', {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          })
+                                          ).toLocaleDateString(
+                                              'en-GB',
+                                              {
+                                                  day: 'numeric',
+                                                  month: 'short',
+                                                  year: 'numeric',
+                                              },
+                                          )
                                         : 'No job deadline provided'}
                                 </div>
+
                                 <Image
                                     src="/images/deadline.svg"
                                     alt="Deadline"
@@ -197,13 +358,26 @@ export default function JobDetailModal({
                             </div>
 
                             {/* Location */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-between items-center pr-[0.5vw]">
-                                Location
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
+                                <span>Location</span>
+
                                 <div className="text-[#000000]">
                                     {job.locationPref ||
                                         'No location provided.'}
                                 </div>
+
                                 <Image
                                     src="/images/location.png"
                                     alt="Location"
@@ -213,36 +387,71 @@ export default function JobDetailModal({
                             </div>
 
                             {/* Company */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-between items-center pr-[0.5vw]">
-                                Company
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
+                                <span>Company</span>
+
                                 <Link
                                     href={`/company/${job.companyId}`}
-                                    className="text-[#000000] !font-[600] hover:underline"
+                                    className="
+                                        !font-[600]
+                                        text-[#000000]
+                                        hover:underline
+                                    "
                                 >
                                     {job.companyName}
                                 </Link>
-                                <Building2 size={22} color="black" />
+
+                                <Building2
+                                    size={22}
+                                    color="black"
+                                />
                             </div>
 
                             {/* Created at */}
-                            <hr className="w-[46.875vw] border-0 border-t border-[#497B93]/50" />
-                            <div className="flex w-full type-sm text-[#497B93] justify-center items-center pr-[0.5vw]">
+                            <hr className="w-full border-0 border-t border-[#497B93]/50" />
+
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-center
+                                    pr-[0.5vw]
+                                    type-sm
+                                    text-[#497B93]
+                                "
+                            >
                                 Created at :{' '}
                                 {job.createdAt
                                     ? new Date(
                                           job.createdAt,
-                                      ).toLocaleDateString('en-GB', {
-                                          day: 'numeric',
-                                          month: 'short',
-                                          year: 'numeric',
-                                      })
+                                      ).toLocaleDateString(
+                                          'en-GB',
+                                          {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          },
+                                      )
                                     : 'No creation date provided'}
                             </div>
                         </div>
                     </div>
                 )}
             </section>
-        </div>
+        </div>,
+        document.body,
     );
 }

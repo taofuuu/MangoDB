@@ -80,7 +80,7 @@ export async function listJobPostings(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { page, pageSize, status, companyId } = parseQuery(
+    const { page, pageSize, status, companyId, q } = parseQuery(
         jobPostingListQuerySchema,
         req.query,
     );
@@ -100,6 +100,26 @@ export async function listJobPostings(
                   ]
                 : []),
             ...(companyId ? [{ companyId }] : []),
+            ...(q
+                ? [
+                      {
+                          OR: [
+                              {
+                                  listingTitle: {
+                                      contains: q,
+                                      mode: 'insensitive' as Prisma.QueryMode,
+                                  },
+                              },
+                              {
+                                  listingDesc: {
+                                      contains: q,
+                                      mode: 'insensitive' as Prisma.QueryMode,
+                                  },
+                              },
+                          ],
+                      },
+                  ]
+                : []),
 
             // 3. Visibility rules: callers can only see OPEN postings
             // or postings they created themselves
@@ -120,10 +140,7 @@ export async function listJobPostings(
 
         prisma.listing.findMany({
             where,
-            orderBy: [
-                { createdAt: 'desc' },
-                { listingId: 'desc' },
-            ],
+            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
             skip: (page - 1) * pageSize,
             take: pageSize,
             select: jobPostingSelect,
@@ -133,14 +150,14 @@ export async function listJobPostings(
     const totalPages = Math.ceil(totalItems / pageSize);
 
     res.json({
-    items: postings.map(toJobPosting),
-    pagination: {
-        page,
-        pageSize,
-        totalItems,
-        totalPages,
-    },
-});
+        items: postings.map(toJobPosting),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages,
+        },
+    });
 }
 
 //for own job posting
@@ -165,10 +182,7 @@ export async function listMyJobPostings(
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
-            orderBy: [
-                { createdAt: 'desc' },
-                { listingId: 'desc' },
-            ],
+            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
             skip: (page - 1) * pageSize,
             take: pageSize,
             select: jobPostingSelect,
