@@ -175,8 +175,14 @@ export async function updateJobPosting(
     }
 
     // A PATCH may send one budget only, so the rule is checked against the
-    // stored row with the body laid over it.
-    if (!minBudgetDoesNotExceedMax({ ...existing, ...omitUndefined(body) })) {
+    // stored row with the body laid over it. Only when a budget is sent, so a
+    // row saved with bad budgets can still have its other fields edited.
+    const sentBudget =
+        body.minBudget !== undefined || body.maxBudget !== undefined;
+    if (
+        sentBudget &&
+        !minBudgetDoesNotExceedMax({ ...existing, ...omitUndefined(body) })
+    ) {
         throw ApiError.validationFailed([
             { field: 'minBudget', message: MIN_BUDGET_EXCEEDS_MAX },
         ]);
