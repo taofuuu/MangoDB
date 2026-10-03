@@ -183,8 +183,11 @@ export async function updateJobPosting(
         sentBudget &&
         !minBudgetDoesNotExceedMax({ ...existing, ...omitUndefined(body) })
     ) {
+        // Name the budget that was sent, so the form shows the error under
+        // that input. Both sent: minBudget, the same as create.
+        const field = body.minBudget === undefined ? 'maxBudget' : 'minBudget';
         throw ApiError.validationFailed([
-            { field: 'minBudget', message: MIN_BUDGET_EXCEEDS_MAX },
+            { field, message: MIN_BUDGET_EXCEEDS_MAX },
         ]);
     }
 
