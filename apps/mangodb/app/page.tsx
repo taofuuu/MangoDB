@@ -58,6 +58,16 @@ const ROUTES = [
         title: 'View Profile',
         detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
+    {
+        href: '/job/view-other',
+        title: 'View and search for job',
+        detail: 'Epic 3: ทำเกิน ;-;',
+    },
+        {
+        href: '/job/view-own',
+        title: 'View own job posting',
+        detail: 'US2-7',
+    },
 ];
 
 export default function Home() {

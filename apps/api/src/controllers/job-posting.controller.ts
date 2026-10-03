@@ -80,7 +80,7 @@ export async function listJobPostings(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { status, companyId } = parseQuery(
+    const { page, pageSize, status, companyId } = parseQuery(
         jobPostingListQuerySchema,
         req.query,
     );
@@ -113,14 +113,79 @@ export async function listJobPostings(
             },
         ],
     };
+    const [totalItems, postings] = await Promise.all([
+        prisma.listing.count({
+            where,
+        }),
 
-    const postings = await prisma.listing.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
-        select: jobPostingSelect,
+        prisma.listing.findMany({
+            where,
+            orderBy: [
+                { createdAt: 'desc' },
+                { listingId: 'desc' },
+            ],
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: jobPostingSelect,
+        }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    res.json({
+    items: postings.map(toJobPosting),
+    pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+    },
+});
+}
+
+//for own job posting
+export async function listMyJobPostings(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { page, pageSize, status } = parseQuery(
+        jobPostingListQuerySchema,
+        req.query,
+    );
+
+    const companyId = req.auth!.companyId;
+
+    const where: Prisma.ListingWhereInput = {
+        listingType: 'JOB',
+        companyId,
+        ...(status ? { listingStatus: status } : {}),
+    };
+
+    const [totalItems, postings] = await Promise.all([
+        prisma.listing.count({ where }),
+        prisma.listing.findMany({
+            where,
+            orderBy: [
+                { createdAt: 'desc' },
+                { listingId: 'desc' },
+            ],
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: jobPostingSelect,
+        }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    res.json({
+        items: postings.map(toJobPosting),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages,
+        },
     });
-
-    res.json(postings.map(toJobPosting));
 }
 
 // US2-7. Fetch a single job posting by ID with visibility rules:

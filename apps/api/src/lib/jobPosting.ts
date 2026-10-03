@@ -13,6 +13,11 @@ export const jobPostingSelect = {
     maxBudget: true,
     listingStatus: true,
     createdAt: true,
+    company: {
+        select: {
+            companyName: true,
+        },
+    },
     jobRequirement: {
         select: {
             locationPref: true,
@@ -31,6 +36,9 @@ export const jobPostingSelect = {
 export type SelectedJobPosting = {
     listingId: number;
     companyId: number | null;
+    company: {
+        companyName: string;
+    } | null;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -54,6 +62,7 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
     return {
         jobPostingId: row.listingId,
         companyId: row.companyId!,
+        companyName: row.company?.companyName ?? '',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,

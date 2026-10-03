@@ -269,6 +269,7 @@ export interface Certificate {
 export interface JobPosting {
     jobPostingId: number;
     companyId: number;
+    companyName: string;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -281,6 +282,11 @@ export interface JobPosting {
     categoryIds: number[];
     categories: string[];
     createdAt?: string | undefined;
+}
+
+export interface JobPostingListResponse {
+    items: JobPosting[];
+    pagination: PaginationMeta;
 }
 
 // What POST /job-postings accepts. Validated by createJobPostingSchema.

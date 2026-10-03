@@ -4,10 +4,13 @@ import {
     createJobPosting,
     getJobPosting,
     listJobPostings,
+    listMyJobPostings
 } from '../controllers/job-posting.controller';
 import { createProposal } from '../controllers/proposal.controller';
 
 export const jobPostingRoutes = Router();
+// US2-7. List my own job postings.
+jobPostingRoutes.get('/mine', requireAuth, listMyJobPostings);
 
 // US2-7. List job postings with status filter and visibility rules.
 // Guards: authenticated as any Company account (provider, receiver, both) or Admin.
