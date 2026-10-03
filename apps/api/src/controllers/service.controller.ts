@@ -18,6 +18,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createListingSchema,
     listingIdParamSchema,
+    type ServiceListQuery,
     serviceListQuerySchema,
 } from '../schemas/service.schema';
 
@@ -121,10 +122,73 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
     };
 }
 
+// Everything in the query but the keyword and paging, typed from the schema
+// so a new filter is added in one place.
+type ServiceFilters = Omit<ServiceListQuery, 'q' | 'page' | 'pageSize'>;
+
+// US3-2. Picking two names in one group finds services with either of them,
+// so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
+// so a filter for "react" still finds a service that stored "React".
+function matchesFilters({
+    category = [],
+    techStack = [],
+    minPrice,
+    maxPrice,
+}: ServiceFilters): Prisma.ListingWhereInput[] {
+    const where: Prisma.ListingWhereInput[] = [];
+    if (category.length > 0) {
+        where.push({
+            listingCategory: {
+                some: {
+                    category: {
+                        catName: { in: category, mode: 'insensitive' },
+                    },
+                },
+            },
+        });
+    }
+    if (techStack.length > 0) {
+        // ADR 0009: the service's own stack, not its company's.
+        where.push({
+            service: {
+                serviceTechStack: {
+                    some: {
+                        techStack: {
+                            techStackName: {
+                                in: techStack,
+                                mode: 'insensitive',
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+    // Price keeps a service whose range overlaps the slider's, so a deal is
+    // possible somewhere inside both. An empty budget counts as open-ended,
+    // so it never rules a service out on its own.
+    if (maxPrice !== undefined) {
+        // Its lowest price fits under the slider's max.
+        where.push({
+            OR: [{ minBudget: null }, { minBudget: { lte: maxPrice } }],
+        });
+    }
+    if (minPrice !== undefined) {
+        // Its highest price reaches the slider's min.
+        where.push({
+            OR: [{ maxBudget: null }, { maxBudget: { gte: minPrice } }],
+        });
+    }
+    return where;
+}
+
 // US3-1. One page of open services for the search screen, newest first. count
 // and findMany run in one transaction so the pagination matches the page.
 export async function listServices(req: Request, res: Response): Promise<void> {
-    const { q, page, pageSize } = parseQuery(serviceListQuerySchema, req.query);
+    const { q, page, pageSize, ...filters } = parseQuery(
+        serviceListQuerySchema,
+        req.query,
+    );
     // Each word is matched on its own, so "react payment" finds a service
     // whose title says payment and whose company's stack has React.
     const words = q?.split(/\s+/).filter(Boolean) ?? [];
@@ -134,7 +198,9 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         listingType: 'SERVICE',
         listingStatus: 'OPEN' satisfies ListingStatus,
         company: { deletedAt: null },
-        ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
+        // T3.2.6. Keyword words and filters share one AND list, so a service
+        // must pass all of them. Two AND keys would let one replace the other.
+        AND: [...words.map(matchesKeyword), ...matchesFilters(filters)],
     };
     const [totalItems, listings] = await prisma.$transaction([
         prisma.listing.count({ where }),

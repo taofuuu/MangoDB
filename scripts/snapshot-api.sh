@@ -95,6 +95,11 @@ C_LIVE=0
 # tech names starting with the run id may exist in tech_stack.
 REUSE_SERVICE_ID=""
 TECH_STACK_SET=0
+# Service filters: four probe services, each with a tech named after the run.
+FILTER_WEB_ID=""
+FILTER_MOBILE_ID=""
+FILTER_WIDE_ID=""
+FILTER_NO_MIN_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -135,7 +140,8 @@ cleanup() {
     local listing_ids
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
-        $REUSE_SERVICE_ID $DELETE_PROBE_ID)"
+        $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -820,6 +826,92 @@ if [ -n "$PROPOSAL_ID" ]; then
 else
     echo "  --  skip   POST /proposals/:proposalId/reject (no probe proposal)"
 fi
+
+# ---------------------------------------------------------------------------
+# 13. Service filters (US3-2)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service filters"
+# Four probe services, each with a tech named exactly after the run. Every
+# query below adds techStack=$RUN, so it only ever sees these four: section
+# 11's "<run>-React" is a different name.
+probe_service() {
+    # An empty min leaves minBudget out of the body, as the API allows.
+    local min=""
+    [ -n "$2" ] && min="\"minBudget\":$2,"
+    api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+        -H 'Content-Type: application/json' \
+        -d "{\"listingTitle\":\"Snapshot Probe $1 service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",${min}\"maxBudget\":$3,\"categoryIds\":[$4],\"techStack\":[\"$RUN\"]}" >/dev/null
+    jget listingId
+}
+FILTER_WEB_ID="$(probe_service web 10000 50000 1)"
+FILTER_MOBILE_ID="$(probe_service mobile 80000 120000 2)"
+FILTER_WIDE_ID="$(probe_service wide 50000 200000 '')"
+FILTER_NO_MIN_ID="$(probe_service no-min '' 30000 '')"
+if [ -z "$FILTER_WEB_ID" ] || [ -z "$FILTER_MOBILE_ID" ] ||
+    [ -z "$FILTER_WIDE_ID" ] || [ -z "$FILTER_NO_MIN_ID" ]; then
+    echo "could not create the filter probe services:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
+    --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
+
+# T3.2.7: the web probe only. The mobile probe is in another category, and the
+# wide and no-min ones have none.
+snap services-filter-category-and-stack GET \
+    "/services?techStack=$RUN&category=Web%20Development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Two values in one group match either: the web and mobile probes.
+snap services-filter-category-either GET \
+    "/services?techStack=$RUN&category=Web%20Development&category=Mobile%20App%20Development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Case is ignored: "web development" still finds the web probe.
+snap services-filter-case GET \
+    "/services?techStack=$RUN&category=web%20development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.8: nothing matches, so 200 with an empty page, not an error.
+snap services-filter-no-match GET \
+    "/services?techStack=$RUN&category=Hardware%20%26%20IoT" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.9: the mobile probe only. The keyword alone matches many services, the
+# filter alone all four.
+snap services-filter-keyword-and-filter GET \
+    "/services?techStack=$RUN&q=mobile" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: overlap. The mobile (80000-120000) and wide (50000-200000) probes
+# both reach into 60000-100000; the web and no-min probes top out at 50000 and
+# 30000.
+snap services-filter-price GET \
+    "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: the web probe starts at or under 20000, and the no-min probe has no
+# start, so it counts as open-ended. The wide probe starts at 50000.
+snap services-filter-price-max GET \
+    "/services?techStack=$RUN&maxPrice=20000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Only the wide probe reaches 150000; the mobile one tops out at 120000.
+snap services-filter-price-min GET \
+    "/services?techStack=$RUN&minPrice=150000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A blank price means no limit, not 0: all four probes.
+snap services-filter-price-empty GET \
+    "/services?techStack=$RUN&maxPrice=" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Slider ends that cross are a 400 the filter panel can show.
+snap error-services-filter-price-range GET \
+    "/services?minPrice=200000&maxPrice=1000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
