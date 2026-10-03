@@ -77,6 +77,9 @@ export interface RegisterRequest {
     companyDescription?: string | undefined;
     address?: string | undefined;
     website?: string | undefined;
+    // The ToS consent checkbox. true stores the consent time; false is
+    // rejected with a 400. Optional until the register form sends it.
+    tosAccepted?: true | undefined;
 }
 
 // A company as the API returns it — never carries the password hash.
