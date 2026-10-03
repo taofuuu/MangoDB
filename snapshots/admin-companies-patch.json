@@ -8,6 +8,7 @@
         "companyDescription": "edited by scripts/snapshot-api.sh",
         "companyId": "<company_id>",
         "companyName": "Snapshot Probe A edited by admin",
+        "companyPhoto": null,
         "companyType": [
             "Software House"
         ],
