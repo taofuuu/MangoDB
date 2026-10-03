@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /job-postings/<job_posting_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "maxBudget",
+                    "message": "Minimum budget cannot exceed maximum budget"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

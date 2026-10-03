@@ -957,6 +957,12 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"minBudget":250000}'
 
+    # Only the max sent: 40000 is under the stored min of 50000, and the error
+    # names maxBudget, the field the form changed.
+    snap error-job-postings-update-budget-max PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"maxBudget":40000}'
+
     snap error-job-postings-update-unknown-category PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"categoryIds":[99999]}'
@@ -981,6 +987,14 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
         -d '{"listingTitle":"Too late"}'
 
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } })"
+
+    # A row saved with min over max, as mock data can be. An edit that sends
+    # no budget still saves, and the bad budgets come back untouched.
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { minBudget: 300000 } })"
+
+    snap job-postings-update-bad-stored-budget PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingDesc":"Edited while the stored budgets are wrong"}'
 else
     echo "  --  skip   PATCH /job-postings/:jobPostingId (no probe posting)"
 fi
