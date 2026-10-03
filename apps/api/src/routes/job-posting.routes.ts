@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
+    closeJobPosting,
     createJobPosting,
     getJobPosting,
     listJobPostings,
@@ -31,6 +32,11 @@ jobPostingRoutes.post(
 // Guards: authenticated only. No requireRole: owning the posting already means
 // a Receiver, and the ownership check lives in lib/jobPosting.ts.
 jobPostingRoutes.patch('/:jobPostingId', requireAuth, updateJobPosting);
+
+// US2-14. Close a job posting and reject its pending proposals. An action
+// endpoint, not PATCH { listingStatus }, because it changes other rows too
+// (docs/conventions.md 2.7). Same guards and owner rule as edit.
+jobPostingRoutes.post('/:jobPostingId/close', requireAuth, closeJobPosting);
 
 // US2-8. Submit a proposal to an open job posting.
 // Guards: authenticated and holding Provider role (BOTH accounts also qualify).

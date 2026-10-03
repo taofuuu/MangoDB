@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import type { ListingStatus } from '@mangodb/shared';
+import type { ListingStatus, ProposalStatus } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
@@ -223,4 +223,47 @@ export async function updateJobPosting(
     });
 
     res.json(toJobPosting(updated));
+}
+
+// US2-14. Close a job posting: it stops taking proposals, and every pending
+// proposal on it is rejected, in one transaction. Only the owner may, and
+// only while it is Open. Answers with the closed posting.
+export async function closeJobPosting(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+
+    // 404 if no such posting, 403 if it is someone else's.
+    await assertJobPostingOwned(jobPostingId, req.auth!.companyId);
+
+    const closed = await prisma.$transaction(async (tx) => {
+        // The status in the where is the Open check: if the posting is
+        // already closed, or an accept closed it a moment ago, nothing matches.
+        const { count } = await tx.listing.updateMany({
+            where: {
+                listingId: jobPostingId,
+                listingStatus: 'OPEN' satisfies ListingStatus,
+            },
+            data: { listingStatus: 'CLOSED' satisfies ListingStatus },
+        });
+        if (count === 0) {
+            throw ApiError.conflict('Only an open job posting can be closed');
+        }
+
+        await tx.proposal.updateMany({
+            where: {
+                listingId: jobPostingId,
+                proposalStatus: 'PENDING' satisfies ProposalStatus,
+            },
+            data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
+        });
+
+        return tx.listing.findUniqueOrThrow({
+            where: { listingId: jobPostingId },
+            select: jobPostingSelect,
+        });
+    });
+
+    res.json(toJobPosting(closed));
 }
