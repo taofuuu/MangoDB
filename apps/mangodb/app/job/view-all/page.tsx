@@ -84,9 +84,6 @@ export default function OtherJobPage() {
     useEffect(() => {
         let cancelled = false;
 
-        setIsLoading(true);
-        setError(null);
-
         getAllJobPostings(
             page,
             PAGE_SIZE,

@@ -1,7 +1,4 @@
-import type {
-    JobPosting,
-    JobPostingListResponse,
-} from '@mangodb/shared';
+import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 
 import { apiFetch } from './api';
 
@@ -64,10 +61,6 @@ export function getMyJobPostings(
 }
 
 // GET one job posting
-export function getJobPostingDetail(
-    jobPostingId: number,
-): Promise<JobPosting> {
-    return apiFetch<JobPosting>(
-        `/job-postings/${jobPostingId}`,
-    );
+export function getJobPostingDetail(jobPostingId: number): Promise<JobPosting> {
+    return apiFetch<JobPosting>(`/job-postings/${jobPostingId}`);
 }

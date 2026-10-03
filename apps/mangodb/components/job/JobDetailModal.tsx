@@ -29,10 +29,6 @@ export default function JobDetailModal({
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
         if (!mounted) return;
 
         const previousFocus = document.activeElement;
@@ -53,10 +49,7 @@ export default function JobDetailModal({
         return () => {
             document.body.style.overflow = previousOverflow;
 
-            window.removeEventListener(
-                'keydown',
-                closeOnEscape,
-            );
+            window.removeEventListener('keydown', closeOnEscape);
 
             if (
                 previousFocus instanceof HTMLElement &&
@@ -122,21 +115,19 @@ export default function JobDetailModal({
                             <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                                 {job?.categories &&
                                 job.categories.length > 0 ? (
-                                    job.categories.map(
-                                        (category) => (
-                                            <span
-                                                key={category}
-                                                className="
+                                    job.categories.map((category) => (
+                                        <span
+                                            key={category}
+                                            className="
                                                     rounded-status
                                                     bg-[#FEC84A]
                                                     px-[0.63vw]
                                                     py-[0.19vh]
                                                 "
-                                            >
-                                                {category}
-                                            </span>
-                                        ),
-                                    )
+                                        >
+                                            {category}
+                                        </span>
+                                    ))
                                 ) : (
                                     <span
                                         className="
@@ -161,8 +152,7 @@ export default function JobDetailModal({
                                 text-ink
                             "
                         >
-                            {job?.listingTitle ??
-                                'Loading job'}
+                            {job?.listingTitle ?? 'Loading job'}
                         </h2>
                     </div>
 
@@ -308,14 +298,10 @@ export default function JobDetailModal({
                                 <span>Duration</span>
 
                                 <div className="text-[#000000]">
-                                    {job.duration ||
-                                        'No job duration provided'}
+                                    {job.duration || 'No job duration provided'}
                                 </div>
 
-                                <Hourglass
-                                    size={20}
-                                    color="black"
-                                />
+                                <Hourglass size={20} color="black" />
                             </div>
 
                             {/* Deadline */}
@@ -338,14 +324,11 @@ export default function JobDetailModal({
                                     {job.deadline
                                         ? new Date(
                                               job.deadline,
-                                          ).toLocaleDateString(
-                                              'en-GB',
-                                              {
-                                                  day: 'numeric',
-                                                  month: 'short',
-                                                  year: 'numeric',
-                                              },
-                                          )
+                                          ).toLocaleDateString('en-GB', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          })
                                         : 'No job deadline provided'}
                                 </div>
 
@@ -413,10 +396,7 @@ export default function JobDetailModal({
                                     {job.companyName}
                                 </Link>
 
-                                <Building2
-                                    size={22}
-                                    color="black"
-                                />
+                                <Building2 size={22} color="black" />
                             </div>
 
                             {/* Created at */}
@@ -437,14 +417,11 @@ export default function JobDetailModal({
                                 {job.createdAt
                                     ? new Date(
                                           job.createdAt,
-                                      ).toLocaleDateString(
-                                          'en-GB',
-                                          {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          },
-                                      )
+                                      ).toLocaleDateString('en-GB', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric',
+                                      })
                                     : 'No creation date provided'}
                             </div>
                         </div>

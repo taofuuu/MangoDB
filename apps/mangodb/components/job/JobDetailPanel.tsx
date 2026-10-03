@@ -35,9 +35,7 @@ export default function JobDetailPanel({
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-[0.8vh]">
-                    <span className="type-sm text-[#497B93]">
-                        Job Detail
-                    </span>
+                    <span className="type-sm text-[#497B93]">Job Detail</span>
 
                     {!isLoading && !error && job ? (
                         <h2 className="type-lg !font-[700] text-ink">
@@ -130,9 +128,7 @@ export default function JobDetailPanel({
                             Failed to load job details.
                         </p>
 
-                        <p className="type-sm text-ink-soft">
-                            {error}
-                        </p>
+                        <p className="type-sm text-ink-soft">{error}</p>
                     </div>
                 </div>
             )}
@@ -142,9 +138,7 @@ export default function JobDetailPanel({
                 <div className="flex flex-1 flex-col overflow-y-auto modal-scrollbar pr-[0.5vw]">
                     {/* Company */}
                     <div className="flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Company
-                        </span>
+                        <span className="type-sm text-[#497B93]">Company</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.companyName}
@@ -196,9 +190,7 @@ export default function JobDetailPanel({
 
                     {/* Budget */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Budget
-                        </span>
+                        <span className="type-sm text-[#497B93]">Budget</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
@@ -207,9 +199,7 @@ export default function JobDetailPanel({
 
                     {/* Location */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Location
-                        </span>
+                        <span className="type-sm text-[#497B93]">Location</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.locationPref ?? 'No location preference'}
@@ -218,9 +208,7 @@ export default function JobDetailPanel({
 
                     {/* Duration */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Duration
-                        </span>
+                        <span className="type-sm text-[#497B93]">Duration</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.duration ?? 'Not specified'}
@@ -229,9 +217,7 @@ export default function JobDetailPanel({
 
                     {/* Deadline */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Deadline
-                        </span>
+                        <span className="type-sm text-[#497B93]">Deadline</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.deadline ?? 'No deadline'}

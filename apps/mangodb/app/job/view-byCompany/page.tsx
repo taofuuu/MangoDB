@@ -22,9 +22,7 @@ export default function CompanyJobsTestPage() {
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto flex w-[56.56vw] flex-col gap-[2.22vh]">
                 <div className="flex flex-col gap-[1.3vh]">
-                    <span className="type-lg">
-                        Test Company Jobs
-                    </span>
+                    <span className="type-lg">Test Company Jobs</span>
 
                     <hr className="border-0 border-t border-[#497B93]/50" />
                 </div>
@@ -32,10 +30,7 @@ export default function CompanyJobsTestPage() {
                 {/* Company ID selector */}
                 <div className="flex items-end gap-[0.63vw]">
                     <div className="flex flex-col gap-[0.74vh]">
-                        <label
-                            htmlFor="companyId"
-                            className="type-sm text-ink"
-                        >
+                        <label htmlFor="companyId" className="type-sm text-ink">
                             Company ID
                         </label>
 
@@ -45,9 +40,7 @@ export default function CompanyJobsTestPage() {
                             min="1"
                             value={companyIdInput}
                             onChange={(event) =>
-                                setCompanyIdInput(
-                                    event.target.value,
-                                )
+                                setCompanyIdInput(event.target.value)
                             }
                             onKeyDown={(event) => {
                                 if (event.key === 'Enter') {
@@ -103,10 +96,7 @@ export default function CompanyJobsTestPage() {
 
                 {/* Job list */}
                 {companyId !== null && (
-                    <JobPostingsPage
-                        view="company"
-                        companyId={companyId}
-                    />
+                    <JobPostingsPage view="company" companyId={companyId} />
                 )}
             </div>
         </main>

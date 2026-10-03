@@ -30,6 +30,7 @@ type JobPostingsPageProps =
       };
 
 export default function JobPostingsPage(props: JobPostingsPageProps) {
+    const companyId = props.view === 'company' ? props.companyId : undefined;
     const isMyJobs = props.view === 'mine';
 
     /*
@@ -43,9 +44,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const [status, setStatus] = useState<JobStatus>('');
 
     const [result, setResult] = useState<JobPostingListResponse | null>(null);
-
     const [isLoading, setIsLoading] = useState(true);
-
     const [error, setError] = useState<string | null>(null);
 
     const [reloadKey, setReloadKey] = useState(0);
@@ -92,9 +91,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     useEffect(() => {
         let cancelled = false;
 
-        setIsLoading(true);
-        setError(null);
-
         const request =
             props.view === 'mine'
                 ? getMyJobPostings(
@@ -113,37 +109,23 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
         request
             .then((data) => {
-                if (cancelled) {
-                    return;
-                }
-
+                if (cancelled) return;
                 setResult(data);
+                setError(null);
             })
             .catch((requestError: unknown) => {
-                if (cancelled) {
-                    return;
-                }
-
+                if (cancelled) return;
                 setError(describeError(requestError));
             })
             .finally(() => {
-                if (cancelled) {
-                    return;
-                }
-
+                if (cancelled) return;
                 setIsLoading(false);
             });
 
         return () => {
             cancelled = true;
         };
-    }, [
-        page,
-        status,
-        reloadKey,
-        props.view,
-        props.view === 'company' ? props.companyId : null,
-    ]);
+    }, [page, status, reloadKey, props.view, companyId]);
 
     /*
      * ============================================================
