@@ -98,6 +98,8 @@ export async function listJobPostings(
                   ]
                 : []),
             ...(companyId ? [{ companyId }] : []),
+            // Search is discovery, so soft-deleted companies' postings stay hidden
+            { company: { deletedAt: null } },
             ...(q
                 ? [
                       {

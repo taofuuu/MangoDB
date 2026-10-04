@@ -84,18 +84,14 @@ export default function OtherJobPage() {
     useEffect(() => {
         let cancelled = false;
 
-        getAllJobPostings(
-            page,
-            PAGE_SIZE,
-            debouncedSearch
-                ? {
-                      status: 'OPEN',
-                      q: debouncedSearch,
-                  }
-                : {
-                      status: 'OPEN',
-                  },
-        )
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
+        setError(null);
+
+        getAllJobPostings(page, PAGE_SIZE, {
+            status: 'OPEN',
+            q: debouncedSearch,
+        })
             .then((data) => {
                 if (cancelled) return;
 
