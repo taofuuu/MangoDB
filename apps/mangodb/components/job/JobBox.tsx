@@ -4,7 +4,15 @@ import type { JobPosting } from '@mangodb/shared';
 
 import Image from 'next/image';
 
-import { MoreHorizontal, ArrowRight, Edit, Trash } from 'lucide-react';
+import {
+    MoreHorizontal,
+    ArrowRight,
+    Edit,
+    Trash,
+    Tag,
+    Wallet,
+    MapPin,
+} from 'lucide-react';
 
 import { useState } from 'react';
 
@@ -160,12 +168,13 @@ export default function JobBox({
                 {/* Categories */}
                 <div className="flex w-full items-start justify-between bg-transparent">
                     <div className="flex items-center gap-[0.52vw]">
-                        <Image
+                        {/* <Image
                             src="/images/category.png"
                             alt="Category"
                             width={25}
                             height={25}
-                        />
+                        /> */}
+                        <Tag size={20} />
 
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
@@ -195,23 +204,21 @@ export default function JobBox({
                 {/* Budget + Deadline + View Detail */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <Image
-                            src="/images/Budget.png"
-                            alt="Budget"
-                            width={25}
-                            height={25}
-                        />
-                        {job.minBudget ?? '-'}-{job.maxBudget ?? '-'}
+                        <Wallet size={20} />
+                        <div>
+                            {job.minBudget != null
+                                ? job.minBudget.toLocaleString()
+                                : '-'}
+                            {' - '}
+                            {job.maxBudget != null
+                                ? job.maxBudget.toLocaleString()
+                                : '-'}{' '}
+                            THB
+                        </div>
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <Image
-                            src="/images/deadline.svg"
-                            alt="Deadline"
-                            width={22}
-                            height={22}
-                        />
-
+                        <MapPin size={20} />
                         {job.deadline || 'No job deadline provided.'}
                     </p>
 
@@ -253,11 +260,12 @@ export default function JobBox({
                 </div>
             </div>
 
-            {isMyJobs && isDetailOpen && (
+            {isMyJobs && (
                 <JobDetailModal
                     job={selectedJob}
                     isLoading={isDetailLoading}
                     error={detailError}
+                    isOpen={isDetailOpen}
                     onClose={closeDetail}
                 />
             )}

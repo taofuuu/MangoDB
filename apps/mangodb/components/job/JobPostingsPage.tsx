@@ -487,6 +487,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                             flex-col
                                             gap-[3.87vh]
                                             pt-[1vh]
+                                            pl-[0.5vw]
                                         "
                                     >
                                         {result.items.map((job) => (
