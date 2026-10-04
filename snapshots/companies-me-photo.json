@@ -1,5 +1,5 @@
 {
-    "request": "GET /companies/me",
+    "request": "PATCH /companies/me/photo",
     "status": 200,
     "body": {
         "accountType": "PROVIDER",
@@ -7,7 +7,7 @@
         "companyDescription": null,
         "companyId": 142,
         "companyName": "Snapshot Seed Provider",
-        "companyPhoto": null,
+        "companyPhoto": "<storage-url>",
         "companyType": [
             "Software House"
         ],

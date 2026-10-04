@@ -719,6 +719,34 @@ snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
 
+# US2-10. The proposals on the posting: the one just created, with its Provider.
+snap error-posting-proposals-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID/proposals"
+
+snap error-posting-proposals-invalid-id GET /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-posting-proposals-not-found GET /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-posting-proposals-forbidden-provider GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Another Receiver: hand the posting to a different company for one call, so the
+# seeded Receiver is signed in but no longer its owner.
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-posting-proposals-forbidden-receiver GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+fi
+
+snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
 # ---------------------------------------------------------------------------

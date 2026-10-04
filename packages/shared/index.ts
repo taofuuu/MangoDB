@@ -166,11 +166,7 @@ export interface ServiceSummary {
     maxBudget: number | null;
     categories: string[];
     techStack: string[];
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    };
+    company: CompanyBrief;
 }
 
 export interface ServiceListResponse {
@@ -318,6 +314,20 @@ export interface Proposal {
     duration: number;
     proposalStatus: ProposalStatus;
     createdAt: string;
+}
+
+// A company in one line: enough to show who it is beside something it sent
+// or owns, with no second request.
+export interface CompanyBrief {
+    companyId: number;
+    companyName: string;
+    companyPhoto: string | null;
+}
+
+// US2-10. One row of GET /job-postings/:jobPostingId/proposals: the proposal,
+// with a short profile of the Provider that sent it so the Receiver can choose.
+export interface PostingProposal extends Proposal {
+    provider: CompanyBrief;
 }
 
 // What POST /job-postings/:jobPostingId/proposals accepts.
