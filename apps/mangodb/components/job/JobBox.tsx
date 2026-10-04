@@ -2,8 +2,6 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import Image from 'next/image';
-
 import {
     MoreHorizontal,
     ArrowRight,
@@ -16,16 +14,13 @@ import {
 
 import { useState } from 'react';
 
-import { describeError } from '@/lib/api';
-
-import { getJobPostingDetail } from '@/lib/job';
 import JobDetailModal from './JobDetailModal';
 
 interface JobBoxProps {
     job: JobPosting;
     isMyJobs: boolean;
     callFromSearchPage: boolean;
-    onViewDetail: (jobPostingId: number) => void;
+    onViewDetail: (job: JobPosting) => void;
 }
 
 export default function JobBox({
@@ -41,33 +36,14 @@ export default function JobBox({
      * Other Jobs detail is controlled by the parent page.
      */
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
-    const [isDetailLoading, setIsDetailLoading] = useState(false);
-    const [detailError, setDetailError] = useState<string | null>(null);
 
     const openDetail = async () => {
         setIsMenuOpen(false);
         setIsDetailOpen(true);
-        setIsDetailLoading(true);
-        setSelectedJob(null);
-        setDetailError(null);
-
-        try {
-            const detail = await getJobPostingDetail(job.jobPostingId);
-
-            setSelectedJob(detail);
-        } catch (requestError: unknown) {
-            setDetailError(describeError(requestError));
-        } finally {
-            setIsDetailLoading(false);
-        }
     };
 
     const closeDetail = () => {
         setIsDetailOpen(false);
-        setSelectedJob(null);
-        setDetailError(null);
-        setIsDetailLoading(false);
     };
 
     return (
@@ -168,12 +144,6 @@ export default function JobBox({
                 {/* Categories */}
                 <div className="flex w-full items-start justify-between bg-transparent">
                     <div className="flex items-center gap-[0.52vw]">
-                        {/* <Image
-                            src="/images/category.png"
-                            alt="Category"
-                            width={25}
-                            height={25}
-                        /> */}
                         <Tag size={20} />
 
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
@@ -205,16 +175,14 @@ export default function JobBox({
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
-                        <div>
-                            {job.minBudget != null
-                                ? job.minBudget.toLocaleString()
-                                : '-'}
-                            {' - '}
-                            {job.maxBudget != null
-                                ? job.maxBudget.toLocaleString()
-                                : '-'}{' '}
-                            THB
-                        </div>
+                        {job.minBudget != null
+                            ? job.minBudget.toLocaleString()
+                            : '-'}
+                        {' - '}
+                        {job.maxBudget != null
+                            ? job.maxBudget.toLocaleString()
+                            : '-'}{' '}
+                        THB
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
@@ -236,7 +204,7 @@ export default function JobBox({
                                  * Other Jobs:
                                  * tell the parent which job was clicked.
                                  */
-                                onViewDetail(job.jobPostingId);
+                                onViewDetail(job);
                             }
                         }}
                         className="
@@ -262,9 +230,7 @@ export default function JobBox({
 
             {isMyJobs && (
                 <JobDetailModal
-                    job={selectedJob}
-                    isLoading={isDetailLoading}
-                    error={detailError}
+                    job={job}
                     isOpen={isDetailOpen}
                     onClose={closeDetail}
                 />

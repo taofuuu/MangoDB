@@ -11,17 +11,13 @@ import Image from 'next/image';
 import ModalShell from '@/components/ui/ModalShell';
 
 interface JobDetailModalProps {
-    job: JobPosting | null;
-    isLoading: boolean;
-    error: string | null;
+    job: JobPosting;
     isOpen: boolean;
     onClose: () => void;
 }
 
 export default function JobDetailModal({
     job,
-    isLoading,
-    error,
     isOpen,
     onClose,
 }: JobDetailModalProps) {
@@ -41,7 +37,7 @@ export default function JobDetailModal({
                     <div className="flex items-center gap-[0.52vw]">
                         <Tag size={20} />
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
-                            {job?.categories && job.categories.length > 0 ? (
+                            {job.categories && job.categories.length > 0 ? (
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
@@ -79,7 +75,7 @@ export default function JobDetailModal({
                                 text-ink
                             "
                     >
-                        {job?.listingTitle ?? 'Loading job'}
+                        {job.listingTitle ?? 'Loading job'}
                     </h2>
                 </div>
 
@@ -107,33 +103,7 @@ export default function JobDetailModal({
                 </button>
             </div>
 
-            {isLoading && (
-                <p
-                    className="
-                            py-[5.56vh]
-                            text-center
-                            type-md
-                            text-ink-soft
-                        "
-                >
-                    Loading Job information…
-                </p>
-            )}
-
-            {error && !isLoading && (
-                <p
-                    className="
-                            py-[5.56vh]
-                            text-center
-                            type-md
-                            text-danger
-                        "
-                >
-                    {error}
-                </p>
-            )}
-
-            {job && !isLoading && !error && (
+            {job && (
                 <div
                     className="
                             flex

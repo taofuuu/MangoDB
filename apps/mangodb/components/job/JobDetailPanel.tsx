@@ -6,17 +6,10 @@ import { X } from 'lucide-react';
 
 interface JobDetailPanelProps {
     job: JobPosting | null;
-    isLoading: boolean;
-    error: string | null;
     onClose: () => void;
 }
 
-export default function JobDetailPanel({
-    job,
-    isLoading,
-    error,
-    onClose,
-}: JobDetailPanelProps) {
+export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
     return (
         <div
             className="
@@ -37,12 +30,10 @@ export default function JobDetailPanel({
                 <div className="flex flex-col gap-[0.8vh]">
                     <span className="type-sm text-[#497B93]">Job Detail</span>
 
-                    {!isLoading && !error && job ? (
+                    {job && (
                         <h2 className="type-lg !font-[700] text-ink">
                             {job.listingTitle}
                         </h2>
-                    ) : (
-                        <div className="h-[3.5vh] w-[14vw] animate-pulse rounded bg-line" />
                     )}
                 </div>
 
@@ -58,83 +49,8 @@ export default function JobDetailPanel({
 
             <hr className="my-[2vh] border-0 border-t border-[#497B93]/30" />
 
-            {/* Loading */}
-            {isLoading && (
-                <div className="flex flex-1 flex-col gap-[1vh] max-h-[72.63vh] max-w-[34vw]">
-                    {/* Company */}
-                    <div className="flex flex-col gap-[0.6vh]">
-                        <div className="h-[2vh] w-[5vw] animate-pulse rounded bg-line" />
-                        <div className="h-[2.5vh] w-[15vw] animate-pulse rounded bg-line" />
-                    </div>
-
-                    {/* Categories */}
-                    <div className="flex flex-col gap-[0.8vh]">
-                        <div className="h-[2vh] w-[7vw] animate-pulse rounded bg-line" />
-
-                        <div className="flex gap-[0.42vw]">
-                            <div className="h-[2.8vh] w-[4vw] animate-pulse rounded-status bg-line" />
-                            <div className="h-[2.8vh] w-[6vw] animate-pulse rounded-status bg-line" />
-                            <div className="h-[2.8vh] w-[7vw] animate-pulse rounded-status bg-line" />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="flex flex-col gap-[0.8vh]">
-                        <div className="h-[2vh] w-[7vw] animate-pulse rounded bg-line" />
-
-                        <div className="flex flex-col gap-[0.7vh]">
-                            <div className="h-[1.8vh] w-full animate-pulse rounded bg-line" />
-                            <div className="h-[1.8vh] w-[95%] animate-pulse rounded bg-line" />
-                            <div className="h-[1.8vh] w-[80%] animate-pulse rounded bg-line" />
-                        </div>
-                    </div>
-
-                    {/* Budget */}
-                    <div className="flex flex-col gap-[0.6vh]">
-                        <div className="h-[2vh] w-[5vw] animate-pulse rounded bg-line" />
-                        <div className="h-[2.5vh] w-[10vw] animate-pulse rounded bg-line" />
-                    </div>
-
-                    {/* Location */}
-                    <div className="flex flex-col gap-[0.6vh]">
-                        <div className="h-[2vh] w-[6vw] animate-pulse rounded bg-line" />
-                        <div className="h-[2.5vh] w-[12vw] animate-pulse rounded bg-line" />
-                    </div>
-
-                    {/* Duration */}
-                    <div className="flex flex-col gap-[0.6vh]">
-                        <div className="h-[2vh] w-[6vw] animate-pulse rounded bg-line" />
-                        <div className="h-[2.5vh] w-[8vw] animate-pulse rounded bg-line" />
-                    </div>
-
-                    {/* Deadline */}
-                    <div className="flex flex-col gap-[0.6vh]">
-                        <div className="h-[2vh] w-[6vw] animate-pulse rounded bg-line" />
-                        <div className="h-[2.5vh] w-[10vw] animate-pulse rounded bg-line" />
-                    </div>
-
-                    {/* Bottom button */}
-                    <div className="mt-auto pt-[2vh]">
-                        <div className="h-[4.5vh] w-full animate-pulse rounded-full bg-line" />
-                    </div>
-                </div>
-            )}
-
-            {/* Error */}
-            {!isLoading && error && (
-                <div className="flex flex-1 items-center justify-center">
-                    <div className="flex flex-col items-center gap-[1vh] text-center">
-                        <p className="type-md text-danger">
-                            Failed to load job details.
-                        </p>
-
-                        <p className="type-sm text-ink-soft">{error}</p>
-                    </div>
-                </div>
-            )}
-
             {/* Job Detail */}
-            {!isLoading && !error && job && (
+            {job && (
                 <div className="flex flex-1 flex-col overflow-y-auto modal-scrollbar pr-[0.5vw]">
                     {/* Company */}
                     <div className="flex flex-col gap-[0.6vh]">

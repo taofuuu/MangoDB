@@ -12,11 +12,7 @@ import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 
 import Link from 'next/link';
 
-import {
-    getAllJobPostings,
-    getJobPostingDetail,
-    getMyJobPostings,
-} from '@/lib/job';
+import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
 
 const PAGE_SIZE = 6;
 
@@ -65,16 +61,12 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      *
      * Used for Other Jobs / Company Jobs.
      *
-     * JobBox sends the jobPostingId here.
-     * This page fetches the complete job detail.
+     * JobBox sends the complete job here.
+     * The list already contains all job posting fields.
      * ============================================================
      */
 
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
-
-    const [isDetailLoading, setIsDetailLoading] = useState(false);
-
-    const [detailError, setDetailError] = useState<string | null>(null);
 
     /*
      * ============================================================
@@ -143,27 +135,13 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      * Open Other Job detail
      *
-     * OwnJobBox calls this with:
-     *
-     * onViewDetail(job.jobPostingId)
-     *
+     * JobBox sends the complete job posting here.
+     * No additional API request is needed.
      * ============================================================
      */
 
-    const openCompanyJobDetail = async (jobPostingId: number) => {
-        setSelectedJob(null);
-        setDetailError(null);
-        setIsDetailLoading(true);
-
-        try {
-            const detail = await getJobPostingDetail(jobPostingId);
-
-            setSelectedJob(detail);
-        } catch (requestError: unknown) {
-            setDetailError(describeError(requestError));
-        } finally {
-            setIsDetailLoading(false);
-        }
+    const openCompanyJobDetail = (job: JobPosting) => {
+        setSelectedJob(job);
     };
 
     /*
@@ -174,8 +152,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
     const closeDetailPanel = () => {
         setSelectedJob(null);
-        setDetailError(null);
-        setIsDetailLoading(false);
     };
 
     /*
@@ -619,8 +595,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     {!isMyJobs && selectedJob && (
                         <JobDetailPanel
                             job={selectedJob}
-                            isLoading={isDetailLoading}
-                            error={detailError}
                             onClose={closeDetailPanel}
                         />
                     )}

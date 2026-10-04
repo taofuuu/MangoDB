@@ -8,7 +8,7 @@ import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { getJobPostingDetail, getAllJobPostings } from '@/lib/job';
+import { getAllJobPostings } from '@/lib/job';
 
 const PAGE_SIZE = 6;
 
@@ -38,8 +38,6 @@ export default function OtherJobPage() {
     const [reloadKey, setReloadKey] = useState(0);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isDetailLoading, setIsDetailLoading] = useState(false);
-    const [detailError, setDetailError] = useState<string | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const filterRef = useRef<HTMLDivElement>(null);
 
@@ -118,27 +116,14 @@ export default function OtherJobPage() {
         };
     }, [page, reloadKey, debouncedSearch]);
 
-    const openDetail = async (jobPostingId: number) => {
+    const openDetail = (job: JobPosting) => {
+        setSelectedJob(job);
         setIsDetailOpen(true);
-        setIsDetailLoading(true);
-        setSelectedJob(null);
-        setDetailError(null);
-
-        try {
-            const detail = await getJobPostingDetail(jobPostingId);
-            setSelectedJob(detail);
-        } catch (requestError: unknown) {
-            setDetailError(describeError(requestError));
-        } finally {
-            setIsDetailLoading(false);
-        }
     };
 
     const closeDetail = useCallback(() => {
         setIsDetailOpen(false);
         setSelectedJob(null);
-        setDetailError(null);
-        setIsDetailLoading(false);
     }, []);
 
     const changePage = (nextPage: number) => {
@@ -650,12 +635,10 @@ export default function OtherJobPage() {
                     {/* DETAIL PANEL                                      */}
                     {/* ================================================= */}
 
-                    {isDetailOpen && (
+                    {isDetailOpen && selectedJob && (
                         <div className="h-[72.63vh] w-[35vw] shrink-0">
                             <JobDetailPanel
                                 job={selectedJob}
-                                isLoading={isDetailLoading}
-                                error={detailError}
                                 onClose={closeDetail}
                             />
                         </div>
