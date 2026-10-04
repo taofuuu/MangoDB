@@ -113,7 +113,7 @@ export const jobPostingListQuerySchema = z.object({
     ),
     pageSize: z.preprocess(
         (val) => (val === '' ? undefined : val),
-        z.coerce.number().int().positive().max(100).default(12),
+        z.coerce.number().int().min(1).max(50).default(12),
     ),
     status: z.preprocess(
         (val) => (val === '' ? undefined : val),
