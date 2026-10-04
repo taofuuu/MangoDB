@@ -367,6 +367,12 @@ snap error-register-validation POST /auth/register \
     -H 'Content-Type: application/json' \
     -d '{"companyName":"","username":"A B","email":"nope","password":"short","phone":"12","accountType":"WIZARD","companyType":[]}'
 
+# US1-13: an otherwise valid body with the ToS box unchecked. Rejected at
+# validation, so nothing is written and there is nothing to clean up.
+snap error-register-tos POST /auth/register \
+    -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe ToS\",\"username\":\"${RUN}tos\",\"email\":\"${RUN}tos@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":false}"
+
 REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}"
 
 snap auth-register POST /auth/register \
