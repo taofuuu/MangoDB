@@ -78,7 +78,8 @@ export interface RegisterRequest {
     address?: string | undefined;
     website?: string | undefined;
     // The ToS consent checkbox. true stores the consent time; false is
-    // rejected with a 400. Optional until the register form sends it.
+    // rejected with a 400. Why it is optional: registerSchema in
+    // apps/api/src/schemas/auth.schema.ts.
     tosAccepted?: true | undefined;
 }
 

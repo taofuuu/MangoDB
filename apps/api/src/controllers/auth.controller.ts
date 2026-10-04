@@ -102,7 +102,7 @@ export async function register(req: Request, res: Response): Promise<void> {
                 password: await hashPassword(password),
                 // Set here, inside the same create as the company, so a
                 // registration that fails stores no consent either. Null
-                // when the form did not send consent - see registerSchema.
+                // when tosAccepted is missing - see registerSchema.
                 tosAcceptedAt: tosAccepted ? new Date() : null,
                 companyType: {
                     create: companyType.map((tag) => ({ companyType: tag })),
