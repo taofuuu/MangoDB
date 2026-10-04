@@ -166,11 +166,7 @@ export interface ServiceSummary {
     maxBudget: number | null;
     categories: string[];
     techStack: string[];
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    };
+    company: CompanyBrief;
 }
 
 export interface ServiceListResponse {
