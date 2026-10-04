@@ -91,6 +91,10 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     useEffect(() => {
         let cancelled = false;
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
+        setError(null);
+
         const request =
             props.view === 'mine'
                 ? getMyJobPostings(
