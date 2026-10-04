@@ -290,6 +290,20 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
+// categoryIds replaces the whole set. Validated by updateJobPostingSchema.
+export interface UpdateJobPostingRequest {
+    listingTitle?: string | undefined;
+    listingDesc?: string | undefined;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | undefined;
+    locationPref?: string | null | undefined;
+    duration?: string | null | undefined;
+    deadline?: string | null | undefined;
+    categoryIds?: number[] | undefined;
+}
+
 // US2-8. A Provider's proposal on a job posting.
 export interface Proposal {
     proposalId: number;
