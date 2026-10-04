@@ -8,7 +8,9 @@ import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import Button from '@/components/ui/Button';
 
-import { describeError } from '@/lib/api';
+import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
+
+import Link from 'next/link';
 
 import {
     getAllJobPostings,
@@ -119,6 +121,12 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
+
+                if (isNotSignedIn(requestError)) {
+                    setError(NOT_SIGNED_IN);
+                    return;
+                }
+
                 setError(describeError(requestError));
             })
             .finally(() => {
@@ -400,8 +408,17 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* =============================================
                             LIST ERROR
                             ============================================= */}
+                        {error === NOT_SIGNED_IN && (
+                            <p className="type-md !font-[400]">
+                                You are not signed in.{' '}
+                                <Link href="/login" className="underline">
+                                    Log in
+                                </Link>
+                                , then come back.
+                            </p>
+                        )}
 
-                        {error && (
+                        {error && error !== NOT_SIGNED_IN && (
                             <div
                                 role="alert"
                                 className="
