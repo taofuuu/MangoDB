@@ -1,5 +1,9 @@
 import type { Request, Response } from 'express';
-import type { ListingStatus, ProposalStatus } from '@mangodb/shared';
+import type {
+    ListingStatus,
+    ProposalStatus,
+    JobPostingListResponse,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
@@ -127,11 +131,8 @@ export async function listJobPostings(
             },
         ],
     };
-    const [totalItems, postings] = await Promise.all([
-        prisma.listing.count({
-            where,
-        }),
-
+    const [totalItems, postings] = await prisma.$transaction([
+        prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
             orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
@@ -140,18 +141,16 @@ export async function listJobPostings(
             select: jobPostingSelect,
         }),
     ]);
-
-    const totalPages = Math.ceil(totalItems / pageSize);
-
-    res.json({
+    const body: JobPostingListResponse = {
         items: postings.map(toJobPosting),
         pagination: {
             page,
             pageSize,
             totalItems,
-            totalPages,
+            totalPages: Math.ceil(totalItems / pageSize),
         },
-    });
+    };
+    res.json(body);
 }
 
 //for own job posting
