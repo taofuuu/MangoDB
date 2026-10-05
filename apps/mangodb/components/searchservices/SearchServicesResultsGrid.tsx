@@ -71,7 +71,7 @@ export function SearchServicesResultsGrid({
                 overflow. Change max-h to make the box taller/shorter. */}
             <div
                 ref={listRef}
-                className="modal-scrollbar flex max-h-[calc(100vh-340px)] min-h-[320px] flex-col gap-4 overflow-y-auto px-2 py-2"
+                className="modal-scrollbar search-scrollbar flex max-h-[calc(100vh-280px)] min-h-[320px] flex-col gap-4 overflow-y-auto px-2 py-2"
             >
                 {items.map((service) => (
                     <SearchServiceCard

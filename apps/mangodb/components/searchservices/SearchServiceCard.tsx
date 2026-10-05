@@ -58,14 +58,6 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                                 )}
                             </div>
                         )}
-
-                        {/* Duration/rating aren't in the data model yet
-                            (duration lives on JobRequirement, rating on
-                            Project) — shown as "-" per the US3-1 acceptance
-                            criteria until a service-level source exists. */}
-                        <p className="type-xs mt-2 text-[var(--color-ink-placeholder)]">
-                            Duration: - &nbsp;·&nbsp; ★ -
-                        </p>
                     </div>
                 </div>
 

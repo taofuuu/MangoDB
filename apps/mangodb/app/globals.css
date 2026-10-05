@@ -149,6 +149,12 @@ body {
 
 /* Scrollbar. One rule; the colour is a variable, which is the whole reason
  * .certificate-scrollbar existed as a second copy of this. */
+
+.search-scrollbar {
+    --scrollbar-thumb: #cccccc;
+    --scrollbar-thumb-hover: #cccccc;
+}
+
 .modal-scrollbar,
 .certificate-scrollbar,
 .view-profile-scrollbar {

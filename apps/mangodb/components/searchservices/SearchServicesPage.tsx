@@ -53,7 +53,7 @@ export function SearchServicesPage({
 
             <div className="min-w-0 flex-1">
                 {/* Divider under the title, per the mockup */}
-                <div className="mb-4 flex items-baseline gap-2 border-b border-[var(--color-brand-light)] pb-2">
+                <div className="mb-4 flex items-baseline gap-2 border-b border-[var(--color-brand-dark)] pb-2">
                     <h1 className="type-lg text-[var(--color-ink)]">
                         All Services
                     </h1>

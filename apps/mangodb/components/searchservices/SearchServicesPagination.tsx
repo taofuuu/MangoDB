@@ -23,7 +23,7 @@ export function SearchServicesPaginationControls({
                     type="button"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
-                    className="rounded-button border border-[var(--color-line)] px-3 py-1.5 type-xs text-[var(--color-ink)] disabled:opacity-40"
+                    className="rounded-button cursor-pointer border border-[var(--color-line)] px-3 py-1.5 type-xs text-[var(--color-ink)] transition-colors hover:bg-[var(--color-brand-tint)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                 >
                     Prev
                 </button>
@@ -31,7 +31,7 @@ export function SearchServicesPaginationControls({
                     type="button"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
-                    className="rounded-button border border-[var(--color-line)] px-3 py-1.5 type-xs text-[var(--color-ink)] disabled:opacity-40"
+                    className="rounded-button cursor-pointer border border-[var(--color-line)] px-3 py-1.5 type-xs text-[var(--color-ink)] transition-colors hover:bg-[var(--color-brand-tint)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                 >
                     Next
                 </button>
