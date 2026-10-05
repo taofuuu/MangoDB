@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FieldError from '@/components/ui/FieldError';
 import {
@@ -14,6 +14,8 @@ import {
 } from '@/lib/validation';
 import { createService, createPortfolioForListing } from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
+import SuccessModal from './SuccessModal';
+import UnauthorizedPage from './UnauthorizedPage';
 
 type ServiceErrors = Partial<
     Record<
@@ -42,7 +44,10 @@ const PREDEFINED_CATEGORIES = [
 export default function AddServiceForm() {
     const router = useRouter();
 
-    // --- Service fields ---
+    // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    // Form fields state
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
@@ -52,19 +57,51 @@ export default function AddServiceForm() {
     const [minBudget, setMinBudget] = useState('');
     const [maxBudget, setMaxBudget] = useState('');
 
-    // --- Portfolios ---
+    // Portfolios & Modals state
     const [portfolios, setPortfolios] = useState<PendingPortfolio[]>([]);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // --- Errors ---
+    // Errors & Loading state
     const [errors, setErrors] = useState<ServiceErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        async function checkAuth() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/auth/me', {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+
+                if (!res.ok) {
+                    setIsAuthorized(false);
+                    return;
+                }
+
+                const user = await res.json();
+                const role = user.role?.toLowerCase();
+                const accountType = user.accountType?.toUpperCase();
+
+                const hasProviderRole =
+                    role === 'provider' ||
+                    role === 'both' ||
+                    accountType === 'PROVIDER' ||
+                    accountType === 'BOTH';
+
+                setIsAuthorized(hasProviderRole);
+            } catch {
+                setIsAuthorized(false);
+            }
+        }
+
+        checkAuth();
+    }, []);
+
     const clearError = (field: keyof ServiceErrors) =>
         setErrors((prev) => ({ ...prev, [field]: undefined }));
 
-    // Category toggle
     const handleCategoryClick = (categoryId: number) => {
         clearError('categoryIds');
         setSelectedCategoryIds((prev) =>
@@ -74,7 +111,6 @@ export default function AddServiceForm() {
         );
     };
 
-    // Tech stack toggle
     const handleTechClick = (tech: string) => {
         clearError('techStack');
         setSelectedTechStack((prev) =>
@@ -92,7 +128,6 @@ export default function AddServiceForm() {
         setPortfolios((prev) => prev.filter((p) => p.id !== id));
     };
 
-    // Client-side Validation Handler
     const validateForm = (): boolean => {
         const newErrors: ServiceErrors = {};
 
@@ -126,18 +161,14 @@ export default function AddServiceForm() {
 
         setIsSubmitting(true);
         try {
-            // 1. Create service listing
             const created = await createService({
                 listingTitle: title,
                 listingDesc: description,
                 categoryIds: selectedCategoryIds,
-                // uncomment when backend is edited to have techstack
-                // techStack: selectedTechStack,
                 ...(min !== undefined && { minBudget: min }),
                 ...(max !== undefined && { maxBudget: max }),
             });
 
-            // 2. Upload portfolios
             for (const p of portfolios) {
                 const body = new FormData();
                 body.append('portfolioName', p.name);
@@ -149,8 +180,7 @@ export default function AddServiceForm() {
                 await createPortfolioForListing(created.listingId, body);
             }
 
-            // 3. Navigate away
-            router.push('/service');
+            setShowSuccessModal(true);
         } catch (cause) {
             const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
             setErrors(fields as ServiceErrors);
@@ -159,6 +189,26 @@ export default function AddServiceForm() {
             setIsSubmitting(false);
         }
     };
+
+    const handleSuccessConfirm = () => {
+        setShowSuccessModal(false);
+        router.push('/');
+    };
+
+    // ── EARLY RETURNS PLACE BELOW ALL HOOKS ──
+    if (isAuthorized === null) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center">
+                <p className="type-sm text-ink-placeholder">
+                    Checking permissions...
+                </p>
+            </div>
+        );
+    }
+
+    if (!isAuthorized) {
+        return <UnauthorizedPage />;
+    }
 
     return (
         <div className="min-h-screen bg-surface py-12 px-6 flex justify-center text-ink">
@@ -171,7 +221,7 @@ export default function AddServiceForm() {
 
                 <form onSubmit={handleSubmit} noValidate>
                     <div className="flex flex-col md:flex-row gap-6 items-stretch">
-                        {/* ── LEFT COLUMN ── */}
+                        {/* LEFT COLUMN */}
                         <div className="flex-1 bg-surface-white rounded-2xl p-6 shadow-sm border border-line">
                             <div className="space-y-4">
                                 {/* Title */}
@@ -252,7 +302,7 @@ export default function AddServiceForm() {
                                     <FieldError message={errors.categoryIds} />
                                 </div>
 
-                                {/* Techstack (Optional) */}
+                                {/* Techstack */}
                                 <div>
                                     <label className="block type-sm font-semibold mb-2 text-ink">
                                         Techstack
@@ -334,7 +384,7 @@ export default function AddServiceForm() {
                             </div>
                         </div>
 
-                        {/* ── RIGHT COLUMN: Portfolio ── */}
+                        {/* RIGHT COLUMN: Portfolio */}
                         <div className="w-full md:w-[400px] bg-surface-white rounded-2xl p-6 shadow-sm border border-line flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="type-md font-bold text-ink">
@@ -388,14 +438,12 @@ export default function AddServiceForm() {
                         </div>
                     </div>
 
-                    {/* Form-level error */}
                     {formError && (
                         <p className="mt-4 type-sm text-danger font-medium">
                             {formError}
                         </p>
                     )}
 
-                    {/* Action buttons */}
                     <div className="mt-8 flex items-center justify-end gap-3">
                         <button
                             type="button"
@@ -416,11 +464,16 @@ export default function AddServiceForm() {
                 </form>
             </div>
 
-            {/* Add Portfolio modal */}
             <AddPortfolioModal
                 isOpen={showPortfolioModal}
                 onClose={() => setShowPortfolioModal(false)}
                 onAdd={handleAddPortfolio}
+            />
+
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={handleSuccessConfirm}
+                title="Service Added Successfully"
             />
         </div>
     );
