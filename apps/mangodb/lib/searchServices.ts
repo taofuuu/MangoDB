@@ -4,7 +4,6 @@
 // Named searchServices, not services/service: "service" already means
 // something else in this codebase (creating/owning a service listing).
 
-import { apiFetch } from './api';
 
 // ---------------------------------------------------------------------------
 // Types — mirror apps/api/src/lib/service.ts (toServiceSummary).
@@ -14,31 +13,14 @@ import { apiFetch } from './api';
 // three types and import them from '@mangodb/shared' instead.
 // ---------------------------------------------------------------------------
 
-export type ServiceSummary = {
-    listingId: number;
-    listingTitle: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    categories: string[];
-    techStack: string[];
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    };
-};
+import type {
+    PaginationMeta as Pagination,
+    ServiceListResponse,
+    ServiceSummary,
+} from '@mangodb/shared';
+import { apiFetch } from './api';
 
-export type Pagination = {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-};
-
-export type ServiceListResponse = {
-    items: ServiceSummary[];
-    pagination: Pagination;
-};
+export type { Pagination, ServiceListResponse, ServiceSummary };
 
 // What the sidebar edits. companyTypes is kept for the mockup but the backend
 // has no company-type filter yet, so it is NOT sent (see searchServices below).
