@@ -6,11 +6,31 @@
             {
                 "accountType": "PROVIDER",
                 "averageRating": null,
+                "companyDescription": null,
+                "companyId": 231,
+                "companyName": "Acme Solutions Ltd.",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
                 "companyDescription": "Mobile App Development Agency (iOS/Android)",
                 "companyId": 3,
                 "companyName": "AppSynth",
                 "deletedAt": null,
                 "phone": "023333333",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": "asdasd",
+                "companyId": 221,
+                "companyName": "asdasd",
+                "deletedAt": null,
+                "phone": "023234234",
                 "ratingCount": 0
             },
             {
@@ -64,6 +84,16 @@
                 "ratingCount": 0
             },
             {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 252,
+                "companyName": "Delete_listing_test",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
                 "accountType": "BOTH",
                 "averageRating": null,
                 "companyDescription": null,
@@ -80,7 +110,7 @@
                 "companyId": 109,
                 "companyName": "Dev BOTH Co.",
                 "deletedAt": null,
-                "phone": "+66 2 000 0000",
+                "phone": "020000000",
                 "ratingCount": 0
             },
             {
@@ -92,43 +122,13 @@
                 "deletedAt": null,
                 "phone": "0812345678",
                 "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 121,
-                "companyName": "Dev RECEIVER Co.",
-                "deletedAt": null,
-                "phone": "+66 2 000 0000",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 131,
-                "companyName": "Dev RECEIVER Co.",
-                "deletedAt": null,
-                "phone": "+66 2 000 0000",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 132,
-                "companyName": "Dev RECEIVER Co.",
-                "deletedAt": null,
-                "phone": "+66 2 000 0000",
-                "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 44,
-            "totalPages": 4
+            "totalItems": 53,
+            "totalPages": 5
         }
     }
 }

@@ -1,0 +1,37 @@
+{
+    "request": "GET /companies?page=1&pageSize=2",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "categories": [
+                    "Mobile App Development",
+                    "Web Development"
+                ],
+                "companyDescription": null,
+                "companyId": 231,
+                "companyName": "Acme Solutions Ltd.",
+                "companyPhoto": null,
+                "techStack": []
+            },
+            {
+                "accountType": "PROVIDER",
+                "categories": [
+                    "Mobile App Development"
+                ],
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
+                "companyPhoto": null,
+                "techStack": []
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 2,
+            "totalItems": 53,
+            "totalPages": 27
+        }
+    }
+}

@@ -7,6 +7,7 @@ import {
     useRef,
     type MouseEvent as ReactMouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 // The overlay behaviour every modal in this app needs, written once.
 //
@@ -59,7 +60,11 @@ const FOCUSABLE = [
 export default function ModalShell({ isOpen, ...props }: ModalShellProps) {
     // Unmounting on close is what makes a reopened dialog start clean, rather
     // than showing the previous attempt's half-filled form or stale error.
-    return isOpen ? <ModalShellDialog {...props} /> : null;
+    if (!isOpen) return null;
+
+    // Portal to <body>, so a transformed parent (translate, scale) cannot
+    // trap the fixed overlay inside its own box.
+    return createPortal(<ModalShellDialog {...props} />, document.body);
 }
 
 function ModalShellDialog({

@@ -237,7 +237,7 @@ export async function deleteCompanyAccount(
     }
 
     // Step 2: is it on an ongoing project? projectEligibility owns that rule
-    // and the definition of "ongoing" (anything not yet Delivered).
+    // and the definition of "ongoing" (status ACTIVE).
     if (await hasOngoingProject(companyId)) {
         throw ApiError.badRequest(
             'Company has active projects and cannot be deleted',

@@ -5,13 +5,25 @@ import {
     changeMyCredentials,
     deleteMyPhoto,
     getMyProfile,
+    listCompanies,
     requestMyAccountDeletion,
     updateMyPhoto,
     updateMyProfile,
 } from '../controllers/company.controller';
 
-// Mounted at /companies. Everything here operates on the caller's own account.
+// Mounted at /companies. GET / searches other companies; everything under /me
+// operates on the caller's own account.
 export const companyRoutes = Router();
+
+// GET /companies, not /companies/search (conventions 2.10): a search is the
+// collection with filters on it, like GET /admin/companies. Any company may
+// search, admins may not. requireRole understands that BOTH grants both roles.
+companyRoutes.get(
+    '/',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    listCompanies,
+);
 
 companyRoutes.get('/me', requireAuth, getMyProfile);
 companyRoutes.patch('/me', requireAuth, updateMyProfile);

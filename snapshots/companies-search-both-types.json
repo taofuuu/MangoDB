@@ -1,0 +1,32 @@
+{
+    "request": "GET /companies?q=Snapshot%20Seed",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "accountType": "PROVIDER",
+                "categories": [],
+                "companyDescription": null,
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null,
+                "techStack": []
+            },
+            {
+                "accountType": "RECEIVER",
+                "categories": [],
+                "companyDescription": null,
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "companyPhoto": null,
+                "techStack": []
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 2,
+            "totalPages": 1
+        }
+    }
+}

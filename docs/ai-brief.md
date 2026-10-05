@@ -233,6 +233,7 @@ tappable.
 | Provider/Receiver chips   | `RoleTags`                                                     |
 | A chip                    | `Tag`                                                          |
 | A button                  | `Button`                                                       |
+| Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
 
@@ -283,7 +284,7 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `/forgot-password` — linked from the login form, no route behind it
 - `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
   mock data, no API
-- Provider search filters and sorting — `GET /providers` takes only `q`, `page`
+- Company search filters and sorting — `GET /companies` takes only `q`, `page`
   and `pageSize`
 - A price or delivery duration on a service — `service` holds only `listing_id`
 

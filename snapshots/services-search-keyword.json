@@ -10,13 +10,16 @@
                 "company": {
                     "companyId": 142,
                     "companyName": "Snapshot Seed Provider",
-                    "companyPhoto": null,
-                    "techStack": []
+                    "companyPhoto": null
                 },
                 "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe service <run>",
                 "maxBudget": 50000,
-                "minBudget": 10000
+                "minBudget": 10000,
+                "techStack": [
+                    "<run>-Node.js",
+                    "<run>-React"
+                ]
             }
         ],
         "pagination": {

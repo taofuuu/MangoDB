@@ -10,12 +10,16 @@ export function isDeadlineInFutureOrToday(dateStr: string): boolean {
     return dateStr >= todayUtcString();
 }
 
-// Validate that minBudget does not exceed maxBudget when both exist
+export const MIN_BUDGET_EXCEEDS_MAX =
+    'Minimum budget cannot exceed maximum budget';
+
+// Validate that minBudget does not exceed maxBudget when both exist.
+// PATCH calls this too, with the body merged over the stored row.
 export function minBudgetDoesNotExceedMax(data: {
     minBudget?: number | null | undefined;
-    maxBudget: number;
+    maxBudget?: number | null | undefined;
 }): boolean {
-    if (data.minBudget != null) {
+    if (data.minBudget != null && data.maxBudget != null) {
         return data.minBudget <= data.maxBudget;
     }
     return true;
@@ -80,8 +84,19 @@ export const jobPostingFields = {
 export const createJobPostingSchema = z
     .strictObject(jobPostingFields)
     .refine(minBudgetDoesNotExceedMax, {
-        message: 'Minimum budget cannot exceed maximum budget',
+        message: MIN_BUDGET_EXCEEDS_MAX,
         path: ['minBudget'],
+    });
+
+// PATCH sends only what changed, so every field is optional. No budget refine
+// here: a body with one budget only means something next to the stored row,
+// so the controller checks the merged values instead.
+export const updateJobPostingSchema = z
+    .strictObject(jobPostingFields)
+    .partial()
+    // An empty body is a client bug, not a no-op worth a 200.
+    .refine((body) => Object.keys(body).length > 0, {
+        message: 'Provide at least one field to update',
     });
 
 export const jobPostingIdParamSchema = z.object({
@@ -92,6 +107,14 @@ export const jobPostingIdParamSchema = z.object({
 // Supports status filtering (DRAFT | OPEN | CLOSED) and filtering by companyId.
 // Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
 export const jobPostingListQuerySchema = z.object({
+    page: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.coerce.number().int().positive().default(1),
+    ),
+    pageSize: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.coerce.number().int().min(1).max(50).default(12),
+    ),
     status: z.preprocess(
         (val) => (val === '' ? undefined : val),
         z.enum(LISTING_STATUSES).optional(),
@@ -99,5 +122,9 @@ export const jobPostingListQuerySchema = z.object({
     companyId: z.preprocess(
         (val) => (val === '' ? undefined : val),
         z.coerce.number().int().positive().max(2147483647).optional(),
+    ),
+    q: z.preprocess(
+        (value) => (value === '' ? undefined : value),
+        z.string().trim().max(100).optional(),
     ),
 });

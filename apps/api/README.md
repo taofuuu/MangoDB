@@ -217,6 +217,11 @@ password: `companyProfileSelect` in `src/lib/companyProfile.ts` names the
 columns that may be returned, and `toCompanyProfile` flattens the tag rows.
 Reuse both for any endpoint that returns a company — US1-4 included.
 
+Consent to the Terms of Service is part of the body. `tosAccepted: true` makes
+the handler write `tos_accepted_at` in the same `create`, so a stored
+timestamp always means a company that registered and consented;
+`tosAccepted: false` or a missing field is a `400`, and nothing is written.
+
 Duplicate usernames and emails are caught twice, on purpose.
 `assertCompanyIdentityAvailable` in `src/lib/companyIdentity.ts` runs the
 case-insensitive pre-check before the insert, so a caller colliding on both
@@ -372,7 +377,7 @@ gains that the token did not already give them.
 `requireRole` keeps administrators out of the self-service flow — they have
 their own account-management routes — and understands that `BOTH` grants both
 company roles. A company with an ongoing project is a `409`; the rule lives in
-`src/lib/projectEligibility.ts` and "ongoing" means "not yet Delivered".
+`src/lib/projectEligibility.ts` and "ongoing" means status `ACTIVE`.
 
 The delete is soft: `company.deletedAt` gets a timestamp and **nothing it owns
 is touched** — listings, proposals, projects and reviews stay exactly where they

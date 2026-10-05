@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /job-postings/<job_posting_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "categoryIds",
+                    "message": "One or more selected categories do not exist"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

@@ -35,7 +35,8 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
-export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
 // The frontend switches on these; a rename is a breaking change for both sides.
@@ -76,6 +77,9 @@ export interface RegisterRequest {
     companyDescription?: string | undefined;
     address?: string | undefined;
     website?: string | undefined;
+    // The ToS consent checkbox. Required: true stores the consent time, and
+    // anything else is rejected with a 400.
+    tosAccepted: true;
 }
 
 // A company as the API returns it — never carries the password hash.
@@ -139,9 +143,9 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-1. One Provider search result card. categories come from the company's
-// service listings; techStack is company-wide, not per service.
-export interface ProviderSummary {
+// US3-6. One company search result card. categories and techStack are every
+// one used by the company's services (ADR 0009: tech stack is per service).
+export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
@@ -151,25 +155,21 @@ export interface ProviderSummary {
     techStack: string[];
 }
 
-export interface ProviderListResponse {
-    items: ProviderSummary[];
+export interface CompanyListResponse {
+    items: CompanySummary[];
     pagination: PaginationMeta;
 }
 
 // US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is company-wide.
+// the company that offers it (ADR 0001). techStack is this service's own.
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-        techStack: string[];
-    };
+    techStack: string[];
+    company: CompanyBrief;
 }
 
 export interface ServiceListResponse {
@@ -268,6 +268,7 @@ export interface Certificate {
 export interface JobPosting {
     jobPostingId: number;
     companyId: number;
+    companyName: string;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -280,6 +281,11 @@ export interface JobPosting {
     categoryIds: number[];
     categories: string[];
     createdAt?: string | undefined;
+}
+
+export interface JobPostingListResponse {
+    items: JobPosting[];
+    pagination: PaginationMeta;
 }
 
 // What POST /job-postings accepts. Validated by createJobPostingSchema.
@@ -302,4 +308,59 @@ export interface CreateServiceRequest {
     maxBudget?: number | null | undefined;
     listingStatus?: ListingStatus | undefined;
     categoryIds?: number[] | undefined;
+}
+// What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
+// categoryIds replaces the whole set. Validated by updateJobPostingSchema.
+export interface UpdateJobPostingRequest {
+    listingTitle?: string | undefined;
+    listingDesc?: string | undefined;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | undefined;
+    locationPref?: string | null | undefined;
+    duration?: string | null | undefined;
+    deadline?: string | null | undefined;
+    categoryIds?: number[] | undefined;
+}
+
+// US2-8. A Provider's proposal on a job posting.
+export interface Proposal {
+    proposalId: number;
+    jobPostingId: number;
+    providerId: number;
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
+    proposalStatus: ProposalStatus;
+    createdAt: string;
+}
+
+// A company in one line: enough to show who it is beside something it sent
+// or owns, with no second request.
+export interface CompanyBrief {
+    companyId: number;
+    companyName: string;
+    companyPhoto: string | null;
+}
+
+// US2-10. One row of GET /job-postings/:jobPostingId/proposals: the proposal,
+// with a short profile of the Provider that sent it so the Receiver can choose.
+export interface PostingProposal extends Proposal {
+    provider: CompanyBrief;
+}
+
+// What POST /job-postings/:jobPostingId/proposals accepts.
+export interface CreateProposalRequest {
+    proposalBudget: number;
+    proposalTerms: string;
+    duration: number;
+}
+
+// The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
+export interface Project {
+    projId: number;
+    proposalId: number;
+    totalBudget: number;
+    // YYYY-MM-DD date string per conventions section 10
+    startDate: string;
+    status: ProjectStatus;
 }

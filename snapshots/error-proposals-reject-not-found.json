@@ -1,0 +1,10 @@
+{
+    "request": "POST /proposals/2147483647/reject",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Proposal not found"
+        }
+    }
+}

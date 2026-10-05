@@ -80,12 +80,28 @@ B_LIVE=0
 NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
+NEW_PROPOSAL_ID=""
+PROVIDER_ID=""
+RECEIVER_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
 DELETED_SERVICE_ID=""
+# Service delete (US2-4): the probe the delete section removes.
+DELETE_PROBE_ID=""
 TOKEN_C=""
 C_LIVE=0
+# ADR 0009: a second probe whose tech name differs only in case, and 1 once
+# tech names starting with the run id may exist in tech_stack.
+REUSE_SERVICE_ID=""
+TECH_STACK_SET=0
+# Service filters: four probe services, each with a tech named after the run.
+FILTER_WEB_ID=""
+FILTER_MOBILE_ID=""
+FILTER_WIDE_ID=""
+FILTER_NO_MIN_ID=""
+# Close job postings (US2-14): a second probe posting, with one pending proposal.
+CLOSE_POSTING_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -95,14 +111,24 @@ PHOTO_SET=0
 # can set (closing a listing, deleting one). Pass one promise, on one line: on
 # Windows npx goes through cmd.exe, which drops everything after the first
 # newline of an argument, so a multi-line script ran nothing and exited 0.
+# --env-file, not `. .env`: a shell reads an unquoted value with a space in it
+# as a command, and under set -e that ended the whole run.
 run_db() {
     (
         cd "$ROOT"
-        set -a
-        [ -f "$ROOT/apps/api/.env" ] && . "$ROOT/apps/api/.env"
-        set +a
-        npx tsx -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.finally(() => prisma.\$disconnect());"
     ) >/dev/null
+}
+
+# Like run_db, but prints what the promise resolves to, for a row no endpoint
+# can create yet and whose id the calls after it need. Last line only: tsx and
+# Prisma may print their own lines first. stdout.write, not console.log, which
+# colours a number and puts escape codes in the id.
+db_value() {
+    (
+        cd "$ROOT"
+        npx tsx --env-file=apps/api/.env -e "import { prisma } from './apps/api/src/lib/prisma'; $1.then((v) => process.stdout.write(String(v))).finally(() => prisma.\$disconnect());"
+    ) | tail -n 1
 }
 
 # The script creates three throwaway companies. If it dies halfway they would sit
@@ -115,9 +141,16 @@ cleanup() {
     # ids that were never set, so only real ones reach the query.
     local listing_ids
     # shellcheck disable=SC2086
-    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID)"
+    listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
+        $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
+    fi
+    # Deleting the services removed their links, but not the tech names. Only
+    # names this run made start with its id, so no real service loses a tech.
+    if [ "$TECH_STACK_SET" = 1 ]; then
+        run_db "prisma.techStack.deleteMany({ where: { techStackName: { startsWith: '$RUN' } } })"
     fi
     # The rows the write stage creates, in case it died before deleting them.
     # A leftover certificate shows up in every later run's listing, which is
@@ -272,6 +305,7 @@ PROVIDER_ID="$(jget company_id)"
 PROVIDER_USERNAME="$(jget username)"
 
 snap companies-me-receiver GET /companies/me -H "$(bearer "$TOKEN_RECEIVER")"
+RECEIVER_ID="$(jget company_id)"
 snap error-forbidden-role GET /certificates/mine -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap auth-check-availability-free POST /auth/check-availability \
@@ -310,8 +344,12 @@ snap error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
 
 echo
-echo "providers"
-snap providers-list GET "/providers?page=1&pageSize=2" \
+echo "companies"
+snap companies-list GET "/companies?page=1&pageSize=2" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+# T3.6.13: the seeded Provider and Receiver share "Snapshot Seed", so both come
+# back. The seeded admin shares it too, and stays out.
+snap companies-search-both-types GET "/companies?q=Snapshot%20Seed" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ "$READ_ONLY" = 1 ]; then
@@ -331,7 +369,13 @@ snap error-register-validation POST /auth/register \
     -H 'Content-Type: application/json' \
     -d '{"companyName":"","username":"A B","email":"nope","password":"short","phone":"12","accountType":"WIZARD","companyType":[]}'
 
-REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}"
+# US1-13: an otherwise valid body with the ToS box unchecked. Rejected at
+# validation, so nothing is written and there is nothing to clean up.
+snap error-register-tos POST /auth/register \
+    -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe ToS\",\"username\":\"${RUN}tos\",\"email\":\"${RUN}tos@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":false}"
+
+REGISTER_A="{\"companyName\":\"Snapshot Probe A\",\"username\":\"${RUN}a\",\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0812345678\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}"
 
 snap auth-register POST /auth/register \
     -H 'Content-Type: application/json' -d "$REGISTER_A"
@@ -363,7 +407,7 @@ echo
 echo "self-service deletion"
 snap auth-register-receiver POST /auth/register \
     -H 'Content-Type: application/json' \
-    -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"]}"
+    -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
 SUBS+=(--id "company_id=$(jget company.company_id)")
@@ -468,6 +512,52 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 6b. Delete a service (US2-4). Before section 7, because probe A is the
+# "other Provider" for the 403 and section 7 deletes it.
+# ---------------------------------------------------------------------------
+
+echo
+echo "service delete"
+# Its own probe, so the search snapshots later never see it.
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe delete $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETE_PROBE_ID="$(jget listingId)"
+if [ -z "$DELETE_PROBE_ID" ]; then
+    echo "could not create the delete probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID")
+
+snap error-services-delete-unauthorized DELETE "/services/$DELETE_PROBE_ID"
+
+snap error-services-delete-invalid-id DELETE /services/not-a-number \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-services-delete-not-found DELETE /services/2147483647 \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# requireRole('provider') stops a Receiver before the ownership check.
+snap error-services-delete-wrong-role DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Probe A is a Provider, but not the owner. It logged out in section 5, so
+# it signs in again first.
+api POST /auth/login -H 'Content-Type: application/json' \
+    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
+TOKEN_A="$(jget accessToken)"
+snap error-services-delete-forbidden DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_A")"
+
+snap services-delete DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Hard delete, so a second try is a 404.
+snap error-services-delete-gone DELETE "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# ---------------------------------------------------------------------------
 # 7. Admin writes. Last, because the final one deletes company A.
 # ---------------------------------------------------------------------------
 
@@ -564,16 +654,118 @@ snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
-# 10. Service search (US3-1)
+# 10. Submit proposals to open job postings (US2-8)
+# ---------------------------------------------------------------------------
+
+echo
+echo "submit proposals"
+
+snap error-proposals-unauthorized POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-forbidden-receiver POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-invalid-id POST /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-not-found POST /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-proposals-validation POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-proposals-own-posting POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Restore owner back to Receiver immediately after own-posting probe
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+fi
+
+snap error-proposals-closed POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    # Ensure posting is OPEN and owned by Receiver before creating valid proposal
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID, listingStatus: 'OPEN' } })"
+fi
+
+snap proposals-create POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+NEW_PROPOSAL_ID="$(jget proposalId)"
+
+if [ -n "$NEW_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$NEW_PROPOSAL_ID")
+    resnap proposals-create
+fi
+
+snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
+
+# US2-10. The proposals on the posting: the one just created, with its Provider.
+snap error-posting-proposals-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID/proposals"
+
+snap error-posting-proposals-invalid-id GET /job-postings/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-posting-proposals-not-found GET /job-postings/2147483647/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-posting-proposals-forbidden-provider GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Another Receiver: hand the posting to a different company for one call, so the
+# seeded Receiver is signed in but no longer its owner.
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
+fi
+
+snap error-posting-proposals-forbidden-receiver GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
+fi
+
+snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
 
 echo
 echo "service search"
 # The probe: the newest open service, and the only one with $RUN in its title.
-# Created with api, not snap: POST /services has its own tests (US2-1).
+# Created with api, not snap: POST /services has its own tests (US2-1). Its
+# tech names start with the run id, so cleanup can delete them safely.
+TECH_STACK_SET=1
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
-    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1]}" >/dev/null
+    -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1],\"techStack\":[\"${RUN}-React\",\"${RUN}-Node.js\"]}" >/dev/null
 NEW_SERVICE_ID="$(jget listingId)"
 if [ -z "$NEW_SERVICE_ID" ]; then
     echo "could not create the probe service:" >&2
@@ -585,7 +777,7 @@ SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
 # Probe C: a Provider that deletes itself. A soft delete leaves its service
 # OPEN, so only the deletedAt filter can keep it out of the results below.
 api POST /auth/register -H 'Content-Type: application/json' \
-    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"]}" >/dev/null
+    -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}" >/dev/null
 TOKEN_C="$(jget accessToken)"
 if [ -z "$TOKEN_C" ]; then
     echo "could not register probe C:" >&2
@@ -608,6 +800,11 @@ snap services-search-default GET "/services?page=1&pageSize=3" \
 snap services-search-keyword GET "/services?q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# ADR 0009: a company card lists every tech its services use. companies-list
+# runs before the probe exists, so this is where the stack shows.
+snap companies-search-service-stack GET "/companies?q=$RUN" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.1.11: no match is a 200 with an empty page, not an error.
 snap services-search-no-match GET "/services?q=${RUN}_none" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -619,6 +816,275 @@ snap services-search-closed GET "/services?q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ADR 0009: "<run>-react" links to the probe's "<run>-React" instead of
+# adding a second tech, so the answer shows the stored spelling.
+snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe reuse service\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000,\"techStack\":[\"${RUN}-react\"]}"
+REUSE_SERVICE_ID="$(jget listingId)"
+if [ -n "$REUSE_SERVICE_ID" ]; then
+    SUBS+=(--id "listing_id=$REUSE_SERVICE_ID")
+    resnap services-create-tech-reuse
+fi
+
+# ---------------------------------------------------------------------------
+# 12. Reject a proposal
+# ---------------------------------------------------------------------------
+
+echo
+echo "proposals"
+PROPOSAL_ID="$NEW_PROPOSAL_ID"
+
+
+if [ -n "$PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$PROPOSAL_ID")
+
+    snap error-proposals-reject-unauthorized POST "/proposals/$PROPOSAL_ID/reject"
+
+    snap error-proposals-reject-invalid-id POST /proposals/not-a-number/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    snap error-proposals-reject-not-found POST /proposals/2147483647/reject \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # The provider sent the proposal but does not own the listing.
+    snap error-proposals-reject-forbidden POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_PROVIDER")"
+
+    snap proposals-reject POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # Now REJECTED, so a second reject is a state conflict.
+    snap error-proposals-reject-conflict POST "/proposals/$PROPOSAL_ID/reject" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+else
+    echo "  --  skip   POST /proposals/:proposalId/reject (no probe proposal)"
+fi
+
+# ---------------------------------------------------------------------------
+# 13. Service filters (US3-2)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service filters"
+# Four probe services, each with a tech named exactly after the run. Every
+# query below adds techStack=$RUN, so it only ever sees these four: section
+# 11's "<run>-React" is a different name.
+probe_service() {
+    # An empty min leaves minBudget out of the body, as the API allows.
+    local min=""
+    [ -n "$2" ] && min="\"minBudget\":$2,"
+    api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+        -H 'Content-Type: application/json' \
+        -d "{\"listingTitle\":\"Snapshot Probe $1 service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",${min}\"maxBudget\":$3,\"categoryIds\":[$4],\"techStack\":[\"$RUN\"]}" >/dev/null
+    jget listingId
+}
+FILTER_WEB_ID="$(probe_service web 10000 50000 1)"
+FILTER_MOBILE_ID="$(probe_service mobile 80000 120000 2)"
+FILTER_WIDE_ID="$(probe_service wide 50000 200000 '')"
+FILTER_NO_MIN_ID="$(probe_service no-min '' 30000 '')"
+if [ -z "$FILTER_WEB_ID" ] || [ -z "$FILTER_MOBILE_ID" ] ||
+    [ -z "$FILTER_WIDE_ID" ] || [ -z "$FILTER_NO_MIN_ID" ]; then
+    echo "could not create the filter probe services:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
+    --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
+
+# T3.2.7: the web probe only. The mobile probe is in another category, and the
+# wide and no-min ones have none.
+snap services-filter-category-and-stack GET \
+    "/services?techStack=$RUN&category=Web%20Development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Two values in one group match either: the web and mobile probes.
+snap services-filter-category-either GET \
+    "/services?techStack=$RUN&category=Web%20Development&category=Mobile%20App%20Development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Case is ignored: "web development" still finds the web probe.
+snap services-filter-case GET \
+    "/services?techStack=$RUN&category=web%20development" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.8: nothing matches, so 200 with an empty page, not an error.
+snap services-filter-no-match GET \
+    "/services?techStack=$RUN&category=Hardware%20%26%20IoT" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.9: the mobile probe only. The keyword alone matches many services, the
+# filter alone all four.
+snap services-filter-keyword-and-filter GET \
+    "/services?techStack=$RUN&q=mobile" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: overlap. The mobile (80000-120000) and wide (50000-200000) probes
+# both reach into 60000-100000; the web and no-min probes top out at 50000 and
+# 30000.
+snap services-filter-price GET \
+    "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T3.2.10: the web probe starts at or under 20000, and the no-min probe has no
+# start, so it counts as open-ended. The wide probe starts at 50000.
+snap services-filter-price-max GET \
+    "/services?techStack=$RUN&maxPrice=20000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Only the wide probe reaches 150000; the mobile one tops out at 120000.
+snap services-filter-price-min GET \
+    "/services?techStack=$RUN&minPrice=150000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A blank price means no limit, not 0: all four probes.
+snap services-filter-price-empty GET \
+    "/services?techStack=$RUN&maxPrice=" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Slider ends that cross are a 400 the filter panel can show.
+snap error-services-filter-price-range GET \
+    "/services?minPrice=200000&maxPrice=1000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 14. Edit job postings (US2-13)
+# ---------------------------------------------------------------------------
+
+echo
+echo "edit job postings"
+# The probe posting from section 8, Open and owned by the receiver again
+# since section 10.
+if [ -n "$NEW_JOB_POSTING_ID" ]; then
+    snap error-job-postings-update-unauthorized PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"Unauthorized edit"}'
+
+    snap error-job-postings-update-not-found PATCH /job-postings/2147483647 \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"Nobody owns this"}'
+
+    # T2.13.9: the provider can see the posting but does not own it.
+    snap error-job-postings-update-forbidden PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"Not my posting"}'
+
+    # T2.13.6: a partial edit. Fields left out keep their values, and the
+    # categories are swapped for the new set.
+    snap job-postings-update PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"Snapshot Probe job posting edited","maxBudget":200000,"deadline":"2029-06-30","categoryIds":[2]}'
+
+    snap job-postings-update-persisted GET "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # T2.13.7: every one of these is a 400, and the GET after them shows
+    # the posting exactly as job-postings-update-persisted left it.
+    snap error-job-postings-update-validation PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"","maxBudget":-5,"deadline":"2020-01-01"}'
+
+    # Only one budget sent: 250000 is over the stored max of 200000.
+    snap error-job-postings-update-budget PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"minBudget":250000}'
+
+    # Only the max sent: 40000 is under the stored min of 50000, and the error
+    # names maxBudget, the field the form changed.
+    snap error-job-postings-update-budget-max PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"maxBudget":40000}'
+
+    snap error-job-postings-update-unknown-category PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"categoryIds":[99999]}'
+
+    snap error-job-postings-update-empty PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{}'
+
+    # A misspelled key is a 400, not a 200 that wrote nothing.
+    snap error-job-postings-update-unknown-key PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitel":"Typo"}'
+
+    snap job-postings-update-unchanged GET "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # T2.13.8: a Closed posting cannot be edited, even by its owner.
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
+
+    snap error-job-postings-update-closed PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingTitle":"Too late"}'
+
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } })"
+
+    # A row saved with min over max, as mock data can be. An edit that sends
+    # no budget still saves, and the bad budgets come back untouched.
+    run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { minBudget: 300000 } })"
+
+    snap job-postings-update-bad-stored-budget PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+        -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+        -d '{"listingDesc":"Edited while the stored budgets are wrong"}'
+else
+    echo "  --  skip   PATCH /job-postings/:jobPostingId (no probe posting)"
+fi
+
+# ---------------------------------------------------------------------------
+# 15. Close job postings (US2-14)
+# ---------------------------------------------------------------------------
+
+echo
+echo "close job postings"
+# A fresh posting, because section 8's has only a rejected proposal and the
+# provider cannot send it a second one. Created with api, not snap: POST
+# /job-postings has its own tests (US2-6).
+api POST /job-postings -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Snapshot Probe job posting to close","listingDesc":"created by scripts/snapshot-api.sh","maxBudget":100000}' >/dev/null
+CLOSE_POSTING_ID="$(jget jobPostingId)"
+if [ -z "$CLOSE_POSTING_ID" ]; then
+    echo "could not create the close probe posting:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "job_posting_id=$CLOSE_POSTING_ID")
+
+api POST "/job-postings/$CLOSE_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":90000,"proposalTerms":"Pending until the posting closes.","duration":1}' >/dev/null
+CLOSE_PROPOSAL_ID="$(jget proposalId)"
+if [ -z "$CLOSE_PROPOSAL_ID" ]; then
+    echo "could not create the close probe proposal:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "proposal_id=$CLOSE_PROPOSAL_ID")
+
+snap error-job-postings-close-unauthorized POST "/job-postings/$CLOSE_POSTING_ID/close"
+
+snap error-job-postings-close-not-found POST /job-postings/2147483647/close \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T2.14.8: the provider can see the posting but does not own it.
+snap error-job-postings-close-forbidden POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# T2.14.6: the answer is the posting, now CLOSED.
+snap job-postings-close POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T2.14.6: the proposal was rejected along with it. Nothing reads a proposal's
+# status yet, so accept stands in: it checks the proposal before the posting,
+# and a still-pending one would fail on the closed posting instead.
+snap error-job-postings-close-rejected-proposal POST "/proposals/$CLOSE_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Closing twice is a state conflict, not a second success.
+snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo

@@ -1,0 +1,10 @@
+{
+    "request": "POST /job-postings/<job_posting_id>/proposals",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Cannot submit a proposal to your own job posting"
+        }
+    }
+}

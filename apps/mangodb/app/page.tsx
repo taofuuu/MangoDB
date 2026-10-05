@@ -62,6 +62,24 @@ const ROUTES = [
         href: '/service/create',
         title: 'Create Service',
         detail: 'US2-1 - create service and add portfolio',
+        href: '/services',
+        title: 'Services (service search)',
+        detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.',
+    },
+    {
+        href: '/job/view-all',
+        title: 'View and search for job',
+        detail: 'Epic 3: ทำเกิน ;-;',
+    },
+    {
+        href: '/job/view-own',
+        title: 'View own job posting',
+        detail: 'US2-7',
+    },
+    {
+        href: '/job/view-byCompany',
+        title: 'View job posting by company (Just for test)',
+        detail: 'US2-7',
     },
 ];
 
