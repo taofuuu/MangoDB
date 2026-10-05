@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import Link from 'next/link';
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
@@ -500,7 +501,17 @@ export default function OtherJobPage() {
                         ${isDetailOpen ? 'w-[56.56vw]' : 'w-[56.56vw]'}
                     `}
                     >
-                        {error && (
+                        {error === NOT_SIGNED_IN && (
+                            <p className="type-md !font-[400]">
+                                You are not signed in.{' '}
+                                <Link href="/login" className="underline">
+                                    Log in
+                                </Link>
+                                , then come back.
+                            </p>
+                        )}
+
+                        {error && error !== NOT_SIGNED_IN && (
                             <div
                                 role="alert"
                                 className="rounded-button border border-danger/30 bg-danger/5 px-[1.25vw] py-[1.48vh] type-sm text-danger"
