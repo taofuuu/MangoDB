@@ -13,8 +13,7 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
 import { describeError } from '@/lib/api';
-
-const PAGE_SIZE = 12;
+import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
 type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
 
@@ -90,7 +89,7 @@ export default function CompaniesPage() {
         setIsLoading(true);
         setError(null);
 
-        getCompanyAccounts(page, PAGE_SIZE, {
+        getCompanyAccounts(page, COMPANY_PAGE_SIZE, {
             q: debouncedSearch || undefined,
             filter: filter === 'ALL' ? undefined : filter,
         })
@@ -284,7 +283,9 @@ export default function CompaniesPage() {
                                 className="grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 aria-label="Loading Company accounts"
                             >
-                                {Array.from({ length: 8 }).map((_, index) => (
+                                {Array.from({
+                                    length: COMPANY_PAGE_SIZE,
+                                }).map((_, index) => (
                                     <div
                                         key={index}
                                         className="h-[28.70vh] animate-pulse rounded-input bg-line"

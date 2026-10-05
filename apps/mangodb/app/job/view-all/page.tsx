@@ -9,8 +9,7 @@ import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getAllJobPostings } from '@/lib/job';
-
-const PAGE_SIZE = 6;
+import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 export default function OtherJobPage() {
     const [page, setPage] = useState(1);
@@ -86,7 +85,7 @@ export default function OtherJobPage() {
         setIsLoading(true);
         setError(null);
 
-        getAllJobPostings(page, PAGE_SIZE, {
+        getAllJobPostings(page, JOB_PAGE_SIZE, {
             status: 'OPEN',
             q: debouncedSearch,
         })
@@ -529,7 +528,7 @@ export default function OtherJobPage() {
                                         aria-label="Loading jobs"
                                     >
                                         {Array.from({
-                                            length: 8,
+                                            length: JOB_PAGE_SIZE,
                                         }).map((_, index) => (
                                             <div
                                                 key={index}

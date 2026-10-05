@@ -14,8 +14,7 @@ import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 import Link from 'next/link';
 
 import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
-
-const PAGE_SIZE = 6;
+import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
 
@@ -94,14 +93,14 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
             props.view === 'mine'
                 ? getMyJobPostings(
                       page,
-                      PAGE_SIZE,
+                      JOB_PAGE_SIZE,
                       status
                           ? {
                                 status,
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, PAGE_SIZE, {
+                : getAllJobPostings(page, JOB_PAGE_SIZE, {
                       companyId: companyId!,
                       status: 'OPEN',
                   });
@@ -442,7 +441,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                     "
                                 >
                                     {Array.from({
-                                        length: 6,
+                                        length: JOB_PAGE_SIZE,
                                     }).map((_, index) => (
                                         <div
                                             key={index}
