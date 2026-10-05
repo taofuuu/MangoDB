@@ -77,9 +77,6 @@ shared `#AFAFAF` colour. WebKit/Blink scrollbar width scales from the 1920px
 reference but is clamped to a usable 6–10px range; Firefox uses its native
 `thin` width.
 
-Long select-style dropdowns use the global `dropdown-scroll-area` class rather
-than defining their own scroll height.
-
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

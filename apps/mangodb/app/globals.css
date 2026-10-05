@@ -183,14 +183,6 @@ body {
     border-radius: 9999px;
 }
 
-/* Shared scroll region for long select-style dropdowns. The native scrollbar
-   thumb remains browser-calculated so it accurately represents the amount of
-   hidden content. */
-.dropdown-scroll-area {
-    height: 12.5rem;
-    overflow-y: auto;
-}
-
 /* uploadbox */
 .upload-box {
     border: 1px dashed var(--color-brand-dark);

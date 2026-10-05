@@ -64,7 +64,7 @@ export default function ServicesDashboard() {
                 </div>
 
                 {/* Display Content */}
-                <div className="space-y-3 overflow-y-auto max-h-[500px] flex-1">
+                <div className="space-y-3 overflow-y-auto max-h-[500px] flex-1 pr-2">
                     {/* Item 1 */}
                     <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
                         <div className="flex justify-between items-center">

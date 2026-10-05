@@ -45,7 +45,7 @@ export default function YearDropdown({
             {/* Dropdown */}
             {open && (
                 <div className="absolute left-0 top-full z-50 w-full rounded-md border border-gray-200 bg-white shadow-lg">
-                    <div className="dropdown-scroll-area">
+                    <div className="h-50 overflow-y-auto">
                         {years.map((year) => (
                             <button
                                 type="button"
