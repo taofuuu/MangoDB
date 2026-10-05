@@ -6,10 +6,11 @@ import type {
     CompanyAccountDetail,
     CompanyAccountListResponse,
 } from '@mangodb/shared';
-import { ChevronDown, LayoutGrid, Menu, Search, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
 import { describeError } from '@/lib/api';
 
@@ -161,8 +162,6 @@ export default function CompaniesPage() {
     const visibleCompanies = (result?.items ?? []).filter(
         (company) => company.accountType !== 'ADMIN',
     );
-    const hasPreviousPage = page > 1;
-    const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
@@ -312,42 +311,12 @@ export default function CompaniesPage() {
                     </div>
                 )}
 
-                {!error && pagination && pagination.totalItems > 0 && (
-                    <nav
-                        aria-label="Company account pages"
-                        className="mt-[2.22vh] flex items-center justify-between gap-[1.04vw]"
-                    >
-                        <p className="type-sm text-ink-soft">
-                            Showing {(page - 1) * pagination.pageSize + 1}–
-                            {Math.min(
-                                page * pagination.pageSize,
-                                pagination.totalItems,
-                            )}{' '}
-                            of {pagination.totalItems}
-                        </p>
-                        <div className="flex items-center gap-[0.63vw]">
-                            <Button
-                                variant="outline"
-                                disabled={!hasPreviousPage || isLoading}
-                                onClick={() => changePage(page - 1)}
-                                className="h-[4.63vh] px-[1.04vw] type-sm"
-                            >
-                                Previous
-                            </Button>
-                            <span className="min-w-[5.21vw] text-center type-sm text-ink-soft">
-                                Page {page} of {pagination.totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                disabled={!hasNextPage || isLoading}
-                                onClick={() => changePage(page + 1)}
-                                className="h-[4.63vh] px-[1.04vw] type-sm"
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </nav>
-                )}
+                <Pagination
+                    pagination={error ? null : pagination}
+                    onPageChange={changePage}
+                    ariaLabel="Company account pages"
+                    isLoading={isLoading}
+                />
             </div>
 
             {isDetailOpen && (
