@@ -173,7 +173,7 @@ export async function listMyJobPostings(
         ...(status ? { listingStatus: status } : {}),
     };
 
-    const [totalItems, postings] = await Promise.all([
+    const [totalItems, postings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
@@ -183,18 +183,16 @@ export async function listMyJobPostings(
             select: jobPostingSelect,
         }),
     ]);
-
-    const totalPages = Math.ceil(totalItems / pageSize);
-
-    res.json({
+    const body: JobPostingListResponse = {
         items: postings.map(toJobPosting),
         pagination: {
             page,
             pageSize,
             totalItems,
-            totalPages,
+            totalPages: Math.ceil(totalItems / pageSize),
         },
-    });
+    };
+    res.json(body);
 }
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
