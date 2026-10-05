@@ -73,7 +73,12 @@ through `type-xs` — **not** `text-lg` etc., which are Tailwind's own.
 
 Native scrollbars are styled globally in `app/globals.css`. Do not add a
 page-specific scrollbar class; any element that becomes scrollable picks up the
-shared colour and responsive dimensions automatically.
+shared `#AFAFAF` colour. WebKit/Blink scrollbar width scales from the 1920px
+reference but is clamped to a usable 6–10px range; Firefox uses its native
+`thin` width.
+
+Long select-style dropdowns use the global `dropdown-scroll-area` class rather
+than defining their own scroll height.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
