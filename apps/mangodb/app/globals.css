@@ -6,11 +6,9 @@
        defaults read it. */
     --foreground: #171717;
 
-    /* 1920 x 1080 design reference:
-       10 / 1920 * 100 = 0.520833vw
-       332 / 1080 * 100 = 30.740741vh */
-    --scrollbar-width: 0.520833vw;
-    --scrollbar-thumb-min-height: 30.740741vh;
+    /* 1920px design reference: 10 / 1920 * 100 = 0.520833vw.
+       The bounds preserve a usable native scrollbar at narrow and wide widths. */
+    --scrollbar-width: clamp(6px, 0.520833vw, 10px);
 }
 
 @theme inline {
@@ -179,9 +177,16 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-    min-height: var(--scrollbar-thumb-min-height);
     background: var(--color-scrollbar);
     border-radius: 9999px;
+}
+
+/* Shared scroll region for long select-style dropdowns. The native scrollbar
+   thumb remains browser-calculated so it accurately represents the amount of
+   hidden content. */
+.dropdown-scroll-area {
+    height: 12.5rem;
+    overflow-y: auto;
 }
 
 /* uploadbox */
