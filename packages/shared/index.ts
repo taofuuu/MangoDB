@@ -293,3 +293,13 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// What POST /services accepts. Validated by createServiceSchema.
+export interface CreateServiceRequest {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    listingStatus?: ListingStatus | undefined;
+    categoryIds?: number[] | undefined;
+}

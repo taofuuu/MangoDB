@@ -58,6 +58,11 @@ const ROUTES = [
         title: 'View Profile',
         detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
+    {
+        href: '/service/create',
+        title: 'Create Service',
+        detail: 'US2-1 - create service and add portfolio',
+    },
 ];
 
 export default function Home() {
