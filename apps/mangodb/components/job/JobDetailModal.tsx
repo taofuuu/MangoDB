@@ -4,8 +4,6 @@ import type { JobPosting } from '@mangodb/shared';
 
 import { X } from 'lucide-react';
 
-import Link from 'next/link';
-
 import Image from 'next/image';
 
 import ModalShell from '@/components/ui/ModalShell';
@@ -289,16 +287,10 @@ export default function JobDetailModal({
                         >
                             <span>Company</span>
 
-                            <Link
-                                href={`/company/${job.companyId}`}
-                                className="
-                                        !font-[600]
-                                        text-ink
-                                        hover:underline
-                                    "
-                            >
+                            {/* Plain text until /profile/[companyId] exists (T2.7.17) */}
+                            <span className="!font-[600] text-ink">
                                 {job.companyName}
-                            </Link>
+                            </span>
 
                             <span aria-hidden="true" className="w-[22px]" />
                         </div>
