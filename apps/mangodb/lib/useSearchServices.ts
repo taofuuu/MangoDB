@@ -21,7 +21,7 @@ type State = {
     items: ServiceSummary[];
     pagination: Pagination | null;
     status: 'idle' | 'loading' | 'loaded' | 'error';
-    error: string | null;
+    error: unknown;
 };
 
 const initialState: State = {
@@ -71,7 +71,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
                 setState((s) => ({
                     ...s,
                     status: 'error',
-                    error: err instanceof Error ? err.message : 'Search failed',
+                    error: err, // keep the original error so the UI can tell 401 from the rest
                 }));
             }
         },

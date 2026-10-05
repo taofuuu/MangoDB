@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import type { Pagination, ServiceSummary } from '@/lib/searchServices';
 import type { SearchServicesMode } from '@/lib/useSearchServices';
+import Link from 'next/link';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { SearchServiceCard } from './SearchServiceCard';
 import { SearchServicesEmptyState } from './SearchServicesEmptyState';
 import {
@@ -20,6 +22,7 @@ export function SearchServicesResultsGrid({
     mode,
     items,
     status,
+    error,
     pagination,
     hasMore,
     onPageChange,
@@ -28,6 +31,7 @@ export function SearchServicesResultsGrid({
     mode: SearchServicesMode;
     items: ServiceSummary[];
     status: 'idle' | 'loading' | 'loaded' | 'error';
+    error: unknown;
     pagination: Pagination | null;
     hasMore: boolean;
     onPageChange: (page: number) => void;
@@ -53,9 +57,23 @@ export function SearchServicesResultsGrid({
     }
 
     if (status === 'error') {
+        if (isNotSignedIn(error)) {
+            return (
+                <p className="py-24 text-center type-sm text-[var(--color-ink-soft)]">
+                    Please sign in to browse services.{' '}
+                    <Link
+                        href="/login"
+                        className="text-[var(--color-brand)] underline"
+                    >
+                        Sign in
+                    </Link>
+                </p>
+            );
+        }
+
         return (
             <p className="py-24 text-center type-sm text-[var(--color-danger)]">
-                Something went wrong loading services. Try again.
+                {describeError(error)}
             </p>
         );
     }

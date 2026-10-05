@@ -41,6 +41,15 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                             {formatBudget(service.maxBudget)}
                         </p>
 
+                        {/* T3.1.4: Duration and Rating are not in the service-level data
+                        model yet, so show "-" until a real source exists. */}
+                        <p className="type-xs mt-1 text-[var(--color-ink-soft)]">
+                            Duration: -
+                        </p>
+                        <p className="type-xs mt-1 text-[var(--color-ink-soft)]">
+                            Rating: -
+                        </p>
+
                         {visibleTech.length > 0 && (
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {visibleTech.map((tech) => (
@@ -61,12 +70,18 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                     </div>
                 </div>
 
-                <a
-                    href={`/matching/${service.listingId}`}
-                    className="rounded-button shrink-0 self-end border border-[var(--color-brand)] px-4 py-2 type-xs whitespace-nowrap text-[var(--color-brand)] transition-colors hover:bg-[var(--color-brand-tint)]"
+                {/* The detail page (/services/:listingId) and its public API are not
+                implemented yet, so this is disabled instead of linking to a 404.
+                Swap it back to <Link href={`/services/${service.listingId}`}> once
+                the detail feature lands. */}
+                <button
+                    type="button"
+                    disabled
+                    title="Coming soon"
+                    className="rounded-button shrink-0 self-end cursor-not-allowed border border-[var(--color-brand)] px-4 py-2 type-xs whitespace-nowrap text-[var(--color-brand)] opacity-40"
                 >
                     view detail →
-                </a>
+                </button>
             </div>
         </div>
     );

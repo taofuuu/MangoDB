@@ -23,6 +23,7 @@ export function SearchServicesPage({
         items,
         pagination,
         status,
+        error,
         filters,
         hasMore,
         search,
@@ -70,6 +71,7 @@ export function SearchServicesPage({
                         mode={mode}
                         items={items}
                         status={status}
+                        error={error}
                         pagination={pagination}
                         hasMore={hasMore}
                         onPageChange={goToPage}
