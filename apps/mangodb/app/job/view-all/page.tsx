@@ -524,7 +524,7 @@ export default function OtherJobPage() {
                         {!error && (
                             <div
                                 ref={listRef}
-                                className="modal-scrollbar max-h-[72.63vh] overflow-y-auto pr-[0.63vw]"
+                                className="max-h-[72.63vh] overflow-y-auto pr-[0.63vw]"
                             >
                                 {isLoading ? (
                                     <div

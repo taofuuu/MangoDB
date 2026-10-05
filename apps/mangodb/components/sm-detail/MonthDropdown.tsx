@@ -55,7 +55,7 @@ export default function MonthDropdown({ value, onChange }: MonthDropdownProps) {
             {/* Dropdown */}
             {open && (
                 <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
-                    <div className="custom-scrollbar h-50 overflow-y-auto">
+                    <div className="h-50 overflow-y-auto">
                         {months.map((month) => (
                             <button
                                 type="button"

@@ -278,7 +278,7 @@ export default function CompaniesPage() {
                 {!error && (
                     <div
                         ref={listRef}
-                        className="modal-scrollbar max-h-[62.96vh] overflow-y-auto pr-[0.63vw]"
+                        className="max-h-[62.96vh] overflow-y-auto pr-[0.63vw]"
                     >
                         {isLoading ? (
                             <div

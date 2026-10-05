@@ -374,7 +374,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     <div
                         ref={listRef}
                         className="
-                            modal-scrollbar
                             h-[72.63vh]
                             w-[56.56vw]
                             overflow-y-auto

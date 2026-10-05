@@ -99,7 +99,7 @@ export default function CompanyCard({ data }: CompanyCardProps) {
             {/* The details, and the only thing that scrolls. Edit sits under
                 the scroll rather than inside it, so it is always reachable. */}
             <div className="flex min-h-0 w-full flex-col md:w-2/3">
-                <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+                <div className="min-h-0 flex-1 overflow-y-auto pr-2">
                     <div className="grid w-full grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                         <Field
                             label="Company Description"

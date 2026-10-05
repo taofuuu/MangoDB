@@ -99,7 +99,7 @@ export default function RegisterLayout({
                     </header>
 
                     {/* content */}
-                    <div className="modal-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto">
+                    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
                         {children}
                     </div>
 

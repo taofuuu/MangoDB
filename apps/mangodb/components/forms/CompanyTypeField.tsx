@@ -48,7 +48,7 @@ export default function CompanyTypeField({
                 {label}
             </span>
 
-            <div className="custom-scrollbar flex h-[13.36vh] w-full flex-wrap content-start gap-x-[1.68vw] gap-y-[2.41vh] overflow-y-auto rounded-button border-[0.75px] border-black bg-white px-[0.97vw] py-[2vh]">
+            <div className="flex h-[13.36vh] w-full flex-wrap content-start gap-x-[1.68vw] gap-y-[2.41vh] overflow-y-auto rounded-button border-[0.75px] border-black bg-white px-[0.97vw] py-[2vh]">
                 {value.map((tag) => (
                     <Tag
                         key={tag}
