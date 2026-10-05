@@ -74,9 +74,14 @@ async function verifyCredentials(
 export async function register(req: Request, res: Response): Promise<void> {
     const body = parseBody(registerSchema, req.body);
     // tosAccepted is pulled out so it is not spread into the row: what gets
-    // stored is when, not the flag. The schema has already turned away false,
-    // so here it is either true or missing.
-    const { companyType, accountType, password, tosAccepted, ...rest } = body;
+    // stored is when, not the flag. The schema only lets true through.
+    const {
+        companyType,
+        accountType,
+        password,
+        tosAccepted: _tosAccepted,
+        ...rest
+    } = body;
 
     // Reports both collisions at once; an index only fails on the first.
     await assertCompanyIdentityAvailable({
@@ -101,9 +106,8 @@ export async function register(req: Request, res: Response): Promise<void> {
                 accountType,
                 password: await hashPassword(password),
                 // Set here, inside the same create as the company, so a
-                // registration that fails stores no consent either. Null
-                // when tosAccepted is missing - see registerSchema.
-                tosAcceptedAt: tosAccepted ? new Date() : null,
+                // registration that fails stores no consent either.
+                tosAcceptedAt: new Date(),
                 companyType: {
                     create: companyType.map((tag) => ({ companyType: tag })),
                 },

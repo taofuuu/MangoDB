@@ -77,10 +77,9 @@ export interface RegisterRequest {
     companyDescription?: string | undefined;
     address?: string | undefined;
     website?: string | undefined;
-    // The ToS consent checkbox. true stores the consent time; false is
-    // rejected with a 400. Why it is optional: registerSchema in
-    // apps/api/src/schemas/auth.schema.ts.
-    tosAccepted?: true | undefined;
+    // The ToS consent checkbox. Required: true stores the consent time, and
+    // anything else is rejected with a 400.
+    tosAccepted: true;
 }
 
 // A company as the API returns it — never carries the password hash.

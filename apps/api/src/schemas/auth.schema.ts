@@ -16,15 +16,11 @@ export const registerSchema = z.object({
     companyDescription: companyFields.companyDescription.optional(),
     address: companyFields.address.optional(),
     website: companyFields.website.optional(),
-    // US1-13. The ToS checkbox. `true` stores tos_accepted_at; `false` is a
-    // 400. Optional for now only because the register form does not send it
-    // yet (T1.13.2 / T1.13.3) - a missing field registers with no consent
-    // recorded. Drop .optional() once the form sends it.
-    tosAccepted: z
-        .literal(true, {
-            message: 'Accept the Terms of Service to register',
-        })
-        .optional(),
+    // US1-13. Consent is mandatory: only `true` registers, and it stores
+    // tos_accepted_at. `false` or a missing field is a 400.
+    tosAccepted: z.literal(true, {
+        message: 'Accept the Terms of Service to register',
+    }),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

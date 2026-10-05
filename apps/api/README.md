@@ -220,9 +220,7 @@ Reuse both for any endpoint that returns a company — US1-4 included.
 Consent to the Terms of Service is part of the body. `tosAccepted: true` makes
 the handler write `tos_accepted_at` in the same `create`, so a stored
 timestamp always means a company that registered and consented;
-`tosAccepted: false` is a `400`. For now a request without the field still
-registers, with `tos_accepted_at` left null — the comment on `registerSchema`
-in `src/schemas/auth.schema.ts` says why and when that changes.
+`tosAccepted: false` or a missing field is a `400`, and nothing is written.
 
 Duplicate usernames and emails are caught twice, on purpose.
 `assertCompanyIdentityAvailable` in `src/lib/companyIdentity.ts` runs the
