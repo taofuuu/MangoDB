@@ -78,6 +78,7 @@
        #999999 and #A3A3A3 — depending on which form you were looking at.
        Two of those pairs were under ΔE 1. */
     --color-ink-placeholder: #999999;
+    --color-panel: #f1f3f5;
 
     /* Every border. There were eight of these — #CBCBCB, #CCCCCC, #E0E0E0,
        #E5E5E5, #EAEAEA, #EDEDED and #F5F5F5 alongside this one — and every
@@ -86,6 +87,7 @@
     /* A filled block rather than a hairline: the Go Back button, a disabled
        swatch. Close to line on paper, a different thing on screen. */
     --color-fill-muted: #d9d9d9;
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 0.12);
 
     /* Shared by every native scrollbar in the app. */
     --color-scrollbar: #afafaf;
