@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { PaginationMeta } from '@mangodb/shared';
 
 import Button from '@/components/ui/Button';
@@ -19,9 +20,26 @@ export default function Pagination({
     isLoading = false,
     className = '',
 }: PaginationProps) {
-    if (!pagination || pagination.totalItems === 0) return null;
+    const currentPage = pagination?.page ?? 0;
+    const totalPages = pagination?.totalPages ?? 0;
+    const isPageOutOfRange =
+        pagination !== null &&
+        pagination !== undefined &&
+        pagination.totalItems > 0 &&
+        totalPages > 0 &&
+        currentPage > totalPages;
 
-    const { page, pageSize, totalItems, totalPages } = pagination;
+    useEffect(() => {
+        if (isPageOutOfRange) {
+            onPageChange(totalPages);
+        }
+    }, [isPageOutOfRange, onPageChange, totalPages]);
+
+    if (!pagination || pagination.totalItems === 0 || isPageOutOfRange) {
+        return null;
+    }
+
+    const { page, pageSize, totalItems } = pagination;
     const firstItem = (page - 1) * pageSize + 1;
     const lastItem = Math.min(page * pageSize, totalItems);
 
