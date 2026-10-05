@@ -13,6 +13,8 @@ import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 
 import Link from 'next/link';
 
+import { FilePlus } from 'lucide-react';
+
 import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
@@ -339,15 +341,17 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                 w-[8.96vw]
                                 items-center
                                 justify-center
-                                rounded-full
-                                bg-brand
+                                gap-[0.42vw]
+                                rounded-button
+                                bg-brand-dark
                                 type-md
                                 text-surface
                                 transition-colors
-                                hover:bg-brand-dark
+                                hover:bg-brand-darker
                             "
                         >
-                            + Add Job
+                            <FilePlus size={18} aria-hidden="true" />
+                            Add Job
                         </button>
                     </div>
                 )}

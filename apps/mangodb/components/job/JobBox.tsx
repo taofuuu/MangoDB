@@ -9,6 +9,7 @@ import {
     ArrowRight,
     CalendarClock,
     Edit,
+    FileX,
     Trash,
 } from 'lucide-react';
 
@@ -65,15 +66,15 @@ export default function JobBox({
                     text-left
                     transition
                     leading-relaxed
+                    shadow-sm
 
                     ${
-                        isMyJobs
-                            ? job.listingStatus === 'OPEN'
-                                ? 'shadow-[0_0_8px_rgba(73,123,147,0.35)]'
-                                : job.listingStatus === 'CLOSED'
-                                  ? 'shadow-[0_0_8px_rgba(197,72,59,0.35)]'
-                                  : 'shadow-sm'
-                            : 'shadow-sm'
+                        // My Jobs outlines each card in its status colour
+                        isMyJobs && job.listingStatus === 'OPEN'
+                            ? 'border-2 border-brand/80'
+                            : isMyJobs && job.listingStatus === 'CLOSED'
+                              ? 'border-2 border-danger/80'
+                              : ''
                     }
                 `}
             >
@@ -124,13 +125,16 @@ export default function JobBox({
                                             type="button"
                                             className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                         >
+                                            <FileX size={15} />
                                             Close
                                         </button>
                                     )}
 
+                                    <hr className="my-1 border-0 border-t border-line" />
+
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left text-danger hover:bg-danger-wash"
                                     >
                                         <Trash size={15} />
                                         Delete
