@@ -16,6 +16,11 @@ export const registerSchema = z.object({
     companyDescription: companyFields.companyDescription.optional(),
     address: companyFields.address.optional(),
     website: companyFields.website.optional(),
+    // US1-13. Consent is mandatory: only `true` registers, and it stores
+    // tos_accepted_at. `false` or a missing field is a 400.
+    tosAccepted: z.literal(true, {
+        message: 'Accept the Terms of Service to register',
+    }),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

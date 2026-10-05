@@ -5,6 +5,7 @@ import {
     createJobPosting,
     getJobPosting,
     listJobPostings,
+    listMyJobPostings,
     updateJobPosting,
 } from '../controllers/job-posting.controller';
 import {
@@ -13,6 +14,14 @@ import {
 } from '../controllers/proposal.controller';
 
 export const jobPostingRoutes = Router();
+// US2-2. List my own job postings, every status, newest first.
+// Guards: authenticated and holding Receiver role, like /services/mine.
+jobPostingRoutes.get(
+    '/mine',
+    requireAuth,
+    requireRole('receiver'),
+    listMyJobPostings,
+);
 
 // US2-7. List job postings with status filter and visibility rules.
 // Guards: authenticated as any Company account (provider, receiver, both) or Admin.

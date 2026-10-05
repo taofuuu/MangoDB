@@ -1,5 +1,9 @@
 import type { Request, Response } from 'express';
-import type { ListingStatus, ProposalStatus } from '@mangodb/shared';
+import type {
+    ListingStatus,
+    ProposalStatus,
+    JobPostingListResponse,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
@@ -74,7 +78,7 @@ export async function listJobPostings(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { status, companyId } = parseQuery(
+    const { page, pageSize, status, companyId, q } = parseQuery(
         jobPostingListQuerySchema,
         req.query,
     );
@@ -94,6 +98,28 @@ export async function listJobPostings(
                   ]
                 : []),
             ...(companyId ? [{ companyId }] : []),
+            // Search is discovery, so soft-deleted companies' postings stay hidden
+            { company: { deletedAt: null } },
+            ...(q
+                ? [
+                      {
+                          OR: [
+                              {
+                                  listingTitle: {
+                                      contains: q,
+                                      mode: 'insensitive' as Prisma.QueryMode,
+                                  },
+                              },
+                              {
+                                  listingDesc: {
+                                      contains: q,
+                                      mode: 'insensitive' as Prisma.QueryMode,
+                                  },
+                              },
+                          ],
+                      },
+                  ]
+                : []),
 
             // 3. Visibility rules: callers can only see OPEN postings
             // or postings they created themselves
@@ -107,14 +133,66 @@ export async function listJobPostings(
             },
         ],
     };
+    const [totalItems, postings] = await prisma.$transaction([
+        prisma.listing.count({ where }),
+        prisma.listing.findMany({
+            where,
+            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: jobPostingSelect,
+        }),
+    ]);
+    const body: JobPostingListResponse = {
+        items: postings.map(toJobPosting),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+        },
+    };
+    res.json(body);
+}
 
-    const postings = await prisma.listing.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
-        select: jobPostingSelect,
-    });
+//for own job posting
+export async function listMyJobPostings(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { page, pageSize, status } = parseQuery(
+        jobPostingListQuerySchema,
+        req.query,
+    );
 
-    res.json(postings.map(toJobPosting));
+    const companyId = req.auth!.companyId;
+
+    const where: Prisma.ListingWhereInput = {
+        listingType: 'JOB',
+        companyId,
+        ...(status ? { listingStatus: status } : {}),
+    };
+
+    const [totalItems, postings] = await prisma.$transaction([
+        prisma.listing.count({ where }),
+        prisma.listing.findMany({
+            where,
+            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            select: jobPostingSelect,
+        }),
+    ]);
+    const body: JobPostingListResponse = {
+        items: postings.map(toJobPosting),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+        },
+    };
+    res.json(body);
 }
 
 // US2-7. Fetch a single job posting by ID with visibility rules:

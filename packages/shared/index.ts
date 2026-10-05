@@ -77,6 +77,9 @@ export interface RegisterRequest {
     companyDescription?: string | undefined;
     address?: string | undefined;
     website?: string | undefined;
+    // The ToS consent checkbox. Required: true stores the consent time, and
+    // anything else is rejected with a 400.
+    tosAccepted: true;
 }
 
 // A company as the API returns it — never carries the password hash.
@@ -265,6 +268,7 @@ export interface Certificate {
 export interface JobPosting {
     jobPostingId: number;
     companyId: number;
+    companyName: string;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -277,6 +281,11 @@ export interface JobPosting {
     categoryIds: number[];
     categories: string[];
     createdAt?: string | undefined;
+}
+
+export interface JobPostingListResponse {
+    items: JobPosting[];
+    pagination: PaginationMeta;
 }
 
 // What POST /job-postings accepts. Validated by createJobPostingSchema.
