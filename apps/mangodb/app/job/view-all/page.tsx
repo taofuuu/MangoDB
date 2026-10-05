@@ -101,9 +101,12 @@ export default function OtherJobPage() {
                 });
             })
             .catch((requestError: unknown) => {
-                if (!cancelled) {
-                    setError(describeError(requestError));
+                if (cancelled) return;
+                if (isNotSignedIn(requestError)) {
+                    setError(NOT_SIGNED_IN);
+                    return;
                 }
+                setError(describeError(requestError));
             })
             .finally(() => {
                 if (!cancelled) {
