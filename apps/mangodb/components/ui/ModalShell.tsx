@@ -58,8 +58,12 @@ const FOCUSABLE = [
 ].join(',');
 
 export default function ModalShell({ isOpen, ...props }: ModalShellProps) {
+    // Unmounting on close is what makes a reopened dialog start clean, rather
+    // than showing the previous attempt's half-filled form or stale error.
     if (!isOpen) return null;
 
+    // Portal to <body>, so a transformed parent (translate, scale) cannot
+    // trap the fixed overlay inside its own box.
     return createPortal(<ModalShellDialog {...props} />, document.body);
 }
 
