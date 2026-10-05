@@ -91,6 +91,9 @@
 
     /* Shared by every native scrollbar in the app. */
     --color-scrollbar: #afafaf;
+
+    /* Previous/Next controls in the shared pagination footer. */
+    --color-pagination-border: #cacaca;
 }
 
 body {
