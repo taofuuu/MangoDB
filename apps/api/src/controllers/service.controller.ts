@@ -68,7 +68,7 @@ export async function createListing(
             listingTitle: data.listingTitle,
             listingDesc: data.listingDesc,
             minBudget: data.minBudget ?? null,
-            maxBudget: data.maxBudget,
+            maxBudget: data.maxBudget ?? null,
             listingStatus: DEFAULT_LISTING_STATUS,
             listingType: 'SERVICE',
             // ADR 0009. Each tech links to its tech_stack row, added above.

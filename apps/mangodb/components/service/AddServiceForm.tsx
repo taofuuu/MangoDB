@@ -16,6 +16,8 @@ import { createService, createPortfolioForListing } from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnauthorizedPage from './UnauthorizedPage';
+import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
 
 type ServiceErrors = Partial<
     Record<
@@ -46,6 +48,7 @@ export default function AddServiceForm() {
 
     // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     // Form fields state
     const [title, setTitle] = useState('');
@@ -67,36 +70,42 @@ export default function AddServiceForm() {
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // ── IDENTICAL AUTHORIZATION METHOD AS PORTFOLIO PAGE ──
     useEffect(() => {
-        async function checkAuth() {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('/api/auth/me', {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                });
-
-                if (!res.ok) {
-                    setIsAuthorized(false);
-                    return;
-                }
-
-                const user = await res.json();
-                const role = user.role?.toLowerCase();
-                const accountType = user.accountType?.toUpperCase();
+        getMyProfile()
+            .then((profile) => {
+                const p = profile as unknown as Record<string, unknown>;
+                const role = (p.role || p.userRole || p.type || '')
+                    .toString()
+                    .toLowerCase();
+                const accountType = (p.accountType || p.account_type || '')
+                    .toString()
+                    .toUpperCase();
 
                 const hasProviderRole =
                     role === 'provider' ||
                     role === 'both' ||
                     accountType === 'PROVIDER' ||
-                    accountType === 'BOTH';
+                    accountType === 'BOTH' ||
+                    (Array.isArray(p.roles) &&
+                        p.roles.some((r) =>
+                            ['provider', 'both'].includes(
+                                String(r).toLowerCase(),
+                            ),
+                        ));
 
-                setIsAuthorized(hasProviderRole);
-            } catch {
+                setIsAuthorized(Boolean(hasProviderRole));
+            })
+            .catch((err: unknown) => {
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
+                    setIsAuthorized(false);
+                    return;
+                }
+
+                setLoadError(describeError(err));
                 setIsAuthorized(false);
-            }
-        }
-
-        checkAuth();
+            });
     }, []);
 
     const clearError = (field: keyof ServiceErrors) =>
@@ -195,8 +204,8 @@ export default function AddServiceForm() {
         router.push('/');
     };
 
-    // ── EARLY RETURNS PLACE BELOW ALL HOOKS ──
-    if (isAuthorized === null) {
+    // ── EARLY RETURNS PLACED AFTER ALL HOOKS ──
+    if (isAuthorized === null && !loadError) {
         return (
             <div className="min-h-screen bg-surface flex items-center justify-center">
                 <p className="type-sm text-ink-placeholder">
@@ -206,7 +215,7 @@ export default function AddServiceForm() {
         );
     }
 
-    if (!isAuthorized) {
+    if (!isAuthorized || loadError === NOT_SIGNED_IN) {
         return <UnauthorizedPage />;
     }
 
@@ -218,6 +227,12 @@ export default function AddServiceForm() {
                 <p className="type-sm text-ink-soft font-medium mb-6">
                     * Indicates required
                 </p>
+
+                {loadError && loadError !== NOT_SIGNED_IN && (
+                    <p className="mb-4 type-sm font-medium text-danger">
+                        {loadError}
+                    </p>
+                )}
 
                 <form onSubmit={handleSubmit} noValidate>
                     <div className="flex flex-col md:flex-row gap-6 items-stretch">
