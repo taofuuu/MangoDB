@@ -14,6 +14,8 @@ import AccountInfoStep, {
     AccountInfoError,
     type AccountInfo,
 } from '@/components/register/AccountStep';
+import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
+import FieldError from '@/components/ui/FieldError';
 import {
     normalizePhone,
     normalizeWebsiteUrl,
@@ -44,7 +46,11 @@ const REGISTER_FIELDS = {
     website: 'website',
     username: 'username',
     password: 'password',
+    tosAccepted: 'tosAccepted',
 } as const;
+
+const TOS_REQUIRED_MESSAGE =
+    'You must accept the Terms of Service to create an account.';
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -91,6 +97,12 @@ export default function RegisterPage() {
     const [companyInfoError, setCompanyInfoError] = useState<CompanyInfoError>(
         {},
     );
+
+    // US1-13. Consent is given in the Terms of Service dialog, which opens on
+    // Create Account until it has been accepted once.
+    const [tosAccepted, setTosAccepted] = useState(false);
+    const [isTosOpen, setIsTosOpen] = useState(false);
+    const [tosError, setTosError] = useState('');
 
     /* ================= NAVIGATION ================= */
 
@@ -167,6 +179,34 @@ export default function RegisterPage() {
         }
 
         setCompanyInfoError({});
+
+        // The form is valid, so the only thing left between the user and an
+        // account is consent. Ask for it rather than send a body the API
+        // rejects.
+        if (!tosAccepted) {
+            setIsTosOpen(true);
+            return;
+        }
+
+        await sendRegister();
+    };
+
+    const acceptTerms = () => {
+        setTosAccepted(true);
+        setTosError('');
+        setIsTosOpen(false);
+        // Accepting is pressing Create Account a second time: the form was
+        // already validated before the dialog opened.
+        void sendRegister();
+    };
+
+    const declineTerms = () => {
+        setTosAccepted(false);
+        setIsTosOpen(false);
+        setTosError(TOS_REQUIRED_MESSAGE);
+    };
+
+    const sendRegister = async () => {
         setIsSubmitting(true);
 
         // Optional fields go out as undefined rather than an empty string,
@@ -183,6 +223,8 @@ export default function RegisterPage() {
             accountType,
             username: accountInfo.username,
             password: accountInfo.password,
+            // Only reachable after Accept. The API takes nothing but `true`.
+            tosAccepted: true,
         };
 
         try {
@@ -200,7 +242,20 @@ export default function RegisterPage() {
 
             // username and password belong to the account step, so a rejection
             // there sends the user back to the boxes it is about.
-            const { username, password, ...companyFields } = fields;
+            const {
+                username,
+                password,
+                tosAccepted: tosField,
+                ...companyFields
+            } = fields;
+
+            // The API did not record consent, so the next Create Account has
+            // to ask again.
+            if (tosField) {
+                setTosAccepted(false);
+                setTosError(tosField);
+            }
+
             if (username || password) {
                 setAccountInfoError({
                     usernameError: username ?? '',
@@ -297,6 +352,10 @@ export default function RegisterPage() {
                 />
             )}
 
+            {currentStep === RegisterStep.CompanyInfo && (
+                <FieldError message={tosError} />
+            )}
+
             {currentStep === RegisterStep.AccountInfo && (
                 <AccountInfoStep
                     value={accountInfo}
@@ -331,6 +390,12 @@ export default function RegisterPage() {
                     </button>
                 </div>
             )}
+
+            <TermsOfServiceModal
+                isOpen={isTosOpen}
+                onAccept={acceptTerms}
+                onDecline={declineTerms}
+            />
         </RegisterLayout>
     );
 }

@@ -161,6 +161,13 @@ body {
     --scrollbar-thumb-hover: var(--color-accent);
 }
 
+/* Paired with .modal-scrollbar on the Terms of Service text, which the design
+   gives the lighter blue. */
+.terms-scrollbar {
+    --scrollbar-thumb: var(--color-brand-light);
+    --scrollbar-thumb-hover: var(--color-brand);
+}
+
 /* Grey rather than brand: this one scrolls inside a card that is already
    busy, so the bar should not be the loudest thing on it. */
 .view-profile-scrollbar {
