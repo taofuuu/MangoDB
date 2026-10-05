@@ -233,6 +233,7 @@ tappable.
 | Provider/Receiver chips   | `RoleTags`                                                     |
 | A chip                    | `Tag`                                                          |
 | A button                  | `Button`                                                       |
+| Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
 
