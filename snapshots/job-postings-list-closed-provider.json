@@ -1,5 +1,13 @@
 {
     "request": "GET /job-postings?status=CLOSED",
     "status": 200,
-    "body": []
+    "body": {
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 0,
+            "totalPages": 0
+        }
+    }
 }
