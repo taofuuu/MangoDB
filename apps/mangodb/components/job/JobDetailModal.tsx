@@ -75,7 +75,7 @@ export default function JobDetailModal({
                                 text-ink
                             "
                     >
-                        {job.listingTitle ?? 'Loading job'}
+                        {job.listingTitle}
                     </h2>
                 </div>
 
