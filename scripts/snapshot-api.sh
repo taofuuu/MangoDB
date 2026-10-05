@@ -754,6 +754,30 @@ snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
+# 10b. List Provider's proposals (US2-9)
+# ---------------------------------------------------------------------------
+
+echo
+echo "proposals mine"
+
+snap error-proposals-mine-unauthorized GET /proposals/mine
+
+snap error-proposals-mine-forbidden-receiver GET /proposals/mine \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-proposals-mine-forbidden-admin GET /proposals/mine \
+    -H "$(bearer "$TOKEN_ADMIN")"
+
+snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVALID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap proposals-mine GET /proposals/mine \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&limit=6" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
 

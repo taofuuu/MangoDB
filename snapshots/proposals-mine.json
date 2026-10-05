@@ -1,0 +1,24 @@
+{
+    "request": "GET /proposals/mine",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "createdAt": "<timestamp>",
+                "duration": 2,
+                "jobPostingId": "<job_posting_id>",
+                "proposalBudget": 80000,
+                "proposalId": "<proposal_id>",
+                "proposalStatus": "PENDING",
+                "proposalTerms": "Full-stack development in 2 months with agile delivery.",
+                "providerId": 142
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 6,
+            "totalItems": 1,
+            "totalPages": 1
+        }
+    }
+}
