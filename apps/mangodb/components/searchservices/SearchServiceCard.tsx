@@ -12,9 +12,8 @@ function initials(name: string): string {
 }
 
 export function SearchServiceCard({ service }: { service: ServiceSummary }) {
-    const visibleTech = service.company.techStack.slice(0, 2);
-    const extraTechCount =
-        service.company.techStack.length - visibleTech.length;
+    const visibleTech = service.techStack.slice(0, 2);
+    const extraTechCount = service.techStack.length - visibleTech.length;
 
     return (
         <div className="rounded-button border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] p-5 shadow-card">
