@@ -4,7 +4,6 @@
 // Named searchServices, not services/service: "service" already means
 // something else in this codebase (creating/owning a service listing).
 
-
 // ---------------------------------------------------------------------------
 // Types — mirror apps/api/src/lib/service.ts (toServiceSummary).
 // NOTE: techStack is the SERVICE's own stack (ADR 0009), so it sits at the top

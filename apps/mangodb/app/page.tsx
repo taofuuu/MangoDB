@@ -61,9 +61,9 @@ const ROUTES = [
     {
         href: '/services',
         title: 'Services (service search)',
-        detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.'
+        detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.',
     },
-    {  
+    {
         href: '/job/view-all',
         title: 'View and search for job',
         detail: 'Epic 3: ทำเกิน ;-;',
