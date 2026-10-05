@@ -4,8 +4,9 @@ export interface CreateServiceBody {
     listingTitle: string;
     listingDesc: string;
     minBudget?: number;
-    maxBudget?: number; // 👈 Made optional
+    maxBudget?: number;
     categoryIds?: number[];
+    techStack?: string[];
 }
 
 // Minimal shape we need back from POST /services — the full Listing type lives
@@ -15,10 +16,11 @@ export interface CreatedService {
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
-    maxBudget: number | null; // 👈 Updated to reflect optional return type
+    maxBudget: number | null;
     listingStatus: string;
     type: string;
     categoryIds: number[];
+    techStack?: string[];
 }
 
 export function createService(

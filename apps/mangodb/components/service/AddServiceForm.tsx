@@ -6,10 +6,10 @@ import FieldError from '@/components/ui/FieldError';
 import {
     toFormErrors,
     SERVICE_FIELDS,
-    PREDEFINED_TECH_STACKS,
     validateServiceTitle,
     validateServiceDescription,
     validateServiceCategory,
+    validateServiceTechStack,
     validateServiceBudgets,
 } from '@/lib/validation';
 import { createService, createPortfolioForListing } from '@/lib/service';
@@ -57,6 +57,7 @@ export default function AddServiceForm() {
         [],
     );
     const [selectedTechStack, setSelectedTechStack] = useState<string[]>([]);
+    const [customTechInput, setCustomTechInput] = useState('');
     const [minBudget, setMinBudget] = useState('');
     const [maxBudget, setMaxBudget] = useState('');
 
@@ -70,7 +71,7 @@ export default function AddServiceForm() {
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ── IDENTICAL AUTHORIZATION METHOD AS PORTFOLIO PAGE ──
+    // ── AUTHORIZATION ──
     useEffect(() => {
         getMyProfile()
             .then((profile) => {
@@ -120,13 +121,64 @@ export default function AddServiceForm() {
         );
     };
 
-    const handleTechClick = (tech: string) => {
-        clearError('techStack');
-        setSelectedTechStack((prev) =>
-            prev.includes(tech)
-                ? prev.filter((item) => item !== tech)
-                : [...prev, tech],
+    const handleAddTech = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+
+        const trimmed = customTechInput.trim();
+        if (!trimmed) return;
+
+        if (trimmed.length > 100) {
+            setErrors((prev) => ({
+                ...prev,
+                techStack: 'Tech stack item cannot exceed 100 characters.',
+            }));
+            return;
+        }
+
+        if (selectedTechStack.length >= 20) {
+            setErrors((prev) => ({
+                ...prev,
+                techStack: 'You can select at most 20 tech stack items.',
+            }));
+            return;
+        }
+
+        const exists = selectedTechStack.some(
+            (item) => item.toLowerCase() === trimmed.toLowerCase(),
         );
+
+        if (exists) {
+            setErrors((prev) => ({
+                ...prev,
+                techStack: 'This tech stack item is already added.',
+            }));
+            return;
+        }
+
+        clearError('techStack');
+        setSelectedTechStack((prev) => [...prev, trimmed]);
+        setCustomTechInput('');
+    };
+
+    const handleRemoveTech = (tech: string) => {
+        clearError('techStack');
+        setSelectedTechStack((prev) => prev.filter((item) => item !== tech));
+    };
+
+    const handleKeyDownTech = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddTech();
+        } else if (
+            e.key === 'Backspace' &&
+            !customTechInput &&
+            selectedTechStack.length > 0
+        ) {
+            const lastTech = selectedTechStack[selectedTechStack.length - 1];
+            if (lastTech) {
+                handleRemoveTech(lastTech);
+            }
+        }
     };
 
     const handleAddPortfolio = (item: PendingPortfolio) => {
@@ -148,6 +200,9 @@ export default function AddServiceForm() {
 
         const catErr = validateServiceCategory(selectedCategoryIds);
         if (catErr) newErrors.categoryIds = catErr;
+
+        const techErr = validateServiceTechStack(selectedTechStack);
+        if (techErr) newErrors.techStack = techErr;
 
         const budgetErrs = validateServiceBudgets(minBudget, maxBudget);
         if (budgetErrs.minBudget) newErrors.minBudget = budgetErrs.minBudget;
@@ -174,6 +229,7 @@ export default function AddServiceForm() {
                 listingTitle: title,
                 listingDesc: description,
                 categoryIds: selectedCategoryIds,
+                techStack: selectedTechStack,
                 ...(min !== undefined && { minBudget: min }),
                 ...(max !== undefined && { maxBudget: max }),
             });
@@ -317,35 +373,58 @@ export default function AddServiceForm() {
                                     <FieldError message={errors.categoryIds} />
                                 </div>
 
-                                {/* Techstack */}
+                                {/* Techstack Tag Box */}
                                 <div>
-                                    <label className="block type-sm font-semibold mb-2 text-ink">
+                                    <label className="block type-sm font-semibold mb-1 text-ink">
                                         Techstack
                                     </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {PREDEFINED_TECH_STACKS.map((tech) => {
-                                            const isSelected =
-                                                selectedTechStack.includes(
-                                                    tech,
-                                                );
-                                            return (
+
+                                    {/* Combined Tags + Text Input Box */}
+                                    <div
+                                        className={`w-full min-h-[42px] p-2 rounded-input border flex flex-wrap items-center gap-1.5 focus-within:ring-1 ${
+                                            errors.techStack
+                                                ? 'border-danger focus-within:border-danger focus-within:ring-danger'
+                                                : 'border-line focus-within:border-brand focus-within:ring-brand'
+                                        }`}
+                                    >
+                                        {selectedTechStack.map((tech) => (
+                                            <span
+                                                key={tech}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-status type-xs font-medium bg-brand text-surface-white"
+                                            >
+                                                {tech}
                                                 <button
                                                     type="button"
-                                                    key={tech}
                                                     onClick={() =>
-                                                        handleTechClick(tech)
+                                                        handleRemoveTech(tech)
                                                     }
-                                                    className={`px-3.5 py-1.5 rounded-status type-xs font-medium transition-colors border ${
-                                                        isSelected
-                                                            ? 'bg-brand text-surface-white border-brand'
-                                                            : 'bg-brand-tint text-ink-soft border-transparent hover:bg-brand-mist'
-                                                    }`}
+                                                    className="hover:opacity-75 focus:outline-none ml-0.5"
+                                                    title="Remove"
                                                 >
-                                                    {tech}
+                                                    ✕
                                                 </button>
-                                            );
-                                        })}
+                                            </span>
+                                        ))}
+
+                                        <input
+                                            type="text"
+                                            value={customTechInput}
+                                            onChange={(e) => {
+                                                setCustomTechInput(
+                                                    e.target.value,
+                                                );
+                                                clearError('techStack');
+                                            }}
+                                            onKeyDown={handleKeyDownTech}
+                                            placeholder={
+                                                selectedTechStack.length === 0
+                                                    ? 'Type technology and press Enter...'
+                                                    : ''
+                                            }
+                                            className="flex-1 min-w-[120px] bg-transparent type-sm placeholder:text-ink-placeholder focus:outline-none px-1"
+                                        />
                                     </div>
+
                                     <FieldError message={errors.techStack} />
                                 </div>
 

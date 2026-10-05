@@ -372,6 +372,7 @@ export const SERVICE_FIELDS = {
     listingTitle: 'title',
     listingDesc: 'description',
     categoryIds: 'categoryIds',
+    techStack: 'techStack',
     minBudget: 'minBudget',
     maxBudget: 'maxBudget',
 } as const;
@@ -450,7 +451,19 @@ export const PREDEFINED_TECH_STACKS = [
 ] as const;
 
 export function validateServiceTechStack(tags: string[]): string | null {
-    // Tech Stack is optional, so empty array is valid
+    if (!tags) return null;
+
+    if (tags.length > 20) {
+        return 'You can select at most 20 tech stack items.';
+    }
+
+    for (const tag of tags) {
+        const trimmed = tag.trim();
+        if (trimmed.length > 100) {
+            return 'Each tech stack name cannot exceed 100 characters.';
+        }
+    }
+
     return null;
 }
 // Proposal validation mirrors the API boundary while keeping the form usable
