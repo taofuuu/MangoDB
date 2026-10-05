@@ -1,20 +1,55 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { Pagination, ServiceSummary } from '@/lib/searchServices';
+import type { PaginationMeta } from '@mangodb/shared';
+import type { ServiceSummary } from '@/lib/searchServices';
 import type { SearchServicesMode } from '@/lib/useSearchServices';
 import Link from 'next/link';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import Pagination from '@/components/ui/Pagination';
 import { SearchServiceCard } from './SearchServiceCard';
 import { SearchServicesEmptyState } from './SearchServicesEmptyState';
-import {
-    SearchServicesInfiniteScrollSentinel,
-    SearchServicesPaginationControls,
-} from './SearchServicesPagination';
 
 function CardSkeleton() {
     return (
         <div className="rounded-button h-[160px] animate-pulse border border-[var(--color-line)] bg-[var(--color-brand-tint)]" />
+    );
+}
+
+function InfiniteScrollSentinel({
+    hasMore,
+    loading,
+    onLoadMore,
+}: {
+    hasMore: boolean;
+    loading: boolean;
+    onLoadMore: () => void;
+}) {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const element = ref.current;
+        if (!element || !hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0]?.isIntersecting && !loading) onLoadMore();
+            },
+            { rootMargin: '200px' },
+        );
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [hasMore, loading, onLoadMore]);
+
+    if (!hasMore) return null;
+
+    return (
+        <div
+            ref={ref}
+            className="py-6 text-center type-xs text-[var(--color-ink-soft)]"
+        >
+            {loading ? 'Loading more…' : ''}
+        </div>
     );
 }
 
@@ -32,7 +67,7 @@ export function SearchServicesResultsGrid({
     items: ServiceSummary[];
     status: 'idle' | 'loading' | 'loaded' | 'error';
     error: unknown;
-    pagination: Pagination | null;
+    pagination: PaginationMeta | null;
     hasMore: boolean;
     onPageChange: (page: number) => void;
     onLoadMore: () => void;
@@ -89,7 +124,7 @@ export function SearchServicesResultsGrid({
                 overflow. Change max-h to make the box taller/shorter. */}
             <div
                 ref={listRef}
-                className="modal-scrollbar search-scrollbar flex max-h-[calc(100vh-280px)] min-h-[320px] flex-col gap-4 overflow-y-auto px-2 py-2"
+                className="flex max-h-[calc(100vh-280px)] min-h-[320px] flex-col gap-4 overflow-y-auto px-2 py-2"
             >
                 {items.map((service) => (
                     <SearchServiceCard
@@ -99,7 +134,7 @@ export function SearchServicesResultsGrid({
                 ))}
 
                 {mode === 'infinite' && (
-                    <SearchServicesInfiniteScrollSentinel
+                    <InfiniteScrollSentinel
                         hasMore={hasMore}
                         loading={status === 'loading'}
                         onLoadMore={onLoadMore}
@@ -107,14 +142,14 @@ export function SearchServicesResultsGrid({
                 )}
             </div>
 
-            {mode === 'pagination' &&
-                pagination &&
-                pagination.totalPages > 1 && (
-                    <SearchServicesPaginationControls
-                        pagination={pagination}
-                        onPageChange={onPageChange}
-                    />
-                )}
+            {mode === 'pagination' && (
+                <Pagination
+                    pagination={pagination}
+                    onPageChange={onPageChange}
+                    ariaLabel="Service pages"
+                    isLoading={status === 'loading'}
+                />
+            )}
         </div>
     );
 }

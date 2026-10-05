@@ -8,8 +8,7 @@ import {
     type SearchServicesFilters,
     type ServiceSummary,
 } from './searchServices';
-
-const DEFAULT_PAGE_SIZE = 10; // small on purpose so pagination is visible in mock data
+import { SERVICE_PAGE_SIZE } from './pagination';
 
 export type SearchServicesMode = 'pagination' | 'infinite';
 
@@ -28,7 +27,7 @@ const initialState: State = {
     q: '',
     filters: EMPTY_SEARCH_SERVICES_FILTERS,
     page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
+    pageSize: SERVICE_PAGE_SIZE,
     items: [],
     pagination: null,
     status: 'idle',
