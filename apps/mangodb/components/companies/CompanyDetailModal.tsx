@@ -81,7 +81,7 @@ export default function CompanyDetailModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="company-detail-title"
-                className="modal-scrollbar max-h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-popup bg-surface p-[2.08vw] shadow-xl"
+                className="max-h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-popup bg-surface p-[2.08vw] shadow-xl"
             >
                 <div className="mb-[1.85vh] flex items-start justify-between gap-[1.04vw]">
                     <div>

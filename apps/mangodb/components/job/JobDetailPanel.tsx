@@ -51,7 +51,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
             {/* Job Detail */}
             {job && (
-                <div className="flex flex-1 flex-col overflow-y-auto modal-scrollbar pr-[0.5vw]">
+                <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
                     {/* Company */}
                     <div className="flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-[#497B93]">Company</span>

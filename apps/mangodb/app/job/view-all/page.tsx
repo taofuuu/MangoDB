@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Link from 'next/link';
+import Pagination from '@/components/ui/Pagination';
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getAllJobPostings } from '@/lib/job';
-
-const PAGE_SIZE = 6;
+import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 export default function OtherJobPage() {
     const [page, setPage] = useState(1);
@@ -86,7 +85,7 @@ export default function OtherJobPage() {
         setIsLoading(true);
         setError(null);
 
-        getAllJobPostings(page, PAGE_SIZE, {
+        getAllJobPostings(page, JOB_PAGE_SIZE, {
             status: 'OPEN',
             q: debouncedSearch,
         })
@@ -149,8 +148,6 @@ export default function OtherJobPage() {
 
     const pagination = result?.pagination;
     const visibleJobs = result?.items ?? [];
-    const hasPreviousPage = page > 1;
-    const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
@@ -498,7 +495,6 @@ export default function OtherJobPage() {
                         flex
                         h-[72.63vh]
                         flex-col
-                        justify-between
                         transition-all
                         duration-300
                         ${isDetailOpen ? 'w-[56.56vw]' : 'w-[56.56vw]'}
@@ -524,7 +520,7 @@ export default function OtherJobPage() {
                         {!error && (
                             <div
                                 ref={listRef}
-                                className="modal-scrollbar max-h-[72.63vh] overflow-y-auto pr-[0.63vw]"
+                                className="min-h-0 flex-1 overflow-y-auto pr-[0.63vw]"
                             >
                                 {isLoading ? (
                                     <div
@@ -532,7 +528,7 @@ export default function OtherJobPage() {
                                         aria-label="Loading jobs"
                                     >
                                         {Array.from({
-                                            length: 8,
+                                            length: JOB_PAGE_SIZE,
                                         }).map((_, index) => (
                                             <div
                                                 key={index}
@@ -541,84 +537,17 @@ export default function OtherJobPage() {
                                         ))}
                                     </div>
                                 ) : result && visibleJobs.length > 0 ? (
-                                    <>
-                                        <div className="flex flex-col gap-[3.87vh]">
-                                            {visibleJobs.map((job) => (
-                                                <JobBox
-                                                    key={job.jobPostingId}
-                                                    job={job}
-                                                    isMyJobs={false}
-                                                    callFromSearchPage={true}
-                                                    onViewDetail={openDetail}
-                                                />
-                                            ))}
-                                        </div>
-
-                                        {/* Pagination */}
-                                        {pagination &&
-                                            pagination.totalItems > 0 && (
-                                                <nav
-                                                    aria-label="Job posting pages"
-                                                    className="mt-[2.22vh] flex items-center justify-between gap-[1.04vw]"
-                                                >
-                                                    <p className="type-sm text-ink-soft">
-                                                        Showing{' '}
-                                                        {(page - 1) *
-                                                            pagination.pageSize +
-                                                            1}
-                                                        –
-                                                        {Math.min(
-                                                            page *
-                                                                pagination.pageSize,
-                                                            pagination.totalItems,
-                                                        )}{' '}
-                                                        of{' '}
-                                                        {pagination.totalItems}
-                                                    </p>
-
-                                                    <div className="flex items-center gap-[0.63vw]">
-                                                        <Button
-                                                            variant="outline"
-                                                            disabled={
-                                                                !hasPreviousPage ||
-                                                                isLoading
-                                                            }
-                                                            onClick={() =>
-                                                                changePage(
-                                                                    page - 1,
-                                                                )
-                                                            }
-                                                            className="h-[4.63vh] px-[1.04vw] type-sm"
-                                                        >
-                                                            Previous
-                                                        </Button>
-
-                                                        <span className="min-w-[5.21vw] text-center type-sm text-ink-soft">
-                                                            Page {page} of{' '}
-                                                            {
-                                                                pagination.totalPages
-                                                            }
-                                                        </span>
-
-                                                        <Button
-                                                            variant="outline"
-                                                            disabled={
-                                                                !hasNextPage ||
-                                                                isLoading
-                                                            }
-                                                            onClick={() =>
-                                                                changePage(
-                                                                    page + 1,
-                                                                )
-                                                            }
-                                                            className="h-[4.63vh] px-[1.04vw] type-sm"
-                                                        >
-                                                            Next
-                                                        </Button>
-                                                    </div>
-                                                </nav>
-                                            )}
-                                    </>
+                                    <div className="flex flex-col gap-[3.87vh]">
+                                        {visibleJobs.map((job) => (
+                                            <JobBox
+                                                key={job.jobPostingId}
+                                                job={job}
+                                                isMyJobs={false}
+                                                callFromSearchPage={true}
+                                                onViewDetail={openDetail}
+                                            />
+                                        ))}
+                                    </div>
                                 ) : (
                                     <p className="py-[9.26vh] text-center type-md text-ink-soft">
                                         {debouncedSearch ||
@@ -632,6 +561,13 @@ export default function OtherJobPage() {
                                 )}
                             </div>
                         )}
+
+                        <Pagination
+                            pagination={error ? null : pagination}
+                            onPageChange={changePage}
+                            ariaLabel="Job posting pages"
+                            isLoading={isLoading}
+                        />
                     </div>
 
                     {/* ================================================= */}

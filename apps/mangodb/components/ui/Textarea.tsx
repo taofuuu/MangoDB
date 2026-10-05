@@ -41,7 +41,7 @@ export default function Textarea({
                 onChange={(e) => onChange(e.target.value)}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${inputId}-error` : undefined}
-                className={`custom-scrollbar block w-full resize-none rounded-button border-[0.75px] border-black bg-white px-[0.83vw] py-[1vh] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none ${className}`}
+                className={`block w-full resize-none rounded-button border-[0.75px] border-black bg-white px-[0.83vw] py-[1vh] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none ${className}`}
                 {...props}
             />
 

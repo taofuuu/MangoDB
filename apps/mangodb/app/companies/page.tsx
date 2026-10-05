@@ -6,14 +6,14 @@ import type {
     CompanyAccountDetail,
     CompanyAccountListResponse,
 } from '@mangodb/shared';
-import { ChevronDown, LayoutGrid, Menu, Search, X } from 'lucide-react';
+import { ChevronDown, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
 import { describeError } from '@/lib/api';
-
-const PAGE_SIZE = 12;
+import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
 type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
 
@@ -89,7 +89,7 @@ export default function CompaniesPage() {
         setIsLoading(true);
         setError(null);
 
-        getCompanyAccounts(page, PAGE_SIZE, {
+        getCompanyAccounts(page, COMPANY_PAGE_SIZE, {
             q: debouncedSearch || undefined,
             filter: filter === 'ALL' ? undefined : filter,
         })
@@ -161,8 +161,6 @@ export default function CompaniesPage() {
     const visibleCompanies = (result?.items ?? []).filter(
         (company) => company.accountType !== 'ADMIN',
     );
-    const hasPreviousPage = page > 1;
-    const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
@@ -278,14 +276,16 @@ export default function CompaniesPage() {
                 {!error && (
                     <div
                         ref={listRef}
-                        className="modal-scrollbar max-h-[62.96vh] overflow-y-auto pr-[0.63vw]"
+                        className="max-h-[62.96vh] overflow-y-auto pr-[0.63vw]"
                     >
                         {isLoading ? (
                             <div
                                 className="grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 aria-label="Loading Company accounts"
                             >
-                                {Array.from({ length: 8 }).map((_, index) => (
+                                {Array.from({
+                                    length: COMPANY_PAGE_SIZE,
+                                }).map((_, index) => (
                                     <div
                                         key={index}
                                         className="h-[28.70vh] animate-pulse rounded-input bg-line"
@@ -312,42 +312,12 @@ export default function CompaniesPage() {
                     </div>
                 )}
 
-                {!error && pagination && pagination.totalItems > 0 && (
-                    <nav
-                        aria-label="Company account pages"
-                        className="mt-[2.22vh] flex items-center justify-between gap-[1.04vw]"
-                    >
-                        <p className="type-sm text-ink-soft">
-                            Showing {(page - 1) * pagination.pageSize + 1}–
-                            {Math.min(
-                                page * pagination.pageSize,
-                                pagination.totalItems,
-                            )}{' '}
-                            of {pagination.totalItems}
-                        </p>
-                        <div className="flex items-center gap-[0.63vw]">
-                            <Button
-                                variant="outline"
-                                disabled={!hasPreviousPage || isLoading}
-                                onClick={() => changePage(page - 1)}
-                                className="h-[4.63vh] px-[1.04vw] type-sm"
-                            >
-                                Previous
-                            </Button>
-                            <span className="min-w-[5.21vw] text-center type-sm text-ink-soft">
-                                Page {page} of {pagination.totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                disabled={!hasNextPage || isLoading}
-                                onClick={() => changePage(page + 1)}
-                                className="h-[4.63vh] px-[1.04vw] type-sm"
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </nav>
-                )}
+                <Pagination
+                    pagination={error ? null : pagination}
+                    onPageChange={changePage}
+                    ariaLabel="Company account pages"
+                    isLoading={isLoading}
+                />
             </div>
 
             {isDetailOpen && (

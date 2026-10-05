@@ -7,14 +7,14 @@ import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 
 import Link from 'next/link';
 
 import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
-
-const PAGE_SIZE = 6;
+import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
 
@@ -93,15 +93,15 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
             props.view === 'mine'
                 ? getMyJobPostings(
                       page,
-                      PAGE_SIZE,
+                      JOB_PAGE_SIZE,
                       status
                           ? {
                                 status,
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, PAGE_SIZE, {
-                      companyId: props.companyId,
+                : getAllJobPostings(page, JOB_PAGE_SIZE, {
+                      companyId: companyId!,
                       status: 'OPEN',
                   });
 
@@ -186,10 +186,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const pagination = result?.pagination;
-
-    const hasPreviousPage = page > 1;
-
-    const hasNextPage = Boolean(pagination && page < pagination.totalPages);
 
     /*
      * ============================================================
@@ -372,32 +368,34 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         ================================================= */}
 
                     <div
-                        ref={listRef}
                         className="
-                            modal-scrollbar
+                            flex
                             h-[72.63vh]
                             w-[56.56vw]
-                            overflow-y-auto
-                            pr-[0.63vw]
+                            flex-col
                         "
                     >
-                        {/* =============================================
+                        <div
+                            ref={listRef}
+                            className="min-h-0 flex-1 overflow-y-auto pr-[0.63vw]"
+                        >
+                            {/* =============================================
                             LIST ERROR
                             ============================================= */}
-                        {error === NOT_SIGNED_IN && (
-                            <p className="type-md !font-[400]">
-                                You are not signed in.{' '}
-                                <Link href="/login" className="underline">
-                                    Log in
-                                </Link>
-                                , then come back.
-                            </p>
-                        )}
+                            {error === NOT_SIGNED_IN && (
+                                <p className="type-md !font-[400]">
+                                    You are not signed in.{' '}
+                                    <Link href="/login" className="underline">
+                                        Log in
+                                    </Link>
+                                    , then come back.
+                                </p>
+                            )}
 
-                        {error && error !== NOT_SIGNED_IN && (
-                            <div
-                                role="alert"
-                                className="
+                            {error && error !== NOT_SIGNED_IN && (
+                                <div
+                                    role="alert"
+                                    className="
                                     rounded-button
                                     border
                                     border-danger/30
@@ -407,47 +405,47 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                     type-sm
                                     text-danger
                                 "
-                            >
-                                <p>{error}</p>
+                                >
+                                    <p>{error}</p>
 
-                                <Button
-                                    variant="outline"
-                                    onClick={retryList}
-                                    className="
+                                    <Button
+                                        variant="outline"
+                                        onClick={retryList}
+                                        className="
                                         mt-[1.11vh]
                                         h-[4.07vh]
                                         px-[1.04vw]
                                         type-sm
                                     "
-                                >
-                                    Try again
-                                </Button>
-                            </div>
-                        )}
+                                    >
+                                        Try again
+                                    </Button>
+                                </div>
+                            )}
 
-                        {/* =============================================
+                            {/* =============================================
                             LIST LOADING
                             ============================================= */}
 
-                        {!error && isLoading && (
-                            <div
-                                className="
+                            {!error && isLoading && (
+                                <div
+                                    className="
                                         flex
                                         flex-col
                                         gap-[3.87vh]
                                         pt-[1vh]
                                         pl-[0.5vw]
                                     "
-                                aria-label="
+                                    aria-label="
                                         Loading job postings
                                     "
-                            >
-                                {Array.from({
-                                    length: 6,
-                                }).map((_, index) => (
-                                    <div
-                                        key={index}
-                                        className="
+                                >
+                                    {Array.from({
+                                        length: JOB_PAGE_SIZE,
+                                    }).map((_, index) => (
+                                        <div
+                                            key={index}
+                                            className="
                                                     flex
                                                     h-[19.9vh]
                                                     w-[54.69vw]
@@ -460,20 +458,19 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                     pr-[2.29vw]
                                                     pl-[2.29vw]
                                                 "
-                                    />
-                                ))}
-                            </div>
-                        )}
+                                        />
+                                    ))}
+                                </div>
+                            )}
 
-                        {/* =============================================
+                            {/* =============================================
                             JOB LIST
                             ============================================= */}
 
-                        {!error &&
-                            !isLoading &&
-                            result &&
-                            result.items.length > 0 && (
-                                <>
+                            {!error &&
+                                !isLoading &&
+                                result &&
+                                result.items.length > 0 && (
                                     <div
                                         className="
                                             flex
@@ -495,101 +492,38 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                             />
                                         ))}
                                     </div>
+                                )}
 
-                                    {/* =================================
-                                        PAGINATION
-                                        ================================= */}
-
-                                    {pagination &&
-                                        pagination.totalItems > 0 && (
-                                            <nav
-                                                aria-label="
-                                                    Job posting pages
-                                                "
-                                                className="
-                                                    mt-[2.22vh]
-                                                    flex
-                                                    items-center
-                                                    justify-between
-                                                    gap-[1.04vw]
-                                                    px-[0.5vw]
-                                                "
-                                            >
-                                                {/* Previous */}
-                                                <button
-                                                    type="button"
-                                                    disabled={!hasPreviousPage}
-                                                    onClick={() =>
-                                                        changePage(page - 1)
-                                                    }
-                                                    className="
-                                                        rounded-full
-                                                        border
-                                                        border-[#497B93]
-                                                        px-[1vw]
-                                                        py-[0.7vh]
-                                                        type-sm
-                                                        text-[#497B93]
-                                                        disabled:cursor-not-allowed
-                                                        disabled:opacity-40
-                                                    "
-                                                >
-                                                    Previous
-                                                </button>
-
-                                                {/* Page number */}
-                                                <span className="type-sm text-ink">
-                                                    Page {pagination.page} of{' '}
-                                                    {pagination.totalPages}
-                                                </span>
-
-                                                {/* Next */}
-                                                <button
-                                                    type="button"
-                                                    disabled={!hasNextPage}
-                                                    onClick={() =>
-                                                        changePage(page + 1)
-                                                    }
-                                                    className="
-                                                        rounded-full
-                                                        border
-                                                        border-[#497B93]
-                                                        px-[1vw]
-                                                        py-[0.7vh]
-                                                        type-sm
-                                                        text-[#497B93]
-                                                        disabled:cursor-not-allowed
-                                                        disabled:opacity-40
-                                                    "
-                                                >
-                                                    Next
-                                                </button>
-                                            </nav>
-                                        )}
-                                </>
-                            )}
-
-                        {/* =============================================
+                            {/* =============================================
                             EMPTY STATE
                             ============================================= */}
 
-                        {!error &&
-                            !isLoading &&
-                            result &&
-                            result.items.length === 0 && (
-                                <div
-                                    className="
+                            {!error &&
+                                !isLoading &&
+                                result &&
+                                result.items.length === 0 && (
+                                    <div
+                                        className="
                                         flex
                                         min-h-[20vh]
                                         items-center
                                         justify-center
                                     "
-                                >
-                                    <p className="type-md text-ink-soft">
-                                        No job postings found.
-                                    </p>
-                                </div>
-                            )}
+                                    >
+                                        <p className="type-md text-ink-soft">
+                                            No job postings found.
+                                        </p>
+                                    </div>
+                                )}
+                        </div>
+
+                        <Pagination
+                            pagination={error ? null : pagination}
+                            onPageChange={changePage}
+                            ariaLabel="Job posting pages"
+                            isLoading={isLoading}
+                            className="px-[0.5vw]"
+                        />
                     </div>
 
                     {!isMyJobs && selectedJob && (
