@@ -201,8 +201,12 @@ export default function AddServiceForm() {
         const catErr = validateServiceCategory(selectedCategoryIds);
         if (catErr) newErrors.categoryIds = catErr;
 
-        const techErr = validateServiceTechStack(selectedTechStack);
-        if (techErr) newErrors.techStack = techErr;
+        if (selectedTechStack.length === 0) {
+            newErrors.techStack = 'At least one tech stack item is required.';
+        } else {
+            const techErr = validateServiceTechStack(selectedTechStack);
+            if (techErr) newErrors.techStack = techErr;
+        }
 
         const budgetErrs = validateServiceBudgets(minBudget, maxBudget);
         if (budgetErrs.minBudget) newErrors.minBudget = budgetErrs.minBudget;
@@ -376,7 +380,7 @@ export default function AddServiceForm() {
                                 {/* Techstack Tag Box */}
                                 <div>
                                     <label className="block type-sm font-semibold mb-1 text-ink">
-                                        Techstack
+                                        Techstack*
                                     </label>
 
                                     {/* Combined Tags + Text Input Box */}
