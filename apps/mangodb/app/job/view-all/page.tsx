@@ -313,7 +313,7 @@ export default function OtherJobPage() {
                             className="relative h-[57.41vh] w-[23.17vw] rounded-popup bg-fill-subtle"
                         >
                             <div className="flex flex-col gap-[2.59vh] px-[1.09vw] py-[1.57vh]">
-                                <h2 className="type-md text-ink">Filter</h2>
+                                <h2 className="type-md text-ink">Filters</h2>
 
                                 <hr className="w-[20.98vw] border-0 border-t border-brand/50" />
 
