@@ -12,8 +12,24 @@ function formatBudget(n: number | null): string {
     return n.toLocaleString('en-US');
 }
 
-function hasBudget(service: ServiceSummary): boolean {
-    return service.minBudget != null && service.maxBudget != null;
+function formatBudgetRange(
+    minBudget: number | null,
+    maxBudget: number | null,
+): string {
+    if (minBudget == null && maxBudget == null) {
+        return 'No budget provided';
+    }
+
+    if (minBudget == null) {
+        return `Up to ฿${formatBudget(maxBudget)}`;
+    }
+
+    if (maxBudget == null) {
+        return `From ฿${formatBudget(minBudget)}`;
+    }
+
+    return `฿${formatBudget(minBudget)} - ฿${formatBudget(maxBudget)}`;
+}
 }
 
 export function SearchServiceCard({ service }: { service: ServiceSummary }) {
