@@ -154,7 +154,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                 hover:bg-brand-dark
                             "
                         >
-                            Apply for this Job
+                            Add Proposal
                         </button>
                     </div>
                 </div>
