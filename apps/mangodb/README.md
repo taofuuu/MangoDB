@@ -71,6 +71,12 @@ Colours are tokens, not hex literals: `bg-brand`, `text-ink`, `border-line`.
 They are declared in `app/globals.css`. The project's type scale is `type-hd`
 through `type-xs` — **not** `text-lg` etc., which are Tailwind's own.
 
+Native scrollbars are styled globally in `app/globals.css`. Do not add a
+page-specific scrollbar class; any element that becomes scrollable picks up the
+shared `#AFAFAF` colour. WebKit/Blink scrollbar width scales from the 1920px
+reference but is clamped to a usable 6–10px range; Firefox uses its native
+`thin` width.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

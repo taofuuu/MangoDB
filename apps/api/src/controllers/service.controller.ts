@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { escapeLike } from '../lib/search';
 import { isRecordNotFound } from '../lib/prismaErrors';
+import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import {
     DEFAULT_LISTING_STATUS,
     assertListingOwned,
@@ -293,6 +294,16 @@ export async function deleteListing(
         throw ApiError.conflict('A service with projects cannot be deleted');
     }
 
+    // A service may carry zero or more portfolio items. service_portfolio
+    // cascades with the listing (prisma/schema.prisma), so the DB rows
+    // vanish on their own — but their files in storage do not, so every
+    // image URL is read here, before the write, the same way deletePortfolio
+    // reads one before deleting a single item.
+    const portfolios = await prisma.servicePortfolio.findMany({
+        where: { listingId },
+        select: { portfolioImage: true },
+    });
+
     try {
         await prisma.listing.delete({
             where: { listingId, companyId, listingType: 'SERVICE' },
@@ -304,6 +315,15 @@ export async function deleteListing(
         }
         throw err;
     }
+
+    // Best-effort cleanup of every portfolio image file: a failed remove
+    // logs but won't block the 204, and the DB rows are already gone either
+    // way — same trade-off deletePortfolio makes for a single image.
+    await Promise.all(
+        portfolios.map((p) =>
+            removeFromStorageByUrl(p.portfolioImage, BUCKETS.PORTFOLIO),
+        ),
+    );
 
     res.status(204).end();
 }

@@ -50,7 +50,7 @@ export default function JobListing() {
 
             {/* Same inset panel the provider page's timeline sits in, and the
                 list scrolls inside it rather than growing the card. */}
-            <div className="view-profile-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
+            <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
                 {mockJobs.map((job) => (
                     <div
                         key={job.id}

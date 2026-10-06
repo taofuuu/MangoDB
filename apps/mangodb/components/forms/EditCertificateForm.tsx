@@ -209,7 +209,7 @@ function EditCertificateDialog({
             isBusy={isSubmitting}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            panelClassName="modal-scrollbar w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
+            panelClassName="w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
         >
             {/* -------------header----------------- */}
             <div className="flex items-center justify-between">

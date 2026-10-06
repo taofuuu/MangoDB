@@ -8,8 +8,11 @@ import {
     proposalIdParamSchema,
 } from '../schemas/proposal.schema';
 import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
+import { assertJobPostingOwned } from '../lib/jobPosting';
 import {
+    postingProposalSelect,
     proposalSelect,
+    toPostingProposal,
     toProposal,
     acceptProposal,
     rejectProposal,
@@ -69,6 +72,27 @@ export async function createProposal(
         }
         throw err;
     }
+}
+
+// US2-10. Every proposal on one job posting, newest first, each with a short
+// profile of its Provider. Soft-deleted Providers are kept: a proposal is
+// history, not discovery (see Company.deletedAt).
+// Only the posting's owner may read them: the list carries every competing
+// Provider's price and terms.
+export async function listPostingProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    await assertJobPostingOwned(jobPostingId, req.auth!.companyId);
+
+    const proposals = await prisma.proposal.findMany({
+        where: { listingId: jobPostingId },
+        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+        select: postingProposalSelect,
+    });
+
+    res.json(proposals.map(toPostingProposal));
 }
 
 export async function acceptProposalHandler(

@@ -169,11 +169,7 @@ export interface ServiceSummary {
     maxBudget: number | null;
     categories: string[];
     techStack: string[];
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    };
+    company: CompanyBrief;
 }
 
 export interface ServiceListResponse {
@@ -272,6 +268,7 @@ export interface Certificate {
 export interface JobPosting {
     jobPostingId: number;
     companyId: number;
+    companyName: string;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -286,6 +283,11 @@ export interface JobPosting {
     createdAt?: string | undefined;
 }
 
+export interface JobPostingListResponse {
+    items: JobPosting[];
+    pagination: PaginationMeta;
+}
+
 // What POST /job-postings accepts. Validated by createJobPostingSchema.
 export interface CreateJobPostingRequest {
     listingTitle: string;
@@ -297,6 +299,20 @@ export interface CreateJobPostingRequest {
     deadline?: string | null | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
+// categoryIds replaces the whole set. Validated by updateJobPostingSchema.
+export interface UpdateJobPostingRequest {
+    listingTitle?: string | undefined;
+    listingDesc?: string | undefined;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | undefined;
+    locationPref?: string | null | undefined;
+    duration?: string | null | undefined;
+    deadline?: string | null | undefined;
+    categoryIds?: number[] | undefined;
+}
+
 // US2-8. A Provider's proposal on a job posting.
 export interface Proposal {
     proposalId: number;
@@ -307,6 +323,20 @@ export interface Proposal {
     duration: number;
     proposalStatus: ProposalStatus;
     createdAt: string;
+}
+
+// A company in one line: enough to show who it is beside something it sent
+// or owns, with no second request.
+export interface CompanyBrief {
+    companyId: number;
+    companyName: string;
+    companyPhoto: string | null;
+}
+
+// US2-10. One row of GET /job-postings/:jobPostingId/proposals: the proposal,
+// with a short profile of the Provider that sent it so the Receiver can choose.
+export interface PostingProposal extends Proposal {
+    provider: CompanyBrief;
 }
 
 // What POST /job-postings/:jobPostingId/proposals accepts.

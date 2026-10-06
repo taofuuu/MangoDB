@@ -87,7 +87,7 @@ export default function ReceiverCompanyCard({
             </div>
 
             {/* The details, and the only thing that scrolls. */}
-            <div className="view-profile-scrollbar min-h-0 flex-1 overflow-y-auto pr-2">
+            <div className="min-h-0 flex-1 overflow-y-auto pr-2">
                 <div className="flex flex-col gap-4">
                     <Field
                         label="Company Description"

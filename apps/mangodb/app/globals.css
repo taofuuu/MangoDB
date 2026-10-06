@@ -5,6 +5,10 @@
     /* Same value as --color-ink below. Kept because body and Tailwind's
        defaults read it. */
     --foreground: #171717;
+
+    /* 1920px design reference: 10 / 1920 * 100 = 0.520833vw.
+       The bounds preserve a usable native scrollbar at narrow and wide widths. */
+    --scrollbar-width: clamp(6px, 0.520833vw, 10px);
 }
 
 @theme inline {
@@ -74,6 +78,7 @@
        #999999 and #A3A3A3 — depending on which form you were looking at.
        Two of those pairs were under ΔE 1. */
     --color-ink-placeholder: #999999;
+    --color-panel: #f1f3f5;
 
     /* Every border. There were eight of these — #CBCBCB, #CCCCCC, #E0E0E0,
        #E5E5E5, #EAEAEA, #EDEDED and #F5F5F5 alongside this one — and every
@@ -82,6 +87,13 @@
     /* A filled block rather than a hairline: the Go Back button, a disabled
        swatch. Close to line on paper, a different thing on screen. */
     --color-fill-muted: #d9d9d9;
+    --shadow-card: 0 2px 8px rgb(0 0 0 / 0.12);
+
+    /* Shared by every native scrollbar in the app. */
+    --color-scrollbar: #afafaf;
+
+    /* Previous/Next controls in the shared pagination footer. */
+    --color-pagination-border: #cacaca;
 }
 
 body {
@@ -145,64 +157,30 @@ body {
     border-radius: 30px;
 }
 
-/* Scrollbar. One rule; the colour is a variable, which is the whole reason
- * .certificate-scrollbar existed as a second copy of this. */
-.modal-scrollbar,
-.certificate-scrollbar,
-.view-profile-scrollbar {
-    --scrollbar-thumb: var(--color-brand);
-    --scrollbar-thumb-hover: var(--color-brand-dark);
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) transparent;
+/* Native scrollbars are global so current and future scrollable elements do
+   not need a page-specific utility class. Firefox exposes only keyword widths;
+   WebKit/Blink use the viewport-relative design dimensions above. Keeping the
+   standard properties Firefox-only prevents them from overriding the exact
+   WebKit/Blink width. */
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-scrollbar) transparent;
+    }
 }
 
-.certificate-scrollbar {
-    --scrollbar-thumb: var(--color-accent);
-    --scrollbar-thumb-hover: var(--color-accent);
+*::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-width);
 }
 
-/* Paired with .modal-scrollbar on the Terms of Service text, which the design
-   gives the lighter blue. */
-.terms-scrollbar {
-    --scrollbar-thumb: var(--color-brand-light);
-    --scrollbar-thumb-hover: var(--color-brand);
-}
-
-/* Grey rather than brand: this one scrolls inside a card that is already
-   busy, so the bar should not be the loudest thing on it. */
-.view-profile-scrollbar {
-    --scrollbar-thumb: var(--color-line);
-    --scrollbar-thumb-hover: var(--color-ink-placeholder);
-    padding-right: 5px;
-}
-
-.modal-scrollbar::-webkit-scrollbar,
-.certificate-scrollbar::-webkit-scrollbar,
-.view-profile-scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-track,
-.certificate-scrollbar::-webkit-scrollbar-track,
-.view-profile-scrollbar::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.certificate-scrollbar::-webkit-scrollbar-track {
-    margin: 8px 0;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb,
-.certificate-scrollbar::-webkit-scrollbar-thumb,
-.view-profile-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
+*::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar);
     border-radius: 9999px;
-}
-
-.modal-scrollbar::-webkit-scrollbar-thumb:hover,
-.certificate-scrollbar::-webkit-scrollbar-thumb:hover,
-.view-profile-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
 }
 
 /* uploadbox */

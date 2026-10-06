@@ -1,0 +1,19 @@
+{
+    "request": "POST /job-postings/<job_posting_id>/close",
+    "status": 200,
+    "body": {
+        "categories": [],
+        "categoryIds": [],
+        "companyId": 143,
+        "createdAt": "<timestamp>",
+        "deadline": null,
+        "duration": null,
+        "jobPostingId": "<job_posting_id>",
+        "listingDesc": "created by scripts/snapshot-api.sh",
+        "listingStatus": "CLOSED",
+        "listingTitle": "Snapshot Probe job posting to close",
+        "locationPref": null,
+        "maxBudget": 100000,
+        "minBudget": null
+    }
+}
