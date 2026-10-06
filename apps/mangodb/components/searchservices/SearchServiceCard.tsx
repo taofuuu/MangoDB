@@ -1,9 +1,5 @@
 import type { ServiceSummary } from '@/lib/searchServices';
-
-function formatBudget(n: number | null): string {
-    if (n == null) return '-';
-    return n.toLocaleString('en-US');
-}
+import { Tag, Wallet } from 'lucide-react';
 
 function initials(name: string): string {
     const parts = name.trim().split(/\s+/);
@@ -11,10 +7,16 @@ function initials(name: string): string {
     return letters.join('') || '?';
 }
 
-export function SearchServiceCard({ service }: { service: ServiceSummary }) {
-    const visibleTech = service.techStack.slice(0, 2);
-    const extraTechCount = service.techStack.length - visibleTech.length;
+function formatBudget(n: number | null): string {
+    if (n == null) return '-';
+    return n.toLocaleString('en-US');
+}
 
+function hasBudget(service: ServiceSummary): boolean {
+    return service.minBudget != null && service.maxBudget != null;
+}
+
+export function SearchServiceCard({ service }: { service: ServiceSummary }) {
     return (
         <div className="rounded-button border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] p-5 shadow-card">
             <div className="flex items-stretch justify-between gap-4">
@@ -31,28 +33,39 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                             {service.company.companyName}
                         </p>
                         {service.categories.length > 0 && (
-                            <p className="type-xs mt-1 text-[var(--color-ink-soft)]">
+                            <p className="type-xs mt-1 flex items-center gap-1 text-[var(--color-ink-soft)]">
+                                <Tag size={14} className="shrink-0" />
                                 {service.categories.join(', ')}
                             </p>
                         )}
 
-                        <p className="type-xs mt-1 text-[var(--color-brand)]">
-                            ฿{formatBudget(service.minBudget)} - ฿
-                            {formatBudget(service.maxBudget)}
+                        <p className="type-xs mt-1 flex items-center gap-1 text-[var(--color-brand)]">
+                            <Wallet size={14} className="shrink-0" />
+                            {hasBudget(service) ? (
+                                <>
+                                    ฿{formatBudget(service.minBudget)} - ฿
+                                    {formatBudget(service.maxBudget)}
+                                </>
+                            ) : (
+                                'No budget provided'
+                            )}
                         </p>
 
                         {/* T3.1.4: Duration and Rating are not in the service-level data
-                        model yet, so show "-" until a real source exists. */}
+                        model yet, so show "-" until a real source exists. 
+                        
                         <p className="type-xs mt-1 text-[var(--color-ink-soft)]">
                             Duration: -
                         </p>
                         <p className="type-xs mt-1 text-[var(--color-ink-soft)]">
                             Rating: -
                         </p>
+                    
+                        */}
 
-                        {visibleTech.length > 0 && (
+                        {service.techStack.length > 0 && (
                             <div className="mt-2 flex flex-wrap items-center gap-2">
-                                {visibleTech.map((tech) => (
+                                {service.techStack.map((tech) => (
                                     <span
                                         key={tech}
                                         className="rounded-status bg-[var(--color-brand-tint)] px-2 py-0.5 type-xs text-[var(--color-brand-deep)]"
@@ -60,11 +73,6 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                                         {tech}
                                     </span>
                                 ))}
-                                {extraTechCount > 0 && (
-                                    <span className="rounded-status bg-[var(--color-line)] px-2 py-0.5 type-xs text-[var(--color-ink-soft)]">
-                                        +{extraTechCount}
-                                    </span>
-                                )}
                             </div>
                         )}
                     </div>
