@@ -28,7 +28,7 @@ export default function JobDetailModal({
             role="dialog"
             labelledBy="job-detail-title"
             backdropClassName="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 p-[2.08vw]"
-            panelClassName="flex max-h-[92vh] w-[54.68vw] flex-col gap-[3.425vh] overflow-y-auto rounded-popup bg-surface-white pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[4vh] leading-relaxed shadow-xl"
+            panelClassName="flex max-h-[92vh] w-[54.68vw] flex-col gap-[3.425vh] overflow-y-auto rounded-popup bg-surface pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[4vh] leading-relaxed shadow-xl"
         >
             {/* Header */}
             <div className="flex items-start justify-between gap-[1.04vw]">
