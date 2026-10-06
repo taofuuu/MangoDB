@@ -30,7 +30,6 @@ function formatBudgetRange(
 
     return `฿${formatBudget(minBudget)} - ฿${formatBudget(maxBudget)}`;
 }
-}
 
 export function SearchServiceCard({ service }: { service: ServiceSummary }) {
     return (
