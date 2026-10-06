@@ -1,44 +1,42 @@
-// US1-13. The Terms of Service a company accepts when it registers.
-//
-// DRAFT: placeholder wording so the consent flow can be built and tested. The
-// final text has to come from the team before release.
-//
-// To publish the final terms, replace the entries below — one { heading, body }
-// per section, in reading order. Nothing else changes: the modal renders
-// whatever this list holds, and it scrolls however long the text gets. Once the
-// final text is in, delete this DRAFT note.
+// US1-13. The Terms of Service a company accepts when it registers, as written
+// in the Figma "ToS" frame. The modal renders whatever this holds, so a future
+// revision is an edit here: the intro, then one { heading, body } per section
+// in reading order.
 export type TermsSection = {
     heading: string;
     body: string;
 };
 
+export const TERMS_INTRO =
+    'By creating an account and using MangoDB, you agree to the following terms.';
+
 export const TERMS_OF_SERVICE: TermsSection[] = [
     {
-        heading: '1. Acceptance of Terms',
-        body: 'By creating a MangoDB account, your company agrees to these Terms of Service. If you do not agree, do not register or use the platform.',
+        heading: '1. Account Information',
+        body: 'You must provide accurate and up-to-date information when creating and maintaining your account.',
     },
     {
-        heading: '2. Your Account',
-        body: 'You are responsible for the accuracy of the company information you provide and for keeping your username and password secure. Activity under your account is treated as activity by your company.',
+        heading: '2. Authorized Use',
+        body: 'You may use MangoDB only for its intended purposes. You must not misuse the platform, interfere with its operation, or access data or accounts without authorization.',
     },
     {
-        heading: '3. Use of the Platform',
-        body: 'MangoDB connects companies that offer services with companies that need them. You agree not to post false, misleading, or unlawful content, and not to interfere with other users or with the operation of the platform.',
+        heading: '3. Company Information',
+        body: 'If you register on behalf of a company, you confirm that you are authorized to provide and manage the information submitted for that company.',
     },
     {
-        heading: '4. Listings, Postings, and Proposals',
-        body: 'Service listings, job postings, and proposals are the responsibility of the company that publishes them. MangoDB does not guarantee the quality, safety, or legality of any listed work, and is not a party to agreements made between companies.',
+        heading: '4. User-Submitted Content',
+        body: 'You are responsible for the accuracy and appropriateness of information and materials you submit to MangoDB, including company details, portfolios, and certificates.',
     },
     {
-        heading: '5. Your Data',
-        body: 'We store the information you provide to run your account and to show your public company profile to other users. We record the time you accepted these terms as proof of consent.',
+        heading: '5. Account Suspension',
+        body: 'MangoDB may suspend or terminate access to an account if it is used in violation of these Terms or in a way that may harm the platform or its users.',
     },
     {
-        heading: '6. Suspension and Deletion',
-        body: 'We may suspend or delete accounts that break these terms. You may delete your account at any time from your account settings.',
+        heading: '6. Service Changes',
+        body: 'MangoDB may modify, update, or discontinue features of the platform when necessary.',
     },
     {
-        heading: '7. Changes to These Terms',
-        body: 'We may update these terms. Continuing to use MangoDB after an update means you accept the updated terms.',
+        heading: '7. Acceptance',
+        body: 'By clicking “Accept”, you acknowledge that you have read, understood, and agreed to these Terms of Service.',
     },
 ];

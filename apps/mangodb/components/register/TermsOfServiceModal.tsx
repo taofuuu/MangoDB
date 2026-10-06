@@ -3,7 +3,7 @@
 import { useId } from 'react';
 import { createPortal } from 'react-dom';
 import ModalShell from '@/components/ui/ModalShell';
-import { TERMS_OF_SERVICE } from '@/lib/terms';
+import { TERMS_INTRO, TERMS_OF_SERVICE } from '@/lib/terms';
 
 type TermsOfServiceModalProps = {
     isOpen: boolean;
@@ -50,12 +50,15 @@ export default function TermsOfServiceModal({
             <div
                 id={bodyId}
                 tabIndex={0}
-                className="modal-scrollbar terms-scrollbar mt-[3.4vh] min-h-0 flex-1 overflow-y-auto pl-[1.5vw] pr-[1vw] text-[18px] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand max-sm:text-[16px]"
+                className="mt-[3.4vh] min-h-0 flex-1 overflow-y-auto pl-[1.5vw] pr-[1vw] text-[18px] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand max-sm:text-[16px]"
             >
+                <p className="leading-[1.65]">{TERMS_INTRO}</p>
                 {TERMS_OF_SERVICE.map((section) => (
-                    <section key={section.heading} className="mb-[2vh]">
-                        <h3 className="font-semibold">{section.heading}</h3>
-                        <p>{section.body}</p>
+                    <section key={section.heading}>
+                        <h3 className="mt-[0.5em] text-[24px] font-medium max-sm:text-[20px]">
+                            {section.heading}
+                        </h3>
+                        <p className="leading-[1.65]">{section.body}</p>
                     </section>
                 ))}
             </div>
