@@ -56,8 +56,8 @@ export default function JobBox({
                     max-w-[54.69vw]
                     flex-col
                     gap-[2.22vh]
-                    rounded-[30px]
-                    bg-white
+                    rounded-popup
+                    bg-surface-white
                     pb-[2.314vh]
                     pt-[2.314vh]
                     pl-[2.29vw]
@@ -91,7 +91,7 @@ export default function JobBox({
                                 onClick={() => setIsMenuOpen((prev) => !prev)}
                                 aria-label="Job actions"
                                 aria-expanded={isMenuOpen}
-                                className="rounded-full p-2 transition hover:bg-gray-100"
+                                className="rounded-full p-2 transition hover:bg-fill-subtle"
                             >
                                 <MoreHorizontal size={24} />
                             </button>
@@ -106,14 +106,14 @@ export default function JobBox({
                                         mt-2
                                         w-[10vw]
                                         rounded-lg
-                                        bg-white
+                                        bg-surface-white
                                         p-2
                                         shadow-lg
                                     "
                                 >
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
                                         <Edit size={15} />
                                         Edit
@@ -122,7 +122,7 @@ export default function JobBox({
                                     {job.listingStatus === 'OPEN' && (
                                         <button
                                             type="button"
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                         >
                                             Close
                                         </button>
@@ -130,7 +130,7 @@ export default function JobBox({
 
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
                                         <Trash size={15} />
                                         Delete
@@ -151,13 +151,13 @@ export default function JobBox({
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
-                                        className="rounded-status bg-[#FEC84A] px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
+                                        className="rounded-status bg-accent px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
                                     >
                                         {category}
                                     </span>
                                 ))
                             ) : (
-                                <span className="rounded-status bg-[#F3F4F6] px-[0.63vw] py-[0.19vh] type-sm !font-[600]">
+                                <span className="rounded-status bg-fill-subtle px-[0.63vw] py-[0.19vh] type-sm !font-[600]">
                                     General
                                 </span>
                             )}
@@ -216,10 +216,10 @@ export default function JobBox({
                             gap-[0.5vw]
                             rounded-[15px]
                             border
-                            border-[#497B93]
+                            border-brand
                             type-sm
-                            text-[#497B93]
-                            hover:bg-[#497B93]/10
+                            text-brand
+                            hover:bg-brand/10
                         "
                     >
                         View Detail

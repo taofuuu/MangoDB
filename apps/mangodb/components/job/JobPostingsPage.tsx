@@ -229,7 +229,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             w-[56.56vw]
                             border-0
                             border-t
-                            border-[#497B93]/50
+                            border-brand/50
                         "
                     />
                 </div>
@@ -260,17 +260,17 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                 {
                                     label: 'ALL',
                                     value: '',
-                                    activeClass: 'bg-[#FEC84A] text-white',
+                                    activeClass: 'bg-accent text-surface-white',
                                 },
                                 {
                                     label: 'OPEN',
                                     value: 'OPEN',
-                                    activeClass: 'bg-[#497B93] text-white',
+                                    activeClass: 'bg-brand text-surface-white',
                                 },
                                 {
                                     label: 'CLOSED',
                                     value: 'CLOSED',
-                                    activeClass: 'bg-[#C5483B] text-white',
+                                    activeClass: 'bg-danger text-surface-white',
                                 },
                             ].map((filter) => {
                                 const isActive = status === filter.value;
@@ -315,7 +315,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                         `
                                                         : `
                                                             border-line
-                                                            bg-white
+                                                            bg-surface-white
                                                             text-ink
                                                             shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_2px_5px_rgba(0,0,0,0.12)]
                                                             hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_3px_7px_rgba(0,0,0,0.16)]
@@ -452,7 +452,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                     animate-pulse
                                                     flex-col
                                                     gap-[2.22vh]
-                                                    rounded-[30px]
+                                                    rounded-popup
                                                     bg-line
                                                     pt-[2.87vh]
                                                     pr-[2.29vw]
