@@ -152,7 +152,7 @@ export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
             onClose={handleClose}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName="modal-scrollbar w-full max-w-[45vw] h-[92vh] max-h-[calc(100vh-2rem)] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl overflow-y-auto"
+            panelClassName="w-full max-w-[45vw] h-[92vh] max-h-[calc(100vh-2rem)] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl overflow-y-auto"
         >
             {/* -------------header----------------- */}
             <div className=" flex items-center justify-between">

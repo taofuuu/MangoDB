@@ -59,6 +59,11 @@ const ROUTES = [
         detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
     {
+        href: '/services',
+        title: 'Services (service search)',
+        detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.',
+    },
+    {
         href: '/job/view-all',
         title: 'View and search for job',
         detail: 'Epic 3: ทำเกิน ;-;',
