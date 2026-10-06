@@ -2,7 +2,7 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import { X, Hourglass, Building2, Tag, Wallet, MapPin } from 'lucide-react';
+import { X } from 'lucide-react';
 
 import Link from 'next/link';
 
@@ -35,7 +35,12 @@ export default function JobDetailModal({
                 <div className="flex flex-col gap-[1vh]">
                     {/* Categories */}
                     <div className="flex items-center gap-[0.52vw]">
-                        <Tag size={20} />
+                        <Image
+                            src="/images/category.png"
+                            alt=""
+                            width={25}
+                            height={25}
+                        />
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
                                 job.categories.map((category) => (
@@ -171,7 +176,12 @@ export default function JobDetailModal({
                                 THB
                             </div>
 
-                            <Wallet size={20} />
+                            <Image
+                                src="/images/budget.png"
+                                alt=""
+                                width={22}
+                                height={22}
+                            />
                         </div>
 
                         {/* Duration */}
@@ -194,7 +204,8 @@ export default function JobDetailModal({
                                 {job.duration || 'No job duration provided'}
                             </div>
 
-                            <Hourglass size={20} color="black" />
+                            {/* No icon in the design; keeps the value in line */}
+                            <span aria-hidden="true" className="w-[22px]" />
                         </div>
 
                         {/* Deadline */}
@@ -228,7 +239,7 @@ export default function JobDetailModal({
 
                             <Image
                                 src="/images/deadline.svg"
-                                alt="Deadline"
+                                alt=""
                                 width={22}
                                 height={22}
                             />
@@ -254,7 +265,12 @@ export default function JobDetailModal({
                                 {job.locationPref || 'No location provided.'}
                             </div>
 
-                            <MapPin size={20} />
+                            <Image
+                                src="/images/location.png"
+                                alt=""
+                                width={18}
+                                height={22}
+                            />
                         </div>
 
                         {/* Company */}
@@ -284,7 +300,7 @@ export default function JobDetailModal({
                                 {job.companyName}
                             </Link>
 
-                            <Building2 size={22} color="black" />
+                            <span aria-hidden="true" className="w-[22px]" />
                         </div>
 
                         {/* Created at */}

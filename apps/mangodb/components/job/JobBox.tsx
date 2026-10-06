@@ -2,14 +2,14 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
+import Image from 'next/image';
+
 import {
     MoreHorizontal,
     ArrowRight,
+    CalendarClock,
     Edit,
     Trash,
-    Tag,
-    Wallet,
-    MapPin,
 } from 'lucide-react';
 
 import { useState } from 'react';
@@ -144,7 +144,12 @@ export default function JobBox({
                 {/* Categories */}
                 <div className="flex w-full items-start justify-between bg-transparent">
                     <div className="flex items-center gap-[0.52vw]">
-                        <Tag size={20} />
+                        <Image
+                            src="/images/category.png"
+                            alt=""
+                            width={25}
+                            height={25}
+                        />
 
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
@@ -174,7 +179,12 @@ export default function JobBox({
                 {/* Budget + Deadline + View Detail */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <Wallet size={20} />
+                        <Image
+                            src="/images/budget.png"
+                            alt=""
+                            width={25}
+                            height={25}
+                        />
                         {job.minBudget != null
                             ? job.minBudget.toLocaleString()
                             : '-'}
@@ -186,7 +196,7 @@ export default function JobBox({
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <MapPin size={20} />
+                        <CalendarClock size={22} aria-hidden="true" />
                         {job.deadline || 'No job deadline provided.'}
                     </p>
 
