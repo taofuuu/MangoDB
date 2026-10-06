@@ -176,7 +176,7 @@ export default function JobBox({
                     )}
                 </div>
 
-                {/* Budget + Deadline + View Detail */}
+                {/* Budget + Location + Deadline + View Detail */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Image
@@ -193,6 +193,16 @@ export default function JobBox({
                             ? job.maxBudget.toLocaleString()
                             : '-'}{' '}
                         THB
+                    </p>
+
+                    <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
+                        <Image
+                            src="/images/location.png"
+                            alt=""
+                            width={18}
+                            height={22}
+                        />
+                        {job.locationPref || 'No location provided.'}
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
