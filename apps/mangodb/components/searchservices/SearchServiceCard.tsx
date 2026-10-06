@@ -56,13 +56,9 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
 
                         <p className="type-xs mt-1 flex items-center gap-1 text-[var(--color-brand)]">
                             <Wallet size={14} className="shrink-0" />
-                            {hasBudget(service) ? (
-                                <>
-                                    ฿{formatBudget(service.minBudget)} - ฿
-                                    {formatBudget(service.maxBudget)}
-                                </>
-                            ) : (
-                                'No budget provided'
+                            {formatBudgetRange(
+                                service.minBudget,
+                                service.maxBudget,
                             )}
                         </p>
 
