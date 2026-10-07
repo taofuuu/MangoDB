@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import {
     fetchSearchServicesFilterOptions,
     type ServiceFilterOptions,
+    type ServiceSummary,
 } from '@/lib/searchServices';
 import {
     useSearchServices,
@@ -14,6 +15,7 @@ import { SearchServicesActiveFilters } from './SearchServicesActiveFilters';
 import { SearchServicesFilterSidebar } from './SearchServicesFilterSidebar';
 import { SearchServicesResultsGrid } from './SearchServicesResultsGrid';
 import { SearchServicesBar } from './SearchServicesBar';
+import { ServiceDetailPanel } from './ServiceDetailPanel';
 
 // mode is a prop, not hardcoded, so whichever pagination style the final
 // design settles on (page numbers vs. infinite scroll) is a one-line change
@@ -47,6 +49,10 @@ export function SearchServicesPage({
         'loading' | 'loaded' | 'error'
     >('loading');
     const [optionsError, setOptionsError] = useState<unknown>(null);
+    const [selectedService, setSelectedService] =
+        useState<ServiceSummary | null>(null);
+
+    const closeDetail = useCallback(() => setSelectedService(null), []);
 
     useEffect(() => {
         let active = true;
@@ -76,8 +82,14 @@ export function SearchServicesPage({
     const showSearchControls = optionsStatus !== 'loading' && !signedOut;
 
     return (
-        <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
-            {showSearchControls && (
+        <div
+            className={`flex py-10 ${
+                selectedService
+                    ? 'ml-[2vw] gap-[1.5vw]'
+                    : 'mx-auto max-w-[1360px] gap-8 px-10'
+            }`}
+        >
+            {showSearchControls && !selectedService && (
                 <SearchServicesFilterSidebar
                     filters={filters}
                     options={options}
@@ -91,7 +103,13 @@ export function SearchServicesPage({
                 />
             )}
 
-            <div className="min-w-0 flex-1">
+            <div
+                className={
+                    selectedService
+                        ? 'min-w-0 w-[56.56vw] flex-none'
+                        : 'min-w-0 flex-1'
+                }
+            >
                 {/* Divider under the title, per the mockup */}
                 <div className="mb-4 flex items-baseline gap-2 border-b border-brand-dark pb-2">
                     <h1 className="type-hd text-ink">All Services</h1>
@@ -121,9 +139,19 @@ export function SearchServicesPage({
                         hasMore={hasMore}
                         onPageChange={goToPage}
                         onLoadMore={loadMore}
+                        onViewDetail={setSelectedService}
                     />
                 </div>
             </div>
+
+            {selectedService && (
+                <div className="h-[72.63vh] w-[35vw] shrink-0">
+                    <ServiceDetailPanel
+                        service={selectedService}
+                        onClose={closeDetail}
+                    />
+                </div>
+            )}
         </div>
     );
 }

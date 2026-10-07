@@ -59,6 +59,7 @@ export function SearchServicesResultsGrid({
     hasMore,
     onPageChange,
     onLoadMore,
+    onViewDetail,
 }: {
     mode: SearchServicesMode;
     items: ServiceSummary[];
@@ -68,6 +69,7 @@ export function SearchServicesResultsGrid({
     hasMore: boolean;
     onPageChange: (page: number) => void;
     onLoadMore: () => void;
+    onViewDetail: (service: ServiceSummary) => void;
 }) {
     const listRef = useRef<HTMLDivElement>(null);
     const currentPage = pagination?.page;
@@ -125,6 +127,7 @@ export function SearchServicesResultsGrid({
                     <SearchServiceCard
                         key={service.listingId}
                         service={service}
+                        onViewDetail={onViewDetail}
                     />
                 ))}
 

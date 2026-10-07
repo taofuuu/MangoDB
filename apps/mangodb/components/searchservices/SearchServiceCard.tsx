@@ -1,4 +1,7 @@
-import type { ServiceSummary } from '@/lib/searchServices';
+import {
+    formatServiceBudgetRange,
+    type ServiceSummary,
+} from '@/lib/searchServices';
 import { Tag, Wallet } from 'lucide-react';
 
 function initials(name: string): string {
@@ -7,31 +10,13 @@ function initials(name: string): string {
     return letters.join('') || '?';
 }
 
-function formatBudget(n: number | null): string {
-    if (n == null) return '-';
-    return n.toLocaleString('en-US');
-}
-
-function formatBudgetRange(
-    minBudget: number | null,
-    maxBudget: number | null,
-): string {
-    if (minBudget == null && maxBudget == null) {
-        return 'No budget provided';
-    }
-
-    if (minBudget == null) {
-        return `Up to ฿${formatBudget(maxBudget)}`;
-    }
-
-    if (maxBudget == null) {
-        return `From ฿${formatBudget(minBudget)}`;
-    }
-
-    return `฿${formatBudget(minBudget)} - ฿${formatBudget(maxBudget)}`;
-}
-
-export function SearchServiceCard({ service }: { service: ServiceSummary }) {
+export function SearchServiceCard({
+    service,
+    onViewDetail,
+}: {
+    service: ServiceSummary;
+    onViewDetail: (service: ServiceSummary) => void;
+}) {
     return (
         <div className="rounded-button border border-brand-light bg-surface-white p-5 shadow-card">
             <div className="flex items-stretch justify-between gap-4">
@@ -56,7 +41,7 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
 
                         <p className="type-xs mt-1 flex items-center gap-1 text-brand">
                             <Wallet size={14} className="shrink-0" />
-                            {formatBudgetRange(
+                            {formatServiceBudgetRange(
                                 service.minBudget,
                                 service.maxBudget,
                             )}
@@ -77,15 +62,10 @@ export function SearchServiceCard({ service }: { service: ServiceSummary }) {
                     </div>
                 </div>
 
-                {/* The detail page (/services/:listingId) and its public API are not
-                implemented yet, so this is disabled instead of linking to a 404.
-                Swap it back to <Link href={`/services/${service.listingId}`}> once
-                the detail feature lands. */}
                 <button
                     type="button"
-                    disabled
-                    title="Coming soon"
-                    className="rounded-button shrink-0 self-end cursor-not-allowed border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand opacity-40"
+                    onClick={() => onViewDetail(service)}
+                    className="rounded-button shrink-0 self-end border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                 >
                     view detail →
                 </button>
