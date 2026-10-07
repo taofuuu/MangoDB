@@ -44,12 +44,6 @@ export async function requireAuth(
         return;
     }
 
-    // Outside the try above: a database error is not an auth failure.
-    if (await isTokenRevoked(claims.jti)) {
-        next(ApiError.unauthorized('Session has ended'));
-        return;
-    }
-
     // US1-6 / US6-4. A token issued before deletion stays cryptographically
     // valid until it expires, and there is no per-company list of outstanding
     // jtis to revoke individually — so every authenticated request re-checks
@@ -57,7 +51,16 @@ export async function requireAuth(
     // caller's business to distinguish from a plain logout.
     const companyId = Number(claims.sub);
 
-    if (await isCompanyDeleted(companyId)) {
+    // written under time-crunch bypass — review later
+    // The two checks don't depend on each other, so they run together: one
+    // database round trip of waiting instead of two, on every request.
+    // Outside the try above: a database error is not an auth failure.
+    const [revoked, companyDeleted] = await Promise.all([
+        isTokenRevoked(claims.jti),
+        isCompanyDeleted(companyId),
+    ]);
+
+    if (revoked || companyDeleted) {
         next(ApiError.unauthorized('Session has ended'));
         return;
     }
