@@ -207,7 +207,7 @@ danger  danger-hover  danger-deep  danger-tint  danger-wash
 accent  accent-tint   orange   role-provider
 surface  surface-white
 ink  ink-soft  ink-placeholder
-line  fill-muted
+line  fill-muted  fill-subtle
 ```
 
 Radii: `rounded-input` (4px), `rounded-button` (12px), `rounded-status` (20px),

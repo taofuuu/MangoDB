@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings?status=CLOSED",
+    "request": "GET /job-postings?status=OPEN&pageSize=1&page=1",
     "status": 200,
     "body": {
         "items": [
@@ -17,7 +17,7 @@
                 "duration": "2 Months",
                 "jobPostingId": "<job_posting_id>",
                 "listingDesc": "Looking for developer team",
-                "listingStatus": "CLOSED",
+                "listingStatus": "OPEN",
                 "listingTitle": "Snapshot Probe job posting",
                 "locationPref": "Remote",
                 "maxBudget": 150000,
@@ -26,9 +26,9 @@
         ],
         "pagination": {
             "page": 1,
-            "pageSize": 12,
-            "totalItems": 1,
-            "totalPages": 1
+            "pageSize": 1,
+            "totalItems": 13,
+            "totalPages": 13
         }
     }
 }

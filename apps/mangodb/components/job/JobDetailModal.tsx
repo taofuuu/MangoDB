@@ -2,11 +2,15 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import { X, Hourglass, Building2, Tag, Wallet, MapPin } from 'lucide-react';
-
-import Link from 'next/link';
-
-import Image from 'next/image';
+import {
+    X,
+    Wallet,
+    MapPin,
+    CalendarClock,
+    Hourglass,
+    Building2,
+    Tag,
+} from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
 
@@ -28,7 +32,7 @@ export default function JobDetailModal({
             role="dialog"
             labelledBy="job-detail-title"
             backdropClassName="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 p-[2.08vw]"
-            panelClassName="flex max-h-[92vh] w-[54.68vw] flex-col gap-[3.425vh] overflow-y-auto rounded-popup bg-white pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[4vh] leading-relaxed shadow-xl"
+            panelClassName="flex max-h-[92vh] w-[54.68vw] flex-col gap-[3.425vh] overflow-y-auto rounded-popup bg-surface pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[4vh] leading-relaxed shadow-xl"
         >
             {/* Header */}
             <div className="flex items-start justify-between gap-[1.04vw]">
@@ -43,7 +47,7 @@ export default function JobDetailModal({
                                         key={category}
                                         className="
                                                     rounded-status
-                                                    bg-[#FEC84A]
+                                                    bg-accent
                                                     px-[0.63vw]
                                                     py-[0.19vh]
                                                 "
@@ -55,7 +59,7 @@ export default function JobDetailModal({
                                 <span
                                     className="
                                             rounded-status
-                                            bg-[#F3F4F6]
+                                            bg-fill-subtle
                                             px-[0.63vw]
                                             py-[0.19vh]
                                         "
@@ -126,7 +130,7 @@ export default function JobDetailModal({
                     >
                         {/* Description */}
                         <div className="w-full text-left">
-                            <span className="type-sm text-[#497B93]">
+                            <span className="type-sm text-brand">
                                 Description :
                             </span>
 
@@ -136,7 +140,7 @@ export default function JobDetailModal({
                                         mb-[1vh]
                                         ml-[1vw]
                                         leading-relaxed
-                                        text-[#000000]
+                                        text-ink
                                     "
                             >
                                 {job.listingDesc ||
@@ -145,7 +149,7 @@ export default function JobDetailModal({
                         </div>
 
                         {/* Budget */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -155,10 +159,10 @@ export default function JobDetailModal({
                                     justify-between
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#000000]
+                                    text-ink
                                 "
                         >
-                            <span className="text-[#497B93]">Budget</span>
+                            <span className="text-brand">Budget</span>
 
                             <div>
                                 {job.minBudget != null
@@ -175,7 +179,7 @@ export default function JobDetailModal({
                         </div>
 
                         {/* Duration */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -185,12 +189,12 @@ export default function JobDetailModal({
                                     justify-between
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#497B93]
+                                    text-brand
                                 "
                         >
                             <span>Duration</span>
 
-                            <div className="text-[#000000]">
+                            <div className="text-ink">
                                 {job.duration || 'No job duration provided'}
                             </div>
 
@@ -198,7 +202,7 @@ export default function JobDetailModal({
                         </div>
 
                         {/* Deadline */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -208,12 +212,12 @@ export default function JobDetailModal({
                                     justify-between
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#497B93]
+                                    text-brand
                                 "
                         >
                             <span>Deadline</span>
 
-                            <div className="text-[#000000]">
+                            <div className="text-ink">
                                 {job.deadline
                                     ? new Date(job.deadline).toLocaleDateString(
                                           'en-GB',
@@ -226,16 +230,11 @@ export default function JobDetailModal({
                                     : 'No job deadline provided'}
                             </div>
 
-                            <Image
-                                src="/images/deadline.svg"
-                                alt="Deadline"
-                                width={22}
-                                height={22}
-                            />
+                            <CalendarClock size={20} color="black" />
                         </div>
 
                         {/* Location */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -245,20 +244,20 @@ export default function JobDetailModal({
                                     justify-between
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#000000]
+                                    text-ink
                                 "
                         >
-                            <span className="text-[#497B93]">Location</span>
+                            <span className="text-brand">Location</span>
 
                             <div>
                                 {job.locationPref || 'No location provided.'}
                             </div>
 
-                            <MapPin size={20} />
+                            <MapPin size={20} color="black" />
                         </div>
 
                         {/* Company */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -268,27 +267,21 @@ export default function JobDetailModal({
                                     justify-between
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#497B93]
+                                    text-brand
                                 "
                         >
                             <span>Company</span>
 
-                            <Link
-                                href={`/company/${job.companyId}`}
-                                className="
-                                        !font-[600]
-                                        text-[#000000]
-                                        hover:underline
-                                    "
-                            >
+                            {/* Plain text until /profile/[companyId] exists (T2.7.17) */}
+                            <span className="!font-[600] text-ink">
                                 {job.companyName}
-                            </Link>
+                            </span>
 
-                            <Building2 size={22} color="black" />
+                            <Building2 size={20} color="black" />
                         </div>
 
                         {/* Created at */}
-                        <hr className="w-full border-0 border-t border-[#497B93]/50" />
+                        <hr className="w-full border-0 border-t border-brand/50" />
 
                         <div
                             className="
@@ -297,7 +290,7 @@ export default function JobDetailModal({
                                     justify-end
                                     pr-[0.5vw]
                                     type-sm
-                                    text-[#497B93]
+                                    text-brand
                                 "
                         >
                             Created at :{' '}
