@@ -24,7 +24,7 @@ export default function CompanyJobsTestPage() {
                 <div className="flex flex-col gap-[1.3vh]">
                     <span className="type-lg">Test Company Jobs</span>
 
-                    <hr className="border-0 border-t border-[#497B93]/50" />
+                    <hr className="border-0 border-t border-brand/50" />
                 </div>
 
                 {/* Company ID selector */}
@@ -54,11 +54,11 @@ export default function CompanyJobsTestPage() {
                                 rounded-full
                                 border
                                 border-line
-                                bg-white
+                                bg-surface-white
                                 px-[1vw]
                                 type-sm
                                 outline-none
-                                focus:border-[#497B93]
+                                focus:border-brand
                             "
                         />
                     </div>
