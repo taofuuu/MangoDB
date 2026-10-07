@@ -40,9 +40,9 @@ export function SearchServicesBar({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Search"
-                className="type-sm w-full max-w-md rounded-full border border-[var(--color-line)] bg-[var(--color-surface-white)] px-5 py-2 text-[var(--color-ink)] shadow-card outline-none placeholder:text-[var(--color-ink-placeholder)] focus:border-[var(--color-brand)]"
+                className="rounded-button type-sm w-full max-w-md border border-[var(--color-line)] bg-[var(--color-surface-white)] px-5 py-2 text-[var(--color-ink)] shadow-card outline-none placeholder:text-[var(--color-ink-placeholder)] focus:border-[var(--color-brand)]"
             />
-            <div className="flex items-center gap-2 type-xs text-[var(--color-ink-soft)]">
+            <div className="flex items-center gap-2 type-sm text-[var(--color-ink-soft)]">
                 <span>Order by:</span>
                 <div className="relative">
                     <button
@@ -51,7 +51,7 @@ export function SearchServicesBar({
                         aria-haspopup="listbox"
                         aria-expanded={orderMenuOpen}
                         aria-controls={orderMenuId}
-                        className="rounded-input flex min-w-[180px] items-center justify-between gap-3 border border-brand-dark bg-surface-white/80 px-3 py-1.5 text-left type-xs text-ink shadow-card"
+                        className="rounded-button flex h-[4.074vh] w-[8.125vw] items-center justify-between gap-3 border border-[var(--color-line)] bg-[var(--color-surface-white)] px-4 text-left type-xs text-[var(--color-ink)] shadow-card outline-none focus:border-[var(--color-brand)]"
                     >
                         <span>{selectedOrder.label}</span>
                         <span aria-hidden className="type-xs text-ink-soft">

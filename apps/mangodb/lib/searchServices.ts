@@ -27,9 +27,7 @@ export type {
     ServiceSummary,
 };
 
-// What the T3.2 sidebar edits. Company type is intentionally absent: the
-// current backlog defines category, tech stack and price as the service
-// filters, and the API has no company-type filter.
+// What the T3.2 sidebar edits.
 export type SearchServicesFilters = {
     categories: string[];
     techStack: string[];
@@ -97,7 +95,7 @@ export async function searchServices(
     if (keyword) qs.set('q', keyword);
     qs.set('orderBy', orderBy);
 
-    filters.categories.forEach((c) => qs.append('category', c));
+    filters.categories.forEach((category) => qs.append('category', category));
     filters.techStack.forEach((t) => qs.append('techStack', t));
 
     if (minBudget != null) qs.set('minPrice', String(minBudget));

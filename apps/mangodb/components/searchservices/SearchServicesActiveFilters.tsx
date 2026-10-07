@@ -6,14 +6,14 @@ import type { SearchServicesFilters } from '@/lib/searchServices';
 function describe(filters: SearchServicesFilters): string[] {
     const parts: string[] = [];
     if (filters.categories.length > 0) {
-        parts.push(`Service Category: ${filters.categories.join(', ')}`);
+        parts.push(`Category > ${filters.categories.join(', ')}`);
     }
     if (filters.techStack.length > 0) {
-        parts.push(`Tech Stack: ${filters.techStack.join(', ')}`);
+        parts.push(`Tech Stack : ${filters.techStack.join(', ')}`);
     }
     if (filters.minBudget != null || filters.maxBudget != null) {
         parts.push(
-            `Price Range: ${filters.minBudget ?? 0}-${filters.maxBudget ?? '∞'}`,
+            `Budget : ${filters.minBudget ?? 0}-${filters.maxBudget ?? '∞'}`,
         );
     }
     return parts;
@@ -32,7 +32,7 @@ export function SearchServicesActiveFilters({
         <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-full items-center gap-2 border-b border-[var(--color-line)] py-3 text-left type-xs text-[var(--color-ink-soft)]"
+            className="flex w-full items-center gap-3 border-b border-[var(--color-line)] py-3 text-left type-lg text-[var(--color-ink)]"
         >
             <span
                 className={`transition-transform ${open ? 'rotate-90' : ''}`}

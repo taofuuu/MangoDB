@@ -207,8 +207,8 @@ export function SearchServicesFilterSidebar({
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="flex-1">
-                        <span className="type-xs text-[var(--color-ink-soft)]">
+                    <label className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="shrink-0 type-sm text-[var(--color-ink)]">
                             Min
                         </span>
                         <input
@@ -223,12 +223,14 @@ export function SearchServicesFilterSidebar({
                                         : null,
                                 })
                             }
-                            className="rounded-input type-xs mt-1 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 py-1"
+                            className="rounded-input type-sm h-7 min-w-0 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 text-[var(--color-ink)]"
                         />
                     </label>
-                    <span className="mt-4 text-[var(--color-ink-soft)]">-</span>
-                    <label className="flex-1">
-                        <span className="type-xs text-[var(--color-ink-soft)]">
+                    <span className="flex h-7 items-center justify-center type-sm text-[var(--color-ink)]">
+                        -
+                    </span>
+                    <label className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="shrink-0 type-sm text-[var(--color-ink)]">
                             Max
                         </span>
                         <input
@@ -243,7 +245,7 @@ export function SearchServicesFilterSidebar({
                                         : null,
                                 })
                             }
-                            className="rounded-input type-xs mt-1 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 py-1"
+                            className="rounded-input type-sm h-7 min-w-0 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 text-[var(--color-ink)]"
                         />
                     </label>
                 </div>
