@@ -73,7 +73,7 @@ export async function createJobPosting(
 
 // US2-7. List job postings filtered by status with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
+// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
 export async function listJobPostings(
     req: Request,
     res: Response,
@@ -197,8 +197,8 @@ export async function listMyJobPostings(
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
-// - Another company's CLOSED or DRAFT posting returns 404 Not Found, the same
+// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
+// - Another company's CLOSED posting returns 404 Not Found, the same
 //   as a non-existent ID, a service ID, or a soft-deleted company's posting.
 export async function getJobPosting(
     req: Request,

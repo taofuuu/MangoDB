@@ -37,7 +37,7 @@ type Row = {
     listingId: number;
     companyId: number;
     listingType: 'JOB' | 'SERVICE';
-    listingStatus: 'OPEN' | 'CLOSED' | 'DRAFT';
+    listingStatus: 'OPEN' | 'CLOSED';
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -203,12 +203,6 @@ function assertNotFound(result: unknown): void {
 describe('GET /job-postings/:jobPostingId', () => {
     it("answers 404, not 403, for another company's closed job", async () => {
         rows = [job(10, OWNER, 'CLOSED')];
-
-        assertNotFound(await getOne(OTHER, 10));
-    });
-
-    it("answers 404 for another company's draft job", async () => {
-        rows = [job(10, OWNER, 'DRAFT')];
 
         assertNotFound(await getOne(OTHER, 10));
     });
