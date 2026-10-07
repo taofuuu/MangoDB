@@ -1,247 +1,246 @@
 {
     "request": "GET /job-postings?status=OPEN",
     "status": 200,
-    "body": [
-        {
-            "categories": [
-                "Web Development"
-            ],
-            "categoryIds": [
-                1
-            ],
-            "companyId": 143,
-            "createdAt": "<timestamp>",
-            "deadline": "2028-12-31",
-            "duration": "2 Months",
-            "jobPostingId": "<job_posting_id>",
-            "listingDesc": "Looking for developer team",
-            "listingStatus": "OPEN",
-            "listingTitle": "Snapshot Probe job posting",
-            "locationPref": "Remote",
-            "maxBudget": 150000,
-            "minBudget": 50000
-        },
-        {
-            "categories": [],
-            "categoryIds": [],
-            "companyId": 248,
-            "createdAt": "<timestamp>",
-            "deadline": null,
-            "duration": null,
-            "jobPostingId": 170,
-            "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Mobile Application Development",
-            "locationPref": null,
-            "maxBudget": 200000,
-            "minBudget": 100000
-        },
-        {
-            "categories": [],
-            "categoryIds": [],
-            "companyId": 248,
-            "createdAt": "<timestamp>",
-            "deadline": null,
-            "duration": null,
-            "jobPostingId": 169,
-            "listingDesc": "Develop a responsive e-commerce website with product management and payment integration.",
-            "listingStatus": "OPEN",
-            "listingTitle": "E-Commerce Website Development",
-            "locationPref": null,
-            "maxBudget": 150000,
-            "minBudget": 80000
-        },
-        {
-            "categories": [],
-            "categoryIds": [],
-            "companyId": 248,
-            "createdAt": "<timestamp>",
-            "deadline": null,
-            "duration": null,
-            "jobPostingId": 168,
-            "listingDesc": "Looking for a developer to build an AI-powered chatbot for customer support.",
-            "listingStatus": "OPEN",
-            "listingTitle": "AI Chatbot Development",
-            "locationPref": null,
-            "maxBudget": 100000,
-            "minBudget": 50000
-        },
-        {
-            "categories": [
-                "ERP & CRM Systems"
-            ],
-            "categoryIds": [
-                7
-            ],
-            "companyId": 106,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-12-31",
-            "duration": "6 เดือน",
-            "jobPostingId": 157,
-            "listingDesc": "ต้องการผู้เชี่ยวชาญ/ทีมพัฒนาเพื่อช่วยวางระบบ ปรับแต่งโมดูล (FI/CO/MM/SD) และเชื่อมต่อ API ระบบ SAP ERP S/4HANA เข้ากับระบบภายในองค์กร",
-            "listingStatus": "OPEN",
-            "listingTitle": "ผู้เชี่ยวชาญการพัฒนาระบบ SAP ERP (SAP S/4HANA Implementation & Customization)",
-            "locationPref": "Hybrid / Bangkok",
-            "maxBudget": 500000,
-            "minBudget": 200000
-        },
-        {
-            "categories": [
-                "Web Development"
-            ],
-            "categoryIds": [
-                1
-            ],
-            "companyId": 143,
-            "createdAt": "<timestamp>",
-            "deadline": "2028-12-31",
-            "duration": "2 Months",
-            "jobPostingId": 73,
-            "listingDesc": "Looking for developer team",
-            "listingStatus": "OPEN",
-            "listingTitle": "Snapshot Probe job posting",
-            "locationPref": "Remote",
-            "maxBudget": 150000,
-            "minBudget": 50000
-        },
-        {
-            "categories": [
-                "Digital Marketing & SEO"
-            ],
-            "categoryIds": [
-                8
-            ],
-            "companyId": 19,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-04-25",
-            "duration": "1 Month",
-            "jobPostingId": 15,
-            "listingDesc": "Seeking consultant to audit technical SEO.",
-            "listingStatus": "OPEN",
-            "listingTitle": "SEO Optimization for Client Websites",
-            "locationPref": "Remote",
-            "maxBudget": 100000,
-            "minBudget": 30000
-        },
-        {
-            "categories": [
-                "Mobile App Development",
-                "Hardware & IoT"
-            ],
-            "categoryIds": [
-                2,
-                3
-            ],
-            "companyId": 18,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-05-20",
-            "duration": "4 Months",
-            "jobPostingId": 14,
-            "listingDesc": "App to control lighting and AC via WiFi.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Smart Home App Development",
-            "locationPref": "Remote / Chonburi",
-            "maxBudget": 400000,
-            "minBudget": 150000
-        },
-        {
-            "categories": [
-                "Web Development",
-                "Mobile App Development"
-            ],
-            "categoryIds": [
-                1,
-                2
-            ],
-            "companyId": 16,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-06-01",
-            "duration": "6 Months",
-            "jobPostingId": 12,
-            "listingDesc": "Need a web dashboard to track 500 delivery trucks.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Fleet Tracking System (GPS)",
-            "locationPref": "On-site Bangkok",
-            "maxBudget": 800000,
-            "minBudget": 300000
-        },
-        {
-            "categories": [
-                "Hardware & IoT"
-            ],
-            "categoryIds": [
-                3
-            ],
-            "companyId": 15,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-05-10",
-            "duration": "1 Month",
-            "jobPostingId": 11,
-            "listingDesc": "Looking for IoT sensors to monitor soil moisture.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Need Smart Sensors for Greenhouse",
-            "locationPref": "Delivery to Khon Kaen",
-            "maxBudget": 80000,
-            "minBudget": 20000
-        },
-        {
-            "categories": [
-                "Hardware & IoT"
-            ],
-            "categoryIds": [
-                3
-            ],
-            "companyId": 10,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-04-25",
-            "duration": "15 Days",
-            "jobPostingId": 5,
-            "listingDesc": "Required for assembling AI robots.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Seeking Supplier for 100 Jetson Nano Boards",
-            "locationPref": "Delivery to Bangkok",
-            "maxBudget": 600000,
-            "minBudget": 400000
-        },
-        {
-            "categories": [
-                "Web Development"
-            ],
-            "categoryIds": [
-                1
-            ],
-            "companyId": 9,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-05-20",
-            "duration": "3 Months",
-            "jobPostingId": 4,
-            "listingDesc": "Video streaming, quiz system, and certificate generation.",
-            "listingStatus": "OPEN",
-            "listingTitle": "E-Learning Web Portal",
-            "locationPref": "Remote",
-            "maxBudget": 200000,
-            "minBudget": 80000
-        },
-        {
-            "categories": [
-                "Mobile App Development",
-                "UI/UX Design"
-            ],
-            "categoryIds": [
-                2,
-                6
-            ],
-            "companyId": 7,
-            "createdAt": "<timestamp>",
-            "deadline": "2026-06-15",
-            "duration": "6 Months",
-            "jobPostingId": 2,
-            "listingDesc": "Highly secure financial app with face scan needed.",
-            "listingStatus": "OPEN",
-            "listingTitle": "Mobile Banking App (iOS/Android)",
-            "locationPref": "Remote / Bangkok",
-            "maxBudget": 1200000,
-            "minBudget": 500000
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobPostingId": "<job_posting_id>",
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "companyId": 248,
+                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobPostingId": 170,
+                "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Mobile Application Development",
+                "locationPref": null,
+                "maxBudget": 200000,
+                "minBudget": 100000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "companyId": 248,
+                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobPostingId": 169,
+                "listingDesc": "Develop a responsive e-commerce website with product management and payment integration.",
+                "listingStatus": "OPEN",
+                "listingTitle": "E-Commerce Website Development",
+                "locationPref": null,
+                "maxBudget": 150000,
+                "minBudget": 80000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "companyId": 248,
+                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobPostingId": 168,
+                "listingDesc": "Looking for a developer to build an AI-powered chatbot for customer support.",
+                "listingStatus": "OPEN",
+                "listingTitle": "AI Chatbot Development",
+                "locationPref": null,
+                "maxBudget": 100000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "ERP & CRM Systems"
+                ],
+                "categoryIds": [
+                    7
+                ],
+                "companyId": 106,
+                "companyName": "บริษัท จำรัส จำสัส เอ้ย จำกัด",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": "6 เดือน",
+                "jobPostingId": 157,
+                "listingDesc": "ต้องการผู้เชี่ยวชาญ/ทีมพัฒนาเพื่อช่วยวางระบบ ปรับแต่งโมดูล (FI/CO/MM/SD) และเชื่อมต่อ API ระบบ SAP ERP S/4HANA เข้ากับระบบภายในองค์กร",
+                "listingStatus": "OPEN",
+                "listingTitle": "ผู้เชี่ยวชาญการพัฒนาระบบ SAP ERP (SAP S/4HANA Implementation & Customization)",
+                "locationPref": "Hybrid / Bangkok",
+                "maxBudget": 500000,
+                "minBudget": 200000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobPostingId": 73,
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "Digital Marketing & SEO"
+                ],
+                "categoryIds": [
+                    8
+                ],
+                "companyId": 19,
+                "companyName": "Creative Agency TH",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-04-25",
+                "duration": "1 Month",
+                "jobPostingId": 15,
+                "listingDesc": "Seeking consultant to audit technical SEO.",
+                "listingStatus": "OPEN",
+                "listingTitle": "SEO Optimization for Client Websites",
+                "locationPref": "Remote",
+                "maxBudget": 100000,
+                "minBudget": 30000
+            },
+            {
+                "categories": [
+                    "Mobile App Development",
+                    "Hardware & IoT"
+                ],
+                "categoryIds": [
+                    2,
+                    3
+                ],
+                "companyId": 18,
+                "companyName": "SmartHome Corp",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-05-20",
+                "duration": "4 Months",
+                "jobPostingId": 14,
+                "listingDesc": "App to control lighting and AC via WiFi.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Smart Home App Development",
+                "locationPref": "Remote / Chonburi",
+                "maxBudget": 400000,
+                "minBudget": 150000
+            },
+            {
+                "categories": [
+                    "Web Development",
+                    "Mobile App Development"
+                ],
+                "categoryIds": [
+                    1,
+                    2
+                ],
+                "companyId": 16,
+                "companyName": "UrbanLogistics",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-06-01",
+                "duration": "6 Months",
+                "jobPostingId": 12,
+                "listingDesc": "Need a web dashboard to track 500 delivery trucks.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Fleet Tracking System (GPS)",
+                "locationPref": "On-site Bangkok",
+                "maxBudget": 800000,
+                "minBudget": 300000
+            },
+            {
+                "categories": [
+                    "Hardware & IoT"
+                ],
+                "categoryIds": [
+                    3
+                ],
+                "companyId": 15,
+                "companyName": "GreenAgri Tech",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-05-10",
+                "duration": "1 Month",
+                "jobPostingId": 11,
+                "listingDesc": "Looking for IoT sensors to monitor soil moisture.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Need Smart Sensors for Greenhouse",
+                "locationPref": "Delivery to Khon Kaen",
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [
+                    "Hardware & IoT"
+                ],
+                "categoryIds": [
+                    3
+                ],
+                "companyId": 10,
+                "companyName": "NextGen AI",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-04-25",
+                "duration": "15 Days",
+                "jobPostingId": 5,
+                "listingDesc": "Required for assembling AI robots.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Seeking Supplier for 100 Jetson Nano Boards",
+                "locationPref": "Delivery to Bangkok",
+                "maxBudget": 600000,
+                "minBudget": 400000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 9,
+                "companyName": "EduSphere",
+                "createdAt": "<timestamp>",
+                "deadline": "2026-05-20",
+                "duration": "3 Months",
+                "jobPostingId": 4,
+                "listingDesc": "Video streaming, quiz system, and certificate generation.",
+                "listingStatus": "OPEN",
+                "listingTitle": "E-Learning Web Portal",
+                "locationPref": "Remote",
+                "maxBudget": 200000,
+                "minBudget": 80000
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 13,
+            "totalPages": 2
         }
-    ]
+    }
 }

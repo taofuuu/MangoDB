@@ -611,7 +611,7 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 9. View job postings and visibility rules (US2-7)
+# 9. View and search job postings, visibility rules (US2-2, US2-7, US3-4)
 # ---------------------------------------------------------------------------
 
 snap error-job-postings-list-unauthorized GET /job-postings
@@ -620,6 +620,21 @@ snap error-job-postings-list-invalid-status GET /job-postings?status=INVALID \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap job-postings-list-open GET /job-postings?status=OPEN \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# T3.4.3. ?q= keeps only jobs whose title or description matches. No job
+# holds the run id, so the second search is always empty.
+snap job-postings-search GET "/job-postings?q=Snapshot%20Probe%20job" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap job-postings-search-no-match GET "/job-postings?q=$RUN" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# One job per page, so page 2 holds a different job under the same total.
+snap job-postings-page-1 GET "/job-postings?status=OPEN&pageSize=1&page=1" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap job-postings-page-2 GET "/job-postings?status=OPEN&pageSize=1&page=2" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
@@ -631,6 +646,13 @@ snap job-postings-list-closed-provider GET /job-postings?status=CLOSED \
 
 snap job-postings-list-closed-receiver GET /job-postings?status=CLOSED \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# T2.2.9. The owner's own list keeps the job closed just above: every status.
+snap job-postings-mine GET /job-postings/mine \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-job-postings-mine-forbidden-provider GET /job-postings/mine \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-job-postings-one-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID"
 

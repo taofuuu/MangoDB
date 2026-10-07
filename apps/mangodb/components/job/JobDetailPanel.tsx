@@ -17,8 +17,8 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                 h-[72.63vh]
                 w-[34vw]
                 flex-col
-                rounded-[30px]
-                bg-white
+                rounded-popup
+                bg-surface-white
                 px-[1.5vw]
                 py-[2.5vh]
                 text-left
@@ -28,7 +28,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-[0.8vh]">
-                    <span className="type-sm text-[#497B93]">Job Detail</span>
+                    <span className="type-sm text-brand">Job Detail</span>
 
                     {job && (
                         <h2 className="type-lg !font-[700] text-ink">
@@ -41,20 +41,20 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     type="button"
                     onClick={onClose}
                     aria-label="Close job detail"
-                    className="rounded-full p-2 transition hover:bg-gray-100"
+                    className="rounded-full p-2 transition hover:bg-fill-subtle"
                 >
                     <X size={22} />
                 </button>
             </div>
 
-            <hr className="my-[2vh] border-0 border-t border-[#497B93]/30" />
+            <hr className="my-[2vh] border-0 border-t border-brand/30" />
 
             {/* Job Detail */}
             {job && (
                 <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
                     {/* Company */}
                     <div className="flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">Company</span>
+                        <span className="type-sm text-brand">Company</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.companyName}
@@ -63,9 +63,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Categories */}
                     <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Categories
-                        </span>
+                        <span className="type-sm text-brand">Categories</span>
 
                         <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
                             {job.categories?.length ? (
@@ -74,7 +72,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                         key={category}
                                         className="
                                             rounded-status
-                                            bg-[#FEC84A]
+                                            bg-accent
                                             px-[0.63vw]
                                             py-[0.19vh]
                                             type-sm
@@ -95,9 +93,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Description */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">
-                            Description
-                        </span>
+                        <span className="type-sm text-brand">Description</span>
 
                         <p className="type-sm leading-relaxed text-ink pl-[0.5vw]">
                             {job.listingDesc}
@@ -106,7 +102,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Budget */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">Budget</span>
+                        <span className="type-sm text-brand">Budget</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
@@ -115,7 +111,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Location */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">Location</span>
+                        <span className="type-sm text-brand">Location</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.locationPref ?? 'No location preference'}
@@ -124,7 +120,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Duration */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">Duration</span>
+                        <span className="type-sm text-brand">Duration</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.duration ?? 'Not specified'}
@@ -133,7 +129,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                     {/* Deadline */}
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                        <span className="type-sm text-[#497B93]">Deadline</span>
+                        <span className="type-sm text-brand">Deadline</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
                             {job.deadline ?? 'No deadline'}
@@ -151,14 +147,14 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                 items-center
                                 justify-center
                                 rounded-full
-                                bg-[#497B93]
+                                bg-brand
                                 type-md
-                                text-white
+                                text-surface-white
                                 transition
-                                hover:bg-[#3F6B80]
+                                hover:bg-brand-dark
                             "
                         >
-                            Apply for this Job
+                            Add Proposal
                         </button>
                     </div>
                 </div>
