@@ -7,6 +7,7 @@
                 "createdAt": "<timestamp>",
                 "duration": 2,
                 "jobPostingId": "<job_posting_id>",
+                "listingTitle": "Snapshot Probe job posting",
                 "proposalBudget": 80000,
                 "proposalId": "<proposal_id>",
                 "proposalStatus": "PENDING",
