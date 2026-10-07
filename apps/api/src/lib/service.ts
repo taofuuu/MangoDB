@@ -1,10 +1,9 @@
-// listing_status is a plain VarChar(50) column with no DB enum, so this is the
-// single source of truth for its values. Browse filters and proposal logic
-// should import from here instead of hardcoding strings.
 import type { ListingStatus, ServiceSummary } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
 
+// The status a new service is created with. The allowed listing_status values
+// live in packages/shared (LISTING_STATUSES, ADR 0010).
 export const DEFAULT_LISTING_STATUS: ListingStatus = 'OPEN';
 
 // ADR 0009. A service's tech names, read through its join table. Used as

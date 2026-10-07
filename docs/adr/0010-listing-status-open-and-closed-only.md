@@ -57,6 +57,8 @@ listed above.
       services would be created closed. Use `'OPEN'` by name instead.
     - `apps/api/src/schemas/job-posting.schema.ts` — the status filter comment.
     - `apps/api/src/seed.ts` — the comment above `listingStatus`.
+    - `apps/api/src/controllers/job-posting.controller.ts` — the visibility
+      comments above `listJobPostings` and `getJobPosting`.
     - `docs/conventions.md` §6.
     - `snapshots/error-job-postings-list-invalid-status.json` — the error
       message lists the allowed values.
