@@ -133,7 +133,11 @@ export async function listJobPostings(
             },
         ],
     };
-    const [totalItems, postings] = await prisma.$transaction([
+    // written under time-crunch bypass — review later
+    // Promise.all, not $transaction: a transaction pins both queries to one
+    // connection, so they wait for each other. Read-only, so the only cost is a
+    // count that can be one off if a job is posted between the two queries.
+    const [totalItems, postings] = await Promise.all([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
@@ -173,7 +177,9 @@ export async function listMyJobPostings(
         ...(status ? { listingStatus: status } : {}),
     };
 
-    const [totalItems, postings] = await prisma.$transaction([
+    // written under time-crunch bypass — review later
+    // Promise.all for the same reason as listJobPostings above.
+    const [totalItems, postings] = await Promise.all([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,

@@ -203,7 +203,11 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         // must pass all of them. Two AND keys would let one replace the other.
         AND: [...words.map(matchesKeyword), ...matchesFilters(filters)],
     };
-    const [totalItems, listings] = await prisma.$transaction([
+    // written under time-crunch bypass — review later
+    // Promise.all, not $transaction: a transaction pins both queries to one
+    // connection, so they wait for each other. Read-only, so the only cost is a
+    // count that can be one off if a service is posted between the two queries.
+    const [totalItems, listings] = await Promise.all([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
