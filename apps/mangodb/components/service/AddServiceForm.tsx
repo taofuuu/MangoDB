@@ -72,30 +72,14 @@ export default function AddServiceForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ── AUTHORIZATION ──
-    useEffect(() => {
+     useEffect(() => {
         getMyProfile()
             .then((profile) => {
-                const p = profile as unknown as Record<string, unknown>;
-                const role = (p.role || p.userRole || p.type || '')
-                    .toString()
-                    .toLowerCase();
-                const accountType = (p.accountType || p.account_type || '')
-                    .toString()
-                    .toUpperCase();
-
                 const hasProviderRole =
-                    role === 'provider' ||
-                    role === 'both' ||
-                    accountType === 'PROVIDER' ||
-                    accountType === 'BOTH' ||
-                    (Array.isArray(p.roles) &&
-                        p.roles.some((r) =>
-                            ['provider', 'both'].includes(
-                                String(r).toLowerCase(),
-                            ),
-                        ));
+                    profile.accountType === 'PROVIDER' ||
+                    profile.accountType === 'BOTH';
 
-                setIsAuthorized(Boolean(hasProviderRole));
+                setIsAuthorized(hasProviderRole);
             })
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
