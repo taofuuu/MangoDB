@@ -15,8 +15,10 @@ import { assertJobPostingOwned } from '../lib/jobPosting';
 import {
     postingProposalSelect,
     proposalSelect,
+    providerProposalSelect,
     toPostingProposal,
     toProposal,
+    toProviderProposal,
     acceptProposal,
     rejectProposal,
 } from '../lib/proposal';
@@ -142,12 +144,12 @@ export async function getMyProposals(
             skip: (page - 1) * pageSize,
             take: pageSize,
             orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-            select: proposalSelect,
+            select: providerProposalSelect,
         }),
     ]);
 
     const body: ProposalListResponse = {
-        items: rows.map(toProposal),
+        items: rows.map(toProviderProposal),
         pagination: {
             page,
             pageSize,
