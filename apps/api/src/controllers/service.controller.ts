@@ -21,6 +21,7 @@ import {
     listingIdParamSchema,
     type ServiceListQuery,
     serviceListQuerySchema,
+    serviceMineQuerySchema,
 } from '../schemas/service.schema';
 
 // Create and publish a service listing (provider-only; see routes).
@@ -234,9 +235,15 @@ export async function getMine(req: Request, res: Response): Promise<void> {
         throw ApiError.unauthorized('Company ID is required');
     }
     const { companyId } = req.auth;
+    // written under time-crunch bypass — review later
+    const { status } = parseQuery(serviceMineQuerySchema, req.query);
 
     const listings = await prisma.listing.findMany({
-        where: { companyId, listingType: 'SERVICE' }, // Defensive: explicit type filter
+        where: {
+            companyId,
+            listingType: 'SERVICE', // Defensive: explicit type filter
+            ...(status ? { listingStatus: status } : {}),
+        },
         orderBy: { createdAt: 'desc' },
         select: listingSelect,
     });
