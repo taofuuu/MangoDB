@@ -44,14 +44,14 @@ export function SearchServicesBar({
             />
             <div className="flex items-center gap-2 type-sm text-ink-soft">
                 <span>Order by:</span>
-                <div className="relative">
+                <div className="relative w-[8.125vw] min-w-[8.125vw] max-w-[8.125vw] shrink-0 basis-[8.125vw]">
                     <button
                         type="button"
                         onClick={() => setOrderMenuOpen((open) => !open)}
                         aria-haspopup="listbox"
                         aria-expanded={orderMenuOpen}
                         aria-controls={orderMenuId}
-                        className="rounded-button flex h-[4.074vh] w-[8.125vw] items-center justify-between gap-3 border border-line bg-surface-white px-4 text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
+                        className="rounded-button flex h-[4.07vh] min-h-[4.07vh] max-h-[4.07vh] w-full box-border items-center justify-between gap-2 border border-line bg-surface-white px-[0.7vw] text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
                     >
                         <span>{selectedOrder.label}</span>
                         <span aria-hidden className="type-xs text-ink-soft">
@@ -64,7 +64,7 @@ export function SearchServicesBar({
                             id={orderMenuId}
                             role="listbox"
                             aria-label="Order services by"
-                            className="rounded-input absolute right-0 top-full z-50 mt-1 w-full border border-line bg-surface-white shadow-card"
+                            className="rounded-button absolute left-0 top-[calc(100%+0.4vh)] z-50 h-[12vh] w-full overflow-hidden border border-line bg-surface-white shadow-card"
                         >
                             {ORDER_OPTIONS.map((option) => (
                                 <button
@@ -76,7 +76,7 @@ export function SearchServicesBar({
                                         onOrderByChange(option.value);
                                         setOrderMenuOpen(false);
                                     }}
-                                    className={`block w-full px-3 py-2 text-left type-sm text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
+                                    className={`flex h-1/3 w-full items-center px-[0.7vw] text-left type-xs text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
                                         option.value === orderBy
                                             ? 'bg-brand-tint text-brand-deep'
                                             : ''
