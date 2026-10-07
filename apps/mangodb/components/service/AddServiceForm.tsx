@@ -65,6 +65,9 @@ export default function AddServiceForm() {
     const [portfolios, setPortfolios] = useState<PendingPortfolio[]>([]);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [createdListingId, setCreatedListingId] = useState<number | null>(
+        null,
+    );
 
     // Errors & Loading state
     const [errors, setErrors] = useState<ServiceErrors>({});
@@ -72,13 +75,12 @@ export default function AddServiceForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ── AUTHORIZATION ──
-     useEffect(() => {
+    useEffect(() => {
         getMyProfile()
             .then((profile) => {
                 const hasProviderRole =
                     profile.accountType === 'PROVIDER' ||
                     profile.accountType === 'BOTH';
-
                 setIsAuthorized(hasProviderRole);
             })
             .catch((err: unknown) => {
@@ -87,7 +89,6 @@ export default function AddServiceForm() {
                     setIsAuthorized(false);
                     return;
                 }
-
                 setLoadError(describeError(err));
                 setIsAuthorized(false);
             });
@@ -200,11 +201,13 @@ export default function AddServiceForm() {
         return Object.keys(newErrors).length === 0;
     };
 
+    // ✏️ EDIT / REPLACE THIS ENTIRE FUNCTION:
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
 
-        if (!validateForm()) {
+        // 1. Only validate form fields if service hasn't been created yet
+        if (!createdListingId && !validateForm()) {
             return;
         }
 
@@ -212,17 +215,33 @@ export default function AddServiceForm() {
         const max = maxBudget.trim() !== '' ? Number(maxBudget) : undefined;
 
         setIsSubmitting(true);
-        try {
-            const created = await createService({
-                listingTitle: title,
-                listingDesc: description,
-                categoryIds: selectedCategoryIds,
-                techStack: selectedTechStack,
-                ...(min !== undefined && { minBudget: min }),
-                ...(max !== undefined && { maxBudget: max }),
-            });
+        let listingId = createdListingId;
 
-            for (const p of portfolios) {
+        // Create base service if it doesn't exist yet
+        if (!listingId) {
+            try {
+                const created = await createService({
+                    listingTitle: title,
+                    listingDesc: description,
+                    categoryIds: selectedCategoryIds,
+                    techStack: selectedTechStack,
+                    ...(min !== undefined && { minBudget: min }),
+                    ...(max !== undefined && { maxBudget: max }),
+                });
+                listingId = created.listingId;
+                setCreatedListingId(listingId); // Save ID to state
+            } catch (cause) {
+                const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
+                setErrors(fields as ServiceErrors);
+                setFormError(message);
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
+        // Upload pending portfolios collected in local state
+        for (const p of portfolios) {
+            try {
                 const body = new FormData();
                 body.append('portfolioName', p.name);
                 if (p.description)
@@ -230,17 +249,20 @@ export default function AddServiceForm() {
                 body.append('portfolioLink', p.link);
                 body.append('developmentDate', p.developmentDate);
                 if (p.image) body.append('portfolioImage', p.image);
-                await createPortfolioForListing(created.listingId, body);
-            }
 
-            setShowSuccessModal(true);
-        } catch (cause) {
-            const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
-            setErrors(fields as ServiceErrors);
-            setFormError(message);
-        } finally {
-            setIsSubmitting(false);
+                await createPortfolioForListing(listingId, body);
+            } catch (cause) {
+                const errorMessage = describeError(cause);
+                setFormError(
+                    `Service was saved successfully, but portfolio "${p.name}" failed to upload: ${errorMessage}. Please fix and try again.`,
+                );
+                setIsSubmitting(false);
+                return; // Stop loop on failure
+            }
         }
+
+        setShowSuccessModal(true);
+        setIsSubmitting(false);
     };
 
     const handleSuccessConfirm = () => {
@@ -540,7 +562,11 @@ export default function AddServiceForm() {
                             disabled={isSubmitting}
                             className="px-5 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? 'Saving…' : 'Add Service'}
+                            {isSubmitting
+                                ? 'Saving…'
+                                : createdListingId
+                                  ? 'Retry Portfolio Upload'
+                                  : 'Add Service'}
                         </button>
                     </div>
                 </form>
