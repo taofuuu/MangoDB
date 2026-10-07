@@ -8,6 +8,7 @@ import {
     type SearchServicesFilters,
     type ServiceSummary,
 } from './searchServices';
+import { prefetchPages } from './pageCache';
 import { SERVICE_PAGE_SIZE } from './pagination';
 
 export type SearchServicesMode = 'pagination' | 'infinite';
@@ -47,14 +48,20 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
             const thisRequest = ++requestId.current;
             setState((s) => ({ ...s, status: 'loading', error: null }));
 
-            try {
-                const result = await searchServices({
+            const loadPage = (pageToLoad: number) =>
+                searchServices({
                     q: state.q,
-                    page,
+                    page: pageToLoad,
                     pageSize: state.pageSize,
                     filters: state.filters,
                 });
+
+            try {
+                const result = await loadPage(page);
                 if (thisRequest !== requestId.current) return; // stale response
+
+                // written under time-crunch bypass — review later
+                prefetchPages(page, result.pagination.totalPages, loadPage);
 
                 setState((s) => ({
                     ...s,

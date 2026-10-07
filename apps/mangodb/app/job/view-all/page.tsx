@@ -9,6 +9,7 @@ import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getAllJobPostings } from '@/lib/job';
+import { prefetchPages } from '@/lib/pageCache';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 export default function OtherJobPage() {
@@ -85,14 +86,20 @@ export default function OtherJobPage() {
         setIsLoading(true);
         setError(null);
 
-        getAllJobPostings(page, JOB_PAGE_SIZE, {
-            status: 'OPEN',
-            q: debouncedSearch,
-        })
+        const loadPage = (pageToLoad: number) =>
+            getAllJobPostings(pageToLoad, JOB_PAGE_SIZE, {
+                status: 'OPEN',
+                q: debouncedSearch,
+            });
+
+        loadPage(page)
             .then((data) => {
                 if (cancelled) return;
 
                 setResult(data);
+
+                // written under time-crunch bypass — review later
+                prefetchPages(page, data.pagination.totalPages, loadPage);
 
                 listRef.current?.scrollTo({
                     top: 0,

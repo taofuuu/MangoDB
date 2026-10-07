@@ -18,6 +18,7 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
+import { cachedGet } from './pageCache';
 
 export type { Pagination, ServiceListResponse, ServiceSummary };
 
@@ -128,5 +129,7 @@ export async function searchServices(
     qs.set('page', String(page));
     qs.set('pageSize', String(pageSize)); // API max is 50
 
-    return apiFetch<ServiceListResponse>(`/services?${qs.toString()}`);
+    // written under time-crunch bypass — review later
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
 }

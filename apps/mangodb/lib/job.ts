@@ -1,6 +1,7 @@
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 
 import { apiFetch } from './api';
+import { cachedGet, clearPageCache } from './pageCache';
 
 export interface GetJobPostingsOptions {
     companyId?: number;
@@ -31,9 +32,9 @@ export function getAllJobPostings(
         query.set('q', options.q);
     }
 
-    return apiFetch<JobPostingListResponse>(
-        `/job-postings?${query.toString()}`,
-    );
+    // written under time-crunch bypass — review later
+    const path = `/job-postings?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<JobPostingListResponse>(path));
 }
 
 // GET own job postings
@@ -55,9 +56,16 @@ export function getMyJobPostings(
         query.set('status', options.status);
     }
 
-    return apiFetch<JobPostingListResponse>(
-        `/job-postings/mine?${query.toString()}`,
-    );
+    // written under time-crunch bypass — review later
+    const path = `/job-postings/mine?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<JobPostingListResponse>(path));
+}
+
+// written under time-crunch bypass — review later
+// Call after anything that adds, edits or closes a job posting, so the lists
+// show it right away instead of after the cache's max age.
+export function clearJobPostingCache(): void {
+    clearPageCache('/job-postings');
 }
 
 // GET one job posting

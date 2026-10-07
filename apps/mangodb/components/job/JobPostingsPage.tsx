@@ -13,7 +13,12 @@ import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 
 import Link from 'next/link';
 
-import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
+import {
+    clearJobPostingCache,
+    getAllJobPostings,
+    getMyJobPostings,
+} from '@/lib/job';
+import { prefetchPages } from '@/lib/pageCache';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
@@ -89,10 +94,10 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
         setIsLoading(true);
         setError(null);
 
-        const request =
+        const loadPage = (pageToLoad: number) =>
             props.view === 'mine'
                 ? getMyJobPostings(
-                      page,
+                      pageToLoad,
                       JOB_PAGE_SIZE,
                       status
                           ? {
@@ -100,16 +105,19 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, JOB_PAGE_SIZE, {
+                : getAllJobPostings(pageToLoad, JOB_PAGE_SIZE, {
                       companyId: companyId!,
                       status: 'OPEN',
                   });
 
-        request
+        loadPage(page)
             .then((data) => {
                 if (cancelled) return;
                 setResult(data);
                 setError(null);
+
+                // written under time-crunch bypass — review later
+                prefetchPages(page, data.pagination.totalPages, loadPage);
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
@@ -176,6 +184,10 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const retryList = () => {
+        // written under time-crunch bypass — review later
+        // Ask the server again, not the cache: AddJobModal's onSuccess (below)
+        // calls this so a new posting shows up straight away.
+        clearJobPostingCache();
         setReloadKey((key) => key + 1);
     };
 
