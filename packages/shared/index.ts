@@ -325,6 +325,18 @@ export interface Proposal {
     createdAt: string;
 }
 
+// US2-9. One row of GET /proposals/mine: the proposal, with the job posting's
+// title so the list needs no extra request per row.
+export interface ProviderProposal extends Proposal {
+    listingTitle: string;
+}
+
+// US2-9. Paginated proposals response for provider tracking.
+export interface ProposalListResponse {
+    items: ProviderProposal[];
+    pagination: PaginationMeta;
+}
+
 // A company in one line: enough to show who it is beside something it sent
 // or owns, with no second request.
 export interface CompanyBrief {
