@@ -22,7 +22,8 @@
  *   controller uses (AND, OR, plain equals, a `company` relation filter,
  *   `contains`). So the test checks what comes back, not which query was run.
  *
- * Run: npm test (in apps/api).
+ * Run: npm test (in apps/api). Needs --experimental-test-module-mocks, which the
+ * test script passes.
  */
 import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
@@ -202,6 +203,12 @@ function assertNotFound(result: unknown): void {
 describe('GET /job-postings/:jobPostingId', () => {
     it("answers 404, not 403, for another company's closed job", async () => {
         rows = [job(10, OWNER, 'CLOSED')];
+
+        assertNotFound(await getOne(OTHER, 10));
+    });
+
+    it("answers 404 for another company's draft job", async () => {
+        rows = [job(10, OWNER, 'DRAFT')];
 
         assertNotFound(await getOne(OTHER, 10));
     });
