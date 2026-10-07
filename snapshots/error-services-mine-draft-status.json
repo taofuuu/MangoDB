@@ -1,5 +1,5 @@
 {
-    "request": "GET /services/mine?status=INVALID",
+    "request": "GET /services/mine?status=DRAFT",
     "status": 400,
     "body": {
         "error": {

@@ -79,12 +79,13 @@ export const serviceListQuerySchema = z
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
 
 // written under time-crunch bypass — review later
-// GET /services/mine. Same status rule as GET /job-postings: a blank
-// ?status= means no filter, anything outside the closed set is a 400.
+// GET /services/mine. A blank ?status= means no filter, like GET
+// /job-postings. There is no DRAFT status (ADR 0010), so only OPEN and
+// CLOSED pass; anything else, DRAFT included, is a 400.
 export const serviceMineQuerySchema = z.object({
     status: z.preprocess(
         (val) => (val === '' ? undefined : val),
-        z.enum(LISTING_STATUSES).optional(),
+        z.enum(LISTING_STATUSES).extract(['OPEN', 'CLOSED']).optional(),
     ),
 });
 

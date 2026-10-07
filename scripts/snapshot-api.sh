@@ -829,6 +829,10 @@ snap services-mine-open GET "/services/mine?status=OPEN" \
 snap error-services-mine-invalid-status GET "/services/mine?status=INVALID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
+# There is no DRAFT status (ADR 0010).
+snap error-services-mine-draft-status GET "/services/mine?status=DRAFT" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
 # ADR 0009: "<run>-react" links to the probe's "<run>-React" instead of
 # adding a second tech, so the answer shows the stored spelling.
 snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
