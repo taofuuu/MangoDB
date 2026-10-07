@@ -35,23 +35,23 @@ function FilterGroup({
     return (
         <div className="py-3">
             <div className="mb-2 flex items-center justify-between">
-                <span className="type-sm text-[var(--color-ink)]">{label}</span>
+                <span className="type-sm text-ink">{label}</span>
                 {selected.length > 0 && (
                     <button
                         type="button"
                         onClick={() => onChange([])}
-                        className="type-xs text-[var(--color-ink-soft)] underline hover:text-[var(--color-brand)]"
+                        className="type-xs text-ink-soft underline hover:text-brand"
                     >
                         Clear
                     </button>
                 )}
             </div>
 
-            <div className="rounded-input relative flex min-h-[76px] flex-wrap content-start items-start gap-2 border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] p-2">
+            <div className="rounded-input relative flex min-h-[76px] flex-wrap content-start items-start gap-2 border border-brand-light bg-surface-white p-2">
                 {selected.map((tag) => (
                     <span
                         key={tag}
-                        className="rounded-status flex items-center gap-1 bg-[var(--color-brand-tint)] px-2 py-1 type-xs text-[var(--color-brand-deep)]"
+                        className="rounded-status flex items-center gap-1 bg-brand-tint px-2 py-1 type-xs text-brand-deep"
                     >
                         {tag}
                         <button
@@ -60,7 +60,7 @@ function FilterGroup({
                                 onChange(selected.filter((t) => t !== tag))
                             }
                             aria-label={`Remove ${tag}`}
-                            className="text-[var(--color-brand-deep)] hover:text-[var(--color-danger)]"
+                            className="text-brand-deep hover:text-danger"
                         >
                             ×
                         </button>
@@ -74,7 +74,7 @@ function FilterGroup({
                         aria-label={`Add ${label} filter`}
                         aria-expanded={open}
                         aria-controls={menuId}
-                        className="h-7 w-7 cursor-pointer appearance-none rounded-full bg-[var(--color-fill-muted)] text-center type-sm text-[var(--color-ink-soft)] [text-align-last:center]"
+                        className="rounded-status h-7 w-7 cursor-pointer bg-fill-muted text-center type-sm text-ink-soft hover:bg-line focus:ring-1 focus:ring-brand focus:outline-none"
                     >
                         +
                     </button>
@@ -83,10 +83,10 @@ function FilterGroup({
                 {open && available.length > 0 && (
                     <div
                         id={menuId}
-                        className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg"
+                        className="rounded-input absolute left-0 top-full z-50 mt-1 w-full border border-line bg-surface-white shadow-card"
                     >
                         {searchable && (
-                            <div className="border-b border-gray-200 p-2">
+                            <div className="border-b border-line p-2">
                                 <input
                                     type="search"
                                     value={query}
@@ -95,7 +95,7 @@ function FilterGroup({
                                     }
                                     placeholder={`Search ${label.toLowerCase()}`}
                                     aria-label={`Search ${label} options`}
-                                    className="rounded-input w-full border border-brand-dark bg-surface-white/80 px-2 py-1.5 type-xs text-ink outline-none placeholder:text-line focus:ring-1 focus:ring-brand"
+                                    className="rounded-input w-full border border-brand bg-surface-white px-2 py-1.5 type-xs text-ink placeholder:text-ink-placeholder focus:ring-1 focus:ring-brand focus:outline-none"
                                     autoFocus
                                 />
                             </div>
@@ -110,13 +110,13 @@ function FilterGroup({
                                 <button
                                     type="button"
                                     role="option"
-                                    aria-selected="false"
+                                    aria-selected={false}
                                     key={option}
                                     onClick={() => {
                                         onChange([...selected, option]);
                                         close();
                                     }}
-                                    className="block w-full px-3 py-2 text-left type-sm text-gray-800 hover:bg-gray-100"
+                                    className="block w-full px-3 py-2 text-left type-sm text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none"
                                 >
                                     {option}
                                 </button>
@@ -149,23 +149,20 @@ export function SearchServicesFilterSidebar({
     onClearAll: () => void;
 }) {
     return (
-        <aside className="w-full max-w-[300px] shrink-0 self-start rounded-2xl bg-[var(--color-panel)] p-5">
-            <div className="mb-1 flex items-center justify-between border-b border-[var(--color-brand-light)] pb-3">
-                <h2 className="type-md text-[var(--color-ink)]">Filters</h2>
+        <aside className="rounded-status w-full max-w-[300px] shrink-0 self-start bg-panel p-5">
+            <div className="mb-1 flex items-center justify-between border-b border-brand-light pb-3">
+                <h2 className="type-md text-ink">Filters</h2>
                 <button
                     type="button"
                     onClick={onClearAll}
-                    className="type-xs text-[var(--color-ink-soft)] underline hover:text-[var(--color-brand)]"
+                    className="type-xs text-ink-soft underline hover:text-brand"
                 >
                     Clear all
                 </button>
             </div>
 
             {optionsError && (
-                <p
-                    role="alert"
-                    className="mt-3 type-xs text-[var(--color-danger)]"
-                >
+                <p role="alert" className="mt-3 type-xs text-danger">
                     Filter choices could not be loaded: {optionsError}
                 </p>
             )}
@@ -186,9 +183,7 @@ export function SearchServicesFilterSidebar({
 
             <div className="pt-3">
                 <div className="mb-2 flex items-center justify-between">
-                    <span className="type-sm text-[var(--color-ink)]">
-                        Price Range
-                    </span>
+                    <span className="type-sm text-ink">Price Range</span>
                     {(filters.minBudget != null ||
                         filters.maxBudget != null) && (
                         <button
@@ -200,7 +195,7 @@ export function SearchServicesFilterSidebar({
                                     maxBudget: null,
                                 })
                             }
-                            className="type-xs text-[var(--color-ink-soft)] underline hover:text-[var(--color-brand)]"
+                            className="type-xs text-ink-soft underline hover:text-brand"
                         >
                             Clear
                         </button>
@@ -208,9 +203,7 @@ export function SearchServicesFilterSidebar({
                 </div>
                 <div className="flex items-center gap-2">
                     <label className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="shrink-0 type-sm text-[var(--color-ink)]">
-                            Min
-                        </span>
+                        <span className="shrink-0 type-sm text-ink">Min</span>
                         <input
                             type="number"
                             min={0}
@@ -223,16 +216,14 @@ export function SearchServicesFilterSidebar({
                                         : null,
                                 })
                             }
-                            className="rounded-input type-sm h-7 min-w-0 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 text-[var(--color-ink)]"
+                            className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                     </label>
-                    <span className="flex h-7 items-center justify-center type-sm text-[var(--color-ink)]">
+                    <span className="flex h-7 items-center justify-center type-sm text-ink">
                         -
                     </span>
                     <label className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="shrink-0 type-sm text-[var(--color-ink)]">
-                            Max
-                        </span>
+                        <span className="shrink-0 type-sm text-ink">Max</span>
                         <input
                             type="number"
                             min={0}
@@ -245,7 +236,7 @@ export function SearchServicesFilterSidebar({
                                         : null,
                                 })
                             }
-                            className="rounded-input type-sm h-7 min-w-0 w-full border border-[var(--color-brand-light)] bg-[var(--color-surface-white)] px-2 text-[var(--color-ink)]"
+                            className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                     </label>
                 </div>

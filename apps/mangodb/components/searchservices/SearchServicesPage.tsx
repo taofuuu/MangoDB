@@ -93,11 +93,9 @@ export function SearchServicesPage({
 
             <div className="min-w-0 flex-1">
                 {/* Divider under the title, per the mockup */}
-                <div className="mb-4 flex items-baseline gap-2 border-b border-[var(--color-brand-dark)] pb-2">
-                    <h1 className="type-hd text-[var(--color-ink)]">
-                        All Services
-                    </h1>
-                    <span className="type-xs text-[var(--color-ink-soft)]">
+                <div className="mb-4 flex items-baseline gap-2 border-b border-brand-dark pb-2">
+                    <h1 className="type-hd text-ink">All Services</h1>
+                    <span className="type-xs text-ink-soft">
                         (Search result: {pagination?.totalItems ?? 0} items)
                     </span>
                 </div>

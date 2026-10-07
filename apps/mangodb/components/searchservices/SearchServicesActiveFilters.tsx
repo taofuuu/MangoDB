@@ -12,9 +12,15 @@ function describe(filters: SearchServicesFilters): string[] {
         parts.push(`Tech Stack : ${filters.techStack.join(', ')}`);
     }
     if (filters.minBudget != null || filters.maxBudget != null) {
-        parts.push(
-            `Budget : ${filters.minBudget ?? 0}-${filters.maxBudget ?? '∞'}`,
-        );
+        if (filters.minBudget != null && filters.maxBudget != null) {
+            parts.push(
+                `Budget : ${filters.minBudget.toLocaleString()} - ${filters.maxBudget.toLocaleString()}`,
+            );
+        } else if (filters.minBudget != null) {
+            parts.push(`Budget : From ${filters.minBudget.toLocaleString()}`);
+        } else if (filters.maxBudget != null) {
+            parts.push(`Budget : Up to ${filters.maxBudget.toLocaleString()}`);
+        }
     }
     return parts;
 }
@@ -32,7 +38,7 @@ export function SearchServicesActiveFilters({
         <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-full items-center gap-3 border-b border-[var(--color-line)] py-3 text-left type-lg text-[var(--color-ink)]"
+            className="flex w-full items-center gap-3 border-b border-line py-3 text-left type-lg text-ink"
         >
             <span
                 className={`transition-transform ${open ? 'rotate-90' : ''}`}

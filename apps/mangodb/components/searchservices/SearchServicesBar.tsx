@@ -40,9 +40,9 @@ export function SearchServicesBar({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Search"
-                className="rounded-button type-sm w-full max-w-md border border-[var(--color-line)] bg-[var(--color-surface-white)] px-5 py-2 text-[var(--color-ink)] shadow-card outline-none placeholder:text-[var(--color-ink-placeholder)] focus:border-[var(--color-brand)]"
+                className="rounded-button type-sm w-full max-w-md border border-line bg-surface-white px-5 py-2 text-ink shadow-card placeholder:text-ink-placeholder focus:ring-1 focus:ring-brand focus:outline-none"
             />
-            <div className="flex items-center gap-2 type-sm text-[var(--color-ink-soft)]">
+            <div className="flex items-center gap-2 type-sm text-ink-soft">
                 <span>Order by:</span>
                 <div className="relative">
                     <button
@@ -51,7 +51,7 @@ export function SearchServicesBar({
                         aria-haspopup="listbox"
                         aria-expanded={orderMenuOpen}
                         aria-controls={orderMenuId}
-                        className="rounded-button flex h-[4.074vh] w-[8.125vw] items-center justify-between gap-3 border border-[var(--color-line)] bg-[var(--color-surface-white)] px-4 text-left type-xs text-[var(--color-ink)] shadow-card outline-none focus:border-[var(--color-brand)]"
+                        className="rounded-button flex h-[4.074vh] w-[8.125vw] items-center justify-between gap-3 border border-line bg-surface-white px-4 text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
                     >
                         <span>{selectedOrder.label}</span>
                         <span aria-hidden className="type-xs text-ink-soft">
@@ -64,7 +64,7 @@ export function SearchServicesBar({
                             id={orderMenuId}
                             role="listbox"
                             aria-label="Order services by"
-                            className="absolute right-0 top-full z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg"
+                            className="rounded-input absolute right-0 top-full z-50 mt-1 w-full border border-line bg-surface-white shadow-card"
                         >
                             {ORDER_OPTIONS.map((option) => (
                                 <button
@@ -76,9 +76,9 @@ export function SearchServicesBar({
                                         onOrderByChange(option.value);
                                         setOrderMenuOpen(false);
                                     }}
-                                    className={`block w-full px-3 py-2 text-left type-sm text-gray-800 hover:bg-gray-100 ${
+                                    className={`block w-full px-3 py-2 text-left type-sm text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
                                         option.value === orderBy
-                                            ? 'bg-gray-100'
+                                            ? 'bg-brand-tint text-brand-deep'
                                             : ''
                                     }`}
                                 >
