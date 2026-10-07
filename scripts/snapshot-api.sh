@@ -662,7 +662,8 @@ snap error-job-postings-one-invalid-id GET /job-postings/not-a-number \
 snap error-job-postings-one-not-found GET /job-postings/2147483647 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+# Another company's closed job is private, so it is 404, not 403.
+snap error-job-postings-one-closed-not-found GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
