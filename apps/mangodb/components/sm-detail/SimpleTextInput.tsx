@@ -33,6 +33,14 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
     // Track the last emitted value to prevent duplicate updates when the component rerenders
     const lastEmittedValueRef = useRef<string>('');
 
+    // Report a value once, however many paths reach it — the debounce timer
+    // and leaving the field can both fire for the same text.
+    const emit = (value: string) => {
+        if (!onChange || value === lastEmittedValueRef.current) return;
+        lastEmittedValueRef.current = value;
+        onChange(value);
+    };
+
     useEffect(() => {
         if (!onChange) return;
 
@@ -48,6 +56,11 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
 
         return () => clearTimeout(timer);
     }, [inputValue, debounceTimeout, onChange]);
+
+    // Leaving the field reports it now rather than after the debounce. A
+    // click on Next or Create Account blurs the field before the click lands,
+    // so the button never reads a value from before the last keystrokes.
+    const handleBlur = () => emit(inputValue);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         //validate input
@@ -71,6 +84,7 @@ export const SimpleTextInput: React.FC<SimpleTextInputProps> = ({
                 type={type}
                 value={inputValue}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 maxLength={maxLength}
                 style={{
                     ...styles.input,

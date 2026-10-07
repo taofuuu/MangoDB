@@ -1,7 +1,7 @@
 'use client';
 
 import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
-import { useEffect, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 export type AccountInfo = {
     username: string;
@@ -16,7 +16,10 @@ export type AccountInfoError = {
 
 type AccountInfoStepProps = {
     value: AccountInfo;
-    onChange: (value: AccountInfo) => void;
+    // The page's own state setter. Updating it directly, rather than through a
+    // copy here, means a value reported on blur is in page state before the
+    // click on Next that caused the blur is handled.
+    onChange: Dispatch<SetStateAction<AccountInfo>>;
     errors?: AccountInfoError;
 };
 
@@ -25,29 +28,23 @@ export default function AccountInfoStep({
     onChange,
     errors,
 }: AccountInfoStepProps) {
-    const [accountInfo, setAccountInfo] = useState<AccountInfo>(
-        value ?? {
-            username: '',
-            password: '',
-            confirmPassword: '',
-        },
-    );
-
+    // Functional updates: several fields can report in the same moment (fast
+    // typing, autofill), and copying `value` from this render would let
+    // each one overwrite the others with stale values.
     const handleUpdateUsername = (newUsername: string) => {
-        setAccountInfo({ ...accountInfo, username: newUsername });
+        onChange((prev) => ({ ...prev, username: newUsername }));
     };
 
     const handleUpdatePassword = (newPassword: string) => {
-        setAccountInfo({ ...accountInfo, password: newPassword });
+        onChange((prev) => ({ ...prev, password: newPassword }));
     };
 
     const handleUpdateConfirmPassword = (newConfirmPassword: string) => {
-        setAccountInfo({ ...accountInfo, confirmPassword: newConfirmPassword });
+        onChange((prev) => ({
+            ...prev,
+            confirmPassword: newConfirmPassword,
+        }));
     };
-
-    useEffect(() => {
-        onChange(accountInfo);
-    }, [accountInfo]);
 
     return (
         <div className="account-info-page flex flex-col gap-5 my-5">
