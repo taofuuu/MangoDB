@@ -177,6 +177,14 @@ export interface ServiceListResponse {
     pagination: PaginationMeta;
 }
 
+// T3.2.2. Values the service-search filter controls can offer. Categories are
+// the fixed catalog; techStack contains names currently used by searchable
+// services (ADR 0009 keeps that vocabulary open-ended).
+export interface ServiceFilterOptions {
+    categories: string[];
+    techStack: string[];
+}
+
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
 export interface SessionResponse {

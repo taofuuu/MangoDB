@@ -1,7 +1,11 @@
 // listing_status is a plain VarChar(50) column with no DB enum, so this is the
 // single source of truth for its values. Browse filters and proposal logic
 // should import from here instead of hardcoding strings.
-import type { ListingStatus, ServiceSummary } from '@mangodb/shared';
+import type {
+    ListingStatus,
+    ServiceFilterOptions,
+    ServiceSummary,
+} from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
@@ -186,5 +190,20 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             companyName: company.companyName,
             companyPhoto: company.companyPhoto,
         },
+    };
+}
+
+type ServiceFilterCategoryRow = { catName: string };
+type ServiceFilterTechStackRow = { techStackName: string };
+
+// Keeps the lookup endpoint's wire shape explicit instead of returning raw
+// Prisma rows. Both input queries are ordered by name in the controller.
+export function toServiceFilterOptions(
+    categories: ServiceFilterCategoryRow[],
+    techStack: ServiceFilterTechStackRow[],
+): ServiceFilterOptions {
+    return {
+        categories: categories.map(({ catName }) => catName),
+        techStack: techStack.map(({ techStackName }) => techStackName),
     };
 }

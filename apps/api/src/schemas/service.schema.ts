@@ -61,6 +61,9 @@ export const serviceListQuerySchema = z
         techStack: nameList.optional(),
         minPrice: price,
         maxPrice: price,
+        orderBy: z
+            .enum(['newest', 'price-asc', 'price-desc'])
+            .default('newest'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })

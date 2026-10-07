@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchSearchServicesFilterOptions } from '@/lib/searchServices';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import {
+    fetchSearchServicesFilterOptions,
+    type ServiceFilterOptions,
+} from '@/lib/searchServices';
 import {
     useSearchServices,
     type SearchServicesMode,
@@ -25,32 +29,67 @@ export function SearchServicesPage({
         status,
         error,
         filters,
+        orderBy,
         hasMore,
         search,
+        setOrderBy,
         setFilters,
         clearFilters,
         goToPage,
         loadMore,
     } = useSearchServices(mode);
 
-    const [options, setOptions] = useState({
-        categories: [] as string[],
-        companyTypes: [] as string[],
-        techStack: [] as string[],
+    const [options, setOptions] = useState<ServiceFilterOptions>({
+        categories: [],
+        techStack: [],
     });
+    const [optionsStatus, setOptionsStatus] = useState<
+        'loading' | 'loaded' | 'error'
+    >('loading');
+    const [optionsError, setOptionsError] = useState<unknown>(null);
 
     useEffect(() => {
-        void fetchSearchServicesFilterOptions().then(setOptions);
+        let active = true;
+
+        void fetchSearchServicesFilterOptions()
+            .then((nextOptions) => {
+                if (!active) return;
+                setOptions(nextOptions);
+                setOptionsStatus('loaded');
+            })
+            .catch((err: unknown) => {
+                if (!active) return;
+                setOptionsError(err);
+                setOptionsStatus('error');
+            });
+
+        return () => {
+            active = false;
+        };
     }, []);
+
+    // Both service requests have the same authentication guard. Wait until
+    // the options request settles so a signed-out visitor never sees an empty
+    // filter panel or search bar flash before the API answers, then keep both
+    // hidden for a 401 from either request.
+    const signedOut = isNotSignedIn(error) || isNotSignedIn(optionsError);
+    const showSearchControls = optionsStatus !== 'loading' && !signedOut;
 
     return (
         <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
-            <SearchServicesFilterSidebar
-                filters={filters}
-                options={options}
-                onChange={setFilters}
-                onClearAll={clearFilters}
-            />
+            {showSearchControls && (
+                <SearchServicesFilterSidebar
+                    filters={filters}
+                    options={options}
+                    optionsError={
+                        optionsStatus === 'error'
+                            ? describeError(optionsError)
+                            : null
+                    }
+                    onChange={setFilters}
+                    onClearAll={clearFilters}
+                />
+            )}
 
             <div className="min-w-0 flex-1">
                 {/* Divider under the title, per the mockup */}
@@ -63,8 +102,16 @@ export function SearchServicesPage({
                     </span>
                 </div>
 
-                <SearchServicesBar onSearch={search} />
-                <SearchServicesActiveFilters filters={filters} />
+                {showSearchControls && (
+                    <>
+                        <SearchServicesBar
+                            onSearch={search}
+                            orderBy={orderBy}
+                            onOrderByChange={setOrderBy}
+                        />
+                        <SearchServicesActiveFilters filters={filters} />
+                    </>
+                )}
 
                 <div className="mt-4">
                     <SearchServicesResultsGrid

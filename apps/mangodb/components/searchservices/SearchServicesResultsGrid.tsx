@@ -95,13 +95,14 @@ export function SearchServicesResultsGrid({
         if (isNotSignedIn(error)) {
             return (
                 <p className="py-24 text-center type-sm text-[var(--color-ink-soft)]">
-                    Please sign in to browse services.{' '}
+                    You are not signed in.{' '}
                     <Link
                         href="/login"
                         className="text-[var(--color-brand)] underline"
                     >
-                        Sign in
+                        Log in
                     </Link>
+                    , then come back.
                 </p>
             );
         }

@@ -894,6 +894,11 @@ fi
 SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
     --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
 
+# T3.2.2: the UI receives the category catalog and the open-ended tech-stack
+# vocabulary from the API instead of maintaining stale hardcoded copies.
+snap services-filter-options GET /services/filter-options \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.2.7: the web probe only. The mobile probe is in another category, and the
 # wide and no-min ones have none.
 snap services-filter-category-and-stack GET \
@@ -942,6 +947,16 @@ snap services-filter-price-min GET \
 # A blank price means no limit, not 0: all four probes.
 snap services-filter-price-empty GET \
     "/services?techStack=$RUN&maxPrice=" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Sorting happens before pagination. The no-min probe is first in ascending
+# order (its range is open-ended) and last in descending order.
+snap services-order-price-asc GET \
+    "/services?techStack=$RUN&orderBy=price-asc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-order-price-desc GET \
+    "/services?techStack=$RUN&orderBy=price-desc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Slider ends that cross are a 400 the filter panel can show.
@@ -1090,4 +1105,3 @@ snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close"
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
-

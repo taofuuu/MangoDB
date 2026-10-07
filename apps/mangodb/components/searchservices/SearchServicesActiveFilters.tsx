@@ -6,17 +6,14 @@ import type { SearchServicesFilters } from '@/lib/searchServices';
 function describe(filters: SearchServicesFilters): string[] {
     const parts: string[] = [];
     if (filters.categories.length > 0) {
-        parts.push(`Category: ${filters.categories.join(', ')}`);
-    }
-    if (filters.companyTypes.length > 0) {
-        parts.push(`Company Type: ${filters.companyTypes.join(', ')}`);
+        parts.push(`Service Category: ${filters.categories.join(', ')}`);
     }
     if (filters.techStack.length > 0) {
         parts.push(`Tech Stack: ${filters.techStack.join(', ')}`);
     }
     if (filters.minBudget != null || filters.maxBudget != null) {
         parts.push(
-            `Budget: ${filters.minBudget ?? 0}-${filters.maxBudget ?? '∞'}`,
+            `Price Range: ${filters.minBudget ?? 0}-${filters.maxBudget ?? '∞'}`,
         );
     }
     return parts;
