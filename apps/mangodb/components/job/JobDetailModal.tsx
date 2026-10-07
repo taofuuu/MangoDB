@@ -2,9 +2,15 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import { X } from 'lucide-react';
-
-import Image from 'next/image';
+import {
+    X,
+    Wallet,
+    MapPin,
+    CalendarClock,
+    Hourglass,
+    Building2,
+    Tag,
+} from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
 
@@ -33,12 +39,7 @@ export default function JobDetailModal({
                 <div className="flex flex-col gap-[1vh]">
                     {/* Categories */}
                     <div className="flex items-center gap-[0.52vw]">
-                        <Image
-                            src="/images/category.png"
-                            alt=""
-                            width={25}
-                            height={25}
-                        />
+                        <Tag size={20} />
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
                                 job.categories.map((category) => (
@@ -174,12 +175,7 @@ export default function JobDetailModal({
                                 THB
                             </div>
 
-                            <Image
-                                src="/images/budget.png"
-                                alt=""
-                                width={22}
-                                height={22}
-                            />
+                            <Wallet size={20} />
                         </div>
 
                         {/* Duration */}
@@ -202,8 +198,7 @@ export default function JobDetailModal({
                                 {job.duration || 'No job duration provided'}
                             </div>
 
-                            {/* No icon in the design; keeps the value in line */}
-                            <span aria-hidden="true" className="w-[22px]" />
+                            <Hourglass size={20} color="black" />
                         </div>
 
                         {/* Deadline */}
@@ -235,12 +230,7 @@ export default function JobDetailModal({
                                     : 'No job deadline provided'}
                             </div>
 
-                            <Image
-                                src="/images/deadline.svg"
-                                alt=""
-                                width={22}
-                                height={22}
-                            />
+                            <CalendarClock size={20} color="black" />
                         </div>
 
                         {/* Location */}
@@ -263,12 +253,7 @@ export default function JobDetailModal({
                                 {job.locationPref || 'No location provided.'}
                             </div>
 
-                            <Image
-                                src="/images/location.png"
-                                alt=""
-                                width={18}
-                                height={22}
-                            />
+                            <MapPin size={20} color="black" />
                         </div>
 
                         {/* Company */}
@@ -292,7 +277,7 @@ export default function JobDetailModal({
                                 {job.companyName}
                             </span>
 
-                            <span aria-hidden="true" className="w-[22px]" />
+                            <Building2 size={20} color="black" />
                         </div>
 
                         {/* Created at */}

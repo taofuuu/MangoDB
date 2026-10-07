@@ -2,8 +2,6 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import Image from 'next/image';
-
 import {
     MoreHorizontal,
     ArrowRight,
@@ -11,6 +9,9 @@ import {
     Edit,
     FileX,
     Trash,
+    MapPin,
+    Wallet,
+    Tag,
 } from 'lucide-react';
 
 import { useState } from 'react';
@@ -57,8 +58,8 @@ export default function JobBox({
                     max-w-[54.69vw]
                     flex-col
                     gap-[2.22vh]
-                    rounded-popup
-                    bg-surface-white
+                    rounded-[30px]
+                    bg-white
                     pb-[2.314vh]
                     pt-[2.314vh]
                     pl-[2.29vw]
@@ -66,15 +67,16 @@ export default function JobBox({
                     text-left
                     transition
                     leading-relaxed
-                    shadow-sm
+
 
                     ${
-                        // My Jobs outlines each card in its status colour
-                        isMyJobs && job.listingStatus === 'OPEN'
-                            ? 'border-2 border-brand/80'
-                            : isMyJobs && job.listingStatus === 'CLOSED'
-                              ? 'border-2 border-danger/80'
-                              : ''
+                        isMyJobs
+                            ? job.listingStatus === 'OPEN'
+                                ? 'shadow-[0_0_8px_rgba(73,123,147,0.35)]'
+                                : job.listingStatus === 'CLOSED'
+                                  ? 'shadow-[0_0_8px_rgba(197,72,59,0.35)]'
+                                  : 'shadow-sm'
+                            : 'shadow-sm'
                     }
                 `}
             >
@@ -148,12 +150,7 @@ export default function JobBox({
                 {/* Categories */}
                 <div className="flex w-full items-start justify-between bg-transparent">
                     <div className="flex items-center gap-[0.52vw]">
-                        <Image
-                            src="/images/category.png"
-                            alt=""
-                            width={25}
-                            height={25}
-                        />
+                        <Tag size={20} />
 
                         <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
@@ -183,12 +180,7 @@ export default function JobBox({
                 {/* Budget + Location + Deadline + View Detail */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <Image
-                            src="/images/budget.png"
-                            alt=""
-                            width={25}
-                            height={25}
-                        />
+                        <Wallet size={20} />
                         {job.minBudget != null
                             ? job.minBudget.toLocaleString()
                             : '-'}
@@ -200,12 +192,7 @@ export default function JobBox({
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                        <Image
-                            src="/images/location.png"
-                            alt=""
-                            width={18}
-                            height={22}
-                        />
+                        <MapPin size={20} />
                         {job.locationPref || 'No location provided.'}
                     </p>
 
