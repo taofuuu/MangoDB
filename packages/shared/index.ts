@@ -355,3 +355,18 @@ export interface Project {
     startDate: string;
     status: ProjectStatus;
 }
+
+export interface ViewProposal {
+    id: string;
+    providerName: string;
+    provider: CompanyBrief;
+    rating: number;
+    submittedDate: string;
+    offeredPrice: string;
+    duration: string;
+    status: 'submitted' | 'rejected' | 'accepted';
+    proposalTerm: string[];
+    contact: string;
+}
+
+export type ViewMode = 'all' | 'rejected';

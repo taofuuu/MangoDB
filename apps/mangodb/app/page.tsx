@@ -78,6 +78,11 @@ const ROUTES = [
         title: 'View job posting by company (Just for test)',
         detail: 'US2-7',
     },
+    {
+        href: '/proposal/view',
+        title: 'View proposal',
+        detail: 'US2-10',
+    },
 ];
 
 export default function Home() {
