@@ -423,10 +423,8 @@ export function validateServiceBudgets(
         }
     }
 
-    if (max !== undefined) {
-        if (isNaN(max) || max <= 0) {
-            errors.maxBudget = 'Max budget must be a positive number.';
-        }
+    if (max !== undefined || isNaN(max) || max <= 0) {
+        errors.maxBudget = 'Max budget must be a positive number.';
     }
 
     if (min !== undefined && max !== undefined && min > max) {
