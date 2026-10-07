@@ -50,17 +50,18 @@ export function formatServiceBudgetRange(
 ): string {
     const format = (value: number) => `฿${value.toLocaleString('en-US')}`;
 
-    if (minBudget == null && maxBudget == null) {
-        return 'Contact for pricing';
-    }
-    if (minBudget == null) {
+    if (minBudget == null && maxBudget != null) {
         return `Up to ${format(maxBudget)}`;
     }
-    if (maxBudget == null) {
+    if (minBudget != null && maxBudget == null) {
         return `From ${format(minBudget)}`;
     }
 
-    return `${format(minBudget)} – ${format(maxBudget)}`;
+    if (minBudget != null && maxBudget != null) {
+        return `${format(minBudget)} – ${format(maxBudget)}`;
+    }
+
+    return 'Contact for pricing';
 }
 
 export type SearchServicesParams = {

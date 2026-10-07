@@ -92,7 +92,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
     }, []);
 
     const setOrderBy = useCallback((orderBy: SearchServicesOrder) => {
-        setState((s) => ({ ...s, orderBy }));
+        setState((s) => ({ ...s, orderBy, page: 1 }));
     }, []);
 
     const setFilters = useCallback((filters: SearchServicesFilters) => {

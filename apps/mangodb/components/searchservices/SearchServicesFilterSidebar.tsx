@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type {
     SearchServicesFilters,
     ServiceFilterOptions,
@@ -22,6 +22,7 @@ function FilterGroup({
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const menuId = useId();
+    const filterGroupRef = useRef<HTMLDivElement>(null);
     const available = options.filter((o) => !selected.includes(o));
     const visibleOptions = available.filter((option) =>
         option.toLowerCase().includes(query.trim().toLowerCase()),
@@ -31,6 +32,29 @@ function FilterGroup({
         setOpen(false);
         setQuery('');
     };
+
+    useEffect(() => {
+        if (!open) return;
+
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            if (
+                filterGroupRef.current &&
+                !filterGroupRef.current.contains(event.target as Node)
+            ) {
+                close();
+            }
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') close();
+        };
+
+        document.addEventListener('mousedown', closeOnOutsideClick);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('mousedown', closeOnOutsideClick);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [open]);
 
     return (
         <div className="py-3">
@@ -47,7 +71,10 @@ function FilterGroup({
                 )}
             </div>
 
-            <div className="rounded-input relative flex min-h-[76px] flex-wrap content-start items-start gap-2 border border-brand-light bg-surface-white p-2">
+            <div
+                ref={filterGroupRef}
+                className="rounded-input relative flex min-h-[76px] flex-wrap content-start items-start gap-2 border border-brand-light bg-surface-white p-2"
+            >
                 {selected.map((tag) => (
                     <span
                         key={tag}
@@ -72,6 +99,7 @@ function FilterGroup({
                         type="button"
                         onClick={() => setOpen((current) => !current)}
                         aria-label={`Add ${label} filter`}
+                        aria-haspopup="listbox"
                         aria-expanded={open}
                         aria-controls={menuId}
                         className="rounded-status h-7 w-7 cursor-pointer bg-fill-muted text-center type-sm text-ink-soft hover:bg-line focus:ring-1 focus:ring-brand focus:outline-none"

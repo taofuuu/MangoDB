@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { SearchServicesOrder } from '@/lib/searchServices';
 
 const ORDER_OPTIONS: { value: SearchServicesOrder; label: string }[] = [
@@ -21,9 +21,33 @@ export function SearchServicesBar({
     const [value, setValue] = useState('');
     const [orderMenuOpen, setOrderMenuOpen] = useState(false);
     const orderMenuId = useId();
+    const orderMenuRef = useRef<HTMLDivElement>(null);
     const selectedOrder = ORDER_OPTIONS.find(
         (option) => option.value === orderBy,
     )!;
+
+    useEffect(() => {
+        if (!orderMenuOpen) return;
+
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            if (
+                orderMenuRef.current &&
+                !orderMenuRef.current.contains(event.target as Node)
+            ) {
+                setOrderMenuOpen(false);
+            }
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setOrderMenuOpen(false);
+        };
+
+        document.addEventListener('mousedown', closeOnOutsideClick);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('mousedown', closeOnOutsideClick);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [orderMenuOpen]);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -44,7 +68,10 @@ export function SearchServicesBar({
             />
             <div className="flex items-center gap-2 type-sm text-ink-soft">
                 <span>Order by:</span>
-                <div className="relative w-[8.125vw] min-w-[8.125vw] max-w-[8.125vw] shrink-0 basis-[8.125vw]">
+                <div
+                    ref={orderMenuRef}
+                    className="relative w-[8.125vw] min-w-[8.125vw] max-w-[8.125vw] shrink-0 basis-[8.125vw]"
+                >
                     <button
                         type="button"
                         onClick={() => setOrderMenuOpen((open) => !open)}

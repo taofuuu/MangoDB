@@ -38,6 +38,8 @@ export function SearchServicesActiveFilters({
         <button
             type="button"
             onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            aria-label="Toggle active service filters"
             className="flex w-full items-center gap-3 border-b border-line py-3 text-left type-lg text-ink"
         >
             <span
