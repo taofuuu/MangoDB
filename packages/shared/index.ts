@@ -109,6 +109,11 @@ export interface CompanyProfile {
     warrantyPolicy: string | null;
 }
 
+// GET /companies/:companyId. What one company sees of another: the profile
+// without the two fields it signs in with. contactEmail is the address meant
+// for other companies.
+export type PublicCompanyProfile = Omit<CompanyProfile, 'username' | 'email'>;
+
 // US6-2. The administrator list deliberately carries less than a full profile:
 // enough to render each card, but no sign-in email or address until a specific
 // account is opened. Password is never part of either admin response.

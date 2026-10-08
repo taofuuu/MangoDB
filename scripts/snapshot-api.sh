@@ -83,6 +83,8 @@ NEW_JOB_POSTING_ID=""
 NEW_PROPOSAL_ID=""
 PROVIDER_ID=""
 RECEIVER_ID=""
+ADMIN_ID=""
+COMPANY_B_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
@@ -285,6 +287,7 @@ snap auth-admin-login POST /auth/admin/login \
     -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 TOKEN_ADMIN="$(jget accessToken)"
 require_token "$TOKEN_ADMIN" "the admin" auth-admin-login
+ADMIN_ID="$(jget company.company_id)"
 
 snap error-login-wrong-password POST /auth/login \
     -H 'Content-Type: application/json' \
@@ -352,6 +355,23 @@ snap companies-list GET "/companies?page=1&pageSize=2" \
 snap companies-search-both-types GET "/companies?q=Snapshot%20Seed" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# Another company's public profile: no username or email. The Receiver shows
+# the provider-only fields as null. An admin account is 404, the same answer
+# as an id that does not exist, so the route cannot be used to find admins.
+snap companies-one GET "/companies/$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-one-receiver GET "/companies/$RECEIVER_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+snap error-companies-one-not-found GET /companies/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-one-admin GET "/companies/$ADMIN_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-one-invalid-id GET /companies/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+# One past the int4 column's range: a 400, not a database error.
+snap error-companies-one-id-too-large GET /companies/2147483648 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 if [ "$READ_ONLY" = 1 ]; then
     echo
     echo "--read-only: stopping before the write endpoints"
@@ -410,12 +430,16 @@ snap auth-register-receiver POST /auth/register \
     -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
-SUBS+=(--id "company_id=$(jget company.company_id)")
+COMPANY_B_ID="$(jget company.company_id)"
+SUBS+=(--id "company_id=$COMPANY_B_ID")
 resnap auth-register-receiver
 
 snap companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
 B_LIVE=0
 snap error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
+# A soft-deleted company has no public profile any more.
+snap error-companies-one-deleted GET "/companies/$COMPANY_B_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
 # 6. Portfolios and certificates. Both carry an image, so both need Supabase.

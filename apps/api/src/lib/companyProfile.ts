@@ -1,4 +1,8 @@
-import type { AccountType, CompanyProfile } from '@mangodb/shared';
+import type {
+    AccountType,
+    CompanyProfile,
+    PublicCompanyProfile,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
 import { omitUndefined } from './objects';
@@ -49,6 +53,44 @@ export interface CompanyProfileRow {
 export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
     // provider is pulled out of the spread on purpose: leaving it in would put
     // the nested row in the response alongside the flattened columns.
+    const { provider, ...rest } = company;
+
+    return {
+        ...rest,
+        accountType: company.accountType as AccountType,
+        companyType: company.companyType.map((tag) => tag.companyType),
+        serviceTerm: provider?.serviceTerm ?? null,
+        warrantyPolicy: provider?.warrantyPolicy ?? null,
+    };
+}
+
+// written under time-crunch bypass — review later
+// GET /companies/:companyId. Its own list rather than companyProfileSelect
+// with two keys removed: a column added to that select later must not reach
+// another company until someone decides it is public.
+export const publicCompanyProfileSelect = {
+    companyId: true,
+    companyName: true,
+    companyDescription: true,
+    contactEmail: true,
+    phone: true,
+    address: true,
+    website: true,
+    companyPhoto: true,
+    accountType: true,
+    companyType: { select: { companyType: true } },
+    provider: { select: { serviceTerm: true, warrantyPolicy: true } },
+} as const;
+
+export type PublicCompanyProfileRow = Omit<
+    CompanyProfileRow,
+    'username' | 'email'
+>;
+
+// Same flattening as toCompanyProfile, for the row without sign-in fields.
+export function toPublicCompanyProfile(
+    company: PublicCompanyProfileRow,
+): PublicCompanyProfile {
     const { provider, ...rest } = company;
 
     return {

@@ -117,6 +117,13 @@ export const changeCredentialsSchema = z
 
 export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;
 
+// written under time-crunch bypass — review later
+// GET /companies/:companyId. Capped at the int4 column's max: a larger id
+// would reach Prisma and come back as a 500 instead of a 400.
+export const companyIdParamSchema = z.object({
+    companyId: z.coerce.number().int().positive().max(2147483647),
+});
+
 // US3-6. Same paging bounds as GET /admin/companies, so one request cannot
 // pull every company into memory. Filter and sort params come later.
 export const companyListQuerySchema = z.object({
