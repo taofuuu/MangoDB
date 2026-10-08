@@ -5,6 +5,7 @@
         {
             "categoryIds": [],
             "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
             "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
             "listingId": 25,
             "listingStatus": "OPEN",

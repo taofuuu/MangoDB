@@ -250,24 +250,33 @@ export async function getMine(req: Request, res: Response): Promise<void> {
     res.status(200).json(listings.map(toListing));
 }
 
+// GET /services/:listingId. Any company can read an OPEN service of an active
+// company, with the owner's name. The owner reads its own in any status.
+// Everything else is 404: a non-open service is private to its owner, so to
+// anyone else it does not exist (docs/conventions.md, 403 vs 404).
 export async function getService(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth!;
-    const listingId = Number(req.params.listingId);
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
 
-    if (isNaN(listingId)) {
-        throw ApiError.badRequest('Invalid listing ID format');
-    }
-
-    const listing = await prisma.listing.findFirst({
+    // A soft-deleted company's services stay in the table, still OPEN, so the
+    // where hides them here, the same as in the search.
+    const listing = await prisma.listing.findUnique({
         where: {
             listingId,
-            companyId,
             listingType: 'SERVICE', // Defensive: explicit type filter
+            company: { deletedAt: null },
         },
         select: listingSelect,
     });
 
     if (!listing) {
+        throw ApiError.notFound('Listing not found');
+    }
+
+    if (
+        listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
+        listing.companyId !== companyId
+    ) {
         throw ApiError.notFound('Listing not found');
     }
 
