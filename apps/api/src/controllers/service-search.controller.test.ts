@@ -216,7 +216,15 @@ describe('GET /services?companyId=', () => {
         assert.deepEqual(ids(await search({})), [10, 20]);
     });
 
-    for (const bad of ['abc', '0', '-1', '1.5', '', '2147483648']) {
+    // Same as a blank ?maxPrice= here and a blank ?companyId= on
+    // GET /job-postings: an empty box in the UI means no filter.
+    it('lists every company when companyId is blank', async () => {
+        rows = [service(10, ALPHA), service(20, BETA)];
+
+        assert.deepEqual(ids(await search({ companyId: '' })), [10, 20]);
+    });
+
+    for (const bad of ['abc', '0', '-1', '1.5', ' ', '2147483648']) {
         it(`answers 400 for companyId=${JSON.stringify(bad)}`, async () => {
             rows = [service(10, ALPHA)];
 
