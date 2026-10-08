@@ -67,6 +67,10 @@ export const serviceListQuerySchema = z
         techStack: nameList.optional(),
         minPrice: price,
         maxPrice: price,
+        // written under time-crunch bypass — review later
+        // One company's services only, e.g. its profile page. Same id rule as
+        // a path id, so ?companyId=abc or 0 is a 400.
+        companyId: z.coerce.number().int().positive().max(INT_MAX).optional(),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })
