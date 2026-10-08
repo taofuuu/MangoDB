@@ -73,7 +73,7 @@ export async function createJobPosting(
 
 // US2-7. List job postings filtered by status with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
+// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
 export async function listJobPostings(
     req: Request,
     res: Response,
@@ -197,37 +197,42 @@ export async function listMyJobPostings(
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED and DRAFT postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
-// - Attempting to view another company's CLOSED or DRAFT posting returns 403 Forbidden.
-// - Non-existent ID or listing with listingType !== 'JOB' returns 404 Not Found.
+// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
+// - Another company's CLOSED posting returns 404 Not Found, the same
+//   as a non-existent ID, a service ID, or a soft-deleted company's posting.
 export async function getJobPosting(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
 
+    // A soft-deleted company's postings stay in the table, still OPEN, so
+    // the where hides them here, the same as in the list.
+    // written under time-crunch bypass — review later
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId },
-        select: {
-            ...jobPostingSelect,
-            listingType: true,
+        where: {
+            listingId: jobPostingId,
+            listingType: 'JOB',
+            company: { deletedAt: null },
         },
+        select: jobPostingSelect,
     });
 
-    if (!posting || posting.listingType !== 'JOB') {
+    if (!posting) {
         throw ApiError.notFound('Job posting not found');
     }
 
     const callerCompanyId = req.auth!.companyId;
     const isOwner = posting.companyId === callerCompanyId;
 
+    // A non-open posting is private to its owner, so to anyone else it does
+    // not exist: 404, not 403 (docs/conventions.md, 403 vs 404).
+    // written under time-crunch bypass — review later
     if (
         posting.listingStatus !== ('OPEN' satisfies ListingStatus) &&
         !isOwner
     ) {
-        throw ApiError.forbidden(
-            'Insufficient permissions to access this resource',
-        );
+        throw ApiError.notFound('Job posting not found');
     }
 
     res.json(toJobPosting(posting));

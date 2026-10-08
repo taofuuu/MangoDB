@@ -91,6 +91,8 @@ DELETED_SERVICE_ID=""
 DELETE_PROBE_ID=""
 TOKEN_C=""
 C_LIVE=0
+TOKEN_D=""
+D_LIVE=0
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
 REUSE_SERVICE_ID=""
@@ -178,6 +180,9 @@ cleanup() {
     if [ "$C_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_C"
+    fi
+    if [ "$D_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me"             -H "Authorization: Bearer $TOKEN_D"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -662,7 +667,8 @@ snap error-job-postings-one-invalid-id GET /job-postings/not-a-number \
 snap error-job-postings-one-not-found GET /job-postings/2147483647 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+# Another company's closed job is private, so it is 404, not 403.
+snap error-job-postings-one-closed-not-found GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
@@ -836,6 +842,28 @@ api POST /services -H "$(bearer "$TOKEN_C")" \
     -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
 DELETED_SERVICE_ID="$(jget listingId)"
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
+
+# Probe D: a Receiver that posts a job, then deletes itself. A soft delete
+# leaves the job OPEN, so only the deletedAt filter keeps it out of the list,
+# and off its detail page.
+api POST /auth/register -H 'Content-Type: application/json'     -d "{\"companyName\":\"Snapshot Probe D\",\"username\":\"${RUN}d\",\"email\":\"${RUN}d@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0822222222\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
+TOKEN_D="$(jget accessToken)"
+if [ -z "$TOKEN_D" ]; then
+    echo "could not register probe D:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+D_LIVE=1
+api POST /job-postings -H "$(bearer "$TOKEN_D")"     -H 'Content-Type: application/json'     -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETED_JOB_POSTING_ID="$(jget jobPostingId)"
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")")" = 204 ] && D_LIVE=0
+SUBS+=(--id "deleted_job_posting_id=$DELETED_JOB_POSTING_ID")
+
+# A deleted company's open job is hidden from the list...
+snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d"     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...and is 404 on detail.
+snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID"     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T3.1.8 and T3.1.10: the probe comes first; probe C's service, though newer,
 # does not appear.
