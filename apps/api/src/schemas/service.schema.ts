@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LISTING_STATUSES } from '@mangodb/shared';
 import { INT4_MAX, int4Id } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
@@ -79,6 +80,16 @@ export const serviceListQuerySchema = z
     );
 
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
+
+// GET /services/mine. A blank ?status= means no filter, like GET
+// /job-postings. There is no DRAFT status (ADR 0010), so only OPEN and
+// CLOSED pass; anything else, DRAFT included, is a 400.
+export const serviceMineQuerySchema = z.object({
+    status: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.enum(LISTING_STATUSES).extract(['OPEN', 'CLOSED']).optional(),
+    ),
+});
 
 // Path params arrive as strings, so this coerces before the integer check —
 // same reason portfolioIdParamSchema needs z.coerce. Used by DELETE

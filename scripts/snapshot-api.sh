@@ -891,6 +891,21 @@ snap services-search-closed GET "/services?q=$RUN" \
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# The status filter on the provider's own list. Seeded services are all OPEN,
+# so the closed probe is the only CLOSED one the provider has.
+snap services-mine-closed GET "/services/mine?status=CLOSED" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap services-mine-open GET "/services/mine?status=OPEN" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-services-mine-invalid-status GET "/services/mine?status=INVALID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# There is no DRAFT status (ADR 0010).
+snap error-services-mine-draft-status GET "/services/mine?status=DRAFT" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
 # ADR 0009: "<run>-react" links to the probe's "<run>-React" instead of
 # adding a second tech, so the answer shows the stored spelling.
 snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
