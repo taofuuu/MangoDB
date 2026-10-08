@@ -65,7 +65,6 @@ export const listingSelect = {
     service: serviceTechStackSelect,
     // Only the name: the company row also holds the sign-in email and
     // password hash (ADR 0001).
-    // written under time-crunch bypass — review later
     company: { select: { companyName: true } },
 } as const;
 

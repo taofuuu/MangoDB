@@ -254,7 +254,6 @@ export async function getService(req: Request, res: Response): Promise<void> {
 
     // A soft-deleted company's services stay in the table, still OPEN, so the
     // where hides them here, the same as in the search.
-    // written under time-crunch bypass — review later
     const listing = await prisma.listing.findUnique({
         where: {
             listingId,
@@ -268,7 +267,6 @@ export async function getService(req: Request, res: Response): Promise<void> {
         throw ApiError.notFound('Listing not found');
     }
 
-    // written under time-crunch bypass — review later
     if (
         listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
         listing.companyId !== companyId
