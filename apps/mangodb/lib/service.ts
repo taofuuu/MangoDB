@@ -9,8 +9,9 @@ export interface CreateServiceBody {
     techStack?: string[];
 }
 
-// Minimal shape we need back from POST /services — the full Listing type lives
-// on the API side. We only need listingId to attach portfolios immediately after.
+// Minimal shape we need back from POST /services — the full type is
+// ServiceListing in @mangodb/shared. We only need listingId to attach
+// portfolios immediately after.
 export interface CreatedService {
     listingId: number;
     listingTitle: string;

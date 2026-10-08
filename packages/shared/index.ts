@@ -237,7 +237,7 @@ export interface IdentityAvailability {
 // A service listing as POST /services, GET /services/mine and
 // GET /services/:listingId return it. companyName is the owner's name; null
 // only on an orphaned listing (conventions section 11).
-export interface Listing {
+export interface ServiceListing {
     listingId: number;
     companyId: number | null;
     companyName: string | null;

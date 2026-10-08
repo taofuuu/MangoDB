@@ -837,6 +837,22 @@ api POST /services -H "$(bearer "$TOKEN_C")" \
 DELETED_SERVICE_ID="$(jget listingId)"
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
 
+# GET /services/:listingId. Any company reads an open service of an active
+# company, with the owner's name (companyName).
+snap services-one-open-other-company GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A deleted company's service is 404, even though it is still OPEN.
+SUBS+=(--id "deleted_service_id=$DELETED_SERVICE_ID")
+snap error-services-one-deleted-owner GET "/services/$DELETED_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-services-one-not-found GET /services/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-services-one-invalid-id GET /services/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.1.8 and T3.1.10: the probe comes first; probe C's service, though newer,
 # does not appear.
 snap services-search-default GET "/services?page=1&pageSize=3" \
@@ -863,6 +879,14 @@ snap services-search-closed GET "/services?q=$RUN" \
 
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A closed service is private to its owner: 404 to another company, not 403...
+snap error-services-one-closed-not-found GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...while the owner still reads it.
+snap services-one-closed-owner GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ADR 0009: "<run>-react" links to the probe's "<run>-React" instead of
 # adding a second tech, so the answer shows the stored spelling.

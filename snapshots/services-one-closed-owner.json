@@ -1,17 +1,20 @@
 {
-    "request": "POST /services",
-    "status": 201,
+    "request": "GET /services/<listing_id>",
+    "status": 200,
     "body": {
-        "categoryIds": [],
+        "categoryIds": [
+            1
+        ],
         "companyId": 142,
         "companyName": "Snapshot Seed Provider",
         "listingDesc": "created by scripts/snapshot-api.sh",
         "listingId": "<listing_id>",
-        "listingStatus": "OPEN",
-        "listingTitle": "Snapshot Probe reuse service",
+        "listingStatus": "CLOSED",
+        "listingTitle": "Snapshot Probe service <run>",
         "maxBudget": 50000,
-        "minBudget": null,
+        "minBudget": 10000,
         "techStack": [
+            "<run>-Node.js",
             "<run>-React"
         ],
         "type": "SERVICE"

@@ -29,7 +29,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import { ApiError } from '../lib/ApiError';
-import type { Listing } from '@mangodb/shared';
+import type { ServiceListing } from '@mangodb/shared';
 
 // One listing row as the database would hold it, with its company joined in.
 type Row = {
@@ -171,7 +171,7 @@ describe('GET /services/:listingId', () => {
     it("lets another company read an open service, with the owner's name", async () => {
         rows = [service(10, OWNER, 'OPEN')];
 
-        const body = (await getOne(OTHER, 10)) as Listing;
+        const body = (await getOne(OTHER, 10)) as ServiceListing;
 
         assert.equal(body.listingId, 10);
         assert.equal(body.listingStatus, 'OPEN');
@@ -182,7 +182,7 @@ describe('GET /services/:listingId', () => {
     it('still shows the owner its own closed service', async () => {
         rows = [service(10, OWNER, 'CLOSED')];
 
-        const body = (await getOne(OWNER, 10)) as Listing;
+        const body = (await getOne(OWNER, 10)) as ServiceListing;
 
         assert.equal(body.listingId, 10);
         assert.equal(body.listingStatus, 'CLOSED');
