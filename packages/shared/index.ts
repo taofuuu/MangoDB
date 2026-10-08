@@ -234,6 +234,23 @@ export interface IdentityAvailability {
     emailAvailable: boolean;
 }
 
+// A service listing as POST /services, GET /services/mine and
+// GET /services/:listingId return it. companyName is the owner's name; null
+// only on an orphaned listing (conventions section 11).
+export interface Listing {
+    listingId: number;
+    companyId: number | null;
+    companyName: string | null;
+    type: 'SERVICE';
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    categoryIds: number[];
+    techStack: string[];
+}
+
 // A work sample on a listing. portfolioId is a surrogate key: the table used
 // to be identified by (listingId, portfolioLink), which left no way to name
 // a row in a URL. The pair is still unique — see @@unique in the schema.

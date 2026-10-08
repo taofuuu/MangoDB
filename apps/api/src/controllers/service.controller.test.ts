@@ -29,7 +29,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import { ApiError } from '../lib/ApiError';
-import type { Listing } from '../lib/service';
+import type { Listing } from '@mangodb/shared';
 
 // One listing row as the database would hold it, with its company joined in.
 type Row = {
@@ -133,7 +133,7 @@ beforeEach(() => {
 // ApiError it threw.
 async function getOne(
     callerCompanyId: number,
-    listingId: number,
+    listingId: number | string,
 ): Promise<unknown> {
     const req = {
         params: { listingId: String(listingId) },
@@ -212,4 +212,22 @@ describe('GET /services/:listingId', () => {
 
         assertNotFound(await getOne(OTHER, 99));
     });
+
+    // A malformed id is a bad request, not a missing row (docs/conventions.md,
+    // status codes). 1.5 is a number, so a plain isNaN check would let it
+    // through to the Int column.
+    for (const badId of ['abc', '1.5']) {
+        it(`answers 400 for the malformed id "${badId}"`, async () => {
+            rows = [service(1, OWNER, 'OPEN')];
+
+            const result = await getOne(OTHER, badId);
+
+            assert.ok(
+                result instanceof ApiError,
+                `expected an ApiError, got ${JSON.stringify(result)}`,
+            );
+            assert.equal(result.status, 400);
+            assert.equal(result.code, 'BAD_REQUEST');
+        });
+    }
 });

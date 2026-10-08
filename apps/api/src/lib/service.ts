@@ -1,7 +1,7 @@
 // listing_status is a plain VarChar(50) column with no DB enum, so this is the
 // single source of truth for its values. Browse filters and proposal logic
 // should import from here instead of hardcoding strings.
-import type { ListingStatus, ServiceSummary } from '@mangodb/shared';
+import type { Listing, ListingStatus, ServiceSummary } from '@mangodb/shared';
 import { LISTING_STATUSES } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
@@ -80,23 +80,6 @@ type SelectedListing = {
     listingCategory: { catId: number }[];
     service: ServiceTechStackRow;
     company: { companyName: string } | null;
-};
-
-// TODO: move to @mangodb/shared next to ServicePortfolio so the frontend can
-// import it. Kept here until you decide where the wire types live.
-export type Listing = {
-    listingId: number;
-    companyId: number | null;
-    // The owner's name. Null only on an orphaned listing (conventions §11).
-    companyName: string | null;
-    type: 'SERVICE';
-    listingTitle: string;
-    listingDesc: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    listingStatus: string;
-    categoryIds: number[];
-    techStack: string[];
 };
 
 export function toListing(row: SelectedListing): Listing {

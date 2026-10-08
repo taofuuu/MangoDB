@@ -250,11 +250,7 @@ export async function getMine(req: Request, res: Response): Promise<void> {
 // anyone else it does not exist (docs/conventions.md, 403 vs 404).
 export async function getService(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth!;
-    const listingId = Number(req.params.listingId);
-
-    if (isNaN(listingId)) {
-        throw ApiError.badRequest('Invalid listing ID format');
-    }
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
 
     // A soft-deleted company's services stay in the table, still OPEN, so the
     // where hides them here, the same as in the search.
