@@ -14,8 +14,10 @@ export const companyAccountListQuerySchema = z.object({
     pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });
 
+// Capped at the int4 column's max: a larger id would reach Prisma and come
+// back as a 500 instead of a 400.
 export const companyAccountIdParamSchema = z.object({
-    companyId: z.coerce.number().int().positive(),
+    companyId: z.coerce.number().int().positive().max(2147483647),
 });
 
 // US6-4. The admin's own password, same field changeCredentialsSchema takes,

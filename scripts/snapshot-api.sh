@@ -345,6 +345,9 @@ snap admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
     -H "$(bearer "$TOKEN_ADMIN")"
 snap error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
+# One past the int4 column's range: a 400, not a database error.
+snap error-admin-company-id-too-large GET /admin/companies/2147483648 \
+    -H "$(bearer "$TOKEN_ADMIN")"
 
 echo
 echo "companies"
