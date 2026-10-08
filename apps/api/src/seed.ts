@@ -133,8 +133,7 @@ async function upsertListing(providerId: number): Promise<number> {
                     'Owned by src/seed.ts so the snapshot script has a listing to post against.',
                 minBudget: 50000,
                 maxBudget: 200000,
-                // Free text today. docs/conventions.md section 6 turns this
-                // into DRAFT | OPEN | CLOSED — update this line when it does.
+                // OPEN | CLOSED (docs/conventions.md section 6, ADR 0010).
                 listingStatus: 'OPEN',
                 listingType: 'SERVICE',
             },
