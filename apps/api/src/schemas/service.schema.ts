@@ -47,11 +47,16 @@ const nameList = z.preprocess(
         .transform((names) => names.filter(Boolean)),
 );
 
+// A blank query value (empty or only spaces) means the filter is not used.
+// Without this, coerce would read it as 0. Used by price and companyId.
+function blankToUndefined(value: unknown): unknown {
+    return typeof value === 'string' && value.trim() === '' ? undefined : value;
+}
+
 // A price slider end: whole baht, same ceiling as the budget columns. A blank
-// value (?maxPrice=) means no limit; coerce alone would read it as 0.
+// value (?maxPrice=) means no limit.
 const price = z.preprocess(
-    (value) =>
-        typeof value === 'string' && value.trim() === '' ? undefined : value,
+    blankToUndefined,
     z.coerce.number().int().nonnegative().max(INT_MAX).optional(),
 );
 
@@ -68,13 +73,18 @@ export const serviceListQuerySchema = z
         minPrice: price,
         maxPrice: price,
         // written under time-crunch bypass — review later
-        // One company's services only, e.g. its profile page. Same id rule as
-        // a path id, so ?companyId=abc or 0 is a 400. A blank value means no
-        // filter, like ?companyId= on GET /job-postings; coerce alone would
-        // read it as 0.
+        // One company's services only, e.g. its profile page. A blank value
+        // means no filter, like a blank price. Digits only: Number() alone
+        // would read "0x10" as 16 and "1e3" as 1000, so those are a 400, as
+        // are "abc" and 0.
         companyId: z.preprocess(
-            (value) => (value === '' ? undefined : value),
-            z.coerce.number().int().positive().max(INT_MAX).optional(),
+            blankToUndefined,
+            z
+                .string()
+                .regex(/^\d+$/, 'companyId must be a whole number')
+                .transform(Number)
+                .pipe(z.number().int().positive().max(INT_MAX))
+                .optional(),
         ),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),

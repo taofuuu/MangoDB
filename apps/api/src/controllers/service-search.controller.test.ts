@@ -7,8 +7,11 @@
  * - The search's usual rules still hold under the filter: only OPEN services,
  *   and none from a soft-deleted company. So asking for a deleted company
  *   gives an empty page, not an error.
- * - A companyId that is not a positive whole number is a 400.
- * - Without ?companyId= every company's open services still come back.
+ * - Without ?companyId=, or with a blank one (empty or only spaces), every
+ *   company's open services still come back. A blank box in the UI means no
+ *   filter, same as a blank ?maxPrice=.
+ * - Anything else that is not plain digits for a positive int4 is a 400. That
+ *   includes "0x10" and "1e3", which Number() alone would read as 16 and 1000.
  *
  * How:
  * - The test calls the controller directly with a fake req and a fake res that
@@ -216,15 +219,17 @@ describe('GET /services?companyId=', () => {
         assert.deepEqual(ids(await search({})), [10, 20]);
     });
 
-    // Same as a blank ?maxPrice= here and a blank ?companyId= on
-    // GET /job-postings: an empty box in the UI means no filter.
-    it('lists every company when companyId is blank', async () => {
-        rows = [service(10, ALPHA), service(20, BETA)];
+    // Same rule as a blank ?maxPrice= in this schema: an empty box in the UI
+    // means no filter.
+    for (const blank of ['', '   ']) {
+        it(`lists every company when companyId=${JSON.stringify(blank)}`, async () => {
+            rows = [service(10, ALPHA), service(20, BETA)];
 
-        assert.deepEqual(ids(await search({ companyId: '' })), [10, 20]);
-    });
+            assert.deepEqual(ids(await search({ companyId: blank })), [10, 20]);
+        });
+    }
 
-    for (const bad of ['abc', '0', '-1', '1.5', ' ', '2147483648']) {
+    for (const bad of ['abc', '0', '-1', '1.5', '0x10', '1e3', '2147483648']) {
         it(`answers 400 for companyId=${JSON.stringify(bad)}`, async () => {
             rows = [service(10, ALPHA)];
 
