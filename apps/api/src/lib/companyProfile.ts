@@ -87,7 +87,9 @@ export type PublicCompanyProfileRow = Omit<
     'username' | 'email'
 >;
 
-// Same flattening as toCompanyProfile, for the row without sign-in fields.
+// Same flattening as toCompanyProfile, copied on purpose. Calling that one
+// instead would need a full row, and its spread would put username and email
+// back into the response.
 export function toPublicCompanyProfile(
     company: PublicCompanyProfileRow,
 ): PublicCompanyProfile {
