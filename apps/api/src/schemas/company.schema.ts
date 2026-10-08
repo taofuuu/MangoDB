@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl, thaiPhone } from './common.schema';
+import { httpUrl, int4Id, thaiPhone } from './common.schema';
 import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 
 // One definition per editable column, shared by registration (US1-1) and the
@@ -117,10 +117,9 @@ export const changeCredentialsSchema = z
 
 export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;
 
-// GET /companies/:companyId. Capped at the int4 column's max: a larger id
-// would reach Prisma and come back as a 500 instead of a 400.
+// GET /companies/:companyId.
 export const companyIdParamSchema = z.object({
-    companyId: z.coerce.number().int().positive().max(2147483647),
+    companyId: int4Id,
 });
 
 // US3-6. Same paging bounds as GET /admin/companies, so one request cannot

@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { httpUrl } from './common.schema';
+import { httpUrl, int4Id } from './common.schema';
 
 export const certificateIdParamSchema = z.object({
-    certificateId: z.coerce.number().int().positive().max(2147483647),
+    certificateId: int4Id,
 });
 
 // A floor on typos, not a real rule: certificates predate the platform, but a

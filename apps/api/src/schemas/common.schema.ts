@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// Prisma Int is a 32-bit int4 column. Without this ceiling, 2147483648 passes
+// validation and reaches the database, which answers with a 500.
+export const INT4_MAX = 2147483647;
+
+// A row id from the path or the query string. Both arrive as strings, so it is
+// coerced first. JSON bodies send real numbers and use INT4_MAX directly.
+export const int4Id = z.coerce.number().int().positive().max(INT4_MAX);
+
 // z.url() accepts any scheme, so javascript: and data: pass it. Those become
 // stored XSS the moment the frontend renders the value as an href or img src.
 export const httpUrl = z

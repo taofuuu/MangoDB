@@ -134,6 +134,10 @@ the administrator company endpoints as the worked example.
 - **Validate with `parseBody` / `parseQuery`** from `src/middleware/validate.ts`.
   They take a zod schema, return a value typed from it, and throw the right
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
+- **An id in the path or query is `int4Id`** from `src/schemas/common.schema.ts`.
+  Every id column is a 32-bit `Int`, and an id past its range that reaches
+  Prisma comes back as a `500` instead of a `400`. Numbers in a JSON body use
+  `INT4_MAX` from the same file.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
   delete or logout. Four endpoints are exceptions, all returning
@@ -385,6 +389,24 @@ are, because that is the history the column exists to preserve. The rule this
 creates: discovery queries filter on `deletedAt`, history queries must not.
 `requireAuth` re-checks it on every request, so a token issued before the
 deletion stops working immediately.
+
+### Other companies
+
+Any company may find and read other companies. Administrators may not: they
+have `/admin/companies` instead.
+
+| Method | Path                    | Guard                                                |
+| ------ | ----------------------- | ---------------------------------------------------- |
+| `GET`  | `/companies`            | `requireAuth`, `requireRole('provider', 'receiver')` |
+| `GET`  | `/companies/:companyId` | `requireAuth`, `requireRole('provider', 'receiver')` |
+
+`GET /companies` (US3-6) is the search: `q`, `page`, `pageSize`, answering a
+page of `CompanySummary`. `GET /companies/:companyId` is one company's public
+profile, `PublicCompanyProfile`: the same body as `GET /companies/me` without
+`username` and `email`, the two fields a company signs in with. Both are
+discovery, so both hide soft-deleted and admin accounts. For the profile, an
+unknown, deleted, or admin id is the same `404`, so the answer does not say
+which of the three it is.
 
 ### Certificates
 
