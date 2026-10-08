@@ -235,7 +235,6 @@ export async function getMine(req: Request, res: Response): Promise<void> {
         throw ApiError.unauthorized('Company ID is required');
     }
     const { companyId } = req.auth;
-    // written under time-crunch bypass — review later
     const { status } = parseQuery(serviceMineQuerySchema, req.query);
 
     const listings = await prisma.listing.findMany({

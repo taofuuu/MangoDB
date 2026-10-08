@@ -78,7 +78,6 @@ export const serviceListQuerySchema = z
 
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
 
-// written under time-crunch bypass — review later
 // GET /services/mine. A blank ?status= means no filter, like GET
 // /job-postings. There is no DRAFT status (ADR 0010), so only OPEN and
 // CLOSED pass; anything else, DRAFT included, is a 400.
