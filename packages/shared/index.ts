@@ -308,6 +308,15 @@ export interface CreateJobPostingRequest {
     categoryIds?: number[] | undefined;
 }
 
+// What POST /services accepts. Validated by createServiceSchema.
+export interface CreateServiceRequest {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    listingStatus?: ListingStatus | undefined;
+    categoryIds?: number[] | undefined;
+}
 // What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
 // categoryIds replaces the whole set. Validated by updateJobPostingSchema.
 export interface UpdateJobPostingRequest {
@@ -331,6 +340,18 @@ export interface Proposal {
     duration: number;
     proposalStatus: ProposalStatus;
     createdAt: string;
+}
+
+// US2-9. One row of GET /proposals/mine: the proposal, with the job posting's
+// title so the list needs no extra request per row.
+export interface ProviderProposal extends Proposal {
+    listingTitle: string;
+}
+
+// US2-9. Paginated proposals response for provider tracking.
+export interface ProposalListResponse {
+    items: ProviderProposal[];
+    pagination: PaginationMeta;
 }
 
 // A company in one line: enough to show who it is beside something it sent

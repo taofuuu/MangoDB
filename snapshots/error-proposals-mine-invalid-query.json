@@ -1,0 +1,20 @@
+{
+    "request": "GET /proposals/mine?page=0&status=INVALID",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "page",
+                    "message": "Too small: expected number to be >0"
+                },
+                {
+                    "field": "status",
+                    "message": "Invalid option: expected one of \"PENDING\"|\"ACCEPTED\"|\"REJECTED\""
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
-import { useEffect, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import CompanyTypeField from '../forms/CompanyTypeField';
 
 export type CompanyInfo = {
@@ -26,7 +26,9 @@ export type CompanyInfoError = {
 
 type CompanyInfoStepProps = {
     value: CompanyInfo;
-    onChange: (value: CompanyInfo) => void;
+    // The page's own state setter — see AccountStep for why it is updated
+    // directly rather than through a copy here.
+    onChange: Dispatch<SetStateAction<CompanyInfo>>;
     errors?: CompanyInfoError;
     onClearError?: (field: keyof CompanyInfo) => void;
 };
@@ -37,70 +39,54 @@ export default function CompanyInfoStep({
     errors,
     onClearError,
 }: CompanyInfoStepProps) {
-    const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(
-        value ?? {
-            companyName: '',
-            companyDescription: '',
-            companyType: [],
-            phoneNumber: '',
-            email: '',
-            address: '',
-            website: '',
-        },
-    );
-
+    // Functional updates: several fields can report in the same moment (fast
+    // typing, autofill), and copying `value` from this render would let
+    // each one overwrite the others with stale values.
     const handleUpdateCompanyType = (companyType: string[]) => {
-        setCompanyInfo({ ...companyInfo, companyType: companyType });
+        onChange((prev) => ({ ...prev, companyType: companyType }));
         if (companyType.length > 0) {
             onClearError?.('companyType');
         }
     };
 
     const handleUpdateCompanyName = (companyName: string) => {
-        setCompanyInfo({ ...companyInfo, companyName: companyName });
+        onChange((prev) => ({ ...prev, companyName: companyName }));
         if (companyName.trim()) {
             onClearError?.('companyName');
         }
     };
 
     const handleUpdateCompanyDescription = (companyDescription: string) => {
-        setCompanyInfo({
-            ...companyInfo,
+        onChange((prev) => ({
+            ...prev,
             companyDescription: companyDescription,
-        });
+        }));
         onClearError?.('companyDescription');
     };
 
     const handleUpdatePhoneNumber = (phoneNumber: string) => {
-        setCompanyInfo({
-            ...companyInfo,
-            phoneNumber: phoneNumber,
-        });
+        onChange((prev) => ({ ...prev, phoneNumber: phoneNumber }));
         if (phoneNumber.trim()) {
             onClearError?.('phoneNumber');
         }
     };
 
     const handleUpdateEmail = (email: string) => {
-        setCompanyInfo({ ...companyInfo, email: email });
+        onChange((prev) => ({ ...prev, email: email }));
         if (email.trim()) {
             onClearError?.('email');
         }
     };
 
     const handleUpdateAddress = (address: string) => {
-        setCompanyInfo({ ...companyInfo, address: address });
+        onChange((prev) => ({ ...prev, address: address }));
         onClearError?.('address');
     };
 
     const handleUpdateWebsite = (website: string) => {
-        setCompanyInfo({ ...companyInfo, website: website });
+        onChange((prev) => ({ ...prev, website: website }));
         onClearError?.('website');
     };
-
-    useEffect(() => {
-        onChange(companyInfo);
-    }, [companyInfo]);
 
     return (
         <div className="company-info-page flex flex-col gap-5 my-5">
