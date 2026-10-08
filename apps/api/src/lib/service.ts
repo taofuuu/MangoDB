@@ -63,6 +63,10 @@ export const listingSelect = {
     listingStatus: true,
     listingCategory: { select: { catId: true } },
     service: serviceTechStackSelect,
+    // Only the name: the company row also holds the sign-in email and
+    // password hash (ADR 0001).
+    // written under time-crunch bypass — review later
+    company: { select: { companyName: true } },
 } as const;
 
 type SelectedListing = {
@@ -75,6 +79,7 @@ type SelectedListing = {
     listingStatus: string;
     listingCategory: { catId: number }[];
     service: ServiceTechStackRow;
+    company: { companyName: string } | null;
 };
 
 // TODO: move to @mangodb/shared next to ServicePortfolio so the frontend can
@@ -82,6 +87,8 @@ type SelectedListing = {
 export type Listing = {
     listingId: number;
     companyId: number | null;
+    // The owner's name. Null only on an orphaned listing (conventions §11).
+    companyName: string | null;
     type: 'SERVICE';
     listingTitle: string;
     listingDesc: string;
@@ -96,6 +103,7 @@ export function toListing(row: SelectedListing): Listing {
     return {
         listingId: row.listingId,
         companyId: row.companyId,
+        companyName: row.company?.companyName ?? null,
         type: 'SERVICE',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
