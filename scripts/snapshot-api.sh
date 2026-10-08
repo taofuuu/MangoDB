@@ -273,12 +273,15 @@ snap auth-login-provider POST /auth/login \
     -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"$PROVIDER_PASSWORD\"}"
 TOKEN_PROVIDER="$(jget accessToken)"
 require_token "$TOKEN_PROVIDER" "the provider" auth-login-provider
+# Seeded, so its id is the same every run. Section 13 filters by it.
+PROVIDER_COMPANY_ID="$(jget company.companyId)"
 
 snap auth-login-receiver POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$RECEIVER_EMAIL\",\"password\":\"$RECEIVER_PASSWORD\"}"
 TOKEN_RECEIVER="$(jget accessToken)"
 require_token "$TOKEN_RECEIVER" "the receiver" auth-login-receiver
+RECEIVER_COMPANY_ID="$(jget company.companyId)"
 
 snap auth-admin-login POST /auth/admin/login \
     -H 'Content-Type: application/json' \
@@ -825,6 +828,8 @@ SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
 api POST /auth/register -H 'Content-Type: application/json' \
     -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}" >/dev/null
 TOKEN_C="$(jget accessToken)"
+C_COMPANY_ID="$(jget company.companyId)"
+SUBS+=(--id "company_id=$C_COMPANY_ID")
 if [ -z "$TOKEN_C" ]; then
     echo "could not register probe C:" >&2
     cat "$BODY" >&2
@@ -1008,6 +1013,25 @@ snap services-filter-price-empty GET \
 # Slider ends that cross are a 400 the filter panel can show.
 snap error-services-filter-price-range GET \
     "/services?minPrice=200000&maxPrice=1000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ?companyId= narrows to one company: all four probes are the provider's...
+snap services-filter-company GET \
+    "/services?techStack=$RUN&companyId=$PROVIDER_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...so another company's id finds none of them.
+snap services-filter-company-other GET \
+    "/services?techStack=$RUN&companyId=$RECEIVER_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Probe C deleted itself in section 11. Its service is still OPEN, but the
+# search hides deleted companies, so this is an empty page, not an error.
+snap services-filter-company-deleted GET "/services?companyId=$C_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Digits only: Number() would read 0x10 as 16.
+snap error-services-filter-company-invalid GET "/services?companyId=0x10" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
