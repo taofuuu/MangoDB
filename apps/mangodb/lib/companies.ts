@@ -2,6 +2,8 @@ import type {
     AccountType,
     CompanyAccountDetail,
     CompanyAccountListResponse,
+    CompanyListResponse,
+    CompanySortOrder,
     ChangeCredentialsRequest,
     ChangeCredentialsResponse,
     CompanyProfile,
@@ -79,6 +81,28 @@ export function getCompanyAccountDetail(
     companyId: number,
 ): Promise<CompanyAccountDetail> {
     return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`);
+}
+
+// US3-6. Company discovery is intentionally separate from the administrator
+// account list: this response contains only public card data, and the endpoint
+// accepts only keyword search, name ordering, and pagination.
+export function searchCompanies(
+    page: number,
+    pageSize: number,
+    q?: string,
+    orderBy: CompanySortOrder = 'nameAsc',
+): Promise<CompanyListResponse> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+        orderBy,
+    });
+
+    if (q?.trim()) {
+        query.set('q', q.trim());
+    }
+
+    return apiFetch<CompanyListResponse>(`/companies?${query.toString()}`);
 }
 
 export function updateCompanyAccount(

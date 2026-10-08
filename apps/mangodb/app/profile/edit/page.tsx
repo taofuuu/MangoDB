@@ -163,7 +163,7 @@ function EditProfilePageInner() {
         await deleteCompanyAccount(Number(targetCompanyId), {
             currentPassword: adminPassword,
         });
-        router.push('/companies');
+        router.push('/admin/companies');
     };
 
     // Cancel leaves the page. Opening /profile/edit directly leaves nothing to

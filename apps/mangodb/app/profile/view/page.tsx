@@ -67,8 +67,8 @@ export default function ViewProfilePage() {
             {profile && (
                 <p className="type-sm">
                     An administrator account has no company profile.{' '}
-                    <Link href="/companies" className="underline">
-                        Browse companies
+                    <Link href="/admin/companies" className="underline">
+                        Manage companies
                     </Link>{' '}
                     instead.
                 </p>
