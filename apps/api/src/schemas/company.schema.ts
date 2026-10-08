@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl, thaiPhone } from './common.schema';
+import { httpUrl, int4Id, thaiPhone } from './common.schema';
 import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 
 // One definition per editable column, shared by registration (US1-1) and the
@@ -116,6 +116,11 @@ export const changeCredentialsSchema = z
     );
 
 export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;
+
+// GET /companies/:companyId.
+export const companyIdParamSchema = z.object({
+    companyId: int4Id,
+});
 
 // US3-6. Same paging bounds as GET /admin/companies, so one request cannot
 // pull every company into memory. Filter and sort params come later.

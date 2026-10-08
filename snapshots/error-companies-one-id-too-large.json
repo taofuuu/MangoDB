@@ -1,0 +1,16 @@
+{
+    "request": "GET /companies/2147483648",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "companyId",
+                    "message": "Too big: expected number to be <=2147483647"
+                }
+            ],
+            "message": "Path parameters are invalid"
+        }
+    }
+}

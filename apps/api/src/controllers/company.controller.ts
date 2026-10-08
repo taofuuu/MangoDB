@@ -11,7 +11,9 @@ import {
     companyProfileSelect,
     companyProfileUpdateData,
     editsProviderFields,
+    publicCompanyProfileSelect,
     toCompanyProfile,
+    toPublicCompanyProfile,
 } from '../lib/companyProfile';
 import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
 import { companySummarySelect, toCompanySummary } from '../lib/companySearch';
@@ -31,10 +33,11 @@ import {
     removeFromStorageByUrl,
     uploadToStorage,
 } from '../lib/storage';
-import { parseBody, parseQuery } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
     changeCredentialsSchema,
+    companyIdParamSchema,
     companyListQuerySchema,
     updateCompanyProfileSchema,
 } from '../schemas/company.schema';
@@ -53,6 +56,28 @@ export async function getMyProfile(req: Request, res: Response): Promise<void> {
     }
 
     res.json(toCompanyProfile(company));
+}
+
+// Another company's profile, without the username and email it signs in with.
+// Unknown, soft-deleted, and admin accounts all answer the same 404, so the
+// route cannot tell a caller which of the three an id is.
+export async function getCompanyProfile(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+    // findFirst, not findUnique: the two extra conditions are not part of a
+    // unique key.
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: publicCompanyProfileSelect,
+    });
+
+    if (!company) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    res.json(toPublicCompanyProfile(company));
 }
 
 // US1-5. Partial by design: an absent field leaves its column alone, and null

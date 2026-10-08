@@ -1,0 +1,20 @@
+{
+    "request": "GET /companies/143",
+    "status": 200,
+    "body": {
+        "accountType": "RECEIVER",
+        "address": null,
+        "companyDescription": null,
+        "companyId": 143,
+        "companyName": "Snapshot Seed Receiver",
+        "companyPhoto": null,
+        "companyType": [
+            "SME"
+        ],
+        "contactEmail": null,
+        "phone": "0810000002",
+        "serviceTerm": null,
+        "warrantyPolicy": null,
+        "website": null
+    }
+}

@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES } from '@mangodb/shared';
-
-// Prisma Int is a 32-bit column: without a max, 3000000000 passes validation
-// and fails at the database as a 500. Same ceiling portfolio uses for ids.
-const INT_MAX = 2147483647;
+import { INT4_MAX, int4Id } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
 // VarChar(100), so one rule fits both (conventions §12).
@@ -15,10 +12,10 @@ export const createListingSchema = z
     .object({
         listingTitle: z.string().trim().min(1).max(255),
         listingDesc: z.string().trim().min(1),
-        minBudget: z.number().int().nonnegative().max(INT_MAX).optional(),
-        maxBudget: z.number().int().positive().max(INT_MAX).optional(),
+        minBudget: z.number().int().nonnegative().max(INT4_MAX).optional(),
+        maxBudget: z.number().int().positive().max(INT4_MAX).optional(),
         categoryIds: z
-            .array(z.number().int().positive().max(INT_MAX))
+            .array(z.number().int().positive().max(INT4_MAX))
             .default([]),
         // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
         // name is a mistake in the body, so it is a 400 rather than dropped.
@@ -53,7 +50,7 @@ const nameList = z.preprocess(
 const price = z.preprocess(
     (value) =>
         typeof value === 'string' && value.trim() === '' ? undefined : value,
-    z.coerce.number().int().nonnegative().max(INT_MAX).optional(),
+    z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
 );
 
 // US3-1. Same paging bounds as GET /companies, so one request cannot pull
@@ -98,5 +95,5 @@ export const serviceMineQuerySchema = z.object({
 // same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
 // /services/:listingId.
 export const listingIdParamSchema = z.object({
-    listingId: z.coerce.number().int().positive().max(INT_MAX),
+    listingId: int4Id,
 });
