@@ -59,7 +59,12 @@ const ROUTES = [
         detail: 'US1-4 — your company profile, laid out for whichever role your account is. A BOTH account gets the provider layout.',
     },
     {
-        href: '/services',
+        href: '/services/create',
+        title: 'Create Service',
+        detail: 'US2-1 - create service and add portfolio',
+    },
+    {
+        href: '/services/search',
         title: 'Services (service search)',
         detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.',
     },

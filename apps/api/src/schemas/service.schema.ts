@@ -15,7 +15,7 @@ export const createListingSchema = z
         listingTitle: z.string().trim().min(1).max(255),
         listingDesc: z.string().trim().min(1),
         minBudget: z.number().int().nonnegative().max(INT_MAX).optional(),
-        maxBudget: z.number().int().positive().max(INT_MAX),
+        maxBudget: z.number().int().positive().max(INT_MAX).optional(),
         categoryIds: z
             .array(z.number().int().positive().max(INT_MAX))
             .default([]),
@@ -23,10 +23,16 @@ export const createListingSchema = z
         // name is a mistake in the body, so it is a 400 rather than dropped.
         techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX).default([]),
     })
-    .refine((b) => b.minBudget === undefined || b.minBudget <= b.maxBudget, {
-        message: 'minBudget must be less than or equal to maxBudget',
-        path: ['minBudget'],
-    });
+    .refine(
+        (b) =>
+            b.minBudget === undefined ||
+            b.maxBudget === undefined ||
+            b.minBudget <= b.maxBudget,
+        {
+            message: 'minBudget must be less than or equal to maxBudget',
+            path: ['minBudget'],
+        },
+    );
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 
