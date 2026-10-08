@@ -52,7 +52,6 @@ companyRoutes.delete(
     requestMyAccountDeletion,
 );
 
-// written under time-crunch bypass — review later
 // Another company's public profile. Last, after every /me route, so "me" is
 // never read as an id. Same callers as the search above: any company, not
 // admins, who have GET /admin/companies/:companyId.

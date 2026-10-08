@@ -58,7 +58,6 @@ export async function getMyProfile(req: Request, res: Response): Promise<void> {
     res.json(toCompanyProfile(company));
 }
 
-// written under time-crunch bypass — review later
 // Another company's profile, without the username and email it signs in with.
 // Unknown, soft-deleted, and admin accounts all answer the same 404, so the
 // route cannot tell a caller which of the three an id is.

@@ -64,7 +64,6 @@ export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
     };
 }
 
-// written under time-crunch bypass — review later
 // GET /companies/:companyId. Its own list rather than companyProfileSelect
 // with two keys removed: a column added to that select later must not reach
 // another company until someone decides it is public.

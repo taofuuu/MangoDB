@@ -117,7 +117,6 @@ export const changeCredentialsSchema = z
 
 export type ChangeCredentialsInput = z.infer<typeof changeCredentialsSchema>;
 
-// written under time-crunch bypass — review later
 // GET /companies/:companyId. Capped at the int4 column's max: a larger id
 // would reach Prisma and come back as a 500 instead of a 400.
 export const companyIdParamSchema = z.object({
