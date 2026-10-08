@@ -7,7 +7,7 @@
             "details": [
                 {
                     "field": "status",
-                    "message": "Invalid option: expected one of \"DRAFT\"|\"OPEN\"|\"CLOSED\""
+                    "message": "Invalid option: expected one of \"OPEN\"|\"CLOSED\""
                 }
             ],
             "message": "Query parameters are invalid"
