@@ -130,7 +130,9 @@ export default function JobForm() {
             };
 
             const job = await createJobPosting(data);
-            router.push('/job');
+            console.log('Created job:', job);
+
+            router.push('/job/view-own');
             router.refresh();
         } catch (cause) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
@@ -145,9 +147,9 @@ export default function JobForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex h-[79.82vh] w-[67.1875vw] flex-col gap-[2vh]"
+            className="flex w-[67.1875vw] flex-col gap-[2vh]"
         >
-            <div className="type-md relative flex h-[79vh] w-[55.16vw] flex-col gap-[0.93vh] rounded-popup bg-white px-[2.6vw] pt-[2vh] pb-[5.65vh] shadow-[2px_2px_10px_2px_#CCCCCC]">
+            <div className="type-md relative flex min-h-[80vh] w-[55.16vw] flex-col gap-[1.2vh] rounded-popup bg-white px-[2.6vw] pt-[3.2vh] pb-[6vh] shadow-[2px_2px_10px_2px_#CCCCCC]">
                 <div className="flex flex-col gap-[0.46vh]">
                     <label className="block">Title*</label>
 
@@ -210,14 +212,12 @@ export default function JobForm() {
                         <input
                             type="text"
                             inputMode="numeric"
-                            min="0"
                             value={minBudget}
                             onChange={(e) => {
                                 setMinBudget(e.target.value);
-                                clearError('minBudget');
                             }}
                             className="h-[4.07vh] w-full box-border rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                            placeholder="Ex: 10000"
+                            placeholder="Ex: 20000"
                         />
 
                         <FieldError message={errors.minBudget} />
@@ -228,11 +228,12 @@ export default function JobForm() {
                         <label className="block">Max Budget</label>
 
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             value={maxBudget}
                             onChange={(e) => setMaxBudget(e.target.value)}
                             className="h-[4.07vh] w-full box-border rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                            placeholder="Ex: 20000"
+                            placeholder="Ex: 50000"
                         />
 
                         <FieldError message={errors.maxBudget} />
@@ -240,7 +241,7 @@ export default function JobForm() {
                 </div>
 
                 {/* Location */}
-                <div className="flex min-w-0 flex-1 flex-col gap-[0.46vh]">
+                <div className="flex flex-col gap-[0.46vh]">
                     <label className="block">Location</label>
 
                     <input
