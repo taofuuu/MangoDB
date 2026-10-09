@@ -178,7 +178,7 @@ export default function CompanySearchPage() {
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-[0.52vw] self-end type-xs text-ink-soft sm:self-auto">
+                    <div className="flex items-center gap-[1vw] self-end type-sm sm:self-auto">
                         <span>Order by:</span>
                         <CompanyOrderDropdown
                             value={orderBy}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { CompanySortOrder } from '@mangodb/shared';
+import { ChevronDown } from 'lucide-react';
 
 const orderOptions: { label: string; value: CompanySortOrder }[] = [
     { label: 'Company name A–Z', value: 'nameAsc' },
@@ -97,15 +98,15 @@ export default function CompanyOrderDropdown({
                         openFromKeyboard();
                     }
                 }}
-                className="flex h-10 w-full items-center justify-between rounded-input border border-line bg-surface-white/80 px-1.5 text-left focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none sm:h-[4.89vh]"
+                className="flex h-10 w-full items-center justify-between rounded-[10px] border border-line bg-surface-white px-[0.7vw] text-left type-sm hover:bg-fill-subtle focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none sm:h-[4.07vh]"
             >
-                <span className="type-sm text-ink">{selectedLabel}</span>
-                <span
+                <span className="text-ink">{selectedLabel}</span>
+                <ChevronDown
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 type-md text-ink-soft"
-                >
-                    ▼
-                </span>
+                    className={`h-[1.5vh] w-[1vw] shrink-0 transition-transform ${
+                        open ? 'rotate-180' : ''
+                    }`}
+                />
             </button>
 
             {open && (
@@ -113,7 +114,7 @@ export default function CompanyOrderDropdown({
                     id="company-order-options"
                     role="listbox"
                     aria-label="Company order"
-                    className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-line bg-white shadow-lg"
+                    className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[10px] border border-line bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
                 >
                     {orderOptions.map((option, index) => (
                         <button
@@ -152,7 +153,7 @@ export default function CompanyOrderDropdown({
                                 }
                             }}
                             onClick={() => selectOption(option.value)}
-                            className="block w-full px-3 py-2 text-left type-sm text-ink hover:bg-fill-subtle focus-visible:bg-fill-subtle focus-visible:outline-none"
+                            className="flex min-h-[4.07vh] w-full items-center px-[0.7vw] text-left type-sm text-ink hover:bg-fill-subtle focus-visible:bg-fill-subtle focus-visible:outline-none"
                         >
                             {option.label}
                         </button>
