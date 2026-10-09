@@ -1,0 +1,273 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import type {
+    CompanyListResponse,
+    CompanySortOrder,
+    CompanySummary,
+} from '@mangodb/shared';
+import { Search, X } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
+import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
+import { searchCompanies } from '@/lib/companies';
+import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
+import CompanySearchCard from './CompanySearchCard';
+import CompanySearchDetail from './CompanySearchDetail';
+import CompanyOrderDropdown from './CompanyOrderDropdown';
+
+export default function CompanySearchPage() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [orderBy, setOrderBy] = useState<CompanySortOrder>('nameAsc');
+    const [page, setPage] = useState(1);
+    const [result, setResult] = useState<CompanyListResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
+    const [selectedCompany, setSelectedCompany] =
+        useState<CompanySummary | null>(null);
+    const listRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const nextSearch = searchQuery.trim();
+        if (nextSearch === debouncedSearch) return;
+
+        const timer = window.setTimeout(() => {
+            setDebouncedSearch(nextSearch);
+            setPage(1);
+            setSelectedCompany(null);
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [searchQuery, debouncedSearch]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(true);
+        setError(null);
+
+        searchCompanies(
+            page,
+            COMPANY_PAGE_SIZE,
+            debouncedSearch || undefined,
+            orderBy,
+        )
+            .then((data) => {
+                if (cancelled) return;
+                setResult(data);
+                listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch((requestError: unknown) => {
+                if (cancelled) return;
+                setError(
+                    isNotSignedIn(requestError)
+                        ? NOT_SIGNED_IN
+                        : describeError(requestError),
+                );
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, debouncedSearch, orderBy, reloadKey]);
+
+    const changePage = useCallback((nextPage: number) => {
+        setPage(nextPage);
+        setSelectedCompany(null);
+    }, []);
+
+    const changeOrder = (nextOrder: CompanySortOrder) => {
+        setOrderBy(nextOrder);
+        setPage(1);
+        setSelectedCompany(null);
+    };
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setDebouncedSearch('');
+        setPage(1);
+        setSelectedCompany(null);
+    };
+
+    const companies = result?.items ?? [];
+    const pagination = result?.pagination;
+
+    if (isLoading && !result && !error) {
+        return (
+            <main className="min-h-screen bg-surface p-6 text-ink">
+                <p className="type-sm">Loading…</p>
+            </main>
+        );
+    }
+
+    if (error === NOT_SIGNED_IN) {
+        return (
+            <main className="min-h-screen bg-surface p-6 text-ink">
+                <p className="type-sm">
+                    You are not signed in.{' '}
+                    <Link href="/login" className="underline">
+                        Log in
+                    </Link>
+                    , then come back.
+                </p>
+            </main>
+        );
+    }
+
+    return (
+        <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
+            <div className="mx-auto max-w-[93.75vw]">
+                <header
+                    className={`border-b border-brand/50 pb-[1.11vh] transition-all duration-300 ${
+                        selectedCompany
+                            ? 'w-full lg:w-[92.06vw]'
+                            : 'w-full lg:mx-auto lg:w-[56.56vw]'
+                    }`}
+                >
+                    <div className="flex flex-wrap items-baseline gap-[0.63vw]">
+                        <h1 className="type-lg !font-[700] text-ink">
+                            All Companies
+                        </h1>
+                        <span className="type-md text-ink-soft">
+                            {pagination
+                                ? `(Search result: ${pagination.totalItems} items)`
+                                : '(Loading results)'}
+                        </span>
+                    </div>
+                </header>
+
+                <div
+                    className={`mt-[1.48vh] flex flex-col items-stretch gap-[1.04vw] transition-all duration-300 sm:flex-row sm:items-center sm:justify-between ${
+                        selectedCompany
+                            ? 'w-full lg:w-[92.06vw]'
+                            : 'w-full lg:mx-auto lg:w-[56.56vw]'
+                    }`}
+                >
+                    <div className="relative h-10 w-full sm:h-[4.07vh] sm:w-[27.86vw] sm:min-w-[260px]">
+                        <Search
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-[0.83vw] top-1/2 size-5 -translate-y-1/2 text-ink-placeholder"
+                        />
+                        <input
+                            type="text"
+                            role="searchbox"
+                            value={searchQuery}
+                            onChange={(event) =>
+                                setSearchQuery(event.target.value)
+                            }
+                            maxLength={100}
+                            placeholder="Search"
+                            aria-label="Search companies"
+                            className="h-full min-h-[40px] w-full rounded-[50px] border border-line bg-white pl-[2.6vw] pr-[2.6vw] type-sm text-ink shadow-card placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={clearSearch}
+                                aria-label="Clear company search"
+                                className="absolute right-[0.83vw] top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                            >
+                                <X aria-hidden="true" className="size-4" />
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-[1vw] self-end type-sm sm:self-auto">
+                        <span>Order by:</span>
+                        <CompanyOrderDropdown
+                            value={orderBy}
+                            onChange={changeOrder}
+                        />
+                    </div>
+                </div>
+
+                {error && (
+                    <div
+                        role="alert"
+                        className="mt-[2.22vh] rounded-button border border-danger/30 bg-danger/5 px-[1.25vw] py-[1.48vh] type-sm text-danger"
+                    >
+                        <p>{error}</p>
+                        <Button
+                            variant="outline"
+                            onClick={() => setReloadKey((key) => key + 1)}
+                            className="mt-[1.11vh] min-h-[40px] px-[1.04vw] type-sm"
+                        >
+                            Try again
+                        </Button>
+                    </div>
+                )}
+
+                {!error && (
+                    <div
+                        className={`mt-[2.22vh] flex flex-col items-stretch gap-[1.5vw] transition-transform duration-300 ease-in-out lg:flex-row lg:items-start ${
+                            !selectedCompany ? 'lg:mx-auto lg:w-fit' : ''
+                        }`}
+                    >
+                        <div className="w-full shrink-0 lg:w-[56.56vw]">
+                            <div
+                                ref={listRef}
+                                aria-busy={isLoading}
+                                className="max-h-[68vh] overflow-y-auto px-[0.42vw] py-[0.74vh]"
+                            >
+                                {isLoading ? (
+                                    <div
+                                        aria-label="Loading companies"
+                                        className="flex flex-col gap-[1.48vh]"
+                                    >
+                                        {Array.from({ length: 5 }).map(
+                                            (_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="h-[19.9vh] animate-pulse rounded-popup bg-line"
+                                                />
+                                            ),
+                                        )}
+                                    </div>
+                                ) : companies.length > 0 ? (
+                                    <div className="flex flex-col gap-[1.48vh]">
+                                        {companies.map((company) => (
+                                            <CompanySearchCard
+                                                key={company.companyId}
+                                                company={company}
+                                                onSelect={setSelectedCompany}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-[9.26vh] text-center">
+                                        <h2 className="type-md !font-[600] text-ink">
+                                            No companies found
+                                        </h2>
+                                        <p className="mt-[0.74vh] type-sm text-ink-soft">
+                                            {debouncedSearch
+                                                ? 'Try a broader company name, service, or technology.'
+                                                : 'There are no companies available to browse yet.'}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <Pagination
+                                pagination={pagination}
+                                onPageChange={changePage}
+                                ariaLabel="Company search result pages"
+                                isLoading={isLoading}
+                            />
+                        </div>
+
+                        <CompanySearchDetail
+                            company={selectedCompany}
+                            onClose={() => setSelectedCompany(null)}
+                        />
+                    </div>
+                )}
+            </div>
+        </main>
+    );
+}

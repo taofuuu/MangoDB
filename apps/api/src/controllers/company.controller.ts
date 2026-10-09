@@ -329,7 +329,10 @@ export async function listCompanies(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { q, page, pageSize } = parseQuery(companyListQuerySchema, req.query);
+    const { q, orderBy, page, pageSize } = parseQuery(
+        companyListQuerySchema,
+        req.query,
+    );
     // Each word is matched on its own, so "flutter kotlin" finds a Provider
     // whose stack has both, even though they are two separate rows.
     const words = q?.split(/\s+/).filter(Boolean) ?? [];
@@ -348,7 +351,10 @@ export async function listCompanies(
             take: pageSize,
             // companyId breaks ties, so two same-named companies never swap
             // places between pages.
-            orderBy: [{ companyName: 'asc' }, { companyId: 'asc' }],
+            orderBy: [
+                { companyName: orderBy === 'nameDesc' ? 'desc' : 'asc' },
+                { companyId: orderBy === 'nameDesc' ? 'desc' : 'asc' },
+            ],
             select: companySummarySelect,
         }),
     ]);

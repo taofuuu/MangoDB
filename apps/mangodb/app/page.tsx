@@ -35,6 +35,11 @@ const ROUTES = [
     },
     {
         href: '/companies',
+        title: 'Explore companies',
+        detail: 'US3-6 — search and view company details.',
+    },
+    {
+        href: '/admin/companies',
         title: 'Companies view for admin',
         detail: 'US6-2 — the administrator company list, with search, filter and pagination.',
     },

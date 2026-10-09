@@ -143,17 +143,30 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-6. One company search result card. categories and techStack are every
-// one used by the company's services (ADR 0009: tech stack is per service).
+// US3-6. One company search result and its read-only public detail. Credentials,
+// deletion state, and consent timestamps stay out of this discovery response.
+// categories and techStack are every one used by the company's services
+// (ADR 0009: tech stack is per service).
 export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
     companyPhoto: string | null;
     accountType: AccountType;
+    contactEmail: string | null;
+    phone: string;
+    address: string | null;
+    website: string | null;
+    companyType: string[];
+    serviceTerm: string | null;
+    warrantyPolicy: string | null;
+    averageRating: number | null;
+    ratingCount: number;
     categories: string[];
     techStack: string[];
 }
+
+export type CompanySortOrder = 'nameAsc' | 'nameDesc';
 
 export interface CompanyListResponse {
     items: CompanySummary[];
