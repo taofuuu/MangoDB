@@ -13,11 +13,12 @@ import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 
 import Link from 'next/link';
 
-import { FilePlus } from 'lucide-react';
+import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
 import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import ModalShell from '../ui/ModalShell';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
 
@@ -49,7 +50,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const [error, setError] = useState<string | null>(null);
 
     const [reloadKey, setReloadKey] = useState(0);
-    const router = useRouter();
 
     /*
      * ============================================================
@@ -182,6 +182,21 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const pagination = result?.pagination;
+
+    /*
+     * ============================================================
+     * Show Add success popup
+     * ============================================================
+     */
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const showPostSuccess = searchParams.get('success') === 'posted';
+
+    const closePostSuccess = () => {
+        router.replace('/job/view-own', { scroll: false });
+    };
 
     /*
      * ============================================================
@@ -532,11 +547,42 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                 </div>
             </div>
 
-            {/* =========================================================
-                ADD JOB MODAL
+            <ModalShell
+                isOpen={showPostSuccess}
+                onClose={closePostSuccess}
+                labelledBy="post-success-title"
+                describedBy="post-success-description"
+                panelClassName="w-[33.33vw] h-[32vh] max-w-full rounded-popup bg-surface text-center px-[2vw]"
+            >
+                <div className="flex flex-col items-center gap-[2.5vh]">
+                    <div className="mt-[5vh] flex w-full justify-center items-center gap-[1.4vw]">
+                        <CheckCircle2Icon size={90} color="#497B93" />
+                        <h2
+                            id="post-success-title"
+                            className="type-md font-semibold text-black"
+                        >
+                            Post created successfully!
+                        </h2>
+                    </div>
 
-                Keep your existing Add Job modal implementation here.
-                ========================================================= */}
+                    <hr
+                        className="
+                            w-[29.53vw]
+                            border-0
+                            border-t
+                            border-brand/50
+                        "
+                    />
+
+                    <button
+                        type="button"
+                        onClick={closePostSuccess}
+                        className="h-[4.07vh] w-[9.16vw] self-end rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light"
+                    >
+                        OK
+                    </button>
+                </div>
+            </ModalShell>
         </main>
     );
 }

@@ -129,11 +129,8 @@ export default function JobForm() {
                 categoryIds,
             };
 
-            const job = await createJobPosting(data);
-            console.log('Created job:', job);
-
-            router.push('/job/view-own');
-            router.refresh();
+            await createJobPosting(data);
+            router.push('/job/view-own?success=posted');
         } catch (cause) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
 
@@ -313,7 +310,7 @@ export default function JobForm() {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand-dark type-sm !font-[500] text-surface transition-colors hover:bg-brand disabled:opacity-50"
+                    className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light disabled:opacity-50"
                 >
                     {isLoading ? 'Posting...' : 'Post'}
                 </button>
