@@ -128,11 +128,11 @@ function DetailHeader({
 }) {
     return (
         <div className="flex items-start justify-between gap-[1.04vw]">
-            <div className="flex flex-col gap-[0.8vh]">
+            <div className="flex min-w-0 flex-1 flex-col gap-[0.8vh]">
                 <p className="type-sm text-brand">Company Detail</p>
                 <h2
                     id="company-search-detail-title"
-                    className="type-lg !font-[700] text-ink"
+                    className="line-clamp-3 break-all type-lg leading-tight !font-[700] text-ink"
                 >
                     {companyName}
                 </h2>

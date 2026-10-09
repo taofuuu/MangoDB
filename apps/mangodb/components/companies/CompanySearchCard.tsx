@@ -45,7 +45,7 @@ export default function CompanySearchCard({
             />
 
             <div className="min-w-0 flex-1">
-                <h2 className="truncate type-md text-ink">
+                <h2 className="line-clamp-2 break-all type-md leading-tight text-ink">
                     {company.companyName}
                 </h2>
                 <p className="mt-[0.56vh] truncate type-sm text-ink-placeholder">
