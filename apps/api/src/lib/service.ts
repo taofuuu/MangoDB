@@ -142,6 +142,7 @@ export async function assertListingOwned(
 export const serviceSummarySelect = {
     listingId: true,
     listingTitle: true,
+    listingDesc: true,
     minBudget: true,
     maxBudget: true,
     listingCategory: {
@@ -160,6 +161,7 @@ export const serviceSummarySelect = {
 interface ServiceSummaryRow {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     listingCategory: { category: { catName: string } }[];
@@ -179,6 +181,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
     return {
         listingId: row.listingId,
         listingTitle: row.listingTitle,
+        listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
         // Sorted: Prisma returns related rows in no fixed order.

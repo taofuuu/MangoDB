@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import {
     formatServiceBudgetRange,
@@ -13,6 +14,15 @@ export function ServiceDetailPanel({
     service: ServiceSummary;
     onClose: () => void;
 }) {
+    useEffect(() => {
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+
+        document.addEventListener('keydown', closeOnEscape);
+        return () => document.removeEventListener('keydown', closeOnEscape);
+    }, [onClose]);
+
     return (
         <div
             className="
@@ -87,6 +97,15 @@ export function ServiceDetailPanel({
                             <span className="type-sm text-ink-soft">-</span>
                         )}
                     </div>
+                </div>
+
+                {/* Description */}
+                <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
+                    <span className="type-sm text-brand">Description</span>
+
+                    <p className="type-sm leading-relaxed whitespace-pre-wrap text-ink pl-[0.5vw]">
+                        {service.listingDesc || '-'}
+                    </p>
                 </div>
 
                 {/* Budget */}

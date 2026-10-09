@@ -173,6 +173,7 @@ export interface CompanyListResponse {
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
