@@ -3,18 +3,14 @@
 import type { CompanySummary } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import ModalShell from '@/components/ui/ModalShell';
 import RoleTags from '@/components/ui/RoleTags';
-import type { CompanyView } from './CompanyViewToggle';
 
 const detailPanelBaseClassName =
     'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_rgba(73,123,147,0.25)]';
 const listDetailPanelClassName = `${detailPanelBaseClassName} w-[34vw]`;
-const popupDetailPanelClassName = `${detailPanelBaseClassName} w-[45vw] max-w-[calc(100vw-2rem)]`;
 
 type CompanySearchDetailProps = {
     company: CompanySummary | null;
-    view: CompanyView;
     onClose: () => void;
 };
 
@@ -66,10 +62,6 @@ function DetailBody({ company }: { company: CompanySummary }) {
             </p>
 
             <dl>
-                <DetailRow
-                    label="Company ID"
-                    value={String(company.companyId)}
-                />
                 <DetailRow label="Contact email" value={company.contactEmail} />
                 <DetailRow label="Phone" value={company.phone} />
                 <DetailRow label="Address" value={company.address} />
@@ -128,41 +120,20 @@ function DetailHeader({
 
 export default function CompanySearchDetail({
     company,
-    view,
     onClose,
 }: CompanySearchDetailProps) {
     if (!company) return null;
 
-    if (view === 'list') {
-        return (
-            <aside
-                aria-labelledby="company-search-detail-title"
-                className={listDetailPanelClassName}
-            >
-                <DetailHeader
-                    companyName={company.companyName}
-                    onClose={onClose}
-                />
-                <hr className="my-[2vh] border-0 border-t border-brand/30" />
-                <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
-                    <DetailBody company={company} />
-                </div>
-            </aside>
-        );
-    }
-
     return (
-        <ModalShell
-            isOpen
-            onClose={onClose}
-            labelledBy="company-search-detail-title"
-            panelClassName={popupDetailPanelClassName}
+        <aside
+            aria-labelledby="company-search-detail-title"
+            className={listDetailPanelClassName}
         >
             <DetailHeader companyName={company.companyName} onClose={onClose} />
             <hr className="my-[2vh] border-0 border-t border-brand/30" />
             <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
                 <DetailBody company={company} />
             </div>
-        </ModalShell>
+        </aside>
     );
 }

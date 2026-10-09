@@ -16,10 +16,8 @@ import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
 import CompanyOrderDropdown from './CompanyOrderDropdown';
-import CompanyViewToggle, { type CompanyView } from './CompanyViewToggle';
 
 export default function CompanySearchPage() {
-    const [view, setView] = useState<CompanyView>('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [orderBy, setOrderBy] = useState<CompanySortOrder>('nameAsc');
@@ -85,11 +83,6 @@ export default function CompanySearchPage() {
         setSelectedCompany(null);
     }, []);
 
-    const changeView = (nextView: CompanyView) => {
-        setView(nextView);
-        setSelectedCompany(null);
-    };
-
     const changeOrder = (nextOrder: CompanySortOrder) => {
         setOrderBy(nextOrder);
         setPage(1);
@@ -111,37 +104,24 @@ export default function CompanySearchPage() {
             <div className="mx-auto max-w-[93.75vw]">
                 <header
                     className={`border-b border-brand/50 pb-[1.11vh] transition-all duration-300 ${
-                        view === 'list'
-                            ? selectedCompany
-                                ? 'w-[92.06vw]'
-                                : 'mx-auto w-[56.56vw]'
-                            : 'w-full'
+                        selectedCompany ? 'w-[92.06vw]' : 'mx-auto w-[56.56vw]'
                     }`}
                 >
-                    <div className="flex flex-wrap items-end justify-between gap-[1.25vw]">
-                        <div>
-                            <div className="flex flex-wrap items-baseline gap-[0.63vw]">
-                                <h1 className="type-lg !font-[700] text-ink">
-                                    All Companies
-                                </h1>
-                                <span className="type-md text-ink-soft">
-                                    {pagination
-                                        ? `(Search result: ${pagination.totalItems} items)`
-                                        : '(Loading results)'}
-                                </span>
-                            </div>
-                        </div>
-                        <CompanyViewToggle value={view} onChange={changeView} />
+                    <div className="flex flex-wrap items-baseline gap-[0.63vw]">
+                        <h1 className="type-lg !font-[700] text-ink">
+                            All Companies
+                        </h1>
+                        <span className="type-md text-ink-soft">
+                            {pagination
+                                ? `(Search result: ${pagination.totalItems} items)`
+                                : '(Loading results)'}
+                        </span>
                     </div>
                 </header>
 
                 <div
                     className={`mt-[1.48vh] flex items-center justify-between gap-[1.04vw] transition-all duration-300 ${
-                        view === 'list'
-                            ? selectedCompany
-                                ? 'w-[92.06vw]'
-                                : 'mx-auto w-[56.56vw]'
-                            : 'w-full'
+                        selectedCompany ? 'w-[92.06vw]' : 'mx-auto w-[56.56vw]'
                     }`}
                 >
                     <div className="relative h-[4.07vh] w-[27.86vw] min-w-[260px]">
@@ -208,18 +188,10 @@ export default function CompanySearchPage() {
                 {!error && (
                     <div
                         className={`mt-[2.22vh] flex items-start gap-[1.5vw] transition-transform duration-300 ease-in-out ${
-                            view === 'list' && !selectedCompany
-                                ? 'mx-auto w-full lg:w-fit'
-                                : ''
+                            !selectedCompany ? 'mx-auto w-fit' : ''
                         }`}
                     >
-                        <div
-                            className={
-                                view === 'list'
-                                    ? 'w-[56.56vw] shrink-0'
-                                    : 'min-w-0 flex-1'
-                            }
-                        >
+                        <div className="w-[56.56vw] shrink-0">
                             <div
                                 ref={listRef}
                                 aria-busy={isLoading}
@@ -228,41 +200,23 @@ export default function CompanySearchPage() {
                                 {isLoading ? (
                                     <div
                                         aria-label="Loading companies"
-                                        className={
-                                            view === 'grid'
-                                                ? 'grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                                                : 'flex flex-col gap-[1.48vh]'
-                                        }
+                                        className="flex flex-col gap-[1.48vh]"
                                     >
-                                        {Array.from({
-                                            length:
-                                                view === 'grid'
-                                                    ? COMPANY_PAGE_SIZE
-                                                    : 5,
-                                        }).map((_, index) => (
-                                            <div
-                                                key={index}
-                                                className={`animate-pulse bg-line ${
-                                                    view === 'grid'
-                                                        ? 'h-[28.70vh] min-h-[28.70vh] rounded-input'
-                                                        : 'h-[19.9vh] rounded-popup'
-                                                }`}
-                                            />
-                                        ))}
+                                        {Array.from({ length: 5 }).map(
+                                            (_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="h-[19.9vh] animate-pulse rounded-popup bg-line"
+                                                />
+                                            ),
+                                        )}
                                     </div>
                                 ) : companies.length > 0 ? (
-                                    <div
-                                        className={
-                                            view === 'grid'
-                                                ? 'grid grid-cols-1 gap-x-[1.67vw] gap-y-[2.96vh] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                                                : 'flex flex-col gap-[1.48vh]'
-                                        }
-                                    >
+                                    <div className="flex flex-col gap-[1.48vh]">
                                         {companies.map((company) => (
                                             <CompanySearchCard
                                                 key={company.companyId}
                                                 company={company}
-                                                view={view}
                                                 onSelect={setSelectedCompany}
                                             />
                                         ))}
@@ -291,7 +245,6 @@ export default function CompanySearchPage() {
 
                         <CompanySearchDetail
                             company={selectedCompany}
-                            view={view}
                             onClose={() => setSelectedCompany(null)}
                         />
                     </div>
