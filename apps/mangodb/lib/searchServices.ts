@@ -5,15 +5,13 @@
 // something else in this codebase (creating/owning a service listing).
 
 // ---------------------------------------------------------------------------
-// Types — mirror apps/api/src/lib/service.ts (toServiceSummary).
-// NOTE: techStack is the SERVICE's own stack (ADR 0009), so it sits at the top
-// level, not inside `company`.
-// TODO: once @mangodb/shared is a dependency of apps/mangodb, delete these
-// three types and import them from '@mangodb/shared' instead.
+// Wire types come from @mangodb/shared. techStack is the SERVICE's own stack
+// (ADR 0009), so it sits at the top level, not inside `company`.
 // ---------------------------------------------------------------------------
 
 import type {
     PaginationMeta as Pagination,
+    SearchServicesOrder,
     ServiceFilterOptions,
     ServiceListResponse,
     ServiceSummary,
@@ -22,6 +20,7 @@ import { apiFetch } from './api';
 
 export type {
     Pagination,
+    SearchServicesOrder,
     ServiceFilterOptions,
     ServiceListResponse,
     ServiceSummary,
@@ -34,8 +33,6 @@ export type SearchServicesFilters = {
     minBudget: number | null;
     maxBudget: number | null;
 };
-
-export type SearchServicesOrder = 'newest' | 'price-asc' | 'price-desc';
 
 export const EMPTY_SEARCH_SERVICES_FILTERS: SearchServicesFilters = {
     categories: [],
