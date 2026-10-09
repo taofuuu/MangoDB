@@ -156,7 +156,8 @@ export default function CompanySearchPage() {
                             className="pointer-events-none absolute left-[0.83vw] top-1/2 size-5 -translate-y-1/2 text-ink-placeholder"
                         />
                         <input
-                            type="search"
+                            type="text"
+                            role="searchbox"
                             value={searchQuery}
                             onChange={(event) =>
                                 setSearchQuery(event.target.value)
