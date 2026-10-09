@@ -10,6 +10,16 @@ export function getPortfolios(companyId: number): Promise<ServicePortfolio[]> {
     return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
 }
 
+// Service details need only work samples attached to the selected listing,
+// not every portfolio owned by its company.
+export function getPortfoliosByListing(
+    listingId: number,
+): Promise<ServicePortfolio[]> {
+    const query = new URLSearchParams({ listingId: String(listingId) });
+
+    return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
+}
+
 export function deletePortfolio(portfolioId: number): Promise<void> {
     return apiFetch<void>(`/portfolios/${portfolioId}`, { method: 'DELETE' });
 }

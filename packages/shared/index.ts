@@ -35,6 +35,14 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+// Ordering choices supported by the public service-search endpoint. Keeping
+// the values here prevents the web app and API schema from drifting apart.
+export const SEARCH_SERVICES_ORDERS = [
+    'newest',
+    'price-asc',
+    'price-desc',
+] as const;
+export type SearchServicesOrder = (typeof SEARCH_SERVICES_ORDERS)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -165,6 +173,7 @@ export interface CompanyListResponse {
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
@@ -175,6 +184,14 @@ export interface ServiceSummary {
 export interface ServiceListResponse {
     items: ServiceSummary[];
     pagination: PaginationMeta;
+}
+
+// T3.2.2. Values the service-search filter controls can offer. Categories are
+// the fixed catalog; techStack contains names currently used by searchable
+// services (ADR 0009 keeps that vocabulary open-ended).
+export interface ServiceFilterOptions {
+    categories: string[];
+    techStack: string[];
 }
 
 // A company and a token to act as it. Register, login, and a credential change

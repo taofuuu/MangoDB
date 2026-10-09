@@ -955,6 +955,11 @@ fi
 SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
     --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
 
+# T3.2.2: the UI receives the category catalog and the open-ended tech-stack
+# vocabulary from the API instead of maintaining stale hardcoded copies.
+snap services-filter-options GET /services/filter-options \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.2.7: the web probe only. The mobile probe is in another category, and the
 # wide and no-min ones have none.
 snap services-filter-category-and-stack GET \
@@ -989,8 +994,9 @@ snap services-filter-price GET \
     "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# T3.2.10: the web probe starts at or under 20000, and the no-min probe has no
-# start, so it counts as open-ended. The wide probe starts at 50000.
+# T3.2.10: the web probe starts at or under 20000. A service without a stated
+# minimum cannot promise that it fits under the user's maximum, and the wide
+# probe starts at 50000.
 snap services-filter-price-max GET \
     "/services?techStack=$RUN&maxPrice=20000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1003,6 +1009,16 @@ snap services-filter-price-min GET \
 # A blank price means no limit, not 0: all four probes.
 snap services-filter-price-empty GET \
     "/services?techStack=$RUN&maxPrice=" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Sorting happens before pagination. A missing starting price is unknown, not
+# the cheapest option, so the no-min probe is last in both directions.
+snap services-order-price-asc GET \
+    "/services?techStack=$RUN&orderBy=price-asc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-order-price-desc GET \
+    "/services?techStack=$RUN&orderBy=price-desc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Slider ends that cross are a 400 the filter panel can show.
@@ -1151,4 +1167,3 @@ snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close"
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
-

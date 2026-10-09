@@ -12,7 +12,7 @@ import { SearchServicesEmptyState } from './SearchServicesEmptyState';
 
 function CardSkeleton() {
     return (
-        <div className="rounded-button h-[160px] animate-pulse border border-[var(--color-line)] bg-[var(--color-brand-tint)]" />
+        <div className="rounded-button h-[160px] animate-pulse border border-line bg-brand-tint" />
     );
 }
 
@@ -44,10 +44,7 @@ function InfiniteScrollSentinel({
     if (!hasMore) return null;
 
     return (
-        <div
-            ref={ref}
-            className="py-6 text-center type-xs text-[var(--color-ink-soft)]"
-        >
+        <div ref={ref} className="py-6 text-center type-xs text-ink-soft">
             {loading ? 'Loading more…' : ''}
         </div>
     );
@@ -62,6 +59,7 @@ export function SearchServicesResultsGrid({
     hasMore,
     onPageChange,
     onLoadMore,
+    onViewDetail,
 }: {
     mode: SearchServicesMode;
     items: ServiceSummary[];
@@ -71,6 +69,7 @@ export function SearchServicesResultsGrid({
     hasMore: boolean;
     onPageChange: (page: number) => void;
     onLoadMore: () => void;
+    onViewDetail: (service: ServiceSummary) => void;
 }) {
     const listRef = useRef<HTMLDivElement>(null);
     const currentPage = pagination?.page;
@@ -94,20 +93,18 @@ export function SearchServicesResultsGrid({
     if (status === 'error') {
         if (isNotSignedIn(error)) {
             return (
-                <p className="py-24 text-center type-sm text-[var(--color-ink-soft)]">
-                    Please sign in to browse services.{' '}
-                    <Link
-                        href="/login"
-                        className="text-[var(--color-brand)] underline"
-                    >
-                        Sign in
+                <p className="py-24 text-center type-sm text-ink-soft">
+                    You are not signed in.{' '}
+                    <Link href="/login" className="text-brand underline">
+                        Log in
                     </Link>
+                    , then come back.
                 </p>
             );
         }
 
         return (
-            <p className="py-24 text-center type-sm text-[var(--color-danger)]">
+            <p className="py-24 text-center type-sm text-danger">
                 {describeError(error)}
             </p>
         );
@@ -130,6 +127,7 @@ export function SearchServicesResultsGrid({
                     <SearchServiceCard
                         key={service.listingId}
                         service={service}
+                        onViewDetail={onViewDetail}
                     />
                 ))}
 

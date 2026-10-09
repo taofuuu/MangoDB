@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LISTING_STATUSES } from '@mangodb/shared';
+import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
 
 // Prisma Int is a 32-bit column: without a max, 3000000000 passes validation
 // and fails at the database as a 500. Same ceiling portfolio uses for ids.
@@ -68,6 +68,7 @@ export const serviceListQuerySchema = z
         techStack: nameList.optional(),
         minPrice: price,
         maxPrice: price,
+        orderBy: z.enum(SEARCH_SERVICES_ORDERS).default('newest'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })
