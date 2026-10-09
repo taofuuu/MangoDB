@@ -81,15 +81,69 @@ export function SearchServicesPage({
     const signedOut = isNotSignedIn(error) || isNotSignedIn(optionsError);
     const showSearchControls = optionsStatus !== 'loading' && !signedOut;
 
+    const headerAndSearch = (
+        <>
+            <div className="mb-4 flex items-baseline gap-2 border-b border-brand-dark pb-2">
+                <h1 className="type-hd text-ink">All Services</h1>
+                <span className="type-xs text-ink-soft">
+                    (Search result: {pagination?.totalItems ?? 0} items)
+                </span>
+            </div>
+
+            {showSearchControls && (
+                <>
+                    <SearchServicesBar
+                        onSearch={search}
+                        orderBy={orderBy}
+                        onOrderByChange={setOrderBy}
+                    />
+                    <SearchServicesActiveFilters filters={filters} />
+                </>
+            )}
+        </>
+    );
+
+    const results = (
+        <SearchServicesResultsGrid
+            mode={mode}
+            items={items}
+            status={status}
+            error={error}
+            pagination={pagination}
+            hasMore={hasMore}
+            onPageChange={goToPage}
+            onLoadMore={loadMore}
+            onViewDetail={setSelectedService}
+        />
+    );
+
+    if (selectedService) {
+        return (
+            <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
+                <div className="mx-auto max-w-[93.75vw]">
+                    <div className="ml-[2vw] w-[91vw]">{headerAndSearch}</div>
+
+                    <div className="mt-[2vh] ml-[2vw] flex items-start gap-[1.5vw]">
+                        <div className="h-[72.63vh] min-w-0 w-[56.56vw] flex-none">
+                            {results}
+                        </div>
+
+                        <div className="h-[72.63vh] w-[35vw] shrink-0">
+                            <ServiceDetailPanel
+                                key={selectedService.listingId}
+                                service={selectedService}
+                                onClose={closeDetail}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
     return (
-        <div
-            className={`flex py-10 ${
-                selectedService
-                    ? 'ml-[2vw] gap-[1.5vw]'
-                    : 'mx-auto max-w-[1360px] gap-8 px-10'
-            }`}
-        >
-            {showSearchControls && !selectedService && (
+        <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
+            {showSearchControls && (
                 <SearchServicesFilterSidebar
                     filters={filters}
                     options={options}
@@ -103,55 +157,10 @@ export function SearchServicesPage({
                 />
             )}
 
-            <div
-                className={
-                    selectedService
-                        ? 'min-w-0 w-[56.56vw] flex-none'
-                        : 'min-w-0 flex-1'
-                }
-            >
-                {/* Divider under the title, per the mockup */}
-                <div className="mb-4 flex items-baseline gap-2 border-b border-brand-dark pb-2">
-                    <h1 className="type-hd text-ink">All Services</h1>
-                    <span className="type-xs text-ink-soft">
-                        (Search result: {pagination?.totalItems ?? 0} items)
-                    </span>
-                </div>
-
-                {showSearchControls && (
-                    <>
-                        <SearchServicesBar
-                            onSearch={search}
-                            orderBy={orderBy}
-                            onOrderByChange={setOrderBy}
-                        />
-                        <SearchServicesActiveFilters filters={filters} />
-                    </>
-                )}
-
-                <div className="mt-4">
-                    <SearchServicesResultsGrid
-                        mode={mode}
-                        items={items}
-                        status={status}
-                        error={error}
-                        pagination={pagination}
-                        hasMore={hasMore}
-                        onPageChange={goToPage}
-                        onLoadMore={loadMore}
-                        onViewDetail={setSelectedService}
-                    />
-                </div>
+            <div className="min-w-0 flex-1">
+                {headerAndSearch}
+                <div className="mt-4">{results}</div>
             </div>
-
-            {selectedService && (
-                <div className="h-[72.63vh] w-[35vw] shrink-0">
-                    <ServiceDetailPanel
-                        service={selectedService}
-                        onClose={closeDetail}
-                    />
-                </div>
-            )}
         </div>
     );
 }
