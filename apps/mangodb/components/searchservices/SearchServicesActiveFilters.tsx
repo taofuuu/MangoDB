@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import type { SearchServicesFilters } from '@/lib/searchServices';
 
 function describe(filters: SearchServicesFilters): string[] {
@@ -42,12 +43,10 @@ export function SearchServicesActiveFilters({
             aria-label="Toggle active service filters"
             className="flex w-full items-center gap-3 border-b border-line py-3 text-left type-lg text-ink"
         >
-            <span
+            <ChevronRight
                 className={`transition-transform ${open ? 'rotate-90' : ''}`}
                 aria-hidden
-            >
-                ›
-            </span>
+            />
             {open
                 ? parts.join(' | ')
                 : `${parts.length} filter${parts.length > 1 ? 's' : ''} applied`}

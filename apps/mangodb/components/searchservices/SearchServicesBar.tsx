@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import type { SearchServicesOrder } from '@/lib/searchServices';
+import { ChevronDown } from 'lucide-react';
+import type { SearchServicesOrder } from '@mangodb/shared';
 
 const ORDER_OPTIONS: { value: SearchServicesOrder; label: string }[] = [
     { value: 'newest', label: 'Newest' },
@@ -70,7 +71,7 @@ export function SearchServicesBar({
                 <span>Order by:</span>
                 <div
                     ref={orderMenuRef}
-                    className="relative w-[8.125vw] min-w-[8.125vw] max-w-[8.125vw] shrink-0 basis-[8.125vw]"
+                    className="relative w-auto min-w-[180px] shrink-0"
                 >
                     <button
                         type="button"
@@ -78,12 +79,13 @@ export function SearchServicesBar({
                         aria-haspopup="listbox"
                         aria-expanded={orderMenuOpen}
                         aria-controls={orderMenuId}
-                        className="rounded-button flex h-[4.07vh] min-h-[4.07vh] max-h-[4.07vh] w-full box-border items-center justify-between gap-2 border border-line bg-surface-white px-[0.7vw] text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
+                        className="rounded-button flex h-9 w-full items-center justify-between gap-2 border border-line bg-surface-white px-3 text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
                     >
                         <span>{selectedOrder.label}</span>
-                        <span aria-hidden className="type-xs text-ink-soft">
-                            ▼
-                        </span>
+                        <ChevronDown
+                            aria-hidden
+                            className="h-4 w-4 shrink-0 text-ink-soft"
+                        />
                     </button>
 
                     {orderMenuOpen && (
@@ -91,7 +93,7 @@ export function SearchServicesBar({
                             id={orderMenuId}
                             role="listbox"
                             aria-label="Order services by"
-                            className="rounded-button absolute left-0 top-[calc(100%+0.4vh)] z-50 h-[12vh] w-full overflow-hidden border border-line bg-surface-white shadow-card"
+                            className="rounded-button absolute left-0 top-10 z-50 w-full overflow-hidden border border-line bg-surface-white shadow-card"
                         >
                             {ORDER_OPTIONS.map((option) => (
                                 <button
@@ -103,7 +105,7 @@ export function SearchServicesBar({
                                         onOrderByChange(option.value);
                                         setOrderMenuOpen(false);
                                     }}
-                                    className={`flex h-1/3 w-full items-center px-[0.7vw] text-left type-xs text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
+                                    className={`flex h-9 w-full items-center px-3 text-left type-xs text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
                                         option.value === orderBy
                                             ? 'bg-brand-tint text-brand-deep'
                                             : ''

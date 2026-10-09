@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import type {
     SearchServicesFilters,
     ServiceFilterOptions,
@@ -89,7 +90,7 @@ function FilterGroup({
                             aria-label={`Remove ${tag}`}
                             className="text-brand-deep hover:text-danger"
                         >
-                            ×
+                            <X aria-hidden className="h-3 w-3" />
                         </button>
                     </span>
                 ))}
@@ -104,7 +105,7 @@ function FilterGroup({
                         aria-controls={menuId}
                         className="rounded-status h-7 w-7 cursor-pointer bg-fill-muted text-center type-sm text-ink-soft hover:bg-line focus:ring-1 focus:ring-brand focus:outline-none"
                     >
-                        +
+                        <Plus aria-hidden className="mx-auto h-4 w-4" />
                     </button>
                 )}
 
@@ -132,7 +133,7 @@ function FilterGroup({
                         <div
                             role="listbox"
                             aria-label={`${label} options`}
-                            className="h-50 overflow-y-auto"
+                            className="max-h-52 overflow-y-auto"
                         >
                             {visibleOptions.map((option) => (
                                 <button
@@ -163,6 +164,112 @@ function FilterGroup({
     );
 }
 
+function parseBudget(value: string): number | null {
+    if (value.trim() === '') return null;
+
+    const budget = Number(value);
+    return Number.isInteger(budget) && budget >= 0 ? budget : null;
+}
+
+function PriceRange({
+    filters,
+    onChange,
+}: {
+    filters: SearchServicesFilters;
+    onChange: (next: SearchServicesFilters) => void;
+}) {
+    const [minInput, setMinInput] = useState(
+        filters.minBudget?.toString() ?? '',
+    );
+    const [maxInput, setMaxInput] = useState(
+        filters.maxBudget?.toString() ?? '',
+    );
+    const latestFilters = useRef(filters);
+
+    useEffect(() => {
+        latestFilters.current = filters;
+    }, [filters]);
+
+    // Waiting briefly before committing avoids issuing a request for every
+    // digit while still making number filters feel immediate.
+    useEffect(() => {
+        const minBudget = parseBudget(minInput);
+        const maxBudget = parseBudget(maxInput);
+        const current = latestFilters.current;
+
+        if (
+            minBudget === current.minBudget &&
+            maxBudget === current.maxBudget
+        ) {
+            return;
+        }
+
+        const timeout = window.setTimeout(() => {
+            onChange({
+                ...latestFilters.current,
+                minBudget,
+                maxBudget,
+            });
+        }, 300);
+
+        return () => window.clearTimeout(timeout);
+    }, [minInput, maxInput, onChange]);
+
+    const clear = () => {
+        setMinInput('');
+        setMaxInput('');
+        onChange({
+            ...latestFilters.current,
+            minBudget: null,
+            maxBudget: null,
+        });
+    };
+
+    return (
+        <div className="pt-3">
+            <div className="mb-2 flex items-center justify-between">
+                <span className="type-sm text-ink">Price Range</span>
+                {(filters.minBudget != null || filters.maxBudget != null) && (
+                    <button
+                        type="button"
+                        onClick={clear}
+                        className="type-xs text-ink-soft underline hover:text-brand"
+                    >
+                        Clear
+                    </button>
+                )}
+            </div>
+            <div className="flex items-center gap-2">
+                <label className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 type-sm text-ink">Min</span>
+                    <input
+                        type="number"
+                        min={0}
+                        value={minInput}
+                        onChange={(event) => setMinInput(event.target.value)}
+                        aria-label="Minimum price"
+                        className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
+                    />
+                </label>
+                <span className="flex h-7 items-center justify-center type-sm text-ink">
+                    -
+                </span>
+                <label className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="shrink-0 type-sm text-ink">Max</span>
+                    <input
+                        type="number"
+                        min={0}
+                        value={maxInput}
+                        onChange={(event) => setMaxInput(event.target.value)}
+                        aria-label="Maximum price"
+                        className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
+                    />
+                </label>
+            </div>
+        </div>
+    );
+}
+
 export function SearchServicesFilterSidebar({
     filters,
     options,
@@ -176,13 +283,22 @@ export function SearchServicesFilterSidebar({
     onChange: (next: SearchServicesFilters) => void;
     onClearAll: () => void;
 }) {
+    const [priceResetVersion, setPriceResetVersion] = useState(0);
+
+    const clearAll = () => {
+        // Remount PriceRange so an uncommitted draft and its pending debounce
+        // are discarded along with the committed filters.
+        setPriceResetVersion((version) => version + 1);
+        onClearAll();
+    };
+
     return (
         <aside className="rounded-status w-full max-w-[300px] shrink-0 self-start bg-panel p-5">
             <div className="mb-1 flex items-center justify-between border-b border-brand-light pb-3">
                 <h2 className="type-md text-ink">Filters</h2>
                 <button
                     type="button"
-                    onClick={onClearAll}
+                    onClick={clearAll}
                     className="type-xs text-ink-soft underline hover:text-brand"
                 >
                     Clear all
@@ -209,66 +325,11 @@ export function SearchServicesFilterSidebar({
                 searchable
             />
 
-            <div className="pt-3">
-                <div className="mb-2 flex items-center justify-between">
-                    <span className="type-sm text-ink">Price Range</span>
-                    {(filters.minBudget != null ||
-                        filters.maxBudget != null) && (
-                        <button
-                            type="button"
-                            onClick={() =>
-                                onChange({
-                                    ...filters,
-                                    minBudget: null,
-                                    maxBudget: null,
-                                })
-                            }
-                            className="type-xs text-ink-soft underline hover:text-brand"
-                        >
-                            Clear
-                        </button>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="shrink-0 type-sm text-ink">Min</span>
-                        <input
-                            type="number"
-                            min={0}
-                            value={filters.minBudget ?? ''}
-                            onChange={(e) =>
-                                onChange({
-                                    ...filters,
-                                    minBudget: e.target.value
-                                        ? Number(e.target.value)
-                                        : null,
-                                })
-                            }
-                            className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
-                        />
-                    </label>
-                    <span className="flex h-7 items-center justify-center type-sm text-ink">
-                        -
-                    </span>
-                    <label className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className="shrink-0 type-sm text-ink">Max</span>
-                        <input
-                            type="number"
-                            min={0}
-                            value={filters.maxBudget ?? ''}
-                            onChange={(e) =>
-                                onChange({
-                                    ...filters,
-                                    maxBudget: e.target.value
-                                        ? Number(e.target.value)
-                                        : null,
-                                })
-                            }
-                            className="rounded-input type-sm h-7 min-w-0 w-full border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
-                        />
-                    </label>
-                </div>
-            </div>
+            <PriceRange
+                key={`${filters.minBudget ?? ''}-${filters.maxBudget ?? ''}-${priceResetVersion}`}
+                filters={filters}
+                onChange={onChange}
+            />
         </aside>
     );
 }
