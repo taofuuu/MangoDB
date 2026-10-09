@@ -1,28 +1,8 @@
 {
-    "request": "GET /companies?orderBy=nameAsc&q=Snapshot%20Seed",
+    "request": "GET /companies?orderBy=nameDesc&q=Snapshot%20Seed",
     "status": 200,
     "body": {
         "items": [
-            {
-                "accountType": "PROVIDER",
-                "address": null,
-                "averageRating": null,
-                "categories": [],
-                "companyDescription": null,
-                "companyId": 142,
-                "companyName": "Snapshot Seed Provider",
-                "companyPhoto": null,
-                "companyType": [
-                    "Software House"
-                ],
-                "contactEmail": null,
-                "phone": "0810000001",
-                "ratingCount": 0,
-                "serviceTerm": "Delivery within 30 days of the agreed start.",
-                "techStack": [],
-                "warrantyPolicy": "90 days of bug fixes after handover.",
-                "website": null
-            },
             {
                 "accountType": "RECEIVER",
                 "address": null,
@@ -41,6 +21,26 @@
                 "serviceTerm": null,
                 "techStack": [],
                 "warrantyPolicy": null,
+                "website": null
+            },
+            {
+                "accountType": "PROVIDER",
+                "address": null,
+                "averageRating": null,
+                "categories": [],
+                "companyDescription": null,
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null,
+                "companyType": [
+                    "Software House"
+                ],
+                "contactEmail": null,
+                "phone": "0810000001",
+                "ratingCount": 0,
+                "serviceTerm": "Delivery within 30 days of the agreed start.",
+                "techStack": [],
+                "warrantyPolicy": "90 days of bug fixes after handover.",
                 "website": null
             }
         ],

@@ -1,10 +1,12 @@
 {
-    "request": "GET /companies?page=1&pageSize=2",
+    "request": "GET /companies?orderBy=nameAsc&page=1&pageSize=2",
     "status": 200,
     "body": {
         "items": [
             {
                 "accountType": "PROVIDER",
+                "address": null,
+                "averageRating": null,
                 "categories": [
                     "Mobile App Development",
                     "Web Development"
@@ -13,10 +15,21 @@
                 "companyId": 231,
                 "companyName": "Acme Solutions Ltd.",
                 "companyPhoto": null,
-                "techStack": []
+                "companyType": [
+                    "LOGISTICS"
+                ],
+                "contactEmail": null,
+                "phone": "0812345678",
+                "ratingCount": 0,
+                "serviceTerm": null,
+                "techStack": [],
+                "warrantyPolicy": null,
+                "website": null
             },
             {
                 "accountType": "PROVIDER",
+                "address": "Bangkok",
+                "averageRating": null,
                 "categories": [
                     "Mobile App Development"
                 ],
@@ -24,7 +37,16 @@
                 "companyId": 3,
                 "companyName": "AppSynth",
                 "companyPhoto": null,
-                "techStack": []
+                "companyType": [
+                    "Agency"
+                ],
+                "contactEmail": null,
+                "phone": "023333333",
+                "ratingCount": 0,
+                "serviceTerm": "Deliverables via TestFlight / Play Console",
+                "techStack": [],
+                "warrantyPolicy": "Free iOS/Android version updates for 1 year",
+                "website": "www.appsynth.com"
             }
         ],
         "pagination": {

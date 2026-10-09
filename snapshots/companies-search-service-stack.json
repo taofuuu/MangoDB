@@ -1,10 +1,12 @@
 {
-    "request": "GET /companies?q=<run>",
+    "request": "GET /companies?orderBy=nameAsc&q=<run>",
     "status": 200,
     "body": {
         "items": [
             {
                 "accountType": "PROVIDER",
+                "address": null,
+                "averageRating": null,
                 "categories": [
                     "Web Development"
                 ],
@@ -12,10 +14,19 @@
                 "companyId": 142,
                 "companyName": "Snapshot Seed Provider",
                 "companyPhoto": null,
+                "companyType": [
+                    "Software House"
+                ],
+                "contactEmail": null,
+                "phone": "0810000001",
+                "ratingCount": 0,
+                "serviceTerm": "Delivery within 30 days of the agreed start.",
                 "techStack": [
                     "<run>-Node.js",
                     "<run>-React"
-                ]
+                ],
+                "warrantyPolicy": "90 days of bug fixes after handover.",
+                "website": null
             }
         ],
         "pagination": {
