@@ -99,6 +99,28 @@ export default function CompanySearchPage() {
     const companies = result?.items ?? [];
     const pagination = result?.pagination;
 
+    if (isLoading && !result && !error) {
+        return (
+            <main className="min-h-screen bg-surface p-6 text-ink">
+                <p className="type-sm">Loading…</p>
+            </main>
+        );
+    }
+
+    if (error === NOT_SIGNED_IN) {
+        return (
+            <main className="min-h-screen bg-surface p-6 text-ink">
+                <p className="type-sm">
+                    You are not signed in.{' '}
+                    <Link href="/login" className="underline">
+                        Log in
+                    </Link>
+                    , then come back.
+                </p>
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto max-w-[93.75vw]">
@@ -164,16 +186,7 @@ export default function CompanySearchPage() {
                     </div>
                 </div>
 
-                {error === NOT_SIGNED_IN && (
-                    <div className="mt-[2.22vh] rounded-button border border-line bg-white px-[1.25vw] py-[1.48vh] type-sm text-ink">
-                        Please sign in to explore companies.{' '}
-                        <Link href="/login" className="text-brand underline">
-                            Sign in
-                        </Link>
-                    </div>
-                )}
-
-                {error && error !== NOT_SIGNED_IN && (
+                {error && (
                     <div
                         role="alert"
                         className="mt-[2.22vh] rounded-button border border-danger/30 bg-danger/5 px-[1.25vw] py-[1.48vh] type-sm text-danger"
