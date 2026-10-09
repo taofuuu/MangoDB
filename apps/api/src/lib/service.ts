@@ -6,11 +6,12 @@ import type {
     ServiceFilterOptions,
     ServiceSummary,
 } from '@mangodb/shared';
-import { LISTING_STATUSES } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
 
-export const DEFAULT_LISTING_STATUS: ListingStatus = LISTING_STATUSES[1];
+// The status a new service is created with. The allowed listing_status values
+// live in packages/shared (LISTING_STATUSES, ADR 0010).
+export const DEFAULT_LISTING_STATUS: ListingStatus = 'OPEN';
 
 // ADR 0009. A service's tech names, read through its join table. Used as
 // `service: serviceTechStackSelect` wherever a response shows a stack.
