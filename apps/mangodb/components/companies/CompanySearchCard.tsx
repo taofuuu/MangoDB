@@ -37,7 +37,7 @@ export default function CompanySearchCard({
     onSelect,
 }: CompanySearchCardProps) {
     return (
-        <article className="relative flex min-h-[19.9vh] max-w-[54.69vw] items-center gap-[1.25vw] rounded-[30px] bg-white px-[2.29vw] py-[2.314vh] text-left leading-relaxed shadow-sm transition">
+        <article className="relative flex min-h-[19.9vh] max-w-full flex-wrap items-center gap-[1.25vw] rounded-[30px] bg-white px-[2.29vw] py-[2.314vh] text-left leading-relaxed shadow-sm transition lg:max-w-[54.69vw]">
             <CompanyAvatar
                 name={company.companyName}
                 photoUrl={company.companyPhoto}
@@ -61,7 +61,7 @@ export default function CompanySearchCard({
                 type="button"
                 onClick={() => onSelect(company)}
                 aria-label={`View details for ${company.companyName}`}
-                className="flex h-[4.07vh] w-[8.125vw] items-center justify-center gap-[0.5vw] rounded-[15px] border border-brand type-sm text-brand hover:bg-brand/10"
+                className="ml-auto flex h-10 min-w-[7rem] shrink-0 items-center justify-center gap-[0.5vw] rounded-[15px] border border-brand px-3 type-sm text-brand hover:bg-brand/10 sm:h-[4.07vh] sm:w-[8.125vw] sm:min-w-0 sm:px-0"
             >
                 view detail
                 <ArrowRight aria-hidden="true" size={15} />

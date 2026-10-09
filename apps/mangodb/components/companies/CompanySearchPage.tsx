@@ -104,7 +104,9 @@ export default function CompanySearchPage() {
             <div className="mx-auto max-w-[93.75vw]">
                 <header
                     className={`border-b border-brand/50 pb-[1.11vh] transition-all duration-300 ${
-                        selectedCompany ? 'w-[92.06vw]' : 'mx-auto w-[56.56vw]'
+                        selectedCompany
+                            ? 'w-full lg:w-[92.06vw]'
+                            : 'w-full lg:mx-auto lg:w-[56.56vw]'
                     }`}
                 >
                     <div className="flex flex-wrap items-baseline gap-[0.63vw]">
@@ -120,11 +122,13 @@ export default function CompanySearchPage() {
                 </header>
 
                 <div
-                    className={`mt-[1.48vh] flex items-center justify-between gap-[1.04vw] transition-all duration-300 ${
-                        selectedCompany ? 'w-[92.06vw]' : 'mx-auto w-[56.56vw]'
+                    className={`mt-[1.48vh] flex flex-col items-stretch gap-[1.04vw] transition-all duration-300 sm:flex-row sm:items-center sm:justify-between ${
+                        selectedCompany
+                            ? 'w-full lg:w-[92.06vw]'
+                            : 'w-full lg:mx-auto lg:w-[56.56vw]'
                     }`}
                 >
-                    <div className="relative h-[4.07vh] w-[27.86vw] min-w-[260px]">
+                    <div className="relative h-10 w-full sm:h-[4.07vh] sm:w-[27.86vw] sm:min-w-[260px]">
                         <Search
                             aria-hidden="true"
                             className="pointer-events-none absolute left-[0.83vw] top-1/2 size-5 -translate-y-1/2 text-ink-placeholder"
@@ -151,7 +155,7 @@ export default function CompanySearchPage() {
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-[0.52vw] type-xs text-ink-soft">
+                    <div className="flex items-center gap-[0.52vw] self-end type-xs text-ink-soft sm:self-auto">
                         <span>Order by:</span>
                         <CompanyOrderDropdown
                             value={orderBy}
@@ -187,11 +191,11 @@ export default function CompanySearchPage() {
 
                 {!error && (
                     <div
-                        className={`mt-[2.22vh] flex items-start gap-[1.5vw] transition-transform duration-300 ease-in-out ${
-                            !selectedCompany ? 'mx-auto w-fit' : ''
+                        className={`mt-[2.22vh] flex flex-col items-stretch gap-[1.5vw] transition-transform duration-300 ease-in-out lg:flex-row lg:items-start ${
+                            !selectedCompany ? 'lg:mx-auto lg:w-fit' : ''
                         }`}
                     >
-                        <div className="w-[56.56vw] shrink-0">
+                        <div className="w-full shrink-0 lg:w-[56.56vw]">
                             <div
                                 ref={listRef}
                                 aria-busy={isLoading}

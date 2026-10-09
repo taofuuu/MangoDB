@@ -1,13 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import type { CompanySummary } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import ModalShell from '@/components/ui/ModalShell';
 import RoleTags from '@/components/ui/RoleTags';
+import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
     'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_rgba(73,123,147,0.25)]';
 const listDetailPanelClassName = `${detailPanelBaseClassName} w-[34vw]`;
+const popupDetailPanelClassName = `${detailPanelBaseClassName} w-full max-w-[calc(100vw-2rem)] sm:w-[45vw]`;
 
 type CompanySearchDetailProps = {
     company: CompanySummary | null;
@@ -31,6 +35,8 @@ function DetailRow({ label, value }: DetailRowProps) {
 }
 
 function DetailBody({ company }: { company: CompanySummary }) {
+    const showProviderDetails = isProviderAccount(company.accountType);
+
     return (
         <>
             <div className="mb-[1.85vh] flex items-center gap-[1.04vw]">
@@ -78,12 +84,37 @@ function DetailBody({ company }: { company: CompanySummary }) {
                     label="Technologies"
                     value={company.techStack.join(', ')}
                 />
-                <DetailRow label="Service terms" value={company.serviceTerm} />
-                <DetailRow
-                    label="Warranty policy"
-                    value={company.warrantyPolicy}
-                />
+                {showProviderDetails && (
+                    <>
+                        <DetailRow
+                            label="Service terms"
+                            value={company.serviceTerm}
+                        />
+                        <DetailRow
+                            label="Warranty policy"
+                            value={company.warrantyPolicy}
+                        />
+                    </>
+                )}
             </dl>
+        </>
+    );
+}
+
+function DetailSurface({
+    company,
+    onClose,
+}: {
+    company: CompanySummary;
+    onClose: () => void;
+}) {
+    return (
+        <>
+            <DetailHeader companyName={company.companyName} onClose={onClose} />
+            <hr className="my-[2vh] border-0 border-t border-brand/30" />
+            <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
+                <DetailBody company={company} />
+            </div>
         </>
     );
 }
@@ -122,18 +153,38 @@ export default function CompanySearchDetail({
     company,
     onClose,
 }: CompanySearchDetailProps) {
+    const [isCompactViewport, setIsCompactViewport] = useState(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 1023px)');
+        const updateViewport = () => setIsCompactViewport(mediaQuery.matches);
+
+        updateViewport();
+        mediaQuery.addEventListener('change', updateViewport);
+        return () => mediaQuery.removeEventListener('change', updateViewport);
+    }, []);
+
     if (!company) return null;
+
+    if (isCompactViewport) {
+        return (
+            <ModalShell
+                isOpen
+                onClose={onClose}
+                labelledBy="company-search-detail-title"
+                panelClassName={popupDetailPanelClassName}
+            >
+                <DetailSurface company={company} onClose={onClose} />
+            </ModalShell>
+        );
+    }
 
     return (
         <aside
             aria-labelledby="company-search-detail-title"
             className={listDetailPanelClassName}
         >
-            <DetailHeader companyName={company.companyName} onClose={onClose} />
-            <hr className="my-[2vh] border-0 border-t border-brand/30" />
-            <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
-                <DetailBody company={company} />
-            </div>
+            <DetailSurface company={company} onClose={onClose} />
         </aside>
     );
 }
