@@ -17,6 +17,7 @@ import { FilePlus } from 'lucide-react';
 
 import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
+import { useRouter } from 'next/navigation';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
 
@@ -48,14 +49,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const [error, setError] = useState<string | null>(null);
 
     const [reloadKey, setReloadKey] = useState(0);
-
-    /*
-     * ============================================================
-     * Add Job modal
-     * ============================================================
-     */
-
-    const [isAddOpen, setIsAddOpen] = useState(false);
+    const router = useRouter();
 
     /*
      * ============================================================
@@ -252,7 +246,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Status filters */}
                         <div
                             className="
-                                mb-[2.22vh]
                                 flex
                                 items-center
                                 gap-[0.63vw]
@@ -334,7 +327,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Add Job */}
                         <button
                             type="button"
-                            onClick={() => setIsAddOpen(true)}
+                            onClick={() => router.push('view-own/create')}
                             className="
                                 flex
                                 h-[4.17vh]
@@ -544,26 +537,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
                 Keep your existing Add Job modal implementation here.
                 ========================================================= */}
-
-            {isAddOpen && (
-                <>
-                    {/*
-                     * Your existing Add Job modal goes here.
-                     *
-                     * Example:
-                     *
-                     * <AddJobModal
-                     *     onClose={() =>
-                     *         setIsAddOpen(false)
-                     *     }
-                     *     onSuccess={() => {
-                     *         setIsAddOpen(false);
-                     *         retryList();
-                     *     }}
-                     * />
-                     */}
-                </>
-            )}
         </main>
     );
 }

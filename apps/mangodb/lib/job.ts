@@ -64,3 +64,22 @@ export function getMyJobPostings(
 export function getJobPostingDetail(jobPostingId: number): Promise<JobPosting> {
     return apiFetch<JobPosting>(`/job-postings/${jobPostingId}`);
 }
+
+//POST job
+export interface CreateJobPosting {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null;
+    maxBudget: number | null;
+    locationPref?: string | null;
+    duration?: string | null;
+    deadline?: string | null;
+    categoryIds?: number[];
+}
+
+export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
+    return apiFetch<JobPosting>('/job-postings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
