@@ -171,34 +171,39 @@ function matchesFilters({
         });
     }
     // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. An empty budget counts as open-ended,
-    // so it never rules a service out on its own.
+    // possible somewhere inside both. A one-sided range is open-ended only on
+    // its missing side; a service with no price at all cannot match a filter.
     if (maxPrice !== undefined) {
         // Its lowest price fits under the slider's max.
-        where.push({
-            OR: [{ minBudget: null }, { minBudget: { lte: maxPrice } }],
-        });
+        where.push({ minBudget: { lte: maxPrice } });
     }
     if (minPrice !== undefined) {
         // Its highest price reaches the slider's min.
         where.push({
-            OR: [{ maxBudget: null }, { maxBudget: { gte: minPrice } }],
+            OR: [
+                { maxBudget: { gte: minPrice } },
+                // A declared minimum with no upper limit can still reach the
+                // requested threshold. An entirely unpriced service cannot.
+                {
+                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
+                },
+            ],
         });
     }
     return where;
 }
 
 // Ordering is applied in the database, before pagination. Price ordering uses
-// the start of the service's range consistently in both directions; an absent
-// minimum is open-ended, so it comes first when sorting low-to-high and last
-// when sorting high-to-low. listingId keeps pages stable when values tie.
+// the start of the service's range consistently in both directions. Missing
+// prices sort last because "Contact for pricing" must not be presented as the
+// cheapest option. listingId keeps pages stable when values tie.
 function serviceOrderBy(
     orderBy: ServiceListQuery['orderBy'],
 ): Prisma.ListingOrderByWithRelationInput[] {
     switch (orderBy) {
         case 'price-asc':
             return [
-                { minBudget: { sort: 'asc', nulls: 'first' } },
+                { minBudget: { sort: 'asc', nulls: 'last' } },
                 { maxBudget: { sort: 'asc', nulls: 'last' } },
                 { listingId: 'desc' },
             ];
@@ -278,6 +283,7 @@ export async function listServiceFilterOptions(
                     some: {
                         service: {
                             listing: {
+                                listingType: 'SERVICE',
                                 listingStatus: 'OPEN',
                                 company: { deletedAt: null },
                             },

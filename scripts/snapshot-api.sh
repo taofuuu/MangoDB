@@ -994,8 +994,9 @@ snap services-filter-price GET \
     "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# T3.2.10: the web probe starts at or under 20000, and the no-min probe has no
-# start, so it counts as open-ended. The wide probe starts at 50000.
+# T3.2.10: the web probe starts at or under 20000. A service without a stated
+# minimum cannot promise that it fits under the user's maximum, and the wide
+# probe starts at 50000.
 snap services-filter-price-max GET \
     "/services?techStack=$RUN&maxPrice=20000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1010,8 +1011,8 @@ snap services-filter-price-empty GET \
     "/services?techStack=$RUN&maxPrice=" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# Sorting happens before pagination. The no-min probe is first in ascending
-# order (its range is open-ended) and last in descending order.
+# Sorting happens before pagination. A missing starting price is unknown, not
+# the cheapest option, so the no-min probe is last in both directions.
 snap services-order-price-asc GET \
     "/services?techStack=$RUN&orderBy=price-asc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
