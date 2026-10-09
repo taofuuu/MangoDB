@@ -174,7 +174,7 @@ Stored values are SCREAMING_SNAKE_CASE, like `account_type`'s `PROVIDER` /
 so the types in `packages/shared` are the only enforcement:
 
 ```ts
-export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
+export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 ```
