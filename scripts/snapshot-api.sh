@@ -93,6 +93,7 @@ TOKEN_C=""
 C_LIVE=0
 TOKEN_D=""
 D_LIVE=0
+DELETED_JOB_POSTING_ID=""
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
 REUSE_SERVICE_ID=""
@@ -145,7 +146,7 @@ cleanup() {
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
-        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID)"
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID $DELETED_JOB_POSTING_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -856,6 +857,11 @@ fi
 D_LIVE=1
 api POST /job-postings -H "$(bearer "$TOKEN_D")"     -H 'Content-Type: application/json'     -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
 DELETED_JOB_POSTING_ID="$(jget jobPostingId)"
+if [ -z "$DELETED_JOB_POSTING_ID" ]; then
+    echo "could not create probe D's job posting:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")")" = 204 ] && D_LIVE=0
 SUBS+=(--id "deleted_job_posting_id=$DELETED_JOB_POSTING_ID")
 

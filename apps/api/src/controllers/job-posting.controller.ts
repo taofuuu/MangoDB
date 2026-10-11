@@ -197,9 +197,10 @@ export async function listMyJobPostings(
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
-// - Another company's CLOSED posting returns 404 Not Found, the same
-//   as a non-existent ID, a service ID, or a soft-deleted company's posting.
+// - Any non-OPEN posting (CLOSED, DRAFT) is visible ONLY to its owner
+//   (companyId === req.auth.companyId).
+// - Anyone else gets 404 Not Found, the same as for a non-existent ID, a
+//   service ID, or a soft-deleted company's posting.
 export async function getJobPosting(
     req: Request,
     res: Response,
@@ -208,7 +209,6 @@ export async function getJobPosting(
 
     // A soft-deleted company's postings stay in the table, still OPEN, so
     // the where hides them here, the same as in the list.
-    // written under time-crunch bypass — review later
     const posting = await prisma.listing.findUnique({
         where: {
             listingId: jobPostingId,
@@ -227,7 +227,6 @@ export async function getJobPosting(
 
     // A non-open posting is private to its owner, so to anyone else it does
     // not exist: 404, not 403 (docs/conventions.md, 403 vs 404).
-    // written under time-crunch bypass — review later
     if (
         posting.listingStatus !== ('OPEN' satisfies ListingStatus) &&
         !isOwner
