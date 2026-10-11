@@ -1,19 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import type { SearchServicesOrder } from '@mangodb/shared';
 
-// Order-by is a placeholder control: the backend's listServices always
-// orders by createdAt desc, listingId desc (see service.controller.ts). No
-// orderBy param exists yet, so selecting an option here does nothing until
-// that's added — kept visible to match the mockup, disabled until then.
-const ORDER_OPTIONS = ['Newest', 'Budget: low to high', 'Budget: high to low'];
+const ORDER_OPTIONS: { value: SearchServicesOrder; label: string }[] = [
+    { value: 'newest', label: 'Newest' },
+    { value: 'price-asc', label: 'Budget: low to high' },
+    { value: 'price-desc', label: 'Budget: high to low' },
+];
 
 export function SearchServicesBar({
     onSearch,
+    orderBy,
+    onOrderByChange,
 }: {
     onSearch: (q: string) => void;
+    orderBy: SearchServicesOrder;
+    onOrderByChange: (orderBy: SearchServicesOrder) => void;
 }) {
     const [value, setValue] = useState('');
+    const [orderMenuOpen, setOrderMenuOpen] = useState(false);
+    const orderMenuId = useId();
+    const orderMenuRef = useRef<HTMLDivElement>(null);
+    const selectedOrder = ORDER_OPTIONS.find(
+        (option) => option.value === orderBy,
+    )!;
+
+    useEffect(() => {
+        if (!orderMenuOpen) return;
+
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            if (
+                orderMenuRef.current &&
+                !orderMenuRef.current.contains(event.target as Node)
+            ) {
+                setOrderMenuOpen(false);
+            }
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setOrderMenuOpen(false);
+        };
+
+        document.addEventListener('mousedown', closeOnOutsideClick);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('mousedown', closeOnOutsideClick);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [orderMenuOpen]);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -30,20 +65,59 @@ export function SearchServicesBar({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="Search"
-                className="type-sm w-full max-w-md rounded-full border border-[var(--color-line)] bg-[var(--color-surface-white)] px-5 py-2 text-[var(--color-ink)] shadow-card outline-none placeholder:text-[var(--color-ink-placeholder)] focus:border-[var(--color-brand)]"
+                className="rounded-button type-sm w-full max-w-md border border-line bg-surface-white px-5 py-2 text-ink shadow-card placeholder:text-ink-placeholder focus:ring-1 focus:ring-brand focus:outline-none"
             />
-            <label className="flex items-center gap-2 type-xs text-[var(--color-ink-soft)]">
-                Order by:
-                <select
-                    disabled
-                    title="Not available yet — the API doesn't support sorting"
-                    className="type-xs rounded-full border border-[var(--color-line)] bg-[var(--color-surface-white)] px-3 py-1.5 text-[var(--color-ink-placeholder)] shadow-card"
+            <div className="flex items-center gap-2 type-sm text-ink-soft">
+                <span>Order by:</span>
+                <div
+                    ref={orderMenuRef}
+                    className="relative w-auto min-w-[180px] shrink-0"
                 >
-                    {ORDER_OPTIONS.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                    ))}
-                </select>
-            </label>
+                    <button
+                        type="button"
+                        onClick={() => setOrderMenuOpen((open) => !open)}
+                        aria-haspopup="listbox"
+                        aria-expanded={orderMenuOpen}
+                        aria-controls={orderMenuId}
+                        className="rounded-button flex h-9 w-full items-center justify-between gap-2 border border-line bg-surface-white px-3 text-left type-xs text-ink shadow-card focus:ring-1 focus:ring-brand focus:outline-none"
+                    >
+                        <span>{selectedOrder.label}</span>
+                        <ChevronDown
+                            aria-hidden
+                            className="h-4 w-4 shrink-0 text-ink-soft"
+                        />
+                    </button>
+
+                    {orderMenuOpen && (
+                        <div
+                            id={orderMenuId}
+                            role="listbox"
+                            aria-label="Order services by"
+                            className="rounded-button absolute left-0 top-10 z-50 w-full overflow-hidden border border-line bg-surface-white shadow-card"
+                        >
+                            {ORDER_OPTIONS.map((option) => (
+                                <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={option.value === orderBy}
+                                    key={option.value}
+                                    onClick={() => {
+                                        onOrderByChange(option.value);
+                                        setOrderMenuOpen(false);
+                                    }}
+                                    className={`flex h-9 w-full items-center px-3 text-left type-xs text-ink hover:bg-brand-tint focus:bg-brand-tint focus:outline-none ${
+                                        option.value === orderBy
+                                            ? 'bg-brand-tint text-brand-deep'
+                                            : ''
+                                    }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
         </form>
     );
 }

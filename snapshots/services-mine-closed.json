@@ -1,0 +1,23 @@
+{
+    "request": "GET /services/mine?status=CLOSED",
+    "status": 200,
+    "body": [
+        {
+            "categoryIds": [
+                1
+            ],
+            "companyId": 142,
+            "listingDesc": "created by scripts/snapshot-api.sh",
+            "listingId": "<listing_id>",
+            "listingStatus": "CLOSED",
+            "listingTitle": "Snapshot Probe service <run>",
+            "maxBudget": 50000,
+            "minBudget": 10000,
+            "techStack": [
+                "<run>-Node.js",
+                "<run>-React"
+            ],
+            "type": "SERVICE"
+        }
+    ]
+}

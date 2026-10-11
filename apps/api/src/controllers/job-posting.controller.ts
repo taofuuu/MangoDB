@@ -197,7 +197,7 @@ export async function listMyJobPostings(
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - Any non-OPEN posting (CLOSED, DRAFT) is visible ONLY to its owner
+// - CLOSED postings are visible ONLY to their owner
 //   (companyId === req.auth.companyId).
 // - Anyone else gets 404 Not Found, the same as for a non-existent ID, a
 //   service ID, or a soft-deleted company's posting.

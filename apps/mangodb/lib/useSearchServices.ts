@@ -6,6 +6,7 @@ import {
     searchServices,
     type Pagination,
     type SearchServicesFilters,
+    type SearchServicesOrder,
     type ServiceSummary,
 } from './searchServices';
 import { SERVICE_PAGE_SIZE } from './pagination';
@@ -14,6 +15,7 @@ export type SearchServicesMode = 'pagination' | 'infinite';
 
 type State = {
     q: string;
+    orderBy: SearchServicesOrder;
     filters: SearchServicesFilters;
     page: number;
     pageSize: number;
@@ -25,6 +27,7 @@ type State = {
 
 const initialState: State = {
     q: '',
+    orderBy: 'newest',
     filters: EMPTY_SEARCH_SERVICES_FILTERS,
     page: 1,
     pageSize: SERVICE_PAGE_SIZE,
@@ -50,6 +53,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
             try {
                 const result = await searchServices({
                     q: state.q,
+                    orderBy: state.orderBy,
                     page,
                     pageSize: state.pageSize,
                     filters: state.filters,
@@ -74,17 +78,21 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
                 }));
             }
         },
-        [state.q, state.pageSize, state.filters],
+        [state.q, state.orderBy, state.pageSize, state.filters],
     );
 
     // Re-run from page 1 whenever the query or filters change.
     useEffect(() => {
         void runSearch(1, true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.q, state.filters, state.pageSize]);
+    }, [state.q, state.orderBy, state.filters, state.pageSize]);
 
     const search = useCallback((q: string) => {
         setState((s) => ({ ...s, q }));
+    }, []);
+
+    const setOrderBy = useCallback((orderBy: SearchServicesOrder) => {
+        setState((s) => ({ ...s, orderBy, page: 1 }));
     }, []);
 
     const setFilters = useCallback((filters: SearchServicesFilters) => {
@@ -113,6 +121,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
     return {
         ...state,
         search,
+        setOrderBy,
         setFilters,
         clearFilters,
         goToPage,
