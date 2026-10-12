@@ -128,7 +128,7 @@ export const companyListQuerySchema = z.object({
     // Trimmed, so a keyword of only spaces reads as no keyword. The cap also
     // bounds how many words one request can split into.
     q: z.string().trim().max(100).optional(),
-    orderBy: z.enum(['nameAsc', 'nameDesc']).default('nameAsc'),
+    orderBy: z.enum(COMPANY_SORT_ORDERS).default('nameAsc'),
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });

@@ -114,7 +114,7 @@ export default function CompanyOrderDropdown({
                     id="company-order-options"
                     role="listbox"
                     aria-label="Company order"
-                    className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[10px] border border-line bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                    className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[10px] border border-line bg-surface-white shadow-card"
                 >
                     {orderOptions.map((option, index) => (
                         <button

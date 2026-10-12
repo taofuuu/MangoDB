@@ -37,7 +37,7 @@ export default function CompanySearchCard({
     onSelect,
 }: CompanySearchCardProps) {
     return (
-        <article className="relative flex min-h-[19.9vh] max-w-full flex-wrap items-center gap-[1.25vw] rounded-[30px] bg-white px-[2.29vw] py-[2.314vh] text-left leading-relaxed shadow-sm transition lg:max-w-[54.69vw]">
+        <article className="relative flex min-h-[19.9vh] max-w-full flex-wrap items-center gap-[1.25vw] rounded-popup bg-surface-white px-[2.29vw] py-[2.314vh] text-left leading-relaxed shadow-sm transition lg:max-w-[54.69vw]">
             <CompanyAvatar
                 name={company.companyName}
                 photoUrl={company.companyPhoto}
@@ -45,7 +45,7 @@ export default function CompanySearchCard({
             />
 
             <div className="min-w-0 flex-1">
-                <h2 className="line-clamp-2 break-all type-md leading-tight text-ink">
+                <h2 className="line-clamp-2 break-words type-md leading-tight text-ink">
                     {company.companyName}
                 </h2>
                 <p className="mt-[0.56vh] truncate type-sm text-ink-placeholder">

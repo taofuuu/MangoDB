@@ -76,16 +76,16 @@ function DetailBody({ company }: { company: CompanySummary }) {
                     label="Company type"
                     value={company.companyType.join(', ')}
                 />
-                <DetailRow
-                    label="Service categories"
-                    value={company.categories.join(', ')}
-                />
-                <DetailRow
-                    label="Technologies"
-                    value={company.techStack.join(', ')}
-                />
                 {showProviderDetails && (
                     <>
+                        <DetailRow
+                            label="Service categories"
+                            value={company.categories.join(', ')}
+                        />
+                        <DetailRow
+                            label="Technologies"
+                            value={company.techStack.join(', ')}
+                        />
                         <DetailRow
                             label="Service terms"
                             value={company.serviceTerm}
@@ -132,7 +132,7 @@ function DetailHeader({
                 <p className="type-sm text-brand">Company Detail</p>
                 <h2
                     id="company-search-detail-title"
-                    className="line-clamp-3 break-all type-lg leading-tight !font-[700] text-ink"
+                    className="line-clamp-3 break-words type-lg leading-tight !font-[700] text-ink"
                 >
                     {companyName}
                 </h2>

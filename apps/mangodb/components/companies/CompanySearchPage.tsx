@@ -165,7 +165,7 @@ export default function CompanySearchPage() {
                             maxLength={100}
                             placeholder="Search"
                             aria-label="Search companies"
-                            className="h-full min-h-[40px] w-full rounded-[50px] border border-line bg-white pl-[2.6vw] pr-[2.6vw] type-sm text-ink shadow-card placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                            className="h-full min-h-[40px] w-full rounded-[50px] border border-line bg-surface-white pl-[2.6vw] pr-[2.6vw] type-sm text-ink shadow-card placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                         {searchQuery && (
                             <button

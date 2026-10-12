@@ -179,7 +179,8 @@ export interface CompanySummary {
     techStack: string[];
 }
 
-export type CompanySortOrder = 'nameAsc' | 'nameDesc';
+export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
+export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
 export interface CompanyListResponse {
     items: CompanySummary[];
