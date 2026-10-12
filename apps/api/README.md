@@ -54,6 +54,19 @@ Uploads are capped at 5 MB and limited to PNG, JPEG and WebP by
 `src/middleware/upload.ts` — not `image/*`, because an SVG is a document the
 browser executes scripts from when its public URL is opened directly.
 
+## Service search filters
+
+`GET /services/filter-options` is authenticated for provider and receiver
+accounts. It returns `{ categories, techStack }` for the service-search
+sidebar. Categories come from the fixed category catalog. Tech-stack names
+come from open services owned by active companies, because that vocabulary is
+open-ended under ADR 0009 and must not be hardcoded in the frontend.
+
+`GET /services` accepts `orderBy=newest`, `orderBy=price-asc`, or
+`orderBy=price-desc`. The default is `newest`. Price ordering uses
+`minBudget`, with `listingId` as the stable final tie-breaker, and runs before
+pagination.
+
 ## Endpoint conventions
 
 Read this before adding an endpoint. Every endpoint follows the same shape so

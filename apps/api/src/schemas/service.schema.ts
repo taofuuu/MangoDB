@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LISTING_STATUSES } from '@mangodb/shared';
+import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
 import { INT4_MAX, int4Id } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
@@ -65,6 +65,7 @@ export const serviceListQuerySchema = z
         techStack: nameList.optional(),
         minPrice: price,
         maxPrice: price,
+        orderBy: z.enum(SEARCH_SERVICES_ORDERS).default('newest'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })
