@@ -185,7 +185,8 @@ cleanup() {
             -H "Authorization: Bearer $TOKEN_C"
     fi
     if [ "$D_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me"             -H "Authorization: Bearer $TOKEN_D"
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_D"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -879,7 +880,8 @@ DELETED_SERVICE_ID="$(jget listingId)"
 # Probe D: a Receiver that posts a job, then deletes itself. A soft delete
 # leaves the job OPEN, so only the deletedAt filter keeps it out of the list,
 # and off its detail page.
-api POST /auth/register -H 'Content-Type: application/json'     -d "{\"companyName\":\"Snapshot Probe D\",\"username\":\"${RUN}d\",\"email\":\"${RUN}d@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0822222222\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe D\",\"username\":\"${RUN}d\",\"email\":\"${RUN}d@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0822222222\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
 TOKEN_D="$(jget accessToken)"
 if [ -z "$TOKEN_D" ]; then
     echo "could not register probe D:" >&2
@@ -887,7 +889,9 @@ if [ -z "$TOKEN_D" ]; then
     exit 1
 fi
 D_LIVE=1
-api POST /job-postings -H "$(bearer "$TOKEN_D")"     -H 'Content-Type: application/json'     -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+api POST /job-postings -H "$(bearer "$TOKEN_D")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
 DELETED_JOB_POSTING_ID="$(jget jobPostingId)"
 if [ -z "$DELETED_JOB_POSTING_ID" ]; then
     echo "could not create probe D's job posting:" >&2
@@ -898,10 +902,12 @@ fi
 SUBS+=(--id "deleted_job_posting_id=$DELETED_JOB_POSTING_ID")
 
 # A deleted company's open job is hidden from the list...
-snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d"     -H "$(bearer "$TOKEN_RECEIVER")"
+snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ...and is 404 on detail.
-snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID"     -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 # GET /services/:listingId. Any company reads an open service of an active
 # company, with the owner's name (companyName).
