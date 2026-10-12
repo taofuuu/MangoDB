@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { int4Id } from './common.schema';
 import { companyFields } from './company.schema';
 
 // Keep pages bounded so one request cannot pull the full Company table into
@@ -15,7 +16,7 @@ export const companyAccountListQuerySchema = z.object({
 });
 
 export const companyAccountIdParamSchema = z.object({
-    companyId: z.coerce.number().int().positive(),
+    companyId: int4Id,
 });
 
 // US6-4. The admin's own password, same field changeCredentialsSchema takes,
