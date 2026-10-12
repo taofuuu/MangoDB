@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PROPOSAL_STATUSES } from '@mangodb/shared';
+import { int4Id } from './common.schema';
 
 export const proposalFields = {
     proposalBudget: z.coerce
@@ -24,7 +25,7 @@ export const proposalFields = {
 export const createProposalSchema = z.strictObject(proposalFields);
 
 export const proposalIdParamSchema = z.object({
-    proposalId: z.coerce.number().int().positive().max(2147483647),
+    proposalId: int4Id,
 });
 
 function emptyOrTrim(val: unknown): unknown {

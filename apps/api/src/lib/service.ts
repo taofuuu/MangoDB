@@ -4,6 +4,7 @@
 import type {
     ListingStatus,
     ServiceFilterOptions,
+    ServiceListing,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
@@ -68,6 +69,9 @@ export const listingSelect = {
     listingStatus: true,
     listingCategory: { select: { catId: true } },
     service: serviceTechStackSelect,
+    // Only the name: the company row also holds the sign-in email and
+    // password hash (ADR 0001).
+    company: { select: { companyName: true } },
 } as const;
 
 type SelectedListing = {
@@ -80,27 +84,14 @@ type SelectedListing = {
     listingStatus: string;
     listingCategory: { catId: number }[];
     service: ServiceTechStackRow;
+    company: { companyName: string } | null;
 };
 
-// TODO: move to @mangodb/shared next to ServicePortfolio so the frontend can
-// import it. Kept here until you decide where the wire types live.
-export type Listing = {
-    listingId: number;
-    companyId: number | null;
-    type: 'SERVICE';
-    listingTitle: string;
-    listingDesc: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    listingStatus: string;
-    categoryIds: number[];
-    techStack: string[];
-};
-
-export function toListing(row: SelectedListing): Listing {
+export function toListing(row: SelectedListing): ServiceListing {
     return {
         listingId: row.listingId,
         companyId: row.companyId,
+        companyName: row.company?.companyName ?? null,
         type: 'SERVICE',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,

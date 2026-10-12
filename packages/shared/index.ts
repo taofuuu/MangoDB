@@ -117,6 +117,11 @@ export interface CompanyProfile {
     warrantyPolicy: string | null;
 }
 
+// GET /companies/:companyId. What one company sees of another: the profile
+// without the two fields it signs in with. contactEmail is the address meant
+// for other companies.
+export type PublicCompanyProfile = Omit<CompanyProfile, 'username' | 'email'>;
+
 // US6-2. The administrator list deliberately carries less than a full profile:
 // enough to render each card, but no sign-in email or address until a specific
 // account is opened. Password is never part of either admin response.
@@ -249,6 +254,23 @@ export interface IdentityAvailability {
     email: string;
     usernameAvailable: boolean;
     emailAvailable: boolean;
+}
+
+// A service listing as POST /services, GET /services/mine and
+// GET /services/:listingId return it. companyName is the owner's name; null
+// only on an orphaned listing (conventions section 11).
+export interface ServiceListing {
+    listingId: number;
+    companyId: number | null;
+    companyName: string | null;
+    type: 'SERVICE';
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    categoryIds: number[];
+    techStack: string[];
 }
 
 // A work sample on a listing. portfolioId is a surrogate key: the table used

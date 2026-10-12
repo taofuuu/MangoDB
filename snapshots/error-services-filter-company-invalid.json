@@ -1,0 +1,16 @@
+{
+    "request": "GET /services?companyId=0x10",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "companyId",
+                    "message": "companyId must be a whole number"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

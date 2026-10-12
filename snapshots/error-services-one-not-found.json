@@ -1,0 +1,10 @@
+{
+    "request": "GET /services/2147483647",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Listing not found"
+        }
+    }
+}
