@@ -12,6 +12,7 @@ import {
     listingSelect,
     resolveTechStack,
     serviceSummarySelect,
+    toServiceFilterOptions,
     toListing,
     toServiceSummary,
 } from '../lib/service';
@@ -126,7 +127,10 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
 
 // Everything in the query but the keyword and paging, typed from the schema
 // so a new filter is added in one place.
-type ServiceFilters = Omit<ServiceListQuery, 'q' | 'page' | 'pageSize'>;
+type ServiceFilters = Omit<
+    ServiceListQuery,
+    'q' | 'orderBy' | 'page' | 'pageSize'
+>;
 
 // US3-2. Picking two names in one group finds services with either of them,
 // so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
@@ -136,8 +140,14 @@ function matchesFilters({
     techStack = [],
     minPrice,
     maxPrice,
+    companyId,
 }: ServiceFilters): Prisma.ListingWhereInput[] {
     const where: Prisma.ListingWhereInput[] = [];
+    // Only narrows: the OPEN and not-deleted rules in listServices still
+    // apply, so a deleted company's id gives an empty page, not a 404.
+    if (companyId !== undefined) {
+        where.push({ companyId });
+    }
     if (category.length > 0) {
         where.push({
             listingCategory: {
@@ -167,27 +177,58 @@ function matchesFilters({
         });
     }
     // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. An empty budget counts as open-ended,
-    // so it never rules a service out on its own.
+    // possible somewhere inside both. A one-sided range is open-ended only on
+    // its missing side; a service with no price at all cannot match a filter.
     if (maxPrice !== undefined) {
         // Its lowest price fits under the slider's max.
-        where.push({
-            OR: [{ minBudget: null }, { minBudget: { lte: maxPrice } }],
-        });
+        where.push({ minBudget: { lte: maxPrice } });
     }
     if (minPrice !== undefined) {
         // Its highest price reaches the slider's min.
         where.push({
-            OR: [{ maxBudget: null }, { maxBudget: { gte: minPrice } }],
+            OR: [
+                { maxBudget: { gte: minPrice } },
+                // A declared minimum with no upper limit can still reach the
+                // requested threshold. An entirely unpriced service cannot.
+                {
+                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
+                },
+            ],
         });
     }
     return where;
 }
 
-// US3-1. One page of open services for the search screen, newest first. count
-// and findMany run in one transaction so the pagination matches the page.
+// Ordering is applied in the database, before pagination. Price ordering uses
+// the start of the service's range consistently in both directions. Missing
+// prices sort last because "Contact for pricing" must not be presented as the
+// cheapest option. listingId keeps pages stable when values tie.
+function serviceOrderBy(
+    orderBy: ServiceListQuery['orderBy'],
+): Prisma.ListingOrderByWithRelationInput[] {
+    switch (orderBy) {
+        case 'price-asc':
+            return [
+                { minBudget: { sort: 'asc', nulls: 'last' } },
+                { maxBudget: { sort: 'asc', nulls: 'last' } },
+                { listingId: 'desc' },
+            ];
+        case 'price-desc':
+            return [
+                { minBudget: { sort: 'desc', nulls: 'last' } },
+                { maxBudget: { sort: 'desc', nulls: 'first' } },
+                { listingId: 'desc' },
+            ];
+        case 'newest':
+            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
+    }
+}
+
+// US3-1. One page of open services for the search screen in the requested
+// order. count and findMany run in one transaction so the pagination matches
+// the page.
 export async function listServices(req: Request, res: Response): Promise<void> {
-    const { q, page, pageSize, ...filters } = parseQuery(
+    const { q, orderBy, page, pageSize, ...filters } = parseQuery(
         serviceListQuerySchema,
         req.query,
     );
@@ -212,7 +253,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
             take: pageSize,
             // listingId breaks ties, so two services created in the same
             // instant never swap places between pages.
-            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+            orderBy: serviceOrderBy(orderBy),
             select: serviceSummarySelect,
         }),
     ]);
@@ -228,6 +269,40 @@ export async function listServices(req: Request, res: Response): Promise<void> {
     };
 
     res.json(body);
+}
+
+// T3.2.2. Categories are the fixed catalog. Tech stacks are open-ended, so
+// only the database can provide an accurate list; include names attached to
+// services that discovery can actually return.
+export async function listServiceFilterOptions(
+    _req: Request,
+    res: Response,
+): Promise<void> {
+    const [categories, techStack] = await prisma.$transaction([
+        prisma.category.findMany({
+            orderBy: { catName: 'asc' },
+            select: { catName: true },
+        }),
+        prisma.techStack.findMany({
+            where: {
+                serviceTechStack: {
+                    some: {
+                        service: {
+                            listing: {
+                                listingType: 'SERVICE',
+                                listingStatus: 'OPEN',
+                                company: { deletedAt: null },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { techStackName: 'asc' },
+            select: { techStackName: true },
+        }),
+    ]);
+
+    res.json(toServiceFilterOptions(categories, techStack));
 }
 
 export async function getMine(req: Request, res: Response): Promise<void> {
@@ -250,24 +325,33 @@ export async function getMine(req: Request, res: Response): Promise<void> {
     res.status(200).json(listings.map(toListing));
 }
 
+// GET /services/:listingId. Any company can read an OPEN service of an active
+// company, with the owner's name. The owner reads its own in any status.
+// Everything else is 404: a non-open service is private to its owner, so to
+// anyone else it does not exist (docs/conventions.md, 403 vs 404).
 export async function getService(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth!;
-    const listingId = Number(req.params.listingId);
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
 
-    if (isNaN(listingId)) {
-        throw ApiError.badRequest('Invalid listing ID format');
-    }
-
-    const listing = await prisma.listing.findFirst({
+    // A soft-deleted company's services stay in the table, still OPEN, so the
+    // where hides them here, the same as in the search.
+    const listing = await prisma.listing.findUnique({
         where: {
             listingId,
-            companyId,
             listingType: 'SERVICE', // Defensive: explicit type filter
+            company: { deletedAt: null },
         },
         select: listingSelect,
     });
 
     if (!listing) {
+        throw ApiError.notFound('Listing not found');
+    }
+
+    if (
+        listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
+        listing.companyId !== companyId
+    ) {
         throw ApiError.notFound('Listing not found');
     }
 

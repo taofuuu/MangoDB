@@ -1,0 +1,10 @@
+{
+    "request": "GET /job-postings/<job_posting_id>",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Job posting not found"
+        }
+    }
+}

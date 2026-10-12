@@ -1,0 +1,13 @@
+{
+    "request": "GET /job-postings?q=<run>_d",
+    "status": 200,
+    "body": {
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 0,
+            "totalPages": 0
+        }
+    }
+}

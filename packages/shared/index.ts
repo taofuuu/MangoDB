@@ -35,6 +35,14 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+// Ordering choices supported by the public service-search endpoint. Keeping
+// the values here prevents the web app and API schema from drifting apart.
+export const SEARCH_SERVICES_ORDERS = [
+    'newest',
+    'price-asc',
+    'price-desc',
+] as const;
+export type SearchServicesOrder = (typeof SEARCH_SERVICES_ORDERS)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -109,6 +117,11 @@ export interface CompanyProfile {
     warrantyPolicy: string | null;
 }
 
+// GET /companies/:companyId. What one company sees of another: the profile
+// without the two fields it signs in with. contactEmail is the address meant
+// for other companies.
+export type PublicCompanyProfile = Omit<CompanyProfile, 'username' | 'email'>;
+
 // US6-2. The administrator list deliberately carries less than a full profile:
 // enough to render each card, but no sign-in email or address until a specific
 // account is opened. Password is never part of either admin response.
@@ -178,6 +191,7 @@ export interface CompanyListResponse {
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
@@ -188,6 +202,14 @@ export interface ServiceSummary {
 export interface ServiceListResponse {
     items: ServiceSummary[];
     pagination: PaginationMeta;
+}
+
+// T3.2.2. Values the service-search filter controls can offer. Categories are
+// the fixed catalog; techStack contains names currently used by searchable
+// services (ADR 0009 keeps that vocabulary open-ended).
+export interface ServiceFilterOptions {
+    categories: string[];
+    techStack: string[];
 }
 
 // A company and a token to act as it. Register, login, and a credential change
@@ -245,6 +267,23 @@ export interface IdentityAvailability {
     email: string;
     usernameAvailable: boolean;
     emailAvailable: boolean;
+}
+
+// A service listing as POST /services, GET /services/mine and
+// GET /services/:listingId return it. companyName is the owner's name; null
+// only on an orphaned listing (conventions section 11).
+export interface ServiceListing {
+    listingId: number;
+    companyId: number | null;
+    companyName: string | null;
+    type: 'SERVICE';
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    categoryIds: number[];
+    techStack: string[];
 }
 
 // A work sample on a listing. portfolioId is a surrogate key: the table used

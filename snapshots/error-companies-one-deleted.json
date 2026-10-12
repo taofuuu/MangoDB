@@ -1,0 +1,10 @@
+{
+    "request": "GET /companies/<company_id>",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Company not found"
+        }
+    }
+}
