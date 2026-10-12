@@ -1,5 +1,6 @@
 import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
 import { apiFetch, isNotSignedIn } from './api';
+import { clearCache } from './apiCache';
 
 // Nothing to store: both login endpoints set the session cookie on the
 // response, and the browser carries it from here on. This just reports who
@@ -13,6 +14,12 @@ async function authenticate(
         method: 'POST',
         body: JSON.stringify({ email, password }),
     });
+
+    // written under time-crunch bypass — review later
+    // The forms move on with router.push('/'), which keeps the cache module
+    // alive. Without this, a second account signing in on the same tab would
+    // be shown the first one's /companies/me and /proposals/mine.
+    clearCache();
 
     return company;
 }

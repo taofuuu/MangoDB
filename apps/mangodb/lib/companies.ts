@@ -9,6 +9,13 @@ import type {
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
+import { cachedGet, invalidateAfter } from './apiCache';
+
+// written under time-crunch bypass — review later
+// Every write in this file clears the whole cache, not one prefix: a company's
+// name and photo are copied into service cards, job postings and the admin
+// list, and deleting a company hides its listings everywhere. These writes are
+// rare, so a full refetch costs little.
 
 export interface GetCompanyAccountsOptions {
     q?: string | undefined;
@@ -17,16 +24,19 @@ export interface GetCompanyAccountsOptions {
 }
 
 export function getMyProfile(): Promise<CompanyProfile> {
-    return apiFetch<CompanyProfile>('/companies/me');
+    const path = '/companies/me';
+    return cachedGet(path, () => apiFetch<CompanyProfile>(path));
 }
 
 export function updateMyProfile(
     body: UpdateCompanyProfileRequest,
 ): Promise<CompanyProfile> {
-    return apiFetch<CompanyProfile>('/companies/me', {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-    });
+    return invalidateAfter(
+        apiFetch<CompanyProfile>('/companies/me', {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
+    );
 }
 
 // US1-5, the photo half. Its own request because PATCH /companies/me is JSON
@@ -36,18 +46,22 @@ export function updateMyPhoto(photo: File): Promise<CompanyProfile> {
     const body = new FormData();
     body.append('photo', photo);
 
-    return apiFetch<CompanyProfile>('/companies/me/photo', {
-        method: 'PATCH',
-        body,
-    });
+    return invalidateAfter(
+        apiFetch<CompanyProfile>('/companies/me/photo', {
+            method: 'PATCH',
+            body,
+        }),
+    );
 }
 
 // Clearing it needs its own method for the same reason: a multipart body has
 // no way to say "no photo" that is not just a forgotten attachment.
 export function deleteMyPhoto(): Promise<CompanyProfile> {
-    return apiFetch<CompanyProfile>('/companies/me/photo', {
-        method: 'DELETE',
-    });
+    return invalidateAfter(
+        apiFetch<CompanyProfile>('/companies/me/photo', {
+            method: 'DELETE',
+        }),
+    );
 }
 
 export function getCompanyAccounts(
@@ -70,25 +84,27 @@ export function getCompanyAccounts(
         query.set('includeDeleted', String(options.includeDeleted));
     }
 
-    return apiFetch<CompanyAccountListResponse>(
-        `/admin/companies?${query.toString()}`,
-    );
+    const path = `/admin/companies?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<CompanyAccountListResponse>(path));
 }
 
 export function getCompanyAccountDetail(
     companyId: number,
 ): Promise<CompanyAccountDetail> {
-    return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`);
+    const path = `/admin/companies/${companyId}`;
+    return cachedGet(path, () => apiFetch<CompanyAccountDetail>(path));
 }
 
 export function updateCompanyAccount(
     companyId: number,
     body: UpdateCompanyProfileRequest,
 ): Promise<CompanyAccountDetail> {
-    return apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-    });
+    return invalidateAfter(
+        apiFetch<CompanyAccountDetail>(`/admin/companies/${companyId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
+    );
 }
 
 // US6-4. 204 on success, so apiFetch resolves with undefined — nothing to
@@ -98,10 +114,12 @@ export function deleteCompanyAccount(
     companyId: number,
     body: DeleteCompanyAccountRequest,
 ): Promise<void> {
-    return apiFetch<void>(`/admin/companies/${companyId}`, {
-        method: 'DELETE',
-        body: JSON.stringify(body),
-    });
+    return invalidateAfter(
+        apiFetch<void>(`/admin/companies/${companyId}`, {
+            method: 'DELETE',
+            body: JSON.stringify(body),
+        }),
+    );
 }
 
 // Username, email, and password, each gated on the current password. The server
@@ -111,9 +129,11 @@ export function deleteCompanyAccount(
 export async function changeMyCredentials(
     body: ChangeCredentialsRequest,
 ): Promise<CompanyProfile> {
-    const { company } = await apiFetch<ChangeCredentialsResponse>(
-        '/companies/me/credentials',
-        { method: 'PATCH', body: JSON.stringify(body) },
+    const { company } = await invalidateAfter(
+        apiFetch<ChangeCredentialsResponse>('/companies/me/credentials', {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
     );
 
     return company;
@@ -123,7 +143,9 @@ export async function changeMyCredentials(
 // has an ongoing project, the API responds with 409 Conflict, which surfaces
 // as an ApiRequestError for the confirm modal to catch and show inline.
 export function deleteMyAccount(): Promise<void> {
-    return apiFetch<void>('/companies/me', {
-        method: 'DELETE',
-    });
+    return invalidateAfter(
+        apiFetch<void>('/companies/me', {
+            method: 'DELETE',
+        }),
+    );
 }

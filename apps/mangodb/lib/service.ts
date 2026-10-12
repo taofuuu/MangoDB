@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api';
+import { invalidateAfter } from '@/lib/apiCache';
 
 export interface CreateServiceBody {
     listingTitle: string;
@@ -26,10 +27,16 @@ export interface CreatedService {
 export function createService(
     body: CreateServiceBody,
 ): Promise<CreatedService> {
-    return apiFetch<CreatedService>('/services', {
-        method: 'POST',
-        body: JSON.stringify(body),
-    });
+    // written under time-crunch bypass — review later
+    // '/services' covers search pages and filter-options, which can gain a new
+    // tech stack name from this listing.
+    return invalidateAfter(
+        apiFetch<CreatedService>('/services', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
 }
 
 export function createPortfolioForListing(
@@ -37,5 +44,8 @@ export function createPortfolioForListing(
     body: FormData,
 ): Promise<unknown> {
     body.append('listingId', String(listingId));
-    return apiFetch('/portfolios', { method: 'POST', body });
+    return invalidateAfter(
+        apiFetch('/portfolios', { method: 'POST', body }),
+        '/portfolios',
+    );
 }
