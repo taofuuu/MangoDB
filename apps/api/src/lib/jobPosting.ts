@@ -102,8 +102,10 @@ export async function assertCategoriesExist(
     }
 }
 
-// Ownership verification helper: 404 and 403 stay separate because job postings
-// are discoverable in public listings, so hiding existence buys nothing.
+// Ownership verification helper for edit and close: 404 and 403 stay separate
+// because an open job posting is discoverable in public listings, so hiding it
+// buys nothing. GET /job-postings/:id is stricter: a non-open posting is 404 to
+// anyone but its owner (job-posting.controller.ts, getJobPosting).
 // Returns the row it read, so edit can check the status and budgets without a
 // second query.
 export async function assertJobPostingOwned(
