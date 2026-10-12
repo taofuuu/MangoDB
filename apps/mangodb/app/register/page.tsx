@@ -32,7 +32,7 @@ import {
     toFormErrors,
 } from '@/lib/validation';
 import { apiFetch } from '@/lib/api';
-import { clearCache } from '@/lib/apiCache';
+import { clearCacheInEveryTab } from '@/lib/apiCache';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -238,8 +238,9 @@ export default function RegisterPage() {
             });
 
             // A new session: drop anything cached for whoever used this tab
-            // before, same as login does.
-            clearCache();
+            // before, same as login does. written under time-crunch bypass —
+            // review later: every tab, since they share the new cookie.
+            clearCacheInEveryTab();
 
             setCurrentStep(RegisterStep.Success);
         } catch (error) {
