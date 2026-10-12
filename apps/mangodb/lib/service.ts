@@ -27,7 +27,6 @@ export interface CreatedService {
 export function createService(
     body: CreateServiceBody,
 ): Promise<CreatedService> {
-    // written under time-crunch bypass — review later
     // '/services' covers search pages and filter-options, which can gain a new
     // tech stack name from this listing.
     return invalidateAfter(

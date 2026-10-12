@@ -15,7 +15,6 @@ async function authenticate(
         body: JSON.stringify({ email, password }),
     });
 
-    // written under time-crunch bypass — review later
     // The forms move on with router.push('/'), which keeps the cache module
     // alive. Without this, a second account signing in on the same tab would
     // be shown the first one's /companies/me and /proposals/mine.

@@ -15,7 +15,6 @@ export function createProposal(
     jobPostingId: number,
     body: CreateProposalRequest,
 ): Promise<Proposal> {
-    // written under time-crunch bypass — review later
     // A new proposal changes /proposals/mine. Job postings carry no proposal
     // data, so nothing else needs clearing.
     return invalidateAfter(

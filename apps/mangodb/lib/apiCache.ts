@@ -1,5 +1,3 @@
-// written under time-crunch bypass — review later
-//
 // In-memory cache for GET requests. The lib/* helpers wrap their reads in
 // cachedGet, so a page you just saw, or one that another component on the same
 // screen already asked for, skips the round trip to the API.

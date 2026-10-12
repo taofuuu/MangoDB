@@ -237,7 +237,6 @@ export default function RegisterPage() {
                 body: JSON.stringify(payload),
             });
 
-            // written under time-crunch bypass — review later
             // A new session: drop anything cached for whoever used this tab
             // before, same as login does.
             clearCache();

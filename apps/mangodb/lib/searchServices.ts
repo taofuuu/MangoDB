@@ -76,7 +76,6 @@ export type SearchServicesParams = {
 // render controls that never match the database.
 // ---------------------------------------------------------------------------
 
-// written under time-crunch bypass — review later
 const FILTER_OPTIONS_MAX_AGE_MS = 5 * 60_000;
 
 export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterOptions> {

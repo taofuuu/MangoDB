@@ -11,7 +11,6 @@ import type {
 import { apiFetch } from './api';
 import { cachedGet, invalidateAfter } from './apiCache';
 
-// written under time-crunch bypass — review later
 // Every write in this file clears the whole cache, not one prefix: a company's
 // name and photo are copied into service cards, job postings and the admin
 // list, and deleting a company hides its listings everywhere. These writes are
