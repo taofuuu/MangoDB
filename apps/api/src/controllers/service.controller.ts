@@ -140,8 +140,14 @@ function matchesFilters({
     techStack = [],
     minPrice,
     maxPrice,
+    companyId,
 }: ServiceFilters): Prisma.ListingWhereInput[] {
     const where: Prisma.ListingWhereInput[] = [];
+    // Only narrows: the OPEN and not-deleted rules in listServices still
+    // apply, so a deleted company's id gives an empty page, not a 404.
+    if (companyId !== undefined) {
+        where.push({ companyId });
+    }
     if (category.length > 0) {
         where.push({
             listingCategory: {
