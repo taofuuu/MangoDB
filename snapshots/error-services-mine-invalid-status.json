@@ -1,0 +1,16 @@
+{
+    "request": "GET /services/mine?status=INVALID",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "status",
+                    "message": "Invalid option: expected one of \"OPEN\"|\"CLOSED\""
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

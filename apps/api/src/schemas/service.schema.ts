@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
 
 // Prisma Int is a 32-bit column: without a max, 3000000000 passes validation
 // and fails at the database as a 500. Same ceiling portfolio uses for ids.
@@ -86,6 +87,7 @@ export const serviceListQuerySchema = z
                 .pipe(z.number().int().positive().max(INT_MAX))
                 .optional(),
         ),
+        orderBy: z.enum(SEARCH_SERVICES_ORDERS).default('newest'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })
@@ -101,6 +103,16 @@ export const serviceListQuerySchema = z
     );
 
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
+
+// GET /services/mine. A blank ?status= means no filter, like GET
+// /job-postings. There is no DRAFT status (ADR 0010), so only OPEN and
+// CLOSED pass; anything else, DRAFT included, is a 400.
+export const serviceMineQuerySchema = z.object({
+    status: z.preprocess(
+        (val) => (val === '' ? undefined : val),
+        z.enum(LISTING_STATUSES).extract(['OPEN', 'CLOSED']).optional(),
+    ),
+});
 
 // Path params arrive as strings, so this coerces before the integer check —
 // same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
