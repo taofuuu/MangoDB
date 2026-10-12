@@ -73,7 +73,6 @@ export const serviceListQuerySchema = z
         techStack: nameList.optional(),
         minPrice: price,
         maxPrice: price,
-        // written under time-crunch bypass — review later
         // One company's services only, e.g. its profile page. A blank value
         // means no filter, like a blank price. Digits only: Number() alone
         // would read "0x10" as 16 and "1e3" as 1000, so those are a 400, as

@@ -142,6 +142,14 @@ before(async () => {
     mock.module(moduleUrl('../lib/prisma'), {
         namedExports: { prisma: fakePrisma },
     });
+    // lib/storage loads env.ts, which throws without a JWT_SECRET. The search
+    // never touches storage, so a stub keeps the test free of app secrets.
+    mock.module(moduleUrl('../lib/storage'), {
+        namedExports: {
+            BUCKETS: { PORTFOLIO: 'portfolio' },
+            removeFromStorageByUrl: async () => undefined,
+        },
+    });
     controller = await import('./service.controller.js');
 });
 
