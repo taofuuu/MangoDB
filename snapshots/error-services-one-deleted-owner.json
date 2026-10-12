@@ -1,0 +1,10 @@
+{
+    "request": "GET /services/<deleted_service_id>",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Listing not found"
+        }
+    }
+}
