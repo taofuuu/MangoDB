@@ -5,6 +5,7 @@ import {
     deleteListing,
     getMine,
     getService,
+    listServiceFilterOptions,
     listServices,
 } from '../controllers/service.controller';
 
@@ -20,6 +21,12 @@ serviceRoutes.get(
     requireAuth,
     requireRole('provider', 'receiver'),
     listServices,
+);
+serviceRoutes.get(
+    '/filter-options',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    listServiceFilterOptions,
 );
 serviceRoutes.post('/', requireAuth, requireRole('provider'), createListing);
 serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);

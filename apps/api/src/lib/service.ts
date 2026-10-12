@@ -1,5 +1,9 @@
+// listing_status is a plain VarChar(50) column with no DB enum, so this is the
+// single source of truth for its values. Browse filters and proposal logic
+// should import from here instead of hardcoding strings.
 import type {
     ListingStatus,
+    ServiceFilterOptions,
     ServiceListing,
     ServiceSummary,
 } from '@mangodb/shared';
@@ -129,6 +133,7 @@ export async function assertListingOwned(
 export const serviceSummarySelect = {
     listingId: true,
     listingTitle: true,
+    listingDesc: true,
     minBudget: true,
     maxBudget: true,
     listingCategory: {
@@ -147,6 +152,7 @@ export const serviceSummarySelect = {
 interface ServiceSummaryRow {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     listingCategory: { category: { catName: string } }[];
@@ -166,6 +172,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
     return {
         listingId: row.listingId,
         listingTitle: row.listingTitle,
+        listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
         // Sorted: Prisma returns related rows in no fixed order.
@@ -178,5 +185,20 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             companyName: company.companyName,
             companyPhoto: company.companyPhoto,
         },
+    };
+}
+
+type ServiceFilterCategoryRow = { catName: string };
+type ServiceFilterTechStackRow = { techStackName: string };
+
+// Keeps the lookup endpoint's wire shape explicit instead of returning raw
+// Prisma rows. Both input queries are ordered by name in the controller.
+export function toServiceFilterOptions(
+    categories: ServiceFilterCategoryRow[],
+    techStack: ServiceFilterTechStackRow[],
+): ServiceFilterOptions {
+    return {
+        categories: categories.map(({ catName }) => catName),
+        techStack: techStack.map(({ techStackName }) => techStackName),
     };
 }
