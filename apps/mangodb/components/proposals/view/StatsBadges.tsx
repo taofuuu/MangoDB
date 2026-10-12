@@ -19,34 +19,24 @@ export const StatsBadges: React.FC<StatsBadgesProps> = ({
     return (
         <div className="flex items-center gap-4 select-none">
             {/* Total Badge */}
-            <button
-                onClick={() => onSelectViewMode('all')}
-                className="flex items-center text-xs font-semibold rounded-lg overflow-hidden border border-[#e5a024] shadow-sm hover:opacity-90 transition-opacity"
-            >
+            <div className="flex items-center text-xs font-semibold rounded-lg overflow-hidden border border-[#e5a024] shadow-sm">
                 <span className="bg-[#f3b829] text-gray-800 px-4 py-1.5 min-w-[55px] text-center">
                     Total
                 </span>
                 <span className="bg-white text-gray-600 px-3 py-1.5 font-normal min-w-[40px] text-center">
-                    {total < 10 ? `0${total}` : total}
+                    {total}
                 </span>
-            </button>
+            </div>
 
             {/* Rejected Badge */}
-            <button
-                onClick={() => onSelectViewMode('rejected')}
-                className={`flex items-center text-xs font-semibold rounded-lg overflow-hidden border shadow-sm transition-all ${
-                    viewMode === 'rejected'
-                        ? 'ring-2 ring-[#e08920] border-[#e08920]'
-                        : 'border-[#e5a024] hover:opacity-90'
-                }`}
-            >
+            <div className="flex items-center text-xs font-semibold rounded-lg overflow-hidden border border-[#e5a024] shadow-sm">
                 <span className="bg-[#f3b829] text-gray-800 px-4 py-1.5 min-w-[55px] text-center">
                     Rejected
                 </span>
                 <span className="bg-white text-gray-600 px-3 py-1.5 font-normal min-w-[40px] text-center">
-                    {rejected < 10 ? `0${rejected}` : rejected}
+                    {rejected}
                 </span>
-            </button>
+            </div>
 
             {/* Remain Badge */}
             <div className="flex items-center text-xs font-semibold rounded-lg overflow-hidden border border-[#e5a024] shadow-sm">
@@ -54,7 +44,7 @@ export const StatsBadges: React.FC<StatsBadgesProps> = ({
                     Remain
                 </span>
                 <span className="bg-white text-gray-600 px-3 py-1.5 font-normal min-w-[40px] text-center">
-                    {remain < 10 ? `0${remain}` : remain}
+                    {remain}
                 </span>
             </div>
         </div>
