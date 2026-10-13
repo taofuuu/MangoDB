@@ -53,7 +53,7 @@ export default function SuccessModal({
                 <div className="w-full flex justify-end">
                     <Button
                         onClick={onClose}
-                        className="px-8 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors"
+                        className="px-8 py-2 type-sm font-semibold"
                     >
                         Done
                     </Button>
