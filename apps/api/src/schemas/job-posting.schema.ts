@@ -81,9 +81,16 @@ export const createJobPostingSchema = z
 // here: a body with one budget only means something next to the stored row,
 // so the controller checks the merged values instead.
 export const updateJobPostingSchema = z
-    .strictObject(jobPostingFields)
-    .partial()
-    // An empty body is a client bug, not a no-op worth a 200.
+    .strictObject({
+        listingTitle: jobPostingFields.listingTitle.optional(),
+        listingDesc: jobPostingFields.listingDesc.optional(),
+        minBudget: jobPostingFields.minBudget,
+        maxBudget: jobPostingFields.maxBudget.optional(),
+        locationPref: jobPostingFields.locationPref,
+        duration: jobPostingFields.duration,
+        deadline: jobPostingFields.deadline,
+        categoryIds: jobPostingFields.categoryIds,
+    })
     .refine((body) => Object.keys(body).length > 0, {
         message: 'Provide at least one field to update',
     });

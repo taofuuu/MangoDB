@@ -2,7 +2,7 @@
 
 import type { JobPosting } from '@mangodb/shared';
 
-import { X } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface JobDetailPanelProps {
     job: JobPosting | null;
@@ -43,7 +43,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     aria-label="Close job detail"
                     className="rounded-full p-2 transition hover:bg-fill-subtle"
                 >
-                    <X size={22} />
+                    <ArrowLeft size={22} />
                 </button>
             </div>
 
