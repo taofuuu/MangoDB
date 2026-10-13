@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import AddServiceForm from '@/components/service/AddServiceForm';
+import ServiceForm from '@/components/service/ServiceForm';
 
 const INT4_MAX = 2_147_483_647;
 
@@ -12,5 +12,5 @@ export default async function EditServicePage({
     const parsedListingId = Number(listingId);
     if (parsedListingId < 1 || parsedListingId > INT4_MAX) notFound();
 
-    return <AddServiceForm listingId={parsedListingId} />;
+    return <ServiceForm mode="edit" listingId={parsedListingId} />;
 }
