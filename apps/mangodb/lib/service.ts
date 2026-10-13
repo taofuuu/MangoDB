@@ -1,20 +1,15 @@
 import { apiFetch } from '@/lib/api';
-import type { ServiceListing, ServicePortfolio } from '@mangodb/shared';
+import type {
+    ServiceListing,
+    ServicePortfolio,
+    UpdateServiceRequest,
+} from '@mangodb/shared';
 
 export interface CreateServiceBody {
     listingTitle: string;
     listingDesc: string;
     minBudget?: number;
     maxBudget?: number;
-    categoryIds?: number[];
-    techStack?: string[];
-}
-
-export interface UpdateServiceBody {
-    listingTitle?: string;
-    listingDesc?: string;
-    minBudget?: number | null;
-    maxBudget?: number | null;
     categoryIds?: number[];
     techStack?: string[];
 }
@@ -40,7 +35,7 @@ export function getMyServices(): Promise<ServiceListing[]> {
 // endpoint contract out of the form so create and edit share one data path.
 export function updateService(
     listingId: number,
-    body: UpdateServiceBody,
+    body: UpdateServiceRequest,
 ): Promise<ServiceListing> {
     return apiFetch<ServiceListing>(`/services/${listingId}`, {
         method: 'PATCH',

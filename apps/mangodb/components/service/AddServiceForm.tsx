@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ServicePortfolio } from '@mangodb/shared';
+import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import {
     toFormErrors,
@@ -18,7 +18,6 @@ import {
     createPortfolioForListing,
     getService,
     updateService,
-    type UpdateServiceBody,
 } from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
@@ -86,10 +85,10 @@ function serializeService(snapshot: ServiceSnapshot): string {
 function changedServiceFields(
     current: ServiceSnapshot,
     initial: ServiceSnapshot,
-): UpdateServiceBody {
+): UpdateServiceRequest {
     const next = normalizeService(current);
     const previous = normalizeService(initial);
-    const body: UpdateServiceBody = {};
+    const body: UpdateServiceRequest = {};
 
     if (next.title !== previous.title) body.listingTitle = next.title;
     if (next.description !== previous.description) {
