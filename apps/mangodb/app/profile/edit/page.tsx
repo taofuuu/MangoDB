@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import { redirectToUnauthorized } from '@/lib/session';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import {
@@ -57,6 +58,9 @@ function EditProfilePageInner() {
         }).catch((err: unknown) => {
             if (isNotSignedIn(err)) {
                 setLoadError(NOT_SIGNED_IN);
+                redirectToUnauthorized(
+                    'You need to be logged in to edit your profile.',
+                );
                 return;
             }
             setLoadError(describeError(err));
@@ -176,20 +180,16 @@ function EditProfilePageInner() {
         }
     };
 
+    if (loadError === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to edit your profile." />
+        );
+    }
+
     return (
         // pt matches the gap the design leaves under the 108px navbar, which
         // is a separate task, so spacing stays right once that lands.
         <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
-            {loadError === NOT_SIGNED_IN && (
-                <p className="type-md !font-[400]">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
-
             {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="type-md !font-[400] text-danger">{loadError}</p>
             )}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import type { ChangeCredentialsRequest, CompanyProfile } from '@mangodb/shared';
 import penIcon from '@/assets/icons/pen.png';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
@@ -11,7 +10,8 @@ import {
     deleteMyAccount,
     getMyProfile,
 } from '@/lib/companies';
-import { redirectToLogin } from '@/lib/session';
+import { redirectToLogin, redirectToUnauthorized } from '@/lib/session';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditAccountModal, {
@@ -51,6 +51,9 @@ export default function AccountPage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized(
+                        'You need to be logged in to access account settings.',
+                    );
                     return;
                 }
                 setLoadError(describeError(err));
@@ -103,6 +106,12 @@ export default function AccountPage() {
         setDeletionSuccess(true);
     };
 
+    if (loadError === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to access account settings." />
+        );
+    }
+
     return (
         <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">
@@ -114,16 +123,6 @@ export default function AccountPage() {
                         Manage your profile, credentials, and account settings.
                     </p>
                 </header>
-
-                {loadError === NOT_SIGNED_IN && (
-                    <p className="type-xs text-ink-soft">
-                        You are not signed in.{' '}
-                        <Link href="/login" className="underline">
-                            Log in
-                        </Link>
-                        , then come back.
-                    </p>
-                )}
 
                 {loadError && loadError !== NOT_SIGNED_IN && (
                     <p role="alert" className="type-xs text-danger">

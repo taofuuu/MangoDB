@@ -8,6 +8,8 @@ import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
 import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import { redirectToUnauthorized } from '@/lib/session';
 
 // US1-4. One route for "my profile", rather than the /provider and /receiver
 // pair it replaces. The role was never the caller's to choose: the layout
@@ -24,11 +26,20 @@ export default function ViewProfilePage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized(
+                        'You need to be logged in to view your company profile.',
+                    );
                     return;
                 }
                 setLoadError(describeError(err));
             });
     }, []);
+
+    if (loadError === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to view your company profile." />
+        );
+    }
 
     // Each view brings its own full-page layout, so they are returned whole
     // rather than dropped into a shared wrapper that fits neither.
@@ -44,16 +55,6 @@ export default function ViewProfilePage() {
     // company profile to render.
     return (
         <div className="min-h-screen bg-surface p-6">
-            {loadError === NOT_SIGNED_IN && (
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
-
             {loadError && loadError !== NOT_SIGNED_IN && (
                 <p role="alert" className="type-sm text-danger">
                     {loadError}
