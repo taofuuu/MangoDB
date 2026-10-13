@@ -556,7 +556,11 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
             >
                 <div className="flex flex-col items-center gap-[2.5vh]">
                     <div className="mt-[5vh] flex w-full justify-center items-center gap-[1.4vw]">
-                        <CheckCircle2Icon size={90} color="#497B93" />
+                        <CheckCircle2Icon
+                        size={90}
+                        className="text-brand"
+                        aria-hidden="true"
+                        />
                         <h2
                             id="post-success-title"
                             className="type-md font-semibold text-ink"
