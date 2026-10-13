@@ -10,8 +10,8 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-
-import Link from 'next/link';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus } from 'lucide-react';
 
@@ -118,6 +118,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized(
+                        'You need to be logged in to view job postings.',
+                    );
                     return;
                 }
 
@@ -194,6 +197,12 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * Render
      * ============================================================
      */
+
+    if (error === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to view job postings." />
+        );
+    }
 
     return (
         <main
@@ -386,16 +395,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             {/* =============================================
                             LIST ERROR
                             ============================================= */}
-                            {error === NOT_SIGNED_IN && (
-                                <p className="type-md !font-[400]">
-                                    You are not signed in.{' '}
-                                    <Link href="/login" className="underline">
-                                        Log in
-                                    </Link>
-                                    , then come back.
-                                </p>
-                            )}
-
                             {error && error !== NOT_SIGNED_IN && (
                                 <div
                                     role="alert"
