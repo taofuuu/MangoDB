@@ -54,9 +54,8 @@ const PREDEFINED_CATEGORIES = [
     { id: 12, name: 'Other' },
 ] as const;
 
-type ServiceFormProps = {
-    listingId?: number;
-};
+type ServiceFormProps =
+    { mode: 'create' } | { mode: 'edit'; listingId: number };
 
 type ServiceSnapshot = {
     title: string;
@@ -114,9 +113,10 @@ function changedServiceFields(
     return body;
 }
 
-export default function AddServiceForm({ listingId }: ServiceFormProps) {
+export default function ServiceForm(props: ServiceFormProps) {
     const router = useRouter();
-    const isEditMode = listingId !== undefined;
+    const isEditMode = props.mode === 'edit';
+    const listingId = isEditMode ? props.listingId : undefined;
 
     // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
