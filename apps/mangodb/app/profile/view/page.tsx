@@ -25,9 +25,7 @@ export default function ViewProfilePage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to view your company profile.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
                 setLoadError(describeError(err));

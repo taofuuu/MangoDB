@@ -88,9 +88,7 @@ export default function AddServiceForm() {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
-                    redirectToUnauthorized(
-                        'You need to be logged in to create or manage service listings.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
                 setLoadError(describeError(err));

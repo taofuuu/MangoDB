@@ -6,7 +6,6 @@ import { sanitizeReturnUrl } from '@/lib/session';
 
 export default function UnauthorizedContent() {
     const searchParams = useSearchParams();
-    const customMessage = searchParams.get('message');
     const returnUrl = searchParams.get('next');
     const safeReturnUrl = sanitizeReturnUrl(returnUrl);
 
@@ -14,10 +13,5 @@ export default function UnauthorizedContent() {
         ? `/login?next=${encodeURIComponent(safeReturnUrl)}`
         : '/login';
 
-    return (
-        <UnauthorizedPage
-            message={customMessage ?? undefined}
-            loginHref={loginHref}
-        />
-    );
+    return <UnauthorizedPage loginHref={loginHref} />;
 }

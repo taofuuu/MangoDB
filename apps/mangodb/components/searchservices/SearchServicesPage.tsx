@@ -84,9 +84,7 @@ export function SearchServicesPage({
 
     useEffect(() => {
         if (signedOut) {
-            redirectToUnauthorized(
-                'You need to be logged in to search and view services.',
-            );
+            redirectToUnauthorized();
         }
     }, [signedOut]);
 

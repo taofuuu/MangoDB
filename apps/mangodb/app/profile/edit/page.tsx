@@ -57,9 +57,7 @@ function EditProfilePageInner() {
         }).catch((err: unknown) => {
             if (isNotSignedIn(err)) {
                 setLoadError(NOT_SIGNED_IN);
-                redirectToUnauthorized(
-                    'You need to be logged in to edit your profile.',
-                );
+                redirectToUnauthorized();
                 return;
             }
             setLoadError(describeError(err));

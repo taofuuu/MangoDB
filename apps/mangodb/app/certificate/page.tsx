@@ -78,9 +78,7 @@ export default function CertificatePage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to view and manage certificates.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
 

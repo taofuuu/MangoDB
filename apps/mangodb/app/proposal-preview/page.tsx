@@ -38,9 +38,7 @@ export default function ProposalPreviewPage() {
             .catch((cause: unknown) => {
                 if (isNotSignedIn(cause)) {
                     setLoadError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to preview proposals.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
 

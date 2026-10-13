@@ -65,9 +65,7 @@ export default function CompanySearchPage() {
                 if (cancelled) return;
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to explore companies.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
                 setError(describeError(requestError));

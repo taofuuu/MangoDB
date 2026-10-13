@@ -50,9 +50,7 @@ export default function AccountPage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to access account settings.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
                 setLoadError(describeError(err));

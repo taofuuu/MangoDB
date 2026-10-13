@@ -104,9 +104,7 @@ export default function OtherJobPage() {
                 if (cancelled) return;
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
-                    redirectToUnauthorized(
-                        'You need to be logged in to view job postings.',
-                    );
+                    redirectToUnauthorized();
                     return;
                 }
                 setError(describeError(requestError));

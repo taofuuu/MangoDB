@@ -92,13 +92,8 @@ export function sanitizeReturnUrl(
     return trimmed;
 }
 
-export function buildUnauthorizedUrl(
-    message?: string,
-    nextPath?: string,
-): string {
+export function buildUnauthorizedUrl(nextPath?: string): string {
     const params = new URLSearchParams();
-    if (message) params.set('message', message);
-
     const current =
         nextPath ??
         (typeof window !== 'undefined'
@@ -113,16 +108,13 @@ export function buildUnauthorizedUrl(
     return query ? `/unauthorized?${query}` : '/unauthorized';
 }
 
-export function redirectToUnauthorized(
-    message?: string,
-    options?: {
-        next?: string;
-        router?: { replace: (url: string) => void };
-    },
-): void {
+export function redirectToUnauthorized(options?: {
+    next?: string;
+    router?: { replace: (url: string) => void };
+}): void {
     if (typeof window === 'undefined') return;
 
-    const url = buildUnauthorizedUrl(message, options?.next);
+    const url = buildUnauthorizedUrl(options?.next);
 
     if (options?.router) {
         options.router.replace(url);
