@@ -192,7 +192,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const showPostSuccess = searchParams.get('success') === 'posted';
+    const showPostSuccess = ['posted', 'updated'].includes(
+        searchParams.get('success') ?? '',
+    );
 
     const closePostSuccess = () => {
         router.replace('/job/view-own', { scroll: false });
@@ -551,7 +553,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             id="post-success-title"
                             className="type-md font-semibold text-ink"
                         >
-                            Post created successfully!
+                            {searchParams.get('success') === 'updated'
+                                ? 'Job updated successfully!'
+                                : 'Job created successfully!'}
                         </h2>
                     </div>
 

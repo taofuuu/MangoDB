@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import JobDetailModal from './JobDetailModal';
 
@@ -48,7 +49,7 @@ export default function JobBox({
         setIsDetailOpen(false);
     };
 
-    // const router = useRouter();
+    const router = useRouter();
 
     return (
         <>
@@ -119,10 +120,12 @@ export default function JobBox({
                                         <>
                                             <button
                                                 type="button"
-                                                // onClick={() => {
-                                                //     setIsMenuOpen(false);
-                                                //     router.push(`/job/view-own/edit/${job.jobPostingId}`);
-                                                // }}
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    router.push(
+                                                        `/job/view-own/edit/${job.jobPostingId}`,
+                                                    );
+                                                }}
                                                 className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                             >
                                                 <Edit size={15} />
