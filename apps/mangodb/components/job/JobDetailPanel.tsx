@@ -56,7 +56,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Company</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.companyName}
                         </p>
                     </div>
@@ -72,7 +72,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                         key={category}
                                         className="
                                             rounded-status
-                                            bg-accent
+                                            bg-accent-tint
                                             px-[0.63vw]
                                             py-[0.19vh]
                                             type-sm
@@ -84,7 +84,14 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                     </span>
                                 ))
                             ) : (
-                                <span className="type-sm text-ink-soft">
+                                <span
+                                    className="
+                                            rounded-status
+                                            bg-fill-subtle
+                                            px-[0.63vw]
+                                            py-[0.19vh]
+                                        "
+                                >
                                     General
                                 </span>
                             )}
@@ -95,7 +102,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Description</span>
 
-                        <p className="type-sm leading-relaxed text-ink pl-[0.5vw]">
+                        <p className="type-sm leading-relaxed text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.listingDesc}
                         </p>
                     </div>
@@ -104,7 +111,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Budget</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
                         </p>
                     </div>
@@ -113,7 +120,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Location</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.locationPref ?? 'No location preference'}
                         </p>
                     </div>
@@ -122,7 +129,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Duration</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.duration ?? 'Not specified'}
                         </p>
                     </div>
@@ -131,7 +138,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Deadline</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.deadline ?? 'No deadline'}
                         </p>
                     </div>

@@ -136,7 +136,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
+    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
     const openCompanyJobDetail = (job: JobPosting) => {
+        setIsDetailPanelOpen(true);
         setSelectedJob(job);
     };
 
@@ -147,6 +149,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const closeDetailPanel = () => {
+        setIsDetailPanelOpen(false);
         setSelectedJob(null);
     };
 
@@ -232,18 +235,30 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     PAGE TITLE
                     ===================================================== */}
 
-                <div className="flex flex-col gap-[1.3vh]">
+                <div
+                    className={`
+        flex
+        flex-col
+        gap-[1.3vh]
+        transition-all
+        duration-300
+        ${isDetailPanelOpen ? 'ml-[2vw] w-[91vw]' : 'ml-0 w-[56.56vw]'}
+    `}
+                >
                     <span className="type-lg">
                         {isMyJobs ? 'My Jobs' : 'Jobs'}
                     </span>
 
                     <hr
                         className="
-                            w-[56.56vw]
-                            border-0
-                            border-t
-                            border-brand/50
-                        "
+            w-full
+            shrink-0
+            border-0
+            border-t
+            border-brand/50
+            transition-all
+            duration-300
+        "
                     />
                 </div>
 
@@ -358,11 +373,18 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     ===================================================== */}
 
                 <div
-                    className="
-                        flex
-                        items-start
-                        gap-[1.5vw]
-                    "
+                    className={`
+                    mt-[2vh]
+                    flex
+                    items-start
+                    transition-all
+                    duration-300
+                    ${
+                        isDetailPanelOpen
+                            ? 'ml-[2vw] gap-[1.5vw]'
+                            : 'gap-[3.87vh]'
+                    }
+                `}
                 >
                     {/* =================================================
                         JOB LIST

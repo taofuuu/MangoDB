@@ -167,7 +167,7 @@ export default function JobBox({
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
-                                        className="rounded-status bg-accent px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
+                                        className="rounded-status bg-accent-tint px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
                                     >
                                         {category}
                                     </span>
