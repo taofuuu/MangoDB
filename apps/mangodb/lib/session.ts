@@ -86,10 +86,30 @@ export function sanitizeReturnUrl(
     }
     const beforeHash = trimmed.split('#')[0] ?? '';
     const pathOnly = beforeHash.split('?')[0] ?? '';
-    if (pathOnly === '/unauthorized' || pathOnly === '/login') {
+    if (
+        pathOnly === '/unauthorized' ||
+        pathOnly === '/login' ||
+        pathOnly === '/admin/login'
+    ) {
         return null;
     }
     return trimmed;
+}
+
+export function buildAdminLoginUrl(nextPath?: string): string {
+    const params = new URLSearchParams();
+    const current =
+        nextPath ??
+        (typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : null);
+    const safeNext = sanitizeReturnUrl(current);
+    if (safeNext && safeNext !== '/admin/companies') {
+        params.set('next', safeNext);
+    }
+
+    const query = params.toString();
+    return query ? `/admin/login?${query}` : '/admin/login';
 }
 
 export function buildUnauthorizedUrl(nextPath?: string): string {

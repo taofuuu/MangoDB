@@ -15,3 +15,7 @@ export function isProviderAccount(accountType: string): boolean {
 export function isReceiverAccount(accountType: string): boolean {
     return accountType === 'RECEIVER' || accountType === 'BOTH';
 }
+
+export function isAdminAccount(accountType: string): boolean {
+    return accountType === 'ADMIN';
+}

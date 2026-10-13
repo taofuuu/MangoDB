@@ -56,10 +56,18 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
 // which
 // is a typo away from a page that never shows the prompt.
 export const NOT_SIGNED_IN = 'not-signed-in';
+export const FORBIDDEN = 'forbidden';
 
 // Six pages wrote this comparison inline as part of a longer .catch ladder.
 export function isNotSignedIn(err: unknown): boolean {
     return err instanceof ApiRequestError && err.status === 401;
+}
+
+export function isForbidden(err: unknown): boolean {
+    return (
+        err instanceof ApiRequestError &&
+        (err.status === 403 || err.code === 'FORBIDDEN')
+    );
 }
 
 // What to show the user when a call fails.
