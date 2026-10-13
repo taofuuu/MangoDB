@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import { redirectToUnauthorized } from '@/lib/session';
 import type {
     CompanyListResponse,
     CompanySortOrder,
@@ -63,11 +64,14 @@ export default function CompanySearchPage() {
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
-                setError(
-                    isNotSignedIn(requestError)
-                        ? NOT_SIGNED_IN
-                        : describeError(requestError),
-                );
+                if (isNotSignedIn(requestError)) {
+                    setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized(
+                        'You need to be logged in to explore companies.',
+                    );
+                    return;
+                }
+                setError(describeError(requestError));
             })
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
@@ -109,15 +113,7 @@ export default function CompanySearchPage() {
 
     if (error === NOT_SIGNED_IN) {
         return (
-            <main className="min-h-screen bg-surface p-6 text-ink">
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            </main>
+            <UnauthorizedPage message="You need to be logged in to explore companies." />
         );
     }
 
