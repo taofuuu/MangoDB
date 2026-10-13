@@ -48,12 +48,13 @@ export const jobPostingFields = {
             .optional(),
     ),
     maxBudget: z.preprocess(
-        (val) => typeof val === 'string' && val.trim() === '' ? undefined : val,
+        (val) =>
+            typeof val === 'string' && val.trim() === '' ? undefined : val,
         z.coerce
             .number({ message: 'Maximum budget is required' })
             .int('Maximum budget must be an integer')
             .positive('Maximum budget must be greater than zero')
-            .max(INT4_MAX, 'Maximum budget exceeds maximum allowed')
+            .max(INT4_MAX, 'Maximum budget exceeds maximum allowed'),
     ),
     locationPref: z
         .string()
@@ -92,9 +93,16 @@ export const createJobPostingSchema = z
 // here: a body with one budget only means something next to the stored row,
 // so the controller checks the merged values instead.
 export const updateJobPostingSchema = z
-    .strictObject(jobPostingFields)
-    .partial()
-    // An empty body is a client bug, not a no-op worth a 200.
+    .strictObject({
+        listingTitle: jobPostingFields.listingTitle.optional(),
+        listingDesc: jobPostingFields.listingDesc.optional(),
+        minBudget: jobPostingFields.minBudget,
+        maxBudget: jobPostingFields.maxBudget.optional(),
+        locationPref: jobPostingFields.locationPref,
+        duration: jobPostingFields.duration,
+        deadline: jobPostingFields.deadline,
+        categoryIds: jobPostingFields.categoryIds,
+    })
     .refine((body) => Object.keys(body).length > 0, {
         message: 'Provide at least one field to update',
     });

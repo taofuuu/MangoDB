@@ -339,7 +339,7 @@ export interface CreateJobPostingRequest {
     listingTitle: string;
     listingDesc: string;
     minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
+    maxBudget: number;
     locationPref?: string | null | undefined;
     duration?: string | null | undefined;
     deadline?: string | null | undefined;
@@ -361,7 +361,7 @@ export interface UpdateJobPostingRequest {
     listingTitle?: string | undefined;
     listingDesc?: string | undefined;
     minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
+    maxBudget?: number | undefined;
     locationPref?: string | null | undefined;
     duration?: string | null | undefined;
     deadline?: string | null | undefined;

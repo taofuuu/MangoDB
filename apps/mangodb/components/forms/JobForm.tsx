@@ -125,8 +125,19 @@ export default function JobForm() {
         const parsedMinBudget =
             minBudget.trim() === '' ? null : Number(minBudget);
 
-        const parsedMaxBudget =
-            maxBudget.trim() === '' ? null : Number(maxBudget);
+        const parsedMaxBudget = Number(maxBudget);
+
+        if (
+            !maxBudget.trim() ||
+            !Number.isFinite(parsedMaxBudget) ||
+            parsedMaxBudget <= 0
+        ) {
+            setErrors((prev) => ({
+                ...prev,
+                maxBudget: 'Maximum budget must be a positive number.',
+            }));
+            return;
+        }
 
         try {
             setIsLoading(true);
