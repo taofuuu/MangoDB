@@ -286,7 +286,10 @@ export default function AddServiceForm() {
     if (isAuthorized === false && loadError !== NOT_SIGNED_IN) {
         return (
             <UnauthorizedPage
+                variant="danger"
+                icon="shield"
                 title="Access Restricted"
+                badge="Insufficient permissions"
                 message={
                     <p>
                         You need a <strong>Provider</strong> account to create

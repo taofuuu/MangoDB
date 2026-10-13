@@ -8,7 +8,13 @@ import EditCertificateForm, {
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+} from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
@@ -22,6 +28,7 @@ export default function CertificatePage() {
         null,
     );
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isRestricted, setIsRestricted] = useState(false);
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -79,6 +86,10 @@ export default function CertificatePage() {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     redirectToUnauthorized();
+                    return;
+                }
+                if (isForbidden(err)) {
+                    setIsRestricted(true);
                     return;
                 }
 
@@ -142,6 +153,19 @@ export default function CertificatePage() {
         if (expires) return `Expires ${expires}`;
         return '';
     };
+
+    if (isRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Provider account to view and manage certificates."
+                showLogin={false}
+            />
+        );
+    }
 
     if (loadError === NOT_SIGNED_IN) {
         return <div className="min-h-screen bg-surface" />;

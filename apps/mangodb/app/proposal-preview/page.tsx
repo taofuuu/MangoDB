@@ -53,7 +53,10 @@ export default function ProposalPreviewPage() {
     if (profile && !isProviderAccount(profile.accountType)) {
         return (
             <UnauthorizedPage
+                variant="danger"
+                icon="shield"
                 title="Access Restricted"
+                badge="Insufficient permissions"
                 message="Only Provider and BOTH accounts can submit proposals."
                 showLogin={false}
             />
