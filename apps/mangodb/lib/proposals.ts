@@ -46,6 +46,7 @@ export function rejectProposal(proposalId: number): Promise<void> {
     return apiFetch<void>(`/proposals/${proposalId}/reject`, {
         method: 'POST',
     });
+}
 export interface GetMyProposalsOptions {
     status?: ProposalStatus | undefined;
 }
