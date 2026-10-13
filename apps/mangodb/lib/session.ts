@@ -18,7 +18,6 @@ async function authenticate(
     // The forms move on with router.push('/'), which keeps the cache module
     // alive. Without this, a second account signing in on the same tab would
     // be shown the first one's /companies/me and /proposals/mine.
-    // written under time-crunch bypass — review later
     // Every tab, not just this one: they all share the new session cookie.
     clearCacheInEveryTab();
 
@@ -67,7 +66,6 @@ export async function logout(): Promise<void> {
 export function redirectToLogin(): void {
     if (typeof window === 'undefined') return;
 
-    // written under time-crunch bypass — review later
     // The reload below clears this tab. Every way a session ends — logout,
     // account deletion, an expired session — comes through here, so this is
     // the one place that tells the other tabs too.

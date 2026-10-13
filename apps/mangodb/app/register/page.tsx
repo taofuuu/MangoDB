@@ -237,9 +237,7 @@ export default function RegisterPage() {
                 body: JSON.stringify(payload),
             });
 
-            // A new session: drop anything cached for whoever used this tab
-            // before, same as login does. written under time-crunch bypass —
-            // review later: every tab, since they share the new cookie.
+            // A new session: clear the cache in every tab, same as login does.
             clearCacheInEveryTab();
 
             setCurrentStep(RegisterStep.Success);

@@ -41,7 +41,6 @@ export function cachedGet<T>(
     const entry: Entry = { promise, savedAt: Date.now(), maxAgeMs };
     cache.set(key, entry);
 
-    // written under time-crunch bypass — review later
     // The age check above only stops an old entry from being used; it never
     // removes one. Search keys are new for every keyword, page and filter, so
     // without this the Map would grow for as long as the tab stays open. The
@@ -79,14 +78,12 @@ export function clearCache(): void {
     cache.clear();
 }
 
-// written under time-crunch bypass — review later
 // How many entries are held. Only the tests read it: it is the one way to see
 // that an expired entry was removed, not just skipped.
 export function cacheSize(): number {
     return cache.size;
 }
 
-// written under time-crunch bypass — review later
 // The session cookie is shared by every tab, but each tab has its own cache.
 // When one tab logs in, registers, or ends the session, the others must not
 // keep answering from what the previous account was allowed to read (an
