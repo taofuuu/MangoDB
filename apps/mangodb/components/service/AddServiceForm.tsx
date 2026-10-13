@@ -825,14 +825,15 @@ export default function AddServiceForm({ listingId }: ServiceFormProps) {
                     )}
 
                     <div className="mt-8 flex items-center justify-end gap-3">
-                        <button
+                        <Button
                             type="button"
+                            variant="muted"
                             onClick={handleCancel}
                             disabled={isSubmitting}
-                            className="px-5 py-2 rounded-button bg-fill-muted text-surface-white type-sm font-semibold hover:bg-ink-placeholder transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="px-5 py-2 type-sm font-semibold disabled:opacity-60"
                         >
                             Cancel
-                        </button>
+                        </Button>
                         <button
                             type="submit"
                             disabled={

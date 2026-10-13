@@ -3,6 +3,7 @@
 import { useId } from 'react';
 import Button from '@/components/ui/Button';
 import ModalShell from '@/components/ui/ModalShell';
+import WarningIcon from '@/components/ui/WarningIcon';
 
 type UnsavedChangesModalProps = {
     isOpen: boolean;
@@ -25,55 +26,39 @@ export default function UnsavedChangesModal({
             role="alertdialog"
             labelledBy={titleId}
             describedBy={descriptionId}
-            panelClassName="w-full max-w-[460px] rounded-popup border border-line bg-surface p-7 shadow-xl"
+            panelClassName="flex h-[26.6667vh] min-h-[240px] w-[32.1354vw] min-w-[320px] flex-col rounded-popup border border-line bg-surface p-8 shadow-xl max-sm:h-auto max-sm:w-[90vw]"
         >
-            <div className="flex items-start gap-4">
-                <div
-                    className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger-wash text-danger"
-                    aria-hidden="true"
-                >
-                    <svg
-                        className="h-6 w-6"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 9v4m0 4h.01M10.3 3.7 2.6 17a2 2 0 0 0 1.73 3h15.34a2 2 0 0 0 1.73-3L13.7 3.7a2 2 0 0 0-3.4 0Z"
-                        />
-                    </svg>
-                </div>
+            <div className="flex min-h-0 w-full flex-[2] items-center gap-4 max-sm:pb-6">
+                <WarningIcon />
                 <div>
-                    <h2 id={titleId} className="type-md font-semibold text-ink">
-                        Discard unsaved changes?
+                    <h2 id={titleId} className="type-md font-bold text-ink">
+                        You have unsaved changes.
                     </h2>
                     <p
                         id={descriptionId}
-                        className="mt-2 type-sm leading-6 text-ink-soft"
+                        className="type-md font-bold text-ink"
                     >
-                        Your service changes haven&apos;t been saved. If you
-                        leave now, they&apos;ll be lost.
+                        Are you sure you want to leave?
                     </p>
                 </div>
             </div>
 
-            <div className="mt-7 flex justify-end gap-3">
+            <hr className="w-full border-line" />
+
+            <div className="flex min-h-0 w-full flex-1 items-center justify-end gap-3 max-sm:pt-6">
                 <Button
-                    variant="outline"
+                    variant="muted"
                     onClick={onKeepEditing}
-                    className="px-5 py-2 type-sm font-semibold"
+                    className="px-5 py-2 type-sm font-bold disabled:opacity-60"
                 >
-                    Keep editing
+                    Cancel
                 </Button>
                 <Button
                     variant="danger"
                     onClick={onDiscard}
-                    className="px-5 py-2 type-sm font-semibold"
+                    className="px-5 py-2 type-sm font-bold"
                 >
-                    Discard changes
+                    Leave
                 </Button>
             </div>
         </ModalShell>

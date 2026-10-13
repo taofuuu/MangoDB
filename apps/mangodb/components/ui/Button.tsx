@@ -1,6 +1,6 @@
 'use client';
 
-type ButtonVariant = 'primary' | 'outline' | 'danger';
+type ButtonVariant = 'primary' | 'outline' | 'danger' | 'muted';
 
 // Fill and border only. Every button in the design has its own size, so the
 // caller passes that through className rather than picking from a size prop.
@@ -8,6 +8,7 @@ const variants: Record<ButtonVariant, string> = {
     primary: 'bg-brand text-surface hover:bg-brand-dark',
     outline: 'border border-brand bg-white text-ink hover:bg-brand/10',
     danger: 'bg-danger text-surface hover:bg-danger-hover',
+    muted: 'bg-fill-muted text-surface-white hover:bg-ink-placeholder',
 };
 
 type ButtonProps = {
