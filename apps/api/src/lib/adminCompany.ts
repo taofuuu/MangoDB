@@ -4,11 +4,18 @@ import type {
     CompanyAccountSummary,
 } from '@mangodb/shared';
 import { companyProfileSelect, toCompanyProfile } from './companyProfile';
-import {
-    companyRatingSelect,
-    getCompanyRating,
-    type CompanyRatingSource,
-} from './companyRating';
+
+const ratingSelect = {
+    proposal: {
+        select: {
+            project: {
+                select: {
+                    rating: { select: { ratingScore: true } },
+                },
+            },
+        },
+    },
+} as const;
 
 // A strict subset of companyProfileSelect, derived rather than restated: the
 // list card shows less than the detail panel, and picking the columns out by
@@ -23,16 +30,46 @@ export const adminCompanyListSelect = {
     phone,
     accountType,
     deletedAt: true,
-    ...companyRatingSelect,
+    ...ratingSelect,
 } as const;
 
 export const adminCompanyDetailSelect = {
     ...companyProfileSelect,
-    ...companyRatingSelect,
+    ...ratingSelect,
     deletedAt: true,
 } as const;
 
-interface CompanyAccountSummaryRow extends CompanyRatingSource {
+interface RatingSource {
+    proposal: {
+        project: {
+            rating: { ratingScore: unknown }[];
+        } | null;
+    }[];
+}
+
+function getRating(source: RatingSource): {
+    averageRating: number | null;
+    ratingCount: number;
+} {
+    const scores = source.proposal.flatMap(
+        ({ project }) =>
+            project?.rating.map(({ ratingScore }) => Number(ratingScore)) ?? [],
+    );
+
+    if (scores.length === 0) {
+        return { averageRating: null, ratingCount: 0 };
+    }
+
+    const average =
+        scores.reduce((sum, score) => sum + score, 0) / scores.length;
+
+    return {
+        averageRating: Math.round(average * 10) / 10,
+        ratingCount: scores.length,
+    };
+}
+
+interface CompanyAccountSummaryRow extends RatingSource {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
@@ -51,12 +88,12 @@ export function toCompanyAccountSummary(
         phone: company.phone,
         accountType: company.accountType as AccountType,
         deletedAt: !company.deletedAt ? null : company.deletedAt.toISOString(),
-        ...getCompanyRating(company),
+        ...getRating(company),
     };
 }
 
 type CompanyAccountDetailRow = Parameters<typeof toCompanyProfile>[0] &
-    CompanyRatingSource & { deletedAt: Date | null };
+    RatingSource & { deletedAt: Date | null };
 
 export function toCompanyAccountDetail(
     company: CompanyAccountDetailRow,
@@ -65,7 +102,7 @@ export function toCompanyAccountDetail(
 
     return {
         ...toCompanyProfile(profile),
-        ...getCompanyRating({ proposal }),
+        ...getRating({ proposal }),
         deletedAt: !deletedAt ? null : deletedAt.toISOString(),
     };
 }

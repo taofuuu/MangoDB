@@ -3,6 +3,7 @@ import type {
     CompanyAccountDetail,
     CompanyAccountListResponse,
     CompanyListResponse,
+    PublicCompanyProfile,
     CompanySortOrder,
     ChangeCredentialsRequest,
     ChangeCredentialsResponse,
@@ -103,6 +104,12 @@ export function searchCompanies(
     }
 
     return apiFetch<CompanyListResponse>(`/companies?${query.toString()}`);
+}
+
+export function getPublicCompanyProfile(
+    companyId: number,
+): Promise<PublicCompanyProfile> {
+    return apiFetch<PublicCompanyProfile>(`/companies/${companyId}`);
 }
 
 export function updateCompanyAccount(

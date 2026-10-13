@@ -156,10 +156,9 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-6. One company search result and its read-only public detail. Credentials,
-// deletion state, and consent timestamps stay out of this discovery response.
-// categories and techStack are every one used by the company's services
-// (ADR 0009: tech stack is per service).
+// US3-6. One company search result card. The full public profile is fetched
+// only when its detail panel opens. categories and techStack are every one
+// used by the company's services (ADR 0009: tech stack is per service).
 export interface CompanySummary {
     companyId: number;
     companyName: string;
@@ -168,13 +167,7 @@ export interface CompanySummary {
     accountType: AccountType;
     contactEmail: string | null;
     phone: string;
-    address: string | null;
     website: string | null;
-    companyType: string[];
-    serviceTerm: string | null;
-    warrantyPolicy: string | null;
-    averageRating: number | null;
-    ratingCount: number;
     categories: string[];
     techStack: string[];
 }

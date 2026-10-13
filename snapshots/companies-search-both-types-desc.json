@@ -5,42 +5,26 @@
         "items": [
             {
                 "accountType": "RECEIVER",
-                "address": null,
-                "averageRating": null,
                 "categories": [],
                 "companyDescription": null,
                 "companyId": 143,
                 "companyName": "Snapshot Seed Receiver",
                 "companyPhoto": null,
-                "companyType": [
-                    "SME"
-                ],
                 "contactEmail": null,
                 "phone": "0810000002",
-                "ratingCount": 0,
-                "serviceTerm": null,
                 "techStack": [],
-                "warrantyPolicy": null,
                 "website": null
             },
             {
                 "accountType": "PROVIDER",
-                "address": null,
-                "averageRating": null,
                 "categories": [],
                 "companyDescription": null,
                 "companyId": 142,
                 "companyName": "Snapshot Seed Provider",
                 "companyPhoto": null,
-                "companyType": [
-                    "Software House"
-                ],
                 "contactEmail": null,
                 "phone": "0810000001",
-                "ratingCount": 0,
-                "serviceTerm": "Delivery within 30 days of the agreed start.",
                 "techStack": [],
-                "warrantyPolicy": "90 days of bug fixes after handover.",
                 "website": null
             }
         ],

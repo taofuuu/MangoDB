@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { CompanySummary } from '@mangodb/shared';
-import { Star, X } from 'lucide-react';
+import type { CompanySummary, PublicCompanyProfile } from '@mangodb/shared';
+import { X } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import ModalShell from '@/components/ui/ModalShell';
 import RoleTags from '@/components/ui/RoleTags';
+import { describeError } from '@/lib/api';
+import { getPublicCompanyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
@@ -16,6 +19,12 @@ const popupDetailPanelClassName = `${detailPanelBaseClassName} w-full max-w-[cal
 type CompanySearchDetailProps = {
     company: CompanySummary | null;
     onClose: () => void;
+};
+
+type DetailRequestState = {
+    companyId: number;
+    profile: PublicCompanyProfile | null;
+    error: string | null;
 };
 
 type DetailRowProps = {
@@ -34,7 +43,13 @@ function DetailRow({ label, value }: DetailRowProps) {
     );
 }
 
-function DetailBody({ company }: { company: CompanySummary }) {
+function DetailBody({
+    company,
+    summary,
+}: {
+    company: PublicCompanyProfile;
+    summary: CompanySummary;
+}) {
     const showProviderDetails = isProviderAccount(company.accountType);
 
     return (
@@ -51,14 +66,6 @@ function DetailBody({ company }: { company: CompanySummary }) {
                         className="flex-wrap gap-[0.52vw]"
                         tagClassName="h-auto px-[0.83vw] py-[0.37vh] type-xs !font-[600]"
                     />
-                    <span className="mt-[0.74vh] inline-flex items-center gap-[0.31vw] type-sm text-ink-soft">
-                        <Star
-                            aria-hidden="true"
-                            className="h-[1.67vh] w-[0.94vw] fill-accent text-accent"
-                        />
-                        {company.averageRating?.toFixed(1) ?? 'No rating'}
-                        {company.ratingCount > 0 && ` (${company.ratingCount})`}
-                    </span>
                 </div>
             </div>
 
@@ -80,11 +87,11 @@ function DetailBody({ company }: { company: CompanySummary }) {
                     <>
                         <DetailRow
                             label="Service categories"
-                            value={company.categories.join(', ')}
+                            value={summary.categories.join(', ')}
                         />
                         <DetailRow
                             label="Technologies"
-                            value={company.techStack.join(', ')}
+                            value={summary.techStack.join(', ')}
                         />
                         <DetailRow
                             label="Service terms"
@@ -102,18 +109,41 @@ function DetailBody({ company }: { company: CompanySummary }) {
 }
 
 function DetailSurface({
-    company,
+    summary,
+    profile,
+    error,
+    onRetry,
     onClose,
 }: {
-    company: CompanySummary;
+    summary: CompanySummary;
+    profile: PublicCompanyProfile | null;
+    error: string | null;
+    onRetry: () => void;
     onClose: () => void;
 }) {
     return (
         <>
-            <DetailHeader companyName={company.companyName} onClose={onClose} />
+            <DetailHeader companyName={summary.companyName} onClose={onClose} />
             <hr className="my-[2vh] border-0 border-t border-brand/30" />
             <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
-                <DetailBody company={company} />
+                {profile ? (
+                    <DetailBody company={profile} summary={summary} />
+                ) : error ? (
+                    <div role="alert" className="type-sm text-danger">
+                        <p>{error}</p>
+                        <Button
+                            variant="outline"
+                            onClick={onRetry}
+                            className="mt-[1.11vh] min-h-[40px] px-[1.04vw] type-sm"
+                        >
+                            Try again
+                        </Button>
+                    </div>
+                ) : (
+                    <p className="type-sm text-ink-soft">
+                        Loading company details…
+                    </p>
+                )}
             </div>
         </>
     );
@@ -154,6 +184,10 @@ export default function CompanySearchDetail({
     onClose,
 }: CompanySearchDetailProps) {
     const [isCompactViewport, setIsCompactViewport] = useState(false);
+    const [detailState, setDetailState] = useState<DetailRequestState | null>(
+        null,
+    );
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
         const mediaQuery = window.matchMedia('(max-width: 1023px)');
@@ -164,7 +198,45 @@ export default function CompanySearchDetail({
         return () => mediaQuery.removeEventListener('change', updateViewport);
     }, []);
 
+    useEffect(() => {
+        if (!company) return;
+
+        let cancelled = false;
+        const companyId = company.companyId;
+
+        getPublicCompanyProfile(companyId)
+            .then((nextProfile) => {
+                if (!cancelled) {
+                    setDetailState({
+                        companyId,
+                        profile: nextProfile,
+                        error: null,
+                    });
+                }
+            })
+            .catch((requestError: unknown) => {
+                if (!cancelled) {
+                    setDetailState({
+                        companyId,
+                        profile: null,
+                        error: describeError(requestError),
+                    });
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [company, reloadKey]);
+
     if (!company) return null;
+
+    const currentDetail =
+        detailState?.companyId === company.companyId ? detailState : null;
+    const retry = () => {
+        setDetailState(null);
+        setReloadKey((key) => key + 1);
+    };
 
     if (isCompactViewport) {
         return (
@@ -174,7 +246,13 @@ export default function CompanySearchDetail({
                 labelledBy="company-search-detail-title"
                 panelClassName={popupDetailPanelClassName}
             >
-                <DetailSurface company={company} onClose={onClose} />
+                <DetailSurface
+                    summary={company}
+                    profile={currentDetail?.profile ?? null}
+                    error={currentDetail?.error ?? null}
+                    onRetry={retry}
+                    onClose={onClose}
+                />
             </ModalShell>
         );
     }
@@ -184,7 +262,13 @@ export default function CompanySearchDetail({
             aria-labelledby="company-search-detail-title"
             className={listDetailPanelClassName}
         >
-            <DetailSurface company={company} onClose={onClose} />
+            <DetailSurface
+                summary={company}
+                profile={currentDetail?.profile ?? null}
+                error={currentDetail?.error ?? null}
+                onRetry={retry}
+                onClose={onClose}
+            />
         </aside>
     );
 }
