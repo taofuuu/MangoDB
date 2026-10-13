@@ -3,7 +3,13 @@
 import { Suspense, useEffect, useState } from 'react';
 import { redirectToUnauthorized } from '@/lib/session';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+} from '@/lib/api';
+import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
 import {
     deleteCompanyAccount,
     deleteMyPhoto,
@@ -36,6 +42,10 @@ function EditProfilePageInner() {
     const [saved, setSaved] = useState<ProfileFormData | null>(null);
     const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [adminAuthError, setAdminAuthError] = useState<{
+        isForbidden: boolean;
+        reason: string;
+    } | null>(null);
     const [errors, setErrors] = useState<ProfileErrors>({});
     // The photo is not a column this form writes, so it is not in ProfileErrors.
     const [photoError, setPhotoError] = useState<string | undefined>(undefined);
@@ -55,10 +65,20 @@ function EditProfilePageInner() {
             setSaved(profile);
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
-            if (isNotSignedIn(err)) {
-                setLoadError(NOT_SIGNED_IN);
-                redirectToUnauthorized();
-                return;
+            if (isAdminEditingOther) {
+                if (isNotSignedIn(err) || isForbidden(err)) {
+                    setAdminAuthError({
+                        isForbidden: isForbidden(err),
+                        reason: describeError(err),
+                    });
+                    return;
+                }
+            } else {
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
             }
             setLoadError(describeError(err));
         });
@@ -176,6 +196,20 @@ function EditProfilePageInner() {
             router.push('/');
         }
     };
+
+    if (adminAuthError) {
+        const nextUrl =
+            typeof window !== 'undefined'
+                ? window.location.pathname + window.location.search
+                : `/profile/edit?companyId=${targetCompanyId}`;
+        return (
+            <AdminUnauthorizedPage
+                next={nextUrl}
+                isForbidden={adminAuthError.isForbidden}
+                reason={adminAuthError.reason}
+            />
+        );
+    }
 
     if (loadError === NOT_SIGNED_IN) {
         return <div className="min-h-screen bg-surface" />;
