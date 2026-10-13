@@ -14,6 +14,8 @@ import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import { redirectToUnauthorized } from '@/lib/session';
 
 export default function CertificatePage() {
     // Null means still loading.
@@ -77,6 +79,9 @@ export default function CertificatePage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized(
+                        'You need to be logged in to view and manage certificates.',
+                    );
                     return;
                 }
 
@@ -141,6 +146,12 @@ export default function CertificatePage() {
         return '';
     };
 
+    if (loadError === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to view and manage certificates." />
+        );
+    }
+
     return (
         <main className="min-h-screen bg-surface pt-10">
             {/* Certificate Box */}
@@ -155,20 +166,6 @@ export default function CertificatePage() {
                     {/* Loading */}
                     {certificates === null && !loadError && (
                         <p className="mt-8">Loading certificates...</p>
-                    )}
-
-                    {/* Not signed in. The same prompt /portfolio,
-                        /profile/edit and /account-settings show, so a session
-                        that has ended reads the same wherever it is noticed —
-                        and offers the way back, which a red line did not. */}
-                    {loadError === NOT_SIGNED_IN && (
-                        <p className="mt-8 type-md !font-[400]">
-                            You are not signed in.{' '}
-                            <Link href="/login" className="underline">
-                                Log in
-                            </Link>
-                            , then come back.
-                        </p>
                     )}
 
                     {/* Anything else really is an error. */}
