@@ -173,12 +173,6 @@ export default function ServiceForm(props: ServiceFormProps) {
                     return;
                 }
 
-                if (!Number.isInteger(listingId) || listingId < 1) {
-                    setLoadError('This service link is invalid.');
-                    setIsAuthorized(false);
-                    return;
-                }
-
                 const [service, existingPortfolios] = await Promise.all([
                     getService(listingId),
                     getPortfoliosByListing(listingId),
@@ -513,7 +507,11 @@ export default function ServiceForm(props: ServiceFormProps) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-surface px-6">
                 <div className="max-w-lg rounded-popup border border-line bg-surface-white p-8 text-center shadow-sm">
-                    <h1 className="type-lg text-ink">Unable to edit service</h1>
+                    <h1 className="type-lg text-ink">
+                        {isEditMode
+                            ? 'Unable to edit service'
+                            : 'Unable to add service'}
+                    </h1>
                     <p role="alert" className="mt-3 type-sm text-ink-soft">
                         {loadError}
                     </p>
@@ -850,7 +848,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                 : createdListingId
                                   ? 'Retry Portfolio Upload'
                                   : isEditMode
-                                    ? 'Save changes'
+                                    ? 'Save Changes'
                                     : 'Add Service'}
                         </button>
                     </div>
