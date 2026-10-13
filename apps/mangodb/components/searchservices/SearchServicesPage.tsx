@@ -142,25 +142,30 @@ export function SearchServicesPage({
     }
 
     return (
-        <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
-            {showSearchControls && (
-                <SearchServicesFilterSidebar
-                    filters={filters}
-                    options={options}
-                    optionsError={
-                        optionsStatus === 'error'
-                            ? describeError(optionsError)
-                            : null
-                    }
-                    onChange={setFilters}
-                    onClearAll={clearFilters}
-                />
-            )}
+        // Full-width main with the page cream, like the detail view above.
+        // The inner div is capped at 1360px, so a background on it alone
+        // would leave white strips at the sides on wide screens.
+        <main className="min-h-screen bg-surface">
+            <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
+                {showSearchControls && (
+                    <SearchServicesFilterSidebar
+                        filters={filters}
+                        options={options}
+                        optionsError={
+                            optionsStatus === 'error'
+                                ? describeError(optionsError)
+                                : null
+                        }
+                        onChange={setFilters}
+                        onClearAll={clearFilters}
+                    />
+                )}
 
-            <div className="min-w-0 flex-1">
-                {headerAndSearch}
-                <div className="mt-4">{results}</div>
+                <div className="min-w-0 flex-1">
+                    {headerAndSearch}
+                    <div className="mt-4">{results}</div>
+                </div>
             </div>
-        </div>
+        </main>
     );
 }
