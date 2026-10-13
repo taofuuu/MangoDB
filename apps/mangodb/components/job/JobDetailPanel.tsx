@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { JobPosting } from '@mangodb/shared';
 
 import { X } from 'lucide-react';
@@ -56,9 +57,12 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Company</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <Link
+                            href={`/profile/${job.companyId}`}
+                            className="type-md text-ink pl-[0.5vw] hover:underline"
+                        >
                             {job.companyName}
-                        </p>
+                        </Link>
                     </div>
 
                     {/* Categories */}
