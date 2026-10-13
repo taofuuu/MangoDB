@@ -437,3 +437,8 @@ export interface ViewProposal {
 }
 
 export type ViewMode = 'all' | 'rejected';
+// listing category
+export interface Category {
+    catId: number;
+    catName: string;
+}
