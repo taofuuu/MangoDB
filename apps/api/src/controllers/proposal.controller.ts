@@ -1,19 +1,24 @@
 import type { Request, Response } from 'express';
+import type { ProposalListResponse } from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { isUniqueViolation } from '../lib/prismaErrors';
-import { parseParams, parseBody } from '../middleware/validate';
+import { parseParams, parseBody, parseQuery } from '../middleware/validate';
 import {
     createProposalSchema,
     proposalIdParamSchema,
+    proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
 import { assertJobPostingOwned } from '../lib/jobPosting';
 import {
     postingProposalSelect,
     proposalSelect,
+    providerProposalSelect,
     toPostingProposal,
     toProposal,
+    toProviderProposal,
     acceptProposal,
     rejectProposal,
 } from '../lib/proposal';
@@ -113,4 +118,45 @@ export async function rejectProposalHandler(
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
     await rejectProposal(proposalId, callerId);
     res.status(204).end();
+}
+
+// US2-9. List authenticated provider's proposals with pagination and status filter.
+// Soft-deleted companies are kept: proposals are history, not discovery (conventions §8).
+export async function getMyProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const callerId = req.auth!.companyId;
+    const { page, pageSize, status } = parseQuery(
+        proposalListQuerySchema,
+        req.query,
+    );
+
+    const where: Prisma.ProposalWhereInput = {
+        senderId: callerId,
+        ...(status ? { proposalStatus: status } : {}),
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.proposal.count({ where }),
+        prisma.proposal.findMany({
+            where,
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+            select: providerProposalSelect,
+        }),
+    ]);
+
+    const body: ProposalListResponse = {
+        items: rows.map(toProviderProposal),
+        pagination: {
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+        },
+    };
+
+    res.json(body);
 }

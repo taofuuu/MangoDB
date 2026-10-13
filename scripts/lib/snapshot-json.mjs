@@ -145,6 +145,15 @@ function scrubRequest(text) {
             new RegExp('/' + sub.value + '(?![0-9])', 'g'),
             '/' + sub.placeholder,
         );
+        // A query value is replaced only under a param of the same key, as
+        // in the body: ?companyId=27 for --id company_id=27, never ?page=27.
+        out = out.replace(
+            new RegExp('([?&])([^=&]+)=' + sub.value + '(?![0-9])', 'g'),
+            (whole, sep, name) =>
+                normalizeKey(name) === sub.key
+                    ? `${sep}${name}=${sub.placeholder}`
+                    : whole,
+        );
     }
     return out;
 }

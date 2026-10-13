@@ -1,0 +1,54 @@
+{
+    "request": "GET /job-postings?q=Snapshot%20Probe%20job",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobPostingId": "<job_posting_id>",
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobPostingId": 73,
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 2,
+            "totalPages": 1
+        }
+    }
+}

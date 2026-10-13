@@ -1,0 +1,19 @@
+{
+    "request": "GET /services/mine?status=OPEN",
+    "status": 200,
+    "body": [
+        {
+            "categoryIds": [],
+            "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
+            "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
+            "listingId": 25,
+            "listingStatus": "OPEN",
+            "listingTitle": "Snapshot seed service listing",
+            "maxBudget": 200000,
+            "minBudget": 50000,
+            "techStack": [],
+            "type": "SERVICE"
+        }
+    ]
+}

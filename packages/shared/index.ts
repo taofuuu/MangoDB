@@ -33,8 +33,16 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // VarChar(50) in the database with nothing enforcing them, so these types are
 // the enforcement — see docs/conventions.md section 6. The label a user reads
 // ("Open for Proposals") is the frontend's; the column stores the value here.
-export const LISTING_STATUSES = ['DRAFT', 'OPEN', 'CLOSED'] as const;
+export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+// Ordering choices supported by the public service-search endpoint. Keeping
+// the values here prevents the web app and API schema from drifting apart.
+export const SEARCH_SERVICES_ORDERS = [
+    'newest',
+    'price-asc',
+    'price-desc',
+] as const;
+export type SearchServicesOrder = (typeof SEARCH_SERVICES_ORDERS)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -109,6 +117,11 @@ export interface CompanyProfile {
     warrantyPolicy: string | null;
 }
 
+// GET /companies/:companyId. What one company sees of another: the profile
+// without the two fields it signs in with. contactEmail is the address meant
+// for other companies.
+export type PublicCompanyProfile = Omit<CompanyProfile, 'username' | 'email'>;
+
 // US6-2. The administrator list deliberately carries less than a full profile:
 // enough to render each card, but no sign-in email or address until a specific
 // account is opened. Password is never part of either admin response.
@@ -143,17 +156,24 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-6. One company search result card. categories and techStack are every
-// one used by the company's services (ADR 0009: tech stack is per service).
+// US3-6. One company search result card. The full public profile is fetched
+// only when its detail panel opens. categories and techStack are every one
+// used by the company's services (ADR 0009: tech stack is per service).
 export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
     companyPhoto: string | null;
     accountType: AccountType;
+    contactEmail: string | null;
+    phone: string;
+    website: string | null;
     categories: string[];
     techStack: string[];
 }
+
+export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
+export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
 export interface CompanyListResponse {
     items: CompanySummary[];
@@ -165,6 +185,7 @@ export interface CompanyListResponse {
 export interface ServiceSummary {
     listingId: number;
     listingTitle: string;
+    listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
     categories: string[];
@@ -175,6 +196,14 @@ export interface ServiceSummary {
 export interface ServiceListResponse {
     items: ServiceSummary[];
     pagination: PaginationMeta;
+}
+
+// T3.2.2. Values the service-search filter controls can offer. Categories are
+// the fixed catalog; techStack contains names currently used by searchable
+// services (ADR 0009 keeps that vocabulary open-ended).
+export interface ServiceFilterOptions {
+    categories: string[];
+    techStack: string[];
 }
 
 // A company and a token to act as it. Register, login, and a credential change
@@ -232,6 +261,23 @@ export interface IdentityAvailability {
     email: string;
     usernameAvailable: boolean;
     emailAvailable: boolean;
+}
+
+// A service listing as POST /services, GET /services/mine and
+// GET /services/:listingId return it. companyName is the owner's name; null
+// only on an orphaned listing (conventions section 11).
+export interface ServiceListing {
+    listingId: number;
+    companyId: number | null;
+    companyName: string | null;
+    type: 'SERVICE';
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    categoryIds: number[];
+    techStack: string[];
 }
 
 // A work sample on a listing. portfolioId is a surrogate key: the table used
@@ -300,6 +346,15 @@ export interface CreateJobPostingRequest {
     categoryIds?: number[] | undefined;
 }
 
+// What POST /services accepts. Validated by createServiceSchema.
+export interface CreateServiceRequest {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    listingStatus?: ListingStatus | undefined;
+    categoryIds?: number[] | undefined;
+}
 // What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
 // categoryIds replaces the whole set. Validated by updateJobPostingSchema.
 export interface UpdateJobPostingRequest {
@@ -323,6 +378,18 @@ export interface Proposal {
     duration: number;
     proposalStatus: ProposalStatus;
     createdAt: string;
+}
+
+// US2-9. One row of GET /proposals/mine: the proposal, with the job posting's
+// title so the list needs no extra request per row.
+export interface ProviderProposal extends Proposal {
+    listingTitle: string;
+}
+
+// US2-9. Paginated proposals response for provider tracking.
+export interface ProposalListResponse {
+    items: ProviderProposal[];
+    pagination: PaginationMeta;
 }
 
 // A company in one line: enough to show who it is beside something it sent

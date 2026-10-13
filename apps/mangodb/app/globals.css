@@ -94,6 +94,10 @@
 
     /* Previous/Next controls in the shared pagination footer. */
     --color-pagination-border: #cacaca;
+
+    /* The pale grey of the job designs: the "General" chip, the search
+       filter panel, a menu row's hover. Much lighter than fill-muted. */
+    --color-fill-subtle: #f3f4f6;
 }
 
 body {

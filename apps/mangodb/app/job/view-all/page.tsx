@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import Link from 'next/link';
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
@@ -171,7 +172,7 @@ export default function OtherJobPage() {
                     <div className="flex items-baseline gap-[1vw]">
                         <h2 className="type-lg">All Jobs</h2>
 
-                        <div className="type-sm text-[#AFAFAF]">
+                        <div className="type-sm text-ink-placeholder">
                             (Search result: {pagination?.totalItems ?? 0} items)
                         </div>
                     </div>
@@ -180,7 +181,7 @@ export default function OtherJobPage() {
                         className={`
                         border-0
                         border-t
-                        border-[#497B93]/50
+                        border-brand/50
                         ${isDetailOpen ? 'w-[91vw]' : 'w-[55.1vw]'}
                     `}
                     />
@@ -203,7 +204,7 @@ export default function OtherJobPage() {
                                 maxLength={100}
                                 placeholder="Search"
                                 aria-label="Search jobs by keyword"
-                                className="h-full w-full rounded-[50px] border border-line bg-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                                className="h-full w-full rounded-[50px] border border-line bg-surface-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                             />
 
                             {searchQuery && (
@@ -223,7 +224,9 @@ export default function OtherJobPage() {
 
                         {/* Order by */}
                         <div className="ml-auto flex items-center gap-[1vw] type-sm">
-                            <span className="text-[#AFAFAF]">Order by:</span>
+                            <span className="text-ink-placeholder">
+                                Order by:
+                            </span>
 
                             <div className="relative w-[8.125vw]">
                                 <button
@@ -231,7 +234,7 @@ export default function OtherJobPage() {
                                     onClick={() =>
                                         setIsOrderOpen((open) => !open)
                                     }
-                                    className="flex h-[4.07vh] w-full items-center justify-between rounded-[10px] border border-line bg-white px-[0.7vw] type-sm hover:bg-[#F3F4F6]"
+                                    className="flex h-[4.07vh] w-full items-center justify-between rounded-[10px] border border-line bg-surface-white px-[0.7vw] type-sm hover:bg-fill-subtle"
                                 >
                                     <span>{orderType || ''}</span>
 
@@ -242,7 +245,7 @@ export default function OtherJobPage() {
                                 </button>
 
                                 {isOrderOpen && (
-                                    <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 h-[12vh] w-full overflow-hidden rounded-[10px] border border-line bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                                    <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 h-[12vh] w-full overflow-hidden rounded-[10px] border border-line bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -250,7 +253,7 @@ export default function OtherJobPage() {
                                                 setPage(1);
                                                 setIsOrderOpen(false);
                                             }}
-                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-[#F3F4F6]"
+                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
                                         />
 
                                         <button
@@ -260,7 +263,7 @@ export default function OtherJobPage() {
                                                 setPage(1);
                                                 setIsOrderOpen(false);
                                             }}
-                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-[#F3F4F6]"
+                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
                                         >
                                             Budget
                                         </button>
@@ -272,7 +275,7 @@ export default function OtherJobPage() {
                                                 setPage(1);
                                                 setIsOrderOpen(false);
                                             }}
-                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-[#F3F4F6]"
+                                            className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
                                         >
                                             Deadline
                                         </button>
@@ -307,12 +310,12 @@ export default function OtherJobPage() {
                     {!isDetailOpen && (
                         <div
                             ref={filterRef}
-                            className="relative h-[57.41vh] w-[23.17vw] rounded-[30px] bg-[#F3F4F6]"
+                            className="relative h-[57.41vh] w-[23.17vw] rounded-popup bg-fill-subtle"
                         >
                             <div className="flex flex-col gap-[2.59vh] px-[1.09vw] py-[1.57vh]">
-                                <h2 className="type-md text-ink">Filter</h2>
+                                <h2 className="type-md text-ink">Filters</h2>
 
-                                <hr className="w-[20.98vw] border-0 border-t border-[#497B93]/50" />
+                                <hr className="w-[20.98vw] border-0 border-t border-brand/50" />
 
                                 {/* Category */}
                                 <div className="flex flex-col gap-[0.83vh]">
@@ -330,7 +333,7 @@ export default function OtherJobPage() {
                                         </button>
                                     </div>
 
-                                    <div className="h-[16vh] w-[20.94vw] rounded-[6px] border border-[#497B93] bg-white" />
+                                    <div className="h-[16vh] w-[20.94vw] rounded-[6px] border border-brand bg-surface-white" />
                                 </div>
 
                                 {/* Budget */}
@@ -364,7 +367,7 @@ export default function OtherJobPage() {
                                                     );
                                                     setPage(1);
                                                 }}
-                                                className="h-[3vh] w-[7.2vw] rounded-[6px] border border-[#497B93] bg-white px-[0.5vw] text-center outline-none focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93]/30"
+                                                className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
                                             />
                                         </div>
                                         -
@@ -381,7 +384,7 @@ export default function OtherJobPage() {
                                                     );
                                                     setPage(1);
                                                 }}
-                                                className="h-[3vh] w-[7.2vw] rounded-[6px] border border-[#497B93] bg-white px-[0.5vw] text-center outline-none focus:border-[#497B93] focus:ring-1 focus:ring-[#497B93]/30"
+                                                className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
                                             />
                                         </div>
                                     </div>
@@ -413,7 +416,7 @@ export default function OtherJobPage() {
                                                         (open) => !open,
                                                     )
                                                 }
-                                                className="flex h-[3.70vh] w-full items-center justify-between rounded-[6px] border border-[#497B93] bg-white px-[0.5vw] type-sm hover:bg-[#F3F4F6]"
+                                                className="flex h-[3.70vh] w-full items-center justify-between rounded-[6px] border border-brand bg-surface-white px-[0.5vw] type-sm hover:bg-fill-subtle"
                                             >
                                                 <span>
                                                     {deadlineType === 'BEFORE'
@@ -431,7 +434,7 @@ export default function OtherJobPage() {
                                             </button>
 
                                             {isDeadlineOpen && (
-                                                <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[6px] border border-[#497B93] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+                                                <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[6px] border border-brand bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
                                                     {[
                                                         {
                                                             label: 'Any',
@@ -461,7 +464,7 @@ export default function OtherJobPage() {
                                                                     false,
                                                                 );
                                                             }}
-                                                            className="w-full px-[0.5vw] py-[0.6vh] text-left type-sm hover:bg-[#F3F4F6]"
+                                                            className="w-full px-[0.5vw] py-[0.6vh] text-left type-sm hover:bg-fill-subtle"
                                                         >
                                                             {option.label}
                                                         </button>
@@ -478,7 +481,7 @@ export default function OtherJobPage() {
                                                 setPage(1);
                                             }}
                                             aria-label="Deadline date"
-                                            className="h-[3.70vh] min-w-0 flex-1 rounded-[6px] border border-[#497B93] bg-white px-[0.63vw] type-sm focus:ring-1 focus:ring-[#497B93]/30"
+                                            className="h-[3.70vh] min-w-0 flex-1 rounded-[6px] border border-brand bg-surface-white px-[0.63vw] type-sm focus:ring-1 focus:ring-brand/30"
                                         />
                                     </div>
                                 </div>
@@ -500,7 +503,17 @@ export default function OtherJobPage() {
                         ${isDetailOpen ? 'w-[56.56vw]' : 'w-[56.56vw]'}
                     `}
                     >
-                        {error && (
+                        {error === NOT_SIGNED_IN && (
+                            <p className="type-md !font-[400]">
+                                You are not signed in.{' '}
+                                <Link href="/login" className="underline">
+                                    Log in
+                                </Link>
+                                , then come back.
+                            </p>
+                        )}
+
+                        {error && error !== NOT_SIGNED_IN && (
                             <div
                                 role="alert"
                                 className="rounded-button border border-danger/30 bg-danger/5 px-[1.25vw] py-[1.48vh] type-sm text-danger"
@@ -532,7 +545,7 @@ export default function OtherJobPage() {
                                         }).map((_, index) => (
                                             <div
                                                 key={index}
-                                                className="flex h-[19.9vh] w-[54.69vw] flex-col gap-[2.22vh] rounded-[30px] bg-line pt-[2.87vh] pl-[2.29vw] pr-[2.29vw] animate-pulse"
+                                                className="flex h-[19.9vh] w-[54.69vw] flex-col gap-[2.22vh] rounded-popup bg-line pt-[2.87vh] pl-[2.29vw] pr-[2.29vw] animate-pulse"
                                             />
                                         ))}
                                     </div>

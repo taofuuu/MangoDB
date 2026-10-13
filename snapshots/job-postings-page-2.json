@@ -1,0 +1,30 @@
+{
+    "request": "GET /job-postings?status=OPEN&pageSize=1&page=2",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [],
+                "categoryIds": [],
+                "companyId": 248,
+                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobPostingId": 170,
+                "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
+                "listingStatus": "OPEN",
+                "listingTitle": "Mobile Application Development",
+                "locationPref": null,
+                "maxBudget": 200000,
+                "minBudget": 100000
+            }
+        ],
+        "pagination": {
+            "page": 2,
+            "pageSize": 1,
+            "totalItems": 13,
+            "totalPages": 13
+        }
+    }
+}

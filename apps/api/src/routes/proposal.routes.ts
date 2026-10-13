@@ -1,11 +1,21 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
 import {
     acceptProposalHandler,
     rejectProposalHandler,
+    getMyProposals,
 } from '../controllers/proposal.controller';
 
 export const proposalRoutes = Router();
+
+// US2-9. List authenticated provider's proposals with pagination and status filter.
+// Guards: authenticated and holding Provider role (BOTH accounts also qualify).
+proposalRoutes.get(
+    '/mine',
+    requireAuth,
+    requireRole('provider'),
+    getMyProposals,
+);
 
 // Accept a proposal: closes the listing, rejects the other pending proposals
 // and creates the Project in one transaction (docs/conventions.md 2.7).

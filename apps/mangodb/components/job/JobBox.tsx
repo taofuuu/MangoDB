@@ -5,11 +5,13 @@ import type { JobPosting } from '@mangodb/shared';
 import {
     MoreHorizontal,
     ArrowRight,
+    CalendarClock,
     Edit,
+    FileX,
     Trash,
-    Tag,
-    Wallet,
     MapPin,
+    Wallet,
+    Tag,
 } from 'lucide-react';
 
 import { useState } from 'react';
@@ -66,6 +68,7 @@ export default function JobBox({
                     transition
                     leading-relaxed
 
+
                     ${
                         isMyJobs
                             ? job.listingStatus === 'OPEN'
@@ -91,7 +94,7 @@ export default function JobBox({
                                 onClick={() => setIsMenuOpen((prev) => !prev)}
                                 aria-label="Job actions"
                                 aria-expanded={isMenuOpen}
-                                className="rounded-full p-2 transition hover:bg-gray-100"
+                                className="rounded-full p-2 transition hover:bg-fill-subtle"
                             >
                                 <MoreHorizontal size={24} />
                             </button>
@@ -106,14 +109,14 @@ export default function JobBox({
                                         mt-2
                                         w-[10vw]
                                         rounded-lg
-                                        bg-white
+                                        bg-surface-white
                                         p-2
                                         shadow-lg
                                     "
                                 >
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
                                         <Edit size={15} />
                                         Edit
@@ -122,15 +125,18 @@ export default function JobBox({
                                     {job.listingStatus === 'OPEN' && (
                                         <button
                                             type="button"
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                         >
+                                            <FileX size={15} />
                                             Close
                                         </button>
                                     )}
 
+                                    <hr className="my-1 border-0 border-t border-line" />
+
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-[#F3F4F6]"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left text-danger hover:bg-danger-wash"
                                     >
                                         <Trash size={15} />
                                         Delete
@@ -151,13 +157,13 @@ export default function JobBox({
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
-                                        className="rounded-status bg-[#FEC84A] px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
+                                        className="rounded-status bg-accent px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
                                     >
                                         {category}
                                     </span>
                                 ))
                             ) : (
-                                <span className="rounded-status bg-[#F3F4F6] px-[0.63vw] py-[0.19vh] type-sm !font-[600]">
+                                <span className="rounded-status bg-fill-subtle px-[0.63vw] py-[0.19vh] type-sm !font-[600]">
                                     General
                                 </span>
                             )}
@@ -171,7 +177,7 @@ export default function JobBox({
                     )}
                 </div>
 
-                {/* Budget + Deadline + View Detail */}
+                {/* Budget + Location + Deadline + View Detail */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
@@ -187,6 +193,11 @@ export default function JobBox({
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <MapPin size={20} />
+                        {job.locationPref || 'No location provided.'}
+                    </p>
+
+                    <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
+                        <CalendarClock size={22} aria-hidden="true" />
                         {job.deadline || 'No job deadline provided.'}
                     </p>
 
@@ -216,10 +227,10 @@ export default function JobBox({
                             gap-[0.5vw]
                             rounded-[15px]
                             border
-                            border-[#497B93]
+                            border-brand
                             type-sm
-                            text-[#497B93]
-                            hover:bg-[#497B93]/10
+                            text-brand
+                            hover:bg-brand/10
                         "
                     >
                         View Detail

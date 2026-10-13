@@ -207,7 +207,7 @@ danger  danger-hover  danger-deep  danger-tint  danger-wash
 accent  accent-tint   orange   role-provider
 surface  surface-white
 ink  ink-soft  ink-placeholder
-line  fill-muted
+line  fill-muted  fill-subtle
 ```
 
 Radii: `rounded-input` (4px), `rounded-button` (12px), `rounded-status` (20px),
@@ -284,8 +284,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `/forgot-password` — linked from the login form, no route behind it
 - `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
   mock data, no API
-- Company search filters and sorting — `GET /companies` takes only `q`, `page`
-  and `pageSize`
+- Company search filters beyond its keyword do not exist. `GET /companies`
+  supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - A price or delivery duration on a service — `service` holds only `listing_id`
 
 ---

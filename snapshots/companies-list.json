@@ -1,5 +1,5 @@
 {
-    "request": "GET /companies?page=1&pageSize=2",
+    "request": "GET /companies?orderBy=nameAsc&page=1&pageSize=2",
     "status": 200,
     "body": {
         "items": [
@@ -13,7 +13,10 @@
                 "companyId": 231,
                 "companyName": "Acme Solutions Ltd.",
                 "companyPhoto": null,
-                "techStack": []
+                "contactEmail": null,
+                "phone": "0812345678",
+                "techStack": [],
+                "website": null
             },
             {
                 "accountType": "PROVIDER",
@@ -24,7 +27,10 @@
                 "companyId": 3,
                 "companyName": "AppSynth",
                 "companyPhoto": null,
-                "techStack": []
+                "contactEmail": null,
+                "phone": "023333333",
+                "techStack": [],
+                "website": "www.appsynth.com"
             }
         ],
         "pagination": {

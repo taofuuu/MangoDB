@@ -5,6 +5,7 @@ import type {
     PostingProposal,
     Proposal,
     ProposalStatus,
+    ProviderProposal,
     ListingStatus,
     Project,
     ProjectStatus,
@@ -75,6 +76,30 @@ export function toPostingProposal(
             companyPhoto: row.company.companyPhoto,
             averageRating: row.company.averageRating,
         },
+    };
+}
+
+// US2-9. A proposal as the Provider sees it in their own list: the proposal
+// plus the job posting's title so the page needs no extra request per row.
+export const providerProposalSelect = {
+    ...proposalSelect,
+    listing: {
+        select: { listingTitle: true },
+    },
+} as const;
+
+export type SelectedProviderProposal = SelectedProposal & {
+    listing: {
+        listingTitle: string;
+    };
+};
+
+export function toProviderProposal(
+    row: SelectedProviderProposal,
+): ProviderProposal {
+    return {
+        ...toProposal(row),
+        listingTitle: row.listing.listingTitle,
     };
 }
 
