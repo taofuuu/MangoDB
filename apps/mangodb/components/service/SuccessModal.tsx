@@ -1,5 +1,9 @@
 'use client';
 
+import { useId } from 'react';
+import Button from '@/components/ui/Button';
+import ModalShell from '@/components/ui/ModalShell';
+
 interface SuccessModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,11 +15,16 @@ export default function SuccessModal({
     onClose,
     title = 'Service Updated Successfully',
 }: SuccessModalProps) {
-    if (!isOpen) return null;
+    const titleId = useId();
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-            <div className="w-full max-w-[480px] bg-surface rounded-popup p-8 shadow-xl border border-line flex flex-col items-center">
+        <ModalShell
+            isOpen={isOpen}
+            onClose={onClose}
+            labelledBy={titleId}
+            panelClassName="w-full max-w-[480px] rounded-popup border border-line bg-surface p-8 shadow-xl"
+        >
+            <div className="flex flex-col items-center">
                 {/* Content Row: Checkmark Icon + Message */}
                 <div className="flex items-center gap-4 w-full mb-6">
                     <div className="w-14 h-14 rounded-full border-[3px] border-brand flex items-center justify-center shrink-0">
@@ -33,22 +42,23 @@ export default function SuccessModal({
                             />
                         </svg>
                     </div>
-                    <h3 className="type-md font-bold text-ink">{title}</h3>
+                    <h3 id={titleId} className="type-md font-bold text-ink">
+                        {title}
+                    </h3>
                 </div>
 
                 <hr className="w-full border-line mb-6" />
 
                 {/* Footer Action Button */}
                 <div className="w-full flex justify-end">
-                    <button
-                        type="button"
+                    <Button
                         onClick={onClose}
                         className="px-8 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors"
                     >
-                        OK
-                    </button>
+                        Done
+                    </Button>
                 </div>
             </div>
-        </div>
+        </ModalShell>
     );
 }
