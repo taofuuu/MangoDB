@@ -73,31 +73,6 @@ export async function ensureTechStack(names: string[]): Promise<string[]> {
     return techNames;
 }
 
-// Service create and edit share this check so an unknown category becomes a
-// field-level 400 instead of a database foreign-key error.
-export async function assertServiceCategoriesExist(
-    categoryIds: number[],
-): Promise<void> {
-    const uniqueCatIds = [...new Set(categoryIds)];
-    if (uniqueCatIds.length === 0) return;
-
-    const existing = await prisma.category.findMany({
-        where: { catId: { in: uniqueCatIds } },
-        select: { catId: true },
-    });
-    const existingIds = new Set(existing.map(({ catId }) => catId));
-    const missing = uniqueCatIds.filter((catId) => !existingIds.has(catId));
-
-    if (missing.length > 0) {
-        throw ApiError.validationFailed([
-            {
-                field: 'categoryIds',
-                message: `Unknown category id(s): ${missing.join(', ')}`,
-            },
-        ]);
-    }
-}
-
 // The columns a service listing response may carry.
 export const listingSelect = {
     listingId: true,

@@ -8,17 +8,17 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
+import { assertCategoriesExist } from '../lib/categories';
 import { omitUndefined } from '../lib/objects';
 import {
     createJobPostingSchema,
     jobPostingIdParamSchema,
     jobPostingListQuerySchema,
     MIN_BUDGET_EXCEEDS_MAX,
-    minBudgetDoesNotExceedMax,
     updateJobPostingSchema,
 } from '../schemas/job-posting.schema';
+import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 import {
-    assertCategoriesExist,
     assertJobPostingOwned,
     jobPostingSelect,
     toJobPosting,

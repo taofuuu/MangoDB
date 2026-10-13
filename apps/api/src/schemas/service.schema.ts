@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
-import { INT4_MAX, int4Id } from './common.schema';
+import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
 // VarChar(100), so one rule fits both (conventions §12).
@@ -10,18 +10,6 @@ const NAME_LIST_MAX = 20;
 
 export const SERVICE_BUDGET_RANGE_ERROR =
     'minBudget must be less than or equal to maxBudget';
-
-// PATCH calls this with the submitted fields merged over the stored row.
-export function serviceBudgetRangeIsValid(data: {
-    minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
-}): boolean {
-    return (
-        data.minBudget == null ||
-        data.maxBudget == null ||
-        data.minBudget <= data.maxBudget
-    );
-}
 
 const serviceFields = {
     listingTitle: z.string().trim().min(1).max(255),
@@ -43,7 +31,7 @@ export const createListingSchema = z
         categoryIds: serviceFields.categoryIds.default([]),
         techStack: serviceFields.techStack.default([]),
     })
-    .refine(serviceBudgetRangeIsValid, {
+    .refine(minBudgetDoesNotExceedMax, {
         message: SERVICE_BUDGET_RANGE_ERROR,
         path: ['minBudget'],
     });

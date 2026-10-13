@@ -3,6 +3,7 @@ import type { Prisma } from '../generated/prisma/client';
 import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
+import { assertCategoriesExist } from '../lib/categories';
 import { escapeLike } from '../lib/search';
 import { isRecordNotFound } from '../lib/prismaErrors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
@@ -10,7 +11,6 @@ import { omitUndefined } from '../lib/objects';
 import {
     DEFAULT_LISTING_STATUS,
     assertListingOwned,
-    assertServiceCategoriesExist,
     ensureTechStack,
     listingSelect,
     serviceSummarySelect,
@@ -23,12 +23,12 @@ import {
     createListingSchema,
     listingIdParamSchema,
     SERVICE_BUDGET_RANGE_ERROR,
-    serviceBudgetRangeIsValid,
     type ServiceListQuery,
     serviceListQuerySchema,
     serviceMineQuerySchema,
     updateListingSchema,
 } from '../schemas/service.schema';
+import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -41,7 +41,7 @@ export async function createListing(
     const { companyId } = req.auth!;
 
     const catIds = [...new Set(data.categoryIds)];
-    await assertServiceCategoriesExist(catIds);
+    await assertCategoriesExist(catIds);
 
     const techNames = await ensureTechStack(data.techStack);
 
@@ -95,7 +95,7 @@ export async function updateService(
         body.minBudget !== undefined || body.maxBudget !== undefined;
     if (
         sentBudget &&
-        !serviceBudgetRangeIsValid({
+        !minBudgetDoesNotExceedMax({
             ...existing,
             ...omitUndefined(body),
         })
@@ -107,7 +107,7 @@ export async function updateService(
     }
 
     if (body.categoryIds !== undefined) {
-        await assertServiceCategoriesExist(body.categoryIds);
+        await assertCategoriesExist(body.categoryIds);
     }
 
     let techNames: string[] | undefined;
