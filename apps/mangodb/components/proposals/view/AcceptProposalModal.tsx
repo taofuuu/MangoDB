@@ -1,51 +1,70 @@
 'use client';
 
-interface AcceptModalProps {
+interface AcceptProposalModalProps {
     isOpen: boolean;
+    companyName: string;
     onClose: () => void;
-    title?: string;
+    onConfirm: () => void;
 }
 
-export default function AcceptModal({
+export default function AcceptProposalModal({
     isOpen,
+    companyName,
     onClose,
-    title = 'Service Updated Successfully',
-}: AcceptModalProps) {
+    onConfirm,
+}: AcceptProposalModalProps) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-            <div className="w-full max-w-[480px] bg-surface rounded-popup p-8 shadow-xl border border-line flex flex-col items-center">
-                {/* Content Row: Checkmark Icon + Message */}
-                <div className="flex items-center gap-4 w-full mb-6">
-                    <div className="w-14 h-14 rounded-full border-[3px] border-brand flex items-center justify-center shrink-0">
-                        <svg
-                            className="w-7 h-7 text-brand"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="w-full max-w-[480px] bg-white rounded-2xl p-8 shadow-xl">
+                {/* Icon + Title */}
+                <div className="flex items-start gap-5 mb-6">
+                    {/* Checkmark icon */}
+                    <svg
+                        className="w-10 h-10 text-[#437788] shrink-0 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                        />
+                    </svg>
+
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">
+                            Accept this proposal?
+                        </h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                            Please review the proposal details before accepting.
+                            Once you accept, a project with{' '}
+                            <strong>{companyName}</strong> will be created and
+                            your job posting will close.
+                        </p>
                     </div>
-                    <h3 className="type-md font-bold text-ink">{title}</h3>
                 </div>
 
-                <hr className="w-full border-line mb-6" />
+                <hr className="border-slate-200 mb-6" />
 
-                {/* Footer Action Button */}
-                <div className="w-full flex justify-end">
+                {/* Actions */}
+                <div className="flex justify-end gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-8 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors"
+                        className="px-6 py-2.5 rounded-full bg-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-300 transition-colors"
                     >
-                        OK
+                        Go Back
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        className="px-6 py-2.5 rounded-full bg-[#437788] text-white text-sm font-semibold hover:bg-[#37647a] transition-colors"
+                    >
+                        Accept proposal
                     </button>
                 </div>
             </div>

@@ -164,7 +164,7 @@ body {
    WebKit/Blink width. */
 @supports not selector(::-webkit-scrollbar) {
     * {
-        scrollbar-width: thin;
+        scrollbar-width: auto;
         scrollbar-color: var(--color-scrollbar) transparent;
     }
 }
@@ -181,6 +181,9 @@ body {
 *::-webkit-scrollbar-thumb {
     background: var(--color-scrollbar);
     border-radius: 9999px;
+
+    border-right: 1px solid transparent;
+    background-clip: padding-box;
 }
 
 /* uploadbox */

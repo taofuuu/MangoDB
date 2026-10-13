@@ -331,6 +331,7 @@ export interface CompanyBrief {
     companyId: number;
     companyName: string;
     companyPhoto: string | null;
+    averageRating: number | null;
 }
 
 // US2-10. One row of GET /job-postings/:jobPostingId/proposals: the proposal,

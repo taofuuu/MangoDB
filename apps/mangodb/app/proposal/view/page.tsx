@@ -196,6 +196,20 @@ function ProposalPageInner({
         }
     };
 
+    const ITEMS_PER_PAGE = 5;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Reset to page 1 whenever the filtered list changes
+    const totalPages = Math.max(
+        1,
+        Math.ceil(activeList.length / ITEMS_PER_PAGE),
+    );
+    const safePage = Math.min(currentPage, totalPages);
+    const pagedList = activeList.slice(
+        (safePage - 1) * ITEMS_PER_PAGE,
+        safePage * ITEMS_PER_PAGE,
+    );
+
     return (
         <div className="min-h-screen bg-[#FFFDF9] font-sans p-6 flex flex-col items-center">
             <div className="w-full max-w-6xl">
@@ -222,6 +236,7 @@ function ProposalPageInner({
                         onSelectViewMode={(mode) => {
                             setViewMode(mode);
                             setSelectedId(null);
+                            setCurrentPage(1);
                         }}
                     />
 
@@ -231,6 +246,7 @@ function ProposalPageInner({
                                 viewMode === 'all' ? 'rejected' : 'all',
                             );
                             setSelectedId(null);
+                            setCurrentPage(1);
                         }}
                         disabled={rejectedCount === 0 && viewMode === 'all'}
                         className={`text-xs px-4 py-1.5 rounded-md font-medium transition-colors shadow-sm ${
@@ -270,20 +286,22 @@ function ProposalPageInner({
                                 : 'grid-cols-1'
                         }`}
                     >
-                        {/* Left Column - List of Cards */}
+                        {/* Left Column - Scrollable list + pagination */}
                         <div
-                            className={`space-y-4 ${
-                                selectedProposal ? 'lg:col-span-4' : 'max-w-2xl'
+                            className={`flex flex-col ${
+                                selectedProposal ? 'lg:col-span-4' : 'max-w-6xl'
                             }`}
                         >
-                            {activeList.map((proposal) => {
-                                return (
+                            {/* Scrollable card area */}
+                            <div className="overflow-y-auto max-h-[70vh] pr-1 space-y-4 ">
+                                {pagedList.map((proposal) => (
                                     <ProposalCard
                                         key={proposal.proposalId}
                                         proposal={proposal}
                                         isSelected={
                                             proposal.proposalId === selectedId
                                         }
+                                        hasSelectedProposal={selectedId != null}
                                         viewMode={viewMode}
                                         onSelect={() =>
                                             setSelectedId(
@@ -297,8 +315,41 @@ function ProposalPageInner({
                                             handleReject(proposal.proposalId, e)
                                         }
                                     />
-                                );
-                            })}
+                                ))}
+                            </div>
+
+                            {/* Pagination controls */}
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
+                                    <span className="text-xs text-slate-500">
+                                        Page {safePage} of {totalPages}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() =>
+                                                setCurrentPage((p) =>
+                                                    Math.max(1, p - 1),
+                                                )
+                                            }
+                                            disabled={safePage === 1}
+                                            className="px-3 py-1 text-xs rounded-md border border-[#437788] text-[#437788] hover:bg-[#437788]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            ← Prev
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                setCurrentPage((p) =>
+                                                    Math.min(totalPages, p + 1),
+                                                )
+                                            }
+                                            disabled={safePage === totalPages}
+                                            className="px-3 py-1 text-xs rounded-md border border-[#437788] text-[#437788] hover:bg-[#437788]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            Next →
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Column - Proposal Detail View */}

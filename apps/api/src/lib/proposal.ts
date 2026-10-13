@@ -73,6 +73,7 @@ export function toPostingProposal(
             companyId: row.company.companyId,
             companyName: row.company.companyName,
             companyPhoto: row.company.companyPhoto,
+            averageRating: row.company.averageRating,
         },
     };
 }
