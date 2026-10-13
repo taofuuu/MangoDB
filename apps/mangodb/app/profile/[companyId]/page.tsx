@@ -4,7 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { PublicCompanyProfile } from '@mangodb/shared';
-import { ApiRequestError, NOT_SIGNED_IN, describeError } from '@/lib/api';
+import {
+    ApiRequestError,
+    NOT_SIGNED_IN,
+    describeError,
+    isNotSignedIn,
+} from '@/lib/api';
 import { getPublicCompanyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
@@ -33,8 +38,8 @@ type LoadResult =
     | { companyId: number; error: string };
 
 function toLoadError(err: unknown): string {
+    if (isNotSignedIn(err)) return NOT_SIGNED_IN;
     if (err instanceof ApiRequestError) {
-        if (err.status === 401) return NOT_SIGNED_IN;
         // Unknown, soft-deleted, and administrator accounts are all 404.
         if (err.status === 404) return NOT_FOUND;
         // The route is for companies; an administrator has its own account
