@@ -41,7 +41,7 @@ export async function createJobPosting(
             listingTitle: body.listingTitle,
             listingDesc: body.listingDesc,
             minBudget: body.minBudget ?? null,
-            maxBudget: body.maxBudget,
+            maxBudget: body.maxBudget ?? null,
             listingStatus: 'OPEN',
             listingType: 'JOB',
             jobRequirement: {
