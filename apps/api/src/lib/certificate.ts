@@ -28,21 +28,10 @@ export type CertificateRow = Certificate;
 export type CertificateResponse = Certificate;
 
 // The ownership check both the update and the delete handler need, written
-// once. It was inlined twice, byte-identical, and both copies folded 403 into
-// 404 by matching on providerId in the same query — so another provider's
-// certificate reported "not found". That is the right answer here and the
-// wrong one in general (see assertPortfolioOwned, which separates them), so
-// the reason is written down rather than left to be re-derived:
-//
-// a provider cannot discover another provider's certificate ids, so there is
-// no id it could have got except by guessing. Confirming a guess is the only
-// thing a 403 would add.
-//
-// That premise no longer holds: GET /certificates?companyId= lists another
-// provider's certificates, ids included. The 404 is kept because it is still
-// safe and the frontend already handles it, but by the rule in
-// docs/adding-a-resource.md these ids are now discoverable, so 404 and 403
-// could be split like assertPortfolioOwned.
+// once. Another provider's certificate answers 404, not 403. Since
+// GET /certificates?companyId=, its ids are discoverable, so by
+// docs/adding-a-resource.md the two could be split like assertPortfolioOwned.
+// The 404 is kept: it leaks nothing, and the frontend already handles it.
 export async function assertCertificateOwned(
     certificateId: number,
     providerId: number,
