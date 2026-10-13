@@ -198,13 +198,8 @@ function EditProfilePageInner() {
     };
 
     if (adminAuthError) {
-        const nextUrl =
-            typeof window !== 'undefined'
-                ? window.location.pathname + window.location.search
-                : `/profile/edit?companyId=${targetCompanyId}`;
         return (
             <AdminUnauthorizedPage
-                next={nextUrl}
                 isForbidden={adminAuthError.isForbidden}
                 reason={adminAuthError.reason}
             />

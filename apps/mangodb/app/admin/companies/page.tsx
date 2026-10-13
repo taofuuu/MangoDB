@@ -179,7 +179,6 @@ export default function AdminCompaniesPage() {
     if (adminAuthError) {
         return (
             <AdminUnauthorizedPage
-                next="/admin/companies"
                 isForbidden={adminAuthError.isForbidden}
                 reason={adminAuthError.reason}
             />

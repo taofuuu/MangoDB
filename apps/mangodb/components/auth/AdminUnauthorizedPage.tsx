@@ -3,7 +3,6 @@
 import UnauthorizedPage from './UnauthorizedPage';
 
 export interface AdminUnauthorizedPageProps {
-    next?: string;
     isForbidden?: boolean;
     reason?: string;
     homeHref?: string;
