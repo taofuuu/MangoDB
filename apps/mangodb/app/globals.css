@@ -100,6 +100,45 @@
     --color-fill-subtle: #f3f4f6;
 }
 
+/* Navbar styles, picked in the profile menu (lib/navTheme.ts). The attribute
+   sits on <html>; with none, the bar gets the default, soft shadow.
+   "No shadow" is a transparent one rather than `none`: Tailwind joins this
+   into a comma list of shadows, and `none` there would void the whole list. */
+:root,
+[data-nav-theme='shadow'] {
+    --nav-bg: var(--color-surface);
+    --nav-line: #ece6d8;
+    --nav-shadow: 0 4px 12px -6px rgb(30 67 83 / 0.18);
+}
+
+[data-nav-theme='figma'] {
+    --nav-bg: var(--color-surface);
+    --nav-line: var(--color-line);
+    --nav-shadow: 0 0 #0000;
+}
+
+[data-nav-theme='oat'] {
+    --nav-bg: #f7f2e8;
+    --nav-line: #e3dccb;
+    --nav-shadow: 0 0 #0000;
+}
+
+[data-nav-theme='teal-grey'] {
+    --nav-bg: #eef2f3;
+    --nav-line: #d3dde1;
+    --nav-shadow: 0 0 #0000;
+}
+
+/* Navbar height, picked in the same menu. Default: the Figma frame's 108px. */
+:root,
+[data-nav-size='figma'] {
+    --nav-height: 108px;
+}
+
+[data-nav-size='compact'] {
+    --nav-height: 64px;
+}
+
 body {
     background: var(--background);
     color: var(--foreground);
