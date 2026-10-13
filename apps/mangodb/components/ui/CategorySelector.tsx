@@ -43,9 +43,7 @@ export default function CategorySelector({
             {/* Selector button and selected tags */}
             <div className="relative">
                 <div
-                    className={`flex min-h-12 flex-wrap items-center gap-2 rounded-input border bg-surface-white/80 p-2 ${
-                        isOpen ? 'border-brand' : 'border-brand'
-                    }`}
+                    className="flex min-h-12 flex-wrap items-center gap-2 rounded-input border border-brand bg-surface-white/80 p-2"
                 >
                     {selectedIds.map((id) => {
                         const category = categories.find(
