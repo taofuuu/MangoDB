@@ -274,7 +274,7 @@ export default function JobDetailModal({
                             <span>Company</span>
 
                             <Link
-                                href={`/profile/${job.companyId}`}
+                                href="/profile/view"
                                 className="!font-[600] text-ink hover:underline"
                             >
                                 {job.companyName}
