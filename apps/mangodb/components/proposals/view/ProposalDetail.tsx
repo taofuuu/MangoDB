@@ -74,15 +74,6 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                                 </span>
                             </div>
 
-                            <div className="mt-1">
-                                <StarRating
-                                    rating={
-                                        proposal.provider?.averageRating ?? null
-                                    }
-                                    size={17}
-                                />
-                            </div>
-
                             <div className="text-xs text-slate-400 mt-0.5">
                                 Submitted:{' '}
                                 {new Date(

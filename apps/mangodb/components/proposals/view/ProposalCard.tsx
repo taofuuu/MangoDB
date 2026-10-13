@@ -70,15 +70,6 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                                 </span>
                             </div>
 
-                            <div className="mt-1">
-                                <StarRating
-                                    rating={
-                                        proposal.provider?.averageRating ?? null
-                                    }
-                                    size={15}
-                                />
-                            </div>
-
                             <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
                                 <span>
                                     {new Date(
