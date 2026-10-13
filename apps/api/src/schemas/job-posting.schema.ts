@@ -53,7 +53,7 @@ export const jobPostingFields = {
             .number({ message: 'Maximum budget is required' })
             .int('Maximum budget must be an integer')
             .positive('Maximum budget must be greater than zero')
-            .max(2147483647, 'Maximum budget exceeds maximum allowed')
+            .max(INT4_MAX, 'Maximum budget exceeds maximum allowed')
             .nullable()
             .optional(),
     ),
