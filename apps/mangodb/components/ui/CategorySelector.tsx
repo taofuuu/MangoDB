@@ -114,7 +114,7 @@ export default function CategorySelector({
                                             onChange={() =>
                                                 toggleCategory(category.catId)
                                             }
-                                            className="h-4 w-4 accent-[#497B93]"
+                                            className="h-4 w-4 accent-brand"
                                         />
 
                                         {category.catName}
