@@ -559,7 +559,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         <CheckCircle2Icon size={90} color="#497B93" />
                         <h2
                             id="post-success-title"
-                            className="type-md font-semibold text-black"
+                            className="type-md font-semibold text-ink"
                         >
                             Post created successfully!
                         </h2>
