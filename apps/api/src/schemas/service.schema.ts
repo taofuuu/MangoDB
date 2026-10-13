@@ -8,29 +8,59 @@ const nameField = z.string().trim().max(100);
 // How many names one listing or one filter may carry.
 const NAME_LIST_MAX = 20;
 
+export const SERVICE_BUDGET_RANGE_ERROR =
+    'minBudget must be less than or equal to maxBudget';
+
+// PATCH calls this with the submitted fields merged over the stored row.
+export function serviceBudgetRangeIsValid(data: {
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+}): boolean {
+    return (
+        data.minBudget == null ||
+        data.maxBudget == null ||
+        data.minBudget <= data.maxBudget
+    );
+}
+
+const serviceFields = {
+    listingTitle: z.string().trim().min(1).max(255),
+    listingDesc: z.string().trim().min(1),
+    minBudget: z.number().int().nonnegative().max(INT4_MAX),
+    maxBudget: z.number().int().positive().max(INT4_MAX),
+    categoryIds: z.array(z.number().int().positive().max(INT4_MAX)),
+    // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
+    // name is a mistake in the body, so it is a 400 rather than dropped.
+    techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX),
+} as const;
+
 export const createListingSchema = z
     .object({
-        listingTitle: z.string().trim().min(1).max(255),
-        listingDesc: z.string().trim().min(1),
-        minBudget: z.number().int().nonnegative().max(INT4_MAX).optional(),
-        maxBudget: z.number().int().positive().max(INT4_MAX).optional(),
-        categoryIds: z
-            .array(z.number().int().positive().max(INT4_MAX))
-            .default([]),
-        // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
-        // name is a mistake in the body, so it is a 400 rather than dropped.
-        techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX).default([]),
+        listingTitle: serviceFields.listingTitle,
+        listingDesc: serviceFields.listingDesc,
+        minBudget: serviceFields.minBudget.optional(),
+        maxBudget: serviceFields.maxBudget.optional(),
+        categoryIds: serviceFields.categoryIds.default([]),
+        techStack: serviceFields.techStack.default([]),
     })
-    .refine(
-        (b) =>
-            b.minBudget === undefined ||
-            b.maxBudget === undefined ||
-            b.minBudget <= b.maxBudget,
-        {
-            message: 'minBudget must be less than or equal to maxBudget',
-            path: ['minBudget'],
-        },
-    );
+    .refine(serviceBudgetRangeIsValid, {
+        message: SERVICE_BUDGET_RANGE_ERROR,
+        path: ['minBudget'],
+    });
+
+// PATCH sends only changed fields. Category and tech arrays replace their
+// whole existing sets; [] deliberately clears one. The controller validates
+// a one-sided budget change against the stored other side.
+export const updateListingSchema = z
+    .strictObject({
+        ...serviceFields,
+        minBudget: serviceFields.minBudget.nullable(),
+        maxBudget: serviceFields.maxBudget.nullable(),
+    })
+    .partial()
+    .refine((body) => Object.keys(body).length > 0, {
+        message: 'Provide at least one field to update',
+    });
 
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 

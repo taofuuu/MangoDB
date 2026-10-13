@@ -19,6 +19,7 @@ import type {
     RegisterRequest,
     UpdateCompanyProfileRequest,
     UpdateJobPostingRequest,
+    UpdateServiceRequest,
 } from '@mangodb/shared';
 import type { registerSchema } from './auth.schema';
 import type {
@@ -31,6 +32,7 @@ import type {
     updateJobPostingSchema,
 } from './job-posting.schema';
 import type { createProposalSchema } from './proposal.schema';
+import type { updateListingSchema } from './service.schema';
 
 // Fails to compile unless T is assignable to U. Both directions are asserted
 // below, so neither side may carry a field the other does not.
@@ -88,6 +90,16 @@ type _UpdateJobPostingMatchesContract = Assert<
 type _ContractMatchesUpdateJobPosting = Assert<
     UpdateJobPostingRequest,
     UpdateJobPostingInput
+>;
+
+type UpdateServiceInput = z.infer<typeof updateListingSchema>;
+type _UpdateServiceMatchesContract = Assert<
+    UpdateServiceInput,
+    UpdateServiceRequest
+>;
+type _ContractMatchesUpdateService = Assert<
+    UpdateServiceRequest,
+    UpdateServiceInput
 >;
 
 type CreateProposalInput = z.infer<typeof createProposalSchema>;

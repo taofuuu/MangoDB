@@ -7,6 +7,7 @@ import {
     getService,
     listServiceFilterOptions,
     listServices,
+    updateService,
 } from '../controllers/service.controller';
 
 // Mounted at /services.
@@ -31,6 +32,12 @@ serviceRoutes.get(
 serviceRoutes.post('/', requireAuth, requireRole('provider'), createListing);
 serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
 serviceRoutes.get('/:listingId', requireAuth, getService);
+serviceRoutes.patch(
+    '/:listingId',
+    requireAuth,
+    requireRole('provider'),
+    updateService,
+);
 serviceRoutes.delete(
     '/:listingId',
     requireAuth,

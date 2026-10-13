@@ -58,6 +58,46 @@ export async function resolveTechStack(names: string[]): Promise<string[]> {
     return typed.map((name) => stored.get(name.toLowerCase()) ?? name);
 }
 
+// Both create and edit need the same two-stage catalog write from ADR 0009:
+// resolve existing spelling first, then add only genuinely new names.
+export async function ensureTechStack(names: string[]): Promise<string[]> {
+    const techNames = await resolveTechStack(names);
+
+    if (techNames.length > 0) {
+        await prisma.techStack.createMany({
+            data: techNames.map((techStackName) => ({ techStackName })),
+            skipDuplicates: true,
+        });
+    }
+
+    return techNames;
+}
+
+// Service create and edit share this check so an unknown category becomes a
+// field-level 400 instead of a database foreign-key error.
+export async function assertServiceCategoriesExist(
+    categoryIds: number[],
+): Promise<void> {
+    const uniqueCatIds = [...new Set(categoryIds)];
+    if (uniqueCatIds.length === 0) return;
+
+    const existing = await prisma.category.findMany({
+        where: { catId: { in: uniqueCatIds } },
+        select: { catId: true },
+    });
+    const existingIds = new Set(existing.map(({ catId }) => catId));
+    const missing = uniqueCatIds.filter((catId) => !existingIds.has(catId));
+
+    if (missing.length > 0) {
+        throw ApiError.validationFailed([
+            {
+                field: 'categoryIds',
+                message: `Unknown category id(s): ${missing.join(', ')}`,
+            },
+        ]);
+    }
+}
+
 // The columns a service listing response may carry.
 export const listingSelect = {
     listingId: true,
@@ -111,10 +151,15 @@ export function toListing(row: SelectedListing): ServiceListing {
 export async function assertListingOwned(
     listingId: number,
     companyId: number,
-): Promise<void> {
+): Promise<{ minBudget: number | null; maxBudget: number | null }> {
     const listing = await prisma.listing.findUnique({
         where: { listingId },
-        select: { companyId: true, listingType: true },
+        select: {
+            companyId: true,
+            listingType: true,
+            minBudget: true,
+            maxBudget: true,
+        },
     });
 
     if (!listing || listing.listingType !== 'SERVICE') {
@@ -126,6 +171,11 @@ export async function assertListingOwned(
     if (listing.companyId !== companyId) {
         throw ApiError.forbidden('This listing belongs to another company');
     }
+
+    return {
+        minBudget: listing.minBudget,
+        maxBudget: listing.maxBudget,
+    };
 }
 
 // US3-1. What one service search card needs. Only these company fields, never
