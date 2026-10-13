@@ -37,6 +37,12 @@ export type CertificateResponse = Certificate;
 // a provider cannot discover another provider's certificate ids, so there is
 // no id it could have got except by guessing. Confirming a guess is the only
 // thing a 403 would add.
+//
+// That premise no longer holds: GET /certificates?companyId= lists another
+// provider's certificates, ids included. The 404 is kept because it is still
+// safe and the frontend already handles it, but by the rule in
+// docs/adding-a-resource.md these ids are now discoverable, so 404 and 403
+// could be split like assertPortfolioOwned.
 export async function assertCertificateOwned(
     certificateId: number,
     providerId: number,

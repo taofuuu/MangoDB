@@ -1,0 +1,16 @@
+{
+    "request": "GET /certificates",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "companyId",
+                    "message": "Invalid input: expected string, received undefined"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}
