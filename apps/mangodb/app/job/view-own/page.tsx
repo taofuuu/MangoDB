@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 export default function Page() {
     return (
-        <Suspense fallback={<div>Loading jobs...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-surface" />}>
             <JobPostingsPage view="mine" />
         </Suspense>
     );
