@@ -141,8 +141,8 @@ export const serviceMineQuerySchema = z.object({
 });
 
 // Path params arrive as strings, so this coerces before the integer check —
-// same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
-// /services/:listingId.
+// same reason portfolioIdParamSchema needs z.coerce. Shared by the service
+// detail, update, and delete endpoints.
 export const listingIdParamSchema = z.object({
     listingId: int4Id,
 });
