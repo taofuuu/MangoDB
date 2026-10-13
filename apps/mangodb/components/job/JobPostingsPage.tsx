@@ -249,7 +249,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     MY JOBS FILTERS + ADD JOB
                     ===================================================== */}
 
-                {isMyJobs && (
+                {isMyJobs && error !== NOT_SIGNED_IN && (
                     <div
                         className="
                             flex
@@ -261,10 +261,10 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Status filters */}
                         <div
                             className="
-                                flex
-                                items-center
-                                gap-[0.63vw]
-                            "
+                            flex
+                            items-center
+                            gap-[0.63vw]
+                        "
                         >
                             {[
                                 {
@@ -340,27 +340,14 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         </div>
 
                         {/* Add Job */}
-                        <button
+                        <Button
                             type="button"
-                            onClick={() => router.push('view-own/create')}
-                            className="
-                                flex
-                                h-[4.17vh]
-                                w-[8.96vw]
-                                items-center
-                                justify-center
-                                gap-[0.42vw]
-                                rounded-button
-                                bg-brand-dark
-                                type-md
-                                text-surface
-                                transition-colors
-                                hover:bg-brand-darker
-                            "
+                            onClick={() => router.push('/job/view-own/create')}
+                            className="flex h-[4.17vh] w-[8.96vw] items-center justify-center gap-[0.42vw] "
                         >
                             <FilePlus size={18} aria-hidden="true" />
                             Add Job
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -556,9 +543,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                 <div className="flex flex-col items-center gap-[2.5vh]">
                     <div className="mt-[5vh] flex w-full justify-center items-center gap-[1.4vw]">
                         <CheckCircle2Icon
-                        size={90}
-                        className="text-brand"
-                        aria-hidden="true"
+                            size={90}
+                            className="text-brand"
+                            aria-hidden="true"
                         />
                         <h2
                             id="post-success-title"
@@ -577,13 +564,13 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         "
                     />
 
-                    <button
+                    <Button
                         type="button"
                         onClick={closePostSuccess}
-                        className="h-[4.07vh] w-[9.16vw] self-end rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light"
+                        className="h-[4.07vh] w-[9.16vw] self-end type-sm !font-[500]"
                     >
                         OK
-                    </button>
+                    </Button>
                 </div>
             </ModalShell>
         </main>

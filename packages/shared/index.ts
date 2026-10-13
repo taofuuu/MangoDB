@@ -422,3 +422,9 @@ export interface Project {
     startDate: string;
     status: ProjectStatus;
 }
+
+// listing category
+export interface Category {
+    catId: number;
+    catName: string;
+}

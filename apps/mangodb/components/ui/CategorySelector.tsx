@@ -1,11 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-
-type Category = {
-    catId: number;
-    catName: string;
-};
+import type { Category } from '@mangodb/shared';
+import FieldError from './FieldError';
 
 type CategorySelectorProps = {
     categories: Category[];
@@ -43,7 +40,13 @@ export default function CategorySelector({
             {/* Selector button and selected tags */}
             <div className="relative">
                 <div
-                    className="flex min-h-12 flex-wrap items-center gap-2 rounded-input border border-brand bg-surface-white/80 p-2"
+                    className={`flex min-h-12 flex-wrap items-center gap-2 rounded-input border bg-surface-white/80 p-2 focus-within:ring-1 ${
+                        error
+                            ? 'border-danger focus-within:ring-danger'
+                            : 'border-brand focus-within:ring-brand'
+                    }`}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? 'categoryIds-error' : undefined}
                 >
                     {selectedIds.map((id) => {
                         const category = categories.find(
@@ -92,7 +95,7 @@ export default function CategorySelector({
                 {isOpen && (
                     <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-input border border-brand bg-surface-white p-2 shadow-lg">
                         {categories.length === 0 ? (
-                            <p className="p-2 text-sm text-ink">
+                            <p className="p-2 type-sm text-ink">
                                 No categories available.
                             </p>
                         ) : (
@@ -104,7 +107,7 @@ export default function CategorySelector({
                                 return (
                                     <label
                                         key={category.catId}
-                                        className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-ink hover:bg-brand/10"
+                                        className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 type-sm text-ink hover:bg-brand/10"
                                     >
                                         <input
                                             type="checkbox"
@@ -124,7 +127,7 @@ export default function CategorySelector({
                 )}
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            <FieldError message={error} id="categoryIds-error" />
         </div>
     );
 }

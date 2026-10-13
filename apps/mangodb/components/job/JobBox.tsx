@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { useState } from 'react';
+import useRouter from 'next/navigation';
 
 import JobDetailModal from './JobDetailModal';
 
@@ -47,6 +48,8 @@ export default function JobBox({
     const closeDetail = () => {
         setIsDetailOpen(false);
     };
+
+    // const router = useRouter();
 
     return (
         <>
@@ -114,25 +117,31 @@ export default function JobBox({
                                         shadow-lg
                                     "
                                 >
-                                    <button
-                                        type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                    >
-                                        <Edit size={15} />
-                                        Edit
-                                    </button>
-
                                     {job.listingStatus === 'OPEN' && (
-                                        <button
-                                            type="button"
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                        >
-                                            <FileX size={15} />
-                                            Close
-                                        </button>
-                                    )}
+                                        <>
+                                            <button
+                                                type="button"
+                                                // onClick={() => {
+                                                //     setIsMenuOpen(false);
+                                                //     router.push(`/job/view-own/edit/${job.jobPostingId}`);
+                                                // }}
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <Edit size={15} />
+                                                Edit
+                                            </button>
 
-                                    <hr className="my-1 border-0 border-t border-line" />
+                                            <button
+                                                type="button"
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <FileX size={15} />
+                                                Close
+                                            </button>
+
+                                            <hr className="my-1 border-0 border-t border-line" />
+                                        </>
+                                    )}
 
                                     <button
                                         type="button"
