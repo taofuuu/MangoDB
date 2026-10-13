@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 import type {
     CompanyListResponse,
@@ -112,9 +111,7 @@ export default function CompanySearchPage() {
     }
 
     if (error === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to explore companies." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
@@ -181,9 +180,7 @@ function EditProfilePageInner() {
     };
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to edit your profile." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

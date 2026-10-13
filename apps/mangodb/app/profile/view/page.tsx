@@ -8,7 +8,6 @@ import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
 import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // US1-4. One route for "my profile", rather than the /provider and /receiver
@@ -36,9 +35,7 @@ export default function ViewProfilePage() {
     }, []);
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to view your company profile." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     // Each view brings its own full-page layout, so they are returned whole

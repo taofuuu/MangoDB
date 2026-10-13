@@ -14,7 +14,6 @@ import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 
 export default function CertificatePage() {
@@ -147,9 +146,7 @@ export default function CertificatePage() {
     };
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to view and manage certificates." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

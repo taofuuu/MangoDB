@@ -49,9 +49,7 @@ export default function ProposalPreviewPage() {
     }, []);
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to preview proposals." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     if (profile && !isProviderAccount(profile.accountType)) {

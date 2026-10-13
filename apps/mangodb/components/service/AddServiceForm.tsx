@@ -301,9 +301,7 @@ export default function AddServiceForm() {
     }
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to create or manage service listings." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

@@ -10,7 +10,6 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus } from 'lucide-react';
@@ -199,9 +198,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     if (error === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to view job postings." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

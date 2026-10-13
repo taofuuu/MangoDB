@@ -16,7 +16,6 @@ import { SearchServicesFilterSidebar } from './SearchServicesFilterSidebar';
 import { SearchServicesResultsGrid } from './SearchServicesResultsGrid';
 import { SearchServicesBar } from './SearchServicesBar';
 import { ServiceDetailPanel } from './ServiceDetailPanel';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // mode is a prop, not hardcoded, so whichever pagination style the final
@@ -92,9 +91,7 @@ export function SearchServicesPage({
     }, [signedOut]);
 
     if (signedOut) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to search and view services." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     const headerAndSearch = (

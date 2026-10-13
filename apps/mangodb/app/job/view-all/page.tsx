@@ -7,7 +7,6 @@ import Pagination from '@/components/ui/Pagination';
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getAllJobPostings } from '@/lib/job';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
@@ -155,9 +154,7 @@ export default function OtherJobPage() {
     const visibleJobs = result?.items ?? [];
 
     if (error === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to view job postings." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

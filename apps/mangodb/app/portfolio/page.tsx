@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { redirectToUnauthorized } from '@/lib/session';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolio/PortfolioCard';
@@ -77,9 +76,7 @@ export default function PortfolioPage() {
     };
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to view company portfolios." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

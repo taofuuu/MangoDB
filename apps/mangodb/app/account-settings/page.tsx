@@ -11,7 +11,6 @@ import {
     getMyProfile,
 } from '@/lib/companies';
 import { redirectToLogin, redirectToUnauthorized } from '@/lib/session';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
 import EditAccountModal, {
@@ -107,9 +106,7 @@ export default function AccountPage() {
     };
 
     if (loadError === NOT_SIGNED_IN) {
-        return (
-            <UnauthorizedPage message="You need to be logged in to access account settings." />
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (
