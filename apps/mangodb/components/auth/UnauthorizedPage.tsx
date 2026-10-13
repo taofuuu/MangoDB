@@ -13,9 +13,7 @@ export interface UnauthorizedPageProps {
     homeHref?: string;
     loginHref?: string;
     homeLabel?: string;
-    loginLabel?: string;
     showLogin?: boolean;
-    primaryButtonClassName?: string;
 }
 
 export default function UnauthorizedPage({
@@ -27,9 +25,7 @@ export default function UnauthorizedPage({
     homeHref = '/',
     loginHref = '/login',
     homeLabel = 'Back to Home',
-    loginLabel = 'Log In',
     showLogin = true,
-    primaryButtonClassName,
 }: UnauthorizedPageProps) {
     const isDanger = variant === 'danger';
 
@@ -41,11 +37,9 @@ export default function UnauthorizedPage({
         ? 'bg-danger-wash text-danger border-danger-tint'
         : 'bg-fill-subtle text-ink-soft border-line';
 
-    const defaultPrimaryButtonClass = isDanger
+    const primaryBtnClass = isDanger
         ? 'bg-danger hover:bg-danger-hover text-surface-white'
         : 'bg-brand hover:bg-brand-dark text-surface-white';
-
-    const primaryBtnClass = primaryButtonClassName ?? defaultPrimaryButtonClass;
 
     return (
         <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-6 text-center">
@@ -93,7 +87,7 @@ export default function UnauthorizedPage({
                             href={loginHref}
                             className={`flex-1 py-2.5 px-4 rounded-button type-sm font-semibold transition-colors text-center ${primaryBtnClass}`}
                         >
-                            {loginLabel}
+                            Log In
                         </Link>
                     )}
                 </div>

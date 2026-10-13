@@ -42,10 +42,10 @@ function EditProfilePageInner() {
     const [saved, setSaved] = useState<ProfileFormData | null>(null);
     const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [adminAuthError, setAdminAuthError] = useState<{
-        isForbidden: boolean;
-        reason: string;
-    } | null>(null);
+    const [adminAuthStatus, setAdminAuthStatus] = useState<
+        'unauthorized' | 'forbidden' | null
+    >(null);
+
     const [errors, setErrors] = useState<ProfileErrors>({});
     // The photo is not a column this form writes, so it is not in ProfileErrors.
     const [photoError, setPhotoError] = useState<string | undefined>(undefined);
@@ -66,11 +66,12 @@ function EditProfilePageInner() {
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
             if (isAdminEditingOther) {
-                if (isNotSignedIn(err) || isForbidden(err)) {
-                    setAdminAuthError({
-                        isForbidden: isForbidden(err),
-                        reason: describeError(err),
-                    });
+                if (isForbidden(err)) {
+                    setAdminAuthStatus('forbidden');
+                    return;
+                }
+                if (isNotSignedIn(err)) {
+                    setAdminAuthStatus('unauthorized');
                     return;
                 }
             } else {
@@ -197,15 +198,14 @@ function EditProfilePageInner() {
         }
     };
 
-    if (!saved && !loadError && !adminAuthError) {
+    if (!saved && !loadError && !adminAuthStatus) {
         return <div className="min-h-screen bg-surface" />;
     }
 
-    if (adminAuthError) {
+    if (adminAuthStatus) {
         return (
             <AdminUnauthorizedPage
-                isForbidden={adminAuthError.isForbidden}
-                reason={adminAuthError.reason}
+                isForbidden={adminAuthStatus === 'forbidden'}
             />
         );
     }

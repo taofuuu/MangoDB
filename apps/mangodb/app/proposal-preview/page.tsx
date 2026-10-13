@@ -75,8 +75,6 @@ export default function ProposalPreviewPage() {
                 </p>
             )}
 
-            {!loadError && !profile && <p className="type-sm">Loading…</p>}
-
             {profile && isProviderAccount(profile.accountType) && (
                 <>
                     <Button

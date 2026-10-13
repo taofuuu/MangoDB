@@ -171,14 +171,14 @@ Do not write your own fetch wrapper, your own 401 check, or your own
 
 ```ts
 catch (err) {
-    if (isNotSignedIn(err)) { setLoadError(NOT_SIGNED_IN); return; }
+    if (isNotSignedIn(err)) { redirectToUnauthorized(); return; }
     setLoadError(describeError(err));
 }
 ```
 
-A page that loads data shows one of three things: the sign-in prompt when
-`loadError === NOT_SIGNED_IN`, the error when it is anything else, or "Loading…"
-while the data is null.
+A page that loads data redirects to `/unauthorized` when `isNotSignedIn(err)`,
+renders the error when it is anything else, or renders a neutral surface gate
+while the data is loading.
 
 ### Errors belong to the field they name
 

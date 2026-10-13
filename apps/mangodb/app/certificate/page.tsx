@@ -186,10 +186,6 @@ export default function CertificatePage() {
                         </Link>
                         <p className="type-hd">Certificates</p>
                     </div>
-                    {/* Loading */}
-                    {certificates === null && !loadError && (
-                        <p className="mt-8">Loading certificates...</p>
-                    )}
 
                     {/* Anything else really is an error. */}
                     {loadError && loadError !== NOT_SIGNED_IN && (

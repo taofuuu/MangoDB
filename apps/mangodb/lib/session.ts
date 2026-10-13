@@ -50,13 +50,7 @@ export async function logout(): Promise<void> {
     }
 }
 
-// A full page load clears everything this session left in memory. replace(),
-// not href: after a push, the browser's back-forward cache can restore this
-// signed-in page as it was. Chrome skips that cache for replace(), but no spec
-// promises it, so reload if it comes back. once: true — this only needs to
-// fire for the navigation this call is about to start, not linger for the rest
-// of the page's life.
-export function redirectToLogin(): void {
+function replaceLocation(url: string): void {
     if (typeof window === 'undefined') return;
 
     window.addEventListener(
@@ -66,7 +60,17 @@ export function redirectToLogin(): void {
         },
         { once: true },
     );
-    window.location.replace('/login');
+    window.location.replace(url);
+}
+
+// A full page load clears everything this session left in memory. replace(),
+// not href: after a push, the browser's back-forward cache can restore this
+// signed-in page as it was. Chrome skips that cache for replace(), but no spec
+// promises it, so reload if it comes back. once: true — this only needs to
+// fire for the navigation this call is about to start, not linger for the rest
+// of the page's life.
+export function redirectToLogin(): void {
+    replaceLocation('/login');
 }
 
 export function sanitizeReturnUrl(
@@ -96,22 +100,6 @@ export function sanitizeReturnUrl(
     return trimmed;
 }
 
-export function buildAdminLoginUrl(nextPath?: string): string {
-    const params = new URLSearchParams();
-    const current =
-        nextPath ??
-        (typeof window !== 'undefined'
-            ? window.location.pathname + window.location.search
-            : null);
-    const safeNext = sanitizeReturnUrl(current);
-    if (safeNext && safeNext !== '/admin/companies') {
-        params.set('next', safeNext);
-    }
-
-    const query = params.toString();
-    return query ? `/admin/login?${query}` : '/admin/login';
-}
-
 export function buildUnauthorizedUrl(nextPath?: string): string {
     const params = new URLSearchParams();
     const current =
@@ -128,25 +116,6 @@ export function buildUnauthorizedUrl(nextPath?: string): string {
     return query ? `/unauthorized?${query}` : '/unauthorized';
 }
 
-export function redirectToUnauthorized(options?: {
-    next?: string;
-    router?: { replace: (url: string) => void };
-}): void {
-    if (typeof window === 'undefined') return;
-
-    const url = buildUnauthorizedUrl(options?.next);
-
-    if (options?.router) {
-        options.router.replace(url);
-        return;
-    }
-
-    window.addEventListener(
-        'pageshow',
-        (event) => {
-            if (event.persisted) window.location.reload();
-        },
-        { once: true },
-    );
-    window.location.replace(url);
+export function redirectToUnauthorized(): void {
+    replaceLocation(buildUnauthorizedUrl());
 }

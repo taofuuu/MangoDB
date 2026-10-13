@@ -36,11 +36,11 @@ export default function AdminCompaniesPage() {
     );
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [adminAuthError, setAdminAuthError] = useState<{
-        isForbidden: boolean;
-        reason: string;
-    } | null>(null);
+    const [adminAuthStatus, setAdminAuthStatus] = useState<
+        'unauthorized' | 'forbidden' | null
+    >(null);
     const [reloadKey, setReloadKey] = useState(0);
+
     const [selectedCompany, setSelectedCompany] =
         useState<CompanyAccountDetail | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -93,7 +93,7 @@ export default function AdminCompaniesPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoading(true);
         setError(null);
-        setAdminAuthError(null);
+        setAdminAuthStatus(null);
 
         getCompanyAccounts(page, COMPANY_PAGE_SIZE, {
             q: debouncedSearch || undefined,
@@ -106,15 +106,17 @@ export default function AdminCompaniesPage() {
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
-                if (isNotSignedIn(requestError) || isForbidden(requestError)) {
-                    setAdminAuthError({
-                        isForbidden: isForbidden(requestError),
-                        reason: describeError(requestError),
-                    });
+                if (isForbidden(requestError)) {
+                    setAdminAuthStatus('forbidden');
+                    return;
+                }
+                if (isNotSignedIn(requestError)) {
+                    setAdminAuthStatus('unauthorized');
                     return;
                 }
                 setError(describeError(requestError));
             })
+
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
             });
@@ -176,15 +178,14 @@ export default function AdminCompaniesPage() {
         (company) => company.accountType !== 'ADMIN',
     );
 
-    if (!result && !error && !adminAuthError) {
+    if (!result && !error && !adminAuthStatus) {
         return <div className="min-h-screen bg-surface" />;
     }
 
-    if (adminAuthError) {
+    if (adminAuthStatus) {
         return (
             <AdminUnauthorizedPage
-                isForbidden={adminAuthError.isForbidden}
-                reason={adminAuthError.reason}
+                isForbidden={adminAuthStatus === 'forbidden'}
             />
         );
     }
