@@ -1,0 +1,22 @@
+{
+    "request": "PATCH /services/<delete_probe_id>",
+    "status": 200,
+    "body": {
+        "categoryIds": [
+            1,
+            2
+        ],
+        "companyId": 142,
+        "companyName": "Snapshot Seed Provider",
+        "listingDesc": "updated by scripts/snapshot-api.sh",
+        "listingId": 381,
+        "listingStatus": "OPEN",
+        "listingTitle": "Snapshot Probe updated service <run>",
+        "maxBudget": 75000,
+        "minBudget": 10000,
+        "techStack": [
+            "<run>-Updated"
+        ],
+        "type": "SERVICE"
+    }
+}
