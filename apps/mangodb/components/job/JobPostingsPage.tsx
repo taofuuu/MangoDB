@@ -249,7 +249,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     MY JOBS FILTERS + ADD JOB
                     ===================================================== */}
 
-                {isMyJobs && error !== NOT_SIGNED_IN && (
+                {isMyJobs && result !== null && !error && (
                     <div
                         className="
                             flex

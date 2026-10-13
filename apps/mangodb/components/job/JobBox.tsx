@@ -70,13 +70,12 @@ export default function JobBox({
                     transition
                     leading-relaxed
 
-
                     ${
                         isMyJobs
                             ? job.listingStatus === 'OPEN'
-                                ? 'shadow-[0_0_8px_rgba(73,123,147,0.35)]'
+                                ? 'shadow-[0_0_12px_color-mix(in_srgb,var(--color-brand)_40%,transparent)]'
                                 : job.listingStatus === 'CLOSED'
-                                  ? 'shadow-[0_0_8px_rgba(197,72,59,0.35)]'
+                                  ? 'shadow-[0_0_12px_color-mix(in_srgb,var(--color-danger)_40%,transparent)]'
                                   : 'shadow-sm'
                             : 'shadow-sm'
                     }

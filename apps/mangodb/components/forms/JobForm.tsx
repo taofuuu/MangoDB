@@ -15,10 +15,13 @@ import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 
 import {
-    validateServiceTitle,
-    validateServiceDescription,
-    validateServiceCategory,
-    validateServiceBudgets,
+    validateJobTitle,
+    validateJobDescription,
+    validateJobCategory,
+    validateJobBudgets,
+    validateJobDeadline,
+    validateJobDuration,
+    validateJobLocation,
 } from '@/lib/validation';
 
 const JOB_FIELDS = {
@@ -92,16 +95,16 @@ export default function JobForm() {
     const validateForm = (): boolean => {
         const newErrors: JobErrors = {};
 
-        const titleError = validateServiceTitle(listingTitle);
+        const titleError = validateJobTitle(listingTitle);
         if (titleError) newErrors.title = titleError;
 
-        const descriptionError = validateServiceDescription(listingDesc);
+        const descriptionError = validateJobDescription(listingDesc);
         if (descriptionError) newErrors.description = descriptionError;
 
-        const categoryError = validateServiceCategory(categoryIds);
+        const categoryError = validateJobCategory(categoryIds);
         if (categoryError) newErrors.categoryIds = categoryError;
 
-        const budgetErrors = validateServiceBudgets(minBudget, maxBudget);
+        const budgetErrors = validateJobBudgets(minBudget, maxBudget);
 
         if (budgetErrors.minBudget) {
             newErrors.minBudget = budgetErrors.minBudget;
@@ -110,6 +113,15 @@ export default function JobForm() {
         if (budgetErrors.maxBudget) {
             newErrors.maxBudget = budgetErrors.maxBudget;
         }
+
+        const durationError = validateJobDuration(duration);
+        if (durationError) newErrors.duration = durationError;
+
+        const locationError = validateJobLocation(locationPref);
+        if (locationError) newErrors.location = locationError;
+
+        const deadlineError = validateJobDeadline(deadline);
+        if (deadlineError) newErrors.deadline = deadlineError;
 
         setErrors(newErrors);
 
@@ -238,7 +250,7 @@ export default function JobForm() {
                     {/* Maximum */}
                     <Input
                         id="max-budget"
-                        label="Max Budget"
+                        label="Max Budget*"
                         type="text"
                         inputMode="numeric"
                         value={maxBudget}
@@ -259,7 +271,6 @@ export default function JobForm() {
                     placeholder="Ex: Bangkok / Remote"
                 />
 
-                {/* Budget */}
                 <div className="flex w-full gap-[1vw]">
                     {/* Deadline */}
                     <Input
