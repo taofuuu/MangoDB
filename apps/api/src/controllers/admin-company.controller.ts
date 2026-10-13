@@ -133,11 +133,19 @@ export async function updateCompanyAccount(
     // learn the target's accountType, which the next check needs.
     const target = await prisma.company.findUnique({
         where: { companyId },
-        select: { accountType: true },
+        select: { accountType: true, deletedAt: true },
     });
 
     if (!target) {
         throw ApiError.notFound('Company account not found');
+    }
+
+    // A soft-deleted account is read-only. 409 rather than the 404
+    // deleteCompanyAccount gives: an administrator can still open this row
+    // through GET /admin/companies/:companyId, so "not found" would contradict
+    // what they are looking at. The row exists; its state forbids the edit.
+    if (target.deletedAt !== null) {
+        throw ApiError.conflict('Deleted company accounts cannot be edited');
     }
 
     // The names, not just a yes/no like editsProviderFields: the error below
@@ -165,7 +173,9 @@ export async function updateCompanyAccount(
     let company;
     try {
         company = await prisma.company.update({
-            where: { companyId },
+            // deletedAt again here, not only in the read above: a delete that
+            // lands between the two would otherwise be edited anyway.
+            where: { companyId, deletedAt: null },
             data: companyProfileUpdateData(body),
             select: adminCompanyDetailSelect,
         });
@@ -179,12 +189,15 @@ export async function updateCompanyAccount(
                 { field: 'companyType', message: 'Remove the duplicate tag' },
             ]);
         }
-        // The company was deleted between the lookup above and this write.
-        // That is the only way to get here: the check above refuses the
-        // account types that own no provider row, and the nested write upserts
-        // the row for the ones that do but are missing it.
+        // The company was soft-deleted between the lookup above and this
+        // write, so the where clause no longer matches. That is the only way
+        // to get here: no request path hard-deletes a company, the check
+        // above refuses the account types that own no provider row, and the
+        // nested write upserts the row for the ones that do but are missing it.
         if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Company account not found');
+            throw ApiError.conflict(
+                'Deleted company accounts cannot be edited',
+            );
         }
         throw err;
     }
