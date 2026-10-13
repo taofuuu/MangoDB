@@ -59,6 +59,7 @@ export default function ProposalPreviewPage() {
             <UnauthorizedPage
                 title="Access Restricted"
                 message="Only Provider and BOTH accounts can submit proposals."
+                showLogin={false}
             />
         );
     }

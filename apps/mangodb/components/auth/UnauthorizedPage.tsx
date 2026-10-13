@@ -10,6 +10,7 @@ export interface UnauthorizedPageProps {
     loginHref?: string;
     homeLabel?: string;
     loginLabel?: string;
+    showLogin?: boolean;
 }
 
 export default function UnauthorizedPage({
@@ -19,6 +20,7 @@ export default function UnauthorizedPage({
     loginHref = '/login',
     homeLabel = 'Back to Home',
     loginLabel = 'Log In',
+    showLogin = true,
 }: UnauthorizedPageProps) {
     return (
         <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-6 text-center">
@@ -48,20 +50,24 @@ export default function UnauthorizedPage({
                 </div>
 
                 {/* Actions */}
-                <div className="w-full flex flex-col sm:flex-row gap-3">
+                <div className="w-full flex flex-col sm:flex-row gap-3 justify-center">
                     <Link
                         href={homeHref}
-                        className="flex-1 py-2.5 px-4 rounded-button bg-fill-muted text-surface-white type-sm font-semibold hover:bg-ink-placeholder transition-colors text-center"
+                        className={`py-2.5 px-4 rounded-button bg-fill-muted text-surface-white type-sm font-semibold hover:bg-ink-placeholder transition-colors text-center ${
+                            showLogin ? 'flex-1' : 'w-full sm:w-auto sm:px-8'
+                        }`}
                     >
                         {homeLabel}
                     </Link>
 
-                    <Link
-                        href={loginHref}
-                        className="flex-1 py-2.5 px-4 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors text-center"
-                    >
-                        {loginLabel}
-                    </Link>
+                    {showLogin && (
+                        <Link
+                            href={loginHref}
+                            className="flex-1 py-2.5 px-4 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors text-center"
+                        >
+                            {loginLabel}
+                        </Link>
+                    )}
                 </div>
             </div>
         </main>

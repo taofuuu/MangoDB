@@ -83,18 +83,13 @@ export default function AddServiceForm() {
                     profile.accountType === 'PROVIDER' ||
                     profile.accountType === 'BOTH';
                 setIsAuthorized(hasProviderRole);
-                if (!hasProviderRole) {
-                    redirectToUnauthorized(
-                        'You need to be logged in as a Provider to create or manage service listings.',
-                    );
-                }
             })
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
                     redirectToUnauthorized(
-                        'You need to be logged in as a Provider to create or manage service listings.',
+                        'You need to be logged in to create or manage service listings.',
                     );
                     return;
                 }
@@ -290,16 +285,24 @@ export default function AddServiceForm() {
         );
     }
 
-    if (!isAuthorized || loadError === NOT_SIGNED_IN) {
+    if (isAuthorized === false && loadError !== NOT_SIGNED_IN) {
         return (
             <UnauthorizedPage
+                title="Access Restricted"
                 message={
                     <p>
-                        You need to be logged in as a <strong>Provider</strong>{' '}
-                        to create or manage service listings.
+                        You need a <strong>Provider</strong> account to create
+                        or manage service listings.
                     </p>
                 }
+                showLogin={false}
             />
+        );
+    }
+
+    if (loadError === NOT_SIGNED_IN) {
+        return (
+            <UnauthorizedPage message="You need to be logged in to create or manage service listings." />
         );
     }
 
