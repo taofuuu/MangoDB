@@ -107,7 +107,7 @@ No `/search` segment. Filters and paging go in the query string, the way
 `GET /admin/companies` already works:
 
 ```
-GET /companies?q=&page=&pageSize=
+GET /companies?q=&orderBy=nameAsc&page=&pageSize=
 ```
 
 ---

@@ -156,17 +156,24 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-6. One company search result card. categories and techStack are every
-// one used by the company's services (ADR 0009: tech stack is per service).
+// US3-6. One company search result card. The full public profile is fetched
+// only when its detail panel opens. categories and techStack are every one
+// used by the company's services (ADR 0009: tech stack is per service).
 export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
     companyPhoto: string | null;
     accountType: AccountType;
+    contactEmail: string | null;
+    phone: string;
+    website: string | null;
     categories: string[];
     techStack: string[];
 }
+
+export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
+export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
 export interface CompanyListResponse {
     items: CompanySummary[];

@@ -1,5 +1,5 @@
 {
-    "request": "GET /companies?q=Snapshot%20Seed",
+    "request": "GET /companies?orderBy=nameAsc&q=Snapshot%20Seed",
     "status": 200,
     "body": {
         "items": [
@@ -10,7 +10,10 @@
                 "companyId": 142,
                 "companyName": "Snapshot Seed Provider",
                 "companyPhoto": null,
-                "techStack": []
+                "contactEmail": null,
+                "phone": "0810000001",
+                "techStack": [],
+                "website": null
             },
             {
                 "accountType": "RECEIVER",
@@ -19,7 +22,10 @@
                 "companyId": 143,
                 "companyName": "Snapshot Seed Receiver",
                 "companyPhoto": null,
-                "techStack": []
+                "contactEmail": null,
+                "phone": "0810000002",
+                "techStack": [],
+                "website": null
             }
         ],
         "pagination": {
