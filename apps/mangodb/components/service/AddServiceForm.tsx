@@ -274,13 +274,7 @@ export default function AddServiceForm() {
 
     // ── EARLY RETURNS PLACED AFTER ALL HOOKS ──
     if (isAuthorized === null && !loadError) {
-        return (
-            <div className="min-h-screen bg-surface flex items-center justify-center">
-                <p className="type-sm text-ink-placeholder">
-                    Checking permissions...
-                </p>
-            </div>
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     if (isAuthorized === false && loadError !== NOT_SIGNED_IN) {

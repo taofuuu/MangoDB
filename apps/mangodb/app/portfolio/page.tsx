@@ -77,6 +77,10 @@ export default function PortfolioPage() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    if (!items && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <main className="min-h-screen bg-surface px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-ink max-md:px-[5vw]">
             <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">

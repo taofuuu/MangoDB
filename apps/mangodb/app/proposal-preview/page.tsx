@@ -50,6 +50,10 @@ export default function ProposalPreviewPage() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    if (!profile && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     if (profile && !isProviderAccount(profile.accountType)) {
         return (
             <UnauthorizedPage

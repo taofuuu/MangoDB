@@ -107,6 +107,10 @@ export default function AccountPage() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    if (!profile && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">

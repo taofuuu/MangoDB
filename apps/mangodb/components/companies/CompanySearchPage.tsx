@@ -101,11 +101,7 @@ export default function CompanySearchPage() {
     const pagination = result?.pagination;
 
     if (isLoading && !result && !error) {
-        return (
-            <main className="min-h-screen bg-surface p-6 text-ink">
-                <p className="type-sm">Loading…</p>
-            </main>
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     if (error === NOT_SIGNED_IN) {

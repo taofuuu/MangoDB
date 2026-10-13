@@ -197,6 +197,10 @@ function EditProfilePageInner() {
         }
     };
 
+    if (!saved && !loadError && !adminAuthError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     if (adminAuthError) {
         return (
             <AdminUnauthorizedPage

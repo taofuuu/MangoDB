@@ -154,6 +154,10 @@ export default function CertificatePage() {
         return '';
     };
 
+    if (certificates === null && !loadError && !isRestricted) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     if (isRestricted) {
         return (
             <UnauthorizedPage

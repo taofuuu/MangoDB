@@ -155,6 +155,10 @@ export default function OtherJobPage() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    if (!result && !error) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
             <div className="mx-auto max-w-[93.75vw]">

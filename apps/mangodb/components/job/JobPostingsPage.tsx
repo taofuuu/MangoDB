@@ -207,6 +207,10 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
+    if (!result && !error && !isRestricted) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     if (isRestricted) {
         return (
             <UnauthorizedPage
