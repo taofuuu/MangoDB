@@ -1,6 +1,5 @@
 'use client';
 
-import { buildAdminLoginUrl } from '@/lib/session';
 import UnauthorizedPage from './UnauthorizedPage';
 
 export interface AdminUnauthorizedPageProps {
@@ -12,14 +11,11 @@ export interface AdminUnauthorizedPageProps {
 }
 
 export default function AdminUnauthorizedPage({
-    next,
     isForbidden = false,
     reason,
     homeHref = '/',
     homeLabel = 'Back to Home',
 }: AdminUnauthorizedPageProps) {
-    const loginHref = buildAdminLoginUrl(next);
-
     if (isForbidden) {
         return (
             <UnauthorizedPage
@@ -30,9 +26,7 @@ export default function AdminUnauthorizedPage({
                 message="This management area requires administrator privileges. Your current account does not have access."
                 homeHref={homeHref}
                 homeLabel={homeLabel}
-                loginHref={loginHref}
-                loginLabel="Admin Login"
-                showLogin={true}
+                showLogin={false}
             />
         );
     }
@@ -46,9 +40,7 @@ export default function AdminUnauthorizedPage({
             message="You must be signed in with an administrator account to view or manage this area."
             homeHref={homeHref}
             homeLabel={homeLabel}
-            loginHref={loginHref}
-            loginLabel="Admin Login"
-            showLogin={true}
+            showLogin={false}
         />
     );
 }
