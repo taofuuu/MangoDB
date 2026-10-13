@@ -25,6 +25,7 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import UnauthorizedPage from './UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { isProviderAccount } from '@/lib/roles';
 import { getPortfoliosByListing } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
@@ -161,9 +162,7 @@ export default function AddServiceForm({ listingId }: ServiceFormProps) {
         async function loadPage() {
             try {
                 const profile = await getMyProfile();
-                const hasProviderRole =
-                    profile.accountType === 'PROVIDER' ||
-                    profile.accountType === 'BOTH';
+                const hasProviderRole = isProviderAccount(profile.accountType);
                 if (!hasProviderRole || cancelled) {
                     if (!cancelled) setIsAuthorized(false);
                     return;
@@ -480,7 +479,11 @@ export default function AddServiceForm({ listingId }: ServiceFormProps) {
 
     const handleSuccessConfirm = () => {
         setShowSuccessModal(false);
-        router.push(isEditMode ? '/profile/view' : '/');
+        if (isEditMode) {
+            router.back();
+            return;
+        }
+        router.push('/');
     };
 
     const handleCancel = () => {
