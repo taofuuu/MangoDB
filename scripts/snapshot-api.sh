@@ -83,6 +83,8 @@ NEW_JOB_POSTING_ID=""
 NEW_PROPOSAL_ID=""
 PROVIDER_ID=""
 RECEIVER_ID=""
+ADMIN_ID=""
+COMPANY_B_ID=""
 # Service search: the probe service, and probe C, a Provider that deletes
 # itself while its service stays OPEN.
 NEW_SERVICE_ID=""
@@ -91,6 +93,9 @@ DELETED_SERVICE_ID=""
 DELETE_PROBE_ID=""
 TOKEN_C=""
 C_LIVE=0
+TOKEN_D=""
+D_LIVE=0
+DELETED_JOB_POSTING_ID=""
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
 REUSE_SERVICE_ID=""
@@ -143,7 +148,7 @@ cleanup() {
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
-        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID)"
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID $DELETED_JOB_POSTING_ID)"
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -178,6 +183,10 @@ cleanup() {
     if [ "$C_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_C"
+    fi
+    if [ "$D_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_D"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -273,18 +282,22 @@ snap auth-login-provider POST /auth/login \
     -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"$PROVIDER_PASSWORD\"}"
 TOKEN_PROVIDER="$(jget accessToken)"
 require_token "$TOKEN_PROVIDER" "the provider" auth-login-provider
+# Seeded, so its id is the same every run. Section 13 filters by it.
+PROVIDER_COMPANY_ID="$(jget company.companyId)"
 
 snap auth-login-receiver POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$RECEIVER_EMAIL\",\"password\":\"$RECEIVER_PASSWORD\"}"
 TOKEN_RECEIVER="$(jget accessToken)"
 require_token "$TOKEN_RECEIVER" "the receiver" auth-login-receiver
+RECEIVER_COMPANY_ID="$(jget company.companyId)"
 
 snap auth-admin-login POST /auth/admin/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 TOKEN_ADMIN="$(jget accessToken)"
 require_token "$TOKEN_ADMIN" "the admin" auth-admin-login
+ADMIN_ID="$(jget company.company_id)"
 
 snap error-login-wrong-password POST /auth/login \
     -H 'Content-Type: application/json' \
@@ -342,14 +355,36 @@ snap admin-companies-detail GET "/admin/companies/$PROVIDER_ID" \
     -H "$(bearer "$TOKEN_ADMIN")"
 snap error-admin-company-not-found GET /admin/companies/2147483647 \
     -H "$(bearer "$TOKEN_ADMIN")"
+# One past the int4 column's range: a 400, not a database error.
+snap error-admin-company-id-too-large GET /admin/companies/2147483648 \
+    -H "$(bearer "$TOKEN_ADMIN")"
 
 echo
 echo "companies"
-snap companies-list GET "/companies?page=1&pageSize=2" \
+snap companies-list GET "/companies?orderBy=nameAsc&page=1&pageSize=2" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 # T3.6.13: the seeded Provider and Receiver share "Snapshot Seed", so both come
 # back. The seeded admin shares it too, and stays out.
-snap companies-search-both-types GET "/companies?q=Snapshot%20Seed" \
+snap companies-search-both-types GET "/companies?orderBy=nameAsc&q=Snapshot%20Seed" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-search-both-types-desc GET "/companies?orderBy=nameDesc&q=Snapshot%20Seed" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Another company's public profile: no username or email. The Receiver shows
+# the provider-only fields as null. An admin account is 404, the same answer
+# as an id that does not exist, so the route cannot be used to find admins.
+snap companies-one GET "/companies/$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-one-receiver GET "/companies/$RECEIVER_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+snap error-companies-one-not-found GET /companies/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-one-admin GET "/companies/$ADMIN_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-one-invalid-id GET /companies/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+# One past the int4 column's range: a 400, not a database error.
+snap error-companies-one-id-too-large GET /companies/2147483648 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ "$READ_ONLY" = 1 ]; then
@@ -410,12 +445,16 @@ snap auth-register-receiver POST /auth/register \
     -d "{\"companyName\":\"Snapshot Probe B\",\"username\":\"${RUN}b\",\"email\":\"${RUN}b@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0898765432\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}"
 TOKEN_B="$(jget accessToken)"
 B_LIVE=1
-SUBS+=(--id "company_id=$(jget company.company_id)")
+COMPANY_B_ID="$(jget company.company_id)"
+SUBS+=(--id "company_id=$COMPANY_B_ID")
 resnap auth-register-receiver
 
 snap companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
 B_LIVE=0
 snap error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
+# A soft-deleted company has no public profile any more.
+snap error-companies-one-deleted GET "/companies/$COMPANY_B_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
 # 6. Portfolios and certificates. Both carry an image, so both need Supabase.
@@ -662,7 +701,8 @@ snap error-job-postings-one-invalid-id GET /job-postings/not-a-number \
 snap error-job-postings-one-not-found GET /job-postings/2147483647 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-job-postings-one-closed-forbidden GET "/job-postings/$NEW_JOB_POSTING_ID" \
+# Another company's closed job is private, so it is 404, not 403.
+snap error-job-postings-one-closed-not-found GET "/job-postings/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
@@ -825,6 +865,8 @@ SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
 api POST /auth/register -H 'Content-Type: application/json' \
     -d "{\"companyName\":\"Snapshot Probe C\",\"username\":\"${RUN}c\",\"email\":\"${RUN}c@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0811111111\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}" >/dev/null
 TOKEN_C="$(jget accessToken)"
+C_COMPANY_ID="$(jget company.companyId)"
+SUBS+=(--id "company_id=$C_COMPANY_ID")
 if [ -z "$TOKEN_C" ]; then
     echo "could not register probe C:" >&2
     cat "$BODY" >&2
@@ -837,6 +879,54 @@ api POST /services -H "$(bearer "$TOKEN_C")" \
 DELETED_SERVICE_ID="$(jget listingId)"
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
 
+# Probe D: a Receiver that posts a job, then deletes itself. A soft delete
+# leaves the job OPEN, so only the deletedAt filter keeps it out of the list,
+# and off its detail page.
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe D\",\"username\":\"${RUN}d\",\"email\":\"${RUN}d@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0822222222\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
+TOKEN_D="$(jget accessToken)"
+if [ -z "$TOKEN_D" ]; then
+    echo "could not register probe D:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+D_LIVE=1
+api POST /job-postings -H "$(bearer "$TOKEN_D")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
+DELETED_JOB_POSTING_ID="$(jget jobPostingId)"
+if [ -z "$DELETED_JOB_POSTING_ID" ]; then
+    echo "could not create probe D's job posting:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")")" = 204 ] && D_LIVE=0
+SUBS+=(--id "deleted_job_posting_id=$DELETED_JOB_POSTING_ID")
+
+# A deleted company's open job is hidden from the list...
+snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...and is 404 on detail.
+snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# GET /services/:listingId. Any company reads an open service of an active
+# company, with the owner's name (companyName).
+snap services-one-open-other-company GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A deleted company's service is 404, even though it is still OPEN.
+SUBS+=(--id "deleted_service_id=$DELETED_SERVICE_ID")
+snap error-services-one-deleted-owner GET "/services/$DELETED_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-services-one-not-found GET /services/2147483647 \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-services-one-invalid-id GET /services/not-a-number \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.1.8 and T3.1.10: the probe comes first; probe C's service, though newer,
 # does not appear.
 snap services-search-default GET "/services?page=1&pageSize=3" \
@@ -848,7 +938,7 @@ snap services-search-keyword GET "/services?q=$RUN" \
 
 # ADR 0009: a company card lists every tech its services use. companies-list
 # runs before the probe exists, so this is where the stack shows.
-snap companies-search-service-stack GET "/companies?q=$RUN" \
+snap companies-search-service-stack GET "/companies?orderBy=nameAsc&q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T3.1.11: no match is a 200 with an empty page, not an error.
@@ -863,6 +953,14 @@ snap services-search-closed GET "/services?q=$RUN" \
 
 snap services-search-closed-default GET "/services?page=1&pageSize=3" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A closed service is private to its owner: 404 to another company, not 403...
+snap error-services-one-closed-not-found GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...while the owner still reads it.
+snap services-one-closed-owner GET "/services/$NEW_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 # The status filter on the provider's own list. Seeded services are all OPEN,
 # so the closed probe is the only CLOSED one the provider has.
@@ -955,6 +1053,11 @@ fi
 SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
     --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
 
+# T3.2.2: the UI receives the category catalog and the open-ended tech-stack
+# vocabulary from the API instead of maintaining stale hardcoded copies.
+snap services-filter-options GET /services/filter-options \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # T3.2.7: the web probe only. The mobile probe is in another category, and the
 # wide and no-min ones have none.
 snap services-filter-category-and-stack GET \
@@ -989,8 +1092,9 @@ snap services-filter-price GET \
     "/services?techStack=$RUN&minPrice=60000&maxPrice=100000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# T3.2.10: the web probe starts at or under 20000, and the no-min probe has no
-# start, so it counts as open-ended. The wide probe starts at 50000.
+# T3.2.10: the web probe starts at or under 20000. A service without a stated
+# minimum cannot promise that it fits under the user's maximum, and the wide
+# probe starts at 50000.
 snap services-filter-price-max GET \
     "/services?techStack=$RUN&maxPrice=20000" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1005,9 +1109,38 @@ snap services-filter-price-empty GET \
     "/services?techStack=$RUN&maxPrice=" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# Sorting happens before pagination. A missing starting price is unknown, not
+# the cheapest option, so the no-min probe is last in both directions.
+snap services-order-price-asc GET \
+    "/services?techStack=$RUN&orderBy=price-asc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-order-price-desc GET \
+    "/services?techStack=$RUN&orderBy=price-desc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # Slider ends that cross are a 400 the filter panel can show.
 snap error-services-filter-price-range GET \
     "/services?minPrice=200000&maxPrice=1000" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ?companyId= narrows to one company: all four probes are the provider's...
+snap services-filter-company GET \
+    "/services?techStack=$RUN&companyId=$PROVIDER_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...so another company's id finds none of them.
+snap services-filter-company-other GET \
+    "/services?techStack=$RUN&companyId=$RECEIVER_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Probe C deleted itself in section 11. Its service is still OPEN, but the
+# search hides deleted companies, so this is an empty page, not an error.
+snap services-filter-company-deleted GET "/services?companyId=$C_COMPANY_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Digits only: Number() would read 0x10 as 16.
+snap error-services-filter-company-invalid GET "/services?companyId=0x10" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
@@ -1151,4 +1284,3 @@ snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close"
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
-

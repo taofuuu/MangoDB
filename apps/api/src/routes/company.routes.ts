@@ -4,6 +4,7 @@ import { uploadImage } from '../middleware/upload';
 import {
     changeMyCredentials,
     deleteMyPhoto,
+    getCompanyProfile,
     getMyProfile,
     listCompanies,
     requestMyAccountDeletion,
@@ -49,4 +50,14 @@ companyRoutes.delete(
     requireAuth,
     requireRole('provider', 'receiver'),
     requestMyAccountDeletion,
+);
+
+// Another company's public profile. Last, after every /me route, so "me" is
+// never read as an id. Same callers as the search above: any company, not
+// admins, who have GET /admin/companies/:companyId.
+companyRoutes.get(
+    '/:companyId',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    getCompanyProfile,
 );

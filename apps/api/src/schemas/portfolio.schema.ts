@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { httpUrl } from './common.schema';
+import { httpUrl, int4Id } from './common.schema';
 
 // Path params arrive as strings, so this coerces before the integer check —
 // the same reason parseQuery's schemas need z.coerce.
 export const portfolioIdParamSchema = z.object({
-    portfolioId: z.coerce.number().int().positive().max(2147483647),
+    portfolioId: int4Id,
 });
 
 // One definition per editable column, sizes matching prisma/schema.prisma —
@@ -33,7 +33,7 @@ export const portfolioFields = {
 // Schema for CREATE (POST /portfolios)
 // with service_id (or listingId) combine with portfolioFields
 export const createPortfolioSchema = z.object({
-    listingId: z.coerce.number().int().positive().max(2147483647),
+    listingId: int4Id,
     portfolioName: portfolioFields.portfolioName,
     portfolioDescription: portfolioFields.portfolioDescription
         .optional()
@@ -59,8 +59,8 @@ export const updatePortfolioSchema = z
 export const PORTFOLIO_UNIQUE_FIELDS = ['portfolioLink'] as const;
 
 export const portfolioQuerySchema = z.object({
-    listingId: z.coerce.number().int().positive().max(2147483647).optional(),
+    listingId: int4Id.optional(),
     // No owner column on the row: the company is three hops away, so this
     // filters through service -> listing, the chain assertPortfolioOwned walks.
-    companyId: z.coerce.number().int().positive().max(2147483647).optional(),
+    companyId: int4Id.optional(),
 });
