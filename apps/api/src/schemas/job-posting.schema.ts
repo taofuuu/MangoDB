@@ -48,7 +48,7 @@ export const jobPostingFields = {
             .optional(),
     ),
     maxBudget: z.preprocess(
-        (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
+        (val) => typeof val === 'string' && val.trim() === '' ? undefined : val,
         z.coerce
             .number({ message: 'Maximum budget is required' })
             .int('Maximum budget must be an integer')
