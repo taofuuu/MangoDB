@@ -165,6 +165,11 @@ await apiFetch<Thing>('/things', { method: 'POST', body: JSON.stringify(x) });
 await apiFetch<Thing>('/things/1', { method: 'PATCH', body: formData }); // multipart
 ```
 
+Requests live in `lib/<area>.ts`. Reads use `cachedGet(path, () => apiFetch(path))`;
+writes use `invalidateAfter(apiFetch(...), '/prefix')` so the reads they change
+are dropped. A write that calls `apiFetch` directly leaves stale data on screen
+for up to 30s.
+
 `apiFetch` throws `ApiRequestError` with `.status`, `.code` and `.details`.
 Do not write your own fetch wrapper, your own 401 check, or your own
 "could not reach the server" message — all three exist:
