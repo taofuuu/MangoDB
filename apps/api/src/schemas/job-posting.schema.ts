@@ -54,8 +54,6 @@ export const jobPostingFields = {
             .int('Maximum budget must be an integer')
             .positive('Maximum budget must be greater than zero')
             .max(INT4_MAX, 'Maximum budget exceeds maximum allowed')
-            .nullable()
-            .optional(),
     ),
     locationPref: z
         .string()
