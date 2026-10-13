@@ -69,8 +69,65 @@ export function redirectToLogin(): void {
     window.location.replace('/login');
 }
 
-export function redirectToUnauthorized(message?: string): void {
+export function sanitizeReturnUrl(
+    url: string | null | undefined,
+): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (
+        !trimmed.startsWith('/') ||
+        trimmed.startsWith('//') ||
+        trimmed.startsWith('/\\')
+    ) {
+        return null;
+    }
+    if (/[\r\n\t]/.test(trimmed)) {
+        return null;
+    }
+    const beforeHash = trimmed.split('#')[0] ?? '';
+    const pathOnly = beforeHash.split('?')[0] ?? '';
+    if (pathOnly === '/unauthorized' || pathOnly === '/login') {
+        return null;
+    }
+    return trimmed;
+}
+
+export function buildUnauthorizedUrl(
+    message?: string,
+    nextPath?: string,
+): string {
+    const params = new URLSearchParams();
+    if (message) params.set('message', message);
+
+    const current =
+        nextPath ??
+        (typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : null);
+    const safeNext = sanitizeReturnUrl(current);
+    if (safeNext && safeNext !== '/') {
+        params.set('next', safeNext);
+    }
+
+    const query = params.toString();
+    return query ? `/unauthorized?${query}` : '/unauthorized';
+}
+
+export function redirectToUnauthorized(
+    message?: string,
+    options?: {
+        next?: string;
+        router?: { replace: (url: string) => void };
+    },
+): void {
     if (typeof window === 'undefined') return;
+
+    const url = buildUnauthorizedUrl(message, options?.next);
+
+    if (options?.router) {
+        options.router.replace(url);
+        return;
+    }
 
     window.addEventListener(
         'pageshow',
@@ -79,8 +136,5 @@ export function redirectToUnauthorized(message?: string): void {
         },
         { once: true },
     );
-    const url = message
-        ? `/unauthorized?message=${encodeURIComponent(message)}`
-        : '/unauthorized';
     window.location.replace(url);
 }
