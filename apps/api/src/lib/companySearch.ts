@@ -13,6 +13,9 @@ export const companySummarySelect = {
     companyDescription: true,
     companyPhoto: true,
     accountType: true,
+    contactEmail: true,
+    phone: true,
+    website: true,
     // Services only; a job posting's categories say what the company wants
     // to hire, not what it offers. A Receiver has none, so both lists are
     // empty on its card.
@@ -33,6 +36,9 @@ interface CompanySummaryRow {
     companyDescription: string | null;
     companyPhoto: string | null;
     accountType: string;
+    contactEmail: string | null;
+    phone: string;
+    website: string | null;
     listing: {
         listingCategory: { category: { catName: string } }[];
         service: ServiceTechStackRow;
@@ -57,6 +63,9 @@ export function toCompanySummary(row: CompanySummaryRow): CompanySummary {
         companyDescription: row.companyDescription,
         companyPhoto: row.companyPhoto,
         accountType: row.accountType as AccountType,
+        contactEmail: row.contactEmail,
+        phone: row.phone,
+        website: row.website,
         // Sorted: Prisma returns related rows in no fixed order.
         categories: [...categories].sort(),
         techStack: [...techStack].sort(),

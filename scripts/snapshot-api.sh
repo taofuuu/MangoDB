@@ -361,11 +361,13 @@ snap error-admin-company-id-too-large GET /admin/companies/2147483648 \
 
 echo
 echo "companies"
-snap companies-list GET "/companies?page=1&pageSize=2" \
+snap companies-list GET "/companies?orderBy=nameAsc&page=1&pageSize=2" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 # T3.6.13: the seeded Provider and Receiver share "Snapshot Seed", so both come
 # back. The seeded admin shares it too, and stays out.
-snap companies-search-both-types GET "/companies?q=Snapshot%20Seed" \
+snap companies-search-both-types GET "/companies?orderBy=nameAsc&q=Snapshot%20Seed" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-search-both-types-desc GET "/companies?orderBy=nameDesc&q=Snapshot%20Seed" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Another company's public profile: no username or email. The Receiver shows
@@ -936,7 +938,7 @@ snap services-search-keyword GET "/services?q=$RUN" \
 
 # ADR 0009: a company card lists every tech its services use. companies-list
 # runs before the probe exists, so this is where the stack shows.
-snap companies-search-service-stack GET "/companies?q=$RUN" \
+snap companies-search-service-stack GET "/companies?orderBy=nameAsc&q=$RUN" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T3.1.11: no match is a 200 with an empty page, not an error.
