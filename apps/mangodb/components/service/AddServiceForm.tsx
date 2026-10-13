@@ -277,7 +277,7 @@ export default function AddServiceForm() {
         return <div className="min-h-screen bg-surface" />;
     }
 
-    if (isAuthorized === false && loadError !== NOT_SIGNED_IN) {
+    if (isAuthorized === false && !loadError) {
         return (
             <UnauthorizedPage
                 variant="danger"

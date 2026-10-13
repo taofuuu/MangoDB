@@ -176,7 +176,7 @@ export default function AdminCompaniesPage() {
         (company) => company.accountType !== 'ADMIN',
     );
 
-    if (!result && !adminAuthError) {
+    if (!result && !error && !adminAuthError) {
         return <div className="min-h-screen bg-surface" />;
     }
 
