@@ -68,3 +68,19 @@ export function redirectToLogin(): void {
     );
     window.location.replace('/login');
 }
+
+export function redirectToUnauthorized(message?: string): void {
+    if (typeof window === 'undefined') return;
+
+    window.addEventListener(
+        'pageshow',
+        (event) => {
+            if (event.persisted) window.location.reload();
+        },
+        { once: true },
+    );
+    const url = message
+        ? `/unauthorized?message=${encodeURIComponent(message)}`
+        : '/unauthorized';
+    window.location.replace(url);
+}

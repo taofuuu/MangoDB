@@ -15,9 +15,10 @@ import {
 import { createService, createPortfolioForListing } from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
-import UnauthorizedPage from './UnauthorizedPage';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
     Record<
@@ -82,11 +83,19 @@ export default function AddServiceForm() {
                     profile.accountType === 'PROVIDER' ||
                     profile.accountType === 'BOTH';
                 setIsAuthorized(hasProviderRole);
+                if (!hasProviderRole) {
+                    redirectToUnauthorized(
+                        'You need to be logged in as a Provider to create or manage service listings.',
+                    );
+                }
             })
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
+                    redirectToUnauthorized(
+                        'You need to be logged in as a Provider to create or manage service listings.',
+                    );
                     return;
                 }
                 setLoadError(describeError(err));
@@ -282,7 +291,16 @@ export default function AddServiceForm() {
     }
 
     if (!isAuthorized || loadError === NOT_SIGNED_IN) {
-        return <UnauthorizedPage />;
+        return (
+            <UnauthorizedPage
+                message={
+                    <p>
+                        You need to be logged in as a <strong>Provider</strong>{' '}
+                        to create or manage service listings.
+                    </p>
+                }
+            />
+        );
     }
 
     return (

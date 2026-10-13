@@ -1,10 +1,27 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
-export default function UnauthorizedPage() {
+export interface UnauthorizedPageProps {
+    title?: string;
+    message?: ReactNode;
+    homeHref?: string;
+    loginHref?: string;
+    homeLabel?: string;
+    loginLabel?: string;
+}
+
+export default function UnauthorizedPage({
+    title = 'Login Required',
+    message = 'You need to be logged in to access this page.',
+    homeHref = '/',
+    loginHref = '/login',
+    homeLabel = 'Back to Home',
+    loginLabel = 'Log In',
+}: UnauthorizedPageProps) {
     return (
-        <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-6 text-center">
+        <main className="min-h-screen bg-surface flex flex-col items-center justify-center px-6 text-center">
             <div className="w-full max-w-[480px] bg-surface-white rounded-2xl p-8 shadow-sm border border-line flex flex-col items-center">
                 {/* Lock / Key Icon */}
                 <div className="w-16 h-16 rounded-full bg-brand-tint border border-brand/30 flex items-center justify-center mb-5">
@@ -14,6 +31,7 @@ export default function UnauthorizedPage() {
                         stroke="currentColor"
                         strokeWidth="2"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                     >
                         <path
                             strokeLinecap="round"
@@ -23,32 +41,29 @@ export default function UnauthorizedPage() {
                     </svg>
                 </div>
 
-                <h1 className="type-hd font-bold text-ink mb-2">
-                    Login Required
-                </h1>
+                <h1 className="type-hd font-bold text-ink mb-2">{title}</h1>
 
-                <p className="type-sm text-ink-soft mb-6 leading-relaxed">
-                    You need to be logged in as a <strong>Provider</strong> to
-                    create or manage service listings.
-                </p>
+                <div className="type-sm text-ink-soft mb-6 leading-relaxed">
+                    {typeof message === 'string' ? <p>{message}</p> : message}
+                </div>
 
                 {/* Actions */}
                 <div className="w-full flex flex-col sm:flex-row gap-3">
                     <Link
-                        href="/"
+                        href={homeHref}
                         className="flex-1 py-2.5 px-4 rounded-button bg-fill-muted text-surface-white type-sm font-semibold hover:bg-ink-placeholder transition-colors text-center"
                     >
-                        Back to Home
+                        {homeLabel}
                     </Link>
 
                     <Link
-                        href="/login" // Adjust to your login route
+                        href={loginHref}
                         className="flex-1 py-2.5 px-4 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors text-center"
                     >
-                        Log In
+                        {loginLabel}
                     </Link>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
