@@ -551,7 +551,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                 isOpen={showPostSuccess}
                 onClose={closePostSuccess}
                 labelledBy="post-success-title"
-                describedBy="post-success-description"
                 panelClassName="w-[33.33vw] h-[32vh] max-w-full rounded-popup bg-surface text-center px-[2vw]"
             >
                 <div className="flex flex-col items-center gap-[2.5vh]">
