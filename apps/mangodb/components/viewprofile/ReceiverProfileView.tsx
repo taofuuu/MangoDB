@@ -1,6 +1,6 @@
 'use client';
 
-import type { CompanyProfile } from '@mangodb/shared';
+import type { PublicCompanyProfile } from '@mangodb/shared';
 import ReceiverCompanyCard, {
     toReceiverCompanyCardData,
 } from './ReceiverCompanyCard';
@@ -8,11 +8,14 @@ import JobListing from './JobListing';
 
 // The receiver-shaped profile: a narrow company card beside the job listings
 // the company has posted. Only a RECEIVER-only company sees it — a BOTH
-// company gets ProviderProfileView.
+// company gets ProviderProfileView. readOnly is another company's profile
+// (T2.7.17).
 export default function ReceiverProfileView({
     profile,
+    readOnly = false,
 }: {
-    profile: CompanyProfile;
+    profile: PublicCompanyProfile;
+    readOnly?: boolean;
 }) {
     return (
         <div className="min-h-screen bg-surface p-6 lg:p-8">
@@ -21,6 +24,7 @@ export default function ReceiverProfileView({
                 <aside className="w-full lg:w-[360px] flex-shrink-0 lg:h-[840px]">
                     <ReceiverCompanyCard
                         data={toReceiverCompanyCardData(profile)}
+                        readOnly={readOnly}
                     />
                 </aside>
 
