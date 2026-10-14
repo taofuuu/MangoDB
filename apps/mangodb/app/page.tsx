@@ -35,6 +35,11 @@ const ROUTES = [
     },
     {
         href: '/companies',
+        title: 'Explore companies',
+        detail: 'US3-6 — search and view company details.',
+    },
+    {
+        href: '/admin/companies',
         title: 'Companies view for admin',
         detail: 'US6-2 — the administrator company list, with search, filter and pagination.',
     },
@@ -63,6 +68,15 @@ const ROUTES = [
         title: 'Create Service',
         detail: 'US2-1 - create service and add portfolio',
     },
+    ...(process.env.NODE_ENV === 'development'
+        ? [
+              {
+                  href: '/dev/services/edit',
+                  title: 'Edit Service Picker (Temporary)',
+                  detail: 'Temporary development page for T2.3.2–T2.3.3. Choose one of your services and open its prefilled edit form; remove this link after T2.2.2 adds the real Edit buttons.',
+              },
+          ]
+        : []),
     {
         href: '/services/search',
         title: 'Services (service search)',
@@ -82,6 +96,11 @@ const ROUTES = [
         href: '/job/view-byCompany',
         title: 'View job posting by company (Just for test)',
         detail: 'US2-7',
+    },
+    {
+        href: '/unauthorized',
+        title: 'Login Required',
+        detail: 'Global unauthorized access guard page.',
     },
 ];
 

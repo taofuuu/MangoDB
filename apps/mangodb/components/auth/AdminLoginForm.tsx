@@ -1,15 +1,16 @@
 'use client';
 
 import { type FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import FieldError from '@/components/ui/FieldError';
 import { describeError } from '@/lib/api';
-import { adminLogin } from '@/lib/session';
+import { adminLogin, sanitizeReturnUrl } from '@/lib/session';
 
 export default function AdminLoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +44,13 @@ export default function AdminLoginForm() {
 
         try {
             await adminLogin(normalizedEmail, password);
-            router.push('/');
+            const returnUrl = searchParams.get('next');
+            const safeNext = sanitizeReturnUrl(returnUrl);
+            router.push(
+                safeNext && safeNext !== '/admin/login'
+                    ? safeNext
+                    : '/admin/companies',
+            );
         } catch (requestError) {
             setError(
                 describeError(requestError, {

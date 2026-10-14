@@ -67,6 +67,21 @@ open-ended under ADR 0009 and must not be hardcoded in the frontend.
 `minBudget`, with `listingId` as the stable final tie-breaker, and runs before
 pagination.
 
+## Service updates
+
+`PATCH /services/:listingId` is authenticated and limited to provider
+accounts. A provider may update only a service owned by its company; another
+provider receives `403 FORBIDDEN`, while an unknown id or a non-service
+listing receives `404 NOT_FOUND`.
+
+The JSON body is a strict, non-empty partial update. It accepts
+`listingTitle`, `listingDesc`, `minBudget`, `maxBudget`, `categoryIds`, and
+`techStack`. Send `null` to clear either budget. When `categoryIds` or
+`techStack` is present, that array replaces the complete existing set, and an
+empty array clears it. A one-sided budget update is validated against the
+other budget already stored on the listing. A successful update returns the
+complete `ServiceListing` resource with status `200`.
+
 ## Endpoint conventions
 
 Read this before adding an endpoint. Every endpoint follows the same shape so
@@ -147,6 +162,10 @@ the administrator company endpoints as the worked example.
 - **Validate with `parseBody` / `parseQuery`** from `src/middleware/validate.ts`.
   They take a zod schema, return a value typed from it, and throw the right
   `ApiError` on bad input. No hand-written `if (!body.email)` chains.
+- **An id in the path or query is `int4Id`** from `src/schemas/common.schema.ts`.
+  Every id column is a 32-bit `Int`, and an id past its range that reaches
+  Prisma comes back as a `500` instead of a `400`. Numbers in a JSON body use
+  `INT4_MAX` from the same file.
 - **Success responses return the resource unwrapped** — `res.json(company)`,
   not `res.json({ data: company })`. `204` with no body for a successful
   delete or logout. Four endpoints are exceptions, all returning
@@ -398,6 +417,24 @@ are, because that is the history the column exists to preserve. The rule this
 creates: discovery queries filter on `deletedAt`, history queries must not.
 `requireAuth` re-checks it on every request, so a token issued before the
 deletion stops working immediately.
+
+### Other companies
+
+Any company may find and read other companies. Administrators may not: they
+have `/admin/companies` instead.
+
+| Method | Path                    | Guard                                                |
+| ------ | ----------------------- | ---------------------------------------------------- |
+| `GET`  | `/companies`            | `requireAuth`, `requireRole('provider', 'receiver')` |
+| `GET`  | `/companies/:companyId` | `requireAuth`, `requireRole('provider', 'receiver')` |
+
+`GET /companies` (US3-6) is the search: `q`, `page`, `pageSize`, answering a
+page of `CompanySummary`. `GET /companies/:companyId` is one company's public
+profile, `PublicCompanyProfile`: the same body as `GET /companies/me` without
+`username` and `email`, the two fields a company signs in with. Both are
+discovery, so both hide soft-deleted and admin accounts. For the profile, an
+unknown, deleted, or admin id is the same `404`, so the answer does not say
+which of the three it is.
 
 ### Certificates
 

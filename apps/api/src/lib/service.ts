@@ -4,6 +4,7 @@
 import type {
     ListingStatus,
     ServiceFilterOptions,
+    ServiceListing,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
@@ -57,6 +58,21 @@ export async function resolveTechStack(names: string[]): Promise<string[]> {
     return typed.map((name) => stored.get(name.toLowerCase()) ?? name);
 }
 
+// Both create and edit need the same two-stage catalog write from ADR 0009:
+// resolve existing spelling first, then add only genuinely new names.
+export async function ensureTechStack(names: string[]): Promise<string[]> {
+    const techNames = await resolveTechStack(names);
+
+    if (techNames.length > 0) {
+        await prisma.techStack.createMany({
+            data: techNames.map((techStackName) => ({ techStackName })),
+            skipDuplicates: true,
+        });
+    }
+
+    return techNames;
+}
+
 // The columns a service listing response may carry.
 export const listingSelect = {
     listingId: true,
@@ -68,6 +84,9 @@ export const listingSelect = {
     listingStatus: true,
     listingCategory: { select: { catId: true } },
     service: serviceTechStackSelect,
+    // Only the name: the company row also holds the sign-in email and
+    // password hash (ADR 0001).
+    company: { select: { companyName: true } },
 } as const;
 
 type SelectedListing = {
@@ -80,27 +99,14 @@ type SelectedListing = {
     listingStatus: string;
     listingCategory: { catId: number }[];
     service: ServiceTechStackRow;
+    company: { companyName: string } | null;
 };
 
-// TODO: move to @mangodb/shared next to ServicePortfolio so the frontend can
-// import it. Kept here until you decide where the wire types live.
-export type Listing = {
-    listingId: number;
-    companyId: number | null;
-    type: 'SERVICE';
-    listingTitle: string;
-    listingDesc: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    listingStatus: string;
-    categoryIds: number[];
-    techStack: string[];
-};
-
-export function toListing(row: SelectedListing): Listing {
+export function toListing(row: SelectedListing): ServiceListing {
     return {
         listingId: row.listingId,
         companyId: row.companyId,
+        companyName: row.company?.companyName ?? null,
         type: 'SERVICE',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
@@ -120,10 +126,15 @@ export function toListing(row: SelectedListing): Listing {
 export async function assertListingOwned(
     listingId: number,
     companyId: number,
-): Promise<void> {
+): Promise<{ minBudget: number | null; maxBudget: number | null }> {
     const listing = await prisma.listing.findUnique({
         where: { listingId },
-        select: { companyId: true, listingType: true },
+        select: {
+            companyId: true,
+            listingType: true,
+            minBudget: true,
+            maxBudget: true,
+        },
     });
 
     if (!listing || listing.listingType !== 'SERVICE') {
@@ -135,6 +146,11 @@ export async function assertListingOwned(
     if (listing.companyId !== companyId) {
         throw ApiError.forbidden('This listing belongs to another company');
     }
+
+    return {
+        minBudget: listing.minBudget,
+        maxBudget: listing.maxBudget,
+    };
 }
 
 // US3-1. What one service search card needs. Only these company fields, never

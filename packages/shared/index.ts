@@ -117,6 +117,11 @@ export interface CompanyProfile {
     warrantyPolicy: string | null;
 }
 
+// GET /companies/:companyId. What one company sees of another: the profile
+// without the two fields it signs in with. contactEmail is the address meant
+// for other companies.
+export type PublicCompanyProfile = Omit<CompanyProfile, 'username' | 'email'>;
+
 // US6-2. The administrator list deliberately carries less than a full profile:
 // enough to render each card, but no sign-in email or address until a specific
 // account is opened. Password is never part of either admin response.
@@ -151,17 +156,24 @@ export interface CompanyAccountListResponse {
     pagination: PaginationMeta;
 }
 
-// US3-6. One company search result card. categories and techStack are every
-// one used by the company's services (ADR 0009: tech stack is per service).
+// US3-6. One company search result card. The full public profile is fetched
+// only when its detail panel opens. categories and techStack are every one
+// used by the company's services (ADR 0009: tech stack is per service).
 export interface CompanySummary {
     companyId: number;
     companyName: string;
     companyDescription: string | null;
     companyPhoto: string | null;
     accountType: AccountType;
+    contactEmail: string | null;
+    phone: string;
+    website: string | null;
     categories: string[];
     techStack: string[];
 }
+
+export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
+export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
 export interface CompanyListResponse {
     items: CompanySummary[];
@@ -251,6 +263,23 @@ export interface IdentityAvailability {
     emailAvailable: boolean;
 }
 
+// A service listing as POST /services, GET /services/mine and
+// GET /services/:listingId return it. companyName is the owner's name; null
+// only on an orphaned listing (conventions section 11).
+export interface ServiceListing {
+    listingId: number;
+    companyId: number | null;
+    companyName: string | null;
+    type: 'SERVICE';
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    categoryIds: number[];
+    techStack: string[];
+}
+
 // A work sample on a listing. portfolioId is a surrogate key: the table used
 // to be identified by (listingId, portfolioLink), which left no way to name
 // a row in a URL. The pair is still unique — see @@unique in the schema.
@@ -326,6 +355,18 @@ export interface CreateServiceRequest {
     listingStatus?: ListingStatus | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// What PATCH /services/:listingId accepts. Send only what changed;
+// categoryIds and techStack each replace the whole set.
+export interface UpdateServiceRequest {
+    listingTitle?: string | undefined;
+    listingDesc?: string | undefined;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    categoryIds?: number[] | undefined;
+    techStack?: string[] | undefined;
+}
+
 // What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
 // categoryIds replaces the whole set. Validated by updateJobPostingSchema.
 export interface UpdateJobPostingRequest {
@@ -392,4 +433,10 @@ export interface Project {
     // YYYY-MM-DD date string per conventions section 10
     startDate: string;
     status: ProjectStatus;
+}
+
+// listing category
+export interface Category {
+    catId: number;
+    catName: string;
 }

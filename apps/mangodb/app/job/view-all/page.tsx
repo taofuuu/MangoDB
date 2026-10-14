@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
-import Link from 'next/link';
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getAllJobPostings } from '@/lib/job';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
+import { redirectToUnauthorized } from '@/lib/session';
 
 export default function OtherJobPage() {
     const [page, setPage] = useState(1);
@@ -104,6 +104,7 @@ export default function OtherJobPage() {
                 if (cancelled) return;
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
                     return;
                 }
                 setError(describeError(requestError));
@@ -149,6 +150,14 @@ export default function OtherJobPage() {
 
     const pagination = result?.pagination;
     const visibleJobs = result?.items ?? [];
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (!result && !error) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
@@ -503,16 +512,6 @@ export default function OtherJobPage() {
                         ${isDetailOpen ? 'w-[56.56vw]' : 'w-[56.56vw]'}
                     `}
                     >
-                        {error === NOT_SIGNED_IN && (
-                            <p className="type-md !font-[400]">
-                                You are not signed in.{' '}
-                                <Link href="/login" className="underline">
-                                    Log in
-                                </Link>
-                                , then come back.
-                            </p>
-                        )}
-
                         {error && error !== NOT_SIGNED_IN && (
                             <div
                                 role="alert"

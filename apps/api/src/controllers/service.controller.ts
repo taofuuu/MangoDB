@@ -3,14 +3,16 @@ import type { Prisma } from '../generated/prisma/client';
 import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
+import { assertCategoriesExist } from '../lib/categories';
 import { escapeLike } from '../lib/search';
 import { isRecordNotFound } from '../lib/prismaErrors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
+import { omitUndefined } from '../lib/objects';
 import {
     DEFAULT_LISTING_STATUS,
     assertListingOwned,
+    ensureTechStack,
     listingSelect,
-    resolveTechStack,
     serviceSummarySelect,
     toServiceFilterOptions,
     toListing,
@@ -20,10 +22,13 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createListingSchema,
     listingIdParamSchema,
+    SERVICE_BUDGET_RANGE_ERROR,
     type ServiceListQuery,
     serviceListQuerySchema,
     serviceMineQuerySchema,
+    updateListingSchema,
 } from '../schemas/service.schema';
+import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -36,33 +41,9 @@ export async function createListing(
     const { companyId } = req.auth!;
 
     const catIds = [...new Set(data.categoryIds)];
-    if (catIds.length > 0) {
-        const found = await prisma.category.findMany({
-            where: { catId: { in: catIds } },
-            select: { catId: true },
-        });
-        const foundIds = new Set(found.map((c) => c.catId));
-        const missing = catIds.filter((id) => !foundIds.has(id));
-        if (missing.length > 0) {
-            throw ApiError.validationFailed([
-                {
-                    field: 'categoryIds',
-                    message: `Unknown category id(s): ${missing.join(', ')}`,
-                },
-            ]);
-        }
-    }
+    await assertCategoriesExist(catIds);
 
-    const techNames = await resolveTechStack(data.techStack);
-
-    // ADR 0009. Add any new names first. skipDuplicates is ON CONFLICT DO
-    // NOTHING, so two requests adding the same new name at once both succeed.
-    if (techNames.length > 0) {
-        await prisma.techStack.createMany({
-            data: techNames.map((techStackName) => ({ techStackName })),
-            skipDuplicates: true,
-        });
-    }
+    const techNames = await ensureTechStack(data.techStack);
 
     const created = await prisma.listing.create({
         data: {
@@ -95,6 +76,98 @@ export async function createListing(
     });
 
     res.status(201).json(toListing(created));
+}
+
+// T2.3.4–T2.3.5. Update only submitted fields and replace submitted relation
+// sets. Ownership is checked before category, tech-stack, or listing writes.
+export async function updateService(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
+    const body = parseBody(updateListingSchema, req.body);
+    const { companyId } = req.auth!;
+
+    // 404 for an unknown/non-service id; 403 for another provider's service.
+    const existing = await assertListingOwned(listingId, companyId);
+
+    const sentBudget =
+        body.minBudget !== undefined || body.maxBudget !== undefined;
+    if (
+        sentBudget &&
+        !minBudgetDoesNotExceedMax({
+            ...existing,
+            ...omitUndefined(body),
+        })
+    ) {
+        const field = body.minBudget === undefined ? 'maxBudget' : 'minBudget';
+        throw ApiError.validationFailed([
+            { field, message: SERVICE_BUDGET_RANGE_ERROR },
+        ]);
+    }
+
+    if (body.categoryIds !== undefined) {
+        await assertCategoriesExist(body.categoryIds);
+    }
+
+    let techNames: string[] | undefined;
+    if (body.techStack !== undefined) {
+        techNames = await ensureTechStack(body.techStack);
+    }
+
+    const { categoryIds, techStack: _techStack, ...listingFields } = body;
+    const techStackCreates = techNames?.map((techStackName) => ({
+        techStack: { connect: { techStackName } },
+    }));
+    try {
+        const updated = await prisma.listing.update({
+            // Recheck owner and type in the write in case the row changed
+            // between the authorization read and this operation.
+            where: { listingId, companyId, listingType: 'SERVICE' },
+            data: {
+                ...omitUndefined(listingFields),
+                ...(categoryIds !== undefined
+                    ? {
+                          listingCategory: {
+                              deleteMany: {},
+                              create: [...new Set(categoryIds)].map(
+                                  (catId) => ({
+                                      catId,
+                                  }),
+                              ),
+                          },
+                      }
+                    : {}),
+                ...(techStackCreates !== undefined
+                    ? {
+                          service: {
+                              upsert: {
+                                  create: {
+                                      serviceTechStack: {
+                                          create: techStackCreates,
+                                      },
+                                  },
+                                  update: {
+                                      serviceTechStack: {
+                                          deleteMany: {},
+                                          create: techStackCreates,
+                                      },
+                                  },
+                              },
+                          },
+                      }
+                    : {}),
+            },
+            select: listingSelect,
+        });
+
+        res.json(toListing(updated));
+    } catch (err) {
+        if (isRecordNotFound(err)) {
+            throw ApiError.notFound('Service listing not found');
+        }
+        throw err;
+    }
 }
 
 // US3-1. One word matches the service's title, description, category or tech
@@ -140,8 +213,14 @@ function matchesFilters({
     techStack = [],
     minPrice,
     maxPrice,
+    companyId,
 }: ServiceFilters): Prisma.ListingWhereInput[] {
     const where: Prisma.ListingWhereInput[] = [];
+    // Only narrows: the OPEN and not-deleted rules in listServices still
+    // apply, so a deleted company's id gives an empty page, not a 404.
+    if (companyId !== undefined) {
+        where.push({ companyId });
+    }
     if (category.length > 0) {
         where.push({
             listingCategory: {
@@ -319,24 +398,33 @@ export async function getMine(req: Request, res: Response): Promise<void> {
     res.status(200).json(listings.map(toListing));
 }
 
+// GET /services/:listingId. Any company can read an OPEN service of an active
+// company, with the owner's name. The owner reads its own in any status.
+// Everything else is 404: a non-open service is private to its owner, so to
+// anyone else it does not exist (docs/conventions.md, 403 vs 404).
 export async function getService(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth!;
-    const listingId = Number(req.params.listingId);
+    const { listingId } = parseParams(listingIdParamSchema, req.params);
 
-    if (isNaN(listingId)) {
-        throw ApiError.badRequest('Invalid listing ID format');
-    }
-
-    const listing = await prisma.listing.findFirst({
+    // A soft-deleted company's services stay in the table, still OPEN, so the
+    // where hides them here, the same as in the search.
+    const listing = await prisma.listing.findUnique({
         where: {
             listingId,
-            companyId,
             listingType: 'SERVICE', // Defensive: explicit type filter
+            company: { deletedAt: null },
         },
         select: listingSelect,
     });
 
     if (!listing) {
+        throw ApiError.notFound('Listing not found');
+    }
+
+    if (
+        listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
+        listing.companyId !== companyId
+    ) {
         throw ApiError.notFound('Listing not found');
     }
 

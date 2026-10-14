@@ -1,7 +1,12 @@
-import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
+import type {
+    JobPosting,
+    JobPostingListResponse,
+    CreateJobPostingRequest,
+    UpdateJobPostingRequest,
+} from '@mangodb/shared';
 
 import { apiFetch } from './api';
-import { cachedGet } from './apiCache';
+import { cachedGet, invalidateAfter } from './apiCache';
 
 export interface GetJobPostingsOptions {
     companyId?: number;
@@ -63,4 +68,18 @@ export function getMyJobPostings(
 export function getJobPostingDetail(jobPostingId: number): Promise<JobPosting> {
     const path = `/job-postings/${jobPostingId}`;
     return cachedGet(path, () => apiFetch<JobPosting>(path));
+}
+
+//POST job
+export type CreateJobPosting = CreateJobPostingRequest;
+export type UpdateJobPosting = UpdateJobPostingRequest;
+
+export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
+    return invalidateAfter(
+        apiFetch<JobPosting>('/job-postings', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        }),
+        '/job-postings',
+    );
 }

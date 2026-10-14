@@ -16,6 +16,7 @@ import { SearchServicesFilterSidebar } from './SearchServicesFilterSidebar';
 import { SearchServicesResultsGrid } from './SearchServicesResultsGrid';
 import { SearchServicesBar } from './SearchServicesBar';
 import { ServiceDetailPanel } from './ServiceDetailPanel';
+import { redirectToUnauthorized } from '@/lib/session';
 
 // mode is a prop, not hardcoded, so whichever pagination style the final
 // design settles on (page numbers vs. infinite scroll) is a one-line change
@@ -80,6 +81,16 @@ export function SearchServicesPage({
     // hidden for a 401 from either request.
     const signedOut = isNotSignedIn(error) || isNotSignedIn(optionsError);
     const showSearchControls = optionsStatus !== 'loading' && !signedOut;
+
+    useEffect(() => {
+        if (signedOut) {
+            redirectToUnauthorized();
+        }
+    }, [signedOut]);
+
+    if (signedOut) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     const headerAndSearch = (
         <>

@@ -1,5 +1,10 @@
 import { apiFetch } from '@/lib/api';
 import { invalidateAfter } from '@/lib/apiCache';
+import type {
+    ServiceListing,
+    ServicePortfolio,
+    UpdateServiceRequest,
+} from '@mangodb/shared';
 
 export interface CreateServiceBody {
     listingTitle: string;
@@ -10,28 +15,37 @@ export interface CreateServiceBody {
     techStack?: string[];
 }
 
-// Minimal shape we need back from POST /services — the full Listing type lives
-// on the API side. We only need listingId to attach portfolios immediately after.
-export interface CreatedService {
-    listingId: number;
-    listingTitle: string;
-    listingDesc: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    listingStatus: string;
-    type: string;
-    categoryIds: number[];
-    techStack?: string[];
-}
-
 export function createService(
     body: CreateServiceBody,
-): Promise<CreatedService> {
+): Promise<ServiceListing> {
     // '/services' covers search pages and filter-options, which can gain a new
     // tech stack name from this listing.
     return invalidateAfter(
-        apiFetch<CreatedService>('/services', {
+        apiFetch<ServiceListing>('/services', {
             method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
+}
+
+export function getService(listingId: number): Promise<ServiceListing> {
+    return apiFetch<ServiceListing>(`/services/${listingId}`);
+}
+
+export function getMyServices(): Promise<ServiceListing[]> {
+    return apiFetch<ServiceListing[]>('/services/mine');
+}
+
+// US2-3. The backend owns validation and authorization; this helper keeps the
+// endpoint contract out of the form so create and edit share one data path.
+export function updateService(
+    listingId: number,
+    body: UpdateServiceRequest,
+): Promise<ServiceListing> {
+    return invalidateAfter(
+        apiFetch<ServiceListing>(`/services/${listingId}`, {
+            method: 'PATCH',
             body: JSON.stringify(body),
         }),
         '/services',
@@ -41,10 +55,10 @@ export function createService(
 export function createPortfolioForListing(
     listingId: number,
     body: FormData,
-): Promise<unknown> {
+): Promise<ServicePortfolio> {
     body.append('listingId', String(listingId));
     return invalidateAfter(
-        apiFetch('/portfolios', { method: 'POST', body }),
+        apiFetch<ServicePortfolio>('/portfolios', { method: 'POST', body }),
         '/portfolios',
     );
 }

@@ -4,6 +4,7 @@
     "body": {
         "categoryIds": [],
         "companyId": 142,
+        "companyName": "Snapshot Seed Provider",
         "listingDesc": "created by scripts/snapshot-api.sh",
         "listingId": "<listing_id>",
         "listingStatus": "OPEN",

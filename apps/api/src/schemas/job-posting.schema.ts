@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES } from '@mangodb/shared';
+import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
 
 function todayUtcString(): string {
     return new Date().toISOString().slice(0, 10);
@@ -12,18 +13,6 @@ export function isDeadlineInFutureOrToday(dateStr: string): boolean {
 
 export const MIN_BUDGET_EXCEEDS_MAX =
     'Minimum budget cannot exceed maximum budget';
-
-// Validate that minBudget does not exceed maxBudget when both exist.
-// PATCH calls this too, with the body merged over the stored row.
-export function minBudgetDoesNotExceedMax(data: {
-    minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
-}): boolean {
-    if (data.minBudget != null && data.maxBudget != null) {
-        return data.minBudget <= data.maxBudget;
-    }
-    return true;
-}
 
 export const jobPostingFields = {
     listingTitle: z
@@ -42,7 +31,7 @@ export const jobPostingFields = {
             .number()
             .int('Minimum budget must be an integer')
             .min(0, 'Minimum budget cannot be negative')
-            .max(2147483647, 'Minimum budget exceeds maximum allowed')
+            .max(INT4_MAX, 'Minimum budget exceeds maximum allowed')
             .nullable()
             .optional(),
     ),
@@ -53,7 +42,7 @@ export const jobPostingFields = {
             .number({ message: 'Maximum budget is required' })
             .int('Maximum budget must be an integer')
             .positive('Maximum budget must be greater than zero')
-            .max(2147483647, 'Maximum budget exceeds maximum allowed'),
+            .max(INT4_MAX, 'Maximum budget exceeds maximum allowed'),
     ),
     locationPref: z
         .string()
@@ -75,7 +64,7 @@ export const jobPostingFields = {
         .nullable()
         .optional(),
     categoryIds: z
-        .array(z.coerce.number().int().positive().max(2147483647))
+        .array(int4Id)
         .max(10, 'Cannot select more than 10 categories')
         .optional(),
 } as const;
@@ -92,15 +81,22 @@ export const createJobPostingSchema = z
 // here: a body with one budget only means something next to the stored row,
 // so the controller checks the merged values instead.
 export const updateJobPostingSchema = z
-    .strictObject(jobPostingFields)
-    .partial()
-    // An empty body is a client bug, not a no-op worth a 200.
+    .strictObject({
+        listingTitle: jobPostingFields.listingTitle.optional(),
+        listingDesc: jobPostingFields.listingDesc.optional(),
+        minBudget: jobPostingFields.minBudget,
+        maxBudget: jobPostingFields.maxBudget.optional(),
+        locationPref: jobPostingFields.locationPref,
+        duration: jobPostingFields.duration,
+        deadline: jobPostingFields.deadline,
+        categoryIds: jobPostingFields.categoryIds,
+    })
     .refine((body) => Object.keys(body).length > 0, {
         message: 'Provide at least one field to update',
     });
 
 export const jobPostingIdParamSchema = z.object({
-    jobPostingId: z.coerce.number().int().positive().max(2147483647),
+    jobPostingId: int4Id,
 });
 
 // Query parameters for GET /job-postings.
@@ -121,7 +117,7 @@ export const jobPostingListQuerySchema = z.object({
     ),
     companyId: z.preprocess(
         (val) => (val === '' ? undefined : val),
-        z.coerce.number().int().positive().max(2147483647).optional(),
+        int4Id.optional(),
     ),
     q: z.preprocess(
         (value) => (value === '' ? undefined : value),

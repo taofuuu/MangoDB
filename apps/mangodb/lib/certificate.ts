@@ -17,6 +17,16 @@ export function getCertificates(): Promise<Certificate[]> {
     );
 }
 
+// The one read of someone else's: another company's certificates, for its
+// public profile. Any signed-in company may call it.
+export function getCompanyCertificates(
+    companyId: number,
+): Promise<Certificate[]> {
+    const query = new URLSearchParams({ companyId: String(companyId) });
+
+    return apiFetch<Certificate[]>(`/certificates?${query.toString()}`);
+}
+
 // FormData, not JSON: both writes carry the image, so the whole body is
 // multipart. The file part is `certImage`; see docs/conventions.md section 1 —
 // a multipart field name is a wire name like any other.

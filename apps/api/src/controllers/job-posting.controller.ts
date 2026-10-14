@@ -8,17 +8,17 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
+import { assertCategoriesExist } from '../lib/categories';
 import { omitUndefined } from '../lib/objects';
 import {
     createJobPostingSchema,
     jobPostingIdParamSchema,
     jobPostingListQuerySchema,
     MIN_BUDGET_EXCEEDS_MAX,
-    minBudgetDoesNotExceedMax,
     updateJobPostingSchema,
 } from '../schemas/job-posting.schema';
+import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 import {
-    assertCategoriesExist,
     assertJobPostingOwned,
     jobPostingSelect,
     toJobPosting,
@@ -41,7 +41,7 @@ export async function createJobPosting(
             listingTitle: body.listingTitle,
             listingDesc: body.listingDesc,
             minBudget: body.minBudget ?? null,
-            maxBudget: body.maxBudget,
+            maxBudget: body.maxBudget ?? null,
             listingStatus: 'OPEN',
             listingType: 'JOB',
             jobRequirement: {
@@ -197,37 +197,41 @@ export async function listMyJobPostings(
 
 // US2-7. Fetch a single job posting by ID with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
-// - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
-// - Attempting to view another company's CLOSED posting returns 403 Forbidden.
-// - Non-existent ID or listing with listingType !== 'JOB' returns 404 Not Found.
+// - CLOSED postings are visible ONLY to their owner
+//   (companyId === req.auth.companyId).
+// - Anyone else gets 404 Not Found, the same as for a non-existent ID, a
+//   service ID, or a soft-deleted company's posting.
 export async function getJobPosting(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
 
+    // A soft-deleted company's postings stay in the table, still OPEN, so
+    // the where hides them here, the same as in the list.
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId },
-        select: {
-            ...jobPostingSelect,
-            listingType: true,
+        where: {
+            listingId: jobPostingId,
+            listingType: 'JOB',
+            company: { deletedAt: null },
         },
+        select: jobPostingSelect,
     });
 
-    if (!posting || posting.listingType !== 'JOB') {
+    if (!posting) {
         throw ApiError.notFound('Job posting not found');
     }
 
     const callerCompanyId = req.auth!.companyId;
     const isOwner = posting.companyId === callerCompanyId;
 
+    // A non-open posting is private to its owner, so to anyone else it does
+    // not exist: 404, not 403 (docs/conventions.md, 403 vs 404).
     if (
         posting.listingStatus !== ('OPEN' satisfies ListingStatus) &&
         !isOwner
     ) {
-        throw ApiError.forbidden(
-            'Insufficient permissions to access this resource',
-        );
+        throw ApiError.notFound('Job posting not found');
     }
 
     res.json(toJobPosting(posting));

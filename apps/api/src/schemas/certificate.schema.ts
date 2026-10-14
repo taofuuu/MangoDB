@@ -1,8 +1,20 @@
 import { z } from 'zod';
-import { httpUrl } from './common.schema';
+import { INT4_MAX, httpUrl, int4Id } from './common.schema';
 
 export const certificateIdParamSchema = z.object({
-    certificateId: z.coerce.number().int().positive().max(2147483647),
+    certificateId: int4Id,
+});
+
+// GET /certificates?companyId=. Required: unlike GET /portfolios, a bare
+// request does not list every company's certificates. Digits only, the same
+// rule as ?companyId= on GET /services: Number() alone would read "0x10" as 16
+// and "1e3" as 1000.
+export const certificateListQuerySchema = z.object({
+    companyId: z
+        .string()
+        .regex(/^\d+$/, 'companyId must be a whole number')
+        .transform(Number)
+        .pipe(z.number().int().positive().max(INT4_MAX)),
 });
 
 // A floor on typos, not a real rule: certificates predate the platform, but a

@@ -1,9 +1,15 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { redirectToUnauthorized } from '@/lib/session';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+} from '@/lib/api';
+import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
 import {
     deleteCompanyAccount,
     deleteMyPhoto,
@@ -36,6 +42,10 @@ function EditProfilePageInner() {
     const [saved, setSaved] = useState<ProfileFormData | null>(null);
     const [targetUsername, setTargetUsername] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [adminAuthStatus, setAdminAuthStatus] = useState<
+        'unauthorized' | 'forbidden' | null
+    >(null);
+
     const [errors, setErrors] = useState<ProfileErrors>({});
     // The photo is not a column this form writes, so it is not in ProfileErrors.
     const [photoError, setPhotoError] = useState<string | undefined>(undefined);
@@ -55,9 +65,21 @@ function EditProfilePageInner() {
             setSaved(profile);
             setTargetUsername(profile.username);
         }).catch((err: unknown) => {
-            if (isNotSignedIn(err)) {
-                setLoadError(NOT_SIGNED_IN);
-                return;
+            if (isAdminEditingOther) {
+                if (isForbidden(err)) {
+                    setAdminAuthStatus('forbidden');
+                    return;
+                }
+                if (isNotSignedIn(err)) {
+                    setAdminAuthStatus('unauthorized');
+                    return;
+                }
+            } else {
+                if (isNotSignedIn(err)) {
+                    setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
             }
             setLoadError(describeError(err));
         });
@@ -163,7 +185,7 @@ function EditProfilePageInner() {
         await deleteCompanyAccount(Number(targetCompanyId), {
             currentPassword: adminPassword,
         });
-        router.push('/companies');
+        router.push('/admin/companies');
     };
 
     // Cancel leaves the page. Opening /profile/edit directly leaves nothing to
@@ -176,20 +198,26 @@ function EditProfilePageInner() {
         }
     };
 
+    if (!saved && !loadError && !adminAuthStatus) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (adminAuthStatus) {
+        return (
+            <AdminUnauthorizedPage
+                isForbidden={adminAuthStatus === 'forbidden'}
+            />
+        );
+    }
+
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         // pt matches the gap the design leaves under the 108px navbar, which
         // is a separate task, so spacing stays right once that lands.
         <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
-            {loadError === NOT_SIGNED_IN && (
-                <p className="type-md !font-[400]">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
-
             {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="type-md !font-[400] text-danger">{loadError}</p>
             )}

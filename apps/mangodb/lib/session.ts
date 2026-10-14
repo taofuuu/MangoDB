@@ -63,7 +63,7 @@ export async function logout(): Promise<void> {
 // promises it, so reload if it comes back. once: true — this only needs to
 // fire for the navigation this call is about to start, not linger for the rest
 // of the page's life.
-export function redirectToLogin(): void {
+function replaceLocation(url: string): void {
     if (typeof window === 'undefined') return;
 
     // The reload below clears this tab. Every way a session ends — logout,
@@ -78,5 +78,56 @@ export function redirectToLogin(): void {
         },
         { once: true },
     );
-    window.location.replace('/login');
+    window.location.replace(url);
+}
+
+export function redirectToLogin(): void {
+    replaceLocation('/login');
+}
+
+export function sanitizeReturnUrl(
+    url: string | null | undefined,
+): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (
+        !trimmed.startsWith('/') ||
+        trimmed.startsWith('//') ||
+        trimmed.startsWith('/\\')
+    ) {
+        return null;
+    }
+    if (/[\r\n\t]/.test(trimmed)) {
+        return null;
+    }
+    const beforeHash = trimmed.split('#')[0] ?? '';
+    const pathOnly = beforeHash.split('?')[0] ?? '';
+    if (
+        pathOnly === '/unauthorized' ||
+        pathOnly === '/login' ||
+        pathOnly === '/admin/login'
+    ) {
+        return null;
+    }
+    return trimmed;
+}
+
+export function buildUnauthorizedUrl(nextPath?: string): string {
+    const params = new URLSearchParams();
+    const current =
+        nextPath ??
+        (typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : null);
+    const safeNext = sanitizeReturnUrl(current);
+    if (safeNext && safeNext !== '/') {
+        params.set('next', safeNext);
+    }
+
+    const query = params.toString();
+    return query ? `/unauthorized?${query}` : '/unauthorized';
+}
+
+export function redirectToUnauthorized(): void {
+    replaceLocation(buildUnauthorizedUrl());
 }
