@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { CompanySummary, PublicCompanyProfile } from '@mangodb/shared';
 import { X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -104,6 +105,15 @@ function DetailBody({
                     </>
                 )}
             </dl>
+
+            {/* The panel is a summary; the profile page has the rest, such
+                as portfolio and certificates. */}
+            <Link
+                href={`/profile/${company.companyId}`}
+                className="mt-[1.85vh] self-start type-sm !font-[600] text-brand hover:underline"
+            >
+                View full profile
+            </Link>
         </>
     );
 }

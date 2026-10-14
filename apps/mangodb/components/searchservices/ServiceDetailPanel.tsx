@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import { ExternalLink, X } from 'lucide-react';
@@ -114,9 +115,12 @@ export function ServiceDetailPanel({
                             photoUrl={service.company.companyPhoto}
                             size={44}
                         />
-                        <p className="type-md text-ink">
+                        <Link
+                            href={`/profile/${service.company.companyId}`}
+                            className="type-md text-ink hover:underline"
+                        >
                             {service.company.companyName || '-'}
-                        </p>
+                        </Link>
                     </div>
                 </div>
 
