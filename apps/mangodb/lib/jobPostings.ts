@@ -90,8 +90,11 @@ export function updateJobPosting(
     jobPostingId: number,
     data: UpdateJobPosting,
 ): Promise<JobPosting> {
-    return apiFetch<JobPosting>(`/job-postings/${jobPostingId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-    });
+    return invalidateAfter(
+        apiFetch<JobPosting>(`/job-postings/${jobPostingId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        }),
+        '/job-postings',
+    );
 }
