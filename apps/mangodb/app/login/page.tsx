@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import LoginCard from '@/components/auth/LoginCard';
 import DecorativePattern from '@/components/auth/Decorate';
 
@@ -24,7 +25,13 @@ export default function LoginPage() {
             />
 
             <div className="absolute inset-0 flex items-center justify-center p-6">
-                <LoginCard />
+                <Suspense
+                    fallback={
+                        <div className="w-full max-w-[420px] h-[400px]" />
+                    }
+                >
+                    <LoginCard />
+                </Suspense>
             </div>
         </main>
     );

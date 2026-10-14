@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import AdminLoginForm from '@/components/auth/AdminLoginForm';
@@ -39,7 +40,9 @@ export default function AdminLoginPage() {
                         </div>
                     </div>
 
-                    <AdminLoginForm />
+                    <Suspense fallback={<div className="h-[20vh]" />}>
+                        <AdminLoginForm />
+                    </Suspense>
                 </div>
             </section>
         </main>

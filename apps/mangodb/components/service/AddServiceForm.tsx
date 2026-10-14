@@ -15,9 +15,10 @@ import {
 import { createService, createPortfolioForListing } from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
-import UnauthorizedPage from './UnauthorizedPage';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
     Record<
@@ -87,6 +88,7 @@ export default function AddServiceForm() {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
+                    redirectToUnauthorized();
                     return;
                 }
                 setLoadError(describeError(err));
@@ -272,17 +274,29 @@ export default function AddServiceForm() {
 
     // ── EARLY RETURNS PLACED AFTER ALL HOOKS ──
     if (isAuthorized === null && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (isAuthorized === false && !loadError) {
         return (
-            <div className="min-h-screen bg-surface flex items-center justify-center">
-                <p className="type-sm text-ink-placeholder">
-                    Checking permissions...
-                </p>
-            </div>
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message={
+                    <p>
+                        You need a <strong>Provider</strong> account to create
+                        or manage service listings.
+                    </p>
+                }
+                showLogin={false}
+            />
         );
     }
 
-    if (!isAuthorized || loadError === NOT_SIGNED_IN) {
-        return <UnauthorizedPage />;
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (

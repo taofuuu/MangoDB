@@ -8,12 +8,19 @@ import EditCertificateForm, {
 } from '@/components/forms/EditCertificateForm';
 import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+} from '@/lib/api';
 import { getCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
+import { redirectToUnauthorized } from '@/lib/session';
 
 export default function CertificatePage() {
     // Null means still loading.
@@ -21,6 +28,7 @@ export default function CertificatePage() {
         null,
     );
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isRestricted, setIsRestricted] = useState(false);
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -77,6 +85,11 @@ export default function CertificatePage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
+                if (isForbidden(err)) {
+                    setIsRestricted(true);
                     return;
                 }
 
@@ -141,6 +154,27 @@ export default function CertificatePage() {
         return '';
     };
 
+    if (certificates === null && !loadError && !isRestricted) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (isRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Provider account to view and manage certificates."
+                showLogin={false}
+            />
+        );
+    }
+
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <main className="min-h-screen bg-surface pt-10">
             {/* Certificate Box */}
@@ -152,24 +186,6 @@ export default function CertificatePage() {
                         </Link>
                         <p className="type-hd">Certificates</p>
                     </div>
-                    {/* Loading */}
-                    {certificates === null && !loadError && (
-                        <p className="mt-8">Loading certificates...</p>
-                    )}
-
-                    {/* Not signed in. The same prompt /portfolio,
-                        /profile/edit and /account-settings show, so a session
-                        that has ended reads the same wherever it is noticed —
-                        and offers the way back, which a red line did not. */}
-                    {loadError === NOT_SIGNED_IN && (
-                        <p className="mt-8 type-md !font-[400]">
-                            You are not signed in.{' '}
-                            <Link href="/login" className="underline">
-                                Log in
-                            </Link>
-                            , then come back.
-                        </p>
-                    )}
 
                     {/* Anything else really is an error. */}
                     {loadError && loadError !== NOT_SIGNED_IN && (
