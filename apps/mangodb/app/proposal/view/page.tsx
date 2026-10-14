@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { PostingProposal, ViewMode } from '@mangodb/shared';
+import type { JobPosting, PostingProposal, ViewMode } from '@mangodb/shared';
 import {
     getSubmittedProposals,
     acceptProposal,
@@ -85,7 +85,7 @@ function ProposalPageInner({
 
         if (!initialJobTitle && !searchParams.get('title')) {
             getJobPostingDetail(effectiveJobId)
-                .then((job) => {
+                .then((job: JobPosting) => {
                     if (job?.listingTitle) {
                         setListingTitle(job.listingTitle);
                     }
