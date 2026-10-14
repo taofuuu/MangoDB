@@ -346,6 +346,23 @@ fi
 
 snap certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
 
+# Another company's certificates, as its profile page loads them: the receiver
+# reads the provider's...
+snap certificates-by-company GET "/certificates?companyId=$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...and a company that is not a provider has none, which is an empty list.
+snap certificates-by-company-none GET "/certificates?companyId=$RECEIVER_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# companyId is required: a bare GET does not list everyone's.
+snap error-certificates-company-missing GET /certificates \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Digits only: Number() would read 0x10 as 16.
+snap error-certificates-company-invalid GET "/certificates?companyId=0x10" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 echo
 echo "admin"
 snap admin-companies GET /admin/companies -H "$(bearer "$TOKEN_ADMIN")"
@@ -551,13 +568,15 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6b. Delete a service (US2-4). Before section 7, because probe A is the
-# "other Provider" for the 403 and section 7 deletes it.
+# 6b. Update and delete a service (US2-3, US2-4). Before section 7, because
+# probe A is the "other Provider" for the ownership checks and section 7
+# deletes it.
 # ---------------------------------------------------------------------------
 
 echo
-echo "service delete"
-# Its own probe, so the search snapshots later never see it.
+echo "service update and delete"
+# One disposable probe covers both lifecycles, so the search snapshots later
+# never see either the original or updated values.
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe delete $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
@@ -567,7 +586,60 @@ if [ -z "$DELETE_PROBE_ID" ]; then
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID")
+SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID" --id "listing_id=$DELETE_PROBE_ID")
+
+snap error-services-update-unauthorized PATCH "/services/$DELETE_PROBE_ID" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Unauthorized update"}'
+
+snap error-services-update-invalid-id PATCH /services/not-a-number \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Invalid id update"}'
+
+snap error-services-update-not-found PATCH /services/2147483647 \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Missing service update"}'
+
+# requireRole('provider') stops a Receiver before the ownership check.
+snap error-services-update-wrong-role PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Wrong role update"}'
+
+# Probe A is a Provider, but not the owner. It logged out in section 5, so
+# it signs in again before both ownership checks.
+api POST /auth/login -H 'Content-Type: application/json' \
+    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
+TOKEN_A="$(jget accessToken)"
+require_token "$TOKEN_A" "service ownership probe A" auth-login-provider
+
+snap error-services-update-forbidden PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_A")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Another provider update"}'
+
+snap error-services-update-empty PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{}'
+
+snap error-services-update-unknown-field PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitel":"Misspelled field"}'
+
+# A one-sided budget change is validated against the value already stored.
+snap error-services-update-budget-range PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"minBudget":50001}'
+
+# Exercises scalar fields plus replacement of both relation sets. The probe is
+# deleted below, and its run-prefixed tech name is removed by cleanup.
+TECH_STACK_SET=1
+snap services-update PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe updated service $RUN\",\"listingDesc\":\"updated by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":75000,\"categoryIds\":[1,2],\"techStack\":[\"${RUN}-Updated\"]}"
+
+# Null clears optional budgets; empty arrays clear relation sets.
+snap services-update-clear-optional PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"minBudget":null,"maxBudget":null,"categoryIds":[],"techStack":[]}'
 
 snap error-services-delete-unauthorized DELETE "/services/$DELETE_PROBE_ID"
 
@@ -581,11 +653,7 @@ snap error-services-delete-not-found DELETE /services/2147483647 \
 snap error-services-delete-wrong-role DELETE "/services/$DELETE_PROBE_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# Probe A is a Provider, but not the owner. It logged out in section 5, so
-# it signs in again first.
-api POST /auth/login -H 'Content-Type: application/json' \
-    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
-TOKEN_A="$(jget accessToken)"
+# Probe A is a Provider, but not the owner.
 snap error-services-delete-forbidden DELETE "/services/$DELETE_PROBE_ID" \
     -H "$(bearer "$TOKEN_A")"
 

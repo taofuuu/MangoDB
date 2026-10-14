@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { redirectToUnauthorized } from '@/lib/session';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
@@ -44,6 +44,7 @@ export default function PortfolioPage() {
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
                     return;
                 }
 
@@ -72,6 +73,14 @@ export default function PortfolioPage() {
         );
     };
 
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (!items && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <main className="min-h-screen bg-surface px-[8.13vw] pt-[7.5vh] pb-[7.5vh] text-ink max-md:px-[5vw]">
             <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">
@@ -87,16 +96,6 @@ export default function PortfolioPage() {
 
                 {items && <ViewToggle value={view} onChange={setView} />}
             </div>
-
-            {loadError === NOT_SIGNED_IN && (
-                <p className="mt-[4.5vh] type-md !font-[400]">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
 
             {loadError && loadError !== NOT_SIGNED_IN && (
                 <p className="mt-[4.5vh] type-md !font-[400] text-danger">

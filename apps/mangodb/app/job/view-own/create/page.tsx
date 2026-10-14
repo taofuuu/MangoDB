@@ -1,72 +1,68 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import JobForm from '@/components/forms/JobForm';
-import UnauthorizedPage from '@/components/service/UnauthorizedPage';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { getMyProfile } from '@/lib/companies';
+import { isReceiverAccount } from '@/lib/roles';
+import { redirectToUnauthorized } from '@/lib/session';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 
 export default function CreateJobPage() {
-    const router = useRouter();
-
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         getMyProfile()
             .then((profile) => {
-                const hasReceiverRole =
-                    profile.accountType === 'RECEIVER' ||
-                    profile.accountType === 'BOTH';
-
+                const hasReceiverRole = isReceiverAccount(profile.accountType);
                 setIsAuthorized(hasReceiverRole);
-
-                if (!hasReceiverRole) {
-                    router.replace('/job/view-own');
-                }
             })
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
+                    redirectToUnauthorized();
                     return;
                 }
 
                 setLoadError(describeError(err));
                 setIsAuthorized(false);
             });
-    }, [router]);
+    }, []);
 
     // Wait until the user's role has been checked.
-    if (isAuthorized === null) {
+    if (isAuthorized === null && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    // Role-restricted for non-receivers
+    if (isAuthorized === false && !loadError) {
         return (
-            <div className="min-h-screen bg-surface flex items-center justify-center">
-                <p className="type-sm text-ink-placeholder">
-                    Checking permissions...
-                </p>
-            </div>
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Receiver account to create job postings."
+                showLogin={false}
+            />
         );
     }
 
-    // Do not render the create form for unauthorized users.
-    if (!isAuthorized) {
-        if (loadError === NOT_SIGNED_IN) {
-            return <UnauthorizedPage />;
-        }
-
-        if (loadError) {
-            return (
-                <div className="min-h-screen bg-surface flex items-center justify-center px-6">
-                    <p className="type-sm text-danger text-center">
-                        Unable to verify your permissions: {loadError}
-                    </p>
-                </div>
-            );
-        }
-
-        return null;
+    if (loadError) {
+        return (
+            <div className="min-h-screen bg-surface flex items-center justify-center px-6">
+                <p className="type-sm text-danger text-center">
+                    Unable to verify your permissions: {loadError}
+                </p>
+            </div>
+        );
     }
 
     return (
