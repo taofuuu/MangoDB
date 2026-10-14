@@ -157,7 +157,9 @@ export default function PortfolioCertificateList({
                 ))}
             </div>
 
-            {!readOnly && displayItems.length > MAX_VISIBLE_ITEMS && (
+            {/* Always on your own profile, even with three items or fewer:
+                it is the way to the pages where you add and edit them. */}
+            {!readOnly && (
                 <div className="mt-3 text-right">
                     <Link
                         href={seeMoreHref}

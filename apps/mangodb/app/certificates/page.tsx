@@ -181,7 +181,7 @@ export default function CertificatePage() {
             <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-hidden rounded-xl border border-brand bg-white pr-1 pl-6">
                 <div className="h-full overflow-y-auto pr-1">
                     <div className="flex w-full items-center pt-5">
-                        <Link href="/" className="type-lg pr-4">
+                        <Link href="/profile/view" className="type-lg pr-4">
                             ←
                         </Link>
                         <p className="type-hd">Certificates</p>

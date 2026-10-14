@@ -52,7 +52,8 @@ export default function LoginForm() {
             await login(identifier, password);
             const nextParam = searchParams.get('next');
             const safeNext = sanitizeReturnUrl(nextParam);
-            router.push(safeNext ?? '/');
+            // No return URL: your profile, not the dev index at /.
+            router.push(safeNext ?? '/profile/view');
         } catch (err) {
             setError(
                 describeError(err, {
