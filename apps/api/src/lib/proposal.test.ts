@@ -1,14 +1,18 @@
 /*
- * Tests for toProviderProposal in lib/proposal.ts: one row of
- * GET /proposals/mine (US2-9, the Provider's "Your Proposals" page).
+ * Tests for the US2-9 helpers in lib/proposal.ts (the Provider's "Your
+ * Proposals" page).
  *
- * What they cover:
+ * toProviderProposal, one row of GET /proposals/mine:
  * - Each proposal carries the job's owner as `receiver` (id, name, photo), so
  *   the page can show who the proposal went to with no extra request per row.
  * - receiver is null when the listing has no owner row. The page shows a
  *   placeholder instead of crashing.
  * - The proposal's own fields keep the shared wire shape: Decimal becomes a
  *   number, Date becomes an ISO string, listingId is renamed jobPostingId.
+ *
+ * toProposalStatusCounts, the body of GET /proposals/mine/counts:
+ * - groupBy leaves out a status with no rows, so each status must start at 0.
+ * - total is the sum of all groups.
  *
  * How:
  * - toProviderProposal is a pure function, so the test feeds it a fake row.
@@ -83,5 +87,44 @@ describe('toProviderProposal', () => {
         assert.equal(result.proposalBudget, 15000.5);
         assert.equal(result.duration, 14);
         assert.equal(result.createdAt, '2026-10-01T08:30:00.000Z');
+    });
+});
+
+describe('toProposalStatusCounts', () => {
+    it('fills a status with no proposals with 0', () => {
+        const result = lib.toProposalStatusCounts([
+            { proposalStatus: 'PENDING', _count: { _all: 4 } },
+        ]);
+
+        assert.deepEqual(result, {
+            total: 4,
+            pending: 4,
+            accepted: 0,
+            rejected: 0,
+        });
+    });
+
+    it('adds every group into total', () => {
+        const result = lib.toProposalStatusCounts([
+            { proposalStatus: 'PENDING', _count: { _all: 5 } },
+            { proposalStatus: 'ACCEPTED', _count: { _all: 3 } },
+            { proposalStatus: 'REJECTED', _count: { _all: 2 } },
+        ]);
+
+        assert.deepEqual(result, {
+            total: 10,
+            pending: 5,
+            accepted: 3,
+            rejected: 2,
+        });
+    });
+
+    it('gives all zeros for a Provider with no proposals', () => {
+        assert.deepEqual(lib.toProposalStatusCounts([]), {
+            total: 0,
+            pending: 0,
+            accepted: 0,
+            rejected: 0,
+        });
     });
 });

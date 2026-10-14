@@ -5,18 +5,16 @@ import Link from 'next/link';
 import type {
     ProposalListResponse,
     ProposalStatus,
+    ProposalStatusCounts,
     ProviderProposal,
 } from '@mangodb/shared';
 import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
-import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import {
-    getMyProposalCounts,
-    listMyProposals,
-    type ProposalStatusCounts,
-} from '@/lib/proposals';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import { getMyProposalCounts, listMyProposals } from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
+import { redirectToUnauthorized } from '@/lib/session';
 import MyProposalCard from './MyProposalCard';
 import MyProposalDetail from './MyProposalDetail';
 
@@ -81,12 +79,16 @@ export default function MyProposalsPage() {
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
+
+                if (isNotSignedIn(requestError)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+
                 setError(
-                    isNotSignedIn(requestError)
-                        ? NOT_SIGNED_IN
-                        : describeError(requestError, {
-                              403: 'Only Provider accounts send proposals, so there is nothing to show here.',
-                          }),
+                    describeError(requestError, {
+                        403: 'Only Provider accounts send proposals, so there is nothing to show here.',
+                    }),
                 );
             })
             .finally(() => {
@@ -132,20 +134,6 @@ export default function MyProposalsPage() {
         return (
             <main className="min-h-screen bg-surface p-6 text-ink">
                 <p className="type-sm">Loading…</p>
-            </main>
-        );
-    }
-
-    if (error === NOT_SIGNED_IN) {
-        return (
-            <main className="min-h-screen bg-surface p-6 text-ink">
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
             </main>
         );
     }

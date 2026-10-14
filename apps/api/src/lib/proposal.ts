@@ -5,6 +5,7 @@ import type {
     PostingProposal,
     Proposal,
     ProposalStatus,
+    ProposalStatusCounts,
     ProviderProposal,
     ListingStatus,
     Project,
@@ -119,6 +120,31 @@ export function toProviderProposal(
               }
             : null,
     };
+}
+
+// US2-9. Turns a groupBy-by-status result into the four chip numbers.
+// A status with no proposals is missing from groupBy's answer, so each
+// one starts at zero.
+export function toProposalStatusCounts(
+    groups: { proposalStatus: string; _count: { _all: number } }[],
+): ProposalStatusCounts {
+    const counts: ProposalStatusCounts = {
+        total: 0,
+        pending: 0,
+        accepted: 0,
+        rejected: 0,
+    };
+    for (const group of groups) {
+        const n = group._count._all;
+        counts.total += n;
+        if (group.proposalStatus === ('PENDING' satisfies ProposalStatus))
+            counts.pending = n;
+        if (group.proposalStatus === ('ACCEPTED' satisfies ProposalStatus))
+            counts.accepted = n;
+        if (group.proposalStatus === ('REJECTED' satisfies ProposalStatus))
+            counts.rejected = n;
+    }
+    return counts;
 }
 
 const projectSelect = {

@@ -3,6 +3,7 @@ import type {
     Proposal,
     ProposalListResponse,
     ProposalStatus,
+    ProposalStatusCounts,
 } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { cachedGet, invalidateAfter } from '@/lib/apiCache';
@@ -62,33 +63,9 @@ export function formatProposalDateTime(iso: string): string {
     );
 }
 
-// US2-9. How many proposals the Provider has sent, by status: the numbers on
-// the page's chips. They must not change when the list is filtered.
-export interface ProposalStatusCounts {
-    total: number;
-    pending: number;
-    accepted: number;
-    rejected: number;
-}
-
-// The list endpoint already counts the matches for a filter in
-// pagination.totalItems, so one 1-item page per status gives each number.
-// This keeps GET /proposals/mine to the plain { items, pagination } shape
-// (docs/conventions.md §3). `list` is a parameter only so tests can fake it.
-export async function getMyProposalCounts(
-    list: typeof listMyProposals = listMyProposals,
-): Promise<ProposalStatusCounts> {
-    const [all, pending, accepted, rejected] = await Promise.all([
-        list(1, 1),
-        list(1, 1, { status: 'PENDING' }),
-        list(1, 1, { status: 'ACCEPTED' }),
-        list(1, 1, { status: 'REJECTED' }),
-    ]);
-
-    return {
-        total: all.pagination.totalItems,
-        pending: pending.pagination.totalItems,
-        accepted: accepted.pagination.totalItems,
-        rejected: rejected.pagination.totalItems,
-    };
+// US2-9. The numbers on the Your Proposals chips. createProposal's
+// invalidateAfter('/proposals') clears this too, so a new proposal shows up.
+export function getMyProposalCounts(): Promise<ProposalStatusCounts> {
+    const path = '/proposals/mine/counts';
+    return cachedGet(path, () => apiFetch<ProposalStatusCounts>(path));
 }
