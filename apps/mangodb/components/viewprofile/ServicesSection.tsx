@@ -1,28 +1,51 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import type { JobPosting } from '@mangodb/shared';
+import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
 import ModalShell from '@/components/ui/ModalShell';
 import { describeError, isNotSignedIn } from '@/lib/api';
-import { listJobPostings } from '@/lib/jobPostings';
+import { listCategories } from '@/lib/categories';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { listCompanyServices, type ServiceSummary } from '@/lib/services';
+import { isReceiverAccount } from '@/lib/roles';
+import {
+    listCompanyServices,
+    listMyServices,
+    toServiceSummary,
+    type ServiceSummary,
+} from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
 interface DisplayItem {
     id: number;
     title: string;
     body: string;
+    closed: boolean;
 }
 
-// The company's open services and open job postings. Both come from the
-// public list endpoints filtered by companyId, so the same card works on your
-// own profile and on another company's. Details opens the same views the
+// A service row and whether it is closed. ServiceSummary has no status, so
+// it is carried beside it.
+interface ServiceRow {
+    summary: ServiceSummary;
+    closed: boolean;
+}
+
+// The company's services and job postings. Another company's profile
+// (readOnly) shows only OPEN ones, from the public lists filtered by
+// companyId. Your own shows every status, from the /mine lists, so you can
+// keep track of closed ones too (US2-2). Details opens the same views the
 // search pages use.
-export default function ServicesSection({ companyId }: { companyId: number }) {
+export default function ServicesSection({
+    profile,
+    readOnly = false,
+}: {
+    profile: PublicCompanyProfile;
+    readOnly?: boolean;
+}) {
+    const { companyId, companyName, companyPhoto, accountType } = profile;
     const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
-    const [services, setServices] = useState<ServiceSummary[]>([]);
+    const [services, setServices] = useState<ServiceRow[]>([]);
     const [jobs, setJobs] = useState<JobPosting[]>([]);
     // One per tab, so a failed services load does not hide the jobs.
     const [servicesError, setServicesError] = useState<string | null>(null);
@@ -34,9 +57,38 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
     useEffect(() => {
         let cancelled = false;
 
-        listCompanyServices(companyId, PROFILE_LIST_SIZE)
-            .then((data) => {
-                if (!cancelled) setServices(data.items);
+        const loadServices: Promise<ServiceRow[]> = readOnly
+            ? listCompanyServices(companyId, PROFILE_LIST_SIZE).then((data) =>
+                  data.items.map((summary) => ({ summary, closed: false })),
+              )
+            : Promise.all([listMyServices(), listCategories()]).then(
+                  ([mine, categories]) =>
+                      mine.map((listing) => ({
+                          summary: toServiceSummary(listing, categories, {
+                              companyId,
+                              companyName,
+                              companyPhoto,
+                          }),
+                          closed: listing.listingStatus === 'CLOSED',
+                      })),
+              );
+
+        // GET /job-postings/mine is receiver-only, so a PROVIDER-only
+        // company's own profile has no jobs to ask for.
+        const loadJobs: Promise<JobPosting[]> = readOnly
+            ? listJobPostings(1, PROFILE_LIST_SIZE, {
+                  companyId,
+                  status: 'OPEN',
+              }).then((data) => data.items)
+            : isReceiverAccount(accountType)
+              ? listMyJobPostings(1, PROFILE_LIST_SIZE).then(
+                    (data) => data.items,
+                )
+              : Promise.resolve([]);
+
+        loadServices
+            .then((rows) => {
+                if (!cancelled) setServices(rows);
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
@@ -47,9 +99,9 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
                 setServicesError(describeError(err));
             });
 
-        listJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
-            .then((data) => {
-                if (!cancelled) setJobs(data.items);
+        loadJobs
+            .then((items) => {
+                if (!cancelled) setJobs(items);
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
@@ -63,27 +115,30 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
         return () => {
             cancelled = true;
         };
-    }, [companyId]);
+    }, [readOnly, companyId, companyName, companyPhoto, accountType]);
 
     const loadError = activeTab === 'services' ? servicesError : jobsError;
 
     const displayItems: DisplayItem[] =
         activeTab === 'services'
-            ? services.map((service) => ({
-                  id: service.serviceId,
-                  title: service.listingTitle,
-                  body: service.listingDesc,
+            ? services.map(({ summary, closed }) => ({
+                  id: summary.serviceId,
+                  title: summary.listingTitle,
+                  body: summary.listingDesc,
+                  closed,
               }))
             : jobs.map((job) => ({
                   id: job.jobPostingId,
                   title: job.listingTitle,
                   body: job.listingDesc,
+                  closed: job.listingStatus === 'CLOSED',
               }));
 
     const openDetail = (id: number) => {
         if (activeTab === 'services') {
             setSelectedService(
-                services.find((service) => service.serviceId === id) ?? null,
+                services.find(({ summary }) => summary.serviceId === id)
+                    ?.summary ?? null,
             );
         } else {
             setSelectedJob(jobs.find((job) => job.jobPostingId === id) ?? null);
@@ -130,7 +185,9 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
                         <p className="py-2 type-xs text-ink-placeholder">
                             {activeTab === 'services'
                                 ? 'No services yet.'
-                                : 'No open job listings.'}
+                                : readOnly
+                                  ? 'No open job listings.'
+                                  : 'No job listings yet.'}
                         </p>
                     )}
                     {displayItems.map((item) => (
@@ -142,6 +199,11 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
                                 <span className="type-sm !font-semibold text-gray-800 truncate">
                                     {item.title || 'Untitled Item'}
                                 </span>
+                                {item.closed && (
+                                    <span className="ml-auto shrink-0 rounded-status bg-danger-tint px-2 type-xs text-danger">
+                                        Closed
+                                    </span>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => openDetail(item.id)}

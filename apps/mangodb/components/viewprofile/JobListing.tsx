@@ -5,14 +5,21 @@ import type { JobPosting } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
-import { listJobPostings } from '@/lib/jobPostings';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { formatServiceBudgetRange } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
-// The company's open job postings, from GET /job-postings?companyId=, so it
-// reads the same on your own profile and on another company's.
-export default function JobListing({ companyId }: { companyId: number }) {
+// A receiver's job postings. Another company's profile (readOnly) shows only
+// OPEN ones, from GET /job-postings?companyId=. Your own shows every status,
+// from GET /job-postings/mine, so closed ones stay in view (US2-2).
+export default function JobListing({
+    companyId,
+    readOnly = false,
+}: {
+    companyId: number;
+    readOnly?: boolean;
+}) {
     const [jobs, setJobs] = useState<JobPosting[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
@@ -20,7 +27,14 @@ export default function JobListing({ companyId }: { companyId: number }) {
     useEffect(() => {
         let cancelled = false;
 
-        listJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
+        const request = readOnly
+            ? listJobPostings(1, PROFILE_LIST_SIZE, {
+                  companyId,
+                  status: 'OPEN',
+              })
+            : listMyJobPostings(1, PROFILE_LIST_SIZE);
+
+        request
             .then((data) => {
                 if (!cancelled) setJobs(data.items);
             })
@@ -36,7 +50,7 @@ export default function JobListing({ companyId }: { companyId: number }) {
         return () => {
             cancelled = true;
         };
-    }, [companyId]);
+    }, [companyId, readOnly]);
 
     return (
         <div className="bg-white rounded-popup p-8 w-full h-full border border-line shadow-sm flex flex-col overflow-hidden">
@@ -53,7 +67,9 @@ export default function JobListing({ companyId }: { companyId: number }) {
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
                 {jobs.length === 0 && !loadError && (
                     <p className="type-xs text-ink-placeholder">
-                        No open job listings.
+                        {readOnly
+                            ? 'No open job listings.'
+                            : 'No job listings yet.'}
                     </p>
                 )}
                 {jobs.map((job) => (
@@ -61,8 +77,13 @@ export default function JobListing({ companyId }: { companyId: number }) {
                         key={job.jobPostingId}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
                     >
-                        <div className="flex-1 type-sm !font-bold text-gray-900">
+                        <div className="flex flex-1 items-center gap-2 type-sm !font-bold text-gray-900">
                             {job.listingTitle}
+                            {job.listingStatus === 'CLOSED' && (
+                                <span className="shrink-0 rounded-status bg-danger-tint px-2 type-xs !font-normal text-danger">
+                                    Closed
+                                </span>
+                            )}
                         </div>
 
                         <div className="flex gap-20 type-xs text-gray-400 mr-8 mt-2 sm:mt-0">
