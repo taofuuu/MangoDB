@@ -99,12 +99,8 @@ export default function LoginForm() {
                     error={passwordError ?? undefined}
                     required
                 />
-                <Link
-                    href="/forgot-password"
-                    className="self-end type-xs text-orange hover:underline"
-                >
-                    Forgot Password ?
-                </Link>
+                {/* No "Forgot password" link yet: there is no page or story
+                    behind it. */}
             </div>
 
             <p
