@@ -166,7 +166,7 @@ export default function JobForm() {
             };
 
             await createJobPosting(data);
-            router.push('/job/view-own?success=posted');
+            router.push('/job-postings/mine?success=posted');
         } catch (cause: unknown) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
             setErrors(fields);

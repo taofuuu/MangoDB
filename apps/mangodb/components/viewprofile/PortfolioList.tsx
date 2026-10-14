@@ -83,7 +83,7 @@ export default function PortfolioCertificateList({
 
     const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
     const seeMoreHref =
-        activeTab === 'portfolio' ? '/portfolio' : '/certificate';
+        activeTab === 'portfolio' ? '/portfolios' : '/certificates';
 
     return (
         <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">

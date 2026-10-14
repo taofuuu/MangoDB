@@ -207,7 +207,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const showPostSuccess = searchParams.get('success') === 'posted';
 
     const closePostSuccess = () => {
-        router.replace('/job/view-own', { scroll: false });
+        router.replace('/job-postings/mine', { scroll: false });
     };
 
     /*
@@ -375,7 +375,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Add Job */}
                         <Button
                             type="button"
-                            onClick={() => router.push('/job/view-own/create')}
+                            onClick={() => router.push('/job-postings/create')}
                             className="flex h-[4.17vh] w-[8.96vw] items-center justify-center gap-[0.42vw] "
                         >
                             <FilePlus size={18} aria-hidden="true" />
