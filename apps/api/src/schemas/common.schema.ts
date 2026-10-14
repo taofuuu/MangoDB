@@ -8,6 +8,19 @@ export const INT4_MAX = 2147483647;
 // coerced first. JSON bodies send real numbers and use INT4_MAX directly.
 export const int4Id = z.coerce.number().int().positive().max(INT4_MAX);
 
+// Create schemas validate submitted budget pairs directly. PATCH controllers
+// call this after merging submitted fields over the stored pair.
+export function minBudgetDoesNotExceedMax(data: {
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+}): boolean {
+    return (
+        data.minBudget == null ||
+        data.maxBudget == null ||
+        data.minBudget <= data.maxBudget
+    );
+}
+
 // z.url() accepts any scheme, so javascript: and data: pass it. Those become
 // stored XSS the moment the frontend renders the value as an href or img src.
 export const httpUrl = z

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import {
     toFormErrors,
@@ -12,12 +13,22 @@ import {
     validateServiceTechStack,
     validateServiceBudgets,
 } from '@/lib/validation';
-import { createService, createPortfolioForListing } from '@/lib/service';
+import {
+    createService,
+    createPortfolioForListing,
+    getService,
+    updateService,
+} from '@/lib/service';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
+import UnsavedChangesModal from './UnsavedChangesModal';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { isProviderAccount } from '@/lib/roles';
+import { getPortfoliosByListing } from '@/lib/portfolios';
+import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
+import Button from '@/components/ui/Button';
 import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
@@ -44,8 +55,69 @@ const PREDEFINED_CATEGORIES = [
     { id: 12, name: 'Other' },
 ] as const;
 
-export default function AddServiceForm() {
+type ServiceFormProps =
+    { mode: 'create' } | { mode: 'edit'; listingId: number };
+
+type ServiceSnapshot = {
+    title: string;
+    description: string;
+    categoryIds: number[];
+    techStack: string[];
+    minBudget: string;
+    maxBudget: string;
+};
+
+function normalizeService(snapshot: ServiceSnapshot): ServiceSnapshot {
+    return {
+        ...snapshot,
+        title: snapshot.title.trim(),
+        description: snapshot.description.trim(),
+        categoryIds: [...snapshot.categoryIds].sort((a, b) => a - b),
+        techStack: snapshot.techStack.map((item) => item.trim()),
+        minBudget: snapshot.minBudget.trim(),
+        maxBudget: snapshot.maxBudget.trim(),
+    };
+}
+
+function serializeService(snapshot: ServiceSnapshot): string {
+    return JSON.stringify(normalizeService(snapshot));
+}
+
+function changedServiceFields(
+    current: ServiceSnapshot,
+    initial: ServiceSnapshot,
+): UpdateServiceRequest {
+    const next = normalizeService(current);
+    const previous = normalizeService(initial);
+    const body: UpdateServiceRequest = {};
+
+    if (next.title !== previous.title) body.listingTitle = next.title;
+    if (next.description !== previous.description) {
+        body.listingDesc = next.description;
+    }
+    if (
+        JSON.stringify(next.categoryIds) !==
+        JSON.stringify(previous.categoryIds)
+    ) {
+        body.categoryIds = next.categoryIds;
+    }
+    if (JSON.stringify(next.techStack) !== JSON.stringify(previous.techStack)) {
+        body.techStack = next.techStack;
+    }
+    if (next.minBudget !== previous.minBudget) {
+        body.minBudget = next.minBudget === '' ? null : Number(next.minBudget);
+    }
+    if (next.maxBudget !== previous.maxBudget) {
+        body.maxBudget = next.maxBudget === '' ? null : Number(next.maxBudget);
+    }
+
+    return body;
+}
+
+export default function ServiceForm(props: ServiceFormProps) {
     const router = useRouter();
+    const isEditMode = props.mode === 'edit';
+    const listingId = props.mode === 'edit' ? props.listingId : null;
 
     // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -64,9 +136,18 @@ export default function AddServiceForm() {
 
     // Portfolios & Modals state
     const [portfolios, setPortfolios] = useState<PendingPortfolio[]>([]);
+    const [savedPortfolios, setSavedPortfolios] = useState<ServicePortfolio[]>(
+        [],
+    );
+    const [portfolioToEdit, setPortfolioToEdit] =
+        useState<ServicePortfolio | null>(null);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [createdListingId, setCreatedListingId] = useState<number | null>(
+        null,
+    );
+    const [initialValues, setInitialValues] = useState<ServiceSnapshot | null>(
         null,
     );
 
@@ -77,14 +158,62 @@ export default function AddServiceForm() {
 
     // ── AUTHORIZATION ──
     useEffect(() => {
-        getMyProfile()
-            .then((profile) => {
-                const hasProviderRole =
-                    profile.accountType === 'PROVIDER' ||
-                    profile.accountType === 'BOTH';
+        let cancelled = false;
+
+        async function loadPage() {
+            try {
+                const profile = await getMyProfile();
+                const hasProviderRole = isProviderAccount(profile.accountType);
+                if (!hasProviderRole || cancelled) {
+                    if (!cancelled) setIsAuthorized(false);
+                    return;
+                }
+
+                if (listingId === null) {
+                    setIsAuthorized(true);
+                    return;
+                }
+
+                const [service, existingPortfolios] = await Promise.all([
+                    getService(listingId),
+                    getPortfoliosByListing(listingId),
+                ]);
+
+                if (cancelled) return;
+                if (service.companyId !== profile.companyId) {
+                    setLoadError(
+                        'You can only edit services owned by your company.',
+                    );
+                    setIsAuthorized(false);
+                    return;
+                }
+
+                const loadedSnapshot: ServiceSnapshot = {
+                    title: service.listingTitle,
+                    description: service.listingDesc,
+                    categoryIds: service.categoryIds,
+                    techStack: service.techStack,
+                    minBudget:
+                        service.minBudget === null
+                            ? ''
+                            : String(service.minBudget),
+                    maxBudget:
+                        service.maxBudget === null
+                            ? ''
+                            : String(service.maxBudget),
+                };
+
+                setTitle(loadedSnapshot.title);
+                setDescription(loadedSnapshot.description);
+                setSelectedCategoryIds(loadedSnapshot.categoryIds);
+                setSelectedTechStack(loadedSnapshot.techStack);
+                setMinBudget(loadedSnapshot.minBudget);
+                setMaxBudget(loadedSnapshot.maxBudget);
+                setSavedPortfolios(existingPortfolios);
+                setInitialValues(loadedSnapshot);
                 setIsAuthorized(hasProviderRole);
-            })
-            .catch((err: unknown) => {
+            } catch (err: unknown) {
+                if (cancelled) return;
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
                     setIsAuthorized(false);
@@ -93,8 +222,43 @@ export default function AddServiceForm() {
                 }
                 setLoadError(describeError(err));
                 setIsAuthorized(false);
-            });
-    }, []);
+            }
+        }
+
+        void loadPage();
+        return () => {
+            cancelled = true;
+        };
+    }, [listingId]);
+
+    const currentSnapshot = serializeService({
+        title,
+        description,
+        categoryIds: selectedCategoryIds,
+        techStack: selectedTechStack,
+        minBudget,
+        maxBudget,
+    });
+    const initialSnapshot = initialValues
+        ? serializeService(initialValues)
+        : null;
+    const hasUnsavedChanges =
+        isEditMode &&
+        initialSnapshot !== null &&
+        (currentSnapshot !== initialSnapshot || portfolios.length > 0);
+
+    useEffect(() => {
+        if (!hasUnsavedChanges) return;
+
+        const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', warnBeforeUnload);
+        return () =>
+            window.removeEventListener('beforeunload', warnBeforeUnload);
+    }, [hasUnsavedChanges]);
 
     const clearError = (field: keyof ServiceErrors) =>
         setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -203,13 +367,11 @@ export default function AddServiceForm() {
         return Object.keys(newErrors).length === 0;
     };
 
-    // ✏️ EDIT / REPLACE THIS ENTIRE FUNCTION:
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
 
-        // 1. Only validate form fields if service hasn't been created yet
-        if (!createdListingId && !validateForm()) {
+        if (!validateForm()) {
             return;
         }
 
@@ -217,59 +379,115 @@ export default function AddServiceForm() {
         const max = maxBudget.trim() !== '' ? Number(maxBudget) : undefined;
 
         setIsSubmitting(true);
-        let listingId = createdListingId;
+        let targetListingId = listingId ?? createdListingId;
 
-        // Create base service if it doesn't exist yet
-        if (!listingId) {
-            try {
+        try {
+            const commonBody = {
+                listingTitle: title.trim(),
+                listingDesc: description.trim(),
+                categoryIds: selectedCategoryIds,
+                techStack: selectedTechStack,
+            };
+
+            if (isEditMode && targetListingId && initialValues) {
+                const changedFields = changedServiceFields(
+                    {
+                        title,
+                        description,
+                        categoryIds: selectedCategoryIds,
+                        techStack: selectedTechStack,
+                        minBudget,
+                        maxBudget,
+                    },
+                    initialValues,
+                );
+
+                if (Object.keys(changedFields).length > 0) {
+                    await updateService(targetListingId, changedFields);
+                }
+            } else if (!targetListingId) {
                 const created = await createService({
-                    listingTitle: title,
-                    listingDesc: description,
-                    categoryIds: selectedCategoryIds,
-                    techStack: selectedTechStack,
+                    ...commonBody,
                     ...(min !== undefined && { minBudget: min }),
                     ...(max !== undefined && { maxBudget: max }),
                 });
-                listingId = created.listingId;
-                setCreatedListingId(listingId); // Save ID to state
+                targetListingId = created.listingId;
+                setCreatedListingId(targetListingId);
+            }
+        } catch (cause) {
+            const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
+            setErrors(fields as ServiceErrors);
+            setFormError(message);
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!targetListingId) {
+            setFormError('The service could not be saved. Please try again.');
+            setIsSubmitting(false);
+            return;
+        }
+
+        for (const portfolio of [...portfolios]) {
+            try {
+                const body = new FormData();
+                body.append('portfolioName', portfolio.name);
+                if (portfolio.description) {
+                    body.append('portfolioDescription', portfolio.description);
+                }
+                body.append('portfolioLink', portfolio.link);
+                body.append('developmentDate', portfolio.developmentDate);
+                if (portfolio.image) {
+                    body.append('portfolioImage', portfolio.image);
+                }
+
+                const saved = await createPortfolioForListing(
+                    targetListingId,
+                    body,
+                );
+                if (isEditMode) {
+                    setSavedPortfolios((current) => [...current, saved]);
+                }
+                setPortfolios((current) =>
+                    current.filter((item) => item.id !== portfolio.id),
+                );
             } catch (cause) {
-                const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
-                setErrors(fields as ServiceErrors);
-                setFormError(message);
+                const errorMessage = describeError(cause);
+                setFormError(
+                    `Your service was saved, but “${portfolio.name}” could not be uploaded. ${errorMessage} You can correct it and try again.`,
+                );
                 setIsSubmitting(false);
                 return;
             }
         }
 
-        // Upload pending portfolios collected in local state
-        for (const p of portfolios) {
-            try {
-                const body = new FormData();
-                body.append('portfolioName', p.name);
-                if (p.description)
-                    body.append('portfolioDescription', p.description);
-                body.append('portfolioLink', p.link);
-                body.append('developmentDate', p.developmentDate);
-                if (p.image) body.append('portfolioImage', p.image);
-
-                await createPortfolioForListing(listingId, body);
-            } catch (cause) {
-                const errorMessage = describeError(cause);
-                setFormError(
-                    `Service was saved successfully, but portfolio "${p.name}" failed to upload: ${errorMessage}. Please fix and try again.`,
-                );
-                setIsSubmitting(false);
-                return; // Stop loop on failure
-            }
-        }
-
+        setInitialValues({
+            title,
+            description,
+            categoryIds: selectedCategoryIds,
+            techStack: selectedTechStack,
+            minBudget,
+            maxBudget,
+        });
         setShowSuccessModal(true);
         setIsSubmitting(false);
     };
 
     const handleSuccessConfirm = () => {
         setShowSuccessModal(false);
+        if (isEditMode) {
+            router.back();
+            return;
+        }
         router.push('/');
+    };
+
+    const handleCancel = () => {
+        if (hasUnsavedChanges) {
+            setShowLeaveModal(true);
+            return;
+        }
+        router.back();
     };
 
     // ── EARLY RETURNS PLACED AFTER ALL HOOKS ──
@@ -299,10 +517,36 @@ export default function AddServiceForm() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    if (!isAuthorized && loadError) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+                <div className="max-w-lg rounded-popup border border-line bg-surface-white p-8 text-center shadow-sm">
+                    <h1 className="type-lg text-ink">
+                        {isEditMode
+                            ? 'Unable to edit service'
+                            : 'Unable to add service'}
+                    </h1>
+                    <p role="alert" className="mt-3 type-sm text-ink-soft">
+                        {loadError}
+                    </p>
+                    <Button
+                        variant="outline"
+                        onClick={() => router.back()}
+                        className="mt-6 px-5 py-2 type-sm font-semibold"
+                    >
+                        Go back
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-surface py-12 px-6 flex justify-center text-ink">
             <div className="w-full max-w-[1100px]">
-                <h1 className="type-hd mb-4">Add My Service</h1>
+                <h1 className="type-hd mb-4">
+                    {isEditMode ? 'Edit Service' : 'Add My Service'}
+                </h1>
                 <hr className="border-brand/40 mb-4" />
                 <p className="type-sm text-ink-soft font-medium mb-6">
                     * Indicates required
@@ -400,7 +644,7 @@ export default function AddServiceForm() {
                                 {/* Techstack Tag Box */}
                                 <div>
                                     <label className="block type-sm font-semibold mb-1 text-ink">
-                                        Techstack*
+                                        Tech stack*
                                     </label>
 
                                     {/* Combined Tags + Text Input Box */}
@@ -517,12 +761,42 @@ export default function AddServiceForm() {
                                 </button>
                             </div>
 
-                            {portfolios.length === 0 ? (
+                            {savedPortfolios.length === 0 &&
+                            portfolios.length === 0 ? (
                                 <p className="type-sm text-ink-placeholder text-center mt-4">
-                                    No portfolios added yet.
+                                    No portfolio items yet.
                                 </p>
                             ) : (
                                 <div className="flex-1 overflow-y-auto modal-scrollbar pr-2 space-y-3 max-h-[380px]">
+                                    {savedPortfolios.map((item) => (
+                                        <div
+                                            key={item.portfolioId}
+                                            className="flex items-center justify-between border border-line rounded-input p-3 type-sm"
+                                        >
+                                            <span className="font-medium text-ink type-xs truncate max-w-[180px]">
+                                                {item.portfolioName}
+                                            </span>
+                                            <div className="ml-2 flex shrink-0 items-center gap-3">
+                                                <a
+                                                    href={item.portfolioLink}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="type-xs font-semibold text-brand hover:underline"
+                                                >
+                                                    View
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setPortfolioToEdit(item)
+                                                    }
+                                                    className="type-xs font-semibold text-brand hover:underline"
+                                                >
+                                                    Edit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                     {portfolios.map((item) => (
                                         <div
                                             key={item.id}
@@ -530,6 +804,9 @@ export default function AddServiceForm() {
                                         >
                                             <span className="font-medium text-ink type-xs truncate max-w-[180px]">
                                                 {item.name}
+                                                <span className="ml-2 font-normal text-ink-placeholder">
+                                                    Pending
+                                                </span>
                                             </span>
                                             <div className="flex items-center gap-3 shrink-0 ml-2">
                                                 {item.image && (
@@ -563,24 +840,30 @@ export default function AddServiceForm() {
                     )}
 
                     <div className="mt-8 flex items-center justify-end gap-3">
-                        <button
+                        <Button
                             type="button"
-                            onClick={() => router.back()}
+                            variant="muted"
+                            onClick={handleCancel}
                             disabled={isSubmitting}
-                            className="px-5 py-2 rounded-button bg-fill-muted text-surface-white type-sm font-semibold hover:bg-ink-placeholder transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="px-5 py-2 type-sm font-semibold disabled:opacity-60"
                         >
-                            Cancel Service
-                        </button>
+                            Cancel
+                        </Button>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting ||
+                                (isEditMode && !hasUnsavedChanges)
+                            }
                             className="px-5 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {isSubmitting
                                 ? 'Saving…'
                                 : createdListingId
                                   ? 'Retry Portfolio Upload'
-                                  : 'Add Service'}
+                                  : isEditMode
+                                    ? 'Save Changes'
+                                    : 'Add Service'}
                         </button>
                     </div>
                 </form>
@@ -595,8 +878,37 @@ export default function AddServiceForm() {
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={handleSuccessConfirm}
-                title="Service Added Successfully"
+                title={
+                    isEditMode
+                        ? 'Service updated successfully'
+                        : 'Service added successfully'
+                }
             />
+
+            <UnsavedChangesModal
+                isOpen={showLeaveModal}
+                onKeepEditing={() => setShowLeaveModal(false)}
+                onDiscard={() => {
+                    setShowLeaveModal(false);
+                    router.back();
+                }}
+            />
+
+            {portfolioToEdit && (
+                <EditPortfolioForm
+                    portfolio={portfolioToEdit}
+                    onClose={() => setPortfolioToEdit(null)}
+                    onSave={(updated) => {
+                        setSavedPortfolios((current) =>
+                            current.map((item) =>
+                                item.portfolioId === updated.portfolioId
+                                    ? updated
+                                    : item,
+                            ),
+                        );
+                    }}
+                />
+            )}
         </div>
     );
 }
