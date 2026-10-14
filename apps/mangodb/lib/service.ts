@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api';
+import { invalidateAfter } from '@/lib/apiCache';
 import type {
     ServiceListing,
     ServicePortfolio,
@@ -17,10 +18,15 @@ export interface CreateServiceBody {
 export function createService(
     body: CreateServiceBody,
 ): Promise<ServiceListing> {
-    return apiFetch<ServiceListing>('/services', {
-        method: 'POST',
-        body: JSON.stringify(body),
-    });
+    // '/services' covers search pages and filter-options, which can gain a new
+    // tech stack name from this listing.
+    return invalidateAfter(
+        apiFetch<ServiceListing>('/services', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
 }
 
 export function getService(listingId: number): Promise<ServiceListing> {
@@ -37,10 +43,13 @@ export function updateService(
     listingId: number,
     body: UpdateServiceRequest,
 ): Promise<ServiceListing> {
-    return apiFetch<ServiceListing>(`/services/${listingId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-    });
+    return invalidateAfter(
+        apiFetch<ServiceListing>(`/services/${listingId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
 }
 
 export function createPortfolioForListing(
@@ -48,8 +57,8 @@ export function createPortfolioForListing(
     body: FormData,
 ): Promise<ServicePortfolio> {
     body.append('listingId', String(listingId));
-    return apiFetch<ServicePortfolio>('/portfolios', {
-        method: 'POST',
-        body,
-    });
+    return invalidateAfter(
+        apiFetch<ServicePortfolio>('/portfolios', { method: 'POST', body }),
+        '/portfolios',
+    );
 }

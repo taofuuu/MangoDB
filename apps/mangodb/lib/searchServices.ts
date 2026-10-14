@@ -17,6 +17,7 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
+import { cachedGet } from './apiCache';
 
 export type {
     Pagination,
@@ -75,8 +76,17 @@ export type SearchServicesParams = {
 // render controls that never match the database.
 // ---------------------------------------------------------------------------
 
+const FILTER_OPTIONS_MAX_AGE_MS = 5 * 60_000;
+
 export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterOptions> {
-    return apiFetch<ServiceFilterOptions>('/services/filter-options');
+    // Categories and tech stack names change rarely, so keep them longer than
+    // the default. createService still clears them at once.
+    const path = '/services/filter-options';
+    return cachedGet(
+        path,
+        () => apiFetch<ServiceFilterOptions>(path),
+        FILTER_OPTIONS_MAX_AGE_MS,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -121,5 +131,6 @@ export async function searchServices(
     qs.set('page', String(page));
     qs.set('pageSize', String(pageSize)); // API max is 50
 
-    return apiFetch<ServiceListResponse>(`/services?${qs.toString()}`);
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
 }
