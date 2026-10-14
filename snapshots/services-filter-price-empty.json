@@ -10,10 +10,10 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
-                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe no-min service <run>",
                 "maxBudget": 30000,
                 "minBudget": null,
+                "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"
                 ]
@@ -25,10 +25,10 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
-                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe wide service <run>",
                 "maxBudget": 200000,
                 "minBudget": 50000,
+                "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"
                 ]
@@ -42,10 +42,10 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
-                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe mobile service <run>",
                 "maxBudget": 120000,
                 "minBudget": 80000,
+                "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"
                 ]
@@ -59,10 +59,10 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
-                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe web service <run>",
                 "maxBudget": 50000,
                 "minBudget": 10000,
+                "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"
                 ]
