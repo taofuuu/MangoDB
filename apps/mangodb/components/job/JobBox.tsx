@@ -123,7 +123,7 @@ export default function JobBox({
                                                 onClick={() => {
                                                     setIsMenuOpen(false);
                                                     router.push(
-                                                        `/job/view-own/edit/${job.jobPostingId}`,
+                                                        `/job-postings/${job.jobPostingId}/edit`,
                                                     );
                                                 }}
                                                 className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"

@@ -3,7 +3,7 @@
 import { useId, useState } from 'react';
 import MonthDropdown from '../sm-detail/MonthDropdown';
 import YearDropdown from '../sm-detail/YearDropdown';
-import { updateCertificate } from '@/lib/certificate';
+import { updateCertificate } from '@/lib/certificates';
 import { toFormErrors, type FieldErrors } from '@/lib/validation';
 import FileUpload from '../sm-detail/FileUpload';
 import FieldError from '@/components/ui/FieldError';

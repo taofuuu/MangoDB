@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
-    createListing,
-    deleteListing,
-    getMine,
+    createService,
+    deleteService,
+    listMyServices,
     getService,
-    listServiceFilterOptions,
+    getServiceFilterOptions,
     listServices,
+    updateService,
 } from '../controllers/service.controller';
 
 // Mounted at /services.
@@ -26,14 +27,25 @@ serviceRoutes.get(
     '/filter-options',
     requireAuth,
     requireRole('provider', 'receiver'),
-    listServiceFilterOptions,
+    getServiceFilterOptions,
 );
-serviceRoutes.post('/', requireAuth, requireRole('provider'), createListing);
-serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMine);
-serviceRoutes.get('/:listingId', requireAuth, getService);
-serviceRoutes.delete(
-    '/:listingId',
+serviceRoutes.post('/', requireAuth, requireRole('provider'), createService);
+serviceRoutes.get(
+    '/mine',
     requireAuth,
     requireRole('provider'),
-    deleteListing,
+    listMyServices,
+);
+serviceRoutes.get('/:serviceId', requireAuth, getService);
+serviceRoutes.patch(
+    '/:serviceId',
+    requireAuth,
+    requireRole('provider'),
+    updateService,
+);
+serviceRoutes.delete(
+    '/:serviceId',
+    requireAuth,
+    requireRole('provider'),
+    deleteService,
 );

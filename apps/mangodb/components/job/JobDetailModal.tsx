@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { JobPosting } from '@mangodb/shared';
 
 import {
@@ -291,10 +292,12 @@ export default function JobDetailModal({
                         >
                             <span>Company</span>
 
-                            {/* Plain text until /profile/[companyId] exists (T2.7.17) */}
-                            <span className="!font-[600] text-ink">
+                            <Link
+                                href="/profile/view"
+                                className="!font-[600] text-ink hover:underline"
+                            >
                                 {job.companyName}
-                            </span>
+                            </Link>
 
                             <Building2 size={20} color="black" />
                         </div>

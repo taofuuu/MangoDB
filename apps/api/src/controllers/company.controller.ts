@@ -287,7 +287,7 @@ export async function deleteMyPhoto(
 // US1-6. Coordinates the existing eligibility and soft-delete layers without
 // owning either rule. Session invalidation and deleted-account login blocking
 // are integrated by their separately assigned US1-6 task.
-export async function requestMyAccountDeletion(
+export async function deleteMyAccount(
     req: Request,
     res: Response,
 ): Promise<void> {

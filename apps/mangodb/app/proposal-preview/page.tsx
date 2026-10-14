@@ -1,15 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { CompanyProfile } from '@mangodb/shared';
 import SubmitProposalModal, {
     type ProposalJobPosting,
 } from '@/components/proposals/SubmitProposalModal';
 import Button from '@/components/ui/Button';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
+import { redirectToUnauthorized } from '@/lib/session';
 
 // Temporary local page for checking the T2.8 modal layout. The real job-detail
 // page will supply its selected JobPosting when T2.7 integrates this component.
@@ -37,6 +38,7 @@ export default function ProposalPreviewPage() {
             .catch((cause: unknown) => {
                 if (isNotSignedIn(cause)) {
                     setLoadError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
                     return;
                 }
 
@@ -44,29 +46,32 @@ export default function ProposalPreviewPage() {
             });
     }, []);
 
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (!profile && !loadError) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (profile && !isProviderAccount(profile.accountType)) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="Only Provider and BOTH accounts can submit proposals."
+                showLogin={false}
+            />
+        );
+    }
+
     return (
         <main className="min-h-screen bg-surface p-6 sm:p-10">
-            {loadError === NOT_SIGNED_IN && (
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
-
             {loadError && loadError !== NOT_SIGNED_IN && (
                 <p role="alert" className="type-sm text-danger">
                     {loadError}
-                </p>
-            )}
-
-            {!loadError && !profile && <p className="type-sm">Loading…</p>}
-
-            {profile && !isProviderAccount(profile.accountType) && (
-                <p className="type-sm">
-                    Only Provider and BOTH accounts can submit proposals.
                 </p>
             )}
 

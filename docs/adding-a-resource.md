@@ -138,10 +138,15 @@ export async function assertServiceOwned(
 
 Pick one of two shapes, and say why in a comment:
 
-| Shape                                          | When                                   |
-| ---------------------------------------------- | -------------------------------------- |
-| 404 and 403 separate (`assertPortfolioOwned`)  | ids are discoverable anyway            |
-| 403 folded into 404 (`assertCertificateOwned`) | ids are not, so a 403 confirms a guess |
+| Shape                                         | When                                   |
+| --------------------------------------------- | -------------------------------------- |
+| 404 and 403 separate (`assertPortfolioOwned`) | ids are discoverable anyway            |
+| 403 folded into 404                           | ids are not, so a 403 confirms a guess |
+
+`assertCertificateOwned` folds them although certificate ids are now
+discoverable (`GET /certificates?companyId=`). The 404 was kept because it
+leaks nothing and the frontend already handles it; a new resource should
+follow the table.
 
 ---
 
@@ -182,7 +187,12 @@ export async function createService(
 ```ts
 export const serviceRoutes = Router();
 
-serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMyServices);
+serviceRoutes.get(
+    '/mine',
+    requireAuth,
+    requireRole('provider'),
+    listMyServices,
+);
 serviceRoutes.post('/', requireAuth, requireRole('provider'), createService);
 serviceRoutes.patch(
     '/:serviceId',

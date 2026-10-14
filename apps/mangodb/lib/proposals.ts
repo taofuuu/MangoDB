@@ -5,6 +5,7 @@ import type {
     ProposalStatus,
 } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
+import { cachedGet, invalidateAfter } from '@/lib/apiCache';
 import { PROPOSAL_PAGE_SIZE } from './pagination';
 
 // Proposal requests live here rather than in the form, matching the existing
@@ -14,10 +15,15 @@ export function createProposal(
     jobPostingId: number,
     body: CreateProposalRequest,
 ): Promise<Proposal> {
-    return apiFetch<Proposal>(`/job-postings/${jobPostingId}/proposals`, {
-        method: 'POST',
-        body: JSON.stringify(body),
-    });
+    // A new proposal changes /proposals/mine. Job postings carry no proposal
+    // data, so nothing else needs clearing.
+    return invalidateAfter(
+        apiFetch<Proposal>(`/job-postings/${jobPostingId}/proposals`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/proposals',
+    );
 }
 
 export interface GetMyProposalsOptions {
@@ -25,7 +31,7 @@ export interface GetMyProposalsOptions {
 }
 
 // US2-9. Lists proposals submitted by the signed-in Provider.
-export function getMyProposals(
+export function listMyProposals(
     page: number = 1,
     pageSize: number = PROPOSAL_PAGE_SIZE,
     options?: GetMyProposalsOptions,
@@ -39,7 +45,6 @@ export function getMyProposals(
         query.set('status', options.status);
     }
 
-    return apiFetch<ProposalListResponse>(
-        `/proposals/mine?${query.toString()}`,
-    );
+    const path = `/proposals/mine?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<ProposalListResponse>(path));
 }

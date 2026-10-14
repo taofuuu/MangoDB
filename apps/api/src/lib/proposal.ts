@@ -130,7 +130,7 @@ function toProject(row: ProjectRow): Project {
     };
 }
 
-export async function acceptProposal(
+export async function acceptProposalTx(
     proposalId: number,
     callerId: number,
 ): Promise<Project> {
@@ -210,7 +210,7 @@ export async function acceptProposal(
     });
 }
 
-export async function rejectProposal(
+export async function rejectPendingProposal(
     proposalId: number,
     callerId: number,
 ): Promise<void> {

@@ -7,12 +7,12 @@ import {
     type CreateJobPosting,
     updateJobPosting,
     type UpdateJobPosting,
-} from '@/lib/job';
+} from '@/lib/jobPostings';
 import { toFormErrors } from '@/lib/validation';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
 import type { Category, JobPosting } from '@mangodb/shared';
-import { getCategories } from '@/lib/categories';
+import { listCategories } from '@/lib/categories';
 import { describeError } from '@/lib/api';
 
 import Input from '@/components/ui/Input';
@@ -99,7 +99,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                 setIsCategoriesLoading(true);
                 setCategoriesError(null);
 
-                const data = await getCategories();
+                const data = await listCategories();
                 setCategories(data);
             } catch (error: unknown) {
                 setCategoriesError(describeError(error));
@@ -234,7 +234,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                 }
 
                 await updateJobPosting(jobPostingId, data);
-                router.push('/job/view-own?success=updated');
+                router.push('/job-postings/mine?success=updated');
             } else {
                 // Create mode: preserve the existing behavior.
                 const data: CreateJobPosting = {
@@ -249,7 +249,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                 };
 
                 await createJobPosting(data);
-                router.push('/job/view-own?success=posted');
+                router.push('/job-postings/mine?success=posted');
             }
         } catch (cause: unknown) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
