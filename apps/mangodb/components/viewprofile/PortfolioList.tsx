@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import type { Certificate } from '@mangodb/shared';
 import { getPortfolios } from '@/lib/portfolios';
-import { getCertificates } from '@/lib/certificate';
+import { getCertificates, getCompanyCertificates } from '@/lib/certificate';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 
 // Matches the card's fixed-height design: enough to preview at a glance,
@@ -31,10 +31,16 @@ interface DisplayItem {
 
 interface PortfolioCertificateListProps {
     companyId: number;
+    // Another company's profile. Its certificates come from
+    // GET /certificates?companyId=, since /certificates/mine is always the
+    // viewer's own. "See more" goes to the viewer's own management pages, so
+    // it is hidden.
+    readOnly?: boolean;
 }
 
 export default function PortfolioCertificateList({
     companyId,
+    readOnly = false,
 }: PortfolioCertificateListProps) {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'certificates'>(
         'portfolio',
@@ -50,14 +56,14 @@ export default function PortfolioCertificateList({
             .then((items) => setPortfolioItems(items))
             .catch(() => setLoadError('Could not load portfolio items.'));
 
-        getCertificates()
+        (readOnly ? getCompanyCertificates(companyId) : getCertificates())
             .then((items) => setCertificateItems(items))
             .catch(() =>
                 setLoadError(
                     (current) => current ?? 'Could not load certificates.',
                 ),
             );
-    }, [companyId]);
+    }, [companyId, readOnly]);
 
     const displayItems: DisplayItem[] =
         activeTab === 'portfolio'
@@ -142,7 +148,7 @@ export default function PortfolioCertificateList({
                 ))}
             </div>
 
-            {displayItems.length > MAX_VISIBLE_ITEMS && (
+            {!readOnly && displayItems.length > MAX_VISIBLE_ITEMS && (
                 <div className="mt-3 text-right">
                     <Link
                         href={seeMoreHref}

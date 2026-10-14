@@ -346,6 +346,23 @@ fi
 
 snap certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
 
+# Another company's certificates, as its profile page loads them: the receiver
+# reads the provider's...
+snap certificates-by-company GET "/certificates?companyId=$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...and a company that is not a provider has none, which is an empty list.
+snap certificates-by-company-none GET "/certificates?companyId=$RECEIVER_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# companyId is required: a bare GET does not list everyone's.
+snap error-certificates-company-missing GET /certificates \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Digits only: Number() would read 0x10 as 16.
+snap error-certificates-company-invalid GET "/certificates?companyId=0x10" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 echo
 echo "admin"
 snap admin-companies GET /admin/companies -H "$(bearer "$TOKEN_ADMIN")"
