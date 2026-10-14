@@ -356,6 +356,18 @@ export interface CreateServiceRequest {
     listingStatus?: ListingStatus | undefined;
     categoryIds?: number[] | undefined;
 }
+
+// What PATCH /services/:serviceId accepts. Send only what changed;
+// categoryIds and techStack each replace the whole set.
+export interface UpdateServiceRequest {
+    listingTitle?: string | undefined;
+    listingDesc?: string | undefined;
+    minBudget?: number | null | undefined;
+    maxBudget?: number | null | undefined;
+    categoryIds?: number[] | undefined;
+    techStack?: string[] | undefined;
+}
+
 // What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
 // categoryIds replaces the whole set. Validated by updateJobPostingSchema.
 export interface UpdateJobPostingRequest {

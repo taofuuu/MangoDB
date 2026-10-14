@@ -7,6 +7,7 @@ import {
     getService,
     getServiceFilterOptions,
     listServices,
+    updateService,
 } from '../controllers/service.controller';
 
 // Mounted at /services.
@@ -36,6 +37,12 @@ serviceRoutes.get(
     listMyServices,
 );
 serviceRoutes.get('/:serviceId', requireAuth, getService);
+serviceRoutes.patch(
+    '/:serviceId',
+    requireAuth,
+    requireRole('provider'),
+    updateService,
+);
 serviceRoutes.delete(
     '/:serviceId',
     requireAuth,

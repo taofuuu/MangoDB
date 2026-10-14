@@ -68,6 +68,15 @@ const ROUTES = [
         title: 'Create Service',
         detail: 'US2-1 - create service and add portfolio',
     },
+    ...(process.env.NODE_ENV === 'development'
+        ? [
+              {
+                  href: '/dev/services/edit',
+                  title: 'Edit Service Picker (Temporary)',
+                  detail: 'Temporary development page for T2.3.2–T2.3.3. Choose one of your services and open its prefilled edit form; remove this link after T2.2.2 adds the real Edit buttons.',
+              },
+          ]
+        : []),
     {
         href: '/services',
         title: 'Services (service search)',

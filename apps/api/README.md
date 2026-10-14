@@ -67,6 +67,21 @@ open-ended under ADR 0009 and must not be hardcoded in the frontend.
 `minBudget`, with `listingId` as the stable final tie-breaker, and runs before
 pagination.
 
+## Service updates
+
+`PATCH /services/:serviceId` is authenticated and limited to provider
+accounts. A provider may update only a service owned by its company; another
+provider receives `403 FORBIDDEN`, while an unknown id or a non-service
+listing receives `404 NOT_FOUND`.
+
+The JSON body is a strict, non-empty partial update. It accepts
+`listingTitle`, `listingDesc`, `minBudget`, `maxBudget`, `categoryIds`, and
+`techStack`. Send `null` to clear either budget. When `categoryIds` or
+`techStack` is present, that array replaces the complete existing set, and an
+empty array clears it. A one-sided budget update is validated against the
+other budget already stored on the listing. A successful update returns the
+complete `ServiceListing` resource with status `200`.
+
 ## Endpoint conventions
 
 Read this before adding an endpoint. Every endpoint follows the same shape so

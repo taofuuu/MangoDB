@@ -1,5 +1,5 @@
-// Everything the web asks /services for: creating one (US2-1) and the search
-// screen's list and filter options (US3-1 / US3-2).
+// Everything the web asks /services for: creating and editing one (US2-1,
+// US2-3) and the search screen's list and filter options (US3-1 / US3-2).
 // Backend: apps/api/src/controllers/service.controller.ts.
 
 // ---------------------------------------------------------------------------
@@ -11,8 +11,10 @@ import type {
     PaginationMeta as Pagination,
     SearchServicesOrder,
     ServiceFilterOptions,
+    ServiceListing,
     ServiceListResponse,
     ServiceSummary,
+    UpdateServiceRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
 
@@ -33,26 +35,31 @@ export interface CreateServiceBody {
     techStack?: string[];
 }
 
-// Minimal shape we need back from POST /services — the full type is
-// ServiceListing in @mangodb/shared. We only need serviceId to attach
-// portfolios immediately after.
-export interface CreatedService {
-    serviceId: number;
-    listingTitle: string;
-    listingDesc: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-    listingStatus: string;
-    type: string;
-    categoryIds: number[];
-    techStack?: string[];
-}
-
 export function createService(
     body: CreateServiceBody,
-): Promise<CreatedService> {
-    return apiFetch<CreatedService>('/services', {
+): Promise<ServiceListing> {
+    return apiFetch<ServiceListing>('/services', {
         method: 'POST',
+        body: JSON.stringify(body),
+    });
+}
+
+export function getService(serviceId: number): Promise<ServiceListing> {
+    return apiFetch<ServiceListing>(`/services/${serviceId}`);
+}
+
+export function listMyServices(): Promise<ServiceListing[]> {
+    return apiFetch<ServiceListing[]>('/services/mine');
+}
+
+// US2-3. The backend owns validation and authorization; this helper keeps the
+// endpoint contract out of the form so create and edit share one data path.
+export function updateService(
+    serviceId: number,
+    body: UpdateServiceRequest,
+): Promise<ServiceListing> {
+    return apiFetch<ServiceListing>(`/services/${serviceId}`, {
+        method: 'PATCH',
         body: JSON.stringify(body),
     });
 }

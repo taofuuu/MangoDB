@@ -1,0 +1,16 @@
+{
+    "request": "PATCH /services/<delete_probe_id>",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "minBudget",
+                    "message": "minBudget must be less than or equal to maxBudget"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}
