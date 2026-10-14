@@ -11,7 +11,7 @@ import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
-import { getPortfolios, deletePortfolio } from '@/lib/portfolios';
+import { listPortfolios, deletePortfolio } from '@/lib/portfolios';
 
 export default function PortfolioPage() {
     // Null means still loading — the same three-state shape as profile/edit.
@@ -39,7 +39,7 @@ export default function PortfolioPage() {
     // revoked token lands in the same place.
     useEffect(() => {
         getMyProfile()
-            .then((profile) => getPortfolios(profile.companyId))
+            .then((profile) => listPortfolios(profile.companyId))
             .then(setItems)
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {

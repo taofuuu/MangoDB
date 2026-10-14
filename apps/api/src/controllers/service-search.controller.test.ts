@@ -188,7 +188,7 @@ function ids(result: unknown): number[] {
         Array.isArray(body.items),
         `no items in ${JSON.stringify(result)}`,
     );
-    return body.items.map((s) => s.listingId).sort((a, b) => a - b);
+    return body.items.map((s) => s.serviceId).sort((a, b) => a - b);
 }
 
 function assertBadRequest(result: unknown): void {

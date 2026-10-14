@@ -5,9 +5,9 @@ import type { JobPosting } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
-import { getAllJobPostings } from '@/lib/job';
+import { listJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { formatServiceBudgetRange } from '@/lib/searchServices';
+import { formatServiceBudgetRange } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // The company's open job postings, from GET /job-postings?companyId=, so it
@@ -20,7 +20,7 @@ export default function JobListing({ companyId }: { companyId: number }) {
     useEffect(() => {
         let cancelled = false;
 
-        getAllJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
+        listJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
             .then((data) => {
                 if (!cancelled) setJobs(data.items);
             })

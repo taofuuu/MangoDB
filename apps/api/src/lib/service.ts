@@ -74,7 +74,7 @@ export async function ensureTechStack(names: string[]): Promise<string[]> {
 }
 
 // The columns a service listing response may carry.
-export const listingSelect = {
+export const serviceSelect = {
     listingId: true,
     companyId: true,
     listingTitle: true,
@@ -89,7 +89,7 @@ export const listingSelect = {
     company: { select: { companyName: true } },
 } as const;
 
-type SelectedListing = {
+type SelectedService = {
     listingId: number;
     companyId: number | null;
     listingTitle: string;
@@ -102,9 +102,11 @@ type SelectedListing = {
     company: { companyName: string } | null;
 };
 
-export function toListing(row: SelectedListing): ServiceListing {
+export function toService(row: SelectedService): ServiceListing {
     return {
-        listingId: row.listingId,
+        // listing_id is the shared key under every listing; on the wire it
+        // takes the resource's name, the way a job posting's is jobPostingId.
+        serviceId: row.listingId,
         companyId: row.companyId,
         companyName: row.company?.companyName ?? null,
         type: 'SERVICE',
@@ -123,12 +125,12 @@ export function toListing(row: SelectedListing): ServiceListing {
 // listing, 403 for one that exists but belongs to another company. A JOB
 // listing with this id is treated as not-found here — it isn't this
 // endpoint's resource, and 403 would wrongly confirm it exists.
-export async function assertListingOwned(
-    listingId: number,
+export async function assertServiceOwned(
+    serviceId: number,
     companyId: number,
 ): Promise<{ minBudget: number | null; maxBudget: number | null }> {
     const listing = await prisma.listing.findUnique({
-        where: { listingId },
+        where: { listingId: serviceId },
         select: {
             companyId: true,
             listingType: true,
@@ -195,7 +197,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
     const company = row.company!;
 
     return {
-        listingId: row.listingId,
+        serviceId: row.listingId,
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,

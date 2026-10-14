@@ -5,9 +5,9 @@ import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
 import ModalShell from '@/components/ui/ModalShell';
 import { describeError, isNotSignedIn } from '@/lib/api';
-import { getAllJobPostings } from '@/lib/job';
+import { listJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { getCompanyServices, type ServiceSummary } from '@/lib/searchServices';
+import { listCompanyServices, type ServiceSummary } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
 interface DisplayItem {
@@ -34,7 +34,7 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
     useEffect(() => {
         let cancelled = false;
 
-        getCompanyServices(companyId, PROFILE_LIST_SIZE)
+        listCompanyServices(companyId, PROFILE_LIST_SIZE)
             .then((data) => {
                 if (!cancelled) setServices(data.items);
             })
@@ -47,7 +47,7 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
                 setServicesError(describeError(err));
             });
 
-        getAllJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
+        listJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
             .then((data) => {
                 if (!cancelled) setJobs(data.items);
             })
@@ -70,7 +70,7 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
     const displayItems: DisplayItem[] =
         activeTab === 'services'
             ? services.map((service) => ({
-                  id: service.listingId,
+                  id: service.serviceId,
                   title: service.listingTitle,
                   body: service.listingDesc,
               }))
@@ -83,7 +83,7 @@ export default function ServicesSection({ companyId }: { companyId: number }) {
     const openDetail = (id: number) => {
         if (activeTab === 'services') {
             setSelectedService(
-                services.find((service) => service.listingId === id) ?? null,
+                services.find((service) => service.serviceId === id) ?? null,
             );
         } else {
             setSelectedJob(jobs.find((job) => job.jobPostingId === id) ?? null);

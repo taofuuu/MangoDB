@@ -15,7 +15,7 @@ import {
     isForbidden,
     isNotSignedIn,
 } from '@/lib/api';
-import { getCertificates } from '@/lib/certificate';
+import { listMyCertificates } from '@/lib/certificates';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
@@ -49,7 +49,7 @@ export default function CertificatePage() {
 
     // GET certificates
     useEffect(() => {
-        getCertificates()
+        listMyCertificates()
             .then((data) => {
                 const mappedCertificates: CertificateData[] = data.map(
                     (cert) => ({

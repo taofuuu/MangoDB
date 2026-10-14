@@ -12,7 +12,7 @@ import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
-import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
+import { getCompanyAccountDetail, listCompanyAccounts } from '@/lib/companies';
 import { describeError, isForbidden, isNotSignedIn } from '@/lib/api';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
@@ -95,7 +95,7 @@ export default function AdminCompaniesPage() {
         setError(null);
         setAdminAuthStatus(null);
 
-        getCompanyAccounts(page, COMPANY_PAGE_SIZE, {
+        listCompanyAccounts(page, COMPANY_PAGE_SIZE, {
             q: debouncedSearch || undefined,
             filter: filter === 'ALL' ? undefined : filter,
         })
