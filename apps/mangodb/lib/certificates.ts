@@ -10,7 +10,7 @@ import { cachedGet, invalidateAfter } from '@/lib/apiCache';
 // All four are provider-only and act on the caller's own certificates — the
 // API works that out from the session, so none of them takes an owner id.
 
-export function getCertificates(): Promise<Certificate[]> {
+export function listMyCertificates(): Promise<Certificate[]> {
     const path = '/certificates/mine';
     return cachedGet(path, () =>
         apiFetch<Certificate[]>(path, { method: 'GET' }),
@@ -19,7 +19,7 @@ export function getCertificates(): Promise<Certificate[]> {
 
 // The one read of someone else's: another company's certificates, for its
 // public profile. Any signed-in company may call it.
-export function getCompanyCertificates(
+export function listCompanyCertificates(
     companyId: number,
 ): Promise<Certificate[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });

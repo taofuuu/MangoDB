@@ -66,7 +66,7 @@ export function deleteMyPhoto(): Promise<CompanyProfile> {
     );
 }
 
-export function getCompanyAccounts(
+export function listCompanyAccounts(
     page: number,
     pageSize: number,
     options?: GetCompanyAccountsOptions,
@@ -100,7 +100,7 @@ export function getCompanyAccountDetail(
 // US3-6. Company discovery is intentionally separate from the administrator
 // account list: this response contains only public card data, and the endpoint
 // accepts only keyword search, name ordering, and pagination.
-export function searchCompanies(
+export function listCompanies(
     page: number,
     pageSize: number,
     q?: string,
@@ -119,7 +119,7 @@ export function searchCompanies(
     return apiFetch<CompanyListResponse>(`/companies?${query.toString()}`);
 }
 
-export function getPublicCompanyProfile(
+export function getCompanyProfile(
     companyId: number,
 ): Promise<PublicCompanyProfile> {
     return apiFetch<PublicCompanyProfile>(`/companies/${companyId}`);

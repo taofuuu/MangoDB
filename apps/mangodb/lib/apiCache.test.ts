@@ -189,12 +189,12 @@ describe('invalidateCache / clearCache', () => {
         const portfolios = countingLoad('portfolios');
 
         await cachedGet('/services?page=1', services);
-        await cachedGet('/portfolios?listingId=3', portfolios);
+        await cachedGet('/portfolios?serviceId=3', portfolios);
 
         invalidateCache('/services', '/portfolios');
 
         await cachedGet('/services?page=1', services);
-        await cachedGet('/portfolios?listingId=3', portfolios);
+        await cachedGet('/portfolios?serviceId=3', portfolios);
         assert.equal(services.mock.callCount(), 2);
         assert.equal(portfolios.mock.callCount(), 2);
     });

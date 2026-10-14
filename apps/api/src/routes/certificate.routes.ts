@@ -4,8 +4,8 @@ import {
     createCertificate,
     updateCertificate,
     deleteCertificate,
-    getMyCertificates,
-    getCompanyCertificates,
+    listMyCertificates,
+    listCompanyCertificates,
 } from '../controllers/certificate.controller';
 import { uploadImage } from '../middleware/upload';
 
@@ -17,7 +17,7 @@ certificateRoutes.get(
     '/mine',
     requireAuth,
     requireRole('provider'),
-    getMyCertificates,
+    listMyCertificates,
 );
 
 // One company's certificates, for its public profile (/profile/:companyId).
@@ -29,7 +29,7 @@ certificateRoutes.get(
     '/',
     requireAuth,
     requireRole('provider', 'receiver'),
-    getCompanyCertificates,
+    listCompanyCertificates,
 );
 
 certificateRoutes.post(

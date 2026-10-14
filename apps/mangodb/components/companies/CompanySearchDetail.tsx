@@ -9,7 +9,7 @@ import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import ModalShell from '@/components/ui/ModalShell';
 import RoleTags from '@/components/ui/RoleTags';
 import { describeError } from '@/lib/api';
-import { getPublicCompanyProfile } from '@/lib/companies';
+import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
@@ -214,7 +214,7 @@ export default function CompanySearchDetail({
         let cancelled = false;
         const companyId = company.companyId;
 
-        getPublicCompanyProfile(companyId)
+        getCompanyProfile(companyId)
             .then((nextProfile) => {
                 if (!cancelled) {
                     setDetailState({

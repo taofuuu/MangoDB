@@ -7,7 +7,7 @@ import {
     getCompanyProfile,
     getMyProfile,
     listCompanies,
-    requestMyAccountDeletion,
+    deleteMyAccount,
     updateMyPhoto,
     updateMyProfile,
 } from '../controllers/company.controller';
@@ -49,7 +49,7 @@ companyRoutes.delete(
     '/me',
     requireAuth,
     requireRole('provider', 'receiver'),
-    requestMyAccountDeletion,
+    deleteMyAccount,
 );
 
 // Another company's public profile. Last, after every /me route, so "me" is
