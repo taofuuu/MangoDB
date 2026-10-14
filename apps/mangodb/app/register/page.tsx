@@ -32,6 +32,7 @@ import {
     toFormErrors,
 } from '@/lib/validation';
 import { apiFetch } from '@/lib/api';
+import { clearCacheInEveryTab } from '@/lib/apiCache';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -235,6 +236,9 @@ export default function RegisterPage() {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
+
+            // A new session: clear the cache in every tab, same as login does.
+            clearCacheInEveryTab();
 
             setCurrentStep(RegisterStep.Success);
         } catch (error) {

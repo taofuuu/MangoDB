@@ -32,7 +32,7 @@ import type {
     updateJobPostingSchema,
 } from './job-posting.schema';
 import type { createProposalSchema } from './proposal.schema';
-import type { updateListingSchema } from './service.schema';
+import type { updateServiceSchema } from './service.schema';
 
 // Fails to compile unless T is assignable to U. Both directions are asserted
 // below, so neither side may carry a field the other does not.
@@ -92,7 +92,7 @@ type _ContractMatchesUpdateJobPosting = Assert<
     UpdateJobPostingInput
 >;
 
-type UpdateServiceInput = z.infer<typeof updateListingSchema>;
+type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
 type _UpdateServiceMatchesContract = Assert<
     UpdateServiceInput,
     UpdateServiceRequest

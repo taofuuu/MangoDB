@@ -8,7 +8,7 @@ import {
     type CertificateData,
     type CertificateErrors,
 } from './EditCertificateForm';
-import { createCertificate } from '@/lib/certificate';
+import { createCertificate } from '@/lib/certificates';
 import { toFormErrors } from '@/lib/validation';
 import FileUpload from '../sm-detail/FileUpload';
 import FieldError from '@/components/ui/FieldError';

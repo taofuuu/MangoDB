@@ -3,11 +3,11 @@
     "status": 200,
     "body": {
         "developmentDate": "2026-03-02",
-        "listingId": 23,
         "portfolioDescription": "Patient self-booking with SMS reminders and a staff rota view.",
         "portfolioId": 16,
         "portfolioImage": "<storage-url>",
         "portfolioLink": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "portfolioName": "Portfolio Test"
+        "portfolioName": "Portfolio Test",
+        "serviceId": 23
     }
 }
