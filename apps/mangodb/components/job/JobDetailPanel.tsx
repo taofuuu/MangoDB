@@ -23,19 +23,13 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
     // Who is looking decides whether Add Proposal shows. getMyProfile is
     // cached, so the many panels that open in a session ask the API once.
-    // If it fails the button just stays hidden: the API still checks every
-    // submission.
     useEffect(() => {
         getMyProfile()
             .then(setViewer)
             .catch((cause: unknown) => {
                 // The session ended after the list loaded: same redirect as
                 // the page guard. Any other failure just hides the button.
-                if (isNotSignedIn(cause)) {
-                    redirectToUnauthorized();
-                    return;
-                }
-                setViewer(null);
+                if (isNotSignedIn(cause)) redirectToUnauthorized();
             });
     }, []);
 
