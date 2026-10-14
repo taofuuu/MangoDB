@@ -97,6 +97,11 @@ const ROUTES = [
         title: 'View job posting by company (Just for test)',
         detail: 'US2-7',
     },
+    {
+        href: '/unauthorized',
+        title: 'Login Required',
+        detail: 'Global unauthorized access guard page.',
+    },
 ];
 
 export default function Home() {

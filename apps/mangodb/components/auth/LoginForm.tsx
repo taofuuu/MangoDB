@@ -2,17 +2,18 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import TextField from '@/components/sm-detail/TextField';
 import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
-import { login } from '@/lib/session';
+import { login, sanitizeReturnUrl } from '@/lib/session';
 
 // A wrong password and a malformed email both have to read the same. The API
 // rejects the second as VALIDATION_FAILED, and showing that would tell an
 // attacker the address is not what it is unhappy about.
 export default function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +50,9 @@ export default function LoginForm() {
             // The session cookie is set on this response, so everything after
             // this point is authenticated.
             await login(identifier, password);
-            router.push('/');
+            const nextParam = searchParams.get('next');
+            const safeNext = sanitizeReturnUrl(nextParam);
+            router.push(safeNext ?? '/');
         } catch (err) {
             setError(
                 describeError(err, {

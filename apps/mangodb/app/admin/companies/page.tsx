@@ -11,8 +11,9 @@ import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
 import { getCompanyAccountDetail, getCompanyAccounts } from '@/lib/companies';
-import { describeError } from '@/lib/api';
+import { describeError, isForbidden, isNotSignedIn } from '@/lib/api';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
 type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
@@ -35,7 +36,11 @@ export default function AdminCompaniesPage() {
     );
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [adminAuthStatus, setAdminAuthStatus] = useState<
+        'unauthorized' | 'forbidden' | null
+    >(null);
     const [reloadKey, setReloadKey] = useState(0);
+
     const [selectedCompany, setSelectedCompany] =
         useState<CompanyAccountDetail | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -88,6 +93,7 @@ export default function AdminCompaniesPage() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoading(true);
         setError(null);
+        setAdminAuthStatus(null);
 
         getCompanyAccounts(page, COMPANY_PAGE_SIZE, {
             q: debouncedSearch || undefined,
@@ -99,8 +105,18 @@ export default function AdminCompaniesPage() {
                 listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
             })
             .catch((requestError: unknown) => {
-                if (!cancelled) setError(describeError(requestError));
+                if (cancelled) return;
+                if (isForbidden(requestError)) {
+                    setAdminAuthStatus('forbidden');
+                    return;
+                }
+                if (isNotSignedIn(requestError)) {
+                    setAdminAuthStatus('unauthorized');
+                    return;
+                }
+                setError(describeError(requestError));
             })
+
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
             });
@@ -161,6 +177,18 @@ export default function AdminCompaniesPage() {
     const visibleCompanies = (result?.items ?? []).filter(
         (company) => company.accountType !== 'ADMIN',
     );
+
+    if (!result && !error && !adminAuthStatus) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (adminAuthStatus) {
+        return (
+            <AdminUnauthorizedPage
+                isForbidden={adminAuthStatus === 'forbidden'}
+            />
+        );
+    }
 
     return (
         <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">

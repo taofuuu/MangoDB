@@ -8,10 +8,15 @@ import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 
-import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-
-import Link from 'next/link';
+import {
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+    NOT_SIGNED_IN,
+} from '@/lib/api';
+import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
@@ -48,6 +53,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const [result, setResult] = useState<JobPostingListResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isRestricted, setIsRestricted] = useState(false);
 
     const [reloadKey, setReloadKey] = useState(0);
 
@@ -112,6 +118,12 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
+
+                if (isForbidden(requestError)) {
+                    setIsRestricted(true);
                     return;
                 }
 
@@ -203,6 +215,27 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * Render
      * ============================================================
      */
+
+    if (!result && !error && !isRestricted) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (isRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Receiver account to view and manage your job postings."
+                showLogin={false}
+            />
+        );
+    }
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     return (
         <main
@@ -381,16 +414,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             {/* =============================================
                             LIST ERROR
                             ============================================= */}
-                            {error === NOT_SIGNED_IN && (
-                                <p className="type-md !font-[400]">
-                                    You are not signed in.{' '}
-                                    <Link href="/login" className="underline">
-                                        Log in
-                                    </Link>
-                                    , then come back.
-                                </p>
-                            )}
-
                             {error && error !== NOT_SIGNED_IN && (
                                 <div
                                     role="alert"
