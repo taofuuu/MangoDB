@@ -86,7 +86,10 @@ export function ServiceDetailPanel({
                 <div className="flex flex-col gap-[0.8vh]">
                     <span className="type-sm text-brand">Service Detail</span>
 
-                    <h2 className="type-lg !font-[700] text-ink">
+                    <h2
+                        id="service-detail-title"
+                        className="type-lg !font-[700] text-ink"
+                    >
                         {service.listingTitle || '-'}
                     </h2>
                 </div>

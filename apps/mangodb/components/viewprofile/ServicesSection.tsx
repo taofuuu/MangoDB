@@ -1,37 +1,94 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import type { JobPosting } from '@mangodb/shared';
+import JobDetailModal from '@/components/job/JobDetailModal';
+import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
+import ModalShell from '@/components/ui/ModalShell';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import { getAllJobPostings } from '@/lib/job';
+import { PROFILE_LIST_SIZE } from '@/lib/pagination';
+import { getCompanyServices, type ServiceSummary } from '@/lib/searchServices';
+import { redirectToUnauthorized } from '@/lib/session';
 
-// Data types
-export interface BlockContent {
-    title1: string;
-    body1: string;
-    title2: string;
-    body2: string;
+interface DisplayItem {
+    id: number;
+    title: string;
+    body: string;
 }
 
-export interface DualSectionData {
-    services: BlockContent;
-    jobs: BlockContent;
-}
-
-const sectionData: DualSectionData = {
-    services: {
-        title1: 'DevOps & Infrastructure Setup',
-        body1: 'Automated CI/CD pipelines, cloud provisioning, and cluster management optimized for scale.',
-        title2: 'Cybersecurity Compliance',
-        body2: 'Comprehensive security audits, risk management frameworks, and automated compliance checks.',
-    },
-    jobs: {
-        title1: 'Senior DevOps Engineer',
-        body1: 'Full-time • Remote — Looking for 5+ years experience in AWS, Kubernetes, and Terraform.',
-        title2: 'Lead UI/UX Designer',
-        body2: 'Full-time • Hybrid — Seeking a product designer to lead design systems and user research.',
-    },
-};
-
-export default function ServicesDashboard() {
+// The company's open services and open job postings. Both come from the
+// public list endpoints filtered by companyId, so the same card works on your
+// own profile and on another company's. Details opens the same views the
+// search pages use.
+export default function ServicesSection({ companyId }: { companyId: number }) {
     const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
-    const currentTabContent = sectionData[activeTab];
+    const [services, setServices] = useState<ServiceSummary[]>([]);
+    const [jobs, setJobs] = useState<JobPosting[]>([]);
+    // One per tab, so a failed services load does not hide the jobs.
+    const [servicesError, setServicesError] = useState<string | null>(null);
+    const [jobsError, setJobsError] = useState<string | null>(null);
+    const [selectedService, setSelectedService] =
+        useState<ServiceSummary | null>(null);
+    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        getCompanyServices(companyId, PROFILE_LIST_SIZE)
+            .then((data) => {
+                if (!cancelled) setServices(data.items);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setServicesError(describeError(err));
+            });
+
+        getAllJobPostings(1, PROFILE_LIST_SIZE, { companyId, status: 'OPEN' })
+            .then((data) => {
+                if (!cancelled) setJobs(data.items);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setJobsError(describeError(err));
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [companyId]);
+
+    const loadError = activeTab === 'services' ? servicesError : jobsError;
+
+    const displayItems: DisplayItem[] =
+        activeTab === 'services'
+            ? services.map((service) => ({
+                  id: service.listingId,
+                  title: service.listingTitle,
+                  body: service.listingDesc,
+              }))
+            : jobs.map((job) => ({
+                  id: job.jobPostingId,
+                  title: job.listingTitle,
+                  body: job.listingDesc,
+              }));
+
+    const openDetail = (id: number) => {
+        if (activeTab === 'services') {
+            setSelectedService(
+                services.find((service) => service.listingId === id) ?? null,
+            );
+        } else {
+            setSelectedJob(jobs.find((job) => job.jobPostingId === id) ?? null);
+        }
+    };
 
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
@@ -63,41 +120,68 @@ export default function ServicesDashboard() {
                     </button>
                 </div>
 
+                {loadError && (
+                    <p className="type-xs text-danger mb-2">{loadError}</p>
+                )}
+
                 {/* Display Content */}
                 <div className="space-y-3 overflow-y-auto max-h-[500px] flex-1 pr-2">
-                    {/* Item 1 */}
-                    <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
-                        <div className="flex justify-between items-center">
-                            <span className="type-sm !font-semibold text-gray-800">
-                                {currentTabContent.title1 || 'Untitled Item'}
-                            </span>
-                            <button className="type-xs text-brand hover:underline !font-medium">
-                                Details
-                            </button>
-                        </div>
-                        <p className="type-xs text-gray-600 leading-relaxed">
-                            {currentTabContent.body1 ||
-                                'No description provided.'}
+                    {displayItems.length === 0 && !loadError && (
+                        <p className="py-2 type-xs text-ink-placeholder">
+                            {activeTab === 'services'
+                                ? 'No services yet.'
+                                : 'No open job listings.'}
                         </p>
-                    </div>
-
-                    {/* Item 2 */}
-                    <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
-                        <div className="flex justify-between items-center">
-                            <span className="type-sm !font-semibold text-gray-800">
-                                {currentTabContent.title2 || 'Untitled Item'}
-                            </span>
-                            <button className="type-xs text-brand hover:underline !font-medium">
-                                Details
-                            </button>
+                    )}
+                    {displayItems.map((item) => (
+                        <div
+                            key={item.id}
+                            className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1"
+                        >
+                            <div className="flex justify-between items-center gap-3">
+                                <span className="type-sm !font-semibold text-gray-800 truncate">
+                                    {item.title || 'Untitled Item'}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => openDetail(item.id)}
+                                    aria-label={`Details for ${item.title}`}
+                                    className="shrink-0 type-xs text-brand hover:underline !font-medium"
+                                >
+                                    Details
+                                </button>
+                            </div>
+                            <p className="type-xs text-gray-600 leading-relaxed line-clamp-2">
+                                {item.body || 'No description provided.'}
+                            </p>
                         </div>
-                        <p className="type-xs text-gray-600 leading-relaxed">
-                            {currentTabContent.body2 ||
-                                'No description provided.'}
-                        </p>
-                    </div>
+                    ))}
                 </div>
             </main>
+
+            {/* ServiceDetailPanel is the search page's side panel; here it
+                floats over the profile instead. */}
+            <ModalShell
+                isOpen={selectedService !== null}
+                onClose={() => setSelectedService(null)}
+                labelledBy="service-detail-title"
+                backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
+            >
+                {selectedService && (
+                    <ServiceDetailPanel
+                        service={selectedService}
+                        onClose={() => setSelectedService(null)}
+                    />
+                )}
+            </ModalShell>
+
+            {selectedJob && (
+                <JobDetailModal
+                    job={selectedJob}
+                    isOpen
+                    onClose={() => setSelectedJob(null)}
+                />
+            )}
         </div>
     );
 }

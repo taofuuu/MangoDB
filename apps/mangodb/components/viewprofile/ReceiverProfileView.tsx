@@ -30,7 +30,7 @@ export default function ReceiverProfileView({
 
                 {/* Right Job Listing Container */}
                 <section className="flex-1 w-full lg:h-[840px]">
-                    <JobListing />
+                    <JobListing companyId={profile.companyId} />
                 </section>
             </main>
         </div>

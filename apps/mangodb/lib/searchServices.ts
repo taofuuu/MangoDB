@@ -100,6 +100,23 @@ export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterO
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
 
+// One company's open services, for its profile page. Same endpoint and shape
+// as the search screen, so a row opens the same ServiceDetailPanel.
+export function getCompanyServices(
+    companyId: number,
+    pageSize: number,
+): Promise<ServiceListResponse> {
+    const qs = new URLSearchParams({
+        companyId: String(companyId),
+        orderBy: 'newest',
+        page: '1',
+        pageSize: String(pageSize),
+    });
+
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
+}
+
 export async function searchServices(
     params: SearchServicesParams,
 ): Promise<ServiceListResponse> {
