@@ -8,7 +8,7 @@ import {
     acceptProposal,
     rejectProposal,
 } from '@/lib/proposals';
-import { getJobPostingDetail } from '@/lib/job';
+import { getJobPostingDetail } from '../../../lib/job';
 import { StatsBadges } from '@/components/proposals/view/StatsBadges';
 import { ProposalCard } from '@/components/proposals/view/ProposalCard';
 import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
