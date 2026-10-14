@@ -9,11 +9,11 @@
         "companyId": 142,
         "companyName": "Snapshot Seed Provider",
         "listingDesc": "updated by scripts/snapshot-api.sh",
-        "listingId": "<listing_id>",
         "listingStatus": "OPEN",
         "listingTitle": "Snapshot Probe updated service <run>",
         "maxBudget": 75000,
         "minBudget": 10000,
+        "serviceId": "<service_id>",
         "techStack": [
             "<run>-Updated"
         ],

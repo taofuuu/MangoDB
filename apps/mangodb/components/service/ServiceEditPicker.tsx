@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { ServiceListing } from '@mangodb/shared';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { getMyServices } from '@/lib/service';
+import { listMyServices } from '@/lib/services';
 
 export default function ServiceEditPicker() {
     const [services, setServices] = useState<ServiceListing[] | null>(null);
@@ -12,7 +12,7 @@ export default function ServiceEditPicker() {
     const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
-        getMyServices()
+        listMyServices()
             .then(setServices)
             .catch((error: unknown) => {
                 setLoadError(
@@ -28,7 +28,7 @@ export default function ServiceEditPicker() {
         return services.filter(
             (service) =>
                 service.listingTitle.toLowerCase().includes(normalizedQuery) ||
-                String(service.listingId).includes(normalizedQuery),
+                String(service.serviceId).includes(normalizedQuery),
         );
     }, [query, services]);
 
@@ -95,7 +95,7 @@ export default function ServiceEditPicker() {
                         <div className="mt-6 space-y-3">
                             {visibleServices.map((service) => (
                                 <article
-                                    key={service.listingId}
+                                    key={service.serviceId}
                                     className="flex flex-col gap-4 rounded-button border border-line p-4 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="min-w-0">
@@ -103,14 +103,14 @@ export default function ServiceEditPicker() {
                                             {service.listingTitle}
                                         </h2>
                                         <p className="mt-1 type-xs text-ink-soft">
-                                            Listing ID: {service.listingId} ·{' '}
+                                            Service ID: {service.serviceId} ·{' '}
                                             {service.listingStatus === 'OPEN'
                                                 ? 'Open'
                                                 : 'Closed'}
                                         </p>
                                     </div>
                                     <Link
-                                        href={`/services/${service.listingId}/edit`}
+                                        href={`/services/${service.serviceId}/edit`}
                                         className="shrink-0 rounded-button bg-brand px-4 py-2 text-center type-sm font-semibold text-surface-white transition-colors hover:bg-brand-dark"
                                     >
                                         Open edit page

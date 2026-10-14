@@ -6,7 +6,7 @@
             "code": "BAD_REQUEST",
             "details": [
                 {
-                    "field": "listingId",
+                    "field": "serviceId",
                     "message": "Invalid input: expected number, received NaN"
                 }
             ],

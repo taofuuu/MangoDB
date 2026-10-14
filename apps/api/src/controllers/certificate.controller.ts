@@ -84,7 +84,7 @@ export async function createCertificate(
     }
 }
 
-export async function getMyCertificates(
+export async function listMyCertificates(
     req: Request,
     res: Response,
 ): Promise<void> {
@@ -101,7 +101,7 @@ export async function getMyCertificates(
 // unknown, deleted, or not a provider has none to show, so each is an empty
 // list rather than a 404, the way ?companyId= on GET /services answers. A
 // deleted company's rows are still in the table, hence the deletedAt filter.
-export async function getCompanyCertificates(
+export async function listCompanyCertificates(
     req: Request,
     res: Response,
 ): Promise<void> {

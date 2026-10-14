@@ -19,9 +19,8 @@ import {
     toPostingProposal,
     toProposal,
     toProviderProposal,
-    toProposalStatusCounts,
-    acceptProposal,
-    rejectProposal,
+    acceptProposalTx,
+    rejectPendingProposal,
 } from '../lib/proposal';
 
 export async function createProposal(
@@ -85,7 +84,7 @@ export async function createProposal(
 // history, not discovery (see Company.deletedAt).
 // Only the posting's owner may read them: the list carries every competing
 // Provider's price and terms.
-export async function listPostingProposals(
+export async function listJobPostingProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
@@ -101,29 +100,29 @@ export async function listPostingProposals(
     res.json(proposals.map(toPostingProposal));
 }
 
-export async function acceptProposalHandler(
+export async function acceptProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    const project = await acceptProposal(proposalId, callerId);
+    const project = await acceptProposalTx(proposalId, callerId);
     res.status(201).json(project);
 }
 
-export async function rejectProposalHandler(
+export async function rejectProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    await rejectProposal(proposalId, callerId);
+    await rejectPendingProposal(proposalId, callerId);
     res.status(204).end();
 }
 
 // US2-9. List authenticated provider's proposals with pagination and status filter.
 // Soft-deleted companies are kept: proposals are history, not discovery (conventions §8).
-export async function getMyProposals(
+export async function listMyProposals(
     req: Request,
     res: Response,
 ): Promise<void> {

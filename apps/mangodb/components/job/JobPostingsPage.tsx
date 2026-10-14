@@ -20,7 +20,7 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
-import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
@@ -93,7 +93,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
         const request =
             props.view === 'mine'
-                ? getMyJobPostings(
+                ? listMyJobPostings(
                       page,
                       JOB_PAGE_SIZE,
                       status
@@ -102,7 +102,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, JOB_PAGE_SIZE, {
+                : listJobPostings(page, JOB_PAGE_SIZE, {
                       companyId: companyId!,
                       status: 'OPEN',
                   });
@@ -207,7 +207,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const showPostSuccess = searchParams.get('success') === 'posted';
 
     const closePostSuccess = () => {
-        router.replace('/job/view-own', { scroll: false });
+        router.replace('/job-postings/mine', { scroll: false });
     };
 
     /*
@@ -375,7 +375,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Add Job */}
                         <Button
                             type="button"
-                            onClick={() => router.push('/job/view-own/create')}
+                            onClick={() => router.push('/job-postings/create')}
                             className="flex h-[4.17vh] w-[8.96vw] items-center justify-center gap-[0.42vw] "
                         >
                             <FilePlus size={18} aria-hidden="true" />

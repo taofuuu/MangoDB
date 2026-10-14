@@ -15,7 +15,7 @@ export interface GetJobPostingsOptions {
 }
 
 // GET all job postings
-export function getAllJobPostings(
+export function listJobPostings(
     page: number,
     pageSize: number,
     options?: GetJobPostingsOptions,
@@ -46,7 +46,7 @@ export interface GetMyJobPostingsOptions {
     status?: 'OPEN' | 'CLOSED';
 }
 
-export function getMyJobPostings(
+export function listMyJobPostings(
     page: number,
     pageSize: number,
     options?: GetMyJobPostingsOptions,
@@ -65,7 +65,7 @@ export function getMyJobPostings(
 }
 
 // GET one job posting
-export function getJobPostingDetail(jobPostingId: number): Promise<JobPosting> {
+export function getJobPosting(jobPostingId: number): Promise<JobPosting> {
     const path = `/job-postings/${jobPostingId}`;
     return cachedGet(path, () => apiFetch<JobPosting>(path));
 }

@@ -1,5 +1,5 @@
 {
-    "request": "GET /services/<listing_id>",
+    "request": "GET /services/<service_id>",
     "status": 404,
     "body": {
         "error": {
