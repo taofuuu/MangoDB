@@ -149,8 +149,7 @@ function ProposalPageInner({
     const selectedProposal = proposals.find((p) => p.proposalId === selectedId);
 
     // Handle rejection via API call
-    const handleReject = async (proposalId: number, e?: React.MouseEvent) => {
-        if (e) e.stopPropagation();
+    const handleReject = async (proposalId: number) => {
 
         try {
             await rejectProposal(proposalId);
