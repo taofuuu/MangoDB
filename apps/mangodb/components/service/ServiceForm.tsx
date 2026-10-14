@@ -919,8 +919,9 @@ export default function ServiceForm(props: ServiceFormProps) {
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirm={handleDelete}
-                title="Delete Service"
-                description="This also deletes the service's portfolio items. This action cannot be undone."
+                title="Delete this service listing?"
+                description={`${initialValues?.title || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
+                confirmLabel="Delete listing"
             />
 
             <UnsavedChangesModal
