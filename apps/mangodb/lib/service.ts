@@ -43,6 +43,12 @@ export function updateService(
     });
 }
 
+// US2-4. The API answers 409 when a project is linked to the service, and
+// removes the service's portfolio items along with it.
+export function deleteService(listingId: number): Promise<void> {
+    return apiFetch<void>(`/services/${listingId}`, { method: 'DELETE' });
+}
+
 export function createPortfolioForListing(
     listingId: number,
     body: FormData,

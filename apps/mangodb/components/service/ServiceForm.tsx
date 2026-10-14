@@ -16,6 +16,7 @@ import {
 import {
     createService,
     createPortfolioForListing,
+    deleteService,
     getService,
     updateService,
 } from '@/lib/service';
@@ -29,6 +30,7 @@ import { isProviderAccount } from '@/lib/roles';
 import { getPortfoliosByListing } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
@@ -144,6 +146,7 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [createdListingId, setCreatedListingId] = useState<number | null>(
         null,
     );
@@ -480,6 +483,22 @@ export default function ServiceForm(props: ServiceFormProps) {
             return;
         }
         router.push('/');
+    };
+
+    // US2-4. Thrown errors become the modal's message, so the 409 for a
+    // service with a project gets a sentence the Provider can act on.
+    const handleDelete = async () => {
+        if (listingId === null) return;
+        try {
+            await deleteService(listingId);
+        } catch (err) {
+            throw new Error(
+                describeError(err, {
+                    409: 'This service has a project linked to it, so it cannot be deleted.',
+                }),
+            );
+        }
+        router.back();
     };
 
     const handleCancel = () => {
@@ -840,6 +859,17 @@ export default function ServiceForm(props: ServiceFormProps) {
                     )}
 
                     <div className="mt-8 flex items-center justify-end gap-3">
+                        {isEditMode && (
+                            <Button
+                                type="button"
+                                variant="danger"
+                                onClick={() => setShowDeleteModal(true)}
+                                disabled={isSubmitting}
+                                className="mr-auto px-5 py-2 type-sm font-semibold disabled:opacity-60"
+                            >
+                                Delete Service
+                            </Button>
+                        )}
                         <Button
                             type="button"
                             variant="muted"
@@ -883,6 +913,14 @@ export default function ServiceForm(props: ServiceFormProps) {
                         ? 'Service updated successfully'
                         : 'Service added successfully'
                 }
+            />
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title="Delete Service"
+                description="This also deletes the service's portfolio items. This action cannot be undone."
             />
 
             <UnsavedChangesModal
