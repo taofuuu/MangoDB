@@ -30,6 +30,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     return (
         <>
             <div
+                onClick={onSelect}
                 className={`relative w-full bg-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
                     isSelected
                         ? viewMode === 'rejected' ||

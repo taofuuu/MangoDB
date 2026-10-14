@@ -150,7 +150,6 @@ function ProposalPageInner({
 
     // Handle rejection via API call
     const handleReject = async (proposalId: number) => {
-
         try {
             await rejectProposal(proposalId);
 
