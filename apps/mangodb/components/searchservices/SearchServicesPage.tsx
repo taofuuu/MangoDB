@@ -141,7 +141,7 @@ export function SearchServicesPage({
 
                         <div className="h-[72.63vh] w-[35vw] shrink-0">
                             <ServiceDetailPanel
-                                key={selectedService.listingId}
+                                key={selectedService.serviceId}
                                 service={selectedService}
                                 onClose={closeDetail}
                             />

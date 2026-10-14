@@ -8,18 +8,18 @@ import { isRecordNotFound } from '../lib/prismaErrors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import {
     DEFAULT_LISTING_STATUS,
-    assertListingOwned,
-    listingSelect,
+    assertServiceOwned,
+    serviceSelect,
     resolveTechStack,
     serviceSummarySelect,
     toServiceFilterOptions,
-    toListing,
+    toService,
     toServiceSummary,
 } from '../lib/service';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
-    createListingSchema,
-    listingIdParamSchema,
+    createServiceSchema,
+    serviceIdParamSchema,
     type ServiceListQuery,
     serviceListQuerySchema,
     serviceMineQuerySchema,
@@ -32,7 +32,7 @@ export async function createService(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const data = parseBody(createListingSchema, req.body);
+    const data = parseBody(createServiceSchema, req.body);
     const { companyId } = req.auth!;
 
     const catIds = [...new Set(data.categoryIds)];
@@ -91,10 +91,10 @@ export async function createService(
                   }
                 : {}),
         },
-        select: listingSelect,
+        select: serviceSelect,
     });
 
-    res.status(201).json(toListing(created));
+    res.status(201).json(toService(created));
 }
 
 // US3-1. One word matches the service's title, description, category or tech
@@ -322,29 +322,29 @@ export async function listMyServices(
             ...(status ? { listingStatus: status } : {}),
         },
         orderBy: { createdAt: 'desc' },
-        select: listingSelect,
+        select: serviceSelect,
     });
 
-    res.status(200).json(listings.map(toListing));
+    res.status(200).json(listings.map(toService));
 }
 
-// GET /services/:listingId. Any company can read an OPEN service of an active
+// GET /services/:serviceId. Any company can read an OPEN service of an active
 // company, with the owner's name. The owner reads its own in any status.
 // Everything else is 404: a non-open service is private to its owner, so to
 // anyone else it does not exist (docs/conventions.md, 403 vs 404).
 export async function getService(req: Request, res: Response): Promise<void> {
     const { companyId } = req.auth!;
-    const { listingId } = parseParams(listingIdParamSchema, req.params);
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
 
     // A soft-deleted company's services stay in the table, still OPEN, so the
     // where hides them here, the same as in the search.
     const listing = await prisma.listing.findUnique({
         where: {
-            listingId,
+            listingId: serviceId,
             listingType: 'SERVICE', // Defensive: explicit type filter
             company: { deletedAt: null },
         },
-        select: listingSelect,
+        select: serviceSelect,
     });
 
     if (!listing) {
@@ -358,10 +358,10 @@ export async function getService(req: Request, res: Response): Promise<void> {
         throw ApiError.notFound('Listing not found');
     }
 
-    res.status(200).json(toListing(listing));
+    res.status(200).json(toService(listing));
 }
 
-// DELETE /services/:listingId. Hard delete. listingCategory, the service row
+// DELETE /services/:serviceId. Hard delete. listingCategory, the service row
 // and any proposals on the listing cascade with it (prisma/schema.prisma
 // onDelete: Cascade). A project blocks the delete instead (project ->
 // proposal is onDelete: Restrict), so a service with projects is refused with
@@ -371,17 +371,17 @@ export async function deleteService(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { listingId } = parseParams(listingIdParamSchema, req.params);
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
     const { companyId } = req.auth!;
 
     // Checked before the write, same split as deletePortfolio: 404 for an
     // unknown/non-SERVICE id, 403 for another company's.
-    await assertListingOwned(listingId, companyId);
+    await assertServiceOwned(serviceId, companyId);
 
     // US2-4: a service with at least one project linked to it can't be
     // deleted. A project links to the listing through its proposal.
     const projectCount = await prisma.project.count({
-        where: { proposal: { listingId } },
+        where: { proposal: { listingId: serviceId } },
     });
     if (projectCount > 0) {
         throw ApiError.conflict('A service with projects cannot be deleted');
@@ -393,16 +393,16 @@ export async function deleteService(
     // image URL is read here, before the write, the same way deletePortfolio
     // reads one before deleting a single item.
     const portfolios = await prisma.servicePortfolio.findMany({
-        where: { listingId },
+        where: { listingId: serviceId },
         select: { portfolioImage: true },
     });
 
     try {
         await prisma.listing.delete({
-            where: { listingId, companyId, listingType: 'SERVICE' },
+            where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
         });
     } catch (err) {
-        // Deleted between assertListingOwned and here.
+        // Deleted between assertServiceOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Service listing not found');
         }

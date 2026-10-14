@@ -8,7 +8,7 @@ const nameField = z.string().trim().max(100);
 // How many names one listing or one filter may carry.
 const NAME_LIST_MAX = 20;
 
-export const createListingSchema = z
+export const createServiceSchema = z
     .object({
         listingTitle: z.string().trim().min(1).max(255),
         listingDesc: z.string().trim().min(1),
@@ -32,7 +32,7 @@ export const createListingSchema = z
         },
     );
 
-export type CreateListingInput = z.infer<typeof createListingSchema>;
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
 // US3-2. A repeated param (?category=Web&category=Mobile) arrives as an array,
 // a single one as a plain string. Both become an array here. Blank values are
@@ -111,8 +111,8 @@ export const serviceMineQuerySchema = z.object({
 });
 
 // Path params arrive as strings, so this coerces before the integer check —
-// same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
-// /services/:listingId.
-export const listingIdParamSchema = z.object({
-    listingId: int4Id,
+// same reason portfolioIdParamSchema needs z.coerce. Used by GET and DELETE
+// /services/:serviceId.
+export const serviceIdParamSchema = z.object({
+    serviceId: int4Id,
 });

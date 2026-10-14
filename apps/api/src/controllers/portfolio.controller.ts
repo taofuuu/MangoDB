@@ -45,7 +45,7 @@ export async function createPortfolio(
 
     // 3. AUTHORIZATION & OWNERSHIP CHECK before Upload file
     const service = await prisma.service.findUnique({
-        where: { listingId: data.listingId },
+        where: { listingId: data.serviceId },
         select: { listing: { select: { companyId: true } } },
     });
 
@@ -76,7 +76,7 @@ export async function createPortfolio(
                 portfolioLink: data.portfolioLink,
                 service: {
                     connect: {
-                        listingId: data.listingId,
+                        listingId: data.serviceId,
                     },
                 },
             },
@@ -230,13 +230,13 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
     res.json(toServicePortfolio(portfolio));
 }
 
-// Public: fetching all portfolios, optionally narrowed to one listing or one
-// company (GET /portfolios?listingId=123, ?companyId=4, or both).
+// Public: fetching all portfolios, optionally narrowed to one service or one
+// company (GET /portfolios?serviceId=123, ?companyId=4, or both).
 export async function listPortfolios(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { listingId, companyId } = parseQuery(
+    const { serviceId, companyId } = parseQuery(
         portfolioQuerySchema,
         req.query,
     );
@@ -245,7 +245,7 @@ export async function listPortfolios(
     // the two filters can combine. An empty one matches everything.
     const portfolios = await prisma.servicePortfolio.findMany({
         where: {
-            ...(listingId ? { listingId } : {}),
+            ...(serviceId ? { listingId: serviceId } : {}),
             ...(companyId ? { service: { listing: { companyId } } } : {}),
         },
         select: portfolioSelect,

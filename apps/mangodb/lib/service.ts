@@ -10,10 +10,10 @@ export interface CreateServiceBody {
 }
 
 // Minimal shape we need back from POST /services — the full type is
-// ServiceListing in @mangodb/shared. We only need listingId to attach
+// ServiceListing in @mangodb/shared. We only need serviceId to attach
 // portfolios immediately after.
 export interface CreatedService {
-    listingId: number;
+    serviceId: number;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -34,9 +34,9 @@ export function createService(
 }
 
 export function createPortfolioForListing(
-    listingId: number,
+    serviceId: number,
     body: FormData,
 ): Promise<unknown> {
-    body.append('listingId', String(listingId));
+    body.append('serviceId', String(serviceId));
     return apiFetch('/portfolios', { method: 'POST', body });
 }

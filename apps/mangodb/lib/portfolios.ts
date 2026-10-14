@@ -10,12 +10,12 @@ export function getPortfolios(companyId: number): Promise<ServicePortfolio[]> {
     return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
 }
 
-// Service details need only work samples attached to the selected listing,
+// Service details need only work samples attached to the selected service,
 // not every portfolio owned by its company.
 export function getPortfoliosByListing(
-    listingId: number,
+    serviceId: number,
 ): Promise<ServicePortfolio[]> {
-    const query = new URLSearchParams({ listingId: String(listingId) });
+    const query = new URLSearchParams({ serviceId: String(serviceId) });
 
     return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
 }

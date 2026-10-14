@@ -125,7 +125,7 @@ export function SearchServicesResultsGrid({
             >
                 {items.map((service) => (
                     <SearchServiceCard
-                        key={service.listingId}
+                        key={service.serviceId}
                         service={service}
                         onViewDetail={onViewDetail}
                     />

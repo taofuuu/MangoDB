@@ -35,9 +35,9 @@ serviceRoutes.get(
     requireRole('provider'),
     listMyServices,
 );
-serviceRoutes.get('/:listingId', requireAuth, getService);
+serviceRoutes.get('/:serviceId', requireAuth, getService);
 serviceRoutes.delete(
-    '/:listingId',
+    '/:serviceId',
     requireAuth,
     requireRole('provider'),
     deleteService,

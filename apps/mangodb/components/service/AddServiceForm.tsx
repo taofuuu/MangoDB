@@ -66,7 +66,7 @@ export default function AddServiceForm() {
     const [portfolios, setPortfolios] = useState<PendingPortfolio[]>([]);
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [createdListingId, setCreatedListingId] = useState<number | null>(
+    const [createdServiceId, setCreatedServiceId] = useState<number | null>(
         null,
     );
 
@@ -209,7 +209,7 @@ export default function AddServiceForm() {
         setFormError(null);
 
         // 1. Only validate form fields if service hasn't been created yet
-        if (!createdListingId && !validateForm()) {
+        if (!createdServiceId && !validateForm()) {
             return;
         }
 
@@ -217,10 +217,10 @@ export default function AddServiceForm() {
         const max = maxBudget.trim() !== '' ? Number(maxBudget) : undefined;
 
         setIsSubmitting(true);
-        let listingId = createdListingId;
+        let serviceId = createdServiceId;
 
         // Create base service if it doesn't exist yet
-        if (!listingId) {
+        if (!serviceId) {
             try {
                 const created = await createService({
                     listingTitle: title,
@@ -230,8 +230,8 @@ export default function AddServiceForm() {
                     ...(min !== undefined && { minBudget: min }),
                     ...(max !== undefined && { maxBudget: max }),
                 });
-                listingId = created.listingId;
-                setCreatedListingId(listingId); // Save ID to state
+                serviceId = created.serviceId;
+                setCreatedServiceId(serviceId); // Save ID to state
             } catch (cause) {
                 const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
                 setErrors(fields as ServiceErrors);
@@ -252,7 +252,7 @@ export default function AddServiceForm() {
                 body.append('developmentDate', p.developmentDate);
                 if (p.image) body.append('portfolioImage', p.image);
 
-                await createPortfolioForListing(listingId, body);
+                await createPortfolioForListing(serviceId, body);
             } catch (cause) {
                 const errorMessage = describeError(cause);
                 setFormError(
@@ -578,7 +578,7 @@ export default function AddServiceForm() {
                         >
                             {isSubmitting
                                 ? 'Saving…'
-                                : createdListingId
+                                : createdServiceId
                                   ? 'Retry Portfolio Upload'
                                   : 'Add Service'}
                         </button>

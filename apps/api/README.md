@@ -482,14 +482,14 @@ duplicates that the old composite primary key made impossible.
 
 The two `GET`s are public: a work sample is meant to be seen, and neither
 reads anything the profile does not already show. `GET /portfolios` takes
-`listingId` and `companyId`, both optional and combinable — `companyId`
+`serviceId` and `companyId`, both optional and combinable — `companyId`
 filters through `service -> listing` because the row itself has no owner
 column. Left off, it answers with every row in the table. Ordered by
 `developmentDate` desc, no pagination, and the body is a bare array.
 
 `POST` is `multipart/form-data`, not JSON: the image is the file part
 `portfolioImage` (png/jpeg/webp, 5 MB, see `src/middleware/upload.ts`) and
-the rest are text parts. `listingId` is required and is checked against the
+the rest are text parts. `serviceId` is required and is checked against the
 caller's company _before_ the upload, so a rejected request never leaves a
 file behind; a failed insert afterwards removes the one it just wrote.
 

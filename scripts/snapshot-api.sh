@@ -336,7 +336,7 @@ snap auth-check-availability-taken POST /auth/check-availability \
 echo
 echo "portfolios + certificates"
 snap portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
-LISTING_ID="$(jget 0.listingId)"
+SERVICE_ID="$(jget 0.serviceId)"
 
 if [ -n "$PORTFOLIO_ID" ]; then
     snap portfolios-one GET "/portfolios/$PORTFOLIO_ID"
@@ -485,11 +485,11 @@ if [ "$UPLOADS" = 1 ]; then
 
     echo
     echo "portfolio lifecycle"
-    if [ -n "$LISTING_ID" ]; then
+    if [ -n "$SERVICE_ID" ]; then
         # portfolioImage is the multipart field name, and a wire name like any
         # other — Phase 2 renames it, and only this call would notice.
         snap portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
-            -F "listingId=$LISTING_ID" \
+            -F "serviceId=$SERVICE_ID" \
             -F 'portfolioName=Snapshot Probe portfolio' \
             -F 'portfolioDescription=created by scripts/snapshot-api.sh' \
             -F 'developmentDate=2026-01-15' \
@@ -578,7 +578,7 @@ echo "service delete"
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe delete $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
-DELETE_PROBE_ID="$(jget listingId)"
+DELETE_PROBE_ID="$(jget serviceId)"
 if [ -z "$DELETE_PROBE_ID" ]; then
     echo "could not create the delete probe service:" >&2
     cat "$BODY" >&2
@@ -869,13 +869,13 @@ TECH_STACK_SET=1
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1],\"techStack\":[\"${RUN}-React\",\"${RUN}-Node.js\"]}" >/dev/null
-NEW_SERVICE_ID="$(jget listingId)"
+NEW_SERVICE_ID="$(jget serviceId)"
 if [ -z "$NEW_SERVICE_ID" ]; then
     echo "could not create the probe service:" >&2
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
+SUBS+=(--id "service_id=$NEW_SERVICE_ID")
 
 # Probe C: a Provider that deletes itself. A soft delete leaves its service
 # OPEN, so only the deletedAt filter can keep it out of the results below.
@@ -893,7 +893,7 @@ C_LIVE=1
 api POST /services -H "$(bearer "$TOKEN_C")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
-DELETED_SERVICE_ID="$(jget listingId)"
+DELETED_SERVICE_ID="$(jget serviceId)"
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
 
 # Probe D: a Receiver that posts a job, then deletes itself. A soft delete
@@ -928,7 +928,7 @@ snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d" \
 snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# GET /services/:listingId. Any company reads an open service of an active
+# GET /services/:serviceId. Any company reads an open service of an active
 # company, with the owner's name (companyName).
 snap services-one-open-other-company GET "/services/$NEW_SERVICE_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -999,9 +999,9 @@ snap error-services-mine-draft-status GET "/services/mine?status=DRAFT" \
 snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe reuse service\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000,\"techStack\":[\"${RUN}-react\"]}"
-REUSE_SERVICE_ID="$(jget listingId)"
+REUSE_SERVICE_ID="$(jget serviceId)"
 if [ -n "$REUSE_SERVICE_ID" ]; then
-    SUBS+=(--id "listing_id=$REUSE_SERVICE_ID")
+    SUBS+=(--id "service_id=$REUSE_SERVICE_ID")
     resnap services-create-tech-reuse
 fi
 
@@ -1055,7 +1055,7 @@ probe_service() {
     api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
         -H 'Content-Type: application/json' \
         -d "{\"listingTitle\":\"Snapshot Probe $1 service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",${min}\"maxBudget\":$3,\"categoryIds\":[$4],\"techStack\":[\"$RUN\"]}" >/dev/null
-    jget listingId
+    jget serviceId
 }
 FILTER_WEB_ID="$(probe_service web 10000 50000 1)"
 FILTER_MOBILE_ID="$(probe_service mobile 80000 120000 2)"
@@ -1067,8 +1067,8 @@ if [ -z "$FILTER_WEB_ID" ] || [ -z "$FILTER_MOBILE_ID" ] ||
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
-    --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
+SUBS+=(--id "service_id=$FILTER_WEB_ID" --id "service_id=$FILTER_MOBILE_ID" \
+    --id "service_id=$FILTER_WIDE_ID" --id "service_id=$FILTER_NO_MIN_ID")
 
 # T3.2.2: the UI receives the category catalog and the open-ended tech-stack
 # vocabulary from the API instead of maintaining stale hardcoded copies.

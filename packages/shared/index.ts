@@ -183,7 +183,7 @@ export interface CompanyListResponse {
 // US3-1. One service search result card: the service, with a short profile of
 // the company that offers it (ADR 0001). techStack is this service's own.
 export interface ServiceSummary {
-    listingId: number;
+    serviceId: number;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -264,10 +264,11 @@ export interface IdentityAvailability {
 }
 
 // A service listing as POST /services, GET /services/mine and
-// GET /services/:listingId return it. companyName is the owner's name; null
-// only on an orphaned listing (conventions section 11).
+// GET /services/:serviceId return it. serviceId is the row's listing_id, named
+// for the resource the way JobPosting's jobPostingId is. companyName is the
+// owner's name; null only on an orphaned listing (conventions section 11).
 export interface ServiceListing {
-    listingId: number;
+    serviceId: number;
     companyId: number | null;
     companyName: string | null;
     type: 'SERVICE';
@@ -280,12 +281,12 @@ export interface ServiceListing {
     techStack: string[];
 }
 
-// A work sample on a listing. portfolioId is a surrogate key: the table used
-// to be identified by (listingId, portfolioLink), which left no way to name
+// A work sample on a service. portfolioId is a surrogate key: the table used
+// to be identified by (listing_id, portfolio_link), which left no way to name
 // a row in a URL. The pair is still unique — see @@unique in the schema.
 export interface ServicePortfolio {
     portfolioId: number;
-    listingId: number;
+    serviceId: number;
     portfolioName: string;
     // Nullable: not every work sample has write-up text yet.
     portfolioDescription: string | null;

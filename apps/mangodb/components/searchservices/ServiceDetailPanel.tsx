@@ -53,7 +53,7 @@ export function ServiceDetailPanel({
     useEffect(() => {
         let active = true;
 
-        void getPortfoliosByListing(service.listingId)
+        void getPortfoliosByListing(service.serviceId)
             .then((items) => {
                 if (active) setPortfolios(items);
             })
@@ -64,7 +64,7 @@ export function ServiceDetailPanel({
         return () => {
             active = false;
         };
-    }, [service.listingId]);
+    }, [service.serviceId]);
 
     return (
         <div
