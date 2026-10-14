@@ -1,5 +1,6 @@
 import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
 import { apiFetch, isNotSignedIn } from './api';
+import { clearCacheInEveryTab } from './apiCache';
 
 // Nothing to store: both login endpoints set the session cookie on the
 // response, and the browser carries it from here on. This just reports who
@@ -13,6 +14,12 @@ async function authenticate(
         method: 'POST',
         body: JSON.stringify({ email, password }),
     });
+
+    // The forms move on with router.push('/'), which keeps the cache module
+    // alive. Without this, a second account signing in on the same tab would
+    // be shown the first one's /companies/me and /proposals/mine.
+    // Every tab, not just this one: they all share the new session cookie.
+    clearCacheInEveryTab();
 
     return company;
 }
@@ -58,6 +65,11 @@ export async function logout(): Promise<void> {
 // of the page's life.
 function replaceLocation(url: string): void {
     if (typeof window === 'undefined') return;
+
+    // The reload below clears this tab. Every way a session ends — logout,
+    // account deletion, an expired session — comes through here, so this is
+    // the one place that tells the other tabs too.
+    clearCacheInEveryTab();
 
     window.addEventListener(
         'pageshow',

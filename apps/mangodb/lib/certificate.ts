@@ -1,5 +1,6 @@
 import type { Certificate } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
+import { cachedGet, invalidateAfter } from '@/lib/apiCache';
 
 // Every certificate request in one place, so a path or a method is written
 // once. Three of these four used to be `apiFetch` called inline from a form,
@@ -10,7 +11,10 @@ import { apiFetch } from '@/lib/api';
 // API works that out from the session, so none of them takes an owner id.
 
 export function getCertificates(): Promise<Certificate[]> {
-    return apiFetch<Certificate[]>('/certificates/mine', { method: 'GET' });
+    const path = '/certificates/mine';
+    return cachedGet(path, () =>
+        apiFetch<Certificate[]>(path, { method: 'GET' }),
+    );
 }
 
 // The one read of someone else's: another company's certificates, for its
@@ -27,21 +31,30 @@ export function getCompanyCertificates(
 // multipart. The file part is `certImage`; see docs/conventions.md section 1 —
 // a multipart field name is a wire name like any other.
 export function createCertificate(body: FormData): Promise<Certificate> {
-    return apiFetch<Certificate>('/certificates', { method: 'POST', body });
+    return invalidateAfter(
+        apiFetch<Certificate>('/certificates', { method: 'POST', body }),
+        '/certificates',
+    );
 }
 
 export function updateCertificate(
     certificateId: number,
     body: FormData,
 ): Promise<Certificate> {
-    return apiFetch<Certificate>(`/certificates/${certificateId}`, {
-        method: 'PATCH',
-        body,
-    });
+    return invalidateAfter(
+        apiFetch<Certificate>(`/certificates/${certificateId}`, {
+            method: 'PATCH',
+            body,
+        }),
+        '/certificates',
+    );
 }
 
 export function deleteCertificate(certificateId: number): Promise<void> {
-    return apiFetch<void>(`/certificates/${certificateId}`, {
-        method: 'DELETE',
-    });
+    return invalidateAfter(
+        apiFetch<void>(`/certificates/${certificateId}`, {
+            method: 'DELETE',
+        }),
+        '/certificates',
+    );
 }
