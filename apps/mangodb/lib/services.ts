@@ -17,6 +17,7 @@ import type {
     UpdateServiceRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
+import { cachedGet, invalidateAfter } from './apiCache';
 
 export type {
     Pagination,
@@ -38,10 +39,15 @@ export interface CreateServiceBody {
 export function createService(
     body: CreateServiceBody,
 ): Promise<ServiceListing> {
-    return apiFetch<ServiceListing>('/services', {
-        method: 'POST',
-        body: JSON.stringify(body),
-    });
+    // '/services' covers search pages and filter-options, which can gain a new
+    // tech stack name from this listing.
+    return invalidateAfter(
+        apiFetch<ServiceListing>('/services', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
 }
 
 export function getService(serviceId: number): Promise<ServiceListing> {
@@ -58,10 +64,13 @@ export function updateService(
     serviceId: number,
     body: UpdateServiceRequest,
 ): Promise<ServiceListing> {
-    return apiFetch<ServiceListing>(`/services/${serviceId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(body),
-    });
+    return invalidateAfter(
+        apiFetch<ServiceListing>(`/services/${serviceId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
 }
 
 // What the T3.2 sidebar edits.
@@ -113,8 +122,17 @@ export type SearchServicesParams = {
 // render controls that never match the database.
 // ---------------------------------------------------------------------------
 
+const FILTER_OPTIONS_MAX_AGE_MS = 5 * 60_000;
+
 export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
-    return apiFetch<ServiceFilterOptions>('/services/filter-options');
+    // Categories and tech stack names change rarely, so keep them longer than
+    // the default. createService still clears them at once.
+    const path = '/services/filter-options';
+    return cachedGet(
+        path,
+        () => apiFetch<ServiceFilterOptions>(path),
+        FILTER_OPTIONS_MAX_AGE_MS,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -159,5 +177,6 @@ export async function listServices(
     qs.set('page', String(page));
     qs.set('pageSize', String(pageSize)); // API max is 50
 
-    return apiFetch<ServiceListResponse>(`/services?${qs.toString()}`);
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
 }

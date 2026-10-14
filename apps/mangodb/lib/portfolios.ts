@@ -1,5 +1,6 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { apiFetch } from './api';
+import { cachedGet, invalidateAfter } from './apiCache';
 
 // The endpoint is public and answers with every company's rows when asked for
 // nothing, so the caller always says whose. A portfolio row has no owner
@@ -7,7 +8,8 @@ import { apiFetch } from './api';
 export function listPortfolios(companyId: number): Promise<ServicePortfolio[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });
 
-    return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
+    const path = `/portfolios?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));
 }
 
 // Service details need only work samples attached to the selected service,
@@ -17,7 +19,8 @@ export function listServicePortfolios(
 ): Promise<ServicePortfolio[]> {
     const query = new URLSearchParams({ serviceId: String(serviceId) });
 
-    return apiFetch<ServicePortfolio[]>(`/portfolios?${query.toString()}`);
+    const path = `/portfolios?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));
 }
 
 // multipart: the image is a file part, so this takes the FormData as built
@@ -27,19 +30,28 @@ export function createPortfolio(
     body: FormData,
 ): Promise<ServicePortfolio> {
     body.append('serviceId', String(serviceId));
-    return apiFetch<ServicePortfolio>('/portfolios', { method: 'POST', body });
+    return invalidateAfter(
+        apiFetch<ServicePortfolio>('/portfolios', { method: 'POST', body }),
+        '/portfolios',
+    );
 }
 
 export function deletePortfolio(portfolioId: number): Promise<void> {
-    return apiFetch<void>(`/portfolios/${portfolioId}`, { method: 'DELETE' });
+    return invalidateAfter(
+        apiFetch<void>(`/portfolios/${portfolioId}`, { method: 'DELETE' }),
+        '/portfolios',
+    );
 }
 
 export function updatePortfolio(
     portfolioId: number,
     body: FormData,
 ): Promise<ServicePortfolio> {
-    return apiFetch<ServicePortfolio>(`/portfolios/${portfolioId}`, {
-        method: 'PATCH',
-        body,
-    });
+    return invalidateAfter(
+        apiFetch<ServicePortfolio>(`/portfolios/${portfolioId}`, {
+            method: 'PATCH',
+            body,
+        }),
+        '/portfolios',
+    );
 }
