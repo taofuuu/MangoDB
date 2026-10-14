@@ -378,7 +378,7 @@ function ProposalPageInner({
 }
 
 export default function ProposalPage(props: {
-    listingId?: number;
+    jobPostingId?: number;
     listingTitle?: string;
 }) {
     return (
@@ -392,7 +392,7 @@ export default function ProposalPage(props: {
             }
         >
             <ProposalPageInner
-                initialJobPostingId={props.listingId}
+                initialJobPostingId={props.jobPostingId}
                 initialJobTitle={props.listingTitle}
             />
         </Suspense>
