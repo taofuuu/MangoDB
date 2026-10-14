@@ -12,7 +12,7 @@ import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import { getMyProposals } from '@/lib/proposals';
+import { listMyProposals } from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import MyProposalCard from './MyProposalCard';
 import MyProposalDetail from './MyProposalDetail';
@@ -43,7 +43,7 @@ function EmptyState() {
                 Search for jobs to offer your proposal and it will show up here.
             </p>
             <Link
-                href="/job/view-all"
+                href="/job-postings"
                 className="mt-4 rounded-button bg-brand px-6 py-2 type-xs text-surface-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
                 Search for Jobs
@@ -69,7 +69,7 @@ export default function MyProposalsPage() {
         setIsLoading(true);
         setError(null);
 
-        getMyProposals(page, PROPOSAL_PAGE_SIZE, { status })
+        listMyProposals(page, PROPOSAL_PAGE_SIZE, { status })
             .then((data) => {
                 if (cancelled) return;
                 setResult(data);
