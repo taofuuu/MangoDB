@@ -8,7 +8,7 @@ import {
     acceptProposal,
     rejectProposal,
 } from '@/lib/proposals';
-import { getJobPostingDetail } from '@/lib/job';
+import { getJobPosting } from '@/lib/jobPostings';
 import { StatsBadges } from '@/components/proposals/view/StatsBadges';
 import { ProposalCard } from '@/components/proposals/view/ProposalCard';
 import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
@@ -84,7 +84,7 @@ function ProposalPageInner({
         if (!effectiveJobId) return;
 
         if (!initialJobTitle && !searchParams.get('title')) {
-            getJobPostingDetail(effectiveJobId)
+            getJobPosting(effectiveJobId)
                 .then((job: JobPosting) => {
                     if (job?.listingTitle) {
                         setListingTitle(job.listingTitle);
