@@ -18,12 +18,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import JobDetailModal from './JobDetailModal';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import { describeError } from '@/lib/api';
+import { closeJobPosting } from '@/lib/job';
 
 interface JobBoxProps {
     job: JobPosting;
     isMyJobs: boolean;
     callFromSearchPage: boolean;
     onViewDetail: (job: JobPosting) => void;
+    // Called after the job is closed, so the list can reload.
+    onClosed?: () => void;
 }
 
 export default function JobBox({
@@ -31,8 +36,24 @@ export default function JobBox({
     isMyJobs,
     callFromSearchPage,
     onViewDetail,
+    onClosed,
 }: JobBoxProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+
+    // US2-14. A thrown error becomes the modal's message.
+    const confirmClose = async () => {
+        try {
+            await closeJobPosting(job.jobPostingId);
+        } catch (err) {
+            throw new Error(
+                describeError(err, {
+                    409: 'This job posting is already closed.',
+                }),
+            );
+        }
+        onClosed?.();
+    };
 
     /*
      * These are only needed for My Jobs.
@@ -134,6 +155,10 @@ export default function JobBox({
 
                                             <button
                                                 type="button"
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    setIsCloseModalOpen(true);
+                                                }}
                                                 className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                             >
                                                 <FileX size={15} />
@@ -256,6 +281,15 @@ export default function JobBox({
                     onClose={closeDetail}
                 />
             )}
+            <DeleteConfirmationModal
+                isOpen={isCloseModalOpen}
+                onClose={() => setIsCloseModalOpen(false)}
+                onConfirm={confirmClose}
+                title="Close Job Posting"
+                description="It stops receiving proposals, and its pending proposals are rejected. A closed job posting cannot be reopened."
+                confirmLabel="Yes, Close"
+                pendingLabel="Closing..."
+            />
         </>
     );
 }

@@ -512,6 +512,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                 onViewDetail={
                                                     openCompanyJobDetail
                                                 }
+                                                onClosed={retryList}
                                             />
                                         ))}
                                     </div>
