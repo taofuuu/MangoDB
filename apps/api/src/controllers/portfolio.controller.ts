@@ -232,7 +232,7 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
 
 // Public: fetching all portfolios, optionally narrowed to one listing or one
 // company (GET /portfolios?listingId=123, ?companyId=4, or both).
-export async function getAllPortfolios(
+export async function listPortfolios(
     req: Request,
     res: Response,
 ): Promise<void> {

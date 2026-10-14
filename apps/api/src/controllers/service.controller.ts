@@ -28,7 +28,7 @@ import {
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
 // atomically in one nested write.
-export async function createListing(
+export async function createService(
     req: Request,
     res: Response,
 ): Promise<void> {
@@ -274,7 +274,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
 // T3.2.2. Categories are the fixed catalog. Tech stacks are open-ended, so
 // only the database can provide an accurate list; include names attached to
 // services that discovery can actually return.
-export async function listServiceFilterOptions(
+export async function getServiceFilterOptions(
     _req: Request,
     res: Response,
 ): Promise<void> {
@@ -305,7 +305,10 @@ export async function listServiceFilterOptions(
     res.json(toServiceFilterOptions(categories, techStack));
 }
 
-export async function getMine(req: Request, res: Response): Promise<void> {
+export async function listMyServices(
+    req: Request,
+    res: Response,
+): Promise<void> {
     if (!req.auth?.companyId) {
         throw ApiError.unauthorized('Company ID is required');
     }
@@ -364,7 +367,7 @@ export async function getService(req: Request, res: Response): Promise<void> {
 // proposal is onDelete: Restrict), so a service with projects is refused with
 // 409 before the write (US2-4). Unlike portfolio there is no stored image to
 // remove.
-export async function deleteListing(
+export async function deleteService(
     req: Request,
     res: Response,
 ): Promise<void> {
