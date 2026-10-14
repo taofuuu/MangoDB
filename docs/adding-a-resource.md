@@ -187,7 +187,12 @@ export async function createService(
 ```ts
 export const serviceRoutes = Router();
 
-serviceRoutes.get('/mine', requireAuth, requireRole('provider'), getMyServices);
+serviceRoutes.get(
+    '/mine',
+    requireAuth,
+    requireRole('provider'),
+    listMyServices,
+);
 serviceRoutes.post('/', requireAuth, requireRole('provider'), createService);
 serviceRoutes.patch(
     '/:serviceId',
