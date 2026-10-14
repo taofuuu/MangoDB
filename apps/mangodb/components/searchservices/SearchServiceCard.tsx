@@ -1,7 +1,4 @@
-import {
-    formatServiceBudgetRange,
-    type ServiceSummary,
-} from '@/lib/searchServices';
+import { formatServiceBudgetRange, type ServiceSummary } from '@/lib/services';
 import { Tag, Wallet } from 'lucide-react';
 
 function initials(name: string): string {

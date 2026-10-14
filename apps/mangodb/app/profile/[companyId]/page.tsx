@@ -10,7 +10,7 @@ import {
     describeError,
     isNotSignedIn,
 } from '@/lib/api';
-import { getPublicCompanyProfile } from '@/lib/companies';
+import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
 import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
@@ -60,7 +60,7 @@ export default function CompanyProfilePage() {
         if (companyId === null) return;
 
         let cancelled = false;
-        getPublicCompanyProfile(companyId)
+        getCompanyProfile(companyId)
             .then((profile) => {
                 if (!cancelled) setResult({ companyId, profile });
             })

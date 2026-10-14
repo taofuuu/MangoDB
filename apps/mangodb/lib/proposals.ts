@@ -58,7 +58,7 @@ export interface GetMyProposalsOptions {
 }
 
 // US2-9. Lists proposals submitted by the signed-in Provider.
-export function getMyProposals(
+export function listMyProposals(
     page: number = 1,
     pageSize: number = PROPOSAL_PAGE_SIZE,
     options?: GetMyProposalsOptions,

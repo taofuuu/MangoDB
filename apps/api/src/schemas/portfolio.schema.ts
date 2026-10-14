@@ -9,8 +9,8 @@ export const portfolioIdParamSchema = z.object({
 
 // One definition per editable column, sizes matching prisma/schema.prisma —
 // same reasoning as companyFields in company.schema.ts. portfolioId and
-// listingId are not here: portfolioId names the row, and moving a sample to
-// a different listing is a different operation than editing it in place,
+// serviceId are not here: portfolioId names the row, and moving a sample to
+// a different service is a different operation than editing it in place,
 // needing a fresh ownership check against the destination.
 export const portfolioFields = {
     portfolioName: z.string().trim().min(1).max(255),
@@ -30,10 +30,10 @@ export const portfolioFields = {
 // one column allowed to actually be empty (schema.prisma: String?) — the
 // other four are required whenever they're present in the body at all.
 
-// Schema for CREATE (POST /portfolios)
-// with service_id (or listingId) combine with portfolioFields
+// Schema for CREATE (POST /portfolios): the service it belongs to, plus
+// portfolioFields.
 export const createPortfolioSchema = z.object({
-    listingId: int4Id,
+    serviceId: int4Id,
     portfolioName: portfolioFields.portfolioName,
     portfolioDescription: portfolioFields.portfolioDescription
         .optional()
@@ -59,7 +59,7 @@ export const updatePortfolioSchema = z
 export const PORTFOLIO_UNIQUE_FIELDS = ['portfolioLink'] as const;
 
 export const portfolioQuerySchema = z.object({
-    listingId: int4Id.optional(),
+    serviceId: int4Id.optional(),
     // No owner column on the row: the company is three hops away, so this
     // filters through service -> listing, the chain assertPortfolioOwned walks.
     companyId: int4Id.optional(),

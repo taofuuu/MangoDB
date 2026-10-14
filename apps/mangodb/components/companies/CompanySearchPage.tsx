@@ -11,7 +11,7 @@ import { Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import { searchCompanies } from '@/lib/companies';
+import { listCompanies } from '@/lib/companies';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
@@ -50,7 +50,7 @@ export default function CompanySearchPage() {
         setIsLoading(true);
         setError(null);
 
-        searchCompanies(
+        listCompanies(
             page,
             COMPANY_PAGE_SIZE,
             debouncedSearch || undefined,

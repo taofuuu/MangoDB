@@ -5,22 +5,35 @@ import { cachedGet, invalidateAfter } from './apiCache';
 // The endpoint is public and answers with every company's rows when asked for
 // nothing, so the caller always says whose. A portfolio row has no owner
 // column — the API filters through service -> listing for us.
-export function getPortfolios(companyId: number): Promise<ServicePortfolio[]> {
+export function listPortfolios(companyId: number): Promise<ServicePortfolio[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });
 
     const path = `/portfolios?${query.toString()}`;
     return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));
 }
 
-// Service details need only work samples attached to the selected listing,
+// Service details need only work samples attached to the selected service,
 // not every portfolio owned by its company.
-export function getPortfoliosByListing(
-    listingId: number,
+export function listServicePortfolios(
+    serviceId: number,
 ): Promise<ServicePortfolio[]> {
-    const query = new URLSearchParams({ listingId: String(listingId) });
+    const query = new URLSearchParams({ serviceId: String(serviceId) });
 
     const path = `/portfolios?${query.toString()}`;
     return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));
+}
+
+// multipart: the image is a file part, so this takes the FormData as built
+// and only adds which service the sample belongs to.
+export function createPortfolio(
+    serviceId: number,
+    body: FormData,
+): Promise<ServicePortfolio> {
+    body.append('serviceId', String(serviceId));
+    return invalidateAfter(
+        apiFetch<ServicePortfolio>('/portfolios', { method: 'POST', body }),
+        '/portfolios',
+    );
 }
 
 export function deletePortfolio(portfolioId: number): Promise<void> {

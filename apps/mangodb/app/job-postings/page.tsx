@@ -8,7 +8,7 @@ import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { getAllJobPostings } from '@/lib/job';
+import { listJobPostings } from '@/lib/jobPostings';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -86,7 +86,7 @@ export default function OtherJobPage() {
         setIsLoading(true);
         setError(null);
 
-        getAllJobPostings(page, JOB_PAGE_SIZE, {
+        listJobPostings(page, JOB_PAGE_SIZE, {
             status: 'OPEN',
             q: debouncedSearch,
         })

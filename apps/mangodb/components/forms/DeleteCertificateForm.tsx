@@ -4,7 +4,7 @@ import DeleteConfirmationModal, {
     type DeleteModalProps,
 } from '@/components/ui/DeleteConfirmationModal';
 import type { CertificateData } from './EditCertificateForm';
-import { deleteCertificate } from '@/lib/certificate';
+import { deleteCertificate } from '@/lib/certificates';
 
 export type DeleteCertificateFormProps = Omit<DeleteModalProps, 'onConfirm'> & {
     certificate?: CertificateData | null | undefined;

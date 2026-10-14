@@ -12,10 +12,10 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
-                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe mobile service <run>",
                 "maxBudget": 120000,
                 "minBudget": 80000,
+                "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"
                 ]

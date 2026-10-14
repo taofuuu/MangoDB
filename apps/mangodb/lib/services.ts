@@ -1,8 +1,6 @@
-// Data layer for the US3-1 / US3-2 "search services" screen. Calls the real
-// GET /services (apps/api/src/controllers/service.controller.ts).
-//
-// Named searchServices, not services/service: "service" already means
-// something else in this codebase (creating/owning a service listing).
+// Everything the web asks /services for: creating and editing one (US2-1,
+// US2-3) and the search screen's list and filter options (US3-1 / US3-2).
+// Backend: apps/api/src/controllers/service.controller.ts.
 
 // ---------------------------------------------------------------------------
 // Wire types come from @mangodb/shared. techStack is the SERVICE's own stack
@@ -13,11 +11,13 @@ import type {
     PaginationMeta as Pagination,
     SearchServicesOrder,
     ServiceFilterOptions,
+    ServiceListing,
     ServiceListResponse,
     ServiceSummary,
+    UpdateServiceRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
-import { cachedGet } from './apiCache';
+import { cachedGet, invalidateAfter } from './apiCache';
 
 export type {
     Pagination,
@@ -26,6 +26,52 @@ export type {
     ServiceListResponse,
     ServiceSummary,
 };
+
+export interface CreateServiceBody {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number;
+    maxBudget?: number;
+    categoryIds?: number[];
+    techStack?: string[];
+}
+
+export function createService(
+    body: CreateServiceBody,
+): Promise<ServiceListing> {
+    // '/services' covers search pages and filter-options, which can gain a new
+    // tech stack name from this listing.
+    return invalidateAfter(
+        apiFetch<ServiceListing>('/services', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
+}
+
+export function getService(serviceId: number): Promise<ServiceListing> {
+    return apiFetch<ServiceListing>(`/services/${serviceId}`);
+}
+
+export function listMyServices(): Promise<ServiceListing[]> {
+    return apiFetch<ServiceListing[]>('/services/mine');
+}
+
+// US2-3. The backend owns validation and authorization; this helper keeps the
+// endpoint contract out of the form so create and edit share one data path.
+export function updateService(
+    serviceId: number,
+    body: UpdateServiceRequest,
+): Promise<ServiceListing> {
+    return invalidateAfter(
+        apiFetch<ServiceListing>(`/services/${serviceId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+        }),
+        '/services',
+    );
+}
 
 // What the T3.2 sidebar edits.
 export type SearchServicesFilters = {
@@ -78,7 +124,7 @@ export type SearchServicesParams = {
 
 const FILTER_OPTIONS_MAX_AGE_MS = 5 * 60_000;
 
-export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterOptions> {
+export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
     // Categories and tech stack names change rarely, so keep them longer than
     // the default. createService still clears them at once.
     const path = '/services/filter-options';
@@ -100,7 +146,7 @@ export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterO
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
 
-export async function searchServices(
+export async function listServices(
     params: SearchServicesParams,
 ): Promise<ServiceListResponse> {
     const { q, orderBy, page, pageSize, filters } = params;

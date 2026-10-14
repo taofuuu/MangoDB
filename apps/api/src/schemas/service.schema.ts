@@ -22,7 +22,7 @@ const serviceFields = {
     techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX),
 } as const;
 
-export const createListingSchema = z
+export const createServiceSchema = z
     .object({
         listingTitle: serviceFields.listingTitle,
         listingDesc: serviceFields.listingDesc,
@@ -39,7 +39,7 @@ export const createListingSchema = z
 // PATCH sends only changed fields. Category and tech arrays replace their
 // whole existing sets; [] deliberately clears one. The controller validates
 // a one-sided budget change against the stored other side.
-export const updateListingSchema = z
+export const updateServiceSchema = z
     .strictObject({
         ...serviceFields,
         minBudget: serviceFields.minBudget.nullable(),
@@ -50,7 +50,7 @@ export const updateListingSchema = z
         message: 'Provide at least one field to update',
     });
 
-export type CreateListingInput = z.infer<typeof createListingSchema>;
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
 // US3-2. A repeated param (?category=Web&category=Mobile) arrives as an array,
 // a single one as a plain string. Both become an array here. Blank values are
@@ -130,7 +130,7 @@ export const serviceMineQuerySchema = z.object({
 
 // Path params arrive as strings, so this coerces before the integer check —
 // same reason portfolioIdParamSchema needs z.coerce. Shared by the service
-// detail, update, and delete endpoints.
-export const listingIdParamSchema = z.object({
-    listingId: int4Id,
+// detail, update, and delete endpoints (/services/:serviceId).
+export const serviceIdParamSchema = z.object({
+    serviceId: int4Id,
 });

@@ -13,12 +13,7 @@ import {
     validateServiceTechStack,
     validateServiceBudgets,
 } from '@/lib/validation';
-import {
-    createService,
-    createPortfolioForListing,
-    getService,
-    updateService,
-} from '@/lib/service';
+import { createService, getService, updateService } from '@/lib/services';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
@@ -26,7 +21,7 @@ import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
-import { getPortfoliosByListing } from '@/lib/portfolios';
+import { createPortfolio, listServicePortfolios } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
 import { redirectToUnauthorized } from '@/lib/session';
@@ -56,7 +51,7 @@ const PREDEFINED_CATEGORIES = [
 ] as const;
 
 type ServiceFormProps =
-    { mode: 'create' } | { mode: 'edit'; listingId: number };
+    { mode: 'create' } | { mode: 'edit'; serviceId: number };
 
 type ServiceSnapshot = {
     title: string;
@@ -117,7 +112,7 @@ function changedServiceFields(
 export default function ServiceForm(props: ServiceFormProps) {
     const router = useRouter();
     const isEditMode = props.mode === 'edit';
-    const listingId = props.mode === 'edit' ? props.listingId : null;
+    const serviceId = props.mode === 'edit' ? props.serviceId : null;
 
     // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -144,7 +139,7 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
-    const [createdListingId, setCreatedListingId] = useState<number | null>(
+    const [createdServiceId, setCreatedServiceId] = useState<number | null>(
         null,
     );
     const [initialValues, setInitialValues] = useState<ServiceSnapshot | null>(
@@ -169,14 +164,14 @@ export default function ServiceForm(props: ServiceFormProps) {
                     return;
                 }
 
-                if (listingId === null) {
+                if (serviceId === null) {
                     setIsAuthorized(true);
                     return;
                 }
 
                 const [service, existingPortfolios] = await Promise.all([
-                    getService(listingId),
-                    getPortfoliosByListing(listingId),
+                    getService(serviceId),
+                    listServicePortfolios(serviceId),
                 ]);
 
                 if (cancelled) return;
@@ -229,7 +224,7 @@ export default function ServiceForm(props: ServiceFormProps) {
         return () => {
             cancelled = true;
         };
-    }, [listingId]);
+    }, [serviceId]);
 
     const currentSnapshot = serializeService({
         title,
@@ -379,7 +374,7 @@ export default function ServiceForm(props: ServiceFormProps) {
         const max = maxBudget.trim() !== '' ? Number(maxBudget) : undefined;
 
         setIsSubmitting(true);
-        let targetListingId = listingId ?? createdListingId;
+        let targetServiceId = serviceId ?? createdServiceId;
 
         try {
             const commonBody = {
@@ -389,7 +384,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                 techStack: selectedTechStack,
             };
 
-            if (isEditMode && targetListingId && initialValues) {
+            if (isEditMode && targetServiceId && initialValues) {
                 const changedFields = changedServiceFields(
                     {
                         title,
@@ -403,16 +398,16 @@ export default function ServiceForm(props: ServiceFormProps) {
                 );
 
                 if (Object.keys(changedFields).length > 0) {
-                    await updateService(targetListingId, changedFields);
+                    await updateService(targetServiceId, changedFields);
                 }
-            } else if (!targetListingId) {
+            } else if (!targetServiceId) {
                 const created = await createService({
                     ...commonBody,
                     ...(min !== undefined && { minBudget: min }),
                     ...(max !== undefined && { maxBudget: max }),
                 });
-                targetListingId = created.listingId;
-                setCreatedListingId(targetListingId);
+                targetServiceId = created.serviceId;
+                setCreatedServiceId(targetServiceId);
             }
         } catch (cause) {
             const { fields, message } = toFormErrors(cause, SERVICE_FIELDS);
@@ -422,7 +417,7 @@ export default function ServiceForm(props: ServiceFormProps) {
             return;
         }
 
-        if (!targetListingId) {
+        if (!targetServiceId) {
             setFormError('The service could not be saved. Please try again.');
             setIsSubmitting(false);
             return;
@@ -441,10 +436,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                     body.append('portfolioImage', portfolio.image);
                 }
 
-                const saved = await createPortfolioForListing(
-                    targetListingId,
-                    body,
-                );
+                const saved = await createPortfolio(targetServiceId, body);
                 if (isEditMode) {
                     setSavedPortfolios((current) => [...current, saved]);
                 }
@@ -859,7 +851,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                         >
                             {isSubmitting
                                 ? 'Saving…'
-                                : createdListingId
+                                : createdServiceId
                                   ? 'Retry Portfolio Upload'
                                   : isEditMode
                                     ? 'Save Changes'

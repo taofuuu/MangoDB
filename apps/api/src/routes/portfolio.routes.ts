@@ -6,7 +6,7 @@ import {
     deletePortfolio,
     updatePortfolio,
     getPortfolio,
-    getAllPortfolios,
+    listPortfolios,
 } from '../controllers/portfolio.controller';
 
 // Mounted at /portfolios. portfolioId names the row on its own, so the
@@ -17,7 +17,7 @@ export const portfolioRoutes = Router();
 // everything under /admin is admin-only, but a public GET of a listing's
 // portfolio belongs here later and must not inherit requireRole('provider').
 
-portfolioRoutes.get('/', getAllPortfolios);
+portfolioRoutes.get('/', listPortfolios);
 portfolioRoutes.get('/:portfolioId', getPortfolio);
 
 portfolioRoutes.post(
