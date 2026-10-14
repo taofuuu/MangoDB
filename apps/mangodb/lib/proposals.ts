@@ -48,3 +48,16 @@ export function getMyProposals(
     const path = `/proposals/mine?${query.toString()}`;
     return cachedGet(path, () => apiFetch<ProposalListResponse>(path));
 }
+
+// The "dd/mm/yyyy hh:mm" stamp on a proposal card, in the viewer's local time.
+// Built by hand rather than with toLocaleString, whose order and separators
+// change with the browser's locale.
+export function formatProposalDateTime(iso: string): string {
+    const date = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return (
+        `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ` +
+        `${pad(date.getHours())}:${pad(date.getMinutes())}`
+    );
+}

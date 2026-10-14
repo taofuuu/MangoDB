@@ -19,6 +19,7 @@ import {
     toPostingProposal,
     toProposal,
     toProviderProposal,
+    toProposalStatusCounts,
     acceptProposal,
     rejectProposal,
 } from '../lib/proposal';
@@ -137,7 +138,17 @@ export async function getMyProposals(
         ...(status ? { proposalStatus: status } : {}),
     };
 
-    const [totalItems, rows] = await prisma.$transaction([
+    // The counts use only senderId, not the status filter: they are the
+    // page's summary chips and must not shrink when the list is filtered.
+    // Built outside the array below: inside it, groupBy loses its result type.
+    const countByStatus = prisma.proposal.groupBy({
+        by: ['proposalStatus'],
+        where: { senderId: callerId },
+        orderBy: { proposalStatus: 'asc' },
+        _count: { _all: true },
+    });
+
+    const [totalItems, rows, statusGroups] = await prisma.$transaction([
         prisma.proposal.count({ where }),
         prisma.proposal.findMany({
             where,
@@ -146,6 +157,7 @@ export async function getMyProposals(
             orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
             select: providerProposalSelect,
         }),
+        countByStatus,
     ]);
 
     const body: ProposalListResponse = {
@@ -156,6 +168,7 @@ export async function getMyProposals(
             totalItems,
             totalPages: Math.ceil(totalItems / pageSize),
         },
+        counts: toProposalStatusCounts(statusGroups),
     };
 
     res.json(body);

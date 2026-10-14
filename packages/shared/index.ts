@@ -393,15 +393,28 @@ export interface Proposal {
 }
 
 // US2-9. One row of GET /proposals/mine: the proposal, with the job posting's
-// title so the list needs no extra request per row.
+// title and the company that posted it, so the list needs no extra request
+// per row. receiver is null when the listing has no owner row.
 export interface ProviderProposal extends Proposal {
     listingTitle: string;
+    receiver: CompanyBrief | null;
+}
+
+// US2-9. How many proposals the Provider has sent, by status. Ignores the
+// ?status= filter, so the page's Total / Accepted / Rejected chips stay put
+// while the user filters by them.
+export interface ProposalStatusCounts {
+    total: number;
+    pending: number;
+    accepted: number;
+    rejected: number;
 }
 
 // US2-9. Paginated proposals response for provider tracking.
 export interface ProposalListResponse {
     items: ProviderProposal[];
     pagination: PaginationMeta;
+    counts: ProposalStatusCounts;
 }
 
 // A company in one line: enough to show who it is beside something it sent
