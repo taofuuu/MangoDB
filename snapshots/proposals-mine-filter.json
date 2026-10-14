@@ -12,13 +12,34 @@
                 "proposalId": "<proposal_id>",
                 "proposalStatus": "PENDING",
                 "proposalTerms": "Full-stack development in 2 months with agile delivery.",
-                "providerId": 142
+                "providerId": 142,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                }
+            },
+            {
+                "createdAt": "<timestamp>",
+                "duration": 1.5,
+                "jobPostingId": 405,
+                "listingTitle": "[demo] Sales dashboard and reports",
+                "proposalBudget": 80000,
+                "proposalId": 138,
+                "proposalStatus": "PENDING",
+                "proposalTerms": "[demo] Proposal for \"Sales dashboard and reports\".\n\nPhase 1: requirements and design (2 weeks).\nPhase 2: build and weekly demos.\nPhase 3: testing, deployment and handover.\n\nPayment: 30% at start, 40% at mid-point, 30% on handover. Includes 90 days of bug fixes.",
+                "providerId": 142,
+                "receiver": {
+                    "companyId": 6,
+                    "companyName": "RoboTech Industries",
+                    "companyPhoto": null
+                }
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 6,
-            "totalItems": 1,
+            "totalItems": 2,
             "totalPages": 1
         }
     }

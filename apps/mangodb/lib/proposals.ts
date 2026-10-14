@@ -61,3 +61,34 @@ export function formatProposalDateTime(iso: string): string {
         `${pad(date.getHours())}:${pad(date.getMinutes())}`
     );
 }
+
+// US2-9. How many proposals the Provider has sent, by status: the numbers on
+// the page's chips. They must not change when the list is filtered.
+export interface ProposalStatusCounts {
+    total: number;
+    pending: number;
+    accepted: number;
+    rejected: number;
+}
+
+// The list endpoint already counts the matches for a filter in
+// pagination.totalItems, so one 1-item page per status gives each number.
+// This keeps GET /proposals/mine to the plain { items, pagination } shape
+// (docs/conventions.md §3). `list` is a parameter only so tests can fake it.
+export async function getMyProposalCounts(
+    list: typeof listMyProposals = listMyProposals,
+): Promise<ProposalStatusCounts> {
+    const [all, pending, accepted, rejected] = await Promise.all([
+        list(1, 1),
+        list(1, 1, { status: 'PENDING' }),
+        list(1, 1, { status: 'ACCEPTED' }),
+        list(1, 1, { status: 'REJECTED' }),
+    ]);
+
+    return {
+        total: all.pagination.totalItems,
+        pending: pending.pagination.totalItems,
+        accepted: accepted.pagination.totalItems,
+        rejected: rejected.pagination.totalItems,
+    };
+}

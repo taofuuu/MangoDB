@@ -5,14 +5,17 @@ import Link from 'next/link';
 import type {
     ProposalListResponse,
     ProposalStatus,
-    ProposalStatusCounts,
     ProviderProposal,
 } from '@mangodb/shared';
 import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import { listMyProposals } from '@/lib/proposals';
+import {
+    getMyProposalCounts,
+    listMyProposals,
+    type ProposalStatusCounts,
+} from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import MyProposalCard from './MyProposalCard';
 import MyProposalDetail from './MyProposalDetail';
@@ -56,6 +59,7 @@ export default function MyProposalsPage() {
     const [status, setStatus] = useState<ProposalStatus | undefined>();
     const [page, setPage] = useState(1);
     const [result, setResult] = useState<ProposalListResponse | null>(null);
+    const [counts, setCounts] = useState<ProposalStatusCounts | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
@@ -94,6 +98,25 @@ export default function MyProposalsPage() {
         };
     }, [page, status, reloadKey]);
 
+    // The chip numbers ignore the filter, so they load once (and again on
+    // Try again), not on every page or chip change. If they fail, the chips
+    // show "–" and the list's own request reports the error.
+    useEffect(() => {
+        let cancelled = false;
+
+        getMyProposalCounts()
+            .then((data) => {
+                if (!cancelled) setCounts(data);
+            })
+            .catch(() => {
+                if (!cancelled) setCounts(null);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [reloadKey]);
+
     const changePage = useCallback((nextPage: number) => {
         setPage(nextPage);
         setSelected(null);
@@ -128,7 +151,6 @@ export default function MyProposalsPage() {
     }
 
     const proposals = result?.items ?? [];
-    const counts = result?.counts;
     const hasNone = counts?.total === 0;
     const activeChip = CHIPS.find((chip) => chip.status === status);
 

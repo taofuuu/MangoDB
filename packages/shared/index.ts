@@ -401,21 +401,10 @@ export interface ProviderProposal extends Proposal {
     receiver: CompanyBrief | null;
 }
 
-// US2-9. How many proposals the Provider has sent, by status. Ignores the
-// ?status= filter, so the page's Total / Accepted / Rejected chips stay put
-// while the user filters by them.
-export interface ProposalStatusCounts {
-    total: number;
-    pending: number;
-    accepted: number;
-    rejected: number;
-}
-
 // US2-9. Paginated proposals response for provider tracking.
 export interface ProposalListResponse {
     items: ProviderProposal[];
     pagination: PaginationMeta;
-    counts: ProposalStatusCounts;
 }
 
 // A company in one line: enough to show who it is beside something it sent
