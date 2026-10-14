@@ -7,8 +7,10 @@ import type { CompanyProfile, JobPosting } from '@mangodb/shared';
 import { ArrowLeft } from 'lucide-react';
 
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
+import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
+import { redirectToUnauthorized } from '@/lib/session';
 
 interface JobDetailPanelProps {
     job: JobPosting | null;
@@ -26,7 +28,15 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
     useEffect(() => {
         getMyProfile()
             .then(setViewer)
-            .catch(() => setViewer(null));
+            .catch((cause: unknown) => {
+                // The session ended after the list loaded: same redirect as
+                // the page guard. Any other failure just hides the button.
+                if (isNotSignedIn(cause)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setViewer(null);
+            });
     }, []);
 
     // US2-8. The API would refuse the other cases anyway (403 for a
