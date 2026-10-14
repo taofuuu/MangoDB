@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import type { PostingProposal, ViewMode } from '@mangodb/shared';
 import RejectProposalModal from './RejectProposalModal';
-import { StarRating } from './StarRating';
+import { Clock, Calendar, Tag } from 'lucide-react';
 
 interface ProposalCardProps {
     proposal: PostingProposal;
@@ -10,7 +10,7 @@ interface ProposalCardProps {
     hasSelectedProposal: boolean;
     viewMode: ViewMode;
     onSelect: () => void;
-    onReject: (e: React.MouseEvent) => void;
+    onReject: () => void;
 }
 
 export const ProposalCard: React.FC<ProposalCardProps> = ({
@@ -30,7 +30,6 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     return (
         <>
             <div
-                onClick={onSelect}
                 className={`relative w-full bg-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
                     isSelected
                         ? viewMode === 'rejected' ||
@@ -47,11 +46,15 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-[#437788] flex-shrink-0 flex items-center justify-center text-white overflow-hidden">
                             {proposal.provider?.companyPhoto ? (
-                                <Image
-                                    src={proposal.provider.companyPhoto}
-                                    alt={proposal.provider.companyName}
-                                    className="w-full h-full object-cover"
-                                />
+                                <div className="relative w-full h-full overflow-hidden">
+                                    <Image
+                                        src={proposal.provider.companyPhoto}
+                                        alt={proposal.provider.companyName}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-cover"
+                                    />
+                                </div>
                             ) : (
                                 <svg
                                     className="w-6 h-6"
@@ -70,7 +73,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+                            <div className="flex items-center gap-1.5 text-xs text-[#497B93] mt-0.5">
+                                <Calendar className="h-4 w-4 text-[#497B93]" />
                                 <span>
                                     {new Date(
                                         proposal.createdAt,
@@ -78,14 +82,20 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                                <span className="font-semibold text-slate-700">
-                                    ${proposal.proposalBudget.toLocaleString()}
-                                </span>
-                                <span>
-                                    {proposal.duration} month
-                                    {proposal.duration > 1 ? 's' : ''}
-                                </span>
+                            <div className="flex items-center gap-3 text-xs text-[#497B93] mt-1">
+                                <div className="flex items-center gap-1 text-xs text-[#497B93]">
+                                    <Tag className="h-4 w-4 text-[#497B93]" />
+                                    <span>
+                                        {proposal.proposalBudget.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-[#497B93]">
+                                    <Clock className="h-4 w-4 text-[#497B93]" />
+                                    <span>
+                                        {proposal.duration} month
+                                        {proposal.duration > 1 ? 's' : ''}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -115,7 +125,10 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 </div>
 
                 <div className="mt-3 ml-15">
-                    <button className="text-xs text-[#437788] border border-[#437788]/40 rounded-md px-3 py-0.5 hover:bg-[#437788]/10 transition-colors flex items-center gap-1">
+                    <button
+                        onClick={onSelect}
+                        className="text-xs text-[#437788] border border-[#437788]/40 rounded-md px-3 py-0.5 hover:bg-[#437788]/10 transition-colors flex items-center gap-1"
+                    >
                         view detail →
                     </button>
                 </div>
@@ -127,7 +140,7 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 onClose={() => setShowRejectModal(false)}
                 onConfirm={() => {
                     setShowRejectModal(false);
-                    onReject({} as React.MouseEvent);
+                    onReject();
                 }}
             />
         </>

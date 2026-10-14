@@ -199,7 +199,7 @@ function ProposalPageInner({
     const ITEMS_PER_PAGE = 5;
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Reset to page 1 whenever the filtered list changes
+    // safePage clamps currentPage to valid range if totalPages shrinks
     const totalPages = Math.max(
         1,
         Math.ceil(activeList.length / ITEMS_PER_PAGE),
@@ -311,8 +311,8 @@ function ProposalPageInner({
                                                     : proposal.proposalId,
                                             )
                                         }
-                                        onReject={(e) =>
-                                            handleReject(proposal.proposalId, e)
+                                        onReject={() =>
+                                            handleReject(proposal.proposalId)
                                         }
                                     />
                                 ))}

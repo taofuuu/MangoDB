@@ -3,7 +3,7 @@ import type { PostingProposal, ViewMode } from '@mangodb/shared';
 import Image from 'next/image';
 import AcceptProposalModal from './AcceptProposalModal';
 import RejectProposalModal from './RejectProposalModal';
-import { StarRating } from './StarRating';
+import { Clock, Calendar, Tag } from 'lucide-react';
 
 interface ProposalDetailProps {
     proposal: PostingProposal;
@@ -39,7 +39,7 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
     return (
         <>
             <div
-                className={`bg-white rounded-2xl p-6 border shadow-sm relative text-slate-700 max-h-[80vh] overflow-y-auto ${
+                className={`bg-white rounded-2xl p-6 border shadow-sm relative text-[#497B93] max-h-[80vh] overflow-y-auto ${
                     viewMode === 'rejected' ||
                     proposal.proposalStatus === 'REJECTED'
                         ? 'border-[#C5483B]'
@@ -50,11 +50,15 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-[#437788] flex-shrink-0 flex items-center justify-center text-white overflow-hidden">
                             {proposal.provider?.companyPhoto ? (
-                                <Image
-                                    src={proposal.provider.companyPhoto}
-                                    alt={proposal.provider.companyName}
-                                    className="w-full h-full object-cover"
-                                />
+                                <div className="relative w-full h-full overflow-hidden">
+                                    <Image
+                                        src={proposal.provider.companyPhoto}
+                                        alt={proposal.provider.companyName}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-cover"
+                                    />
+                                </div>
                             ) : (
                                 <svg
                                     className="w-6 h-6"
@@ -74,31 +78,37 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                                 </span>
                             </div>
 
-                            <div className="text-xs text-slate-400 mt-0.5">
+                            <div className="flex items-center gap-1 text-xs text-[#497B93] mt-0.5">
+                                <Calendar className="h-4 w-4 text-[#497B93]" />
                                 Submitted:{' '}
                                 {new Date(
                                     proposal.createdAt,
                                 ).toLocaleDateString()}
                             </div>
 
-                            <div className="flex items-center gap-6 text-xs text-slate-500 mt-2">
+                            <div className="flex items-center gap-6 text-xs text-[#497B93] mt-2">
                                 <div>
-                                    <div className="text-[10px] text-slate-400">
+                                    <div className="text-[10px] text-[#497B93]">
                                         Offered Price
                                     </div>
-                                    <div className="font-semibold text-slate-800">
-                                        $
-                                        {proposal.proposalBudget.toLocaleString()}
+                                    <div className="flex items-center gap-1 text-xs text-[#497B93]">
+                                        <Tag className="h-4 w-4 text-[#497B93]" />
+                                        <div className="font-semibold">
+                                            {proposal.proposalBudget.toLocaleString()}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <div className="text-[10px] text-slate-400">
+                                    <div className="text-[10px] text-[#497B93]">
                                         Estimated Duration
                                     </div>
-                                    <div className="font-semibold text-slate-800">
-                                        {proposal.duration} month
-                                        {proposal.duration > 1 ? 's' : ''}
+                                    <div className="flex items-center gap-1 text-xs text-[#497B93]">
+                                        <Clock className="h-4 w-4 text-[#497B93]" />
+                                        <div className="font-semibold">
+                                            {proposal.duration} month
+                                            {proposal.duration > 1 ? 's' : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +144,7 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
 
                         <button
                             onClick={onClose}
-                            className="ml-2 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            className="ml-2 p-1.5 rounded-full text-[#497B93] hover:text-slate-600 hover:bg-slate-100 transition-colors"
                         >
                             ✕
                         </button>

@@ -62,7 +62,7 @@ export default function RejectProposalModal({
                         onClick={onConfirm}
                         className="px-6 py-2.5 rounded-full bg-[#C5483B] text-white text-sm font-semibold hover:bg-[#a83c30] transition-colors"
                     >
-                        Delete proposal
+                        Reject proposal
                     </button>
                 </div>
             </div>

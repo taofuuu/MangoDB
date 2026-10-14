@@ -168,7 +168,7 @@ body {
    WebKit/Blink width. */
 @supports not selector(::-webkit-scrollbar) {
     * {
-        scrollbar-width: auto;
+        scrollbar-width: thin;
         scrollbar-color: var(--color-scrollbar) transparent;
     }
 }
