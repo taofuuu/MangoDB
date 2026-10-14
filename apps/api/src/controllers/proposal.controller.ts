@@ -19,6 +19,7 @@ import {
     toPostingProposal,
     toProposal,
     toProviderProposal,
+    toProposalStatusCounts,
     acceptProposalTx,
     rejectPendingProposal,
 } from '../lib/proposal';
