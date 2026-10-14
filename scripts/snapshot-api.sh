@@ -569,7 +569,7 @@ if [ -z "$DELETE_PROBE_ID" ]; then
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID")
+SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID" --id "listing_id=$DELETE_PROBE_ID")
 
 snap error-services-update-unauthorized PATCH "/services/$DELETE_PROBE_ID" \
     -H 'Content-Type: application/json' \
