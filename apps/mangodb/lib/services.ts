@@ -1,8 +1,6 @@
-// Data layer for the US3-1 / US3-2 "search services" screen. Calls the real
-// GET /services (apps/api/src/controllers/service.controller.ts).
-//
-// Named searchServices, not services/service: "service" already means
-// something else in this codebase (creating/owning a service listing).
+// Everything the web asks /services for: creating one (US2-1) and the search
+// screen's list and filter options (US3-1 / US3-2).
+// Backend: apps/api/src/controllers/service.controller.ts.
 
 // ---------------------------------------------------------------------------
 // Wire types come from @mangodb/shared. techStack is the SERVICE's own stack
@@ -25,6 +23,39 @@ export type {
     ServiceListResponse,
     ServiceSummary,
 };
+
+export interface CreateServiceBody {
+    listingTitle: string;
+    listingDesc: string;
+    minBudget?: number;
+    maxBudget?: number;
+    categoryIds?: number[];
+    techStack?: string[];
+}
+
+// Minimal shape we need back from POST /services — the full type is
+// ServiceListing in @mangodb/shared. We only need serviceId to attach
+// portfolios immediately after.
+export interface CreatedService {
+    serviceId: number;
+    listingTitle: string;
+    listingDesc: string;
+    minBudget: number | null;
+    maxBudget: number | null;
+    listingStatus: string;
+    type: string;
+    categoryIds: number[];
+    techStack?: string[];
+}
+
+export function createService(
+    body: CreateServiceBody,
+): Promise<CreatedService> {
+    return apiFetch<CreatedService>('/services', {
+        method: 'POST',
+        body: JSON.stringify(body),
+    });
+}
 
 // What the T3.2 sidebar edits.
 export type SearchServicesFilters = {
@@ -75,7 +106,7 @@ export type SearchServicesParams = {
 // render controls that never match the database.
 // ---------------------------------------------------------------------------
 
-export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterOptions> {
+export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
     return apiFetch<ServiceFilterOptions>('/services/filter-options');
 }
 
@@ -90,7 +121,7 @@ export async function fetchSearchServicesFilterOptions(): Promise<ServiceFilterO
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
 
-export async function searchServices(
+export async function listServices(
     params: SearchServicesParams,
 ): Promise<ServiceListResponse> {
     const { q, orderBy, page, pageSize, filters } = params;

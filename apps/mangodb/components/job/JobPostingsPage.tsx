@@ -20,7 +20,7 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
-import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
@@ -93,7 +93,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
         const request =
             props.view === 'mine'
-                ? getMyJobPostings(
+                ? listMyJobPostings(
                       page,
                       JOB_PAGE_SIZE,
                       status
@@ -102,7 +102,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, JOB_PAGE_SIZE, {
+                : listJobPostings(page, JOB_PAGE_SIZE, {
                       companyId: companyId!,
                       status: 'OPEN',
                   });

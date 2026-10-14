@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { PaginationMeta } from '@mangodb/shared';
-import type { ServiceSummary } from '@/lib/searchServices';
+import type { ServiceSummary } from '@/lib/services';
 import type { SearchServicesMode } from '@/lib/useSearchServices';
 import Link from 'next/link';
 import { describeError, isNotSignedIn } from '@/lib/api';

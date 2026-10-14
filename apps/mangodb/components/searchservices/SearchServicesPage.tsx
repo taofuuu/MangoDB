@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import {
-    fetchSearchServicesFilterOptions,
+    getServiceFilterOptions,
     type ServiceFilterOptions,
     type ServiceSummary,
-} from '@/lib/searchServices';
+} from '@/lib/services';
 import {
     useSearchServices,
     type SearchServicesMode,
@@ -58,7 +58,7 @@ export function SearchServicesPage({
     useEffect(() => {
         let active = true;
 
-        void fetchSearchServicesFilterOptions()
+        void getServiceFilterOptions()
             .then((nextOptions) => {
                 if (!active) return;
                 setOptions(nextOptions);

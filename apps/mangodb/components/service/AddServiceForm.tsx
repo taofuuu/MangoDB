@@ -12,7 +12,8 @@ import {
     validateServiceTechStack,
     validateServiceBudgets,
 } from '@/lib/validation';
-import { createService, createPortfolioForListing } from '@/lib/service';
+import { createService } from '@/lib/services';
+import { createPortfolio } from '@/lib/portfolios';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
@@ -252,7 +253,7 @@ export default function AddServiceForm() {
                 body.append('developmentDate', p.developmentDate);
                 if (p.image) body.append('portfolioImage', p.image);
 
-                await createPortfolioForListing(serviceId, body);
+                await createPortfolio(serviceId, body);
             } catch (cause) {
                 const errorMessage = describeError(cause);
                 setFormError(

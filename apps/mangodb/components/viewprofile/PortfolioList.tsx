@@ -3,8 +3,11 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import type { Certificate } from '@mangodb/shared';
-import { getPortfolios } from '@/lib/portfolios';
-import { getCertificates, getCompanyCertificates } from '@/lib/certificate';
+import { listPortfolios } from '@/lib/portfolios';
+import {
+    listMyCertificates,
+    listCompanyCertificates,
+} from '@/lib/certificates';
 import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 
 // Matches the card's fixed-height design: enough to preview at a glance,
@@ -52,11 +55,11 @@ export default function PortfolioCertificateList({
     const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
-        getPortfolios(companyId)
+        listPortfolios(companyId)
             .then((items) => setPortfolioItems(items))
             .catch(() => setLoadError('Could not load portfolio items.'));
 
-        (readOnly ? getCompanyCertificates(companyId) : getCertificates())
+        (readOnly ? listCompanyCertificates(companyId) : listMyCertificates())
             .then((items) => setCertificateItems(items))
             .catch(() =>
                 setLoadError(

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import CategorySelector from '../ui/CategorySelector';
-import { createJobPosting, type CreateJobPosting } from '@/lib/job';
+import { createJobPosting, type CreateJobPosting } from '@/lib/jobPostings';
 import { toFormErrors } from '@/lib/validation';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
 import type { Category } from '@mangodb/shared';
-import { getCategories } from '@/lib/categories';
+import { listCategories } from '@/lib/categories';
 import { describeError } from '@/lib/api';
 
 import Input from '@/components/ui/Input';
@@ -73,7 +73,7 @@ export default function JobForm() {
                 setIsCategoriesLoading(true);
                 setCategoriesError(null);
 
-                const data = await getCategories();
+                const data = await listCategories();
                 setCategories(data);
             } catch (error: unknown) {
                 setCategoriesError(describeError(error));
