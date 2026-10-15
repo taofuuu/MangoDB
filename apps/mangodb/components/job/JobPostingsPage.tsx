@@ -148,9 +148,8 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
-    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+    const isDetailPanelOpen = Boolean(selectedJob);
     const openCompanyJobDetail = (job: JobPosting) => {
-        setIsDetailPanelOpen(true);
         setSelectedJob(job);
     };
 
@@ -161,7 +160,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const closeDetailPanel = () => {
-        setIsDetailPanelOpen(false);
         setSelectedJob(null);
     };
 
@@ -412,11 +410,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     items-start
                     transition-all
                     duration-300
-                    ${
-                        isDetailPanelOpen
-                            ? 'ml-[2vw] gap-[1.5vw]'
-                            : 'gap-[3.87vh]'
-                    }
+                    ${isDetailPanelOpen ? 'ml-[2vw] gap-[1.5vw]' : ''}
                 `}
                 >
                     {/* =================================================

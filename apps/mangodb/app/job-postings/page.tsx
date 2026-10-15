@@ -307,7 +307,7 @@ export default function OtherJobPage() {
                     ${
                         isDetailOpen
                             ? 'ml-[2vw] gap-[1.5vw]'
-                            : 'pl-[6.5vw] gap-[3.87vh]'
+                            : 'pl-[6.5vw] gap-[2vw]'
                     }
                 `}
                 >

@@ -146,8 +146,15 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
         const locationError = validateJobLocation(locationPref);
         if (locationError) newErrors.location = locationError;
 
-        const deadlineError = validateJobDeadline(deadline);
-        if (deadlineError) newErrors.deadline = deadlineError;
+        const initialDeadline = initialJob?.deadline?.slice(0, 10);
+
+        if (!initialJob || deadline !== initialDeadline) {
+            const deadlineError = validateJobDeadline(deadline);
+
+            if (deadlineError) {
+                newErrors.deadline = deadlineError;
+            }
+        }
 
         setErrors(newErrors);
 

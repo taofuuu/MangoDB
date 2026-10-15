@@ -9,6 +9,8 @@ import { getMyProfile } from '@/lib/companies';
 import { getJobPosting } from '@/lib/jobPostings';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 
+import Link from 'next/link';
+
 import type { JobPosting } from '@mangodb/shared';
 
 type EditJobPageProps = {
@@ -53,9 +55,6 @@ export default function EditJobPage({ params }: EditJobPageProps) {
 
                 const posting = await getJobPosting(jobPostingId);
 
-                // Confirm the posting can be retrieved.
-                const job = await getJobPosting(jobPostingId);
-
                 if (cancelled) return;
 
                 // Only the company that owns the posting can edit it.
@@ -67,7 +66,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     return;
                 }
 
-                if (job.listingStatus !== 'OPEN') {
+                if (posting.listingStatus !== 'OPEN') {
                     setLoadError('Only open job postings can be edited.');
                     setIsAuthorized(false);
                     return;
@@ -123,6 +122,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     <p className="type-sm text-danger text-center">
                         {loadError}
                     </p>
+                    <Link href="/job/view-own" className="...">
+                        Back to My Jobs
+                    </Link>
                 </div>
             );
         }
@@ -142,6 +144,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 <div className="mt-[1px] ml-[7vw] flex w-full justify-center">
                     {job && (
                         <JobForm
+                            key={job.jobPostingId}
                             jobPostingId={job.jobPostingId}
                             initialJob={job}
                         />
