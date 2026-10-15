@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
+import { formatBudgetRange } from '@/lib/money';
 
 interface JobDetailModalProps {
     job: JobPosting;
@@ -166,14 +167,10 @@ export default function JobDetailModal({
                             <span className="text-brand">Budget</span>
 
                             <div>
-                                {job.minBudget != null
-                                    ? job.minBudget.toLocaleString()
-                                    : '-'}
-                                {' - '}
-                                {job.maxBudget != null
-                                    ? job.maxBudget.toLocaleString()
-                                    : '-'}{' '}
-                                THB
+                                {formatBudgetRange(
+                                    job.minBudget,
+                                    job.maxBudget,
+                                )}
                             </div>
 
                             <Wallet size={20} />
