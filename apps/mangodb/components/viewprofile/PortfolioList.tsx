@@ -8,18 +8,14 @@ import {
     listMyCertificates,
     listCompanyCertificates,
 } from '@/lib/certificates';
-import { monthLabel } from '@/components/sm-detail/MonthDropdown';
+import { formatDateOnly, monthLabel } from '@/lib/dates';
+import ProfileItemDetailModal, {
+    type ProfileItem,
+} from './ProfileItemDetailModal';
 
 // Matches the card's fixed-height design: enough to preview at a glance,
 // the rest lives behind "See more" instead of an in-card scrollbar.
 const MAX_VISIBLE_ITEMS = 3;
-
-function formatPortfolioDate(dateString: string): string {
-    // Split rather than new Date() — an ISO date parses as UTC midnight and
-    // would render a day early west of UTC.
-    const [year, month, day] = dateString.split('-');
-    return `${Number(day)} ${monthLabel(String(Number(month)))} ${year}`;
-}
 
 function formatCertificateDate(cert: Certificate): string {
     if (!cert.issueMonth || !cert.issueYear) return '—';
@@ -30,6 +26,7 @@ interface DisplayItem {
     id: number;
     title: string;
     date: string;
+    entry: ProfileItem;
 }
 
 interface PortfolioCertificateListProps {
@@ -53,6 +50,7 @@ export default function PortfolioCertificateList({
     );
     const [certificateItems, setCertificateItems] = useState<Certificate[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [selected, setSelected] = useState<ProfileItem | null>(null);
 
     useEffect(() => {
         listPortfolios(companyId)
@@ -73,12 +71,14 @@ export default function PortfolioCertificateList({
             ? portfolioItems.map((item) => ({
                   id: item.portfolioId,
                   title: item.portfolioName,
-                  date: formatPortfolioDate(item.developmentDate),
+                  date: formatDateOnly(item.developmentDate),
+                  entry: { kind: 'portfolio', item },
               }))
             : certificateItems.map((item) => ({
                   id: item.certificateId,
                   title: item.certTitle,
                   date: formatCertificateDate(item),
+                  entry: { kind: 'certificate', item },
               }));
 
     const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
@@ -143,7 +143,12 @@ export default function PortfolioCertificateList({
                             <span className="text-gray-400 type-xs">
                                 {item.date}
                             </span>
-                            <button className="text-brand hover:underline">
+                            <button
+                                type="button"
+                                onClick={() => setSelected(item.entry)}
+                                aria-label={`Details for ${item.title}`}
+                                className="text-brand hover:underline"
+                            >
                                 Details
                             </button>
                         </div>
@@ -151,7 +156,9 @@ export default function PortfolioCertificateList({
                 ))}
             </div>
 
-            {!readOnly && displayItems.length > MAX_VISIBLE_ITEMS && (
+            {/* Always on your own profile, even with three items or fewer:
+                it is the way to the pages where you add and edit them. */}
+            {!readOnly && (
                 <div className="mt-3 text-right">
                     <Link
                         href={seeMoreHref}
@@ -160,6 +167,13 @@ export default function PortfolioCertificateList({
                         See more
                     </Link>
                 </div>
+            )}
+
+            {selected && (
+                <ProfileItemDetailModal
+                    entry={selected}
+                    onClose={() => setSelected(null)}
+                />
             )}
         </div>
     );

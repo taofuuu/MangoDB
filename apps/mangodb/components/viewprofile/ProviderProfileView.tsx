@@ -34,7 +34,7 @@ export default function ProviderProfileView({
                     />
                 </div>
                 <div className="lg:col-span-2">
-                    <ServicesSection />
+                    <ServicesSection profile={profile} readOnly={readOnly} />
                 </div>
                 <div className="lg:col-span-3">
                     <ProjectTimeline />

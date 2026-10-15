@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
 import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
@@ -9,7 +9,18 @@ import { logout, redirectToLogin } from '@/lib/session';
 // logout() ends the session on the server — the token is revoked and the
 // cookie cleared on the same response — so this only decides where the user
 // lands. The confirmation modal owns the pending/error state around that.
-export default function LogoutButton() {
+//
+// className and children let the navbar menu draw this as a text row. Without
+// them it is the icon button the account settings page uses.
+type LogoutButtonProps = {
+    className?: string;
+    children?: ReactNode;
+};
+
+export default function LogoutButton({
+    className = 'p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer',
+    children,
+}: LogoutButtonProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     const handleConfirm = async () => {
@@ -34,16 +45,20 @@ export default function LogoutButton() {
             <button
                 type="button"
                 onClick={() => setIsConfirmOpen(true)}
-                aria-label="Log Out"
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                // Visible text names the button itself, so the label is only
+                // needed for the icon-only version.
+                aria-label={children ? undefined : 'Log Out'}
+                className={className}
             >
-                <Image
-                    src={logoutIcon}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="h-[18px] w-[18px] object-contain"
-                />
+                {children ?? (
+                    <Image
+                        src={logoutIcon}
+                        alt=""
+                        width={18}
+                        height={18}
+                        className="h-[18px] w-[18px] object-contain"
+                    />
+                )}
             </button>
 
             <LogoutConfirmationModal

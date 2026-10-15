@@ -8,6 +8,8 @@
 // ---------------------------------------------------------------------------
 
 import type {
+    Category,
+    CompanyBrief,
     PaginationMeta as Pagination,
     SearchServicesOrder,
     ServiceFilterOptions,
@@ -56,6 +58,32 @@ export function getService(serviceId: number): Promise<ServiceListing> {
 
 export function listMyServices(): Promise<ServiceListing[]> {
     return apiFetch<ServiceListing[]>('/services/mine');
+}
+
+// A ServiceListing (GET /services/mine) in the ServiceSummary shape the
+// service detail panel takes. The listing holds category ids and the panel
+// shows names, so they are looked up in the catalog (GET /categories).
+export function toServiceSummary(
+    listing: ServiceListing,
+    categories: Category[],
+    company: CompanyBrief,
+): ServiceSummary {
+    const names = new Map(categories.map((c) => [c.catId, c.catName]));
+
+    return {
+        serviceId: listing.serviceId,
+        listingTitle: listing.listingTitle,
+        listingDesc: listing.listingDesc,
+        minBudget: listing.minBudget,
+        maxBudget: listing.maxBudget,
+        // Sorted, the way GET /services returns them.
+        categories: listing.categoryIds
+            .map((id) => names.get(id))
+            .filter((name): name is string => name !== undefined)
+            .sort(),
+        techStack: listing.techStack,
+        company,
+    };
 }
 
 // US2-3. The backend owns validation and authorization; this helper keeps the
@@ -145,6 +173,23 @@ export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
 //   maxBudget  -> maxPrice
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
+
+// One company's open services, for its profile page. Same endpoint and shape
+// as the search screen, so a row opens the same ServiceDetailPanel.
+export function listCompanyServices(
+    companyId: number,
+    pageSize: number,
+): Promise<ServiceListResponse> {
+    const qs = new URLSearchParams({
+        companyId: String(companyId),
+        orderBy: 'newest',
+        page: '1',
+        pageSize: String(pageSize),
+    });
+
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
+}
 
 export async function listServices(
     params: SearchServicesParams,

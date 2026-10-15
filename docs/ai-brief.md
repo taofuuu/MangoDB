@@ -90,6 +90,7 @@ Never `{ message, resource }`. The status code already says it worked.
 | 403  | signed in, but not allowed                                   |
 | 404  | no such row, or the caller has no business knowing it exists |
 | 409  | unique constraint, or a state conflict                       |
+| 429  | too many failed logins — only the login limit sends it       |
 
 401 and 403 must stay distinct: 401 is _who are you_, 403 is _I know who you
 are, and no_.
@@ -286,9 +287,8 @@ Every row has really happened on this codebase.
 
 Saying "that isn't built" is a useful answer. Inventing it is not.
 
-- `/forgot-password` — linked from the login form, no route behind it
-- `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
-  mock data, no API
+- `/forgot-password` — no route and no story; the login form no longer links it
+- `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - A price or delivery duration on a service — `service` holds only `listing_id`

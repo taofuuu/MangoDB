@@ -5,6 +5,7 @@ import type {
     PostingProposal,
     Proposal,
     ProposalStatus,
+    ProposalStatusCounts,
     ProviderProposal,
     ListingStatus,
     Project,
@@ -79,27 +80,71 @@ export function toPostingProposal(
 }
 
 // US2-9. A proposal as the Provider sees it in their own list: the proposal
-// plus the job posting's title so the page needs no extra request per row.
+// plus the job posting's title and its owner, so the page needs no extra
+// request per row. A soft-deleted owner is still shown: a proposal is history.
 export const providerProposalSelect = {
     ...proposalSelect,
     listing: {
-        select: { listingTitle: true },
+        select: {
+            listingTitle: true,
+            company: {
+                select: {
+                    companyId: true,
+                    companyName: true,
+                    companyPhoto: true,
+                },
+            },
+        },
     },
 } as const;
 
 export type SelectedProviderProposal = SelectedProposal & {
     listing: {
         listingTitle: string;
+        company: CompanyBrief | null;
     };
 };
 
 export function toProviderProposal(
     row: SelectedProviderProposal,
 ): ProviderProposal {
+    const owner = row.listing.company;
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,
+        receiver: owner
+            ? {
+                  companyId: owner.companyId,
+                  companyName: owner.companyName,
+                  companyPhoto: owner.companyPhoto,
+              }
+            : null,
     };
+}
+
+// US2-9. Turns a groupBy-by-status result into the four chip numbers.
+// A status with no proposals is missing from groupBy's answer, so each
+// one starts at zero.
+export function toProposalStatusCounts(
+    groups: { proposalStatus: string; _count: { _all: number } }[],
+): ProposalStatusCounts {
+    const counts: ProposalStatusCounts = {
+        total: 0,
+        pending: 0,
+        accepted: 0,
+        rejected: 0,
+    };
+    for (const group of groups) {
+        const n = group._count._all;
+        counts.total += n;
+        if (group.proposalStatus === ('PENDING' satisfies ProposalStatus))
+            counts.pending = n;
+        if (group.proposalStatus === ('ACCEPTED' satisfies ProposalStatus))
+            counts.accepted = n;
+        if (group.proposalStatus === ('REJECTED' satisfies ProposalStatus))
+            counts.rejected = n;
+    }
+    return counts;
 }
 
 const projectSelect = {

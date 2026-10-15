@@ -208,6 +208,7 @@ the frontend imports the same definitions.
 | `FORBIDDEN`         | 403    | Authenticated but the role may not do it         |
 | `NOT_FOUND`         | 404    | Unknown route or missing resource                |
 | `CONFLICT`          | 409    | Existing data blocks the write (username taken)  |
+| `TOO_MANY_REQUESTS` | 429    | Too many failed logins (`middleware/rateLimit`)  |
 | `INTERNAL`          | 500    | Anything unplanned — a bug, never thrown by hand |
 
 `401` means "we do not know who you are", `403` means "we know, and no". A

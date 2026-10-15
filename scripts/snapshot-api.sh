@@ -907,6 +907,14 @@ snap proposals-mine GET /proposals/mine \
 snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&limit=6" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
+snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
+
+snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap proposals-mine-counts GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
