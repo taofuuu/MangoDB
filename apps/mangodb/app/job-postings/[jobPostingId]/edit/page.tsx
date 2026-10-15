@@ -1,14 +1,15 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import JobForm from '@/components/forms/JobForm';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { getMyProfile } from '@/lib/companies';
 import { getJobPosting } from '@/lib/jobPostings';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import { describeError, isNotSignedIn } from '@/lib/api';
 
+import { isReceiverAccount } from '@/lib/roles';
+import { redirectToUnauthorized } from '@/lib/session';
 import Link from 'next/link';
 
 import type { JobPosting } from '@mangodb/shared';
@@ -21,7 +22,6 @@ type EditJobPageProps = {
 
 export default function EditJobPage({ params }: EditJobPageProps) {
     const { jobPostingId: rawId } = use(params);
-    const router = useRouter();
     const jobPostingId = Number(rawId);
     const isValidJobPostingId =
         Number.isSafeInteger(jobPostingId) && jobPostingId > 0;
@@ -29,6 +29,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
     const [job, setJob] = useState<JobPosting | null>(null);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
+    const [isAccessRestricted, setIsAccessRestricted] = useState(false);
 
     useEffect(() => {
         if (!isValidJobPostingId) {
@@ -43,12 +45,9 @@ export default function EditJobPage({ params }: EditJobPageProps) {
 
                 if (cancelled) return;
 
-                const hasReceiverRole =
-                    profile.accountType === 'RECEIVER' ||
-                    profile.accountType === 'BOTH';
-
-                if (!hasReceiverRole) {
-                    router.replace('/job-postings/mine');
+                if (!isReceiverAccount(profile.accountType)) {
+                    setIsAccessRestricted(true);
+                    // setLoadError('Only Receiver accounts can edit job postings.');
                     setIsAuthorized(false);
                     return;
                 }
@@ -77,9 +76,13 @@ export default function EditJobPage({ params }: EditJobPageProps) {
             } catch (err: unknown) {
                 if (cancelled) return;
 
-                setLoadError(
-                    isNotSignedIn(err) ? NOT_SIGNED_IN : describeError(err),
-                );
+                if (isNotSignedIn(err)) {
+                    setIsRedirecting(true);
+                    redirectToUnauthorized();
+                    return;
+                }
+
+                setLoadError(describeError(err));
                 setIsAuthorized(false);
             }
         }
@@ -89,16 +92,27 @@ export default function EditJobPage({ params }: EditJobPageProps) {
         return () => {
             cancelled = true;
         };
-    }, [jobPostingId, router, isValidJobPostingId]);
+    }, [jobPostingId, isValidJobPostingId]);
 
     if (!isValidJobPostingId) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+            <div className="flex flex-col items-center gap-4">
                 <p className="type-sm text-danger text-center">
                     Invalid job posting ID.
                 </p>
+
+                <Link
+                    href="/job-postings/mine"
+                    className="type-sm text-[#497B93] underline"
+                >
+                    Back to My Jobs
+                </Link>
             </div>
         );
+    }
+
+    if (isRedirecting) {
+        return <div className="min-h-screen bg-surface" />;
     }
 
     if (isAuthorized === null) {
@@ -110,19 +124,30 @@ export default function EditJobPage({ params }: EditJobPageProps) {
             </div>
         );
     }
+    if (isAccessRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="Only Receiver accounts can edit job postings."
+                showLogin={false}
+            />
+        );
+    }
 
     if (!isAuthorized) {
-        if (loadError === NOT_SIGNED_IN) {
-            return <UnauthorizedPage />;
-        }
-
         if (loadError) {
             return (
-                <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+                <div className="flex flex-col min-h-screen items-center justify-center bg-surface px-6 gap-4">
                     <p className="type-sm text-danger text-center">
                         {loadError}
                     </p>
-                    <Link href="/job/view-own" className="...">
+                    <Link
+                        href="/job-postings/mine"
+                        className="type-sm text-brand underline"
+                    >
                         Back to My Jobs
                     </Link>
                 </div>
