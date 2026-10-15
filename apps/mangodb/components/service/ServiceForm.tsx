@@ -483,11 +483,15 @@ export default function ServiceForm(props: ServiceFormProps) {
 
     // US2-4. Thrown errors become the modal's message, so the 409 for a
     // service with a project gets a sentence the Provider can act on.
+    // isSubmitting is shared with Save, so Save and Cancel stay disabled while
+    // the delete runs. It stays true on success: the page is leaving.
     const handleDelete = async () => {
-        if (serviceId === null) return;
+        if (serviceId === null || isSubmitting) return;
+        setIsSubmitting(true);
         try {
             await deleteService(serviceId);
         } catch (err) {
+            setIsSubmitting(false);
             throw new Error(
                 describeError(err, {
                     409: 'This service has a project linked to it, so it cannot be deleted.',
