@@ -140,6 +140,7 @@ GET /companies?q=&orderBy=nameAsc&page=&pageSize=
 | 403  | signed in, but not allowed                                   |
 | 404  | no such row, or the caller has no business knowing it exists |
 | 409  | a unique constraint, or a state conflict                     |
+| 429  | too many failed logins — only the login limit sends it       |
 
 401 is _who are you_; 403 is _I know who you are, and no_. Keep them apart.
 Fold 403 into 404 only when the row's existence is itself private.

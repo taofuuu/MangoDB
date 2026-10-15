@@ -17,6 +17,7 @@ import {
 } from '@/lib/api';
 import { listMyCertificates } from '@/lib/certificates';
 import { monthLabel } from '@/lib/dates';
+import { isStorageImage } from '@/lib/images';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
@@ -293,8 +294,13 @@ export default function CertificatePage() {
                                         <div className="flex w-full items-center gap-10">
                                             {/* A button only with an image
                                                 behind it: an empty frame has
-                                                nothing to expand. */}
-                                            {certificate.certImage ? (
+                                                nothing to expand. Only our own
+                                                uploads, since next/image throws
+                                                on any other host. */}
+                                            {certificate.certImage &&
+                                            isStorageImage(
+                                                certificate.certImage,
+                                            ) ? (
                                                 <button
                                                     type="button"
                                                     onClick={() =>
