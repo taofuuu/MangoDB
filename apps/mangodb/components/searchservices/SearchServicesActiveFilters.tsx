@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import type { SearchServicesFilters } from '@/lib/searchServices';
+import type { SearchServicesFilters } from '@/lib/services';
 
 function describe(filters: SearchServicesFilters): string[] {
     const parts: string[] = [];

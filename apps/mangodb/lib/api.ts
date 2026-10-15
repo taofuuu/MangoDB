@@ -62,6 +62,10 @@ export function isNotSignedIn(err: unknown): boolean {
     return err instanceof ApiRequestError && err.status === 401;
 }
 
+export function isForbidden(err: unknown): boolean {
+    return err instanceof ApiRequestError && err.status === 403;
+}
+
 // What to show the user when a call fails.
 //
 // This replaces six near-identical functions — toModalMessage, describeError,

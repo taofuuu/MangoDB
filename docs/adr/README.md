@@ -66,3 +66,6 @@ record at all.
 | [0009](0009-tech-stack-belongs-to-a-service.md)            | Tech stack belongs to a service, not to the Provider                     | Accepted |
 | [0010](0010-listing-status-open-and-closed-only.md)        | A listing is only OPEN or CLOSED; there is no DRAFT                      | Accepted |
 | [0011](0011-search-page-gray-scrollbar-brand-blue-next.md) | Search page: gray scrollbar, brand-blue Next button                      | Accepted |
+| [0012](0012-no-forgot-password.md)                         | No forgot-password feature                                               | Accepted |
+| [0013](0013-close-job-delete-service.md)                   | Jobs are closed, not deleted; services can still be deleted              | Accepted |
+| [0014](0014-login-goes-to-own-account-page.md)             | After login, go to your own account page; no new landing page            | Accepted |

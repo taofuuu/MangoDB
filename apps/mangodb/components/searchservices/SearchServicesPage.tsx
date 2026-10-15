@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import {
-    fetchSearchServicesFilterOptions,
+    getServiceFilterOptions,
     type ServiceFilterOptions,
     type ServiceSummary,
-} from '@/lib/searchServices';
+} from '@/lib/services';
 import {
     useSearchServices,
     type SearchServicesMode,
@@ -16,6 +16,7 @@ import { SearchServicesFilterSidebar } from './SearchServicesFilterSidebar';
 import { SearchServicesResultsGrid } from './SearchServicesResultsGrid';
 import { SearchServicesBar } from './SearchServicesBar';
 import { ServiceDetailPanel } from './ServiceDetailPanel';
+import { redirectToUnauthorized } from '@/lib/session';
 
 // mode is a prop, not hardcoded, so whichever pagination style the final
 // design settles on (page numbers vs. infinite scroll) is a one-line change
@@ -57,7 +58,7 @@ export function SearchServicesPage({
     useEffect(() => {
         let active = true;
 
-        void fetchSearchServicesFilterOptions()
+        void getServiceFilterOptions()
             .then((nextOptions) => {
                 if (!active) return;
                 setOptions(nextOptions);
@@ -80,6 +81,16 @@ export function SearchServicesPage({
     // hidden for a 401 from either request.
     const signedOut = isNotSignedIn(error) || isNotSignedIn(optionsError);
     const showSearchControls = optionsStatus !== 'loading' && !signedOut;
+
+    useEffect(() => {
+        if (signedOut) {
+            redirectToUnauthorized();
+        }
+    }, [signedOut]);
+
+    if (signedOut) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     const headerAndSearch = (
         <>
@@ -130,7 +141,7 @@ export function SearchServicesPage({
 
                         <div className="h-[72.63vh] w-[35vw] shrink-0">
                             <ServiceDetailPanel
-                                key={selectedService.listingId}
+                                key={selectedService.serviceId}
                                 service={selectedService}
                                 onClose={closeDetail}
                             />
@@ -142,25 +153,30 @@ export function SearchServicesPage({
     }
 
     return (
-        <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
-            {showSearchControls && (
-                <SearchServicesFilterSidebar
-                    filters={filters}
-                    options={options}
-                    optionsError={
-                        optionsStatus === 'error'
-                            ? describeError(optionsError)
-                            : null
-                    }
-                    onChange={setFilters}
-                    onClearAll={clearFilters}
-                />
-            )}
+        // Full-width main with the page cream, like the detail view above.
+        // The inner div is capped at 1360px, so a background on it alone
+        // would leave white strips at the sides on wide screens.
+        <main className="min-h-screen bg-surface">
+            <div className="mx-auto flex max-w-[1360px] gap-8 px-10 py-10">
+                {showSearchControls && (
+                    <SearchServicesFilterSidebar
+                        filters={filters}
+                        options={options}
+                        optionsError={
+                            optionsStatus === 'error'
+                                ? describeError(optionsError)
+                                : null
+                        }
+                        onChange={setFilters}
+                        onClearAll={clearFilters}
+                    />
+                )}
 
-            <div className="min-w-0 flex-1">
-                {headerAndSearch}
-                <div className="mt-4">{results}</div>
+                <div className="min-w-0 flex-1">
+                    {headerAndSearch}
+                    <div className="mt-4">{results}</div>
+                </div>
             </div>
-        </div>
+        </main>
     );
 }

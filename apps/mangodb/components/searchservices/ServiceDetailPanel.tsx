@@ -1,16 +1,14 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import { ExternalLink, X } from 'lucide-react';
 import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import { getPortfoliosByListing } from '@/lib/portfolios';
-import {
-    formatServiceBudgetRange,
-    type ServiceSummary,
-} from '@/lib/searchServices';
+import { listServicePortfolios } from '@/lib/portfolios';
+import { formatServiceBudgetRange, type ServiceSummary } from '@/lib/services';
 
 const portfolioDateFormatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -52,7 +50,7 @@ export function ServiceDetailPanel({
     useEffect(() => {
         let active = true;
 
-        void getPortfoliosByListing(service.listingId)
+        void listServicePortfolios(service.serviceId)
             .then((items) => {
                 if (active) setPortfolios(items);
             })
@@ -63,7 +61,7 @@ export function ServiceDetailPanel({
         return () => {
             active = false;
         };
-    }, [service.listingId]);
+    }, [service.serviceId]);
 
     return (
         <div
@@ -114,9 +112,12 @@ export function ServiceDetailPanel({
                             photoUrl={service.company.companyPhoto}
                             size={44}
                         />
-                        <p className="type-md text-ink">
+                        <Link
+                            href={`/profile/${service.company.companyId}`}
+                            className="type-md text-ink hover:underline"
+                        >
                             {service.company.companyName || '-'}
-                        </p>
+                        </Link>
                     </div>
                 </div>
 

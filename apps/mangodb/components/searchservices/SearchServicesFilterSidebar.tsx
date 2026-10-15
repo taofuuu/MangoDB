@@ -5,7 +5,7 @@ import { Plus, X } from 'lucide-react';
 import type {
     SearchServicesFilters,
     ServiceFilterOptions,
-} from '@/lib/searchServices';
+} from '@/lib/services';
 
 function FilterGroup({
     label,

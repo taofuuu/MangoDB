@@ -1,5 +1,5 @@
-import AddServiceForm from '@/components/service/AddServiceForm';
+import ServiceForm from '@/components/service/ServiceForm';
 
-export default function ServicePage() {
-    return <AddServiceForm />;
+export default function CreateServicePage() {
+    return <ServiceForm mode="create" />;
 }

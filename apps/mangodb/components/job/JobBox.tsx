@@ -48,6 +48,8 @@ export default function JobBox({
         setIsDetailOpen(false);
     };
 
+    // const router = useRouter();
+
     return (
         <>
             <div
@@ -68,13 +70,12 @@ export default function JobBox({
                     transition
                     leading-relaxed
 
-
                     ${
                         isMyJobs
                             ? job.listingStatus === 'OPEN'
-                                ? 'shadow-[0_0_8px_rgba(73,123,147,0.35)]'
+                                ? 'shadow-[0_0_12px_color-mix(in_srgb,var(--color-brand)_40%,transparent)]'
                                 : job.listingStatus === 'CLOSED'
-                                  ? 'shadow-[0_0_8px_rgba(197,72,59,0.35)]'
+                                  ? 'shadow-[0_0_12px_color-mix(in_srgb,var(--color-danger)_40%,transparent)]'
                                   : 'shadow-sm'
                             : 'shadow-sm'
                     }
@@ -114,25 +115,31 @@ export default function JobBox({
                                         shadow-lg
                                     "
                                 >
-                                    <button
-                                        type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                    >
-                                        <Edit size={15} />
-                                        Edit
-                                    </button>
-
                                     {job.listingStatus === 'OPEN' && (
-                                        <button
-                                            type="button"
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                        >
-                                            <FileX size={15} />
-                                            Close
-                                        </button>
-                                    )}
+                                        <>
+                                            <button
+                                                type="button"
+                                                // onClick={() => {
+                                                //     setIsMenuOpen(false);
+                                                //     router.push(`/job-postings/${job.jobPostingId}/edit`);
+                                                // }}
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <Edit size={15} />
+                                                Edit
+                                            </button>
 
-                                    <hr className="my-1 border-0 border-t border-line" />
+                                            <button
+                                                type="button"
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <FileX size={15} />
+                                                Close
+                                            </button>
+
+                                            <hr className="my-1 border-0 border-t border-line" />
+                                        </>
+                                    )}
 
                                     <button
                                         type="button"

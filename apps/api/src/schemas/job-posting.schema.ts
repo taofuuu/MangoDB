@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES } from '@mangodb/shared';
-import { INT4_MAX, int4Id } from './common.schema';
+import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
 
 function todayUtcString(): string {
     return new Date().toISOString().slice(0, 10);
@@ -13,18 +13,6 @@ export function isDeadlineInFutureOrToday(dateStr: string): boolean {
 
 export const MIN_BUDGET_EXCEEDS_MAX =
     'Minimum budget cannot exceed maximum budget';
-
-// Validate that minBudget does not exceed maxBudget when both exist.
-// PATCH calls this too, with the body merged over the stored row.
-export function minBudgetDoesNotExceedMax(data: {
-    minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
-}): boolean {
-    if (data.minBudget != null && data.maxBudget != null) {
-        return data.minBudget <= data.maxBudget;
-    }
-    return true;
-}
 
 export const jobPostingFields = {
     listingTitle: z
@@ -93,9 +81,16 @@ export const createJobPostingSchema = z
 // here: a body with one budget only means something next to the stored row,
 // so the controller checks the merged values instead.
 export const updateJobPostingSchema = z
-    .strictObject(jobPostingFields)
-    .partial()
-    // An empty body is a client bug, not a no-op worth a 200.
+    .strictObject({
+        listingTitle: jobPostingFields.listingTitle.optional(),
+        listingDesc: jobPostingFields.listingDesc.optional(),
+        minBudget: jobPostingFields.minBudget,
+        maxBudget: jobPostingFields.maxBudget.optional(),
+        locationPref: jobPostingFields.locationPref,
+        duration: jobPostingFields.duration,
+        deadline: jobPostingFields.deadline,
+        categoryIds: jobPostingFields.categoryIds,
+    })
     .refine((body) => Object.keys(body).length > 0, {
         message: 'Provide at least one field to update',
     });

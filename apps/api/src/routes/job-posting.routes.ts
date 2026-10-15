@@ -10,7 +10,7 @@ import {
 } from '../controllers/job-posting.controller';
 import {
     createProposal,
-    listPostingProposals,
+    listJobPostingProposals,
 } from '../controllers/proposal.controller';
 
 export const jobPostingRoutes = Router();
@@ -48,7 +48,7 @@ jobPostingRoutes.get(
     '/:jobPostingId/proposals',
     requireAuth,
     requireRole('receiver'),
-    listPostingProposals,
+    listJobPostingProposals,
 );
 // US2-13. Edit a job posting: only the owner, only while it is Open.
 // Guards: authenticated only. No requireRole: owning the posting already means
