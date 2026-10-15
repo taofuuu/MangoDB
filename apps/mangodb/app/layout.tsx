@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans_Thai } from 'next/font/google';
+import Navbar from '@/components/nav/Navbar';
 import './globals.css';
 
 const ibm = IBM_Plex_Sans_Thai({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="th">
-            <body className={ibm.className}>{children}</body>
+            <body className={ibm.className}>
+                <Navbar />
+                {children}
+            </body>
         </html>
     );
 }
