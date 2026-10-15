@@ -8,8 +8,7 @@ import {
     listMyCertificates,
     listCompanyCertificates,
 } from '@/lib/certificates';
-import { monthLabel } from '@/components/sm-detail/MonthDropdown';
-import { formatDateOnly } from '@/lib/dates';
+import { formatDateOnly, monthLabel } from '@/lib/dates';
 import ProfileItemDetailModal, {
     type ProfileItem,
 } from './ProfileItemDetailModal';

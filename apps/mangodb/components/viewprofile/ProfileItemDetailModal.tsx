@@ -5,9 +5,8 @@ import { useId } from 'react';
 import type { Certificate, ServicePortfolio } from '@mangodb/shared';
 import { X } from 'lucide-react';
 import { hasPortfolioImage } from '@/components/portfolio/portfolioImage';
-import { monthLabel } from '@/components/sm-detail/MonthDropdown';
 import ModalShell from '@/components/ui/ModalShell';
-import { formatDateOnly } from '@/lib/dates';
+import { formatDateOnly, monthLabel } from '@/lib/dates';
 import { isStorageImage } from '@/lib/images';
 
 export type ProfileItem =

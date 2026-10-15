@@ -16,7 +16,7 @@ import {
     isNotSignedIn,
 } from '@/lib/api';
 import { listMyCertificates } from '@/lib/certificates';
-import { monthLabel } from '@/components/sm-detail/MonthDropdown';
+import { monthLabel } from '@/lib/dates';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
 import bin from '@/public/bin.png';
