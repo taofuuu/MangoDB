@@ -118,11 +118,14 @@ export default function EditJobPage({ params }: EditJobPageProps) {
 
         if (loadError) {
             return (
-                <div className="flex min-h-screen items-center justify-center bg-surface px-6">
+                <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface px-6">
                     <p className="type-sm text-danger text-center">
                         {loadError}
                     </p>
-                    <Link href="/job/view-own" className="...">
+                    <Link
+                        href="/job-postings/mine"
+                        className="rounded-button bg-brand px-4 py-2 type-sm text-surface-white hover:bg-brand-dark"
+                    >
                         Back to My Jobs
                     </Link>
                 </div>
