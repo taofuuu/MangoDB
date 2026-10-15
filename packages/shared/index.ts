@@ -449,6 +449,7 @@ export interface Project {
     status: ProjectStatus;
 }
 
+export type ViewMode = 'all' | 'rejected';
 // listing category
 export interface Category {
     catId: number;
