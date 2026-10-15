@@ -20,7 +20,9 @@ export default function JobListing({
     companyId: number;
     readOnly?: boolean;
 }) {
-    const [jobs, setJobs] = useState<JobPosting[]>([]);
+    // null until the list answers, so "Loading…" shows instead of a
+    // momentary "No job listings yet."
+    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
 
@@ -65,14 +67,17 @@ export default function JobListing({
             {/* Same inset panel the provider page's timeline sits in, and the
                 list scrolls inside it rather than growing the card. */}
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
-                {jobs.length === 0 && !loadError && (
+                {jobs === null && !loadError && (
+                    <p className="type-xs text-ink-placeholder">Loading…</p>
+                )}
+                {jobs?.length === 0 && !loadError && (
                     <p className="type-xs text-ink-placeholder">
                         {readOnly
                             ? 'No open job listings.'
                             : 'No job listings yet.'}
                     </p>
                 )}
-                {jobs.map((job) => (
+                {jobs?.map((job) => (
                     <div
                         key={job.jobPostingId}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"

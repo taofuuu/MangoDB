@@ -45,8 +45,10 @@ export default function ServicesSection({
 }) {
     const { companyId, companyName, companyPhoto, accountType } = profile;
     const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
-    const [services, setServices] = useState<ServiceRow[]>([]);
-    const [jobs, setJobs] = useState<JobPosting[]>([]);
+    // null until the list answers, so "Loading…" shows instead of a
+    // momentary "No services yet."
+    const [services, setServices] = useState<ServiceRow[] | null>(null);
+    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
     // One per tab, so a failed services load does not hide the jobs.
     const [servicesError, setServicesError] = useState<string | null>(null);
     const [jobsError, setJobsError] = useState<string | null>(null);
@@ -119,29 +121,32 @@ export default function ServicesSection({
 
     const loadError = activeTab === 'services' ? servicesError : jobsError;
 
-    const displayItems: DisplayItem[] =
+    // null while the active tab's list is still loading.
+    const displayItems: DisplayItem[] | null =
         activeTab === 'services'
-            ? services.map(({ summary, closed }) => ({
+            ? (services?.map(({ summary, closed }) => ({
                   id: summary.serviceId,
                   title: summary.listingTitle,
                   body: summary.listingDesc,
                   closed,
-              }))
-            : jobs.map((job) => ({
+              })) ?? null)
+            : (jobs?.map((job) => ({
                   id: job.jobPostingId,
                   title: job.listingTitle,
                   body: job.listingDesc,
                   closed: job.listingStatus === 'CLOSED',
-              }));
+              })) ?? null);
 
     const openDetail = (id: number) => {
         if (activeTab === 'services') {
             setSelectedService(
-                services.find(({ summary }) => summary.serviceId === id)
+                services?.find(({ summary }) => summary.serviceId === id)
                     ?.summary ?? null,
             );
         } else {
-            setSelectedJob(jobs.find((job) => job.jobPostingId === id) ?? null);
+            setSelectedJob(
+                jobs?.find((job) => job.jobPostingId === id) ?? null,
+            );
         }
     };
 
@@ -181,7 +186,12 @@ export default function ServicesSection({
 
                 {/* Display Content */}
                 <div className="space-y-3 overflow-y-auto max-h-[500px] flex-1 pr-2">
-                    {displayItems.length === 0 && !loadError && (
+                    {displayItems === null && !loadError && (
+                        <p className="py-2 type-xs text-ink-placeholder">
+                            Loading…
+                        </p>
+                    )}
+                    {displayItems?.length === 0 && !loadError && (
                         <p className="py-2 type-xs text-ink-placeholder">
                             {activeTab === 'services'
                                 ? 'No services yet.'
@@ -190,7 +200,7 @@ export default function ServicesSection({
                                   : 'No job listings yet.'}
                         </p>
                     )}
-                    {displayItems.map((item) => (
+                    {displayItems?.map((item) => (
                         <div
                             key={item.id}
                             className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1"
