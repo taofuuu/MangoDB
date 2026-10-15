@@ -29,9 +29,13 @@ function formatPortfolioDate(date: string): string {
 export function ServiceDetailPanel({
     service,
     onClose,
+    titleId,
 }: {
     service: ServiceSummary;
     onClose: () => void;
+    // Set when the panel sits in a dialog, so the dialog can name itself by
+    // the heading (aria-labelledby). The search page's side panel needs none.
+    titleId?: string;
 }) {
     const [portfolios, setPortfolios] = useState<ServicePortfolio[] | null>(
         null,
@@ -83,7 +87,7 @@ export function ServiceDetailPanel({
                 <div className="flex flex-col gap-[0.8vh]">
                     <span className="type-sm text-brand">Service Detail</span>
 
-                    <h2 className="type-lg !font-[700] text-ink">
+                    <h2 id={titleId} className="type-lg !font-[700] text-ink">
                         {service.listingTitle || '-'}
                     </h2>
                 </div>

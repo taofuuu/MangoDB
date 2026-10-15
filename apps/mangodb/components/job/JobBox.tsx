@@ -8,7 +8,6 @@ import {
     CalendarClock,
     Edit,
     FileX,
-    Trash,
     MapPin,
     Wallet,
     Tag,
@@ -88,8 +87,10 @@ export default function JobBox({
                         {job.listingTitle}
                     </h2>
 
-                    {/* More menu - only for My Jobs */}
-                    {isMyJobs && (
+                    {/* More menu - only for My Jobs, and only while OPEN:
+                        Edit and Close are its only actions. There is no
+                        Delete yet — no story and no DELETE endpoint. */}
+                    {isMyJobs && job.listingStatus === 'OPEN' && (
                         <div className="relative">
                             <button
                                 type="button"
@@ -116,40 +117,26 @@ export default function JobBox({
                                         shadow-lg
                                     "
                                 >
-                                    {job.listingStatus === 'OPEN' && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsMenuOpen(false);
-                                                    router.push(
-                                                        `/job-postings/${job.jobPostingId}/edit`,
-                                                    );
-                                                }}
-                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                            >
-                                                <Edit size={15} />
-                                                Edit
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                            >
-                                                <FileX size={15} />
-                                                Close
-                                            </button>
-
-                                            <hr className="my-1 border-0 border-t border-line" />
-                                        </>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.push(
+                                                `/job-postings/${job.jobPostingId}/edit`,
+                                            );
+                                        }}
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                    >
+                                        <Edit size={15} />
+                                        Edit
+                                    </button>
 
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left text-danger hover:bg-danger-wash"
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
-                                        <Trash size={15} />
-                                        Delete
+                                        <FileX size={15} />
+                                        Close
                                     </button>
                                 </div>
                             )}

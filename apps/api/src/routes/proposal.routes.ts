@@ -4,6 +4,7 @@ import {
     acceptProposal,
     rejectProposal,
     listMyProposals,
+    getMyProposalCounts,
 } from '../controllers/proposal.controller';
 
 export const proposalRoutes = Router();
@@ -15,6 +16,16 @@ proposalRoutes.get(
     requireAuth,
     requireRole('provider'),
     listMyProposals,
+);
+
+// US2-9. The provider's proposal counts by status, for the page's chips. Its
+// own endpoint so /mine stays { items, pagination } (conventions §3).
+// Same guards as /mine.
+proposalRoutes.get(
+    '/mine/counts',
+    requireAuth,
+    requireRole('provider'),
+    getMyProposalCounts,
 );
 
 // Accept a proposal: closes the listing, rejects the other pending proposals

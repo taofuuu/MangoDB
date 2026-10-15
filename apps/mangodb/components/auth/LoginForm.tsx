@@ -52,7 +52,8 @@ export default function LoginForm() {
             await login(identifier, password);
             const nextParam = searchParams.get('next');
             const safeNext = sanitizeReturnUrl(nextParam);
-            router.push(safeNext ?? '/');
+            // No return URL: your profile, not the dev index at /.
+            router.push(safeNext ?? '/profile/view');
         } catch (err) {
             setError(
                 describeError(err, {
@@ -99,12 +100,8 @@ export default function LoginForm() {
                     error={passwordError ?? undefined}
                     required
                 />
-                <Link
-                    href="/forgot-password"
-                    className="self-end type-xs text-orange hover:underline"
-                >
-                    Forgot Password ?
-                </Link>
+                {/* No "Forgot password" link yet: there is no page or story
+                    behind it. */}
             </div>
 
             <p
