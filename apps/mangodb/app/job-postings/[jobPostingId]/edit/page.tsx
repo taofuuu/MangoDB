@@ -146,7 +146,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     </p>
                     <Link
                         href="/job-postings/mine"
-                        className="type-sm text-brand underline"
+                        className="rounded-button bg-brand px-4 py-2 type-sm text-surface-white hover:bg-brand-dark"
                     >
                         Back to My Jobs
                     </Link>
