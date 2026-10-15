@@ -4,6 +4,7 @@ import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
 import ModalShell from '@/components/ui/ModalShell';
+import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
 import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
@@ -210,9 +211,11 @@ export default function ServicesSection({
                                     {item.title || 'Untitled Item'}
                                 </span>
                                 {item.closed && (
-                                    <span className="ml-auto shrink-0 rounded-status bg-danger-tint px-2 type-xs text-danger">
-                                        Closed
-                                    </span>
+                                    <Tag
+                                        size="sm"
+                                        label="Closed"
+                                        className="ml-auto shrink-0 bg-danger-tint text-danger"
+                                    />
                                 )}
                                 <button
                                     type="button"

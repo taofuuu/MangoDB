@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import type { JobPosting } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
+import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
 import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
@@ -82,12 +83,16 @@ export default function JobListing({
                         key={job.jobPostingId}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
                     >
-                        <div className="flex flex-1 items-center gap-2 type-sm !font-bold text-gray-900">
-                            {job.listingTitle}
+                        <div className="flex flex-1 items-center gap-2">
+                            <span className="type-sm !font-bold text-gray-900">
+                                {job.listingTitle}
+                            </span>
                             {job.listingStatus === 'CLOSED' && (
-                                <span className="shrink-0 rounded-status bg-danger-tint px-2 type-xs !font-normal text-danger">
-                                    Closed
-                                </span>
+                                <Tag
+                                    size="sm"
+                                    label="Closed"
+                                    className="shrink-0 bg-danger-tint text-danger"
+                                />
                             )}
                         </div>
 
