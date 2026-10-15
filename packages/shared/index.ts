@@ -55,6 +55,7 @@ export type ApiErrorCode =
     | 'FORBIDDEN'
     | 'NOT_FOUND'
     | 'CONFLICT'
+    | 'TOO_MANY_REQUESTS'
     | 'INTERNAL';
 
 // One per bad field, so a form can show each message beside its own input.

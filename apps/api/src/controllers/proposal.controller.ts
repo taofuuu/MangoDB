@@ -35,8 +35,10 @@ export async function createProposal(
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 
+    // A soft-deleted company's postings stay OPEN in the table, so the where
+    // hides them here, the same 404 that GET /job-postings/:id gives.
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobPostingId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
