@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
@@ -56,6 +56,7 @@ export default function ServicesSection({
     const [selectedService, setSelectedService] =
         useState<ServiceSummary | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const serviceTitleId = useId();
 
     useEffect(() => {
         let cancelled = false;
@@ -239,13 +240,14 @@ export default function ServicesSection({
             <ModalShell
                 isOpen={selectedService !== null}
                 onClose={() => setSelectedService(null)}
-                labelledBy="service-detail-title"
+                labelledBy={serviceTitleId}
                 backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
             >
                 {selectedService && (
                     <ServiceDetailPanel
                         service={selectedService}
                         onClose={() => setSelectedService(null)}
+                        titleId={serviceTitleId}
                     />
                 )}
             </ModalShell>
