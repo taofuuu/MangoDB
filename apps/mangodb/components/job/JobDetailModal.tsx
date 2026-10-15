@@ -34,7 +34,22 @@ export default function JobDetailModal({
             role="dialog"
             labelledBy="job-detail-title"
             backdropClassName="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 p-[2.08vw]"
-            panelClassName="flex max-h-[92vh] w-[54.68vw] flex-col gap-[3.425vh] overflow-y-auto rounded-popup bg-surface pl-[2.29vw] pr-[2.29vw] pt-[3.33vh] pb-[4vh] leading-relaxed shadow-xl"
+            panelClassName="
+                flex
+                max-h-[80vh]
+                min-h-[60vh]
+                w-[54.68vw]
+                flex-col
+                overflow-hidden
+                rounded-popup
+                bg-surface
+                pl-[2.29vw]
+                pr-[2.29vw]
+                pt-[3.33vh]
+                pb-[4vh]
+                leading-relaxed
+                shadow-xl
+            "
         >
             {/* Header */}
             <div className="flex items-start justify-between gap-[1.04vw]">
@@ -42,14 +57,14 @@ export default function JobDetailModal({
                     {/* Categories */}
                     <div className="flex items-center gap-[0.52vw]">
                         <Tag size={20} />
-                        <div className="flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
+                        <div className="flex min-h-[2.22vh] type-sm flex-wrap gap-[0.42vw]">
                             {job.categories && job.categories.length > 0 ? (
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
                                         className="
                                                     rounded-status
-                                                    bg-accent
+                                                    bg-accent-tint
                                                     px-[0.63vw]
                                                     py-[0.19vh]
                                                 "
@@ -113,9 +128,10 @@ export default function JobDetailModal({
                 <div
                     className="
                             flex
+                            min-h-0
+                            flex-1
                             flex-col
-                            items-center
-                            justify-center
+                            overflow-y-auto
                             gap-[3.425vh]
                         "
                 >
@@ -138,12 +154,15 @@ export default function JobDetailModal({
 
                             <p
                                 className="
-                                        mt-[1vh]
-                                        mb-[1vh]
-                                        ml-[1vw]
-                                        leading-relaxed
-                                        text-ink
-                                    "
+                                    mt-[1vh]
+                                    mb-[1vh]
+                                    ml-[1vw]
+                                    min-w-0
+                                    break-words
+                                    whitespace-pre-wrap
+                                    leading-relaxed
+                                    text-ink
+                                "
                             >
                                 {job.listingDesc ||
                                     'No job description provided.'}

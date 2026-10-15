@@ -72,12 +72,27 @@ export function getJobPosting(jobPostingId: number): Promise<JobPosting> {
 
 //POST job
 export type CreateJobPosting = CreateJobPostingRequest;
-export type UpdateJobPosting = UpdateJobPostingRequest;
 
 export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
     return invalidateAfter(
         apiFetch<JobPosting>('/job-postings', {
             method: 'POST',
+            body: JSON.stringify(data),
+        }),
+        '/job-postings',
+    );
+}
+
+//UPDATE job
+export type UpdateJobPosting = UpdateJobPostingRequest;
+
+export function updateJobPosting(
+    jobPostingId: number,
+    data: UpdateJobPosting,
+): Promise<JobPosting> {
+    return invalidateAfter(
+        apiFetch<JobPosting>(`/job-postings/${jobPostingId}`, {
+            method: 'PATCH',
             body: JSON.stringify(data),
         }),
         '/job-postings',

@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import CategorySelector from '../ui/CategorySelector';
-import { createJobPosting, type CreateJobPosting } from '@/lib/jobPostings';
+import {
+    createJobPosting,
+    type CreateJobPosting,
+    updateJobPosting,
+    type UpdateJobPosting,
+} from '@/lib/jobPostings';
 import { toFormErrors } from '@/lib/validation';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
-import type { Category } from '@mangodb/shared';
+import type { Category, JobPosting } from '@mangodb/shared';
 import { listCategories } from '@/lib/categories';
 import { describeError } from '@/lib/api';
 
@@ -48,18 +53,39 @@ type JobErrors = Partial<
         string
     >
 >;
-export default function JobForm() {
-    const [listingTitle, setListingTitle] = useState('');
-    const [listingDesc, setListingDesc] = useState('');
-    const [minBudget, setMinBudget] = useState('');
-    const [maxBudget, setMaxBudget] = useState('');
-    const [locationPref, setLocationPref] = useState('');
-    const [duration, setDuration] = useState('');
-    const [deadline, setDeadline] = useState('');
+
+type JobFormProps = {
+    jobPostingId?: number;
+    initialJob?: JobPosting;
+};
+
+export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
+    const [listingTitle, setListingTitle] = useState(
+        initialJob?.listingTitle ?? '',
+    );
+    const [listingDesc, setListingDesc] = useState(
+        initialJob?.listingDesc ?? '',
+    );
+    const [minBudget, setMinBudget] = useState(
+        initialJob?.minBudget != null ? String(initialJob.minBudget) : '',
+    );
+    const [maxBudget, setMaxBudget] = useState(
+        initialJob?.maxBudget != null ? String(initialJob.maxBudget) : '',
+    );
+    const [locationPref, setLocationPref] = useState(
+        initialJob?.locationPref ?? '',
+    );
+    const [duration, setDuration] = useState(initialJob?.duration ?? '');
+    const [deadline, setDeadline] = useState(
+        initialJob?.deadline?.slice(0, 10) ?? '',
+    );
+
     const [categories, setCategories] = useState<Category[]>([]);
     const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
     const [categoriesError, setCategoriesError] = useState<string | null>(null);
-    const [categoryIds, setCategoryIds] = useState<number[]>([]);
+    const [categoryIds, setCategoryIds] = useState<number[]>(
+        initialJob?.categoryIds ?? [],
+    );
 
     const [errors, setErrors] = useState<JobErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
@@ -120,8 +146,15 @@ export default function JobForm() {
         const locationError = validateJobLocation(locationPref);
         if (locationError) newErrors.location = locationError;
 
-        const deadlineError = validateJobDeadline(deadline);
-        if (deadlineError) newErrors.deadline = deadlineError;
+        const initialDeadline = initialJob?.deadline?.slice(0, 10);
+
+        if (!initialJob || deadline !== initialDeadline) {
+            const deadlineError = validateJobDeadline(deadline);
+
+            if (deadlineError) {
+                newErrors.deadline = deadlineError;
+            }
+        }
 
         setErrors(newErrors);
 
@@ -151,22 +184,80 @@ export default function JobForm() {
             return;
         }
 
+        const normalizedTitle = listingTitle.trim();
+        const normalizedDescription = listingDesc.trim();
+        const normalizedLocation = locationPref.trim() || null;
+        const normalizedDuration = duration.trim() || null;
+        const normalizedDeadline = deadline.trim() || null;
+
         try {
             setIsLoading(true);
 
-            const data: CreateJobPosting = {
-                listingTitle: listingTitle.trim(),
-                listingDesc: listingDesc.trim(),
-                minBudget: parsedMinBudget,
-                maxBudget: parsedMaxBudget,
-                locationPref: locationPref.trim() || null,
-                duration: duration.trim() || null,
-                deadline: deadline.trim() || null,
-                categoryIds,
-            };
+            if (jobPostingId !== undefined && initialJob) {
+                // Edit mode: send only fields that changed.
+                const data: UpdateJobPosting = {};
 
-            await createJobPosting(data);
-            router.push('/job-postings/mine?success=posted');
+                if (normalizedTitle !== initialJob.listingTitle) {
+                    data.listingTitle = normalizedTitle;
+                }
+
+                if (normalizedDescription !== initialJob.listingDesc) {
+                    data.listingDesc = normalizedDescription;
+                }
+
+                if (parsedMinBudget !== initialJob.minBudget) {
+                    data.minBudget = parsedMinBudget;
+                }
+
+                if (parsedMaxBudget !== initialJob.maxBudget) {
+                    data.maxBudget = parsedMaxBudget;
+                }
+
+                if (normalizedLocation !== initialJob.locationPref) {
+                    data.locationPref = normalizedLocation;
+                }
+
+                if (normalizedDuration !== initialJob.duration) {
+                    data.duration = normalizedDuration;
+                }
+
+                if (normalizedDeadline !== initialJob.deadline) {
+                    data.deadline = normalizedDeadline;
+                }
+
+                const sameCategories =
+                    categoryIds.length === initialJob.categoryIds.length &&
+                    categoryIds.every((id) =>
+                        initialJob.categoryIds.includes(id),
+                    );
+
+                if (!sameCategories) {
+                    data.categoryIds = categoryIds;
+                }
+
+                if (Object.keys(data).length === 0) {
+                    setFormError('No changes to save.');
+                    return;
+                }
+
+                await updateJobPosting(jobPostingId, data);
+                router.push('/job-postings/mine?success=updated');
+            } else {
+                // Create mode: preserve the existing behavior.
+                const data: CreateJobPosting = {
+                    listingTitle: normalizedTitle,
+                    listingDesc: normalizedDescription,
+                    minBudget: parsedMinBudget,
+                    maxBudget: parsedMaxBudget,
+                    locationPref: normalizedLocation,
+                    duration: normalizedDuration,
+                    deadline: normalizedDeadline,
+                    categoryIds,
+                };
+
+                await createJobPosting(data);
+                router.push('/job-postings/mine?success=posted');
+            }
         } catch (cause: unknown) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
             setErrors(fields);
@@ -312,10 +403,12 @@ export default function JobForm() {
                 <Button
                     type="submit"
                     isLoading={isLoading}
-                    loadingLabel="Posting..."
+                    loadingLabel={
+                        jobPostingId !== undefined ? 'Saving...' : 'Posting...'
+                    }
                     className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light disabled:opacity-50"
                 >
-                    Post
+                    {jobPostingId !== undefined ? 'Save Changes' : 'Post'}
                 </Button>
             </div>
         </form>

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { formatBudgetRange } from '@/lib/money';
 
@@ -49,7 +50,7 @@ export default function JobBox({
         setIsDetailOpen(false);
     };
 
-    // const router = useRouter();
+    const router = useRouter();
 
     return (
         <>
@@ -120,10 +121,12 @@ export default function JobBox({
                                 >
                                     <button
                                         type="button"
-                                        // onClick={() => {
-                                        //     setIsMenuOpen(false);
-                                        //     router.push(`/job-postings/${job.jobPostingId}/edit`);
-                                        // }}
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.push(
+                                                `/job-postings/${job.jobPostingId}/edit`,
+                                            );
+                                        }}
                                         className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
                                         <Edit size={15} />
@@ -153,7 +156,7 @@ export default function JobBox({
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
-                                        className="rounded-status bg-accent px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
+                                        className="rounded-status bg-accent-tint px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
                                     >
                                         {category}
                                     </span>
