@@ -159,7 +159,7 @@ export default function CompanySearchPage() {
                                 type="button"
                                 onClick={clearSearch}
                                 aria-label="Clear search"
-                                className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:outline-none"
+                                className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                             >
                                 <X
                                     aria-hidden="true"
