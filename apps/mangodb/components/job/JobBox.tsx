@@ -15,6 +15,8 @@ import {
 
 import { useState } from 'react';
 
+import { formatBudgetRange } from '@/lib/money';
+
 import JobDetailModal from './JobDetailModal';
 
 interface JobBoxProps {
@@ -175,14 +177,7 @@ export default function JobBox({
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
-                        {job.minBudget != null
-                            ? job.minBudget.toLocaleString()
-                            : '-'}
-                        {' - '}
-                        {job.maxBudget != null
-                            ? job.maxBudget.toLocaleString()
-                            : '-'}{' '}
-                        THB
+                        {formatBudgetRange(job.minBudget, job.maxBudget)}
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
