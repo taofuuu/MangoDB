@@ -116,26 +116,6 @@ export const EMPTY_SEARCH_SERVICES_FILTERS: SearchServicesFilters = {
     maxBudget: null,
 };
 
-export function formatServiceBudgetRange(
-    minBudget: number | null,
-    maxBudget: number | null,
-): string {
-    const format = (value: number) => `฿${value.toLocaleString('en-US')}`;
-
-    if (minBudget == null && maxBudget != null) {
-        return `Up to ${format(maxBudget)}`;
-    }
-    if (minBudget != null && maxBudget == null) {
-        return `From ${format(minBudget)}`;
-    }
-
-    if (minBudget != null && maxBudget != null) {
-        return `${format(minBudget)} – ${format(maxBudget)}`;
-    }
-
-    return 'Contact for pricing';
-}
-
 export type SearchServicesParams = {
     q: string;
     orderBy: SearchServicesOrder;

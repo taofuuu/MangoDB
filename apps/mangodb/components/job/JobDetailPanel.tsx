@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
 import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { formatBudgetRange } from '@/lib/money';
 import { isProviderAccount } from '@/lib/roles';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -147,8 +148,8 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Budget</span>
 
-                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
-                            {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
+                        <p className="type-md text-ink pl-[0.5vw]">
+                            {formatBudgetRange(job.minBudget, job.maxBudget)}
                         </p>
                     </div>
 

@@ -7,8 +7,8 @@ import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
 import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
+import { formatBudgetRange } from '@/lib/money';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { formatServiceBudgetRange } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // A receiver's job postings. Another company's profile (readOnly) shows only
@@ -102,7 +102,7 @@ export default function JobListing({
                                     Budget
                                 </span>
                                 <span className="font-semibold text-gray-800">
-                                    {formatServiceBudgetRange(
+                                    {formatBudgetRange(
                                         job.minBudget,
                                         job.maxBudget,
                                     )}
