@@ -103,7 +103,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
 
                 <Link
                     href="/job-postings/mine"
-                    className="type-sm text-[#497B93] underline"
+                    className="type-sm text-brand underline"
                 >
                     Back to My Jobs
                 </Link>
