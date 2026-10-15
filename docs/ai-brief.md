@@ -287,9 +287,8 @@ Every row has really happened on this codebase.
 
 Saying "that isn't built" is a useful answer. Inventing it is not.
 
-- `/forgot-password` — linked from the login form, no route behind it
-- `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
-  mock data, no API
+- `/forgot-password` — no route and no story; the login form no longer links it
+- `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - A price or delivery duration on a service — `service` holds only `listing_id`

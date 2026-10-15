@@ -273,8 +273,10 @@ export default function JobDetailModal({
                         >
                             <span>Company</span>
 
+                            {/* The posting's own company: this popup also opens
+                                from another company's profile. */}
                             <Link
-                                href="/profile/view"
+                                href={`/profile/${job.companyId}`}
                                 className="!font-[600] text-ink hover:underline"
                             >
                                 {job.companyName}
