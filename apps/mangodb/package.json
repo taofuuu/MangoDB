@@ -8,7 +8,7 @@
         "start": "next start",
         "lint": "eslint",
         "typecheck": "next typegen && tsc --noEmit",
-        "test": "node --import tsx --test --test-force-exit lib/apiCache.test.ts lib/apiCache.crossTab.test.ts"
+        "test": "node --import tsx --test --test-force-exit \"lib/**/*.test.ts\""
     },
     "dependencies": {
         "@mangodb/shared": "*",
