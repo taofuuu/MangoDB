@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { CompanyProfile } from '@mangodb/shared';
 import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
-import { applySavedNavPrefs } from '@/lib/navTheme';
 import ProfileMenu from './ProfileMenu';
 
 // The bar across the top of every page: logo on the left, the signed-in
@@ -21,9 +20,9 @@ const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
 const NAV_LINKS = [
-    { href: '/job/view-all', label: 'Search jobs', shortLabel: 'Jobs' },
+    { href: '/job-postings', label: 'Search jobs', shortLabel: 'Jobs' },
     {
-        href: '/services/search',
+        href: '/services',
         label: 'Search services',
         shortLabel: 'Services',
     },
@@ -43,8 +42,8 @@ export default function Navbar() {
     const isHidden = HIDDEN_ON.includes(pathname);
     const [state, setState] = useState<ProfileState>({ status: 'loading' });
 
-    // Once per page load. The layout keeps this mounted across client-side
-    // navigation, so moving between pages does not refetch.
+    // Again on every page change. getMyProfile is cached, so this is usually
+    // free, and an edited name or photo shows up right after saving.
     useEffect(() => {
         if (isHidden) return;
 
@@ -55,24 +54,16 @@ export default function Navbar() {
                     status: isNotSignedIn(err) ? 'signed-out' : 'error',
                 }),
             );
-    }, [isHidden]);
-
-    // The <head> script sets the saved style and height before paint. In
-    // development, Strict Mode's remount resets <html> to its JSX attributes
-    // and drops them, so put them back before paint. A no-op in production.
-    useLayoutEffect(() => {
-        applySavedNavPrefs();
-    }, []);
+    }, [isHidden, pathname]);
 
     if (isHidden) return null;
 
     return (
-        // The colours come from the navbar style picked in the profile menu
-        // (--nav-* in globals.css). Every style is light, so the accents
-        // inside stay teal, the app's action colour.
-        <header className="sticky top-0 z-30 border-b border-(--nav-line) bg-(--nav-bg) shadow-(--nav-shadow)">
-            {/* --nav-height: the height picked in the profile menu. */}
-            <nav className="flex h-(--nav-height) items-center justify-between gap-6 px-[2.19vw]">
+        // The page's cream with a grey line and a soft shadow in the brand's
+        // deep teal. The accents inside stay teal, the app's action colour.
+        <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_rgb(30_67_83/0.18)]">
+            {/* 108px is the navbar frame's height in the Figma design. */}
+            <nav className="flex h-[108px] items-center justify-between gap-6 px-[2.19vw]">
                 <Link
                     href="/"
                     aria-label="MangoDB home"
@@ -81,10 +72,10 @@ export default function Navbar() {
                     <Image
                         src="/assets/MangoDB_Logo_nobg.png"
                         alt=""
-                        width={160}
+                        width={48}
                         height={48}
                         priority
-                        className="h-12 w-auto object-contain"
+                        className="h-12 w-12 object-contain"
                     />
                     {/* Hidden on phones, where it would push the links and the
                         avatar off the edge. The logo still says "home". */}
@@ -96,7 +87,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-4 sm:gap-8 xl:gap-10">
                     <ul className="flex items-center gap-3 sm:gap-6 xl:gap-8">
                         {NAV_LINKS.map((link) => {
-                            const isCurrent = pathname.startsWith(link.href);
+                            const isCurrent = pathname === link.href;
                             return (
                                 <li key={link.href}>
                                     <Link

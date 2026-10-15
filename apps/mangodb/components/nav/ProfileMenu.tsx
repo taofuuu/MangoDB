@@ -5,17 +5,10 @@ import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import LogoutButton from '@/components/auth/LogoutButton';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import {
-    NAV_SIZES,
-    NAV_THEMES,
-    type NavPrefValue,
-    readNavPref,
-    saveNavPref,
-} from '@/lib/navTheme';
 
 // The avatar button and the small panel it opens, like GitHub's profile menu:
 // who is signed in at the top, then View profile, Edit profile, Settings and
-// Logout, and pickers for the navbar's style and height at the bottom.
+// Logout.
 //
 // The panel stays mounted and is only hidden when closed. LogoutButton owns
 // its confirmation modal, so unmounting the panel would unmount the modal too.
@@ -25,13 +18,6 @@ import {
 const ITEM_CLASS =
     'block w-full rounded-lg px-3 py-2 text-left type-sm text-ink transition-colors hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline-none cursor-pointer';
 
-// One option in the style or height picker.
-function optionClass(isSelected: boolean): string {
-    return `flex items-center gap-2 rounded-lg px-2 py-1.5 text-left type-xs text-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand cursor-pointer ${
-        isSelected ? 'bg-brand-tint ring-1 ring-brand' : 'hover:bg-brand-tint'
-    }`;
-}
-
 type ProfileMenuProps = {
     profile: CompanyProfile;
 };
@@ -40,16 +26,6 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
     const panelId = useId();
-    const styleLabelId = useId();
-    const heightLabelId = useId();
-    // Read straight from storage: this menu only mounts in the browser, after
-    // the profile has loaded, so there is no server render to disagree with.
-    const [navTheme, setNavTheme] = useState<NavPrefValue<'theme'>>(() =>
-        readNavPref('theme'),
-    );
-    const [navSize, setNavSize] = useState<NavPrefValue<'size'>>(() =>
-        readNavPref('size'),
-    );
 
     // Only listen while open: a closed menu has nothing to close.
     useEffect(() => {
@@ -145,78 +121,6 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                     >
                         Logout
                     </LogoutButton>
-                </div>
-
-                <div className="mt-1 border-t border-line px-3 pt-2.5 pb-1.5">
-                    <p id={styleLabelId} className="type-xs text-ink-soft">
-                        Navbar style
-                    </p>
-                    <div
-                        role="radiogroup"
-                        aria-labelledby={styleLabelId}
-                        className="mt-2 grid grid-cols-2 gap-1.5"
-                    >
-                        {NAV_THEMES.map((theme) => {
-                            const isSelected = theme.id === navTheme;
-                            return (
-                                <button
-                                    key={theme.id}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={isSelected}
-                                    onClick={() => {
-                                        setNavTheme(theme.id);
-                                        saveNavPref('theme', theme.id);
-                                    }}
-                                    className={optionClass(isSelected)}
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        style={{
-                                            backgroundColor: theme.swatch,
-                                        }}
-                                        className={`h-4 w-4 shrink-0 rounded-full border border-line ${
-                                            theme.id === 'shadow'
-                                                ? 'shadow-[0_2px_4px_rgb(30_67_83/0.3)]'
-                                                : ''
-                                        }`}
-                                    />
-                                    {theme.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <p
-                        id={heightLabelId}
-                        className="mt-3 type-xs text-ink-soft"
-                    >
-                        Navbar height
-                    </p>
-                    <div
-                        role="radiogroup"
-                        aria-labelledby={heightLabelId}
-                        className="mt-2 grid grid-cols-2 gap-1.5"
-                    >
-                        {NAV_SIZES.map((size) => {
-                            const isSelected = size.id === navSize;
-                            return (
-                                <button
-                                    key={size.id}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={isSelected}
-                                    onClick={() => {
-                                        setNavSize(size.id);
-                                        saveNavPref('size', size.id);
-                                    }}
-                                    className={optionClass(isSelected)}
-                                >
-                                    {size.label}
-                                </button>
-                            );
-                        })}
-                    </div>
                 </div>
             </div>
         </div>
