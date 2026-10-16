@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useId, useState } from 'react';
+import Link from 'next/link';
 import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
@@ -9,7 +10,7 @@ import { describeError, isNotSignedIn } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
 import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { isReceiverAccount } from '@/lib/roles';
+import { ownProfileListingTabs, type ListingTab } from '@/lib/roles';
 import {
     listCompanyServices,
     listMyServices,
@@ -17,6 +18,11 @@ import {
     type ServiceSummary,
 } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
+
+const TAB_LABELS: Record<ListingTab, string> = {
+    services: 'Services',
+    jobs: 'Job Listing',
+};
 
 interface DisplayItem {
     id: number;
@@ -45,7 +51,13 @@ export default function ServicesSection({
     readOnly?: boolean;
 }) {
     const { companyId, companyName, companyPhoto, accountType } = profile;
-    const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
+    // Your own profile shows only the tabs your role has listings in.
+    const tabs: ListingTab[] = readOnly
+        ? ['services', 'jobs']
+        : ownProfileListingTabs(accountType);
+    const [activeTab, setActiveTab] = useState<ListingTab>(
+        tabs[0] ?? 'services',
+    );
     // null until the list answers, so "Loading…" shows instead of a
     // momentary "No services yet."
     const [services, setServices] = useState<ServiceRow[] | null>(null);
@@ -77,14 +89,14 @@ export default function ServicesSection({
                       })),
               );
 
-        // GET /job-postings/mine is receiver-only, so a PROVIDER-only
-        // company's own profile has no jobs to ask for.
+        // GET /job-postings/mine is receiver-only, so only a profile with a
+        // Job Listing tab asks for its jobs.
         const loadJobs: Promise<JobPosting[]> = readOnly
             ? listJobPostings(1, PROFILE_LIST_SIZE, {
                   companyId,
                   status: 'OPEN',
               }).then((data) => data.items)
-            : isReceiverAccount(accountType)
+            : ownProfileListingTabs(accountType).includes('jobs')
               ? listMyJobPostings(1, PROFILE_LIST_SIZE).then(
                     (data) => data.items,
                 )
@@ -155,31 +167,23 @@ export default function ServicesSection({
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
             <main className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
-                {/* Tab Switcher. Full width, so the two tabs split the card
+                {/* Tab Switcher. Full width, so the tabs split the card
                     rather than huddling in one corner of it. */}
                 <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('services')}
-                        className={`flex-1 py-1.5 rounded-button font-medium transition ${
-                            activeTab === 'services'
-                                ? 'bg-white shadow text-brand'
-                                : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    >
-                        Services
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('jobs')}
-                        className={`flex-1 py-1.5 rounded-button font-medium transition ${
-                            activeTab === 'jobs'
-                                ? 'bg-white shadow text-brand'
-                                : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    >
-                        Job Listing
-                    </button>
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setActiveTab(tab)}
+                            className={`flex-1 py-1.5 rounded-button font-medium transition ${
+                                activeTab === tab
+                                    ? 'bg-white shadow text-brand'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {TAB_LABELS[tab]}
+                        </button>
+                    ))}
                 </div>
 
                 {loadError && (
@@ -233,6 +237,19 @@ export default function ServicesSection({
                         </div>
                     ))}
                 </div>
+
+                {/* The profile only previews your jobs; the full list, with
+                    its filters and edit actions, is the My Jobs page. */}
+                {!readOnly && activeTab === 'jobs' && (
+                    <div className="mt-3 text-right">
+                        <Link
+                            href="/job-postings/mine"
+                            className="type-xs text-brand hover:underline font-medium"
+                        >
+                            See more
+                        </Link>
+                    </div>
+                )}
             </main>
 
             {/* ServiceDetailPanel is the search page's side panel; here it
