@@ -1,6 +1,7 @@
 /*
- * Tests for ownProfileListingTabs in lib/roles.ts: which listing tabs your own
- * profile's ServicesSection shows.
+ * Tests for profileListingTabs in lib/roles.ts: which listing tabs a
+ * profile's ServicesSection shows, on your own profile and on another
+ * company's.
  *
  * - A PROVIDER-only company only offers work, so it gets the Services tab
  *   alone. It cannot post job listings, so a Job Listing tab would always be
@@ -17,23 +18,23 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ownProfileListingTabs } from './roles';
+import { profileListingTabs } from './roles';
 
-describe('ownProfileListingTabs', () => {
+describe('profileListingTabs', () => {
     it('gives a PROVIDER only the Services tab', () => {
-        assert.deepEqual(ownProfileListingTabs('PROVIDER'), ['services']);
+        assert.deepEqual(profileListingTabs('PROVIDER'), ['services']);
     });
 
     it('gives a BOTH company Services, then Job Listing', () => {
-        assert.deepEqual(ownProfileListingTabs('BOTH'), ['services', 'jobs']);
+        assert.deepEqual(profileListingTabs('BOTH'), ['services', 'jobs']);
     });
 
     it('gives a RECEIVER only the Job Listing tab', () => {
-        assert.deepEqual(ownProfileListingTabs('RECEIVER'), ['jobs']);
+        assert.deepEqual(profileListingTabs('RECEIVER'), ['jobs']);
     });
 
     it('gives an unknown account type no tabs', () => {
-        assert.deepEqual(ownProfileListingTabs('ADMIN'), []);
-        assert.deepEqual(ownProfileListingTabs('SOMETHING_NEW'), []);
+        assert.deepEqual(profileListingTabs('ADMIN'), []);
+        assert.deepEqual(profileListingTabs('SOMETHING_NEW'), []);
     });
 });
