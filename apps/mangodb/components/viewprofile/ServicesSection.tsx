@@ -288,6 +288,19 @@ export default function ServicesSection({
                         </Link>
                     </div>
                 )}
+
+                {/* Another company's profile previews its services; the
+                    full list, with paging, is its services page. */}
+                {readOnly && activeTab === 'services' && (
+                    <div className="mt-3 text-right">
+                        <Link
+                            href={`/services/by-company?companyId=${companyId}`}
+                            className="type-xs text-brand hover:underline font-medium"
+                        >
+                            See more
+                        </Link>
+                    </div>
+                )}
             </main>
 
             {/* ServiceDetailPanel is the search page's side panel; here it
