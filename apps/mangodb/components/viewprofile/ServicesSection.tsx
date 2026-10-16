@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useId, useState } from 'react';
+import Link from 'next/link';
 import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
@@ -236,6 +237,17 @@ export default function ServicesSection({
                         </div>
                     ))}
                 </div>
+
+                {/* The profile only previews your jobs; the full list, with
+                    its filters and edit actions, is US2-7's page. */}
+                {!readOnly && activeTab === 'jobs' && (
+                    <Link
+                        href="/job-postings/mine"
+                        className="mt-3 self-end type-xs !font-medium text-brand hover:underline"
+                    >
+                        Show more →
+                    </Link>
+                )}
             </main>
 
             {/* ServiceDetailPanel is the search page's side panel; here it

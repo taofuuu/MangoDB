@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { JobPosting } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import Tag from '@/components/ui/Tag';
@@ -132,6 +133,17 @@ export default function JobListing({
                     </div>
                 ))}
             </div>
+
+            {/* The profile only previews your jobs; the full list, with its
+                filters and edit actions, is US2-7's page. */}
+            {!readOnly && (
+                <Link
+                    href="/job-postings/mine"
+                    className="mt-3 self-end px-1 type-xs !font-medium text-brand hover:underline"
+                >
+                    Show more →
+                </Link>
+            )}
 
             {selectedJob && (
                 <JobDetailModal
