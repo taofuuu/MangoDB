@@ -8,6 +8,14 @@ datasource db {
   provider = "postgresql"
 }
 
+// Models are PascalCase and fields are camelCase, with @map / @@map carrying
+// the real snake_case table and column names. See docs/conventions.md section 1:
+// snake_case stops at the database, and this file is where it stops.
+//
+// @map changes no database column. It only changes what Prisma calls one, so
+// nothing here needs a migration and `prisma migrate diff` reports no drift.
+// `npm run db:pull` preserves these renames, so re-introspecting is safe.
+
 model Category {
   catId           Int               @id @default(autoincrement()) @map("cat_id")
   catName         String            @unique @map("cat_name") @db.VarChar(100)
@@ -46,8 +54,21 @@ model Company {
   website            String?       @db.VarChar(255)
   accountType        String        @map("account_type") @db.VarChar(100)
   contactEmail       String?       @map("contact_email") @db.VarChar(100)
-  deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  // Public URL of the photo in the `profile` storage bucket. Null until the
+  // company uploads one. Same shape as certImage and portfolioImage: the
+  // bytes live in storage, the column only points at them.
   companyPhoto       String?       @map("company_photo") @db.VarChar(255)
+  // Soft delete. Null means active; a timestamp means the account is gone as
+  // far as discovery is concerned, while everything it is attached to -
+  // listings, proposals, projects, reviews - stays exactly where it is.
+  //
+  // The rule this creates: discovery queries (company search, browse, find a
+  // provider) filter on deletedAt; history queries (past projects, reviews)
+  // must NOT, or they hide the very history this column exists to keep.
+  deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  // When the company accepted the Terms of Service at registration. Nullable
+  // because accounts created before the ToS existed never accepted it; new
+  // registrations set it (T1.13.5).
   tosAcceptedAt      DateTime?     @map("tos_accepted_at") @db.Timestamptz(6)
   companyType        CompanyType[]
   listing            Listing[]
@@ -86,8 +107,8 @@ model Listing {
   minBudget       Int?              @map("min_budget")
   maxBudget       Int?              @map("max_budget")
   listingStatus   String            @map("listing_status") @db.VarChar(50)
-  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   listingType     String            @map("listing_type") @db.VarChar(20)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   jobRequirement  JobRequirement?
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]
@@ -115,7 +136,7 @@ model Project {
   endDate         DateTime?         @map("end_date") @db.Date
   comment         String?
   status          String            @db.VarChar(50)
-  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onUpdate: NoAction)
+  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
   projectContract ProjectContract[]
   rating          Rating[]
 
@@ -137,8 +158,8 @@ model Proposal {
   senderId       Int      @map("sender_id")
   proposalBudget Decimal  @map("proposal_budget") @db.Decimal(12, 2)
   proposalTerms  String   @map("proposal_terms")
-  proposalStatus String   @map("proposal_status") @db.VarChar(50)
   duration       Decimal  @db.Decimal(4, 1)
+  proposalStatus String   @map("proposal_status") @db.VarChar(50)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   project        Project?
   listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
@@ -184,6 +205,8 @@ model Service {
   @@map("service")
 }
 
+// ADR 0009. A service's tech stack, linked like listing_category: one row per
+// service and tech. Points at service, so a job can never carry one.
 model ServiceTechStack {
   listingId   Int       @map("listing_id")
   techStackId Int       @map("tech_stack_id")
@@ -194,6 +217,8 @@ model ServiceTechStack {
   @@map("service_tech_stack")
 }
 
+// ADR 0009. Every tech name any service has used. Unlike category this list
+// is open: a new name is added the first time a service sends it.
 model TechStack {
   techStackId      Int                @id @default(autoincrement()) @map("tech_stack_id")
   techStackName    String             @unique @map("tech_stack_name") @db.VarChar(100)
