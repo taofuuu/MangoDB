@@ -8,8 +8,9 @@ import { hasPortfolioImage, portfolioImageSrc } from './portfolioImage';
 
 type PortfolioCardProps = {
     item: ServicePortfolio;
-    onEdit: (item: ServicePortfolio) => void;
-    onDelete: (item: ServicePortfolio) => void;
+    // Left out on another company's portfolio page, which only reads.
+    onEdit?: (item: ServicePortfolio) => void;
+    onDelete?: (item: ServicePortfolio) => void;
     onExpandImage: (image: ExpandedImage) => void;
 };
 
@@ -66,24 +67,27 @@ export default function PortfolioCard({
                 <div className={frameClassName}>{image}</div>
             )}
 
-            {/* mt-auto pins the footer to the bottom of the card */}
-            <div className="mt-auto flex items-center justify-between pt-[2vh] pr-[1vw]">
-                <div className="flex items-center gap-[1vw]">
-                    <button
-                        type="button"
-                        onClick={() => onEdit(item)}
-                        className="type-sm !font-[600] text-brand transition-colors hover:text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                    >
-                        Edit
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDelete(item)}
-                        className="type-sm !font-[600] text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
-                    >
-                        Delete
-                    </button>
-                </div>
+            {/* mt-auto pins the footer to the bottom of the card; mr-auto
+                on the actions keeps the dots right when there are none. */}
+            <div className="mt-auto flex items-center justify-end pt-[2vh] pr-[1vw]">
+                {onEdit && onDelete && (
+                    <div className="mr-auto flex items-center gap-[1vw]">
+                        <button
+                            type="button"
+                            onClick={() => onEdit(item)}
+                            className="type-sm !font-[600] text-brand transition-colors hover:text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDelete(item)}
+                            className="type-sm !font-[600] text-danger transition-colors hover:text-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                )}
 
                 <PortfolioDots />
             </div>
