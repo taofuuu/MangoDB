@@ -28,7 +28,11 @@ export default function CompanyJobsPage() {
     // JobPostingsPage reads useSearchParams, which needs a Suspense boundary.
     return (
         <Suspense fallback={<div className="min-h-screen bg-surface" />}>
-            <JobPostingsPage view="company" companyId={companyId} />
+            <JobPostingsPage
+                view="company"
+                companyId={companyId}
+                backHref={`/profile/${companyId}`}
+            />
         </Suspense>
     );
 }

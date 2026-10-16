@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { redirectToUnauthorized } from '@/lib/session';
 import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolio/PortfolioCard';
@@ -86,6 +87,13 @@ export default function PortfolioPage() {
             <div className="flex items-start justify-between gap-[2vw] max-md:flex-col max-md:gap-[2vh]">
                 <div>
                     <h1 className="type-hd !text-[48px] leading-none">
+                        <Link
+                            href="/profile/view"
+                            aria-label="Back to the company profile"
+                            className="pr-4"
+                        >
+                            ←
+                        </Link>
                         Portfolio
                     </h1>
 
