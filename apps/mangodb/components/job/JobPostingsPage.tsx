@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 
 import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
 
@@ -27,14 +28,17 @@ import ModalShell from '../ui/ModalShell';
 
 type JobStatus = '' | 'OPEN' | 'CLOSED';
 
-type JobPostingsPageProps =
+// backHref puts a ← before the title. Only the pages opened from See more on
+// a profile pass it; /job-postings/by-company has no profile to go back to.
+type JobPostingsPageProps = { backHref?: string } & (
     | {
           view: 'mine';
       }
     | {
           view: 'company';
           companyId: number;
-      };
+      }
+);
 
 export default function JobPostingsPage(props: JobPostingsPageProps) {
     const companyId = props.view === 'company' ? props.companyId : undefined;
@@ -277,6 +281,15 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     `}
                 >
                     <span className="type-lg">
+                        {props.backHref && (
+                            <Link
+                                href={props.backHref}
+                                aria-label="Back to the company profile"
+                                className="pr-4"
+                            >
+                                ←
+                            </Link>
+                        )}
                         {isMyJobs ? 'My Jobs' : 'Jobs'}
                     </span>
 
