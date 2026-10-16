@@ -135,7 +135,7 @@ export default function JobListing({
             </div>
 
             {/* The profile only previews your jobs; the full list, with its
-                filters and edit actions, is US2-7's page. */}
+                filters and edit actions, is the My Jobs page. */}
             {!readOnly && (
                 <div className="mt-3 text-right">
                     <Link
