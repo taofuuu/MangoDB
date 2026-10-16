@@ -15,3 +15,16 @@ export function isProviderAccount(accountType: string): boolean {
 export function isReceiverAccount(accountType: string): boolean {
     return accountType === 'RECEIVER' || accountType === 'BOTH';
 }
+
+export type ListingTab = 'services' | 'jobs';
+
+// The listing tabs on your own profile's ServicesSection. Services is the tab
+// you offer as a provider and Job Listing the one you post as a receiver, so a
+// PROVIDER-only company gets Services alone and a BOTH company gets the two.
+// Another company's profile keeps both tabs; this rule is only for your own.
+export function ownProfileListingTabs(accountType: string): ListingTab[] {
+    const tabs: ListingTab[] = [];
+    if (isProviderAccount(accountType)) tabs.push('services');
+    if (isReceiverAccount(accountType)) tabs.push('jobs');
+    return tabs;
+}
