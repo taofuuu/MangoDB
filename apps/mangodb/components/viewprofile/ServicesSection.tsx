@@ -238,12 +238,17 @@ export default function ServicesSection({
                     ))}
                 </div>
 
-                {/* The profile only previews your jobs; the full list, with
-                    its filters and edit actions, is the My Jobs page. */}
-                {!readOnly && activeTab === 'jobs' && (
+                {/* The profile only previews the jobs. Your own full list,
+                    with its filters and edit actions, is the My Jobs page;
+                    another company's is its jobs page, with paging. */}
+                {activeTab === 'jobs' && (
                     <div className="mt-3 text-right">
                         <Link
-                            href="/job-postings/mine"
+                            href={
+                                readOnly
+                                    ? `/profile/${companyId}/jobs`
+                                    : '/job-postings/mine'
+                            }
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more
