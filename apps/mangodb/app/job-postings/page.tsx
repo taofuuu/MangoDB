@@ -160,7 +160,7 @@ export default function OtherJobPage() {
     }
 
     return (
-        <main className="min-h-screen bg-surface flex pt-[3vh] px-[2.67vw]">
+        <main className="min-h-screen bg-surface flex py-[3vh] px-[2.67vw]">
             <div
                 className={`
                     flex
@@ -169,7 +169,7 @@ export default function OtherJobPage() {
                     duration-300
                     ${
                         isDetailOpen
-                            ? 'ml-[2vw] gap-[1.5vw]'
+                            ? 'pl-[2vw] gap-[1.5vw]'
                             : 'pl-[6.5vw] gap-[2vw]'
                     }
                 `}
@@ -366,7 +366,7 @@ export default function OtherJobPage() {
                     transition-all
                     duration-300
                     justify-center
-                    ${isDetailOpen ? ' w-[91vw]' : 'w-[55.1vw]'}
+                    ${isDetailOpen ? ' w-[93vw]' : 'w-[56.56vw]'}
                         `}
                     >
                         <div className="flex items-baseline gap-[1vw]">
