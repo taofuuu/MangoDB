@@ -13,25 +13,10 @@ export function OtherCompanyServiceCard({
     isSelected = false,
     onViewDetail,
 }: OtherCompanyServiceCardProps) {
-    const minBudgetStr =
-        service.minBudget != null
-            ? service.minBudget.toLocaleString('en-US')
-            : null;
-    const maxBudgetStr =
-        service.maxBudget != null
-            ? service.maxBudget.toLocaleString('en-US')
-            : null;
-
-    let budgetDisplay = '';
-    if (minBudgetStr && maxBudgetStr) {
-        budgetDisplay = `${minBudgetStr} - ${maxBudgetStr}`;
-    } else if (minBudgetStr) {
-        budgetDisplay = `From ${minBudgetStr}`;
-    } else if (maxBudgetStr) {
-        budgetDisplay = `Up to ${maxBudgetStr}`;
-    } else {
-        budgetDisplay = 'Contact for pricing';
-    }
+    const budgetDisplay = formatServiceBudgetRange(
+        service.minBudget,
+        service.maxBudget,
+    );
 
     const categories =
         'categories' in service && Array.isArray(service.categories)
