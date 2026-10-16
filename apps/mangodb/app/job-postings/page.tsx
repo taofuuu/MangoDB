@@ -366,7 +366,7 @@ export default function OtherJobPage() {
                     transition-all
                     duration-300
                     justify-center
-                    ${isDetailOpen ? 'ml-[2vw] w-[91vw]' : 'w-[55.1vw]'}
+                    ${isDetailOpen ? ' w-[91vw]' : 'w-[55.1vw]'}
                         `}
                     >
                         <div className="flex items-baseline gap-[1vw]">
@@ -490,7 +490,7 @@ export default function OtherJobPage() {
                     {/* ================================================= */}
                     {/* JOB LIST                                          */}
                     {/* ================================================= */}
-                    <div className="flex gap-[1.5vw]">
+                    <div className="flex gap-[1.5vw] pr-[2vw]">
                         <div
                             className={`
                         flex
