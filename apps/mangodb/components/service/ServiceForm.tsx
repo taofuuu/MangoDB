@@ -498,7 +498,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                 }),
             );
         }
-        router.back();
+        router.replace('/profile/view');
     };
 
     const handleCancel = () => {
