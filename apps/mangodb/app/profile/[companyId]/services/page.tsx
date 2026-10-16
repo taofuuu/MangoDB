@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
 import { describeError, isNotSignedIn } from '@/lib/api';
@@ -144,6 +145,15 @@ function CompanyServicesContent() {
                 {/* Header Title */}
                 <div className="mb-6">
                     <h1 className="type-lg !font-bold text-ink">
+                        {isValidCompanyId && (
+                            <Link
+                                href={`/profile/${companyId}`}
+                                aria-label="Back to the company profile"
+                                className="pr-4"
+                            >
+                                ←
+                            </Link>
+                        )}
                         {companyName
                             ? `${companyName}’s Services`
                             : `${titlePrefix} listing`}
