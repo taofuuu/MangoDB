@@ -137,12 +137,14 @@ export default function JobListing({
             {/* The profile only previews your jobs; the full list, with its
                 filters and edit actions, is US2-7's page. */}
             {!readOnly && (
-                <Link
-                    href="/job-postings/mine"
-                    className="mt-3 self-end px-1 type-xs !font-medium text-brand hover:underline"
-                >
-                    Show more →
-                </Link>
+                <div className="mt-3 text-right">
+                    <Link
+                        href="/job-postings/mine"
+                        className="type-xs text-brand hover:underline font-medium"
+                    >
+                        See more
+                    </Link>
+                </div>
             )}
 
             {selectedJob && (
