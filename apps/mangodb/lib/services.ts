@@ -101,6 +101,16 @@ export function updateService(
     );
 }
 
+// US2-4. The API answers 409 when a project is linked to the service, and
+// removes the service's portfolio items along with it, so both caches go.
+export function deleteService(serviceId: number): Promise<void> {
+    return invalidateAfter(
+        apiFetch<void>(`/services/${serviceId}`, { method: 'DELETE' }),
+        '/services',
+        '/portfolios',
+    );
+}
+
 // What the T3.2 sidebar edits.
 export type SearchServicesFilters = {
     categories: string[];
