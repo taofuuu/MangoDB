@@ -2,16 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type {
-    PaginationMeta,
-    ServiceListResponse,
-    ServiceSummary,
-} from '@mangodb/shared';
-import { apiFetch, describeError, isNotSignedIn } from '@/lib/api';
-import { getCompanyProfile, getMyProfile } from '@/lib/companies';
-import { isProviderAccount } from '@/lib/roles';
+import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import { getCompanyProfile } from '@/lib/companies';
+import { listCompanyServices } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import Pagination from '@/components/ui/Pagination';
 import { OtherCompanyServiceCard } from '@/components/service/OtherCompanyServiceCard';
 import { OtherCompanyServiceDetailPanel } from '@/components/service/OtherCompanyServiceDetailPanel';
@@ -49,8 +44,6 @@ function EmptyState() {
 }
 
 function CompanyServicesContent() {
-    // /profile/[companyId]/services: the id is part of the path, so a
-    // non-number like /profile/abc/services is the only bad case left.
     const params = useParams<{ companyId: string }>();
     const companyId = /^\d+$/.test(params.companyId)
         ? Number(params.companyId)
@@ -61,11 +54,6 @@ function CompanyServicesContent() {
     const [page, setPage] = useState(1);
     const pageSize = 5;
 
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(
-        null,
-    );
-    const [isProvider, setIsProvider] = useState<boolean | null>(null);
-    const [roleError, setRoleError] = useState<string | null>(null);
     const [services, setServices] = useState<ServiceSummary[]>([]);
     const [pagination, setPagination] = useState<PaginationMeta | null>(null);
     const [selectedService, setSelectedService] =
@@ -73,34 +61,9 @@ function CompanyServicesContent() {
     const [isLoading, setIsLoading] = useState(isValidCompanyId);
     const [error, setError] = useState<string | null>(null);
 
-    // 1. Verify current user is logged in
+    // 1. Fetch company profile to get company name
     useEffect(() => {
-        let active = true;
-
-        getMyProfile()
-            .then(() => {
-                if (active) setIsAuthenticated(true);
-            })
-            .catch((err: unknown) => {
-                if (!active) return;
-                if (isNotSignedIn(err)) {
-                    setIsAuthenticated(false);
-                    redirectToUnauthorized();
-                } else {
-                    // Other errors (e.g. network failure)
-                    setError(describeError(err));
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            active = false;
-        };
-    }, []);
-
-    // 2. Fetch company profile to check role and get company name
-    useEffect(() => {
-        if (!companyId || isNaN(companyId) || isAuthenticated === false) {
+        if (!companyId || isNaN(companyId)) {
             return;
         }
 
@@ -109,59 +72,38 @@ function CompanyServicesContent() {
         getCompanyProfile(companyId)
             .then((profile) => {
                 if (!active) return;
-                setRoleError(null);
                 if (profile?.companyName) {
                     setCompanyName(profile.companyName);
-                }
-                const canProvide = profile?.accountType
-                    ? isProviderAccount(profile.accountType)
-                    : false;
-                setIsProvider(canProvide);
-
-                if (!canProvide) {
-                    const cName = profile?.companyName || 'This company';
-                    setRoleError(
-                        `${cName} is registered as a ${profile?.accountType || 'non-provider'} account. Only companies with a Provider or Both role can offer services.`,
-                    );
-                    setIsLoading(false);
                 }
             })
             .catch((err) => {
                 if (!active) return;
                 if (isNotSignedIn(err)) {
-                    setIsAuthenticated(false);
                     redirectToUnauthorized();
                     return;
                 }
-                setError(describeError(err));
+                setError(
+                    describeError(err, {
+                        404: 'This company could not be found.',
+                    }),
+                );
                 setIsLoading(false);
             });
 
         return () => {
             active = false;
         };
-    }, [companyId, isAuthenticated]);
+    }, [companyId]);
 
-    // 3. Fetch services only if the company is a PROVIDER or BOTH
+    // 2. Fetch services using listCompanyServices
     useEffect(() => {
-        if (
-            !companyId ||
-            isNaN(companyId) ||
-            isProvider !== true ||
-            isAuthenticated !== true
-        ) {
+        if (!companyId || isNaN(companyId)) {
             return;
         }
 
         let active = true;
 
-        const params = new URLSearchParams({
-            companyId: String(companyId),
-            page: String(page),
-            pageSize: String(pageSize),
-        });
-
-        apiFetch<ServiceListResponse>(`/services?${params.toString()}`)
+        listCompanyServices(companyId, pageSize)
             .then((res) => {
                 if (!active) return;
                 setError(null);
@@ -180,7 +122,6 @@ function CompanyServicesContent() {
             .catch((err) => {
                 if (!active) return;
                 if (isNotSignedIn(err)) {
-                    setIsAuthenticated(false);
                     redirectToUnauthorized();
                     return;
                 }
@@ -193,18 +134,9 @@ function CompanyServicesContent() {
         return () => {
             active = false;
         };
-    }, [companyId, isProvider, isAuthenticated, page]);
+    }, [companyId, page]);
 
     const titlePrefix = companyName ? `${companyName}’s` : 'Company name’s';
-
-    if (isAuthenticated === false) {
-        return (
-            <UnauthorizedPage
-                title="Login Required"
-                message="You need to be logged in to view company services."
-            />
-        );
-    }
 
     return (
         <main className="min-h-screen bg-surface px-6 lg:px-12 py-8">
@@ -237,17 +169,6 @@ function CompanyServicesContent() {
                 ) : error ? (
                     <div className="py-20 text-center text-danger type-sm">
                         {error}
-                    </div>
-                ) : roleError ? (
-                    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                        <div className="max-w-md rounded-2xl border border-danger/30 bg-danger/5 p-6 text-center">
-                            <h2 className="type-md font-bold text-danger mb-2">
-                                Company Cannot Offer Services
-                            </h2>
-                            <p className="type-sm text-ink-soft leading-relaxed">
-                                {roleError}
-                            </p>
-                        </div>
                     </div>
                 ) : services.length === 0 ? (
                     <EmptyState />
@@ -310,7 +231,6 @@ function CompanyServicesContent() {
     );
 }
 
-// No Suspense needed: useParams, unlike useSearchParams, does not suspend.
 export default function OtherCompanyServicesPage() {
     return <CompanyServicesContent />;
 }

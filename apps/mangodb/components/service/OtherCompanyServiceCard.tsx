@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ServiceListing, ServiceSummary } from '@mangodb/shared';
-import { Tag, MoreHorizontal } from 'lucide-react';
+import { Tag } from 'lucide-react';
 
 interface OtherCompanyServiceCardProps {
     service: ServiceListing | ServiceSummary;
@@ -105,18 +105,7 @@ export function OtherCompanyServiceCard({
             </div>
 
             {/* Right side controls */}
-            <div className="flex flex-col items-end justify-between self-stretch shrink-0">
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
-                    aria-label="More options"
-                    className="p-1 rounded-full hover:bg-fill-subtle transition"
-                >
-                    <MoreHorizontal size={18} />
-                </button>
-
+            <div className="flex flex-col items-end justify-end self-stretch shrink-0">
                 <button
                     type="button"
                     onClick={(e) => {
