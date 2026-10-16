@@ -294,7 +294,7 @@ export default function ServicesSection({
                 {readOnly && activeTab === 'services' && (
                     <div className="mt-3 text-right">
                         <Link
-                            href={`/services/by-company?companyId=${companyId}`}
+                            href={`/profile/${companyId}/services`}
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more

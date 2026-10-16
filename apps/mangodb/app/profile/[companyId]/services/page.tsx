@@ -1,7 +1,7 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import type {
     PaginationMeta,
     ServiceListResponse,
@@ -49,15 +49,15 @@ function EmptyState() {
 }
 
 function CompanyServicesContent() {
-    const searchParams = useSearchParams();
-    const queryCompanyId =
-        searchParams.get('companyId') || searchParams.get('id');
-    const companyId = queryCompanyId ? Number(queryCompanyId) : null;
-    const isValidCompanyId = Boolean(companyId && !isNaN(companyId));
+    // /profile/[companyId]/services: the id is part of the path, so a
+    // non-number like /profile/abc/services is the only bad case left.
+    const params = useParams<{ companyId: string }>();
+    const companyId = /^\d+$/.test(params.companyId)
+        ? Number(params.companyId)
+        : null;
+    const isValidCompanyId = companyId !== null && companyId >= 1;
 
-    const [companyName, setCompanyName] = useState<string>(
-        searchParams.get('name') || '',
-    );
+    const [companyName, setCompanyName] = useState<string>('');
     const [page, setPage] = useState(1);
     const pageSize = 5;
 
@@ -219,11 +219,10 @@ function CompanyServicesContent() {
                     <div className="h-px bg-brand/30 mt-3 w-full" />
                 </div>
 
-                {!companyId || isNaN(companyId) ? (
+                {!isValidCompanyId ? (
                     <div className="py-20 text-center text-ink-soft">
                         <p className="type-sm">
-                            Please provide a valid companyId in the URL, e.g.{' '}
-                            <code className="text-brand">?companyId=1</code>
+                            This company could not be found.
                         </p>
                     </div>
                 ) : isLoading && services.length === 0 ? (
@@ -311,19 +310,7 @@ function CompanyServicesContent() {
     );
 }
 
+// No Suspense needed: useParams, unlike useSearchParams, does not suspend.
 export default function OtherCompanyServicesPage() {
-    return (
-        <Suspense
-            fallback={
-                <main className="min-h-screen bg-surface px-6 lg:px-12 py-8">
-                    <div className="mx-auto max-w-6xl">
-                        <div className="h-8 w-48 animate-pulse rounded bg-line mb-6" />
-                        <div className="h-64 w-full animate-pulse rounded-[20px] bg-line/60" />
-                    </div>
-                </main>
-            }
-        >
-            <CompanyServicesContent />
-        </Suspense>
-    );
+    return <CompanyServicesContent />;
 }
