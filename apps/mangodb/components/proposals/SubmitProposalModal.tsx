@@ -5,6 +5,7 @@ import { MailCheck, X } from 'lucide-react';
 import type { JobPosting, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
+import { formatBudgetRange } from '@/lib/money';
 import { createProposal } from '@/lib/proposals';
 import {
     toFormErrors,
@@ -65,23 +66,6 @@ const MONTHS = [
     'Nov',
     'Dec',
 ] as const;
-
-function formatBudget(
-    minBudget: number | null,
-    maxBudget: number | null,
-): string {
-    if (maxBudget === null) {
-        return minBudget === null
-            ? 'Not specified'
-            : NUMBER_FORMATTER.format(minBudget);
-    }
-
-    if (minBudget !== null && minBudget !== maxBudget) {
-        return `${NUMBER_FORMATTER.format(minBudget)} – ${NUMBER_FORMATTER.format(maxBudget)}`;
-    }
-
-    return NUMBER_FORMATTER.format(maxBudget);
-}
 
 // deadline is a date-only wire value. Splitting it avoids shifting the day in
 // a UTC+7 browser, as required by docs/conventions.md section 10.
@@ -293,7 +277,7 @@ export default function SubmitProposalModal({
                     <div>
                         <dt className="type-xs text-ink-placeholder">Budget</dt>
                         <dd className="type-xs text-ink">
-                            {formatBudget(
+                            {formatBudgetRange(
                                 jobPosting.minBudget,
                                 jobPosting.maxBudget,
                             )}

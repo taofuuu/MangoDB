@@ -1,5 +1,8 @@
 import type { Request, Response } from 'express';
-import type { ProposalListResponse } from '@mangodb/shared';
+import type {
+    ProposalListResponse,
+    ProposalStatusCounts,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
@@ -19,6 +22,7 @@ import {
     toPostingProposal,
     toProposal,
     toProviderProposal,
+    toProposalStatusCounts,
     acceptProposalTx,
     rejectPendingProposal,
 } from '../lib/proposal';
@@ -31,8 +35,10 @@ export async function createProposal(
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 
+    // A soft-deleted company's postings stay OPEN in the table, so the where
+    // hides them here, the same 404 that GET /job-postings/:id gives.
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobPostingId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -158,5 +164,25 @@ export async function listMyProposals(
         },
     };
 
+    res.json(body);
+}
+
+// US2-9. The numbers on the Your Proposals chips: one groupBy over the
+// caller's proposals. It reads no ?status=, so the chips stay put while the
+// list is filtered. Soft-deleted owners are counted, as in listMyProposals.
+export async function getMyProposalCounts(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const callerId = req.auth!.companyId;
+
+    const groups = await prisma.proposal.groupBy({
+        by: ['proposalStatus'],
+        where: { senderId: callerId },
+        orderBy: { proposalStatus: 'asc' },
+        _count: { _all: true },
+    });
+
+    const body: ProposalStatusCounts = toProposalStatusCounts(groups);
     res.json(body);
 }

@@ -221,7 +221,7 @@ export default function OtherJobPage() {
                                     type="button"
                                     onClick={clearSearch}
                                     aria-label="Clear search"
-                                    className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:outline-none"
+                                    className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                                 >
                                     <X
                                         aria-hidden="true"
@@ -307,7 +307,7 @@ export default function OtherJobPage() {
                     ${
                         isDetailOpen
                             ? 'ml-[2vw] gap-[1.5vw]'
-                            : 'pl-[6.5vw] gap-[3.87vh]'
+                            : 'pl-[6.5vw] gap-[2vw]'
                     }
                 `}
                 >

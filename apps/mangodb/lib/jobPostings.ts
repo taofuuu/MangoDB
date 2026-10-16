@@ -72,12 +72,38 @@ export function getJobPosting(jobPostingId: number): Promise<JobPosting> {
 
 //POST job
 export type CreateJobPosting = CreateJobPostingRequest;
-export type UpdateJobPosting = UpdateJobPostingRequest;
 
 export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
     return invalidateAfter(
         apiFetch<JobPosting>('/job-postings', {
             method: 'POST',
+            body: JSON.stringify(data),
+        }),
+        '/job-postings',
+    );
+}
+
+// US2-14. Closes an open job posting and rejects its pending proposals.
+// The API answers 409 when the posting is not open any more.
+export function closeJobPosting(jobPostingId: number): Promise<JobPosting> {
+    return invalidateAfter(
+        apiFetch<JobPosting>(`/job-postings/${jobPostingId}/close`, {
+            method: 'POST',
+        }),
+        '/job-postings',
+    );
+}
+
+//UPDATE job
+export type UpdateJobPosting = UpdateJobPostingRequest;
+
+export function updateJobPosting(
+    jobPostingId: number,
+    data: UpdateJobPosting,
+): Promise<JobPosting> {
+    return invalidateAfter(
+        apiFetch<JobPosting>(`/job-postings/${jobPostingId}`, {
+            method: 'PATCH',
             body: JSON.stringify(data),
         }),
         '/job-postings',

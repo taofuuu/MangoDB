@@ -8,21 +8,28 @@ import {
     CalendarClock,
     Edit,
     FileX,
-    Trash,
     MapPin,
     Wallet,
     Tag,
 } from 'lucide-react';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+import { formatBudgetRange } from '@/lib/money';
 
 import JobDetailModal from './JobDetailModal';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import { describeError } from '@/lib/api';
+import { closeJobPosting } from '@/lib/jobPostings';
 
 interface JobBoxProps {
     job: JobPosting;
     isMyJobs: boolean;
     callFromSearchPage: boolean;
     onViewDetail: (job: JobPosting) => void;
+    // Called after the job is closed, so the list can reload.
+    onClosed?: () => void;
 }
 
 export default function JobBox({
@@ -30,8 +37,24 @@ export default function JobBox({
     isMyJobs,
     callFromSearchPage,
     onViewDetail,
+    onClosed,
 }: JobBoxProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+
+    // US2-14. A thrown error becomes the modal's message.
+    const confirmClose = async () => {
+        try {
+            await closeJobPosting(job.jobPostingId);
+        } catch (err) {
+            throw new Error(
+                describeError(err, {
+                    409: 'This job posting is already closed.',
+                }),
+            );
+        }
+        onClosed?.();
+    };
 
     /*
      * These are only needed for My Jobs.
@@ -48,7 +71,7 @@ export default function JobBox({
         setIsDetailOpen(false);
     };
 
-    // const router = useRouter();
+    const router = useRouter();
 
     return (
         <>
@@ -87,8 +110,10 @@ export default function JobBox({
                         {job.listingTitle}
                     </h2>
 
-                    {/* More menu - only for My Jobs */}
-                    {isMyJobs && (
+                    {/* More menu - only for My Jobs, and only while OPEN:
+                        Edit and Close are its only actions. There is no
+                        Delete yet — no story and no DELETE endpoint. */}
+                    {isMyJobs && job.listingStatus === 'OPEN' && (
                         <div className="relative">
                             <button
                                 type="button"
@@ -115,38 +140,30 @@ export default function JobBox({
                                         shadow-lg
                                     "
                                 >
-                                    {job.listingStatus === 'OPEN' && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                // onClick={() => {
-                                                //     setIsMenuOpen(false);
-                                                //     router.push(`/job-postings/${job.jobPostingId}/edit`);
-                                                // }}
-                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                            >
-                                                <Edit size={15} />
-                                                Edit
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                            >
-                                                <FileX size={15} />
-                                                Close
-                                            </button>
-
-                                            <hr className="my-1 border-0 border-t border-line" />
-                                        </>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.push(
+                                                `/job-postings/${job.jobPostingId}/edit`,
+                                            );
+                                        }}
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                    >
+                                        <Edit size={15} />
+                                        Edit
+                                    </button>
 
                                     <button
                                         type="button"
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left text-danger hover:bg-danger-wash"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            setIsCloseModalOpen(true);
+                                        }}
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
-                                        <Trash size={15} />
-                                        Delete
+                                        <FileX size={15} />
+                                        Close
                                     </button>
                                 </div>
                             )}
@@ -164,7 +181,7 @@ export default function JobBox({
                                 job.categories.map((category) => (
                                     <span
                                         key={category}
-                                        className="rounded-status bg-accent px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
+                                        className="rounded-status bg-accent-tint px-[0.63vw] py-[0.19vh] type-sm !font-[600] text-ink"
                                     >
                                         {category}
                                     </span>
@@ -188,14 +205,7 @@ export default function JobBox({
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
-                        {job.minBudget != null
-                            ? job.minBudget.toLocaleString()
-                            : '-'}
-                        {' - '}
-                        {job.maxBudget != null
-                            ? job.maxBudget.toLocaleString()
-                            : '-'}{' '}
-                        THB
+                        {formatBudgetRange(job.minBudget, job.maxBudget)}
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
@@ -253,6 +263,15 @@ export default function JobBox({
                     onClose={closeDetail}
                 />
             )}
+            <DeleteConfirmationModal
+                isOpen={isCloseModalOpen}
+                onClose={() => setIsCloseModalOpen(false)}
+                onConfirm={confirmClose}
+                title="Close Job Posting"
+                description="It stops receiving proposals, and its pending proposals are rejected. A closed job posting cannot be reopened."
+                confirmLabel="Yes, Close"
+                pendingLabel="Closing..."
+            />
         </>
     );
 }

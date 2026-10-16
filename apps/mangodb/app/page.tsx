@@ -103,6 +103,11 @@ const ROUTES = [
         detail: 'US2-7',
     },
     {
+        href: '/proposal/view',
+        title: 'View proposal',
+        detail: 'US2-10',
+    },
+    {
         href: '/unauthorized',
         title: 'Login Required',
         detail: 'Global unauthorized access guard page.',

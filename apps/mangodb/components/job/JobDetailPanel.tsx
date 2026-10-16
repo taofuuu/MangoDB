@@ -1,9 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { JobPosting } from '@mangodb/shared';
+import type { CompanyProfile, JobPosting } from '@mangodb/shared';
 
 import { ArrowLeft } from 'lucide-react';
+
+import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
+import { isNotSignedIn } from '@/lib/api';
+import { getMyProfile } from '@/lib/companies';
+import { formatBudgetRange } from '@/lib/money';
+import { isProviderAccount } from '@/lib/roles';
+import { redirectToUnauthorized } from '@/lib/session';
 
 interface JobDetailPanelProps {
     job: JobPosting | null;
@@ -11,6 +19,31 @@ interface JobDetailPanelProps {
 }
 
 export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
+    const [viewer, setViewer] = useState<CompanyProfile | null>(null);
+    const [isProposalFormOpen, setIsProposalFormOpen] = useState(false);
+
+    // Who is looking decides whether Add Proposal shows. getMyProfile is
+    // cached, so the many panels that open in a session ask the API once.
+    useEffect(() => {
+        getMyProfile()
+            .then(setViewer)
+            .catch((cause: unknown) => {
+                // The session ended after the list loaded: same redirect as
+                // the page guard. Any other failure just hides the button.
+                if (isNotSignedIn(cause)) redirectToUnauthorized();
+            });
+    }, []);
+
+    // US2-8. The API would refuse the other cases anyway (403 for a
+    // Receiver-only account or your own posting, 409 for a closed one), so
+    // the button is only offered where a submission can succeed (T2.8.10).
+    const canSubmitProposal =
+        job !== null &&
+        viewer !== null &&
+        isProviderAccount(viewer.accountType) &&
+        job.listingStatus === 'OPEN' &&
+        job.companyId !== viewer.companyId;
+
     return (
         <div
             className="
@@ -59,7 +92,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
 
                         <Link
                             href={`/profile/${job.companyId}`}
-                            className="type-md text-ink pl-[0.5vw] hover:underline"
+                            className="type-md text-ink pl-[0.5vw] hover:underline [overflow-wrap:anywhere]"
                         >
                             {job.companyName}
                         </Link>
@@ -76,7 +109,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                         key={category}
                                         className="
                                             rounded-status
-                                            bg-accent
+                                            bg-accent-tint
                                             px-[0.63vw]
                                             py-[0.19vh]
                                             type-sm
@@ -88,7 +121,14 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                     </span>
                                 ))
                             ) : (
-                                <span className="type-sm text-ink-soft">
+                                <span
+                                    className="
+                                            rounded-status
+                                            bg-fill-subtle
+                                            px-[0.63vw]
+                                            py-[0.19vh]
+                                        "
+                                >
                                     General
                                 </span>
                             )}
@@ -99,7 +139,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Description</span>
 
-                        <p className="type-sm leading-relaxed text-ink pl-[0.5vw]">
+                        <p className="type-sm leading-relaxed text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.listingDesc}
                         </p>
                     </div>
@@ -109,7 +149,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                         <span className="type-sm text-brand">Budget</span>
 
                         <p className="type-md text-ink pl-[0.5vw]">
-                            {job.minBudget ?? '-'} - {job.maxBudget ?? '-'} THB
+                            {formatBudgetRange(job.minBudget, job.maxBudget)}
                         </p>
                     </div>
 
@@ -117,7 +157,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Location</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.locationPref ?? 'No location preference'}
                         </p>
                     </div>
@@ -126,7 +166,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Duration</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.duration ?? 'Not specified'}
                         </p>
                     </div>
@@ -135,16 +175,18 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Deadline</span>
 
-                        <p className="type-md text-ink pl-[0.5vw]">
+                        <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
                             {job.deadline ?? 'No deadline'}
                         </p>
                     </div>
 
                     {/* Bottom action */}
-                    <div className="mt-auto pt-[2vh]">
-                        <button
-                            type="button"
-                            className="
+                    {canSubmitProposal && (
+                        <div className="mt-auto pt-[2vh]">
+                            <button
+                                type="button"
+                                onClick={() => setIsProposalFormOpen(true)}
+                                className="
                                 flex
                                 h-[4.5vh]
                                 w-full
@@ -157,11 +199,22 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                 transition
                                 hover:bg-brand-dark
                             "
-                        >
-                            Add Proposal
-                        </button>
-                    </div>
+                            >
+                                Add Proposal
+                            </button>
+                        </div>
+                    )}
                 </div>
+            )}
+
+            {/* key: a different job starts with an empty form. */}
+            {job && canSubmitProposal && (
+                <SubmitProposalModal
+                    key={job.jobPostingId}
+                    isOpen={isProposalFormOpen}
+                    jobPosting={job}
+                    onClose={() => setIsProposalFormOpen(false)}
+                />
             )}
         </div>
     );

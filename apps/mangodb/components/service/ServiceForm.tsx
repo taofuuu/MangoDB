@@ -13,7 +13,12 @@ import {
     validateServiceTechStack,
     validateServiceBudgets,
 } from '@/lib/validation';
-import { createService, getService, updateService } from '@/lib/services';
+import {
+    createService,
+    deleteService,
+    getService,
+    updateService,
+} from '@/lib/services';
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
@@ -24,6 +29,7 @@ import { isProviderAccount } from '@/lib/roles';
 import { createPortfolio, listServicePortfolios } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
@@ -139,6 +145,7 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [createdServiceId, setCreatedServiceId] = useState<number | null>(
         null,
     );
@@ -472,6 +479,26 @@ export default function ServiceForm(props: ServiceFormProps) {
             return;
         }
         router.push('/');
+    };
+
+    // US2-4. Thrown errors become the modal's message, so the 409 for a
+    // service with a project gets a sentence the Provider can act on.
+    // isSubmitting is shared with Save, so Save and Cancel stay disabled while
+    // the delete runs. It stays true on success: the page is leaving.
+    const handleDelete = async () => {
+        if (serviceId === null || isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            await deleteService(serviceId);
+        } catch (err) {
+            setIsSubmitting(false);
+            throw new Error(
+                describeError(err, {
+                    409: 'This service has a project linked to it, so it cannot be deleted.',
+                }),
+            );
+        }
+        router.replace('/profile/view');
     };
 
     const handleCancel = () => {
@@ -832,6 +859,17 @@ export default function ServiceForm(props: ServiceFormProps) {
                     )}
 
                     <div className="mt-8 flex items-center justify-end gap-3">
+                        {isEditMode && (
+                            <Button
+                                type="button"
+                                variant="danger"
+                                onClick={() => setShowDeleteModal(true)}
+                                disabled={isSubmitting}
+                                className="mr-auto px-5 py-2 type-sm font-semibold disabled:opacity-60"
+                            >
+                                Delete Service
+                            </Button>
+                        )}
                         <Button
                             type="button"
                             variant="muted"
@@ -875,6 +913,15 @@ export default function ServiceForm(props: ServiceFormProps) {
                         ? 'Service updated successfully'
                         : 'Service added successfully'
                 }
+            />
+
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title="Delete this service listing?"
+                description={`${initialValues?.title || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
+                confirmLabel="Delete listing"
             />
 
             <UnsavedChangesModal

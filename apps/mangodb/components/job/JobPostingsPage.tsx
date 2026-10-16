@@ -148,6 +148,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
+    const isDetailPanelOpen = Boolean(selectedJob);
     const openCompanyJobDetail = (job: JobPosting) => {
         setSelectedJob(job);
     };
@@ -204,7 +205,9 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const showPostSuccess = searchParams.get('success') === 'posted';
+    const showPostSuccess = ['posted', 'updated', 'closed'].includes(
+        searchParams.get('success') ?? '',
+    );
 
     const closePostSuccess = () => {
         router.replace('/job-postings/mine', { scroll: false });
@@ -263,18 +266,30 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     PAGE TITLE
                     ===================================================== */}
 
-                <div className="flex flex-col gap-[1.3vh]">
+                <div
+                    className={`
+        flex
+        flex-col
+        gap-[1.3vh]
+        transition-all
+        duration-300
+        ${isDetailPanelOpen ? 'ml-[2vw] w-[91vw]' : 'ml-0 w-[56.56vw]'}
+    `}
+                >
                     <span className="type-lg">
                         {isMyJobs ? 'My Jobs' : 'Jobs'}
                     </span>
 
                     <hr
                         className="
-                            w-[56.56vw]
-                            border-0
-                            border-t
-                            border-brand/50
-                        "
+            w-full
+            shrink-0
+            border-0
+            border-t
+            border-brand/50
+            transition-all
+            duration-300
+        "
                     />
                 </div>
 
@@ -389,11 +404,14 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     ===================================================== */}
 
                 <div
-                    className="
-                        flex
-                        items-start
-                        gap-[1.5vw]
-                    "
+                    className={`
+                    mt-[2vh]
+                    flex
+                    items-start
+                    transition-all
+                    duration-300
+                    ${isDetailPanelOpen ? 'ml-[2vw] gap-[1.5vw]' : ''}
+                `}
                 >
                     {/* =================================================
                         JOB LIST
@@ -511,6 +529,13 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                 onViewDetail={
                                                     openCompanyJobDetail
                                                 }
+                                                onClosed={() => {
+                                                    retryList();
+                                                    router.replace(
+                                                        '/job-postings/mine?success=closed',
+                                                        { scroll: false },
+                                                    );
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -574,7 +599,11 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             id="post-success-title"
                             className="type-md font-semibold text-ink"
                         >
-                            Post created successfully!
+                            {searchParams.get('success') === 'closed'
+                                ? 'Job closed successfully!'
+                                : searchParams.get('success') === 'updated'
+                                  ? 'Job updated successfully!'
+                                  : 'Job created successfully!'}
                         </h2>
                     </div>
 

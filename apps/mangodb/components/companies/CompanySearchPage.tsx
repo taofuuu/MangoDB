@@ -137,10 +137,10 @@ export default function CompanySearchPage() {
                             : 'w-full lg:mx-auto lg:w-[56.56vw]'
                     }`}
                 >
-                    <div className="relative h-10 w-full sm:h-[4.07vh] sm:w-[27.86vw] sm:min-w-[260px]">
+                    <div className="relative h-[4.07vh] w-full min-w-[180px] sm:w-[27.86vw]">
                         <Search
                             aria-hidden="true"
-                            className="pointer-events-none absolute left-[0.83vw] top-1/2 size-5 -translate-y-1/2 text-ink-placeholder"
+                            className="pointer-events-none absolute left-[0.6vw] top-1/2 h-[2vh] w-[2vw] -translate-y-1/2 text-ink-placeholder"
                         />
                         <input
                             type="text"
@@ -151,17 +151,20 @@ export default function CompanySearchPage() {
                             }
                             maxLength={100}
                             placeholder="Search"
-                            aria-label="Search companies"
-                            className="h-full min-h-[40px] w-full rounded-[50px] border border-line bg-surface-white pl-[2.6vw] pr-[2.6vw] type-sm text-ink shadow-card placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                            aria-label="Search companies by keyword"
+                            className="h-full w-full rounded-[50px] border border-line bg-surface-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                         {searchQuery && (
                             <button
                                 type="button"
                                 onClick={clearSearch}
-                                aria-label="Clear company search"
-                                className="absolute right-[0.83vw] top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                                aria-label="Clear search"
+                                className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                             >
-                                <X aria-hidden="true" className="size-4" />
+                                <X
+                                    aria-hidden="true"
+                                    className="h-[1.48vh] w-[0.73vw]"
+                                />
                             </button>
                         )}
                     </div>

@@ -8,6 +8,8 @@
 // ---------------------------------------------------------------------------
 
 import type {
+    Category,
+    CompanyBrief,
     PaginationMeta as Pagination,
     SearchServicesOrder,
     ServiceFilterOptions,
@@ -58,6 +60,32 @@ export function listMyServices(): Promise<ServiceListing[]> {
     return apiFetch<ServiceListing[]>('/services/mine');
 }
 
+// A ServiceListing (GET /services/mine) in the ServiceSummary shape the
+// service detail panel takes. The listing holds category ids and the panel
+// shows names, so they are looked up in the catalog (GET /categories).
+export function toServiceSummary(
+    listing: ServiceListing,
+    categories: Category[],
+    company: CompanyBrief,
+): ServiceSummary {
+    const names = new Map(categories.map((c) => [c.catId, c.catName]));
+
+    return {
+        serviceId: listing.serviceId,
+        listingTitle: listing.listingTitle,
+        listingDesc: listing.listingDesc,
+        minBudget: listing.minBudget,
+        maxBudget: listing.maxBudget,
+        // Sorted, the way GET /services returns them.
+        categories: listing.categoryIds
+            .map((id) => names.get(id))
+            .filter((name): name is string => name !== undefined)
+            .sort(),
+        techStack: listing.techStack,
+        company,
+    };
+}
+
 // US2-3. The backend owns validation and authorization; this helper keeps the
 // endpoint contract out of the form so create and edit share one data path.
 export function updateService(
@@ -70,6 +98,16 @@ export function updateService(
             body: JSON.stringify(body),
         }),
         '/services',
+    );
+}
+
+// US2-4. The API answers 409 when a project is linked to the service, and
+// removes the service's portfolio items along with it, so both caches go.
+export function deleteService(serviceId: number): Promise<void> {
+    return invalidateAfter(
+        apiFetch<void>(`/services/${serviceId}`, { method: 'DELETE' }),
+        '/services',
+        '/portfolios',
     );
 }
 
@@ -87,26 +125,6 @@ export const EMPTY_SEARCH_SERVICES_FILTERS: SearchServicesFilters = {
     minBudget: null,
     maxBudget: null,
 };
-
-export function formatServiceBudgetRange(
-    minBudget: number | null,
-    maxBudget: number | null,
-): string {
-    const format = (value: number) => `฿${value.toLocaleString('en-US')}`;
-
-    if (minBudget == null && maxBudget != null) {
-        return `Up to ${format(maxBudget)}`;
-    }
-    if (minBudget != null && maxBudget == null) {
-        return `From ${format(minBudget)}`;
-    }
-
-    if (minBudget != null && maxBudget != null) {
-        return `${format(minBudget)} – ${format(maxBudget)}`;
-    }
-
-    return 'Contact for pricing';
-}
 
 export type SearchServicesParams = {
     q: string;
@@ -145,6 +163,23 @@ export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
 //   maxBudget  -> maxPrice
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
+
+// One company's open services, for its profile page. Same endpoint and shape
+// as the search screen, so a row opens the same ServiceDetailPanel.
+export function listCompanyServices(
+    companyId: number,
+    pageSize: number,
+): Promise<ServiceListResponse> {
+    const qs = new URLSearchParams({
+        companyId: String(companyId),
+        orderBy: 'newest',
+        page: '1',
+        pageSize: String(pageSize),
+    });
+
+    const path = `/services?${qs.toString()}`;
+    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
+}
 
 export async function listServices(
     params: SearchServicesParams,

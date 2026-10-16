@@ -21,10 +21,12 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
 
+            # 22, not 20: Node 20 is end-of-life, and its test runner cannot
+            # expand the "src/**/*.test.ts" globs the test scripts use.
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: '20'
+                  node-version: '22'
                   cache: 'npm'
 
             - name: Install Dependencies
@@ -43,6 +45,10 @@ jobs:
             # Format, lint and typecheck. Same command anyone can run locally.
             - name: Verify
               run: npm run verify
+
+            # Unit tests. They mock the database and storage, so no secrets.
+            - name: Test
+              run: npm test
 
             - name: Build
               run: npm run build

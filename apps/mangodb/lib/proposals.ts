@@ -1,8 +1,11 @@
 import type {
     CreateProposalRequest,
+    PostingProposal,
+    Project,
     Proposal,
     ProposalListResponse,
     ProposalStatus,
+    ProposalStatusCounts,
 } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { cachedGet, invalidateAfter } from '@/lib/apiCache';
@@ -26,6 +29,31 @@ export function createProposal(
     );
 }
 
+// US2-10. Fetch submitted proposals for a given job posting listing ID
+export function getSubmittedProposals(
+    jobPostingId: number,
+): Promise<PostingProposal[]> {
+    return apiFetch<PostingProposal[]>(
+        `/job-postings/${jobPostingId}/proposals`,
+        {
+            method: 'GET',
+        },
+    );
+}
+
+// Accept a proposal (POST /proposals/:proposalId/accept)
+export function acceptProposal(proposalId: number): Promise<Project> {
+    return apiFetch<Project>(`/proposals/${proposalId}/accept`, {
+        method: 'POST',
+    });
+}
+
+// Reject a proposal (POST /proposals/:proposalId/reject)
+export function rejectProposal(proposalId: number): Promise<void> {
+    return apiFetch<void>(`/proposals/${proposalId}/reject`, {
+        method: 'POST',
+    });
+}
 export interface GetMyProposalsOptions {
     status?: ProposalStatus | undefined;
 }
@@ -47,4 +75,24 @@ export function listMyProposals(
 
     const path = `/proposals/mine?${query.toString()}`;
     return cachedGet(path, () => apiFetch<ProposalListResponse>(path));
+}
+
+// The "dd/mm/yyyy hh:mm" stamp on a proposal card, in the viewer's local time.
+// Built by hand rather than with toLocaleString, whose order and separators
+// change with the browser's locale.
+export function formatProposalDateTime(iso: string): string {
+    const date = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return (
+        `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ` +
+        `${pad(date.getHours())}:${pad(date.getMinutes())}`
+    );
+}
+
+// US2-9. The numbers on the Your Proposals chips. createProposal's
+// invalidateAfter('/proposals') clears this too, so a new proposal shows up.
+export function getMyProposalCounts(): Promise<ProposalStatusCounts> {
+    const path = '/proposals/mine/counts';
+    return cachedGet(path, () => apiFetch<ProposalStatusCounts>(path));
 }
