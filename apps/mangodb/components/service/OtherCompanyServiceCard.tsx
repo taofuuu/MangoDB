@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ServiceListing, ServiceSummary } from '@mangodb/shared';
 import { Tag } from 'lucide-react';
+import { formatBudgetRange } from '@/lib/money';
 
 interface OtherCompanyServiceCardProps {
     service: ServiceListing | ServiceSummary;
@@ -13,7 +14,7 @@ export function OtherCompanyServiceCard({
     isSelected = false,
     onViewDetail,
 }: OtherCompanyServiceCardProps) {
-    const budgetDisplay = formatServiceBudgetRange(
+    const budgetDisplay = formatBudgetRange(
         service.minBudget,
         service.maxBudget,
     );

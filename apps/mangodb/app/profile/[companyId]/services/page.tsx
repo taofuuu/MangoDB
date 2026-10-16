@@ -103,7 +103,7 @@ function CompanyServicesContent() {
 
         let active = true;
 
-        listCompanyServices(companyId, pageSize)
+        listCompanyServices(companyId, page, pageSize)
             .then((res) => {
                 if (!active) return;
                 setError(null);

@@ -77,8 +77,9 @@ export default function ServicesSection({
         let cancelled = false;
 
         const loadServices: Promise<ServiceRow[]> = readOnly
-            ? listCompanyServices(companyId, PROFILE_LIST_SIZE).then((data) =>
-                  data.items.map((summary) => ({ summary, closed: false })),
+            ? listCompanyServices(companyId, 1, PROFILE_LIST_SIZE).then(
+                  (data) =>
+                      data.items.map((summary) => ({ summary, closed: false })),
               )
             : Promise.all([listMyServices(), listCategories()]).then(
                   ([mine, categories]) =>
