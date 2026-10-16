@@ -33,8 +33,8 @@ interface PortfolioCertificateListProps {
     companyId: number;
     // Another company's profile. Its certificates come from
     // GET /certificates?companyId=, since /certificates/mine is always the
-    // viewer's own. "See more" goes to the viewer's own management pages, so
-    // it is hidden.
+    // viewer's own, and "See more" goes to its read-only pages under
+    // /profile/:id instead of your management pages.
     readOnly?: boolean;
 }
 
@@ -82,8 +82,11 @@ export default function PortfolioCertificateList({
               }));
 
     const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
-    const seeMoreHref =
-        activeTab === 'portfolio' ? '/portfolios' : '/certificates';
+    const seeMorePage =
+        activeTab === 'portfolio' ? 'portfolios' : 'certificates';
+    const seeMoreHref = readOnly
+        ? `/profile/${companyId}/${seeMorePage}`
+        : `/${seeMorePage}`;
 
     return (
         <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
@@ -156,18 +159,18 @@ export default function PortfolioCertificateList({
                 ))}
             </div>
 
-            {/* Always on your own profile, even with three items or fewer:
-                it is the way to the pages where you add and edit them. */}
-            {!readOnly && (
-                <div className="mt-3 text-right">
-                    <Link
-                        href={seeMoreHref}
-                        className="type-xs text-brand hover:underline font-medium"
-                    >
-                        See more
-                    </Link>
-                </div>
-            )}
+            {/* Always shown, even with three items or fewer: on your own
+                profile it is the way to the pages where you add and edit
+                them, and another company's matches its other See more
+                links. */}
+            <div className="mt-3 text-right">
+                <Link
+                    href={seeMoreHref}
+                    className="type-xs text-brand hover:underline font-medium"
+                >
+                    See more
+                </Link>
+            </div>
 
             {selected && (
                 <ProfileItemDetailModal

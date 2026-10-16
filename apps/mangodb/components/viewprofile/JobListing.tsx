@@ -134,18 +134,21 @@ export default function JobListing({
                 ))}
             </div>
 
-            {/* The profile only previews your jobs; the full list, with its
-                filters and edit actions, is the My Jobs page. */}
-            {!readOnly && (
-                <div className="mt-3 text-right">
-                    <Link
-                        href="/job-postings/mine"
-                        className="type-xs text-brand hover:underline font-medium"
-                    >
-                        See more
-                    </Link>
-                </div>
-            )}
+            {/* The profile only previews the jobs. Your own full list, with
+                its filters and edit actions, is the My Jobs page; another
+                company's is its jobs page, with paging. */}
+            <div className="mt-3 text-right">
+                <Link
+                    href={
+                        readOnly
+                            ? `/profile/${companyId}/jobs`
+                            : '/job-postings/mine'
+                    }
+                    className="type-xs text-brand hover:underline font-medium"
+                >
+                    See more
+                </Link>
+            </div>
 
             {selectedJob && (
                 <JobDetailModal

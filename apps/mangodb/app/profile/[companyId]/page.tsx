@@ -10,22 +10,10 @@ import {
     describeError,
     isNotSignedIn,
 } from '@/lib/api';
-import { getCompanyProfile } from '@/lib/companies';
+import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
 import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
-
-// The API's ids are int4, so anything else could never name a company. Caught
-// here rather than sent, because the API answers a malformed id with 400, and
-// to the reader "/profile/abc" is just as much a company that is not there.
-const MAX_INT4 = 2_147_483_647;
-
-function parseCompanyId(raw: string | string[] | undefined): number | null {
-    if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
-
-    const id = Number(raw);
-    return id >= 1 && id <= MAX_INT4 ? id : null;
-}
 
 const NOT_FOUND = 'not-found';
 const ADMIN = 'admin';

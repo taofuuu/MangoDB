@@ -10,7 +10,7 @@ import { describeError, isNotSignedIn } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
 import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { ownProfileListingTabs, type ListingTab } from '@/lib/roles';
+import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
     getService,
     listCompanyServices,
@@ -52,10 +52,9 @@ export default function ServicesSection({
     readOnly?: boolean;
 }) {
     const { companyId, companyName, companyPhoto, accountType } = profile;
-    // Your own profile shows only the tabs your role has listings in.
-    const tabs: ListingTab[] = readOnly
-        ? ['services', 'jobs']
-        : ownProfileListingTabs(accountType);
+    // Only the tabs the company's role has listings in, on your own
+    // profile and on another company's alike.
+    const tabs = profileListingTabs(accountType);
     const [activeTab, setActiveTab] = useState<ListingTab>(
         tabs[0] ?? 'services',
     );
@@ -93,18 +92,20 @@ export default function ServicesSection({
                       })),
               );
 
-        // GET /job-postings/mine is receiver-only, so only a profile with a
-        // Job Listing tab asks for its jobs.
-        const loadJobs: Promise<JobPosting[]> = readOnly
-            ? listJobPostings(1, PROFILE_LIST_SIZE, {
-                  companyId,
-                  status: 'OPEN',
-              }).then((data) => data.items)
-            : ownProfileListingTabs(accountType).includes('jobs')
-              ? listMyJobPostings(1, PROFILE_LIST_SIZE).then(
+        // Only a profile with a Job Listing tab asks for its jobs; GET
+        // /job-postings/mine is receiver-only anyway.
+        const loadJobs: Promise<JobPosting[]> = !profileListingTabs(
+            accountType,
+        ).includes('jobs')
+            ? Promise.resolve([])
+            : readOnly
+              ? listJobPostings(1, PROFILE_LIST_SIZE, {
+                    companyId,
+                    status: 'OPEN',
+                }).then((data) => data.items)
+              : listMyJobPostings(1, PROFILE_LIST_SIZE).then(
                     (data) => data.items,
-                )
-              : Promise.resolve([]);
+                );
 
         loadServices
             .then((rows) => {
@@ -277,12 +278,17 @@ export default function ServicesSection({
                     ))}
                 </div>
 
-                {/* The profile only previews your jobs; the full list, with
-                    its filters and edit actions, is the My Jobs page. */}
-                {!readOnly && activeTab === 'jobs' && (
+                {/* The profile only previews the jobs. Your own full list,
+                    with its filters and edit actions, is the My Jobs page;
+                    another company's is its jobs page, with paging. */}
+                {activeTab === 'jobs' && (
                     <div className="mt-3 text-right">
                         <Link
-                            href="/job-postings/mine"
+                            href={
+                                readOnly
+                                    ? `/profile/${companyId}/jobs`
+                                    : '/job-postings/mine'
+                            }
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more
