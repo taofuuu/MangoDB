@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     EMPTY_SEARCH_SERVICES_FILTERS,
-    searchServices,
+    listServices,
     type Pagination,
     type SearchServicesFilters,
     type SearchServicesOrder,
     type ServiceSummary,
-} from './searchServices';
+} from './services';
 import { SERVICE_PAGE_SIZE } from './pagination';
 
 export type SearchServicesMode = 'pagination' | 'infinite';
@@ -51,7 +51,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
             setState((s) => ({ ...s, status: 'loading', error: null }));
 
             try {
-                const result = await searchServices({
+                const result = await listServices({
                     q: state.q,
                     orderBy: state.orderBy,
                     page,

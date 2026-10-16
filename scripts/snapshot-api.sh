@@ -336,7 +336,7 @@ snap auth-check-availability-taken POST /auth/check-availability \
 echo
 echo "portfolios + certificates"
 snap portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
-LISTING_ID="$(jget 0.listingId)"
+SERVICE_ID="$(jget 0.serviceId)"
 
 if [ -n "$PORTFOLIO_ID" ]; then
     snap portfolios-one GET "/portfolios/$PORTFOLIO_ID"
@@ -345,6 +345,23 @@ else
 fi
 
 snap certificates-mine GET /certificates/mine -H "$(bearer "$TOKEN_PROVIDER")"
+
+# Another company's certificates, as its profile page loads them: the receiver
+# reads the provider's...
+snap certificates-by-company GET "/certificates?companyId=$PROVIDER_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ...and a company that is not a provider has none, which is an empty list.
+snap certificates-by-company-none GET "/certificates?companyId=$RECEIVER_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# companyId is required: a bare GET does not list everyone's.
+snap error-certificates-company-missing GET /certificates \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Digits only: Number() would read 0x10 as 16.
+snap error-certificates-company-invalid GET "/certificates?companyId=0x10" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
 echo "admin"
@@ -468,11 +485,11 @@ if [ "$UPLOADS" = 1 ]; then
 
     echo
     echo "portfolio lifecycle"
-    if [ -n "$LISTING_ID" ]; then
+    if [ -n "$SERVICE_ID" ]; then
         # portfolioImage is the multipart field name, and a wire name like any
         # other — Phase 2 renames it, and only this call would notice.
         snap portfolios-create POST /portfolios -H "$(bearer "$TOKEN_PROVIDER")" \
-            -F "listingId=$LISTING_ID" \
+            -F "serviceId=$SERVICE_ID" \
             -F 'portfolioName=Snapshot Probe portfolio' \
             -F 'portfolioDescription=created by scripts/snapshot-api.sh' \
             -F 'developmentDate=2026-01-15' \
@@ -551,23 +568,78 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6b. Delete a service (US2-4). Before section 7, because probe A is the
-# "other Provider" for the 403 and section 7 deletes it.
+# 6b. Update and delete a service (US2-3, US2-4). Before section 7, because
+# probe A is the "other Provider" for the ownership checks and section 7
+# deletes it.
 # ---------------------------------------------------------------------------
 
 echo
-echo "service delete"
-# Its own probe, so the search snapshots later never see it.
+echo "service update and delete"
+# One disposable probe covers both lifecycles, so the search snapshots later
+# never see either the original or updated values.
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe delete $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
-DELETE_PROBE_ID="$(jget listingId)"
+DELETE_PROBE_ID="$(jget serviceId)"
 if [ -z "$DELETE_PROBE_ID" ]; then
     echo "could not create the delete probe service:" >&2
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID")
+SUBS+=(--id "delete_probe_id=$DELETE_PROBE_ID" --id "service_id=$DELETE_PROBE_ID")
+
+snap error-services-update-unauthorized PATCH "/services/$DELETE_PROBE_ID" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Unauthorized update"}'
+
+snap error-services-update-invalid-id PATCH /services/not-a-number \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Invalid id update"}'
+
+snap error-services-update-not-found PATCH /services/2147483647 \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Missing service update"}'
+
+# requireRole('provider') stops a Receiver before the ownership check.
+snap error-services-update-wrong-role PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Wrong role update"}'
+
+# Probe A is a Provider, but not the owner. It logged out in section 5, so
+# it signs in again before both ownership checks.
+api POST /auth/login -H 'Content-Type: application/json' \
+    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
+TOKEN_A="$(jget accessToken)"
+require_token "$TOKEN_A" "service ownership probe A" auth-login-provider
+
+snap error-services-update-forbidden PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_A")" -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Another provider update"}'
+
+snap error-services-update-empty PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{}'
+
+snap error-services-update-unknown-field PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"listingTitel":"Misspelled field"}'
+
+# A one-sided budget change is validated against the value already stored.
+snap error-services-update-budget-range PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"minBudget":50001}'
+
+# Exercises scalar fields plus replacement of both relation sets. The probe is
+# deleted below, and its run-prefixed tech name is removed by cleanup.
+TECH_STACK_SET=1
+snap services-update PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe updated service $RUN\",\"listingDesc\":\"updated by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":75000,\"categoryIds\":[1,2],\"techStack\":[\"${RUN}-Updated\"]}"
+
+# Null clears optional budgets; empty arrays clear relation sets.
+snap services-update-clear-optional PATCH "/services/$DELETE_PROBE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
+    -d '{"minBudget":null,"maxBudget":null,"categoryIds":[],"techStack":[]}'
 
 snap error-services-delete-unauthorized DELETE "/services/$DELETE_PROBE_ID"
 
@@ -581,11 +653,7 @@ snap error-services-delete-not-found DELETE /services/2147483647 \
 snap error-services-delete-wrong-role DELETE "/services/$DELETE_PROBE_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# Probe A is a Provider, but not the owner. It logged out in section 5, so
-# it signs in again first.
-api POST /auth/login -H 'Content-Type: application/json' \
-    -d "{\"email\":\"${RUN}a@example.test\",\"password\":\"snapshot-probe-pw\"}" >/dev/null
-TOKEN_A="$(jget accessToken)"
+# Probe A is a Provider, but not the owner.
 snap error-services-delete-forbidden DELETE "/services/$DELETE_PROBE_ID" \
     -H "$(bearer "$TOKEN_A")"
 
@@ -839,6 +907,14 @@ snap proposals-mine GET /proposals/mine \
 snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&limit=6" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
+snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
+
+snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap proposals-mine-counts GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
 # ---------------------------------------------------------------------------
@@ -852,13 +928,13 @@ TECH_STACK_SET=1
 api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"minBudget\":10000,\"maxBudget\":50000,\"categoryIds\":[1],\"techStack\":[\"${RUN}-React\",\"${RUN}-Node.js\"]}" >/dev/null
-NEW_SERVICE_ID="$(jget listingId)"
+NEW_SERVICE_ID="$(jget serviceId)"
 if [ -z "$NEW_SERVICE_ID" ]; then
     echo "could not create the probe service:" >&2
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "listing_id=$NEW_SERVICE_ID")
+SUBS+=(--id "service_id=$NEW_SERVICE_ID")
 
 # Probe C: a Provider that deletes itself. A soft delete leaves its service
 # OPEN, so only the deletedAt filter can keep it out of the results below.
@@ -876,7 +952,7 @@ C_LIVE=1
 api POST /services -H "$(bearer "$TOKEN_C")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
-DELETED_SERVICE_ID="$(jget listingId)"
+DELETED_SERVICE_ID="$(jget serviceId)"
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
 
 # Probe D: a Receiver that posts a job, then deletes itself. A soft delete
@@ -911,7 +987,7 @@ snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d" \
 snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-# GET /services/:listingId. Any company reads an open service of an active
+# GET /services/:serviceId. Any company reads an open service of an active
 # company, with the owner's name (companyName).
 snap services-one-open-other-company GET "/services/$NEW_SERVICE_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
@@ -982,9 +1058,9 @@ snap error-services-mine-draft-status GET "/services/mine?status=DRAFT" \
 snap services-create-tech-reuse POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe reuse service\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000,\"techStack\":[\"${RUN}-react\"]}"
-REUSE_SERVICE_ID="$(jget listingId)"
+REUSE_SERVICE_ID="$(jget serviceId)"
 if [ -n "$REUSE_SERVICE_ID" ]; then
-    SUBS+=(--id "listing_id=$REUSE_SERVICE_ID")
+    SUBS+=(--id "service_id=$REUSE_SERVICE_ID")
     resnap services-create-tech-reuse
 fi
 
@@ -1038,7 +1114,7 @@ probe_service() {
     api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
         -H 'Content-Type: application/json' \
         -d "{\"listingTitle\":\"Snapshot Probe $1 service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",${min}\"maxBudget\":$3,\"categoryIds\":[$4],\"techStack\":[\"$RUN\"]}" >/dev/null
-    jget listingId
+    jget serviceId
 }
 FILTER_WEB_ID="$(probe_service web 10000 50000 1)"
 FILTER_MOBILE_ID="$(probe_service mobile 80000 120000 2)"
@@ -1050,8 +1126,8 @@ if [ -z "$FILTER_WEB_ID" ] || [ -z "$FILTER_MOBILE_ID" ] ||
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "listing_id=$FILTER_WEB_ID" --id "listing_id=$FILTER_MOBILE_ID" \
-    --id "listing_id=$FILTER_WIDE_ID" --id "listing_id=$FILTER_NO_MIN_ID")
+SUBS+=(--id "service_id=$FILTER_WEB_ID" --id "service_id=$FILTER_MOBILE_ID" \
+    --id "service_id=$FILTER_WIDE_ID" --id "service_id=$FILTER_NO_MIN_ID")
 
 # T3.2.2: the UI receives the category catalog and the open-ended tech-stack
 # vocabulary from the API instead of maintaining stale hardcoded copies.

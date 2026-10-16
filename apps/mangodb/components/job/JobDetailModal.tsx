@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { JobPosting } from '@mangodb/shared';
 
 import {
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
+import { formatBudgetRange } from '@/lib/money';
 
 interface JobDetailModalProps {
     job: JobPosting;
@@ -184,14 +186,10 @@ export default function JobDetailModal({
                             <span className="text-brand">Budget</span>
 
                             <div>
-                                {job.minBudget != null
-                                    ? job.minBudget.toLocaleString()
-                                    : '-'}
-                                {' - '}
-                                {job.maxBudget != null
-                                    ? job.maxBudget.toLocaleString()
-                                    : '-'}{' '}
-                                THB
+                                {formatBudgetRange(
+                                    job.minBudget,
+                                    job.maxBudget,
+                                )}
                             </div>
 
                             <Wallet size={20} />
@@ -291,10 +289,14 @@ export default function JobDetailModal({
                         >
                             <span>Company</span>
 
-                            {/* Plain text until /profile/[companyId] exists (T2.7.17) */}
-                            <span className="!font-[600] text-ink">
+                            {/* The posting's own company: this popup also opens
+                                from another company's profile. */}
+                            <Link
+                                href={`/profile/${job.companyId}`}
+                                className="!font-[600] text-ink hover:underline"
+                            >
                                 {job.companyName}
-                            </span>
+                            </Link>
 
                             <Building2 size={20} color="black" />
                         </div>

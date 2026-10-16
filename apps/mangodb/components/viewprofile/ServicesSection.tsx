@@ -1,37 +1,156 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
+import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
+import JobDetailModal from '@/components/job/JobDetailModal';
+import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
+import ModalShell from '@/components/ui/ModalShell';
+import Tag from '@/components/ui/Tag';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import { listCategories } from '@/lib/categories';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
+import { PROFILE_LIST_SIZE } from '@/lib/pagination';
+import { isReceiverAccount } from '@/lib/roles';
+import {
+    listCompanyServices,
+    listMyServices,
+    toServiceSummary,
+    type ServiceSummary,
+} from '@/lib/services';
+import { redirectToUnauthorized } from '@/lib/session';
 
-// Data types
-export interface BlockContent {
-    title1: string;
-    body1: string;
-    title2: string;
-    body2: string;
+interface DisplayItem {
+    id: number;
+    title: string;
+    body: string;
+    closed: boolean;
 }
 
-export interface DualSectionData {
-    services: BlockContent;
-    jobs: BlockContent;
+// A service row and whether it is closed. ServiceSummary has no status, so
+// it is carried beside it.
+interface ServiceRow {
+    summary: ServiceSummary;
+    closed: boolean;
 }
 
-const sectionData: DualSectionData = {
-    services: {
-        title1: 'DevOps & Infrastructure Setup',
-        body1: 'Automated CI/CD pipelines, cloud provisioning, and cluster management optimized for scale.',
-        title2: 'Cybersecurity Compliance',
-        body2: 'Comprehensive security audits, risk management frameworks, and automated compliance checks.',
-    },
-    jobs: {
-        title1: 'Senior DevOps Engineer',
-        body1: 'Full-time • Remote — Looking for 5+ years experience in AWS, Kubernetes, and Terraform.',
-        title2: 'Lead UI/UX Designer',
-        body2: 'Full-time • Hybrid — Seeking a product designer to lead design systems and user research.',
-    },
-};
-
-export default function ServicesDashboard() {
+// The company's services and job postings. Another company's profile
+// (readOnly) shows only OPEN ones, from the public lists filtered by
+// companyId. Your own shows every status, from the /mine lists, so you can
+// keep track of closed ones too (US2-2). Details opens the same views the
+// search pages use.
+export default function ServicesSection({
+    profile,
+    readOnly = false,
+}: {
+    profile: PublicCompanyProfile;
+    readOnly?: boolean;
+}) {
+    const { companyId, companyName, companyPhoto, accountType } = profile;
     const [activeTab, setActiveTab] = useState<'services' | 'jobs'>('services');
-    const currentTabContent = sectionData[activeTab];
+    // null until the list answers, so "Loading…" shows instead of a
+    // momentary "No services yet."
+    const [services, setServices] = useState<ServiceRow[] | null>(null);
+    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
+    // One per tab, so a failed services load does not hide the jobs.
+    const [servicesError, setServicesError] = useState<string | null>(null);
+    const [jobsError, setJobsError] = useState<string | null>(null);
+    const [selectedService, setSelectedService] =
+        useState<ServiceSummary | null>(null);
+    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const serviceTitleId = useId();
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadServices: Promise<ServiceRow[]> = readOnly
+            ? listCompanyServices(companyId, PROFILE_LIST_SIZE).then((data) =>
+                  data.items.map((summary) => ({ summary, closed: false })),
+              )
+            : Promise.all([listMyServices(), listCategories()]).then(
+                  ([mine, categories]) =>
+                      mine.map((listing) => ({
+                          summary: toServiceSummary(listing, categories, {
+                              companyId,
+                              companyName,
+                              companyPhoto,
+                          }),
+                          closed: listing.listingStatus === 'CLOSED',
+                      })),
+              );
+
+        // GET /job-postings/mine is receiver-only, so a PROVIDER-only
+        // company's own profile has no jobs to ask for.
+        const loadJobs: Promise<JobPosting[]> = readOnly
+            ? listJobPostings(1, PROFILE_LIST_SIZE, {
+                  companyId,
+                  status: 'OPEN',
+              }).then((data) => data.items)
+            : isReceiverAccount(accountType)
+              ? listMyJobPostings(1, PROFILE_LIST_SIZE).then(
+                    (data) => data.items,
+                )
+              : Promise.resolve([]);
+
+        loadServices
+            .then((rows) => {
+                if (!cancelled) setServices(rows);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setServicesError(describeError(err));
+            });
+
+        loadJobs
+            .then((items) => {
+                if (!cancelled) setJobs(items);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setJobsError(describeError(err));
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [readOnly, companyId, companyName, companyPhoto, accountType]);
+
+    const loadError = activeTab === 'services' ? servicesError : jobsError;
+
+    // null while the active tab's list is still loading.
+    const displayItems: DisplayItem[] | null =
+        activeTab === 'services'
+            ? (services?.map(({ summary, closed }) => ({
+                  id: summary.serviceId,
+                  title: summary.listingTitle,
+                  body: summary.listingDesc,
+                  closed,
+              })) ?? null)
+            : (jobs?.map((job) => ({
+                  id: job.jobPostingId,
+                  title: job.listingTitle,
+                  body: job.listingDesc,
+                  closed: job.listingStatus === 'CLOSED',
+              })) ?? null);
+
+    const openDetail = (id: number) => {
+        if (activeTab === 'services') {
+            setSelectedService(
+                services?.find(({ summary }) => summary.serviceId === id)
+                    ?.summary ?? null,
+            );
+        } else {
+            setSelectedJob(
+                jobs?.find((job) => job.jobPostingId === id) ?? null,
+            );
+        }
+    };
 
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
@@ -63,41 +182,83 @@ export default function ServicesDashboard() {
                     </button>
                 </div>
 
+                {loadError && (
+                    <p className="type-xs text-danger mb-2">{loadError}</p>
+                )}
+
                 {/* Display Content */}
                 <div className="space-y-3 overflow-y-auto max-h-[500px] flex-1 pr-2">
-                    {/* Item 1 */}
-                    <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
-                        <div className="flex justify-between items-center">
-                            <span className="type-sm !font-semibold text-gray-800">
-                                {currentTabContent.title1 || 'Untitled Item'}
-                            </span>
-                            <button className="type-xs text-brand hover:underline !font-medium">
-                                Details
-                            </button>
-                        </div>
-                        <p className="type-xs text-gray-600 leading-relaxed">
-                            {currentTabContent.body1 ||
-                                'No description provided.'}
+                    {displayItems === null && !loadError && (
+                        <p className="py-2 type-xs text-ink-placeholder">
+                            Loading…
                         </p>
-                    </div>
-
-                    {/* Item 2 */}
-                    <div className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1">
-                        <div className="flex justify-between items-center">
-                            <span className="type-sm !font-semibold text-gray-800">
-                                {currentTabContent.title2 || 'Untitled Item'}
-                            </span>
-                            <button className="type-xs text-brand hover:underline !font-medium">
-                                Details
-                            </button>
-                        </div>
-                        <p className="type-xs text-gray-600 leading-relaxed">
-                            {currentTabContent.body2 ||
-                                'No description provided.'}
+                    )}
+                    {displayItems?.length === 0 && !loadError && (
+                        <p className="py-2 type-xs text-ink-placeholder">
+                            {activeTab === 'services'
+                                ? 'No services yet.'
+                                : readOnly
+                                  ? 'No open job listings.'
+                                  : 'No job listings yet.'}
                         </p>
-                    </div>
+                    )}
+                    {displayItems?.map((item) => (
+                        <div
+                            key={item.id}
+                            className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1"
+                        >
+                            <div className="flex justify-between items-center gap-3">
+                                <span className="type-sm !font-semibold text-gray-800 truncate">
+                                    {item.title || 'Untitled Item'}
+                                </span>
+                                {item.closed && (
+                                    <Tag
+                                        size="sm"
+                                        label="Closed"
+                                        className="ml-auto shrink-0 bg-danger-tint text-danger"
+                                    />
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => openDetail(item.id)}
+                                    aria-label={`Details for ${item.title}`}
+                                    className="shrink-0 type-xs text-brand hover:underline !font-medium"
+                                >
+                                    Details
+                                </button>
+                            </div>
+                            <p className="type-xs text-gray-600 leading-relaxed line-clamp-2">
+                                {item.body || 'No description provided.'}
+                            </p>
+                        </div>
+                    ))}
                 </div>
             </main>
+
+            {/* ServiceDetailPanel is the search page's side panel; here it
+                floats over the profile instead. */}
+            <ModalShell
+                isOpen={selectedService !== null}
+                onClose={() => setSelectedService(null)}
+                labelledBy={serviceTitleId}
+                backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
+            >
+                {selectedService && (
+                    <ServiceDetailPanel
+                        service={selectedService}
+                        onClose={() => setSelectedService(null)}
+                        titleId={serviceTitleId}
+                    />
+                )}
+            </ModalShell>
+
+            {selectedJob && (
+                <JobDetailModal
+                    job={selectedJob}
+                    isOpen
+                    onClose={() => setSelectedJob(null)}
+                />
+            )}
         </div>
     );
 }

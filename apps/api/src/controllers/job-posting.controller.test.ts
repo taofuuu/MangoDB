@@ -10,6 +10,8 @@
  *   The owner still sees its own closed job.
  * - A soft-deleted company's jobs are hidden from the list and 404 on detail,
  *   even when they are still OPEN (a soft delete does not close them).
+ * - The keyword: each word matches on its own, and "%" is a plain character,
+ *   not a wildcard that matches every job.
  *
  * How:
  * - The test calls the controller functions directly with a fake req and a
@@ -20,7 +22,8 @@
  *   array and answers findUnique / findFirst / findMany / count by reading the
  *   `where` the controller sends. It understands only the parts of `where` the
  *   controller uses (AND, OR, plain equals, a `company` relation filter,
- *   `contains`). So the test checks what comes back, not which query was run.
+ *   `contains` read as SQL LIKE). So the test checks what comes back, not
+ *   which query was run.
  *
  * Run: npm test (in apps/api). Needs --experimental-test-module-mocks, which the
  * test script passes.
@@ -81,6 +84,29 @@ function job(
     };
 }
 
+// Prisma's `contains` becomes SQL LIKE: % is any run of characters, _ is any
+// one character, and a backslash makes the next character plain. Reading it
+// the same way here is what catches a search that forgets escapeLike.
+function likeToRegExp(pattern: string): RegExp {
+    const plain = (ch: string) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let source = '';
+    for (let i = 0; i < pattern.length; i++) {
+        const ch = pattern.charAt(i);
+        if (ch === '\\' && i + 1 < pattern.length) {
+            i++;
+            source += plain(pattern.charAt(i));
+        } else if (ch === '%') {
+            source += '.*';
+        } else if (ch === '_') {
+            source += '.';
+        } else {
+            source += plain(ch);
+        }
+    }
+    // The controller always asks for mode: 'insensitive'.
+    return new RegExp(source, 'i');
+}
+
 // Reads the small part of Prisma's `where` language the controller uses.
 function matches(row: Record<string, unknown>, where: unknown): boolean {
     if (where === undefined) return true;
@@ -103,9 +129,7 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
             ) {
                 const c = cond as { contains?: string; equals?: unknown };
                 if (c.contains !== undefined) {
-                    return String(value)
-                        .toLowerCase()
-                        .includes(c.contains.toLowerCase());
+                    return likeToRegExp(c.contains).test(String(value));
                 }
                 if ('equals' in c) return value === c.equals;
                 throw new Error(`fake prisma: unsupported filter on ${key}`);
@@ -282,5 +306,37 @@ describe('GET /job-postings', () => {
 
         assert.deepEqual(body.items, []);
         assert.equal(body.pagination.totalItems, 0);
+    });
+
+    it('reads % in a keyword as a plain character, not a wildcard', async () => {
+        rows = [
+            { ...job(10, OWNER, 'OPEN'), listingTitle: '50% off rebuild' },
+            job(11, OWNER, 'OPEN'),
+        ];
+
+        const body = await list(OTHER, { q: '%' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobPostingId),
+            [10],
+        );
+    });
+
+    it('matches each keyword word on its own', async () => {
+        rows = [
+            {
+                ...job(10, OWNER, 'OPEN'),
+                listingTitle: 'React app',
+                listingDesc: 'Needs a payment page',
+            },
+            { ...job(11, OWNER, 'OPEN'), listingTitle: 'React app' },
+        ];
+
+        const body = await list(OTHER, { q: 'react payment' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobPostingId),
+            [10],
+        );
     });
 });

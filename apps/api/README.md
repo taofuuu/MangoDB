@@ -67,6 +67,21 @@ open-ended under ADR 0009 and must not be hardcoded in the frontend.
 `minBudget`, with `listingId` as the stable final tie-breaker, and runs before
 pagination.
 
+## Service updates
+
+`PATCH /services/:serviceId` is authenticated and limited to provider
+accounts. A provider may update only a service owned by its company; another
+provider receives `403 FORBIDDEN`, while an unknown id or a non-service
+listing receives `404 NOT_FOUND`.
+
+The JSON body is a strict, non-empty partial update. It accepts
+`listingTitle`, `listingDesc`, `minBudget`, `maxBudget`, `categoryIds`, and
+`techStack`. Send `null` to clear either budget. When `categoryIds` or
+`techStack` is present, that array replaces the complete existing set, and an
+empty array clears it. A one-sided budget update is validated against the
+other budget already stored on the listing. A successful update returns the
+complete `ServiceListing` resource with status `200`.
+
 ## Endpoint conventions
 
 Read this before adding an endpoint. Every endpoint follows the same shape so
@@ -193,6 +208,7 @@ the frontend imports the same definitions.
 | `FORBIDDEN`         | 403    | Authenticated but the role may not do it         |
 | `NOT_FOUND`         | 404    | Unknown route or missing resource                |
 | `CONFLICT`          | 409    | Existing data blocks the write (username taken)  |
+| `TOO_MANY_REQUESTS` | 429    | Too many failed logins (`middleware/rateLimit`)  |
 | `INTERNAL`          | 500    | Anything unplanned — a bug, never thrown by hand |
 
 `401` means "we do not know who you are", `403` means "we know, and no". A
@@ -482,14 +498,14 @@ duplicates that the old composite primary key made impossible.
 
 The two `GET`s are public: a work sample is meant to be seen, and neither
 reads anything the profile does not already show. `GET /portfolios` takes
-`listingId` and `companyId`, both optional and combinable — `companyId`
+`serviceId` and `companyId`, both optional and combinable — `companyId`
 filters through `service -> listing` because the row itself has no owner
 column. Left off, it answers with every row in the table. Ordered by
 `developmentDate` desc, no pagination, and the body is a bare array.
 
 `POST` is `multipart/form-data`, not JSON: the image is the file part
 `portfolioImage` (png/jpeg/webp, 5 MB, see `src/middleware/upload.ts`) and
-the rest are text parts. `listingId` is required and is checked against the
+the rest are text parts. `serviceId` is required and is checked against the
 caller's company _before_ the upload, so a rejected request never leaves a
 file behind; a failed insert afterwards removes the one it just wrote.
 

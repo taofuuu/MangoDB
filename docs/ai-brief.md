@@ -90,6 +90,7 @@ Never `{ message, resource }`. The status code already says it worked.
 | 403  | signed in, but not allowed                                   |
 | 404  | no such row, or the caller has no business knowing it exists |
 | 409  | unique constraint, or a state conflict                       |
+| 429  | too many failed logins — only the login limit sends it       |
 
 401 and 403 must stay distinct: 401 is _who are you_, 403 is _I know who you
 are, and no_.
@@ -165,20 +166,25 @@ await apiFetch<Thing>('/things', { method: 'POST', body: JSON.stringify(x) });
 await apiFetch<Thing>('/things/1', { method: 'PATCH', body: formData }); // multipart
 ```
 
+Requests live in `lib/<area>.ts`. Reads use `cachedGet(path, () => apiFetch(path))`;
+writes use `invalidateAfter(apiFetch(...), '/prefix')` so the reads they change
+are dropped. A write that calls `apiFetch` directly leaves stale data on screen
+for up to 30s.
+
 `apiFetch` throws `ApiRequestError` with `.status`, `.code` and `.details`.
 Do not write your own fetch wrapper, your own 401 check, or your own
 "could not reach the server" message — all three exist:
 
 ```ts
 catch (err) {
-    if (isNotSignedIn(err)) { setLoadError(NOT_SIGNED_IN); return; }
+    if (isNotSignedIn(err)) { redirectToUnauthorized(); return; }
     setLoadError(describeError(err));
 }
 ```
 
-A page that loads data shows one of three things: the sign-in prompt when
-`loadError === NOT_SIGNED_IN`, the error when it is anything else, or "Loading…"
-while the data is null.
+A page that loads data redirects to `/unauthorized` when `isNotSignedIn(err)`,
+renders the error when it is anything else, or renders a neutral surface gate
+while the data is loading.
 
 ### Errors belong to the field they name
 
@@ -281,9 +287,8 @@ Every row has really happened on this codebase.
 
 Saying "that isn't built" is a useful answer. Inventing it is not.
 
-- `/forgot-password` — linked from the login form, no route behind it
-- `ServicesSection`, `ProjectTimeline`, `JobListing` — real layout, hardcoded
-  mock data, no API
+- `/forgot-password` — no route and no story; the login form no longer links it
+- `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - A price or delivery duration on a service — `service` holds only `listing_id`

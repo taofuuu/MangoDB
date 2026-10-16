@@ -1,46 +1,59 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import type { JobPosting } from '@mangodb/shared';
+import JobDetailModal from '@/components/job/JobDetailModal';
+import Tag from '@/components/ui/Tag';
+import { describeError, isNotSignedIn } from '@/lib/api';
+import { formatDateOnly } from '@/lib/dates';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
+import { formatBudgetRange } from '@/lib/money';
+import { PROFILE_LIST_SIZE } from '@/lib/pagination';
+import { redirectToUnauthorized } from '@/lib/session';
 
-export default function JobListing() {
-    const mockJobs = [
-        {
-            id: 1,
-            title: 'DevOps & Infrastructure Setup',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-        {
-            id: 2,
-            title: 'Data Engineering & Pipeline Setup',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-        {
-            id: 3,
-            title: 'UI/UX Design',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-        {
-            id: 4,
-            title: 'Cybersecurity Compliance & Auditing',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-        {
-            id: 5,
-            title: 'Software Testing Services',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-        {
-            id: 6,
-            title: 'Managed Migration Services',
-            budget: '1,000,000',
-            deadline: '30 Aug 2026',
-        },
-    ];
+// A receiver's job postings. Another company's profile (readOnly) shows only
+// OPEN ones, from GET /job-postings?companyId=. Your own shows every status,
+// from GET /job-postings/mine, so closed ones stay in view (US2-2).
+export default function JobListing({
+    companyId,
+    readOnly = false,
+}: {
+    companyId: number;
+    readOnly?: boolean;
+}) {
+    // null until the list answers, so "Loading…" shows instead of a
+    // momentary "No job listings yet."
+    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const request = readOnly
+            ? listJobPostings(1, PROFILE_LIST_SIZE, {
+                  companyId,
+                  status: 'OPEN',
+              })
+            : listMyJobPostings(1, PROFILE_LIST_SIZE);
+
+        request
+            .then((data) => {
+                if (!cancelled) setJobs(data.items);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setLoadError(describeError(err));
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [companyId, readOnly]);
 
     return (
         <div className="bg-white rounded-popup p-8 w-full h-full border border-line shadow-sm flex flex-col overflow-hidden">
@@ -48,16 +61,39 @@ export default function JobListing() {
                 Job Listing
             </h3>
 
+            {loadError && (
+                <p className="type-xs text-danger mb-2 px-1">{loadError}</p>
+            )}
+
             {/* Same inset panel the provider page's timeline sits in, and the
                 list scrolls inside it rather than growing the card. */}
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
-                {mockJobs.map((job) => (
+                {jobs === null && !loadError && (
+                    <p className="type-xs text-ink-placeholder">Loading…</p>
+                )}
+                {jobs?.length === 0 && !loadError && (
+                    <p className="type-xs text-ink-placeholder">
+                        {readOnly
+                            ? 'No open job listings.'
+                            : 'No job listings yet.'}
+                    </p>
+                )}
+                {jobs?.map((job) => (
                     <div
-                        key={job.id}
+                        key={job.jobPostingId}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
                     >
-                        <div className="flex-1 type-sm !font-bold text-gray-900">
-                            {job.title}
+                        <div className="flex flex-1 items-center gap-2">
+                            <span className="type-sm !font-bold text-gray-900">
+                                {job.listingTitle}
+                            </span>
+                            {job.listingStatus === 'CLOSED' && (
+                                <Tag
+                                    size="sm"
+                                    label="Closed"
+                                    className="shrink-0 bg-danger-tint text-danger"
+                                />
+                            )}
                         </div>
 
                         <div className="flex gap-20 type-xs text-gray-400 mr-8 mt-2 sm:mt-0">
@@ -66,7 +102,10 @@ export default function JobListing() {
                                     Budget
                                 </span>
                                 <span className="font-semibold text-gray-800">
-                                    {job.budget}
+                                    {formatBudgetRange(
+                                        job.minBudget,
+                                        job.maxBudget,
+                                    )}
                                 </span>
                             </div>
 
@@ -75,17 +114,32 @@ export default function JobListing() {
                                     Deadline
                                 </span>
                                 <span className="font-semibold text-gray-800">
-                                    {job.deadline}
+                                    {job.deadline
+                                        ? formatDateOnly(job.deadline)
+                                        : '—'}
                                 </span>
                             </div>
                         </div>
 
-                        <button className="text-brand hover:underline type-xs !font-medium mt-2 sm:mt-0 transition-colors ml-8">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedJob(job)}
+                            aria-label={`Details for ${job.listingTitle}`}
+                            className="text-brand hover:underline type-xs !font-medium mt-2 sm:mt-0 transition-colors ml-8"
+                        >
                             Details
                         </button>
                     </div>
                 ))}
             </div>
+
+            {selectedJob && (
+                <JobDetailModal
+                    job={selectedJob}
+                    isOpen
+                    onClose={() => setSelectedJob(null)}
+                />
+            )}
         </div>
     );
 }

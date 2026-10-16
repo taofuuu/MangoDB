@@ -2,6 +2,19 @@ import type { NextFunction, Request, Response } from 'express';
 import type { ApiErrorResponse } from '@mangodb/shared';
 import { ApiError } from '../lib/ApiError';
 
+// express.json() rejects a body before any route runs: broken JSON, or more
+// than its 100kb limit. Both are the caller's mistake, so 400, not 500.
+function bodyParserError(err: unknown): ApiError | null {
+    const type = (err as { type?: unknown } | null)?.type;
+    if (type === 'entity.parse.failed') {
+        return ApiError.badRequest('Request body is not valid JSON');
+    }
+    if (type === 'entity.too.large') {
+        return ApiError.badRequest('Request body is too large');
+    }
+    return null;
+}
+
 // Mount last. Four arguments is how Express recognises error middleware, so
 // `next` must stay even though the happy path never calls it.
 export function errorHandler(
@@ -15,15 +28,16 @@ export function errorHandler(
         return;
     }
 
-    if (err instanceof ApiError) {
+    const apiError = err instanceof ApiError ? err : bodyParserError(err);
+    if (apiError) {
         const body: ApiErrorResponse = {
             error: {
-                code: err.code,
-                message: err.message,
-                ...(err.details ? { details: err.details } : {}),
+                code: apiError.code,
+                message: apiError.message,
+                ...(apiError.details ? { details: apiError.details } : {}),
             },
         };
-        res.status(err.status).json(body);
+        res.status(apiError.status).json(body);
         return;
     }
 

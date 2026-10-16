@@ -3,20 +3,19 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import type { Certificate } from '@mangodb/shared';
-import { getPortfolios } from '@/lib/portfolios';
-import { getCertificates } from '@/lib/certificate';
-import { monthLabel } from '@/components/sm-detail/MonthDropdown';
+import { listPortfolios } from '@/lib/portfolios';
+import {
+    listMyCertificates,
+    listCompanyCertificates,
+} from '@/lib/certificates';
+import { formatDateOnly, monthLabel } from '@/lib/dates';
+import ProfileItemDetailModal, {
+    type ProfileItem,
+} from './ProfileItemDetailModal';
 
 // Matches the card's fixed-height design: enough to preview at a glance,
 // the rest lives behind "See more" instead of an in-card scrollbar.
 const MAX_VISIBLE_ITEMS = 3;
-
-function formatPortfolioDate(dateString: string): string {
-    // Split rather than new Date() — an ISO date parses as UTC midnight and
-    // would render a day early west of UTC.
-    const [year, month, day] = dateString.split('-');
-    return `${Number(day)} ${monthLabel(String(Number(month)))} ${year}`;
-}
 
 function formatCertificateDate(cert: Certificate): string {
     if (!cert.issueMonth || !cert.issueYear) return '—';
@@ -27,14 +26,21 @@ interface DisplayItem {
     id: number;
     title: string;
     date: string;
+    entry: ProfileItem;
 }
 
 interface PortfolioCertificateListProps {
     companyId: number;
+    // Another company's profile. Its certificates come from
+    // GET /certificates?companyId=, since /certificates/mine is always the
+    // viewer's own. "See more" goes to the viewer's own management pages, so
+    // it is hidden.
+    readOnly?: boolean;
 }
 
 export default function PortfolioCertificateList({
     companyId,
+    readOnly = false,
 }: PortfolioCertificateListProps) {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'certificates'>(
         'portfolio',
@@ -44,37 +50,40 @@ export default function PortfolioCertificateList({
     );
     const [certificateItems, setCertificateItems] = useState<Certificate[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [selected, setSelected] = useState<ProfileItem | null>(null);
 
     useEffect(() => {
-        getPortfolios(companyId)
+        listPortfolios(companyId)
             .then((items) => setPortfolioItems(items))
             .catch(() => setLoadError('Could not load portfolio items.'));
 
-        getCertificates()
+        (readOnly ? listCompanyCertificates(companyId) : listMyCertificates())
             .then((items) => setCertificateItems(items))
             .catch(() =>
                 setLoadError(
                     (current) => current ?? 'Could not load certificates.',
                 ),
             );
-    }, [companyId]);
+    }, [companyId, readOnly]);
 
     const displayItems: DisplayItem[] =
         activeTab === 'portfolio'
             ? portfolioItems.map((item) => ({
                   id: item.portfolioId,
                   title: item.portfolioName,
-                  date: formatPortfolioDate(item.developmentDate),
+                  date: formatDateOnly(item.developmentDate),
+                  entry: { kind: 'portfolio', item },
               }))
             : certificateItems.map((item) => ({
                   id: item.certificateId,
                   title: item.certTitle,
                   date: formatCertificateDate(item),
+                  entry: { kind: 'certificate', item },
               }));
 
     const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
     const seeMoreHref =
-        activeTab === 'portfolio' ? '/portfolio' : '/certificate';
+        activeTab === 'portfolio' ? '/portfolios' : '/certificates';
 
     return (
         <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
@@ -134,7 +143,12 @@ export default function PortfolioCertificateList({
                             <span className="text-gray-400 type-xs">
                                 {item.date}
                             </span>
-                            <button className="text-brand hover:underline">
+                            <button
+                                type="button"
+                                onClick={() => setSelected(item.entry)}
+                                aria-label={`Details for ${item.title}`}
+                                className="text-brand hover:underline"
+                            >
                                 Details
                             </button>
                         </div>
@@ -142,7 +156,9 @@ export default function PortfolioCertificateList({
                 ))}
             </div>
 
-            {displayItems.length > MAX_VISIBLE_ITEMS && (
+            {/* Always on your own profile, even with three items or fewer:
+                it is the way to the pages where you add and edit them. */}
+            {!readOnly && (
                 <div className="mt-3 text-right">
                     <Link
                         href={seeMoreHref}
@@ -151,6 +167,13 @@ export default function PortfolioCertificateList({
                         See more
                     </Link>
                 </div>
+            )}
+
+            {selected && (
+                <ProfileItemDetailModal
+                    entry={selected}
+                    onClose={() => setSelected(null)}
+                />
             )}
         </div>
     );

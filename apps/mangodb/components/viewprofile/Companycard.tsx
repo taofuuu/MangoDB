@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { AccountType, CompanyProfile } from '@mangodb/shared';
+import type { AccountType, PublicCompanyProfile } from '@mangodb/shared';
 import RoleTags from '../ui/RoleTags';
 import CompanyAvatar from './CompanyAvatar';
 import Tag from '../ui/Tag';
@@ -25,11 +25,15 @@ export interface CompanyCardData {
 
 interface CompanyCardProps {
     data: CompanyCardData;
+    // Another company's profile shows the same card with no way to edit it.
+    readOnly?: boolean;
 }
 
 // The profile's nullable columns become "Not provided" here rather than
 // rendering an empty line, which reads as a loading glitch.
-export function toCompanyCardData(profile: CompanyProfile): CompanyCardData {
+export function toCompanyCardData(
+    profile: PublicCompanyProfile,
+): CompanyCardData {
     return {
         name: profile.companyName,
         email: profile.contactEmail ?? 'Not provided',
@@ -65,7 +69,10 @@ function Field({
     );
 }
 
-export default function CompanyCard({ data }: CompanyCardProps) {
+export default function CompanyCard({
+    data,
+    readOnly = false,
+}: CompanyCardProps) {
     return (
         <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm md:flex-row md:gap-8">
             {/* Who the company is. Fixed rather than scrolled: it is short
@@ -143,14 +150,16 @@ export default function CompanyCard({ data }: CompanyCardProps) {
                     </div>
                 </div>
 
-                <div className="flex shrink-0 justify-end pt-4">
-                    <Link
-                        href="/profile/edit"
-                        className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
-                    >
-                        Edit
-                    </Link>
-                </div>
+                {!readOnly && (
+                    <div className="flex shrink-0 justify-end pt-4">
+                        <Link
+                            href="/profile/edit"
+                            className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
+                        >
+                            Edit
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     );

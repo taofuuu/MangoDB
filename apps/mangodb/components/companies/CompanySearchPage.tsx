@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { redirectToUnauthorized } from '@/lib/session';
 import type {
     CompanyListResponse,
     CompanySortOrder,
@@ -11,7 +11,7 @@ import { Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-import { searchCompanies } from '@/lib/companies';
+import { listCompanies } from '@/lib/companies';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
@@ -50,7 +50,7 @@ export default function CompanySearchPage() {
         setIsLoading(true);
         setError(null);
 
-        searchCompanies(
+        listCompanies(
             page,
             COMPANY_PAGE_SIZE,
             debouncedSearch || undefined,
@@ -63,11 +63,12 @@ export default function CompanySearchPage() {
             })
             .catch((requestError: unknown) => {
                 if (cancelled) return;
-                setError(
-                    isNotSignedIn(requestError)
-                        ? NOT_SIGNED_IN
-                        : describeError(requestError),
-                );
+                if (isNotSignedIn(requestError)) {
+                    setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
+                setError(describeError(requestError));
             })
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
@@ -100,25 +101,11 @@ export default function CompanySearchPage() {
     const pagination = result?.pagination;
 
     if (isLoading && !result && !error) {
-        return (
-            <main className="min-h-screen bg-surface p-6 text-ink">
-                <p className="type-sm">Loading…</p>
-            </main>
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     if (error === NOT_SIGNED_IN) {
-        return (
-            <main className="min-h-screen bg-surface p-6 text-ink">
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            </main>
-        );
+        return <div className="min-h-screen bg-surface" />;
     }
 
     return (
@@ -150,10 +137,10 @@ export default function CompanySearchPage() {
                             : 'w-full lg:mx-auto lg:w-[56.56vw]'
                     }`}
                 >
-                    <div className="relative h-10 w-full sm:h-[4.07vh] sm:w-[27.86vw] sm:min-w-[260px]">
+                    <div className="relative h-[4.07vh] w-full min-w-[180px] sm:w-[27.86vw]">
                         <Search
                             aria-hidden="true"
-                            className="pointer-events-none absolute left-[0.83vw] top-1/2 size-5 -translate-y-1/2 text-ink-placeholder"
+                            className="pointer-events-none absolute left-[0.6vw] top-1/2 h-[2vh] w-[2vw] -translate-y-1/2 text-ink-placeholder"
                         />
                         <input
                             type="text"
@@ -164,17 +151,20 @@ export default function CompanySearchPage() {
                             }
                             maxLength={100}
                             placeholder="Search"
-                            aria-label="Search companies"
-                            className="h-full min-h-[40px] w-full rounded-[50px] border border-line bg-surface-white pl-[2.6vw] pr-[2.6vw] type-sm text-ink shadow-card placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
+                            aria-label="Search companies by keyword"
+                            className="h-full w-full rounded-[50px] border border-line bg-surface-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
                         />
                         {searchQuery && (
                             <button
                                 type="button"
                                 onClick={clearSearch}
-                                aria-label="Clear company search"
-                                className="absolute right-[0.83vw] top-1/2 -translate-y-1/2 rounded-full p-1 text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                                aria-label="Clear search"
+                                className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
                             >
-                                <X aria-hidden="true" className="size-4" />
+                                <X
+                                    aria-hidden="true"
+                                    className="h-[1.48vh] w-[0.73vw]"
+                                />
                             </button>
                         )}
                     </div>

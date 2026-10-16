@@ -32,8 +32,14 @@ type SelectedPortfolio = {
 // plain YYYY-MM-DD with no timezone drift.
 export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
     return {
-        ...row,
+        portfolioId: row.portfolioId,
+        // The service's listing_id, named for the resource (GET /services/:serviceId).
+        serviceId: row.listingId,
+        portfolioName: row.portfolioName,
+        portfolioDescription: row.portfolioDescription,
         developmentDate: row.developmentDate.toISOString().slice(0, 10),
+        portfolioImage: row.portfolioImage,
+        portfolioLink: row.portfolioLink,
     };
 }
 

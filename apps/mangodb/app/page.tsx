@@ -14,7 +14,7 @@ const ROUTES = [
         detail: 'US1-5 — the editable company profile form, against the API.',
     },
     {
-        href: '/certificate',
+        href: '/certificates',
         title: 'Certificates',
         detail: "Add, edit and delete a provider's certificates.",
     },
@@ -29,7 +29,7 @@ const ROUTES = [
         detail: 'Sign in to your company account.',
     },
     {
-        href: '/portfolio',
+        href: '/portfolios',
         title: 'Portfolio',
         detail: 'Company portfolio grid and list views, against the API.',
     },
@@ -68,25 +68,44 @@ const ROUTES = [
         title: 'Create Service',
         detail: 'US2-1 - create service and add portfolio',
     },
+    ...(process.env.NODE_ENV === 'development'
+        ? [
+              {
+                  href: '/dev/services/edit',
+                  title: 'Edit Service Picker (Temporary)',
+                  detail: 'Temporary development page for T2.3.2–T2.3.3. Choose one of your services and open its prefilled edit form; remove this link after T2.2.2 adds the real Edit buttons.',
+              },
+          ]
+        : []),
     {
-        href: '/services/search',
+        href: '/services',
         title: 'Services (service search)',
-        detail: 'US3-1 — search and filter service listings. Mock data for now; see WIRING NOTE in lib/searchServices.ts.',
+        detail: 'US3-1 — search and filter service listings. Calls GET /services.',
     },
     {
-        href: '/job/view-all',
+        href: '/job-postings',
         title: 'View and search for job',
         detail: 'Epic 3: ทำเกิน ;-;',
     },
     {
-        href: '/job/view-own',
+        href: '/job-postings/mine',
         title: 'View own job posting',
         detail: 'US2-7',
     },
     {
-        href: '/job/view-byCompany',
+        href: '/job-postings/by-company',
         title: 'View job posting by company (Just for test)',
         detail: 'US2-7',
+    },
+    {
+        href: '/proposal/view',
+        title: 'View proposal',
+        detail: 'US2-10',
+    },
+    {
+        href: '/unauthorized',
+        title: 'Login Required',
+        detail: 'Global unauthorized access guard page.',
     },
 ];
 

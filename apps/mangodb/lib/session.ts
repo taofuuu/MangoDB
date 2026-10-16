@@ -1,5 +1,6 @@
 import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
 import { apiFetch, isNotSignedIn } from './api';
+import { clearCacheInEveryTab } from './apiCache';
 
 // Nothing to store: both login endpoints set the session cookie on the
 // response, and the browser carries it from here on. This just reports who
@@ -13,6 +14,12 @@ async function authenticate(
         method: 'POST',
         body: JSON.stringify({ email, password }),
     });
+
+    // The forms move on with router.push('/'), which keeps the cache module
+    // alive. Without this, a second account signing in on the same tab would
+    // be shown the first one's /companies/me and /proposals/mine.
+    // Every tab, not just this one: they all share the new session cookie.
+    clearCacheInEveryTab();
 
     return company;
 }
@@ -56,8 +63,13 @@ export async function logout(): Promise<void> {
 // promises it, so reload if it comes back. once: true — this only needs to
 // fire for the navigation this call is about to start, not linger for the rest
 // of the page's life.
-export function redirectToLogin(): void {
+function replaceLocation(url: string): void {
     if (typeof window === 'undefined') return;
+
+    // The reload below clears this tab. Every way a session ends — logout,
+    // account deletion, an expired session — comes through here, so this is
+    // the one place that tells the other tabs too.
+    clearCacheInEveryTab();
 
     window.addEventListener(
         'pageshow',
@@ -66,5 +78,56 @@ export function redirectToLogin(): void {
         },
         { once: true },
     );
-    window.location.replace('/login');
+    window.location.replace(url);
+}
+
+export function redirectToLogin(): void {
+    replaceLocation('/login');
+}
+
+export function sanitizeReturnUrl(
+    url: string | null | undefined,
+): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (
+        !trimmed.startsWith('/') ||
+        trimmed.startsWith('//') ||
+        trimmed.startsWith('/\\')
+    ) {
+        return null;
+    }
+    if (/[\r\n\t]/.test(trimmed)) {
+        return null;
+    }
+    const beforeHash = trimmed.split('#')[0] ?? '';
+    const pathOnly = beforeHash.split('?')[0] ?? '';
+    if (
+        pathOnly === '/unauthorized' ||
+        pathOnly === '/login' ||
+        pathOnly === '/admin/login'
+    ) {
+        return null;
+    }
+    return trimmed;
+}
+
+export function buildUnauthorizedUrl(nextPath?: string): string {
+    const params = new URLSearchParams();
+    const current =
+        nextPath ??
+        (typeof window !== 'undefined'
+            ? window.location.pathname + window.location.search
+            : null);
+    const safeNext = sanitizeReturnUrl(current);
+    if (safeNext && safeNext !== '/') {
+        params.set('next', safeNext);
+    }
+
+    const query = params.toString();
+    return query ? `/unauthorized?${query}` : '/unauthorized';
+}
+
+export function redirectToUnauthorized(): void {
+    replaceLocation(buildUnauthorizedUrl());
 }

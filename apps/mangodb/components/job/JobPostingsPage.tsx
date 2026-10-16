@@ -8,14 +8,19 @@ import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 
-import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
-
-import Link from 'next/link';
+import {
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+    NOT_SIGNED_IN,
+} from '@/lib/api';
+import { redirectToUnauthorized } from '@/lib/session';
 
 import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
-import { getAllJobPostings, getMyJobPostings } from '@/lib/job';
+import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
@@ -48,6 +53,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const [result, setResult] = useState<JobPostingListResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isRestricted, setIsRestricted] = useState(false);
 
     const [reloadKey, setReloadKey] = useState(0);
 
@@ -87,7 +93,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
         const request =
             props.view === 'mine'
-                ? getMyJobPostings(
+                ? listMyJobPostings(
                       page,
                       JOB_PAGE_SIZE,
                       status
@@ -96,7 +102,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             }
                           : undefined,
                   )
-                : getAllJobPostings(page, JOB_PAGE_SIZE, {
+                : listJobPostings(page, JOB_PAGE_SIZE, {
                       companyId: companyId!,
                       status: 'OPEN',
                   });
@@ -112,6 +118,12 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
                 if (isNotSignedIn(requestError)) {
                     setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
+                }
+
+                if (isForbidden(requestError)) {
+                    setIsRestricted(true);
                     return;
                 }
 
@@ -136,9 +148,8 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
-    const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+    const isDetailPanelOpen = Boolean(selectedJob);
     const openCompanyJobDetail = (job: JobPosting) => {
-        setIsDetailPanelOpen(true);
         setSelectedJob(job);
     };
 
@@ -149,7 +160,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const closeDetailPanel = () => {
-        setIsDetailPanelOpen(false);
         setSelectedJob(null);
     };
 
@@ -200,7 +210,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     );
 
     const closePostSuccess = () => {
-        router.replace('/job/view-own', { scroll: false });
+        router.replace('/job-postings/mine', { scroll: false });
     };
 
     /*
@@ -208,6 +218,27 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * Render
      * ============================================================
      */
+
+    if (!result && !error && !isRestricted) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
+    if (isRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Receiver account to view and manage your job postings."
+                showLogin={false}
+            />
+        );
+    }
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     return (
         <main
@@ -359,7 +390,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Add Job */}
                         <Button
                             type="button"
-                            onClick={() => router.push('/job/view-own/create')}
+                            onClick={() => router.push('/job-postings/create')}
                             className="flex h-[4.17vh] w-[8.96vw] items-center justify-center gap-[0.42vw] "
                         >
                             <FilePlus size={18} aria-hidden="true" />
@@ -379,11 +410,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                     items-start
                     transition-all
                     duration-300
-                    ${
-                        isDetailPanelOpen
-                            ? 'ml-[2vw] gap-[1.5vw]'
-                            : 'gap-[3.87vh]'
-                    }
+                    ${isDetailPanelOpen ? 'ml-[2vw] gap-[1.5vw]' : ''}
                 `}
                 >
                     {/* =================================================
@@ -405,16 +432,6 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             {/* =============================================
                             LIST ERROR
                             ============================================= */}
-                            {error === NOT_SIGNED_IN && (
-                                <p className="type-md !font-[400]">
-                                    You are not signed in.{' '}
-                                    <Link href="/login" className="underline">
-                                        Log in
-                                    </Link>
-                                    , then come back.
-                                </p>
-                            )}
-
                             {error && error !== NOT_SIGNED_IN && (
                                 <div
                                     role="alert"

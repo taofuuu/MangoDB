@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { CompanySummary, PublicCompanyProfile } from '@mangodb/shared';
 import { X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -8,7 +9,7 @@ import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import ModalShell from '@/components/ui/ModalShell';
 import RoleTags from '@/components/ui/RoleTags';
 import { describeError } from '@/lib/api';
-import { getPublicCompanyProfile } from '@/lib/companies';
+import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
@@ -104,6 +105,15 @@ function DetailBody({
                     </>
                 )}
             </dl>
+
+            {/* The panel is a summary; the profile page has the rest, such
+                as portfolio and certificates. */}
+            <Link
+                href={`/profile/${company.companyId}`}
+                className="mt-[1.85vh] self-start type-sm !font-[600] text-brand hover:underline"
+            >
+                View full profile
+            </Link>
         </>
     );
 }
@@ -204,7 +214,7 @@ export default function CompanySearchDetail({
         let cancelled = false;
         const companyId = company.companyId;
 
-        getPublicCompanyProfile(companyId)
+        getCompanyProfile(companyId)
             .then((nextProfile) => {
                 if (!cancelled) {
                     setDetailState({

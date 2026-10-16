@@ -1,16 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import { ExternalLink, X } from 'lucide-react';
 import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import { getPortfoliosByListing } from '@/lib/portfolios';
-import {
-    formatServiceBudgetRange,
-    type ServiceSummary,
-} from '@/lib/searchServices';
+import { formatBudgetRange } from '@/lib/money';
+import { listServicePortfolios } from '@/lib/portfolios';
+import type { ServiceSummary } from '@/lib/services';
 
 const portfolioDateFormatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -31,9 +30,13 @@ function formatPortfolioDate(date: string): string {
 export function ServiceDetailPanel({
     service,
     onClose,
+    titleId,
 }: {
     service: ServiceSummary;
     onClose: () => void;
+    // Set when the panel sits in a dialog, so the dialog can name itself by
+    // the heading (aria-labelledby). The search page's side panel needs none.
+    titleId?: string;
 }) {
     const [portfolios, setPortfolios] = useState<ServicePortfolio[] | null>(
         null,
@@ -52,7 +55,7 @@ export function ServiceDetailPanel({
     useEffect(() => {
         let active = true;
 
-        void getPortfoliosByListing(service.listingId)
+        void listServicePortfolios(service.serviceId)
             .then((items) => {
                 if (active) setPortfolios(items);
             })
@@ -63,7 +66,7 @@ export function ServiceDetailPanel({
         return () => {
             active = false;
         };
-    }, [service.listingId]);
+    }, [service.serviceId]);
 
     return (
         <div
@@ -85,7 +88,7 @@ export function ServiceDetailPanel({
                 <div className="flex flex-col gap-[0.8vh]">
                     <span className="type-sm text-brand">Service Detail</span>
 
-                    <h2 className="type-lg !font-[700] text-ink">
+                    <h2 id={titleId} className="type-lg !font-[700] text-ink">
                         {service.listingTitle || '-'}
                     </h2>
                 </div>
@@ -114,9 +117,12 @@ export function ServiceDetailPanel({
                             photoUrl={service.company.companyPhoto}
                             size={44}
                         />
-                        <p className="type-md text-ink">
+                        <Link
+                            href={`/profile/${service.company.companyId}`}
+                            className="type-md text-ink hover:underline"
+                        >
                             {service.company.companyName || '-'}
-                        </p>
+                        </Link>
                     </div>
                 </div>
 
@@ -162,7 +168,7 @@ export function ServiceDetailPanel({
                     <span className="type-sm text-brand">Budget</span>
 
                     <p className="type-md text-ink pl-[0.5vw]">
-                        {formatServiceBudgetRange(
+                        {formatBudgetRange(
                             service.minBudget,
                             service.maxBudget,
                         )}

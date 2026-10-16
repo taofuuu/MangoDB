@@ -8,17 +8,18 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/ApiError';
+import { assertCategoriesExist } from '../lib/categories';
 import { omitUndefined } from '../lib/objects';
+import { escapeLike } from '../lib/search';
 import {
     createJobPostingSchema,
     jobPostingIdParamSchema,
     jobPostingListQuerySchema,
     MIN_BUDGET_EXCEEDS_MAX,
-    minBudgetDoesNotExceedMax,
     updateJobPostingSchema,
 } from '../schemas/job-posting.schema';
+import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 import {
-    assertCategoriesExist,
     assertJobPostingOwned,
     jobPostingSelect,
     toJobPosting,
@@ -71,6 +72,16 @@ export async function createJobPosting(
     res.status(201).json(toJobPosting(created));
 }
 
+// US3-4. One word matches the job's title or description, ignoring case.
+// escapeLike stops "%" or "_" from acting as a wildcard that matches every row.
+function matchesKeyword(word: string): Prisma.ListingWhereInput {
+    const contains = {
+        contains: escapeLike(word),
+        mode: 'insensitive',
+    } as const;
+    return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
+}
+
 // US2-7. List job postings filtered by status with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
@@ -83,6 +94,9 @@ export async function listJobPostings(
         req.query,
     );
     const callerCompanyId = req.auth!.companyId;
+    // Each word is matched on its own, like the service and company search,
+    // so "react payment" finds a job that says each one somewhere.
+    const words = q?.split(/\s+/).filter(Boolean) ?? [];
 
     const where: Prisma.ListingWhereInput = {
         AND: [
@@ -100,26 +114,7 @@ export async function listJobPostings(
             ...(companyId ? [{ companyId }] : []),
             // Search is discovery, so soft-deleted companies' postings stay hidden
             { company: { deletedAt: null } },
-            ...(q
-                ? [
-                      {
-                          OR: [
-                              {
-                                  listingTitle: {
-                                      contains: q,
-                                      mode: 'insensitive' as Prisma.QueryMode,
-                                  },
-                              },
-                              {
-                                  listingDesc: {
-                                      contains: q,
-                                      mode: 'insensitive' as Prisma.QueryMode,
-                                  },
-                              },
-                          ],
-                      },
-                  ]
-                : []),
+            ...words.map(matchesKeyword),
 
             // 3. Visibility rules: callers can only see OPEN postings
             // or postings they created themselves

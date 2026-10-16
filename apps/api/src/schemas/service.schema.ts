@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
-import { INT4_MAX, int4Id } from './common.schema';
+import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
 // VarChar(100), so one rule fits both (conventions §12).
@@ -8,31 +8,49 @@ const nameField = z.string().trim().max(100);
 // How many names one listing or one filter may carry.
 const NAME_LIST_MAX = 20;
 
-export const createListingSchema = z
-    .object({
-        listingTitle: z.string().trim().min(1).max(255),
-        listingDesc: z.string().trim().min(1),
-        minBudget: z.number().int().nonnegative().max(INT4_MAX).optional(),
-        maxBudget: z.number().int().positive().max(INT4_MAX).optional(),
-        categoryIds: z
-            .array(z.number().int().positive().max(INT4_MAX))
-            .default([]),
-        // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
-        // name is a mistake in the body, so it is a 400 rather than dropped.
-        techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX).default([]),
-    })
-    .refine(
-        (b) =>
-            b.minBudget === undefined ||
-            b.maxBudget === undefined ||
-            b.minBudget <= b.maxBudget,
-        {
-            message: 'minBudget must be less than or equal to maxBudget',
-            path: ['minBudget'],
-        },
-    );
+export const SERVICE_BUDGET_RANGE_ERROR =
+    'minBudget must be less than or equal to maxBudget';
 
-export type CreateListingInput = z.infer<typeof createListingSchema>;
+const serviceFields = {
+    listingTitle: z.string().trim().min(1).max(255),
+    listingDesc: z.string().trim().min(1),
+    minBudget: z.number().int().nonnegative().max(INT4_MAX),
+    maxBudget: z.number().int().positive().max(INT4_MAX),
+    categoryIds: z.array(z.number().int().positive().max(INT4_MAX)),
+    // ADR 0009. Tech names as typed, e.g. ["React", "Node.js"]. A blank
+    // name is a mistake in the body, so it is a 400 rather than dropped.
+    techStack: z.array(nameField.min(1)).max(NAME_LIST_MAX),
+} as const;
+
+export const createServiceSchema = z
+    .object({
+        listingTitle: serviceFields.listingTitle,
+        listingDesc: serviceFields.listingDesc,
+        minBudget: serviceFields.minBudget.optional(),
+        maxBudget: serviceFields.maxBudget.optional(),
+        categoryIds: serviceFields.categoryIds.default([]),
+        techStack: serviceFields.techStack.default([]),
+    })
+    .refine(minBudgetDoesNotExceedMax, {
+        message: SERVICE_BUDGET_RANGE_ERROR,
+        path: ['minBudget'],
+    });
+
+// PATCH sends only changed fields. Category and tech arrays replace their
+// whole existing sets; [] deliberately clears one. The controller validates
+// a one-sided budget change against the stored other side.
+export const updateServiceSchema = z
+    .strictObject({
+        ...serviceFields,
+        minBudget: serviceFields.minBudget.nullable(),
+        maxBudget: serviceFields.maxBudget.nullable(),
+    })
+    .partial()
+    .refine((body) => Object.keys(body).length > 0, {
+        message: 'Provide at least one field to update',
+    });
+
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
 // US3-2. A repeated param (?category=Web&category=Mobile) arrives as an array,
 // a single one as a plain string. Both become an array here. Blank values are
@@ -111,8 +129,8 @@ export const serviceMineQuerySchema = z.object({
 });
 
 // Path params arrive as strings, so this coerces before the integer check —
-// same reason portfolioIdParamSchema needs z.coerce. Used by DELETE
-// /services/:listingId.
-export const listingIdParamSchema = z.object({
-    listingId: int4Id,
+// same reason portfolioIdParamSchema needs z.coerce. Shared by the service
+// detail, update, and delete endpoints (/services/:serviceId).
+export const serviceIdParamSchema = z.object({
+    serviceId: int4Id,
 });

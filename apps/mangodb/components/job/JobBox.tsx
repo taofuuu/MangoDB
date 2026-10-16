@@ -16,10 +16,12 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { formatBudgetRange } from '@/lib/money';
+
 import JobDetailModal from './JobDetailModal';
 import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { describeError } from '@/lib/api';
-import { closeJobPosting } from '@/lib/job';
+import { closeJobPosting } from '@/lib/jobPostings';
 
 interface JobBoxProps {
     job: JobPosting;
@@ -108,8 +110,9 @@ export default function JobBox({
                         {job.listingTitle}
                     </h2>
 
-                    {/* More menu - only for My Jobs, and only while open:
-                        Edit and Close are its only actions. */}
+                    {/* More menu - only for My Jobs, and only while OPEN:
+                        Edit and Close are its only actions. There is no
+                        Delete yet — no story and no DELETE endpoint. */}
                     {isMyJobs && job.listingStatus === 'OPEN' && (
                         <div className="relative">
                             <button
@@ -137,33 +140,31 @@ export default function JobBox({
                                         shadow-lg
                                     "
                                 >
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsMenuOpen(false);
-                                                router.push(
-                                                    `/job/view-own/edit/${job.jobPostingId}`,
-                                                );
-                                            }}
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                        >
-                                            <Edit size={15} />
-                                            Edit
-                                        </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            router.push(
+                                                `/job-postings/${job.jobPostingId}/edit`,
+                                            );
+                                        }}
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                    >
+                                        <Edit size={15} />
+                                        Edit
+                                    </button>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsMenuOpen(false);
-                                                setIsCloseModalOpen(true);
-                                            }}
-                                            className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                        >
-                                            <FileX size={15} />
-                                            Close
-                                        </button>
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsMenuOpen(false);
+                                            setIsCloseModalOpen(true);
+                                        }}
+                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                    >
+                                        <FileX size={15} />
+                                        Close
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -204,14 +205,7 @@ export default function JobBox({
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
-                        {job.minBudget != null
-                            ? job.minBudget.toLocaleString()
-                            : '-'}
-                        {' - '}
-                        {job.maxBudget != null
-                            ? job.maxBudget.toLocaleString()
-                            : '-'}{' '}
-                        THB
+                        {formatBudgetRange(job.minBudget, job.maxBudget)}
                     </p>
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">

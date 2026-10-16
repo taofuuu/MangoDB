@@ -2,11 +2,12 @@ import type { Request, Response } from 'express';
 
 import { prisma } from '../lib/prisma';
 
-import { parseBody, parseParams } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 
 import {
     EXPIRY_BEFORE_ISSUE,
     certificateIdParamSchema,
+    certificateListQuerySchema,
     createCertificateSchema,
     expiryIsOnOrAfterIssue,
     updateCertificateSchema,
@@ -83,13 +84,33 @@ export async function createCertificate(
     }
 }
 
-export async function getMyCertificates(
+export async function listMyCertificates(
     req: Request,
     res: Response,
 ): Promise<void> {
     const providerId = req.auth!.companyId;
     const certificates = await prisma.certificate.findMany({
         where: { providerId },
+        orderBy: { certificateId: 'desc' },
+        select: certificateSelect,
+    });
+    res.json(certificates.map(toCertificate));
+}
+
+// Another company's certificates, for its profile page. A company that is
+// unknown, deleted, or not a provider has none to show, so each is an empty
+// list rather than a 404, the way ?companyId= on GET /services answers. A
+// deleted company's rows are still in the table, hence the deletedAt filter.
+export async function listCompanyCertificates(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseQuery(certificateListQuerySchema, req.query);
+    const certificates = await prisma.certificate.findMany({
+        where: {
+            providerId: companyId,
+            provider: { company: { deletedAt: null } },
+        },
         orderBy: { certificateId: 'desc' },
         select: certificateSelect,
     });

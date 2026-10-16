@@ -1,7 +1,5 @@
-import {
-    formatServiceBudgetRange,
-    type ServiceSummary,
-} from '@/lib/searchServices';
+import { formatBudgetRange } from '@/lib/money';
+import type { ServiceSummary } from '@/lib/services';
 import { Tag, Wallet } from 'lucide-react';
 
 function initials(name: string): string {
@@ -41,7 +39,7 @@ export function SearchServiceCard({
 
                         <p className="type-xs mt-1 flex items-center gap-1 text-brand">
                             <Wallet size={14} className="shrink-0" />
-                            {formatServiceBudgetRange(
+                            {formatBudgetRange(
                                 service.minBudget,
                                 service.maxBudget,
                             )}
