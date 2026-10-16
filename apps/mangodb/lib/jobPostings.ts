@@ -83,9 +83,6 @@ export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
     );
 }
 
-//UPDATE job
-export type UpdateJobPosting = UpdateJobPostingRequest;
-
 // US2-14. Closes an open job posting and rejects its pending proposals.
 // The API answers 409 when the posting is not open any more.
 export function closeJobPosting(jobPostingId: number): Promise<JobPosting> {
@@ -96,6 +93,9 @@ export function closeJobPosting(jobPostingId: number): Promise<JobPosting> {
         '/job-postings',
     );
 }
+
+//UPDATE job
+export type UpdateJobPosting = UpdateJobPostingRequest;
 
 export function updateJobPosting(
     jobPostingId: number,

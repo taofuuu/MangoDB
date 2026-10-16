@@ -205,7 +205,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const showPostSuccess = ['posted', 'updated'].includes(
+    const showPostSuccess = ['posted', 'updated', 'closed'].includes(
         searchParams.get('success') ?? '',
     );
 
@@ -529,7 +529,13 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                 onViewDetail={
                                                     openCompanyJobDetail
                                                 }
-                                                onClosed={retryList}
+                                                onClosed={() => {
+                                                    retryList();
+                                                    router.replace(
+                                                        '/job-postings/mine?success=closed',
+                                                        { scroll: false },
+                                                    );
+                                                }}
                                             />
                                         ))}
                                     </div>
@@ -593,9 +599,11 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                             id="post-success-title"
                             className="type-md font-semibold text-ink"
                         >
-                            {searchParams.get('success') === 'updated'
-                                ? 'Job updated successfully!'
-                                : 'Job created successfully!'}
+                            {searchParams.get('success') === 'closed'
+                                ? 'Job closed successfully!'
+                                : searchParams.get('success') === 'updated'
+                                  ? 'Job updated successfully!'
+                                  : 'Job created successfully!'}
                         </h2>
                     </div>
 
