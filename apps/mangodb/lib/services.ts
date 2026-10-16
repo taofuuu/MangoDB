@@ -164,16 +164,18 @@ export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
 //   q, orderBy, page, pageSize -> same
 // ---------------------------------------------------------------------------
 
-// One company's open services, for its profile page. Same endpoint and shape
-// as the search screen, so a row opens the same ServiceDetailPanel.
+// One company's open services, for its profile (page 1) and its full services
+// page. Same endpoint and shape as the search screen, so a row opens the same
+// ServiceDetailPanel.
 export function listCompanyServices(
     companyId: number,
+    page: number,
     pageSize: number,
 ): Promise<ServiceListResponse> {
     const qs = new URLSearchParams({
         companyId: String(companyId),
         orderBy: 'newest',
-        page: '1',
+        page: String(page),
         pageSize: String(pageSize),
     });
 

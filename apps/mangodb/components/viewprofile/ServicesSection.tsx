@@ -12,6 +12,7 @@ import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
+    getService,
     listCompanyServices,
     listMyServices,
     toServiceSummary,
@@ -66,6 +67,8 @@ export default function ServicesSection({
     const [jobsError, setJobsError] = useState<string | null>(null);
     const [selectedService, setSelectedService] =
         useState<ServiceSummary | null>(null);
+    // Why another company's service could not be opened (T2.7.24).
+    const [serviceError, setServiceError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
     const serviceTitleId = useId();
 
@@ -73,8 +76,9 @@ export default function ServicesSection({
         let cancelled = false;
 
         const loadServices: Promise<ServiceRow[]> = readOnly
-            ? listCompanyServices(companyId, PROFILE_LIST_SIZE).then((data) =>
-                  data.items.map((summary) => ({ summary, closed: false })),
+            ? listCompanyServices(companyId, 1, PROFILE_LIST_SIZE).then(
+                  (data) =>
+                      data.items.map((summary) => ({ summary, closed: false })),
               )
             : Promise.all([listMyServices(), listCategories()]).then(
                   ([mine, categories]) =>
@@ -152,8 +156,38 @@ export default function ServicesSection({
                   closed: job.listingStatus === 'CLOSED',
               })) ?? null);
 
+    // Another company's service can be closed or deleted after the list
+    // loaded, and GET /services/:id answers 404 for both, so Details asks
+    // for it again instead of trusting the row (T2.7.24).
+    const openOtherService = (serviceId: number) => {
+        setServiceError(null);
+        Promise.all([getService(serviceId), listCategories()])
+            .then(([listing, categories]) => {
+                setSelectedService(
+                    toServiceSummary(listing, categories, {
+                        companyId,
+                        companyName: listing.companyName ?? companyName,
+                        companyPhoto,
+                    }),
+                );
+            })
+            .catch((err: unknown) => {
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setServiceError(
+                    describeError(err, {
+                        404: 'This service could not be found',
+                    }),
+                );
+            });
+    };
+
     const openDetail = (id: number) => {
-        if (activeTab === 'services') {
+        if (activeTab === 'services' && readOnly) {
+            openOtherService(id);
+        } else if (activeTab === 'services') {
             setSelectedService(
                 services?.find(({ summary }) => summary.serviceId === id)
                     ?.summary ?? null,
@@ -189,6 +223,11 @@ export default function ServicesSection({
 
                 {loadError && (
                     <p className="type-xs text-danger mb-2">{loadError}</p>
+                )}
+                {activeTab === 'services' && serviceError && (
+                    <p role="alert" className="type-xs text-danger mb-2">
+                        {serviceError}
+                    </p>
                 )}
 
                 {/* Display Content */}
@@ -250,6 +289,19 @@ export default function ServicesSection({
                                     ? `/profile/${companyId}/jobs`
                                     : '/job-postings/mine'
                             }
+                            className="type-xs text-brand hover:underline font-medium"
+                        >
+                            See more
+                        </Link>
+                    </div>
+                )}
+
+                {/* Another company's profile previews its services; the
+                    full list, with paging, is its services page. */}
+                {readOnly && activeTab === 'services' && (
+                    <div className="mt-3 text-right">
+                        <Link
+                            href={`/profile/${companyId}/services`}
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more
