@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
+import type {
+    Category,
+    ServicePortfolio,
+    UpdateServiceRequest,
+} from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import {
@@ -21,9 +25,10 @@ import {
     getService,
     updateService,
 } from '@/lib/services';
-import PortfolioForm, {
-    type PendingPortfolio,
-} from '@/components/portfolios/PortfolioForm';
+import type { PendingPortfolio } from '@/components/portfolios/PortfolioForm';
+import ServicePortfolios from './ServicePortfolios';
+import TechStackInput from './TechStackInput';
+import { listCategories } from '@/lib/categories';
 import SuccessModal from '@/components/ui/SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import PageGate from '@/components/auth/PageGate';
@@ -45,18 +50,6 @@ type ServiceErrors = Partial<
         string
     >
 >;
-
-const PREDEFINED_CATEGORIES = [
-    { id: 1, name: 'Web Development' },
-    { id: 2, name: 'Mobile App Development' },
-    { id: 3, name: 'Hardware & IoT' },
-    { id: 4, name: 'IT Consulting & Security' },
-    { id: 5, name: 'Artificial Intelligence (AI)' },
-    { id: 6, name: 'UI/UX Design' },
-    { id: 7, name: 'ERP & CRM Systems' },
-    { id: 8, name: 'Digital Marketing & SEO' },
-    { id: 12, name: 'Other' },
-] as const;
 
 type ServiceFormProps =
     { mode: 'create' } | { mode: 'edit'; serviceId: number };
@@ -127,6 +120,9 @@ export default function ServiceForm(props: ServiceFormProps) {
     const companyId = me.status === 'ready' ? me.company.companyId : null;
     // Add has nothing to load; Edit is loaded once the service arrives.
     const [isLoaded, setIsLoaded] = useState(serviceId === null);
+    // The catalog (ADR 0002). Null while it loads.
+    const [categories, setCategories] = useState<Category[] | null>(null);
+    const [categoriesError, setCategoriesError] = useState<string | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
 
     // Form fields state
@@ -136,7 +132,6 @@ export default function ServiceForm(props: ServiceFormProps) {
         [],
     );
     const [selectedTechStack, setSelectedTechStack] = useState<string[]>([]);
-    const [customTechInput, setCustomTechInput] = useState('');
     const [minBudget, setMinBudget] = useState('');
     const [maxBudget, setMaxBudget] = useState('');
 
@@ -145,9 +140,6 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [savedPortfolios, setSavedPortfolios] = useState<ServicePortfolio[]>(
         [],
     );
-    const [portfolioToEdit, setPortfolioToEdit] =
-        useState<ServicePortfolio | null>(null);
-    const [showPortfolioModal, setShowPortfolioModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -162,6 +154,12 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [errors, setErrors] = useState<ServiceErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        listCategories()
+            .then(setCategories)
+            .catch((err: unknown) => setCategoriesError(describeError(err)));
+    }, []);
 
     // ── EDIT: LOAD THE SERVICE ──
     // Waits for useMyCompany, since only the owning company may edit.
@@ -265,66 +263,6 @@ export default function ServiceForm(props: ServiceFormProps) {
                 ? prev.filter((id) => id !== categoryId)
                 : [...prev, categoryId],
         );
-    };
-
-    const handleAddTech = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-
-        const trimmed = customTechInput.trim();
-        if (!trimmed) return;
-
-        if (trimmed.length > 100) {
-            setErrors((prev) => ({
-                ...prev,
-                techStack: 'Tech stack item cannot exceed 100 characters.',
-            }));
-            return;
-        }
-
-        if (selectedTechStack.length >= 20) {
-            setErrors((prev) => ({
-                ...prev,
-                techStack: 'You can select at most 20 tech stack items.',
-            }));
-            return;
-        }
-
-        const exists = selectedTechStack.some(
-            (item) => item.toLowerCase() === trimmed.toLowerCase(),
-        );
-
-        if (exists) {
-            setErrors((prev) => ({
-                ...prev,
-                techStack: 'This tech stack item is already added.',
-            }));
-            return;
-        }
-
-        clearError('techStack');
-        setSelectedTechStack((prev) => [...prev, trimmed]);
-        setCustomTechInput('');
-    };
-
-    const handleRemoveTech = (tech: string) => {
-        clearError('techStack');
-        setSelectedTechStack((prev) => prev.filter((item) => item !== tech));
-    };
-
-    const handleKeyDownTech = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddTech();
-        } else if (
-            e.key === 'Backspace' &&
-            !customTechInput &&
-            selectedTechStack.length > 0
-        ) {
-            const lastTech = selectedTechStack[selectedTechStack.length - 1];
-            if (lastTech) {
-                handleRemoveTech(lastTech);
-            }
-        }
     };
 
     const handleAddPortfolio = (item: PendingPortfolio) => {
@@ -616,19 +554,27 @@ export default function ServiceForm(props: ServiceFormProps) {
                                     <label className="block type-sm font-semibold mb-2 text-ink">
                                         Service Category*
                                     </label>
+                                    {categoriesError && (
+                                        <FieldError message={categoriesError} />
+                                    )}
+                                    {!categories && !categoriesError && (
+                                        <p className="type-sm text-ink-placeholder">
+                                            Loading categories...
+                                        </p>
+                                    )}
                                     <div className="flex flex-wrap gap-2">
-                                        {PREDEFINED_CATEGORIES.map((cat) => {
+                                        {(categories ?? []).map((cat) => {
                                             const isSelected =
                                                 selectedCategoryIds.includes(
-                                                    cat.id,
+                                                    cat.categoryId,
                                                 );
                                             return (
                                                 <button
                                                     type="button"
-                                                    key={cat.id}
+                                                    key={cat.categoryId}
                                                     onClick={() =>
                                                         handleCategoryClick(
-                                                            cat.id,
+                                                            cat.categoryId,
                                                         )
                                                     }
                                                     className={`px-3.5 py-1.5 rounded-status type-xs font-medium transition-colors border ${
@@ -637,7 +583,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                                             : 'bg-brand-tint text-ink-soft border-transparent hover:bg-brand-mist'
                                                     }`}
                                                 >
-                                                    {cat.name}
+                                                    {cat.categoryName}
                                                 </button>
                                             );
                                         })}
@@ -645,60 +591,19 @@ export default function ServiceForm(props: ServiceFormProps) {
                                     <FieldError message={errors.categoryIds} />
                                 </div>
 
-                                {/* Techstack Tag Box */}
-                                <div>
-                                    <label className="block type-sm font-semibold mb-1 text-ink">
-                                        Tech stack*
-                                    </label>
-
-                                    {/* Combined Tags + Text Input Box */}
-                                    <div
-                                        className={`w-full min-h-[42px] p-2 rounded-input border flex flex-wrap items-center gap-1.5 focus-within:ring-1 ${
-                                            errors.techStack
-                                                ? 'border-danger focus-within:border-danger focus-within:ring-danger'
-                                                : 'border-line focus-within:border-brand focus-within:ring-brand'
-                                        }`}
-                                    >
-                                        {selectedTechStack.map((tech) => (
-                                            <span
-                                                key={tech}
-                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-status type-xs font-medium bg-brand text-surface-white"
-                                            >
-                                                {tech}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleRemoveTech(tech)
-                                                    }
-                                                    className="hover:opacity-75 focus:outline-none ml-0.5"
-                                                    title="Remove"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </span>
-                                        ))}
-
-                                        <input
-                                            type="text"
-                                            value={customTechInput}
-                                            onChange={(e) => {
-                                                setCustomTechInput(
-                                                    e.target.value,
-                                                );
-                                                clearError('techStack');
-                                            }}
-                                            onKeyDown={handleKeyDownTech}
-                                            placeholder={
-                                                selectedTechStack.length === 0
-                                                    ? 'Type technology and press Enter...'
-                                                    : ''
-                                            }
-                                            className="flex-1 min-w-[120px] bg-transparent type-sm placeholder:text-ink-placeholder focus:outline-none px-1"
-                                        />
-                                    </div>
-
-                                    <FieldError message={errors.techStack} />
-                                </div>
+                                <TechStackInput
+                                    value={selectedTechStack}
+                                    onChange={setSelectedTechStack}
+                                    error={errors.techStack}
+                                    onError={(message) =>
+                                        message
+                                            ? setErrors((prev) => ({
+                                                  ...prev,
+                                                  techStack: message,
+                                              }))
+                                            : clearError('techStack')
+                                    }
+                                />
 
                                 {/* Budget */}
                                 <div className="flex gap-4">
@@ -750,91 +655,21 @@ export default function ServiceForm(props: ServiceFormProps) {
                             </div>
                         </div>
 
-                        {/* RIGHT COLUMN: Portfolio */}
-                        <div className="w-full md:w-[400px] bg-surface-white rounded-2xl p-6 shadow-sm border border-line flex flex-col">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="type-md font-bold text-ink">
-                                    Portfolio
-                                </h2>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPortfolioModal(true)}
-                                    className="px-4 py-1.5 border border-brand rounded-button type-xs font-semibold text-brand hover:bg-brand-tint transition-colors"
-                                >
-                                    Add Portfolio
-                                </button>
-                            </div>
-
-                            {savedPortfolios.length === 0 &&
-                            portfolios.length === 0 ? (
-                                <p className="type-sm text-ink-placeholder text-center mt-4">
-                                    No portfolio items yet.
-                                </p>
-                            ) : (
-                                <div className="flex-1 overflow-y-auto modal-scrollbar pr-2 space-y-3 max-h-[380px]">
-                                    {savedPortfolios.map((item) => (
-                                        <div
-                                            key={item.portfolioId}
-                                            className="flex items-center justify-between border border-line rounded-input p-3 type-sm"
-                                        >
-                                            <span className="font-medium text-ink type-xs truncate max-w-[180px]">
-                                                {item.portfolioName}
-                                            </span>
-                                            <div className="ml-2 flex shrink-0 items-center gap-3">
-                                                <a
-                                                    href={item.portfolioLink}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="type-xs font-semibold text-brand hover:underline"
-                                                >
-                                                    View
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setPortfolioToEdit(item)
-                                                    }
-                                                    className="type-xs font-semibold text-brand hover:underline"
-                                                >
-                                                    Edit
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {portfolios.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="flex items-center justify-between border border-line rounded-input p-3 type-sm"
-                                        >
-                                            <span className="font-medium text-ink type-xs truncate max-w-[180px]">
-                                                {item.name}
-                                                <span className="ml-2 font-normal text-ink-placeholder">
-                                                    Pending
-                                                </span>
-                                            </span>
-                                            <div className="flex items-center gap-3 shrink-0 ml-2">
-                                                {item.image && (
-                                                    <span className="type-xs text-ink-placeholder italic truncate max-w-[80px]">
-                                                        {item.image.name}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleRemovePortfolio(
-                                                            item.id,
-                                                        )
-                                                    }
-                                                    className="type-xs font-semibold text-danger hover:text-danger-hover transition-colors"
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <ServicePortfolios
+                            saved={savedPortfolios}
+                            onSavedChange={(updated) =>
+                                setSavedPortfolios((current) =>
+                                    current.map((item) =>
+                                        item.portfolioId === updated.portfolioId
+                                            ? updated
+                                            : item,
+                                    ),
+                                )
+                            }
+                            pending={portfolios}
+                            onAddPending={handleAddPortfolio}
+                            onRemovePending={handleRemovePortfolio}
+                        />
                     </div>
 
                     {formError && (
@@ -884,14 +719,6 @@ export default function ServiceForm(props: ServiceFormProps) {
                 </form>
             </div>
 
-            {showPortfolioModal && (
-                <PortfolioForm
-                    mode="add"
-                    onClose={() => setShowPortfolioModal(false)}
-                    onAdd={handleAddPortfolio}
-                />
-            )}
-
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={handleSuccessConfirm}
@@ -919,23 +746,6 @@ export default function ServiceForm(props: ServiceFormProps) {
                     router.back();
                 }}
             />
-
-            {portfolioToEdit && (
-                <PortfolioForm
-                    mode="edit"
-                    portfolio={portfolioToEdit}
-                    onClose={() => setPortfolioToEdit(null)}
-                    onSave={(updated) => {
-                        setSavedPortfolios((current) =>
-                            current.map((item) =>
-                                item.portfolioId === updated.portfolioId
-                                    ? updated
-                                    : item,
-                            ),
-                        );
-                    }}
-                />
-            )}
         </div>
     );
 }
