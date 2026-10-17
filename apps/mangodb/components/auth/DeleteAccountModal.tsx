@@ -3,11 +3,9 @@
 import { useId, useState } from 'react';
 import Image from 'next/image';
 import binIcon from '@/assets/icons/bin.png';
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from '../ui/DeleteConfirmationModal';
+import ConfirmModal, { type ConfirmModalBaseProps } from '../ui/ConfirmModal';
 
-type DeleteAccountModalProps = Omit<DeleteModalProps, 'onConfirm'> & {
+type DeleteAccountModalProps = Omit<ConfirmModalBaseProps, 'onConfirm'> & {
     expectedEmail: string;
     onConfirm?: (confirmedEmail: string) => void | Promise<void>;
 };
@@ -35,7 +33,7 @@ function DeleteAccountDialog({
         confirmEmail.trim().toLowerCase() === normalizedEmail;
 
     return (
-        <DeleteConfirmationModal
+        <ConfirmModal
             {...props}
             isOpen
             title="Delete Account"
@@ -90,6 +88,6 @@ function DeleteAccountDialog({
                     className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>
-        </DeleteConfirmationModal>
+        </ConfirmModal>
     );
 }

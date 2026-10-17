@@ -4,22 +4,24 @@ import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import ModalShell from './ModalShell';
 import WarningIcon from './WarningIcon';
 
-export type DeleteModalProps = {
+// The props every wrapper (DeletePortfolioModal, LogoutConfirmationModal, …)
+// passes through.
+export type ConfirmModalBaseProps = {
     isOpen: boolean;
-    isDeleting?: boolean;
     onClose: () => void;
     // Optional action. Without it, confirmation simply closes the popup.
     onConfirm?: (() => void | Promise<void>) | undefined;
 };
 
-type DeleteConfirmationModalProps = DeleteModalProps & {
+type ConfirmModalProps = ConfirmModalBaseProps & {
     title: string;
     description?: ReactNode;
     icon?: ReactNode;
     layout?: 'inline' | 'stacked';
     confirmLabel?: string;
-    // 'danger' is every existing use of this modal — an irreversible delete.
-    // 'primary' is for a confirmation that isn't destructive, like logout.
+    // 'danger' for something that cannot be undone, like a delete or a
+    // reject. 'primary' for a confirmation that isn't destructive, like
+    // logout or accepting a proposal.
     confirmVariant?: 'danger' | 'primary';
     pendingLabel?: string;
     cancelLabel?: string;
@@ -32,17 +34,17 @@ const CONFIRM_VARIANTS: Record<'danger' | 'primary', string> = {
     primary: 'bg-brand hover:bg-brand-dark focus-visible:outline-brand',
 };
 
-export default function DeleteConfirmationModal({
-    isOpen,
-    ...props
-}: DeleteConfirmationModalProps) {
+// "Are you sure?" with Go Back and a confirm button. The defaults are a
+// delete's, the most common use. onConfirm may be async: the dialog shows
+// the pending label while it runs, closes when it resolves, and shows the
+// error's message when it throws.
+export default function ConfirmModal({ isOpen, ...props }: ConfirmModalProps) {
     // ModalShell unmounts on close, so a fresh dialog starts with no pending
     // action and no error every time it opens.
-    return isOpen ? <DeleteConfirmationDialog {...props} /> : null;
+    return isOpen ? <ConfirmDialog {...props} /> : null;
 }
 
-function DeleteConfirmationDialog({
-    isDeleting = false,
+function ConfirmDialog({
     onClose,
     onConfirm,
     title,
@@ -55,14 +57,14 @@ function DeleteConfirmationDialog({
     cancelLabel = 'Go Back',
     confirmDisabled = false,
     children,
-}: Omit<DeleteConfirmationModalProps, 'isOpen'>) {
+}: Omit<ConfirmModalProps, 'isOpen'>) {
     const titleId = useId();
     const descriptionId = useId();
     const pendingRef = useRef(false);
     const mountedRef = useRef(false);
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const isBusy = isDeleting || isPending;
+    const isBusy = isPending;
 
     // onConfirm can resolve after this dialog has gone — the caller usually
     // navigates away on success. Setting state then is a no-op React warns
@@ -80,7 +82,7 @@ function DeleteConfirmationDialog({
 
     const handleConfirm = async () => {
         // A ref also blocks two submissions before React updates the buttons.
-        if (pendingRef.current || isDeleting || confirmDisabled) return;
+        if (pendingRef.current || confirmDisabled) return;
 
         // Frontend-only popups need no action callback to confirm and close.
         if (!onConfirm) {
@@ -100,7 +102,7 @@ function DeleteConfirmationDialog({
                 setError(
                     cause instanceof Error && cause.message
                         ? cause.message
-                        : 'Unable to delete. Please try again.',
+                        : 'Something went wrong. Please try again.',
                 );
             }
         } finally {

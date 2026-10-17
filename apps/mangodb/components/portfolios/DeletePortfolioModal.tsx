@@ -1,9 +1,7 @@
 'use client';
 
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from '../ui/DeleteConfirmationModal';
+import ConfirmModal, { type ConfirmModalBaseProps } from '../ui/ConfirmModal';
 
-export default function DeletePortfolioModal(props: DeleteModalProps) {
-    return <DeleteConfirmationModal {...props} title="Delete Portfolio" />;
+export default function DeletePortfolioModal(props: ConfirmModalBaseProps) {
+    return <ConfirmModal {...props} title="Delete Portfolio" />;
 }

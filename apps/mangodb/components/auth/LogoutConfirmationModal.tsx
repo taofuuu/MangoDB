@@ -2,13 +2,11 @@
 
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from '../ui/DeleteConfirmationModal';
+import ConfirmModal, { type ConfirmModalBaseProps } from '../ui/ConfirmModal';
 
-export default function LogoutConfirmationModal(props: DeleteModalProps) {
+export default function LogoutConfirmationModal(props: ConfirmModalBaseProps) {
     return (
-        <DeleteConfirmationModal
+        <ConfirmModal
             {...props}
             title="Confirm Logout?"
             description="You will not receive notifications anymore."

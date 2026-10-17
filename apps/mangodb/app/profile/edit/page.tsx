@@ -178,7 +178,7 @@ function EditProfilePageInner() {
     };
 
     // US6-4. The confirm modal collects the admin's own password and hands it
-    // here. Deliberately uncaught: DeleteConfirmationModal's onConfirm already
+    // here. Deliberately uncaught: ConfirmModal's onConfirm already
     // catches and shows a thrown error's .message as the modal's error line,
     // so a wrong password (401) surfaces there instead of navigating away.
     const handleDeleteAccount = async (adminPassword: string) => {

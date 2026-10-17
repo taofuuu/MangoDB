@@ -1,12 +1,15 @@
 'use client';
 
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from '@/components/ui/DeleteConfirmationModal';
+import ConfirmModal, {
+    type ConfirmModalBaseProps,
+} from '@/components/ui/ConfirmModal';
 import type { CertificateData } from './EditCertificateForm';
 import { deleteCertificate } from '@/lib/certificates';
 
-export type DeleteCertificateFormProps = Omit<DeleteModalProps, 'onConfirm'> & {
+export type DeleteCertificateFormProps = Omit<
+    ConfirmModalBaseProps,
+    'onConfirm'
+> & {
     certificate?: CertificateData | null | undefined;
     onConfirm?: (() => void | Promise<void>) | undefined;
     onDelete?:
@@ -19,7 +22,6 @@ export default function DeleteCertificateForm({
     certificate,
     onConfirm,
     onDelete,
-    isDeleting,
 }: DeleteCertificateFormProps) {
     const handleConfirm = async () => {
         if (certificate?.id) {
@@ -36,11 +38,10 @@ export default function DeleteCertificateForm({
     };
 
     return (
-        <DeleteConfirmationModal
+        <ConfirmModal
             isOpen={isOpen}
             onClose={onClose}
             onConfirm={handleConfirm}
-            {...(isDeleting !== undefined ? { isDeleting } : {})}
             title="Delete Certificate"
             description={
                 certificate?.name ? (

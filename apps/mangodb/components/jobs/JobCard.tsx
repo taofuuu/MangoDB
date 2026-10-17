@@ -21,7 +21,7 @@ import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 
 import JobDetailModal from './JobDetailModal';
-import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { describeError } from '@/lib/api';
 import { closeJob } from '@/lib/jobs';
 
@@ -281,7 +281,7 @@ export default function JobCard({
                     onClose={closeDetail}
                 />
             )}
-            <DeleteConfirmationModal
+            <ConfirmModal
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
                 onConfirm={confirmClose}

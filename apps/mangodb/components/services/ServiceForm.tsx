@@ -32,7 +32,7 @@ import { useMyCompany } from '@/lib/useMyCompany';
 import { createPortfolio, listPortfolios } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/portfolios/EditPortfolioForm';
 import Button from '@/components/ui/Button';
-import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { redirectToUnauthorized } from '@/lib/session';
 
 type ServiceErrors = Partial<
@@ -901,7 +901,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                 }
             />
 
-            <DeleteConfirmationModal
+            <ConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirm={handleDelete}

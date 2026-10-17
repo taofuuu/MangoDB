@@ -95,7 +95,7 @@ export default function AccountPage() {
         try {
             await deleteMyAccount();
         } catch (err) {
-            // Rethrown so DeleteConfirmationModal catches and displays the error (e.g. 409 ongoing project)
+            // Rethrown so ConfirmModal catches and displays the error (e.g. 409 ongoing project)
             throw new Error(describeError(err));
         }
 

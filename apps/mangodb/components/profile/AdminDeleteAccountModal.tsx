@@ -3,11 +3,9 @@
 import { useId, useState } from 'react';
 import Image from 'next/image';
 import binIcon from '@/assets/icons/bin.png';
-import DeleteConfirmationModal, {
-    type DeleteModalProps,
-} from '../ui/DeleteConfirmationModal';
+import ConfirmModal, { type ConfirmModalBaseProps } from '../ui/ConfirmModal';
 
-type AdminDeleteAccountModalProps = Omit<DeleteModalProps, 'onConfirm'> & {
+type AdminDeleteAccountModalProps = Omit<ConfirmModalBaseProps, 'onConfirm'> & {
     // The account being removed, shown in the title so the admin can see which
     // one they are about to delete before confirming.
     username: string;
@@ -34,7 +32,7 @@ function AdminDeleteAccountDialog({
     const canConfirm = password.trim().length > 0;
 
     return (
-        <DeleteConfirmationModal
+        <ConfirmModal
             {...props}
             isOpen
             title={`Delete account for ${username}?`}
@@ -88,6 +86,6 @@ function AdminDeleteAccountDialog({
                     className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>
-        </DeleteConfirmationModal>
+        </ConfirmModal>
     );
 }
