@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleTextInput } from '@/components/register/SimpleTextInput';
+import Input from '@/components/ui/Input';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type AccountInfo = {
@@ -16,9 +16,8 @@ export type AccountInfoError = {
 
 type AccountInfoStepProps = {
     value: AccountInfo;
-    // The page's own state setter. Updating it directly, rather than through a
-    // copy here, means a value reported on blur is in page state before the
-    // click on Next that caused the blur is handled.
+    // The page's own state setter. Every keystroke lands in page state, so
+    // Next always reads the latest value.
     onChange: Dispatch<SetStateAction<AccountInfo>>;
     errors?: AccountInfoError;
 };
@@ -48,27 +47,30 @@ export default function AccountInfoStep({
 
     return (
         <div className="account-info-page flex flex-col gap-5 my-5">
-            <SimpleTextInput
-                title="Username"
+            <Input
+                label="Username"
+                value={value.username ?? ''}
                 onChange={handleUpdateUsername}
-                initValue={value ? value.username : ''}
-                error={errors?.usernameError || ''}
+                error={errors?.usernameError}
+                placeholder="Type here..."
             />
 
-            <SimpleTextInput
-                title="Password"
-                type="password"
+            <Input
+                label="Password"
+                value={value.password ?? ''}
                 onChange={handleUpdatePassword}
-                initValue={value ? (value.password ?? '') : ''}
-                error={errors?.passwordError || ''}
+                error={errors?.passwordError}
+                type="password"
+                placeholder="Type here..."
             />
 
-            <SimpleTextInput
-                title="Confirm Password"
-                type="password"
+            <Input
+                label="Confirm Password"
+                value={value.confirmPassword ?? ''}
                 onChange={handleUpdateConfirmPassword}
-                initValue={value ? (value.confirmPassword ?? '') : ''}
-                error={errors?.confirmPasswordError || ''}
+                error={errors?.confirmPasswordError}
+                type="password"
+                placeholder="Type here..."
             />
         </div>
     );
