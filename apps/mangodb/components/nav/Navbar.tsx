@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import type { CompanyProfile } from '@mangodb/shared';
 import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
+import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProfileMenu from './ProfileMenu';
 
 // The bar across the top of every page: logo on the left, the signed-in
@@ -19,12 +20,20 @@ const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 // The two searches, the app's main ways in. Uppercase on screen to match the
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
+// canUse matches the page's own gate: providers look for jobs, receivers for
+// services, and a BOTH company gets the two.
 const NAV_LINKS = [
-    { href: '/jobs', label: 'Search jobs', shortLabel: 'Jobs' },
+    {
+        href: '/jobs',
+        label: 'Search jobs',
+        shortLabel: 'Jobs',
+        canUse: isProviderAccount,
+    },
     {
         href: '/services',
         label: 'Search services',
         shortLabel: 'Services',
+        canUse: isReceiverAccount,
     },
 ];
 
@@ -58,6 +67,12 @@ export default function Navbar() {
 
     if (isHidden) return null;
 
+    // Only once we know who is signed in, so a link never shows and vanishes.
+    const links =
+        state.status === 'signed-in'
+            ? NAV_LINKS.filter((link) => link.canUse(state.profile.accountType))
+            : [];
+
     return (
         // The page's cream with a grey line and a soft shadow in the brand's
         // deep teal. The accents inside stay teal, the app's action colour.
@@ -85,7 +100,7 @@ export default function Navbar() {
 
                 <div className="flex items-center gap-4 sm:gap-8 xl:gap-10">
                     <ul className="flex items-center gap-3 sm:gap-6 xl:gap-8">
-                        {NAV_LINKS.map((link) => {
+                        {links.map((link) => {
                             const isCurrent = pathname === link.href;
                             return (
                                 <li key={link.href}>
