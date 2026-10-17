@@ -18,6 +18,9 @@
         "apps/*",
         "packages/*"
     ],
+    "engines": {
+        "node": ">=22"
+    },
     "scripts": {
         "prepare": "husky",
         "lint": "npm run lint --workspaces --if-present",
