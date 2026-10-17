@@ -31,13 +31,13 @@ export default function ReceivedProposalDetail({
     return (
         <>
             <div
-                className={`bg-white rounded-2xl p-6 border shadow-sm relative text-[#497B93] max-h-[80vh] overflow-y-auto ${
+                className={`bg-white rounded-2xl p-6 border shadow-sm relative text-brand max-h-[80vh] overflow-y-auto ${
                     proposal.proposalStatus === 'REJECTED'
-                        ? 'border-[#C5483B]'
-                        : 'border-[#437788] ring-2 ring-[#437788]/10'
+                        ? 'border-danger'
+                        : 'border-brand ring-2 ring-brand/10'
                 }`}
             >
-                <div className="flex items-start justify-between pb-4 border-b border-[#497B93]">
+                <div className="flex items-start justify-between pb-4 border-b border-brand">
                     <div className="flex items-center gap-3">
                         <CompanyAvatar
                             name={companyName}
@@ -53,18 +53,18 @@ export default function ReceivedProposalDetail({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1 text-xs text-[#497B93] mt-0.5">
-                                <Calendar className="h-4 w-4 text-[#497B93]" />
+                            <div className="flex items-center gap-1 text-xs text-brand mt-0.5">
+                                <Calendar className="h-4 w-4 text-brand" />
                                 Submitted: {formatDate(proposal.createdAt)}
                             </div>
 
-                            <div className="flex items-center gap-6 text-xs text-[#497B93] mt-2">
+                            <div className="flex items-center gap-6 text-xs text-brand mt-2">
                                 <div>
-                                    <div className="text-[10px] text-[#497B93]">
+                                    <div className="text-[10px] text-brand">
                                         Offered Price
                                     </div>
-                                    <div className="flex items-center gap-1 text-xs text-[#497B93]">
-                                        <Tag className="h-4 w-4 text-[#497B93]" />
+                                    <div className="flex items-center gap-1 text-xs text-brand">
+                                        <Tag className="h-4 w-4 text-brand" />
                                         <div className="font-semibold">
                                             {formatBaht(
                                                 proposal.proposalBudget,
@@ -74,11 +74,11 @@ export default function ReceivedProposalDetail({
                                 </div>
 
                                 <div>
-                                    <div className="text-[10px] text-[#497B93]">
+                                    <div className="text-[10px] text-brand">
                                         Estimated Duration
                                     </div>
-                                    <div className="flex items-center gap-1 text-xs text-[#497B93]">
-                                        <Clock className="h-4 w-4 text-[#497B93]" />
+                                    <div className="flex items-center gap-1 text-xs text-brand">
+                                        <Clock className="h-4 w-4 text-brand" />
                                         <div className="font-semibold">
                                             {formatMonths(proposal.duration)}
                                         </div>
@@ -97,13 +97,13 @@ export default function ReceivedProposalDetail({
                             <>
                                 <button
                                     onClick={() => setShowAcceptModal(true)}
-                                    className="text-xs px-3 py-1 rounded-md text-[#3DA62F] border border-[#3DA62F] hover:bg-emerald-50 transition-colors"
+                                    className="text-xs px-3 py-1 rounded-md text-brand border border-brand hover:bg-brand-tint transition-colors"
                                 >
                                     ✓ Accept
                                 </button>
                                 <button
                                     onClick={() => setShowRejectModal(true)}
-                                    className="text-xs px-3 py-1 rounded-md text-[#C5483B] border border-[#C5483B] hover:bg-red-50 transition-colors"
+                                    className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-red-50 transition-colors"
                                 >
                                     ✕ Reject
                                 </button>
@@ -112,7 +112,7 @@ export default function ReceivedProposalDetail({
 
                         <button
                             onClick={onClose}
-                            className="ml-2 p-1.5 rounded-full text-[#497B93] hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            className="ml-2 p-1.5 rounded-full text-brand hover:text-slate-600 hover:bg-slate-100 transition-colors"
                         >
                             ✕
                         </button>

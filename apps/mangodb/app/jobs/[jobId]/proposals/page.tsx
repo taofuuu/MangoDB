@@ -149,7 +149,7 @@ export default function JobProposalsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FFFDF9] font-sans p-6 flex flex-col items-center">
+        <div className="min-h-screen bg-surface font-sans p-6 flex flex-col items-center">
             <div className="w-full max-w-6xl">
                 {/* Main Header Title */}
                 <div className="mb-6">
@@ -259,7 +259,7 @@ export default function JobProposalsPage() {
                                                 )
                                             }
                                             disabled={safePage === 1}
-                                            className="px-3 py-1 text-xs rounded-md border border-[#437788] text-[#437788] hover:bg-[#437788]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                            className="px-3 py-1 text-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                         >
                                             ← Prev
                                         </button>
@@ -270,7 +270,7 @@ export default function JobProposalsPage() {
                                                 )
                                             }
                                             disabled={safePage === totalPages}
-                                            className="px-3 py-1 text-xs rounded-md border border-[#437788] text-[#437788] hover:bg-[#437788]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                            className="px-3 py-1 text-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                         >
                                             Next →
                                         </button>

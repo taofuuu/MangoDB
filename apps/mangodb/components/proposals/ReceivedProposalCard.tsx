@@ -36,11 +36,11 @@ export default function ReceivedProposalCard({
                 className={`relative w-full bg-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
                     isSelected
                         ? proposal.proposalStatus === 'REJECTED'
-                            ? 'border-[#C5483B] ring-2 ring-[#C5483B]/20'
-                            : 'border-[#437788] ring-2 ring-[#437788]/20'
+                            ? 'border-danger ring-2 ring-danger/20'
+                            : 'border-brand ring-2 ring-brand/20'
                         : proposal.proposalStatus === 'REJECTED'
-                          ? 'border-[#C5483B]/20 hover:border-[#C5483B]/50'
-                          : 'border-[#437788]/20 hover:border-[#437788]/50'
+                          ? 'border-danger/20 hover:border-danger/50'
+                          : 'border-brand/20 hover:border-brand/50'
                 }`}
             >
                 <div className="flex items-start justify-between">
@@ -58,20 +58,20 @@ export default function ReceivedProposalCard({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-[#497B93] mt-0.5">
-                                <Calendar className="h-4 w-4 text-[#497B93]" />
+                            <div className="flex items-center gap-1.5 text-xs text-brand mt-0.5">
+                                <Calendar className="h-4 w-4 text-brand" />
                                 <span>{formatDate(proposal.createdAt)}</span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-[#497B93] mt-1">
-                                <div className="flex items-center gap-1 text-xs text-[#497B93]">
-                                    <Tag className="h-4 w-4 text-[#497B93]" />
+                            <div className="flex items-center gap-3 text-xs text-brand mt-1">
+                                <div className="flex items-center gap-1 text-xs text-brand">
+                                    <Tag className="h-4 w-4 text-brand" />
                                     <span>
                                         {formatBaht(proposal.proposalBudget)}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-[#497B93]">
-                                    <Clock className="h-4 w-4 text-[#497B93]" />
+                                <div className="flex items-center gap-1 text-xs text-brand">
+                                    <Clock className="h-4 w-4 text-brand" />
                                     <span>
                                         {formatMonths(proposal.duration)}
                                     </span>
@@ -91,7 +91,7 @@ export default function ReceivedProposalCard({
                                     e.stopPropagation();
                                     setShowRejectModal(true);
                                 }}
-                                className="text-xs px-3 py-1 rounded-md text-[#C5483B] border border-[#C5483B] hover:bg-red-50 transition-colors"
+                                className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-red-50 transition-colors"
                             >
                                 ✕ Reject
                             </button>
@@ -102,7 +102,7 @@ export default function ReceivedProposalCard({
                 <div className="mt-3 ml-15">
                     <button
                         onClick={onSelect}
-                        className="text-xs text-[#437788] border border-[#437788]/40 rounded-md px-3 py-0.5 hover:bg-[#437788]/10 transition-colors flex items-center gap-1"
+                        className="text-xs text-brand border border-brand/40 rounded-md px-3 py-0.5 hover:bg-brand/10 transition-colors flex items-center gap-1"
                     >
                         view detail →
                     </button>

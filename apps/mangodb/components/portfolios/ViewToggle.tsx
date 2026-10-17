@@ -26,7 +26,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
             >
                 <svg
                     viewBox="0 0 20 20"
-                    className="size-[20px]"
+                    className="size-[20px] text-ink"
                     aria-hidden="true"
                 >
                     <rect
@@ -35,7 +35,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="8"
                         height="8"
                         rx="1.5"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                     <rect
                         x="11"
@@ -43,7 +43,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="8"
                         height="8"
                         rx="1.5"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                     <rect
                         x="1"
@@ -51,7 +51,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="8"
                         height="8"
                         rx="1.5"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                     <rect
                         x="11"
@@ -59,7 +59,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="8"
                         height="8"
                         rx="1.5"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                 </svg>
             </button>
@@ -73,7 +73,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
             >
                 <svg
                     viewBox="0 0 20 20"
-                    className="size-[20px]"
+                    className="size-[20px] text-ink"
                     aria-hidden="true"
                 >
                     <rect
@@ -82,7 +82,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="18"
                         height="2"
                         rx="1"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                     <rect
                         x="1"
@@ -90,7 +90,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="18"
                         height="2"
                         rx="1"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                     <rect
                         x="1"
@@ -98,7 +98,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
                         width="18"
                         height="2"
                         rx="1"
-                        fill="#171717"
+                        fill="currentColor"
                     />
                 </svg>
             </button>
