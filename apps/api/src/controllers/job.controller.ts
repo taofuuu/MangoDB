@@ -1,5 +1,10 @@
 import type { Request, Response } from 'express';
-import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
+import type {
+    Job,
+    ListingStatus,
+    ListingType,
+    Paginated,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
@@ -7,11 +12,13 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { omitUndefined } from '../lib/objects';
+import { orNotFound } from '../lib/prisma-errors';
 import { fromDateOnly } from '../lib/dates';
 import {
     assertBudgetRange,
     assertListingOwned,
     assertListingVisible,
+    LISTING_MESSAGES,
     categoryCreate,
     categoryReplace,
     closeOpenListing,
@@ -42,8 +49,8 @@ export async function createJob(req: Request, res: Response): Promise<void> {
             listingDesc: body.listingDesc,
             minBudget: body.minBudget ?? null,
             maxBudget: body.maxBudget ?? null,
-            listingStatus: 'OPEN',
-            listingType: 'JOB',
+            listingStatus: 'OPEN' satisfies ListingStatus,
+            listingType: 'JOB' satisfies ListingType,
             job: {
                 create: {
                     locationPref: body.locationPref ?? null,
@@ -96,7 +103,7 @@ export async function listMyJobs(req: Request, res: Response): Promise<void> {
     const companyId = req.auth!.companyId;
 
     const where: Prisma.ListingWhereInput = {
-        listingType: 'JOB',
+        listingType: 'JOB' satisfies ListingType,
         companyId,
         ...(status ? { listingStatus: status } : {}),
     };
@@ -131,7 +138,7 @@ export async function getJob(req: Request, res: Response): Promise<void> {
     const posting = await prisma.listing.findUnique({
         where: {
             listingId: jobId,
-            listingType: 'JOB',
+            listingType: 'JOB' satisfies ListingType,
             company: { deletedAt: null },
         },
         select: jobSelect,
@@ -171,24 +178,36 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
         deadline: deadline == null ? deadline : fromDateOnly(deadline),
     });
 
-    const updated = await prisma.listing.update({
-        where: { listingId: jobId },
-        data: {
-            ...omitUndefined(listingFields),
-            // upsert, not update: an older row may have no requirement row.
-            ...(Object.keys(requirement).length > 0
-                ? {
-                      job: {
-                          upsert: { create: requirement, update: requirement },
-                      },
-                  }
-                : {}),
-            ...(categoryIds
-                ? { listingCategory: categoryReplace(categoryIds) }
-                : {}),
-        },
-        select: jobSelect,
-    });
+    // The owner and kind again in the write, so a row that changed hands or
+    // went between the check and here is a 404, not someone else's edit.
+    const updated = await orNotFound(
+        prisma.listing.update({
+            where: {
+                listingId: jobId,
+                companyId: req.auth!.companyId,
+                listingType: 'JOB' satisfies ListingType,
+            },
+            data: {
+                ...omitUndefined(listingFields),
+                // upsert, not update: an older row may have no requirement row.
+                ...(Object.keys(requirement).length > 0
+                    ? {
+                          job: {
+                              upsert: {
+                                  create: requirement,
+                                  update: requirement,
+                              },
+                          },
+                      }
+                    : {}),
+                ...(categoryIds
+                    ? { listingCategory: categoryReplace(categoryIds) }
+                    : {}),
+            },
+            select: jobSelect,
+        }),
+        LISTING_MESSAGES.JOB.notFound,
+    );
 
     res.json(toJob(updated));
 }

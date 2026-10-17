@@ -1,4 +1,4 @@
-import type { AccountType, CompanySummary } from '@mangodb/shared';
+import type { AccountType, CompanySummary, ListingType } from '@mangodb/shared';
 import {
     type ServiceTechStackRow,
     serviceTechStackSelect,
@@ -21,7 +21,7 @@ export function companyKeywordWhere(word: string): Prisma.CompanyWhereInput {
             {
                 listing: {
                     some: {
-                        listingType: 'SERVICE',
+                        listingType: 'SERVICE' satisfies ListingType,
                         OR: serviceTextMatches(word),
                     },
                 },
@@ -45,7 +45,7 @@ export const companySummarySelect = {
     // to hire, not what it offers. A Receiver has none, so both lists are
     // empty on its card.
     listing: {
-        where: { listingType: 'SERVICE' },
+        where: { listingType: 'SERVICE' satisfies ListingType },
         select: {
             listingCategory: {
                 select: { category: { select: { categoryName: true } } },

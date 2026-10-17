@@ -1,5 +1,10 @@
 import type { Request, Response } from 'express';
-import type { Paginated, ServiceSummary } from '@mangodb/shared';
+import type {
+    ListingStatus,
+    ListingType,
+    Paginated,
+    ServiceSummary,
+} from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
@@ -59,7 +64,7 @@ export async function createService(
             minBudget: data.minBudget ?? null,
             maxBudget: data.maxBudget ?? null,
             listingStatus: DEFAULT_LISTING_STATUS,
-            listingType: 'SERVICE',
+            listingType: 'SERVICE' satisfies ListingType,
             // ADR 0009. Each tech links to its tech_stack row, added above.
             service: {
                 create: {
@@ -109,7 +114,11 @@ export async function updateService(
         prisma.listing.update({
             // Recheck owner and type in the write in case the row changed
             // between the authorization read and this operation.
-            where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
+            where: {
+                listingId: serviceId,
+                companyId,
+                listingType: 'SERVICE' satisfies ListingType,
+            },
             data: {
                 ...omitUndefined(listingFields),
                 ...(categoryIds !== undefined
@@ -190,8 +199,8 @@ export async function getServiceFilterOptions(
                     some: {
                         service: {
                             listing: {
-                                listingType: 'SERVICE',
-                                listingStatus: 'OPEN',
+                                listingType: 'SERVICE' satisfies ListingType,
+                                listingStatus: 'OPEN' satisfies ListingStatus,
                                 company: { deletedAt: null },
                             },
                         },
@@ -210,23 +219,20 @@ export async function listMyServices(
     req: Request,
     res: Response,
 ): Promise<void> {
-    if (!req.auth?.companyId) {
-        throw ApiError.unauthorized('Company ID is required');
-    }
-    const { companyId } = req.auth;
+    const { companyId } = req.auth!;
     const { status } = parseQuery(serviceMineQuerySchema, req.query);
 
     const listings = await prisma.listing.findMany({
         where: {
             companyId,
-            listingType: 'SERVICE', // Defensive: explicit type filter
+            listingType: 'SERVICE' satisfies ListingType,
             ...(status ? { listingStatus: status } : {}),
         },
         orderBy: { createdAt: 'desc' },
         select: serviceSelect,
     });
 
-    res.status(200).json(listings.map(toService));
+    res.json(listings.map(toService));
 }
 
 // GET /services/:serviceId. Any company can read an OPEN service of an active
@@ -242,15 +248,13 @@ export async function getService(req: Request, res: Response): Promise<void> {
     const listing = await prisma.listing.findUnique({
         where: {
             listingId: serviceId,
-            listingType: 'SERVICE', // Defensive: explicit type filter
+            listingType: 'SERVICE' satisfies ListingType,
             company: { deletedAt: null },
         },
         select: serviceSelect,
     });
 
-    res.status(200).json(
-        toService(assertListingVisible(listing, companyId, 'SERVICE')),
-    );
+    res.json(toService(assertListingVisible(listing, companyId, 'SERVICE')));
 }
 
 // DELETE /services/:serviceId. Hard delete. listingCategory, the service row
@@ -292,7 +296,11 @@ export async function deleteService(
     // A 404 if it was deleted between the ownership check and here.
     await orNotFound(
         prisma.listing.delete({
-            where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
+            where: {
+                listingId: serviceId,
+                companyId,
+                listingType: 'SERVICE' satisfies ListingType,
+            },
         }),
         LISTING_MESSAGES.SERVICE.notFound,
     );

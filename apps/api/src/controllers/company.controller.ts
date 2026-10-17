@@ -36,6 +36,7 @@ import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
+import { requireFile } from '../middleware/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     changeCredentialsSchema,
@@ -195,11 +196,7 @@ export async function updateMyPhoto(
 ): Promise<void> {
     const companyId = req.auth!.companyId;
 
-    if (!req.file) {
-        throw ApiError.badRequest('Provide an image to upload', [
-            { field: 'photo', message: 'Choose an image first' },
-        ]);
-    }
+    const file = requireFile(req.file, 'photo');
 
     // Read first, for the old URL to clean up afterwards and so a deleted
     // company is a plain 404 rather than a P2025 out of the update.
@@ -215,7 +212,7 @@ export async function updateMyPhoto(
     // The new photo replaces the old one, and saveWithUpload removes
     // whichever file ends up unreferenced.
     const company = await saveWithUpload(
-        req.file,
+        file,
         BUCKETS.PROFILE,
         'companies',
         (companyPhoto) =>

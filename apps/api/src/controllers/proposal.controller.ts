@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
 import type {
     ListingStatus,
+    ListingType,
     Paginated,
+    ProposalStatus,
     ProposalStatusCounts,
     SentProposal,
 } from '@mangodb/shared';
@@ -56,7 +58,7 @@ export async function createProposal(
         },
     });
 
-    if (!posting || posting.listingType !== 'JOB') {
+    if (!posting || posting.listingType !== ('JOB' satisfies ListingType)) {
         throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
     }
 
@@ -64,7 +66,7 @@ export async function createProposal(
         throw ApiError.forbidden('You cannot send a proposal to your own job');
     }
 
-    if (posting.listingStatus !== 'OPEN') {
+    if (posting.listingStatus !== ('OPEN' satisfies ListingStatus)) {
         throw ApiError.conflict('This job is not open for proposals');
     }
 
@@ -76,7 +78,7 @@ export async function createProposal(
                 proposalBudget: body.proposalBudget,
                 proposalTerms: body.proposalTerms,
                 duration: body.duration,
-                proposalStatus: 'PENDING',
+                proposalStatus: 'PENDING' satisfies ProposalStatus,
             },
             select: proposalSelect,
         });

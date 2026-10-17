@@ -41,3 +41,28 @@ export function uploadImage(field: string) {
         });
     };
 }
+
+// A route whose image is required. Called after parseBody, so a bad field is
+// reported the same way, under the name the form gives the file input.
+export function requireFile(
+    file: Express.Multer.File | undefined,
+    field: string,
+): Express.Multer.File {
+    if (!file) {
+        throw ApiError.validationFailed([
+            { field, message: 'Choose an image first' },
+        ]);
+    }
+    return file;
+}
+
+// A multipart PATCH may carry only a new image, so an empty body is fine when
+// a file came. Neither is a request that changes nothing.
+export function assertSomethingToUpdate(
+    body: object,
+    file: Express.Multer.File | undefined,
+): void {
+    if (Object.keys(body).length === 0 && !file) {
+        throw ApiError.badRequest('Provide at least one field to update');
+    }
+}

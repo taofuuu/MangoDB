@@ -15,6 +15,8 @@ import {
 
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
+import { orNotFound } from '../lib/prisma-errors';
+import { assertSomethingToUpdate } from '../middleware/upload';
 import { ApiError } from '../lib/api-error';
 import {
     assertCertificateOwned,
@@ -110,9 +112,7 @@ export async function updateCertificate(
     const body = parseBody(updateCertificateSchema, req.body);
 
     // The text body may be empty when the only change is a replacement image.
-    if (Object.keys(body).length === 0 && !req.file) {
-        throw ApiError.badRequest('Provide at least one field to update');
-    }
+    assertSomethingToUpdate(body, req.file);
 
     // Read before any write, for the ownership check and for the dates the
     // rule below needs — a PATCH may send one half of a date pair, so the rule
@@ -165,7 +165,11 @@ export async function deleteCertificate(
         providerId,
     );
 
-    await prisma.certificate.delete({ where: { certificateId } });
+    // The owner again in the write: a 404 if it went between the check and here.
+    await orNotFound(
+        prisma.certificate.delete({ where: { certificateId, providerId } }),
+        'Certificate not found',
+    );
 
     // Best-effort cleanup: the row is gone either way.
     if (certImage) {

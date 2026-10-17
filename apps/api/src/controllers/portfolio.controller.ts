@@ -11,6 +11,7 @@ import {
 import { assertListingOwned } from '../lib/listing';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
+import { assertSomethingToUpdate, requireFile } from '../middleware/upload';
 
 import { omitUndefined } from '../lib/objects';
 import { isRecordNotFound, orNotFound } from '../lib/prisma-errors';
@@ -27,13 +28,9 @@ export async function createPortfolio(
     req: Request,
     res: Response,
 ): Promise<void> {
-    // 1. Validate image file
-    if (!req.file) {
-        throw ApiError.badRequest('Portfolio image file is required');
-    }
-
-    // 2. Parse Text Fields จาก Form-Data
+    // 1. The text fields, then the image they come with.
     const data = parseBody(createPortfolioSchema, req.body);
+    const file = requireFile(req.file, 'portfolioImage');
     const companyId = req.auth!.companyId;
 
     // 3. 404 for an unknown service, 403 for another company's, before any
@@ -45,7 +42,7 @@ export async function createPortfolio(
     let created;
     try {
         created = await saveWithUpload(
-            req.file,
+            file,
             BUCKETS.PORTFOLIO,
             'portfolios',
             (portfolioImage) =>
@@ -83,9 +80,7 @@ export async function updatePortfolio(
     const companyId = req.auth!.companyId;
 
     // The text body may be empty when the only change is a replacement image.
-    if (Object.keys(data).length === 0 && !req.file) {
-        throw ApiError.badRequest('Provide at least one field to update');
-    }
+    assertSomethingToUpdate(data, req.file);
 
     // Checked before any write, and the two cases stay distinct: 404 for an
     // unknown id, 403 for another company's (README.md's 401/403/404 rule).
