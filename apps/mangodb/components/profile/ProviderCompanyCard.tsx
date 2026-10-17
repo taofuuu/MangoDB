@@ -86,7 +86,7 @@ export default function ProviderCompanyCard({
                     className="mb-4"
                 />
 
-                <h2 className="mb-3 text-2xl font-bold tracking-tight text-ink">
+                <h2 className="mb-3 type-lg !font-[700] tracking-tight text-ink">
                     {data.name}
                 </h2>
 

@@ -53,24 +53,24 @@ export default function ReceivedProposalCard({
 
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-ink text-sm">
+                                <span className="!font-[700] text-ink type-sm">
                                     {companyName}
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-brand mt-0.5">
+                            <div className="flex items-center gap-1.5 type-xs text-brand mt-0.5">
                                 <Calendar className="h-4 w-4 text-brand" />
                                 <span>{formatDate(proposal.createdAt)}</span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-brand mt-1">
-                                <div className="flex items-center gap-1 text-xs text-brand">
+                            <div className="flex items-center gap-3 type-xs text-brand mt-1">
+                                <div className="flex items-center gap-1 type-xs text-brand">
                                     <Tag className="h-4 w-4 text-brand" />
                                     <span>
                                         {formatBaht(proposal.proposalBudget)}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1 text-xs text-brand">
+                                <div className="flex items-center gap-1 type-xs text-brand">
                                     <Clock className="h-4 w-4 text-brand" />
                                     <span>
                                         {formatMonths(proposal.duration)}
@@ -91,7 +91,7 @@ export default function ReceivedProposalCard({
                                     e.stopPropagation();
                                     setShowRejectModal(true);
                                 }}
-                                className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
+                                className="type-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
                             >
                                 ✕ Reject
                             </button>
@@ -102,7 +102,7 @@ export default function ReceivedProposalCard({
                 <div className="mt-3 ml-15">
                     <button
                         onClick={onSelect}
-                        className="text-xs text-brand border border-brand/40 rounded-md px-3 py-0.5 hover:bg-brand/10 transition-colors flex items-center gap-1"
+                        className="type-xs text-brand border border-brand/40 rounded-md px-3 py-0.5 hover:bg-brand/10 transition-colors flex items-center gap-1"
                     >
                         view detail →
                     </button>

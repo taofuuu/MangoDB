@@ -166,7 +166,7 @@ export default function CertificateForm({
             </div>
 
             <hr className="border-brand-dark/50 my-2" />
-            <p className="my-2 type-sm !text-[12px]">*Indicates required</p>
+            <p className="my-2 type-xs">*Indicates required</p>
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-3">

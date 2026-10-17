@@ -103,7 +103,7 @@ export default function Home() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
             <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
-                <h1 className="text-4xl font-bold text-ink">MangoDB</h1>
+                <h1 className="type-hd !font-[700] text-ink">MangoDB</h1>
                 <p className="mt-3 text-brand">Welcome to MangoDB.</p>
 
                 <Link

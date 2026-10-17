@@ -363,10 +363,10 @@ export default function RegisterPage() {
 
             {currentStep === RegisterStep.Success && (
                 <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-tint text-brand text-3xl font-bold">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-tint text-brand type-hd !font-[700]">
                         ✓
                     </div>
-                    <h1 className="text-3xl font-bold text-ink">Success</h1>
+                    <h1 className="type-hd !font-[700] text-ink">Success</h1>
                     <p className="mt-2 text-ink-soft">
                         Your account has been created successfully.
                     </p>

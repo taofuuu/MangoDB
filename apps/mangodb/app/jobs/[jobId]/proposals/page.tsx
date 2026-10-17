@@ -153,12 +153,12 @@ export default function JobProposalsPage() {
             <div className="w-full max-w-6xl">
                 {/* Main Header Title */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-ink">
+                    <h1 className="type-lg !font-[700] text-ink">
                         {viewMode === 'rejected'
                             ? 'Rejected Proposals'
                             : 'Submitted Proposals'}
                     </h1>
-                    <h2 className="text-base font-semibold text-ink mt-0.5">
+                    <h2 className="type-md !font-[600] text-ink mt-0.5">
                         {listingTitle}
                     </h2>
                     <div className="h-px bg-fill-muted mt-3 w-full" />
@@ -191,11 +191,11 @@ export default function JobProposalsPage() {
 
                 {/* Loading / Error / Empty States */}
                 {activeIsLoading ? (
-                    <div className="py-20 text-center text-ink-soft font-medium text-sm">
+                    <div className="py-20 text-center text-ink-soft !font-[500] type-sm">
                         Loading proposals...
                     </div>
                 ) : activeError ? (
-                    <div className="py-20 text-center text-danger font-medium text-sm">
+                    <div className="py-20 text-center text-danger !font-[500] type-sm">
                         {activeError}
                     </div>
                 ) : activeList.length === 0 ? (
@@ -248,7 +248,7 @@ export default function JobProposalsPage() {
                             {/* Pagination controls */}
                             {totalPages > 1 && (
                                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-line">
-                                    <span className="text-xs text-ink-soft">
+                                    <span className="type-xs text-ink-soft">
                                         Page {safePage} of {totalPages}
                                     </span>
                                     <div className="flex items-center gap-2">
@@ -259,7 +259,7 @@ export default function JobProposalsPage() {
                                                 )
                                             }
                                             disabled={safePage === 1}
-                                            className="px-3 py-1 text-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                            className="px-3 py-1 type-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                         >
                                             ← Prev
                                         </button>
@@ -270,7 +270,7 @@ export default function JobProposalsPage() {
                                                 )
                                             }
                                             disabled={safePage === totalPages}
-                                            className="px-3 py-1 text-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                            className="px-3 py-1 type-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                         >
                                             Next →
                                         </button>

@@ -21,7 +21,7 @@ export default function LoginCard() {
                         height={82}
                         priority
                     />
-                    <h1 className="text-2xl font-bold text-ink sm:text-[36px]">
+                    <h1 className="type-lg !font-[700] text-ink sm:!text-[36px]">
                         MangoDB Cooperation
                     </h1>
                     <p className="type-sm text-ink-soft">

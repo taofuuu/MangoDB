@@ -53,17 +53,17 @@ export default function ReceivedProposalDetail({
                                 </span>
                             </div>
 
-                            <div className="flex items-center gap-1 text-xs text-brand mt-0.5">
+                            <div className="flex items-center gap-1 type-xs text-brand mt-0.5">
                                 <Calendar className="h-4 w-4 text-brand" />
                                 Submitted: {formatDate(proposal.createdAt)}
                             </div>
 
-                            <div className="flex items-center gap-6 text-xs text-brand mt-2">
+                            <div className="flex items-center gap-6 type-xs text-brand mt-2">
                                 <div>
-                                    <div className="text-[10px] text-brand">
+                                    <div className="type-xs text-brand">
                                         Offered Price
                                     </div>
-                                    <div className="flex items-center gap-1 text-xs text-brand">
+                                    <div className="flex items-center gap-1 type-xs text-brand">
                                         <Tag className="h-4 w-4 text-brand" />
                                         <div className="font-semibold">
                                             {formatBaht(
@@ -74,10 +74,10 @@ export default function ReceivedProposalDetail({
                                 </div>
 
                                 <div>
-                                    <div className="text-[10px] text-brand">
+                                    <div className="type-xs text-brand">
                                         Estimated Duration
                                     </div>
-                                    <div className="flex items-center gap-1 text-xs text-brand">
+                                    <div className="flex items-center gap-1 type-xs text-brand">
                                         <Clock className="h-4 w-4 text-brand" />
                                         <div className="font-semibold">
                                             {formatMonths(proposal.duration)}
@@ -97,13 +97,13 @@ export default function ReceivedProposalDetail({
                             <>
                                 <button
                                     onClick={() => setShowAcceptModal(true)}
-                                    className="text-xs px-3 py-1 rounded-md text-brand border border-brand hover:bg-brand-tint transition-colors"
+                                    className="type-xs px-3 py-1 rounded-md text-brand border border-brand hover:bg-brand-tint transition-colors"
                                 >
                                     ✓ Accept
                                 </button>
                                 <button
                                     onClick={() => setShowRejectModal(true)}
-                                    className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
+                                    className="type-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
                                 >
                                     ✕ Reject
                                 </button>
@@ -120,10 +120,10 @@ export default function ReceivedProposalDetail({
                 </div>
 
                 <div className="mt-5">
-                    <h4 className="font-bold text-xs text-ink mb-3">
+                    <h4 className="!font-[700] type-xs text-ink mb-3">
                         Proposal Terms
                     </h4>
-                    <div className="space-y-2 text-xs text-ink-soft leading-relaxed whitespace-pre-line">
+                    <div className="space-y-2 type-xs text-ink-soft leading-relaxed whitespace-pre-line">
                         {proposal.proposalTerms}
                     </div>
                 </div>
