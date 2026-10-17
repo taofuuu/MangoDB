@@ -1,27 +1,35 @@
 'use client';
 
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 import Button from '@/components/ui/Button';
 import ModalShell from '@/components/ui/ModalShell';
 
 interface SuccessModalProps {
     isOpen: boolean;
+    // Called by the button, Escape and the backdrop alike.
     onClose: () => void;
-    title?: string;
+    title: string;
+    message?: ReactNode;
+    actionLabel?: string;
 }
 
+// "It worked", with one button. For a question, use ConfirmModal.
 export default function SuccessModal({
     isOpen,
     onClose,
-    title = 'Service Updated Successfully',
+    title,
+    message,
+    actionLabel = 'Done',
 }: SuccessModalProps) {
     const titleId = useId();
+    const messageId = useId();
 
     return (
         <ModalShell
             isOpen={isOpen}
             onClose={onClose}
             labelledBy={titleId}
+            {...(message ? { describedBy: messageId } : {})}
             panelClassName="w-full max-w-[480px] rounded-popup border border-line bg-surface p-8 shadow-xl"
         >
             <div className="flex flex-col items-center">
@@ -34,6 +42,7 @@ export default function SuccessModal({
                             stroke="currentColor"
                             strokeWidth="3"
                             viewBox="0 0 24 24"
+                            aria-hidden="true"
                         >
                             <path
                                 strokeLinecap="round"
@@ -42,9 +51,19 @@ export default function SuccessModal({
                             />
                         </svg>
                     </div>
-                    <h3 id={titleId} className="type-md font-bold text-ink">
-                        {title}
-                    </h3>
+                    <div>
+                        <h3 id={titleId} className="type-md font-bold text-ink">
+                            {title}
+                        </h3>
+                        {message && (
+                            <p
+                                id={messageId}
+                                className="mt-2 type-xs text-ink-soft leading-relaxed"
+                            >
+                                {message}
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 <hr className="w-full border-line mb-6" />
@@ -55,7 +74,7 @@ export default function SuccessModal({
                         onClick={onClose}
                         className="px-8 py-2 type-sm font-semibold"
                     >
-                        Done
+                        {actionLabel}
                     </Button>
                 </div>
             </div>

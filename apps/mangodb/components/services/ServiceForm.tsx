@@ -24,7 +24,7 @@ import {
 import AddPortfolioModal, {
     type PendingPortfolio,
 } from '../portfolios/AddPortfolioModal';
-import SuccessModal from './SuccessModal';
+import SuccessModal from '@/components/ui/SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';

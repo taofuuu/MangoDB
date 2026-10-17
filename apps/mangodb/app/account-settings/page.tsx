@@ -13,6 +13,7 @@ import {
 import { redirectToLogin, redirectToUnauthorized } from '@/lib/session';
 import LogoutButton from '@/components/auth/LogoutButton';
 import DeleteAccountModal from '@/components/auth/DeleteAccountModal';
+import SuccessModal from '@/components/ui/SuccessModal';
 import EditAccountModal, {
     type EditAccountMode,
 } from '@/components/auth/EditAccountModal';
@@ -297,57 +298,14 @@ export default function AccountPage() {
                 onConfirm={handleDeleteAccount}
             />
 
-            {/* Deletion Result Modal */}
-            {deletionSuccess && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.6vh]">
-                    <section
-                        role="alertdialog"
-                        aria-modal="true"
-                        aria-labelledby="deletion-result-title"
-                        aria-describedby="deletion-result-desc"
-                        className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-surface text-ink px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
-                    >
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger-tint text-danger">
-                            <svg
-                                className="h-6 w-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                                aria-hidden="true"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
-                        </div>
-                        <h2
-                            id="deletion-result-title"
-                            className="type-md font-semibold text-ink mt-3"
-                        >
-                            Account Deleted
-                        </h2>
-                        <p
-                            id="deletion-result-desc"
-                            className="type-xs text-ink-soft mt-2 leading-relaxed"
-                        >
-                            Your account has been successfully deleted. Please
-                            note that records of your past projects and reviews
-                            have been retained. You will now be redirected to
-                            the login page.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={redirectToLogin}
-                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-danger type-xs text-surface font-semibold transition-colors hover:bg-danger-hover cursor-pointer"
-                        >
-                            Go to Login
-                        </button>
-                    </section>
-                </div>
-            )}
+            {/* The account is gone; every way out goes to the login page. */}
+            <SuccessModal
+                isOpen={deletionSuccess}
+                onClose={redirectToLogin}
+                title="Account Deleted"
+                message="Your account has been successfully deleted. Please note that records of your past projects and reviews have been retained. You will now be redirected to the login page."
+                actionLabel="Go to Login"
+            />
         </main>
     );
 }

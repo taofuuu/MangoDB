@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import FieldError from '@/components/ui/FieldError';
+import ModalShell from '@/components/ui/ModalShell';
 import { isNotSignedIn } from '@/lib/api';
 import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 
@@ -82,6 +83,7 @@ export default function EditAccountModal({
     // Only what no input can hold: offline, or a 500.
     const [formError, setFormError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const titleId = useId();
 
     // Touching a box clears what was wrong with it, so a field the user has
     // already fixed stops looking broken.
@@ -235,253 +237,246 @@ export default function EditAccountModal({
     };
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onMouseDown={(e) => {
-                // Not while a save is in flight: the request lands either way,
-                // and closing here would hide the error if it fails.
-                if (e.target === e.currentTarget && !isSaving) {
-                    onClose();
-                }
-            }}
+        <ModalShell
+            isOpen
+            onClose={onClose}
+            // Not while a save is in flight: the request lands either way, and
+            // closing would hide the error if it fails.
+            isBusy={isSaving}
+            labelledBy={titleId}
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            panelClassName="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-gray-100"
         >
-            <div className="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-gray-100">
-                {/* Header */}
-                <div>
-                    <h2 className="type-md font-semibold text-ink">
-                        {modalTitles[mode]}
-                    </h2>
-                </div>
+            {/* Header */}
+            <div>
+                <h2 id={titleId} className="type-md font-semibold text-ink">
+                    {modalTitles[mode]}
+                </h2>
+            </div>
 
-                <hr className="border-brand-dark/30 my-3" />
+            <hr className="border-brand-dark/30 my-3" />
 
-                <p className="type-xs text-ink-soft mb-4">
-                    Enter your details below. Current password is required to
-                    confirm and apply changes.
-                </p>
+            <p className="type-xs text-ink-soft mb-4">
+                Enter your details below. Current password is required to
+                confirm and apply changes.
+            </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Username Mode */}
-                    {mode === 'username' && (
-                        <div>
-                            <label
-                                htmlFor="modal-username-input"
-                                className="block type-xs font-medium text-ink mb-1"
-                            >
-                                Username <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                id="modal-username-input"
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => {
-                                    setInputValue(e.target.value);
-                                    clearError('value');
-                                }}
-                                placeholder="Enter username"
-                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                autoFocus
-                            />
-                            <FieldError message={errors.value} />
-                        </div>
-                    )}
-
-                    {/* Email Mode */}
-                    {mode === 'email' && (
-                        <div>
-                            <label
-                                htmlFor="modal-email-input"
-                                className="block type-xs font-medium text-ink mb-1"
-                            >
-                                Email <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                id="modal-email-input"
-                                type="email"
-                                value={inputValue}
-                                onChange={(e) => {
-                                    setInputValue(e.target.value);
-                                    clearError('value');
-                                }}
-                                placeholder="Enter email address"
-                                className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                autoFocus
-                            />
-                            <FieldError message={errors.value} />
-                        </div>
-                    )}
-
-                    {/* Password Mode */}
-                    {mode === 'password' && (
-                        <>
-                            <div>
-                                <label
-                                    htmlFor="modal-new-password-input"
-                                    className="block type-xs font-medium text-ink mb-1"
-                                >
-                                    New Password{' '}
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="modal-new-password-input"
-                                        type={
-                                            showNewPassword
-                                                ? 'text'
-                                                : 'password'
-                                        }
-                                        value={newPassword}
-                                        onChange={(e) => {
-                                            setNewPassword(e.target.value);
-                                            clearError('newPassword');
-                                        }}
-                                        placeholder="Enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                        autoFocus
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowNewPassword(!showNewPassword)
-                                        }
-                                        aria-label={
-                                            showNewPassword
-                                                ? 'Hide password'
-                                                : 'Show password'
-                                        }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                                    >
-                                        <EyeIcon
-                                            className={`w-4 h-4 ${
-                                                showNewPassword
-                                                    ? 'text-ink'
-                                                    : 'text-ink-placeholder'
-                                            }`}
-                                        />
-                                    </button>
-                                </div>
-                                <FieldError message={errors.newPassword} />
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="modal-confirm-password-input"
-                                    className="block type-xs font-medium text-ink mb-1"
-                                >
-                                    Confirm New Password{' '}
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="modal-confirm-password-input"
-                                        type={
-                                            showConfirmPassword
-                                                ? 'text'
-                                                : 'password'
-                                        }
-                                        value={confirmPassword}
-                                        onChange={(e) => {
-                                            setConfirmPassword(e.target.value);
-                                            clearError('confirmPassword');
-                                        }}
-                                        placeholder="Re-enter new password"
-                                        className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowConfirmPassword(
-                                                !showConfirmPassword,
-                                            )
-                                        }
-                                        aria-label={
-                                            showConfirmPassword
-                                                ? 'Hide password'
-                                                : 'Show password'
-                                        }
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                                    >
-                                        <EyeIcon
-                                            className={`w-4 h-4 ${
-                                                showConfirmPassword
-                                                    ? 'text-ink'
-                                                    : 'text-ink-placeholder'
-                                            }`}
-                                        />
-                                    </button>
-                                </div>
-                                <FieldError message={errors.confirmPassword} />
-                            </div>
-                        </>
-                    )}
-
-                    {/* Security Check: Current Password */}
-                    <div className="pt-2 border-t border-gray-200">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Username Mode */}
+                {mode === 'username' && (
+                    <div>
                         <label
-                            htmlFor="modal-current-password-input"
+                            htmlFor="modal-username-input"
                             className="block type-xs font-medium text-ink mb-1"
                         >
-                            Current Password{' '}
-                            <span className="text-danger">*</span>
+                            Username <span className="text-danger">*</span>
                         </label>
-                        <div className="relative">
-                            <input
-                                id="modal-current-password-input"
-                                type={showCurrentPassword ? 'text' : 'password'}
-                                value={currentPassword}
-                                onChange={(e) => {
-                                    setCurrentPassword(e.target.value);
-                                    clearError('currentPassword');
-                                }}
-                                placeholder="Enter current password"
-                                className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                            />
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowCurrentPassword(!showCurrentPassword)
-                                }
-                                aria-label={
-                                    showCurrentPassword
-                                        ? 'Hide password'
-                                        : 'Show password'
-                                }
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                            >
-                                <EyeIcon
-                                    className={`w-4 h-4 ${
-                                        showCurrentPassword
-                                            ? 'text-ink'
-                                            : 'text-ink-placeholder'
-                                    }`}
-                                />
-                            </button>
-                        </div>
-                        <FieldError message={errors.currentPassword} />
+                        <input
+                            id="modal-username-input"
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                clearError('value');
+                            }}
+                            placeholder="Enter username"
+                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                            autoFocus
+                        />
+                        <FieldError message={errors.value} />
                     </div>
+                )}
 
-                    <FieldError message={formError} />
+                {/* Email Mode */}
+                {mode === 'email' && (
+                    <div>
+                        <label
+                            htmlFor="modal-email-input"
+                            className="block type-xs font-medium text-ink mb-1"
+                        >
+                            Email <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            id="modal-email-input"
+                            type="email"
+                            value={inputValue}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                clearError('value');
+                            }}
+                            placeholder="Enter email address"
+                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                            autoFocus
+                        />
+                        <FieldError message={errors.value} />
+                    </div>
+                )}
 
-                    {/* Footer buttons */}
-                    <div className="pt-3 flex items-center justify-end gap-2.5">
+                {/* Password Mode */}
+                {mode === 'password' && (
+                    <>
+                        <div>
+                            <label
+                                htmlFor="modal-new-password-input"
+                                className="block type-xs font-medium text-ink mb-1"
+                            >
+                                New Password{' '}
+                                <span className="text-danger">*</span>
+                            </label>
+                            <div className="relative">
+                                <input
+                                    id="modal-new-password-input"
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => {
+                                        setNewPassword(e.target.value);
+                                        clearError('newPassword');
+                                    }}
+                                    placeholder="Enter new password"
+                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                                    autoFocus
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowNewPassword(!showNewPassword)
+                                    }
+                                    aria-label={
+                                        showNewPassword
+                                            ? 'Hide password'
+                                            : 'Show password'
+                                    }
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
+                                >
+                                    <EyeIcon
+                                        className={`w-4 h-4 ${
+                                            showNewPassword
+                                                ? 'text-ink'
+                                                : 'text-ink-placeholder'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                            <FieldError message={errors.newPassword} />
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="modal-confirm-password-input"
+                                className="block type-xs font-medium text-ink mb-1"
+                            >
+                                Confirm New Password{' '}
+                                <span className="text-danger">*</span>
+                            </label>
+                            <div className="relative">
+                                <input
+                                    id="modal-confirm-password-input"
+                                    type={
+                                        showConfirmPassword
+                                            ? 'text'
+                                            : 'password'
+                                    }
+                                    value={confirmPassword}
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        clearError('confirmPassword');
+                                    }}
+                                    placeholder="Re-enter new password"
+                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowConfirmPassword(
+                                            !showConfirmPassword,
+                                        )
+                                    }
+                                    aria-label={
+                                        showConfirmPassword
+                                            ? 'Hide password'
+                                            : 'Show password'
+                                    }
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
+                                >
+                                    <EyeIcon
+                                        className={`w-4 h-4 ${
+                                            showConfirmPassword
+                                                ? 'text-ink'
+                                                : 'text-ink-placeholder'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                            <FieldError message={errors.confirmPassword} />
+                        </div>
+                    </>
+                )}
+
+                {/* Security Check: Current Password */}
+                <div className="pt-2 border-t border-gray-200">
+                    <label
+                        htmlFor="modal-current-password-input"
+                        className="block type-xs font-medium text-ink mb-1"
+                    >
+                        Current Password <span className="text-danger">*</span>
+                    </label>
+                    <div className="relative">
+                        <input
+                            id="modal-current-password-input"
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={currentPassword}
+                            onChange={(e) => {
+                                setCurrentPassword(e.target.value);
+                                clearError('currentPassword');
+                            }}
+                            placeholder="Enter current password"
+                            className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                        />
                         <button
                             type="button"
-                            onClick={onClose}
-                            disabled={isSaving}
-                            className="rounded-status border border-brand px-5 py-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                            }
+                            aria-label={
+                                showCurrentPassword
+                                    ? 'Hide password'
+                                    : 'Show password'
+                            }
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
                         >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSaving}
-                            className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isSaving ? 'Saving…' : 'Save'}
+                            <EyeIcon
+                                className={`w-4 h-4 ${
+                                    showCurrentPassword
+                                        ? 'text-ink'
+                                        : 'text-ink-placeholder'
+                                }`}
+                            />
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
+                    <FieldError message={errors.currentPassword} />
+                </div>
+
+                <FieldError message={formError} />
+
+                {/* Footer buttons */}
+                <div className="pt-3 flex items-center justify-end gap-2.5">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={isSaving}
+                        className="rounded-status border border-brand px-5 py-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {isSaving ? 'Saving…' : 'Save'}
+                    </button>
+                </div>
+            </form>
+        </ModalShell>
     );
 }
