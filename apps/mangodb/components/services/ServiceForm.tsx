@@ -21,16 +21,15 @@ import {
     getService,
     updateService,
 } from '@/lib/services';
-import AddPortfolioModal, {
+import PortfolioForm, {
     type PendingPortfolio,
-} from '../portfolios/AddPortfolioModal';
+} from '@/components/portfolios/PortfolioForm';
 import SuccessModal from '@/components/ui/SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { useMyCompany } from '@/lib/useMyCompany';
 import { createPortfolio, listPortfolios } from '@/lib/portfolios';
-import EditPortfolioForm from '@/components/portfolios/EditPortfolioForm';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { redirectToUnauthorized } from '@/lib/session';
@@ -885,11 +884,13 @@ export default function ServiceForm(props: ServiceFormProps) {
                 </form>
             </div>
 
-            <AddPortfolioModal
-                isOpen={showPortfolioModal}
-                onClose={() => setShowPortfolioModal(false)}
-                onAdd={handleAddPortfolio}
-            />
+            {showPortfolioModal && (
+                <PortfolioForm
+                    mode="add"
+                    onClose={() => setShowPortfolioModal(false)}
+                    onAdd={handleAddPortfolio}
+                />
+            )}
 
             <SuccessModal
                 isOpen={showSuccessModal}
@@ -920,7 +921,8 @@ export default function ServiceForm(props: ServiceFormProps) {
             />
 
             {portfolioToEdit && (
-                <EditPortfolioForm
+                <PortfolioForm
+                    mode="edit"
                     portfolio={portfolioToEdit}
                     onClose={() => setPortfolioToEdit(null)}
                     onSave={(updated) => {

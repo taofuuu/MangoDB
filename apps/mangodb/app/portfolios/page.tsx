@@ -10,7 +10,7 @@ import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import EmptyState from '@/components/ui/EmptyState';
 import ViewToggle, { PortfolioView } from '@/components/portfolios/ViewToggle';
 import DeletePortfolioModal from '@/components/portfolios/DeletePortfolioModal';
-import EditPortfolioForm from '@/components/portfolios/EditPortfolioForm';
+import PortfolioForm from '@/components/portfolios/PortfolioForm';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { listPortfolios, deletePortfolio } from '@/lib/portfolios';
@@ -162,7 +162,8 @@ export default function PortfolioPage() {
             />
 
             {pendingEdit && (
-                <EditPortfolioForm
+                <PortfolioForm
+                    mode="edit"
                     key={pendingEdit.portfolioId}
                     portfolio={pendingEdit}
                     onClose={() => setPendingEdit(null)}
