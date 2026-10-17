@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import type { ReceivedProposal } from '@mangodb/shared';
-import type { ViewMode } from './StatsBadges';
 import Image from 'next/image';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import ProposalStatusBadge from './ProposalStatusBadge';
 import { CircleCheck, Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 
 interface ReceivedProposalDetailProps {
     proposal: ReceivedProposal;
-    viewMode: ViewMode;
     onClose: () => void;
     // Both throw on failure, so the dialog can show why.
     onAccept: () => Promise<void>;
@@ -18,7 +17,6 @@ interface ReceivedProposalDetailProps {
 
 export default function ReceivedProposalDetail({
     proposal,
-    viewMode,
     onClose,
     onAccept,
     onReject,
@@ -34,7 +32,6 @@ export default function ReceivedProposalDetail({
         <>
             <div
                 className={`bg-white rounded-2xl p-6 border shadow-sm relative text-[#497B93] max-h-[80vh] overflow-y-auto ${
-                    viewMode === 'rejected' ||
                     proposal.proposalStatus === 'REJECTED'
                         ? 'border-[#C5483B]'
                         : 'border-[#437788] ring-2 ring-[#437788]/10'
@@ -108,15 +105,10 @@ export default function ReceivedProposalDetail({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {viewMode === 'rejected' ||
-                        proposal.proposalStatus === 'REJECTED' ? (
-                            <span className="text-[#C5483B] text-xs font-semibold mr-2">
-                                Rejected
-                            </span>
-                        ) : proposal.proposalStatus === 'ACCEPTED' ? (
-                            <span className="text-[#3DA62F] text-xs font-semibold mr-2">
-                                Accepted
-                            </span>
+                        {proposal.proposalStatus !== 'PENDING' ? (
+                            <ProposalStatusBadge
+                                status={proposal.proposalStatus}
+                            />
                         ) : (
                             <>
                                 <button

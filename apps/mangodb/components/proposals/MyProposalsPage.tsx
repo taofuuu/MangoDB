@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import type {
     Paginated,
     ProposalStatus,
@@ -12,6 +11,7 @@ import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
+import StatusTabs from '@/components/ui/StatusTabs';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProposalCounts, listMyProposals } from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
@@ -142,34 +142,17 @@ export default function MyProposalsPage() {
                         <h1 className="type-hd text-ink">Your Proposals</h1>
                     </header>
 
-                    <div
-                        role="group"
-                        aria-label="Filter proposals by status"
-                        className="mt-4 flex flex-wrap gap-3"
-                    >
-                        {CHIPS.map((chip) => {
-                            const isActive = chip.status === status;
-                            return (
-                                <button
-                                    key={chip.label}
-                                    type="button"
-                                    onClick={() => changeStatus(chip.status)}
-                                    aria-pressed={isActive}
-                                    className={`flex overflow-hidden rounded-button border border-accent type-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-                                        isActive
-                                            ? 'ring-2 ring-brand ring-offset-1'
-                                            : 'hover:brightness-95'
-                                    }`}
-                                >
-                                    <span className="bg-accent px-3 py-1.5 text-ink">
-                                        {chip.label}
-                                    </span>
-                                    <span className="min-w-9 bg-surface-white px-3 py-1.5 text-ink">
-                                        {counts ? counts[chip.count] : '–'}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                    <div className="mt-4">
+                        <StatusTabs
+                            tabs={CHIPS.map((chip) => ({
+                                label: chip.label,
+                                value: chip.status,
+                                count: counts ? counts[chip.count] : '–',
+                            }))}
+                            value={status}
+                            onChange={changeStatus}
+                            label="Filter proposals by status"
+                        />
                     </div>
 
                     {error && (

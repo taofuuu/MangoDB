@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { ReceivedProposal } from '@mangodb/shared';
-import type { ViewMode } from '@/components/proposals/StatsBadges';
 import {
     listJobProposals,
     acceptProposal,
@@ -12,7 +11,7 @@ import {
 import { getJob } from '@/lib/jobs';
 import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import EmptyState from '@/components/ui/EmptyState';
-import StatsBadges from '@/components/proposals/StatsBadges';
+import StatusTabs from '@/components/ui/StatusTabs';
 import ReceivedProposalCard from '@/components/proposals/ReceivedProposalCard';
 import ReceivedProposalDetail from '@/components/proposals/ReceivedProposalDetail';
 import {
@@ -24,6 +23,9 @@ import {
 import { redirectToUnauthorized } from '@/lib/session';
 
 const NOT_FOUND = 'This job could not be found.';
+
+// The list shows the proposals still in play, or only the rejected ones.
+type ViewMode = 'all' | 'rejected';
 
 // US2-10. The proposals sent to one of your jobs, opened from the job.
 export default function JobProposalsPage() {
@@ -71,11 +73,10 @@ export default function JobProposalsPage() {
     const activeError = jobId === null ? NOT_FOUND : error;
     const activeIsLoading = jobId !== null && isLoading;
 
-    const totalCount = proposals.length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
-    const remainCount = totalCount - rejectedCount;
+    const remainCount = proposals.length - rejectedCount;
 
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
@@ -164,38 +165,28 @@ export default function JobProposalsPage() {
                 </div>
 
                 {/* Stats & View Switchers */}
-                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                    <StatsBadges
-                        total={totalCount}
-                        rejected={rejectedCount}
-                        remain={remainCount}
-                        viewMode={viewMode}
-                        onSelectViewMode={(mode) => {
+                <div className="mb-6">
+                    <StatusTabs<ViewMode>
+                        tabs={[
+                            {
+                                label: 'Remain',
+                                value: 'all',
+                                count: remainCount,
+                            },
+                            {
+                                label: 'Rejected',
+                                value: 'rejected',
+                                count: rejectedCount,
+                            },
+                        ]}
+                        value={viewMode}
+                        onChange={(mode) => {
                             setViewMode(mode);
                             setSelectedId(null);
                             setCurrentPage(1);
                         }}
+                        label="Show remaining or rejected proposals"
                     />
-
-                    <button
-                        onClick={() => {
-                            setViewMode(
-                                viewMode === 'all' ? 'rejected' : 'all',
-                            );
-                            setSelectedId(null);
-                            setCurrentPage(1);
-                        }}
-                        disabled={rejectedCount === 0 && viewMode === 'all'}
-                        className={`text-xs px-4 py-1.5 rounded-md font-medium transition-colors shadow-sm ${
-                            rejectedCount === 0 && viewMode === 'all'
-                                ? 'bg-slate-300 text-slate-100 cursor-not-allowed'
-                                : 'bg-[#437788] text-white hover:bg-[#35616f]'
-                        }`}
-                    >
-                        {viewMode === 'all'
-                            ? 'view rejected proposal'
-                            : 'back to all proposal'}
-                    </button>
                 </div>
 
                 {/* Loading / Error / Empty States */}
@@ -239,7 +230,6 @@ export default function JobProposalsPage() {
                                             proposal.proposalId === selectedId
                                         }
                                         hasSelectedProposal={selectedId != null}
-                                        viewMode={viewMode}
                                         onSelect={() =>
                                             setSelectedId(
                                                 selectedId ===
@@ -294,7 +284,6 @@ export default function JobProposalsPage() {
                             <div className="lg:col-span-8">
                                 <ReceivedProposalDetail
                                     proposal={selectedProposal}
-                                    viewMode={viewMode}
                                     onClose={() => setSelectedId(null)}
                                     onAccept={() =>
                                         handleAccept(

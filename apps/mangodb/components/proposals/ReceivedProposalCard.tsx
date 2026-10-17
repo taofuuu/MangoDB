@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { ReceivedProposal } from '@mangodb/shared';
-import type { ViewMode } from './StatsBadges';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import ProposalStatusBadge from './ProposalStatusBadge';
 import { Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
@@ -11,7 +11,6 @@ interface ReceivedProposalCardProps {
     proposal: ReceivedProposal;
     isSelected: boolean;
     hasSelectedProposal: boolean;
-    viewMode: ViewMode;
     onSelect: () => void;
     // Throws on failure, so the dialog can show why.
     onReject: () => Promise<void>;
@@ -21,7 +20,6 @@ export default function ReceivedProposalCard({
     proposal,
     isSelected,
     hasSelectedProposal,
-    viewMode,
     onSelect,
     onReject,
 }: ReceivedProposalCardProps) {
@@ -37,12 +35,10 @@ export default function ReceivedProposalCard({
                 onClick={onSelect}
                 className={`relative w-full bg-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
                     isSelected
-                        ? viewMode === 'rejected' ||
-                          proposal.proposalStatus === 'REJECTED'
+                        ? proposal.proposalStatus === 'REJECTED'
                             ? 'border-[#C5483B] ring-2 ring-[#C5483B]/20'
                             : 'border-[#437788] ring-2 ring-[#437788]/20'
-                        : viewMode === 'rejected' ||
-                            proposal.proposalStatus === 'REJECTED'
+                        : proposal.proposalStatus === 'REJECTED'
                           ? 'border-[#C5483B]/20 hover:border-[#C5483B]/50'
                           : 'border-[#437788]/20 hover:border-[#437788]/50'
                 }`}
@@ -101,15 +97,10 @@ export default function ReceivedProposalCard({
                     </div>
 
                     <div>
-                        {viewMode === 'rejected' ||
-                        proposal.proposalStatus === 'REJECTED' ? (
-                            <span className="text-[#C5483B] text-xs font-medium mr-2">
-                                Rejected
-                            </span>
-                        ) : proposal.proposalStatus === 'ACCEPTED' ? (
-                            <span className="text-emerald-500 text-xs font-medium mr-2">
-                                Accepted
-                            </span>
+                        {proposal.proposalStatus !== 'PENDING' ? (
+                            <ProposalStatusBadge
+                                status={proposal.proposalStatus}
+                            />
                         ) : hasSelectedProposal ? null : (
                             <button
                                 onClick={(e) => {

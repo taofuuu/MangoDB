@@ -25,9 +25,16 @@ import { listJobs, listMyJobs } from '@/lib/jobs';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
+import StatusTabs, { type StatusTab } from '../ui/StatusTabs';
 
 // '' is the All tab: no status filter.
 type JobStatus = '' | ListingStatus;
+
+const STATUS_TABS: StatusTab<JobStatus>[] = [
+    { label: 'All', value: '' },
+    { label: 'Open', value: 'OPEN' },
+    { label: 'Closed', value: 'CLOSED' },
+];
 
 // backHref puts a ← before the title, back to the profile the list was
 // opened from.
@@ -319,85 +326,18 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         "
                     >
                         {/* Status filters */}
-                        <div
-                            className="
-                            flex
-                            items-center
-                            gap-[0.63vw]
-                        "
-                        >
-                            {[
-                                {
-                                    label: 'ALL',
-                                    value: '',
-                                    activeClass: 'bg-accent text-surface-white',
-                                },
-                                {
-                                    label: 'OPEN',
-                                    value: 'OPEN',
-                                    activeClass: 'bg-brand text-surface-white',
-                                },
-                                {
-                                    label: 'CLOSED',
-                                    value: 'CLOSED',
-                                    activeClass: 'bg-danger text-surface-white',
-                                },
-                            ].map((filter) => {
-                                const isActive = status === filter.value;
-
-                                return (
-                                    <button
-                                        key={filter.label}
-                                        type="button"
-                                        onClick={() => {
-                                            setStatus(
-                                                filter.value as JobStatus,
-                                            );
-
-                                            setPage(1);
-
-                                            /*
-                                             * Close any
-                                             * currently
-                                             * opened detail
-                                             * when changing
-                                             * filters.
-                                             */
-                                            closeDetailPanel();
-                                        }}
-                                        className={`
-                                                flex
-                                                h-[4.17vh]
-                                                w-[6.77vw]
-                                                items-center
-                                                justify-center
-                                                rounded-full
-                                                border
-                                                type-md
-                                                font-medium
-                                                transition-colors
-                                                ${
-                                                    isActive
-                                                        ? `
-                                                            ${filter.activeClass}
-                                                            border-transparent
-                                                            shadow-[inset_0_2px_4px_rgba(0,0,0,0.18),0_3px_6px_rgba(0,0,0,0.18)]
-                                                        `
-                                                        : `
-                                                            border-line
-                                                            bg-surface-white
-                                                            text-ink
-                                                            shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_2px_5px_rgba(0,0,0,0.12)]
-                                                            hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_3px_7px_rgba(0,0,0,0.16)]
-                                                        `
-                                                }
-                                            `}
-                                    >
-                                        {filter.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <StatusTabs
+                            tabs={STATUS_TABS}
+                            value={status}
+                            onChange={(next) => {
+                                setStatus(next);
+                                setPage(1);
+                                // A detail open from the old filter may not
+                                // be in the new one.
+                                closeDetailPanel();
+                            }}
+                            label="Filter jobs by status"
+                        />
 
                         {/* Add Job */}
                         <Button
