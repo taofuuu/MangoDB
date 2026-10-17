@@ -2,9 +2,33 @@ import type { AccountType, CompanySummary } from '@mangodb/shared';
 import {
     type ServiceTechStackRow,
     serviceTechStackSelect,
+    serviceTextMatches,
     toTechStackNames,
 } from './service';
+import { containsWord } from './search';
 import type { Prisma } from '../generated/prisma/client';
+
+// US3-6. One word matches the company, or one of its services by title,
+// description, category or tech stack, ignoring case. Jobs are left out: they
+// say what the company wants to hire, not what it offers. So a Receiver
+// matches on its name or description only.
+export function companyKeywordWhere(word: string): Prisma.CompanyWhereInput {
+    const contains = containsWord(word);
+    return {
+        OR: [
+            { companyName: contains },
+            { companyDescription: contains },
+            {
+                listing: {
+                    some: {
+                        listingType: 'SERVICE',
+                        OR: serviceTextMatches(word),
+                    },
+                },
+            },
+        ],
+    };
+}
 
 // What one search result card needs. Kept apart from the query itself: when
 // sorting by price arrives, only the step that picks the page of ids changes.

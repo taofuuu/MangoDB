@@ -5,7 +5,7 @@ import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
-import { escapeLike } from '../lib/search';
+import { splitWords } from '../lib/search';
 import { isRecordNotFound } from '../lib/prisma-errors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
@@ -13,6 +13,7 @@ import {
     DEFAULT_LISTING_STATUS,
     assertServiceOwned,
     ensureTechStack,
+    serviceKeywordWhere,
     serviceSelect,
     serviceSummarySelect,
     toServiceFilterOptions,
@@ -171,34 +172,6 @@ export async function updateService(
     }
 }
 
-// US3-1. One word matches the service's title, description, category or tech
-// stack, or its company's name, ignoring case.
-function matchesKeyword(word: string): Prisma.ListingWhereInput {
-    const contains = {
-        contains: escapeLike(word),
-        mode: 'insensitive',
-    } as const;
-    return {
-        OR: [
-            { listingTitle: contains },
-            { listingDesc: contains },
-            {
-                listingCategory: {
-                    some: { category: { categoryName: contains } },
-                },
-            },
-            {
-                service: {
-                    serviceTechStack: {
-                        some: { techStack: { techStackName: contains } },
-                    },
-                },
-            },
-            { company: { companyName: contains } },
-        ],
-    };
-}
-
 // Everything in the query but the keyword and paging, typed from the schema
 // so a new filter is added in one place.
 type ServiceFilters = Omit<
@@ -306,9 +279,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         serviceListQuerySchema,
         req.query,
     );
-    // Each word is matched on its own, so "react payment" finds a service
-    // whose title says payment and whose company's stack has React.
-    const words = q?.split(/\s+/).filter(Boolean) ?? [];
+    const words = splitWords(q);
     // Search is discovery, so services of soft-deleted companies stay hidden.
     // A soft delete leaves their listings OPEN, so this filter is what does it.
     const where: Prisma.ListingWhereInput = {
@@ -317,7 +288,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         company: { deletedAt: null },
         // T3.2.6. Keyword words and filters share one AND list, so a service
         // must pass all of them. Two AND keys would let one replace the other.
-        AND: [...words.map(matchesKeyword), ...matchesFilters(filters)],
+        AND: [...words.map(serviceKeywordWhere), ...matchesFilters(filters)],
     };
     const [totalItems, listings] = await prisma.$transaction([
         prisma.listing.count({ where }),

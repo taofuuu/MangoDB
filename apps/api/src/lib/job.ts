@@ -2,6 +2,7 @@ import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import { containsWord } from './search';
 import type { Prisma } from '../generated/prisma/client';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
@@ -72,6 +73,12 @@ export function toJob(row: SelectedJob): Job {
         categories: row.listingCategory.map((lc) => lc.category.categoryName),
         createdAt: row.createdAt.toISOString(),
     };
+}
+
+// US3-4. One word matches the job's title or description, ignoring case.
+export function jobKeywordWhere(word: string): Prisma.ListingWhereInput {
+    const contains = containsWord(word);
+    return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
 }
 
 // Ownership verification helper for edit and close: 404 and 403 stay separate

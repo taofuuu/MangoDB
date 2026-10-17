@@ -11,6 +11,7 @@ import type {
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import { containsWord } from './search';
 import type { Prisma } from '../generated/prisma/client';
 
 // The status a new service is created with. The allowed listing_status values
@@ -153,6 +154,34 @@ export async function assertServiceOwned(
     return {
         minBudget: listing.minBudget,
         maxBudget: listing.maxBudget,
+    };
+}
+
+// US3-1. Where one word may appear on a service itself: its title,
+// description, a category or a tech name. The company search reuses it.
+export function serviceTextMatches(word: string): Prisma.ListingWhereInput[] {
+    const contains = containsWord(word);
+    return [
+        { listingTitle: contains },
+        { listingDesc: contains },
+        { listingCategory: { some: { category: { categoryName: contains } } } },
+        {
+            service: {
+                serviceTechStack: {
+                    some: { techStack: { techStackName: contains } },
+                },
+            },
+        },
+    ];
+}
+
+// US3-1. One word matches the service itself or its company's name.
+export function serviceKeywordWhere(word: string): Prisma.ListingWhereInput {
+    return {
+        OR: [
+            ...serviceTextMatches(word),
+            { company: { companyName: containsWord(word) } },
+        ],
     };
 }
 

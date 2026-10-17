@@ -12,7 +12,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { omitUndefined } from '../lib/objects';
-import { escapeLike } from '../lib/search';
+import { splitWords } from '../lib/search';
 import {
     createJobSchema,
     jobIdParamSchema,
@@ -21,7 +21,7 @@ import {
     updateJobSchema,
 } from '../schemas/job.schema';
 import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
-import { assertJobOwned, jobSelect, toJob } from '../lib/job';
+import { assertJobOwned, jobKeywordWhere, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + job atomically.
@@ -67,16 +67,6 @@ export async function createJob(req: Request, res: Response): Promise<void> {
     res.status(201).json(toJob(created));
 }
 
-// US3-4. One word matches the job's title or description, ignoring case.
-// escapeLike stops "%" or "_" from acting as a wildcard that matches every row.
-function matchesKeyword(word: string): Prisma.ListingWhereInput {
-    const contains = {
-        contains: escapeLike(word),
-        mode: 'insensitive',
-    } as const;
-    return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
-}
-
 // US2-7. List job postings filtered by status with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
@@ -86,9 +76,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
         req.query,
     );
     const callerCompanyId = req.auth!.companyId;
-    // Each word is matched on its own, like the service and company search,
-    // so "react payment" finds a job that says each one somewhere.
-    const words = q?.split(/\s+/).filter(Boolean) ?? [];
+    const words = splitWords(q);
 
     const where: Prisma.ListingWhereInput = {
         AND: [
@@ -106,7 +94,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
             ...(companyId ? [{ companyId }] : []),
             // Search is discovery, so soft-deleted companies' postings stay hidden
             { company: { deletedAt: null } },
-            ...words.map(matchesKeyword),
+            ...words.map(jobKeywordWhere),
 
             // 3. Visibility rules: callers can only see OPEN postings
             // or postings they created themselves
