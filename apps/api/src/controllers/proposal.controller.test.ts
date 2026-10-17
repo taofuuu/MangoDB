@@ -12,6 +12,9 @@
  *   below them is filtered. The list endpoint handles filtering.
  * - A soft-deleted company's job is 404 to a proposal, even while it is still
  *   OPEN, and nothing is written. An active company's open job takes one.
+ * - POST /proposals/:proposalId/accept (acceptProposal, US2-11): a project is
+ *   created, the job closes, and the other pending proposals are rejected.
+ *   A refusal (404, 403, 409) changes nothing.
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
@@ -44,11 +47,57 @@ type ListingRow = {
     company: { deletedAt: Date | null };
 };
 
+// The accept tests need whole proposal rows; the counts tests above only need
+// sender and status, so they keep the smaller `rows`.
+type ProposalRow = {
+    proposalId: number;
+    listingId: number;
+    proposalBudget: number;
+    proposalStatus: string;
+};
+
+type ProjectRow = {
+    projId: number;
+    proposalId: number;
+    totalBudget: number;
+    startDate: Date;
+    status: string;
+};
+
 let rows: Row[] = [];
 let listings: ListingRow[] = [];
+let proposals: ProposalRow[] = [];
+let projects: ProjectRow[] = [];
+
+// Copies of every table, so a test can check that a refusal wrote nothing.
+function snapshotTables(): string {
+    return JSON.stringify({ listings, proposals, projects });
+}
 
 const fakePrisma = {
+    // No rollback here: every refusal in acceptProposalTx throws before its
+    // first write, which is what the "changes nothing" tests check.
+    $transaction: (work: (tx: unknown) => Promise<unknown>) => work(fakePrisma),
+    project: {
+        create: async (args: { data: Omit<ProjectRow, 'projId'> }) => {
+            const row = { ...args.data, projId: projects.length + 1 };
+            projects.push(row);
+            return row;
+        },
+    },
     listing: {
+        updateMany: async (args: {
+            where: { listingId: number; listingStatus: string };
+            data: { listingStatus: 'OPEN' | 'CLOSED' };
+        }) => {
+            const hits = listings.filter(
+                (l) =>
+                    l.listingId === args.where.listingId &&
+                    l.listingStatus === args.where.listingStatus,
+            );
+            for (const l of hits) l.listingStatus = args.data.listingStatus;
+            return { count: hits.length };
+        },
         findUnique: async (args: {
             where: {
                 listingId: number;
@@ -63,6 +112,49 @@ const fakePrisma = {
             ) ?? null,
     },
     proposal: {
+        // The accept query: one proposal, with its listing joined in.
+        findUnique: async (args: { where: { proposalId: number } }) => {
+            const p = proposals.find(
+                (row) => row.proposalId === args.where.proposalId,
+            );
+            if (!p) return null;
+            const l = listings.find((row) => row.listingId === p.listingId);
+            return {
+                listingId: p.listingId,
+                proposalStatus: p.proposalStatus,
+                proposalBudget: p.proposalBudget,
+                listing: l
+                    ? {
+                          listingId: l.listingId,
+                          listingStatus: l.listingStatus,
+                          companyId: l.companyId,
+                      }
+                    : null,
+            };
+        },
+        // Matches on the fields acceptProposalTx filters by: one proposal by
+        // id, or every other one on the listing ({ not: id }), by status.
+        updateMany: async (args: {
+            where: {
+                proposalId?: number | { not: number };
+                listingId?: number;
+                proposalStatus: string;
+            };
+            data: { proposalStatus: string };
+        }) => {
+            const { proposalId, listingId, proposalStatus } = args.where;
+            const hits = proposals.filter(
+                (p) =>
+                    p.proposalStatus === proposalStatus &&
+                    (listingId === undefined || p.listingId === listingId) &&
+                    (proposalId === undefined ||
+                        (typeof proposalId === 'number'
+                            ? p.proposalId === proposalId
+                            : p.proposalId !== proposalId.not)),
+            );
+            for (const p of hits) p.proposalStatus = args.data.proposalStatus;
+            return { count: hits.length };
+        },
         create: async (args: {
             data: {
                 listingId: number;
@@ -121,6 +213,8 @@ before(async () => {
 beforeEach(() => {
     rows = [];
     listings = [];
+    proposals = [];
+    projects = [];
 });
 
 async function getCounts(
@@ -238,4 +332,122 @@ describe('POST /job-postings/:jobPostingId/proposals', () => {
         assert.equal(result.body.providerId, PROVIDER);
         assert.equal(rows.length, 1);
     });
+});
+
+describe('POST /proposals/:proposalId/accept', () => {
+    const OWNER = 1;
+    const PROVIDER = 2;
+
+    function job(listingStatus: 'OPEN' | 'CLOSED'): ListingRow {
+        return {
+            listingId: 10,
+            listingType: 'JOB',
+            companyId: OWNER,
+            listingStatus,
+            company: { deletedAt: null },
+        };
+    }
+
+    function proposal(proposalId: number, proposalStatus: string): ProposalRow {
+        return {
+            proposalId,
+            listingId: 10,
+            proposalBudget: 80000,
+            proposalStatus,
+        };
+    }
+
+    // Accepts as callerId. Returns the status and JSON it answered with, or
+    // the ApiError it threw.
+    async function accept(
+        proposalId: number,
+        callerId: number,
+    ): Promise<unknown> {
+        const req = {
+            auth: { companyId: callerId },
+            params: { proposalId: String(proposalId) },
+        } as unknown as Request;
+        let status = 200;
+        let body: unknown;
+        const res = {
+            status(code: number) {
+                status = code;
+                return this;
+            },
+            json(value: unknown) {
+                body = value;
+                return this;
+            },
+        } as unknown as Response;
+
+        try {
+            await controller.acceptProposal(req, res);
+        } catch (err) {
+            return err;
+        }
+        return { status, body };
+    }
+
+    it('creates the project, closes the job and rejects the others', async () => {
+        listings = [job('OPEN')];
+        proposals = [
+            proposal(1, 'PENDING'),
+            proposal(2, 'PENDING'),
+            proposal(3, 'REJECTED'),
+        ];
+
+        const result = (await accept(1, OWNER)) as {
+            status: number;
+            body: Record<string, unknown>;
+        };
+
+        assert.equal(result.status, 201);
+        assert.equal(result.body.proposalId, 1);
+        assert.equal(result.body.totalBudget, 80000);
+        assert.equal(result.body.status, 'ACTIVE');
+        assert.match(String(result.body.startDate), /^\d{4}-\d{2}-\d{2}$/);
+        assert.equal(listings[0]!.listingStatus, 'CLOSED');
+        assert.deepEqual(
+            proposals.map((p) => p.proposalStatus),
+            ['ACCEPTED', 'REJECTED', 'REJECTED'],
+        );
+        assert.equal(projects.length, 1);
+    });
+
+    // [what, outcome, proposal status, job status, caller, expected code]
+    const refusals: [
+        string,
+        string,
+        'PENDING' | 'ACCEPTED' | 'REJECTED',
+        'OPEN' | 'CLOSED',
+        number,
+        number,
+    ][] = [
+        ['an unknown proposal', 'is 404', 'PENDING', 'OPEN', OWNER, 404],
+        ["someone else's job", 'is 403', 'PENDING', 'OPEN', PROVIDER, 403],
+        [
+            'a proposal that is not pending',
+            'is 409',
+            'REJECTED',
+            'OPEN',
+            OWNER,
+            409,
+        ],
+        ['a closed job', 'is 409', 'PENDING', 'CLOSED', OWNER, 409],
+    ];
+
+    for (const [what, outcome, status, jobStatus, caller, code] of refusals) {
+        it(`${what} ${outcome} and changes nothing`, async () => {
+            listings = [job(jobStatus)];
+            proposals = [proposal(1, status), proposal(2, 'PENDING')];
+            const before = snapshotTables();
+            const id = code === 404 ? 99 : 1;
+
+            const result = await accept(id, caller);
+
+            assert.ok(result instanceof ApiError, 'expected an ApiError');
+            assert.equal(result.status, code);
+            assert.equal(snapshotTables(), before);
+        });
+    }
 });
