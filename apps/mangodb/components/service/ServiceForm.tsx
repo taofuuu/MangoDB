@@ -7,12 +7,14 @@ import FieldError from '@/components/ui/FieldError';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import {
     SERVICE_FIELDS,
-    validateServiceTitle,
-    validateServiceDescription,
     validateServiceCategory,
     validateServiceTechStack,
-    validateServiceBudgets,
 } from '@/lib/validation/service';
+import {
+    validateBudgets,
+    validateListingDesc,
+    validateListingTitle,
+} from '@/lib/validation/listing';
 import {
     createService,
     deleteService,
@@ -345,10 +347,10 @@ export default function ServiceForm(props: ServiceFormProps) {
     const validateForm = (): boolean => {
         const newErrors: ServiceErrors = {};
 
-        const titleErr = validateServiceTitle(title);
+        const titleErr = validateListingTitle(title);
         if (titleErr) newErrors.title = titleErr;
 
-        const descErr = validateServiceDescription(description);
+        const descErr = validateListingDesc(description);
         if (descErr) newErrors.description = descErr;
 
         const catErr = validateServiceCategory(selectedCategoryIds);
@@ -361,7 +363,9 @@ export default function ServiceForm(props: ServiceFormProps) {
             if (techErr) newErrors.techStack = techErr;
         }
 
-        const budgetErrs = validateServiceBudgets(minBudget, maxBudget);
+        const budgetErrs = validateBudgets(minBudget, maxBudget, {
+            maxRequired: false,
+        });
         if (budgetErrs.minBudget) newErrors.minBudget = budgetErrs.minBudget;
         if (budgetErrs.maxBudget) newErrors.maxBudget = budgetErrs.maxBudget;
 

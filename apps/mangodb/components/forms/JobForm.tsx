@@ -20,14 +20,16 @@ import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 
 import {
-    validateJobTitle,
-    validateJobDescription,
-    validateJobCategory,
-    validateJobBudgets,
     validateJobDeadline,
     validateJobDuration,
     validateJobLocation,
 } from '@/lib/validation/job';
+import {
+    validateBudgets,
+    validateCategoryIds,
+    validateListingDesc,
+    validateListingTitle,
+} from '@/lib/validation/listing';
 
 const JOB_FIELDS = {
     listingTitle: 'title',
@@ -121,16 +123,18 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
     const validateForm = (): boolean => {
         const newErrors: JobErrors = {};
 
-        const titleError = validateJobTitle(listingTitle);
+        const titleError = validateListingTitle(listingTitle);
         if (titleError) newErrors.title = titleError;
 
-        const descriptionError = validateJobDescription(listingDesc);
+        const descriptionError = validateListingDesc(listingDesc);
         if (descriptionError) newErrors.description = descriptionError;
 
-        const categoryError = validateJobCategory(categoryIds);
+        const categoryError = validateCategoryIds(categoryIds);
         if (categoryError) newErrors.categoryIds = categoryError;
 
-        const budgetErrors = validateJobBudgets(minBudget, maxBudget);
+        const budgetErrors = validateBudgets(minBudget, maxBudget, {
+            maxRequired: true,
+        });
 
         if (budgetErrors.minBudget) {
             newErrors.minBudget = budgetErrors.minBudget;
