@@ -40,17 +40,13 @@ certificateRoutes.post(
     createCertificate,
 );
 
+// Owner-only: owning the certificate is checked in the handler, so the role
+// is checked on create only.
 certificateRoutes.patch(
     '/:certificateId',
     requireAuth,
-    requireRole('provider'),
     uploadImage('certImage'),
     updateCertificate,
 );
 
-certificateRoutes.delete(
-    '/:certificateId',
-    requireAuth,
-    requireRole('provider'),
-    deleteCertificate,
-);
+certificateRoutes.delete('/:certificateId', requireAuth, deleteCertificate);

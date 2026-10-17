@@ -18,13 +18,17 @@ export const jobRoutes = Router();
 // Guards: authenticated and holding Receiver role, like /services/mine.
 jobRoutes.get('/mine', requireAuth, requireRole('receiver'), listMyJobs);
 
-// US2-7. List job postings with status filter and visibility rules.
-// Guards: authenticated as any Company account (provider, receiver, both) or Admin.
-jobRoutes.get('/', requireAuth, listJobs);
+// US2-7. List jobs with a status filter and the visibility rules.
+// Guards: company accounts only, like the service search; not admins.
+jobRoutes.get('/', requireAuth, requireRole('provider', 'receiver'), listJobs);
 
-// US2-7. Fetch a single job posting by ID with visibility rules.
-// Guards: authenticated as any Company account (provider, receiver, both) or Admin.
-jobRoutes.get('/:jobId', requireAuth, getJob);
+// US2-7. One job, with the visibility rules. Same guards as the list.
+jobRoutes.get(
+    '/:jobId',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    getJob,
+);
 
 // US2-6. Create and publish a job posting.
 // Guards: authenticated and holding Receiver role (BOTH accounts also qualify).
@@ -42,7 +46,7 @@ jobRoutes.get(
 );
 // US2-13. Edit a job posting: only the owner, only while it is Open.
 // Guards: authenticated only. No requireRole: owning the posting already means
-// a Receiver, and the ownership check lives in lib/job.ts.
+// a Receiver, and the ownership check lives in lib/listing.ts.
 jobRoutes.patch('/:jobId', requireAuth, updateJob);
 
 // US2-14. Close a job posting and reject its pending proposals. An action
