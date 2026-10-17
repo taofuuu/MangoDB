@@ -241,7 +241,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                     onClick={onClose}
                     disabled={isSaving}
                     aria-label={`Close ${title.toLowerCase()}`}
-                    className="text-ink-placeholder hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-ink-placeholder hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     X
                 </button>
@@ -383,7 +383,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                         onChange={handleImageChange}
                         accept="image/png,image/jpeg,image/webp"
                         label="Upload Image"
-                        className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                        className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     />
                     <FieldError message={errors.image} />
                 </div>

@@ -277,7 +277,7 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
             className="flex w-[67.1875vw] flex-col gap-[2vh]"
             noValidate
         >
-            <div className="type-md relative flex min-h-[80vh] w-[55.16vw] flex-col gap-[2vh] rounded-popup bg-white px-[2.6vw] pt-[3.2vh] pb-[6vh] shadow-card">
+            <div className="type-md relative flex min-h-[80vh] w-[55.16vw] flex-col gap-[2vh] rounded-popup bg-surface-white px-[2.6vw] pt-[3.2vh] pb-[6vh] shadow-card">
                 <Input
                     id="job-title"
                     label="Title*"

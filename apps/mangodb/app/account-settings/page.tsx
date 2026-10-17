@@ -115,7 +115,7 @@ export default function AccountPage() {
     return (
         <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">
-                <header className="border-b border-gray-200 pb-4">
+                <header className="border-b border-line pb-4">
                     <h1 className="type-lg font-bold text-ink">
                         Account Settings
                     </h1>
@@ -146,16 +146,16 @@ export default function AccountPage() {
                         )}
 
                         {/* Account Information Card with Segmented Rows */}
-                        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                            <div className="p-6 pb-4 border-b border-gray-100">
+                        <div className="rounded-xl border border-line bg-surface-white shadow-sm overflow-hidden">
+                            <div className="p-6 pb-4 border-b border-line">
                                 <h2 className="type-md font-semibold text-ink">
                                     Account Information
                                 </h2>
                             </div>
 
-                            <div className="divide-y divide-gray-100">
+                            <div className="divide-y divide-line">
                                 {/* 1. Username Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Username
@@ -170,7 +170,7 @@ export default function AccountPage() {
                                             openEditModal('username')
                                         }
                                         aria-label="Edit Username"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -183,7 +183,7 @@ export default function AccountPage() {
                                 </div>
 
                                 {/* 2. Email Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Email
@@ -196,7 +196,7 @@ export default function AccountPage() {
                                         type="button"
                                         onClick={() => openEditModal('email')}
                                         aria-label="Edit Email"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -209,7 +209,7 @@ export default function AccountPage() {
                                 </div>
 
                                 {/* 3. Change Password Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Password
@@ -224,7 +224,7 @@ export default function AccountPage() {
                                             openEditModal('password')
                                         }
                                         aria-label="Change Password"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -239,7 +239,7 @@ export default function AccountPage() {
                         </div>
 
                         {/* Session */}
-                        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-white p-6 shadow-sm">
                             <div>
                                 <h2 className="type-md font-semibold text-ink">
                                     Logout
@@ -254,7 +254,7 @@ export default function AccountPage() {
                         </div>
 
                         {/* Danger Zone */}
-                        <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 shadow-sm">
+                        <div className="rounded-xl border border-danger-tint bg-danger-wash/40 p-6 shadow-sm">
                             <h2 className="type-md font-semibold text-danger">
                                 Danger Zone
                             </h2>

@@ -31,7 +31,7 @@ export default function PortfolioCard({
     );
 
     return (
-        <div className="flex h-[37.13vh] flex-col rounded-[2px] border border-line bg-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
+        <div className="flex h-[37.13vh] flex-col rounded-[2px] border border-line bg-surface-white px-[1.25vw] pt-[3.7vh] pb-[2.5vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md max-lg:h-auto max-lg:w-full max-lg:px-4">
             <h2 className="type-lg leading-tight !font-[700] text-ink">
                 {/* An anchor, not a button: middle-click, copy link and screen
                     readers all expect a link for an external URL. */}

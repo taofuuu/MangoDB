@@ -18,7 +18,7 @@ type LogoutButtonProps = {
 };
 
 export default function LogoutButton({
-    className = 'p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer',
+    className = 'p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer',
     children,
 }: LogoutButtonProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);

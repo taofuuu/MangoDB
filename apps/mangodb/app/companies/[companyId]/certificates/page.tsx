@@ -90,7 +90,7 @@ export default function CompanyCertificatesPage() {
 
     return (
         <main className="min-h-screen bg-surface pt-10">
-            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-hidden rounded-xl border border-brand bg-white pr-1 pl-6">
+            <div className="mx-auto mt-8 h-[80.7vh] w-[76.5vw] overflow-hidden rounded-xl border border-brand bg-surface-white pr-1 pl-6">
                 <div className="h-full overflow-y-auto pr-1">
                     <div className="flex w-full items-center pt-5">
                         {companyId !== null && (

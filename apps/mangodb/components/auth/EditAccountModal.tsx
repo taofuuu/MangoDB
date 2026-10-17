@@ -245,7 +245,7 @@ export default function EditAccountModal({
             isBusy={isSaving}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            panelClassName="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-gray-100"
+            panelClassName="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-line"
         >
             {/* Header */}
             <div>
@@ -280,7 +280,7 @@ export default function EditAccountModal({
                                 clearError('value');
                             }}
                             placeholder="Enter username"
-                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                             autoFocus
                         />
                         <FieldError message={errors.value} />
@@ -305,7 +305,7 @@ export default function EditAccountModal({
                                 clearError('value');
                             }}
                             placeholder="Enter email address"
-                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                             autoFocus
                         />
                         <FieldError message={errors.value} />
@@ -333,7 +333,7 @@ export default function EditAccountModal({
                                         clearError('newPassword');
                                     }}
                                     placeholder="Enter new password"
-                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                     autoFocus
                                 />
                                 <button
@@ -382,7 +382,7 @@ export default function EditAccountModal({
                                         clearError('confirmPassword');
                                     }}
                                     placeholder="Re-enter new password"
-                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                                 />
                                 <button
                                     type="button"
@@ -413,7 +413,7 @@ export default function EditAccountModal({
                 )}
 
                 {/* Security Check: Current Password */}
-                <div className="pt-2 border-t border-gray-200">
+                <div className="pt-2 border-t border-line">
                     <label
                         htmlFor="modal-current-password-input"
                         className="block type-xs font-medium text-ink mb-1"
@@ -430,7 +430,7 @@ export default function EditAccountModal({
                                 clearError('currentPassword');
                             }}
                             placeholder="Enter current password"
-                            className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
+                            className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                         <button
                             type="button"

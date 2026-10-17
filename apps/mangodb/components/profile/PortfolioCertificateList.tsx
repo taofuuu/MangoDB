@@ -81,16 +81,16 @@ export default function PortfolioCertificateList({
         : `/${seeMorePage}`;
 
     return (
-        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+        <div className="bg-surface-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
             {/* Tab Switcher. Full width, matching the other three cards. */}
-            <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
+            <div className="bg-fill-subtle p-1 rounded-button flex w-full mb-4 type-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'portfolio'
-                            ? 'bg-white shadow text-brand'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
                     }`}
                 >
                     Portfolio
@@ -100,8 +100,8 @@ export default function PortfolioCertificateList({
                     onClick={() => setActiveTab('certificates')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'certificates'
-                            ? 'bg-white shadow text-brand'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
                     }`}
                 >
                     Certificate
@@ -109,7 +109,7 @@ export default function PortfolioCertificateList({
             </div>
 
             {/* Title Header */}
-            <h3 className="type-sm !font-bold text-gray-800 mb-3 capitalize">
+            <h3 className="type-sm !font-bold text-ink mb-3 capitalize">
                 {activeTab === 'portfolio' ? 'Portfolio' : 'Certificates'}
             </h3>
 
@@ -118,9 +118,9 @@ export default function PortfolioCertificateList({
             )}
 
             {/* List Display */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-line">
                 {visibleItems.length === 0 && !loadError && (
-                    <p className="py-2 type-xs text-gray-400">
+                    <p className="py-2 type-xs text-ink-placeholder">
                         {activeTab === 'portfolio'
                             ? 'No portfolio items yet.'
                             : 'No certificates yet.'}
@@ -131,11 +131,11 @@ export default function PortfolioCertificateList({
                         key={item.id}
                         className="py-2 flex justify-between items-center type-xs"
                     >
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-ink">
                             {item.title}
                         </span>
                         <div className="flex items-center gap-6">
-                            <span className="text-gray-400 type-xs">
+                            <span className="text-ink-placeholder type-xs">
                                 {item.date}
                             </span>
                             <button

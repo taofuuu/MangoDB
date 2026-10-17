@@ -62,7 +62,7 @@ export default function ReceiverCompanyCard({
     readOnly = false,
 }: ReceiverCompanyCardProps) {
     return (
-        <div className="flex h-full w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm">
+        <div className="flex h-full w-full flex-col overflow-hidden rounded-popup border border-line bg-surface-white p-8 shadow-sm">
             {/* Who the company is. Fixed, like the provider card's. */}
             <div className="mb-5 flex shrink-0 flex-col items-center text-center">
                 <CompanyAvatar
@@ -126,7 +126,7 @@ export default function ReceiverCompanyCard({
                 <div className="flex shrink-0 justify-end pt-4">
                     <Link
                         href="/profile/edit"
-                        className="rounded-button bg-brand px-6 py-1.5 type-xs !font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
+                        className="rounded-button bg-brand px-6 py-1.5 type-xs !font-medium text-surface-white shadow-sm transition-colors hover:bg-brand-dark"
                     >
                         Edit
                     </Link>

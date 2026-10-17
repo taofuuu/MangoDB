@@ -326,7 +326,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 type-sm font-medium text-red-600">
+                <div className="my-2 rounded-md border border-danger-tint bg-danger-wash p-3 type-sm font-medium text-danger">
                     {errorMessage}
                 </div>
             )}
@@ -363,13 +363,11 @@ export default function RegisterPage() {
 
             {currentStep === RegisterStep.Success && (
                 <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 text-3xl font-bold">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-tint text-brand text-3xl font-bold">
                         ✓
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-800">
-                        Success
-                    </h1>
-                    <p className="mt-2 text-gray-600">
+                    <h1 className="text-3xl font-bold text-ink">Success</h1>
+                    <p className="mt-2 text-ink-soft">
                         Your account has been created successfully.
                     </p>
                     <button

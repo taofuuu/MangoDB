@@ -33,7 +33,7 @@ export default function ReceivedProposalCard({
         <>
             <div
                 onClick={onSelect}
-                className={`relative w-full bg-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
+                className={`relative w-full bg-surface-white rounded-xl p-5 cursor-pointer transition-all border shadow-sm hover:shadow-md ${
                     isSelected
                         ? proposal.proposalStatus === 'REJECTED'
                             ? 'border-danger ring-2 ring-danger/20'
@@ -53,7 +53,7 @@ export default function ReceivedProposalCard({
 
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-sm">
+                                <span className="font-bold text-ink text-sm">
                                     {companyName}
                                 </span>
                             </div>
@@ -91,7 +91,7 @@ export default function ReceivedProposalCard({
                                     e.stopPropagation();
                                     setShowRejectModal(true);
                                 }}
-                                className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-red-50 transition-colors"
+                                className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
                             >
                                 ✕ Reject
                             </button>

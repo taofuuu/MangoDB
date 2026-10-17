@@ -188,11 +188,11 @@ export default function ServicesSection({
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
-            <main className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 bg-fill-subtle max-w-5xl mx-auto rounded-popup">
+            <main className="bg-surface-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
                 {/* Tab Switcher. Full width, so the tabs split the card
                     rather than huddling in one corner of it. */}
-                <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
+                <div className="bg-fill-subtle p-1 rounded-button flex w-full mb-4 type-xs">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -200,8 +200,8 @@ export default function ServicesSection({
                             onClick={() => setActiveTab(tab)}
                             className={`flex-1 py-1.5 rounded-button font-medium transition ${
                                 activeTab === tab
-                                    ? 'bg-white shadow text-brand'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-surface-white shadow text-brand'
+                                    : 'text-ink-soft hover:text-ink'
                             }`}
                         >
                             {TAB_LABELS[tab]}
@@ -237,10 +237,10 @@ export default function ServicesSection({
                     {displayItems?.map((item) => (
                         <div
                             key={item.id}
-                            className="p-3 border border-gray-100 rounded-button bg-gray-50/50 hover:bg-gray-50 transition space-y-1"
+                            className="p-3 border border-line rounded-button bg-fill-subtle/50 hover:bg-fill-subtle transition space-y-1"
                         >
                             <div className="flex justify-between items-center gap-3">
-                                <span className="type-sm !font-semibold text-gray-800 truncate">
+                                <span className="type-sm !font-semibold text-ink truncate">
                                     {item.title || 'Untitled Item'}
                                 </span>
                                 {item.closed && (
@@ -259,7 +259,7 @@ export default function ServicesSection({
                                     Details
                                 </button>
                             </div>
-                            <p className="type-xs text-gray-600 leading-relaxed line-clamp-2">
+                            <p className="type-xs text-ink-soft leading-relaxed line-clamp-2">
                                 {item.body || 'No description provided.'}
                             </p>
                         </div>

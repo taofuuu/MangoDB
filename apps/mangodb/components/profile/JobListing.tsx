@@ -57,8 +57,8 @@ export default function JobListing({
     }, [companyId, readOnly]);
 
     return (
-        <div className="bg-white rounded-popup p-8 w-full h-full border border-line shadow-sm flex flex-col overflow-hidden">
-            <h3 className="type-md !font-bold text-gray-900 mb-4 px-1">
+        <div className="bg-surface-white rounded-popup p-8 w-full h-full border border-line shadow-sm flex flex-col overflow-hidden">
+            <h3 className="type-md !font-bold text-ink mb-4 px-1">
                 Job Listing
             </h3>
 
@@ -68,7 +68,7 @@ export default function JobListing({
 
             {/* Same inset panel the provider page's timeline sits in, and the
                 list scrolls inside it rather than growing the card. */}
-            <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-gray-50/70 p-4">
+            <div className="flex flex-1 flex-col gap-3 overflow-y-auto rounded-button border border-line bg-fill-subtle/70 p-4">
                 {jobs === null && !loadError && (
                     <p className="type-xs text-ink-placeholder">Loading…</p>
                 )}
@@ -82,10 +82,10 @@ export default function JobListing({
                 {jobs?.map((job) => (
                     <div
                         key={job.jobId}
-                        className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
+                        className="bg-surface-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
                     >
                         <div className="flex flex-1 items-center gap-2">
-                            <span className="type-sm !font-bold text-gray-900">
+                            <span className="type-sm !font-bold text-ink">
                                 {job.listingTitle}
                             </span>
                             {job.listingStatus === 'CLOSED' && (
@@ -97,12 +97,12 @@ export default function JobListing({
                             )}
                         </div>
 
-                        <div className="flex gap-20 type-xs text-gray-400 mr-8 mt-2 sm:mt-0">
+                        <div className="flex gap-20 type-xs text-ink-placeholder mr-8 mt-2 sm:mt-0">
                             <div className="flex flex-col items-start">
-                                <span className="type-xs text-gray-400">
+                                <span className="type-xs text-ink-placeholder">
                                     Budget
                                 </span>
-                                <span className="font-semibold text-gray-800">
+                                <span className="font-semibold text-ink">
                                     {formatBudgetRange(
                                         job.minBudget,
                                         job.maxBudget,
@@ -111,10 +111,10 @@ export default function JobListing({
                             </div>
 
                             <div className="flex flex-col items-start">
-                                <span className="type-xs text-gray-400">
+                                <span className="type-xs text-ink-placeholder">
                                     Deadline
                                 </span>
-                                <span className="font-semibold text-gray-800">
+                                <span className="font-semibold text-ink">
                                     {job.deadline
                                         ? formatDateOnly(job.deadline)
                                         : '—'}

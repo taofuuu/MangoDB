@@ -58,16 +58,16 @@ export default function ProjectTimeline() {
         activeTab === 'history' ? historyEvents : ongoingEvents;
 
     return (
-        <div className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px]">
+        <div className="bg-surface-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px]">
             {/* Sub Tabs Switcher. Full width, matching the other three cards. */}
-            <div className="bg-gray-100 p-1 rounded-button flex w-full mb-4 type-xs">
+            <div className="bg-fill-subtle p-1 rounded-button flex w-full mb-4 type-xs">
                 <button
                     type="button"
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'history'
-                            ? 'bg-white shadow text-brand'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
                     }`}
                 >
                     History
@@ -77,8 +77,8 @@ export default function ProjectTimeline() {
                     onClick={() => setActiveTab('ongoing')}
                     className={`flex-1 py-1.5 rounded-button font-medium transition ${
                         activeTab === 'ongoing'
-                            ? 'bg-white shadow text-brand'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
                     }`}
                 >
                     Ongoing Project
@@ -86,60 +86,60 @@ export default function ProjectTimeline() {
             </div>
 
             {/* Single Visible Container */}
-            <div className="bg-gray-50/70 rounded-button p-4 border border-line h-[300px] overflow-hidden">
+            <div className="bg-fill-subtle/70 rounded-button p-4 border border-line h-[300px] overflow-hidden">
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="type-sm !font-bold text-gray-800 capitalize">
+                    <h3 className="type-sm !font-bold text-ink capitalize">
                         {activeTab === 'history'
                             ? 'Project History'
                             : 'Ongoing Projects'}
                     </h3>
-                    <button className="type-xs bg-white border border-gray-200 px-3 py-1 rounded-button text-gray-600 shadow-sm flex items-center gap-1">
+                    <button className="type-xs bg-surface-white border border-line px-3 py-1 rounded-button text-ink-soft shadow-sm flex items-center gap-1">
                         ▲ Sort by Date
                     </button>
                 </div>
 
                 {/* Timeline Feed */}
-                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-300">
+                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-3 before:bottom-3 before:w-[2px] before:bg-fill-muted">
                     {currentEvents.map((item) => (
                         <div
                             key={item.id}
-                            className="relative flex items-center bg-white p-3 rounded-button border border-gray-100 shadow-sm type-xs justify-between"
+                            className="relative flex items-center bg-surface-white p-3 rounded-button border border-line shadow-sm type-xs justify-between"
                         >
                             {/* Timeline Node Point */}
-                            <span className="absolute -left-[21px] top-[20px] w-2.5 h-2.5 rounded-full bg-white border-2 border-brand"></span>
+                            <span className="absolute -left-[21px] top-[20px] w-2.5 h-2.5 rounded-full bg-surface-white border-2 border-brand"></span>
 
                             <div className="flex gap-4 items-center">
                                 <div>
-                                    <div className="font-semibold text-gray-800">
+                                    <div className="font-semibold text-ink">
                                         {item.startDate}
                                     </div>
-                                    <div className="type-xs text-gray-400">
+                                    <div className="type-xs text-ink-placeholder">
                                         Start Date
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="font-semibold text-gray-800">
+                                    <div className="font-semibold text-ink">
                                         {item.endDate}
                                     </div>
-                                    <div className="type-xs text-gray-400">
+                                    <div className="type-xs text-ink-placeholder">
                                         {activeTab === 'history'
                                             ? 'End Date'
                                             : 'Est. End Date'}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="type-xs text-gray-400">
+                                    <div className="type-xs text-ink-placeholder">
                                         Customer
                                     </div>
-                                    <div className="font-medium text-gray-700">
+                                    <div className="font-medium text-ink">
                                         {item.customer}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="type-xs text-gray-400">
+                                    <div className="type-xs text-ink-placeholder">
                                         Project Name
                                     </div>
-                                    <div className="font-medium text-gray-700">
+                                    <div className="font-medium text-ink">
                                         {item.project}
                                     </div>
                                 </div>
@@ -148,10 +148,10 @@ export default function ProjectTimeline() {
                             <div className="flex items-center gap-4">
                                 {activeTab === 'history' ? (
                                     <div className="text-right">
-                                        <div className="type-xs text-gray-400">
+                                        <div className="type-xs text-ink-placeholder">
                                             Rating
                                         </div>
-                                        <div className="font-bold text-gray-800">
+                                        <div className="font-bold text-ink">
                                             {item.rating}
                                         </div>
                                     </div>

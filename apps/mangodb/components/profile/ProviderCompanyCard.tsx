@@ -74,7 +74,7 @@ export default function ProviderCompanyCard({
     readOnly = false,
 }: ProviderCompanyCardProps) {
     return (
-        <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm md:flex-row md:gap-8">
+        <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-surface-white p-8 shadow-sm md:flex-row md:gap-8">
             {/* Who the company is. Fixed rather than scrolled: it is short
                 enough to always fit, and scrolling it along with the details
                 is what pushed the phone number off the card. */}
@@ -154,7 +154,7 @@ export default function ProviderCompanyCard({
                     <div className="flex shrink-0 justify-end pt-4">
                         <Link
                             href="/profile/edit"
-                            className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-dark"
+                            className="rounded-button bg-brand px-6 py-1.5 type-xs font-medium text-surface-white shadow-sm transition-colors hover:bg-brand-dark"
                         >
                             Edit
                         </Link>

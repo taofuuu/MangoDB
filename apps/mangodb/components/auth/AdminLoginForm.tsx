@@ -87,7 +87,7 @@ export default function AdminLoginForm() {
                     placeholder="Email"
                     required
                     aria-invalid={emailError ? true : undefined}
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-surface-white px-[1.04vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <FieldError message={emailError} />
             </div>
@@ -109,7 +109,7 @@ export default function AdminLoginForm() {
                     placeholder="Password"
                     required
                     aria-invalid={passwordError ? true : undefined}
-                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-white px-[1.04vw] pr-[3.13vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
+                    className="h-[4.89vh] min-h-[44px] w-full rounded-input border border-line bg-surface-white px-[1.04vw] pr-[3.13vw] type-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand"
                 />
                 <button
                     type="button"

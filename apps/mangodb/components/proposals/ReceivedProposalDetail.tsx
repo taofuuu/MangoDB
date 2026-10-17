@@ -31,7 +31,7 @@ export default function ReceivedProposalDetail({
     return (
         <>
             <div
-                className={`bg-white rounded-2xl p-6 border shadow-sm relative text-brand max-h-[80vh] overflow-y-auto ${
+                className={`bg-surface-white rounded-2xl p-6 border shadow-sm relative text-brand max-h-[80vh] overflow-y-auto ${
                     proposal.proposalStatus === 'REJECTED'
                         ? 'border-danger'
                         : 'border-brand ring-2 ring-brand/10'
@@ -47,7 +47,7 @@ export default function ReceivedProposalDetail({
 
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800">
+                                <span className="font-bold text-ink">
                                     {proposal.sender?.companyName ||
                                         `Provider #${proposal.sender?.companyId}`}
                                 </span>
@@ -103,7 +103,7 @@ export default function ReceivedProposalDetail({
                                 </button>
                                 <button
                                     onClick={() => setShowRejectModal(true)}
-                                    className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-red-50 transition-colors"
+                                    className="text-xs px-3 py-1 rounded-md text-danger border border-danger hover:bg-danger-wash transition-colors"
                                 >
                                     ✕ Reject
                                 </button>
@@ -112,7 +112,7 @@ export default function ReceivedProposalDetail({
 
                         <button
                             onClick={onClose}
-                            className="ml-2 p-1.5 rounded-full text-brand hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                            className="ml-2 p-1.5 rounded-full text-brand hover:text-ink-soft hover:bg-fill-subtle transition-colors"
                         >
                             ✕
                         </button>
@@ -120,10 +120,10 @@ export default function ReceivedProposalDetail({
                 </div>
 
                 <div className="mt-5">
-                    <h4 className="font-bold text-xs text-slate-800 mb-3">
+                    <h4 className="font-bold text-xs text-ink mb-3">
                         Proposal Terms
                     </h4>
-                    <div className="space-y-2 text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+                    <div className="space-y-2 text-xs text-ink-soft leading-relaxed whitespace-pre-line">
                         {proposal.proposalTerms}
                     </div>
                 </div>

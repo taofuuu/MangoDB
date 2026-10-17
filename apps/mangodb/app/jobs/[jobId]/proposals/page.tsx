@@ -153,15 +153,15 @@ export default function JobProposalsPage() {
             <div className="w-full max-w-6xl">
                 {/* Main Header Title */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900">
+                    <h1 className="text-2xl font-bold text-ink">
                         {viewMode === 'rejected'
                             ? 'Rejected Proposals'
                             : 'Submitted Proposals'}
                     </h1>
-                    <h2 className="text-base font-semibold text-slate-700 mt-0.5">
+                    <h2 className="text-base font-semibold text-ink mt-0.5">
                         {listingTitle}
                     </h2>
-                    <div className="h-px bg-slate-200 mt-3 w-full" />
+                    <div className="h-px bg-fill-muted mt-3 w-full" />
                 </div>
 
                 {/* Stats & View Switchers */}
@@ -191,11 +191,11 @@ export default function JobProposalsPage() {
 
                 {/* Loading / Error / Empty States */}
                 {activeIsLoading ? (
-                    <div className="py-20 text-center text-slate-500 font-medium text-sm">
+                    <div className="py-20 text-center text-ink-soft font-medium text-sm">
                         Loading proposals...
                     </div>
                 ) : activeError ? (
-                    <div className="py-20 text-center text-red-500 font-medium text-sm">
+                    <div className="py-20 text-center text-danger font-medium text-sm">
                         {activeError}
                     </div>
                 ) : activeList.length === 0 ? (
@@ -247,8 +247,8 @@ export default function JobProposalsPage() {
 
                             {/* Pagination controls */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-200">
-                                    <span className="text-xs text-slate-500">
+                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-line">
+                                    <span className="text-xs text-ink-soft">
                                         Page {safePage} of {totalPages}
                                     </span>
                                     <div className="flex items-center gap-2">

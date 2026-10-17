@@ -108,7 +108,7 @@ export default function LoginForm() {
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
-                className={`type-sm text-red-600 min-h-5 -mt-2 ${
+                className={`type-sm text-danger min-h-5 -mt-2 ${
                     error ? 'visible' : 'invisible'
                 }`}
             >
@@ -124,7 +124,7 @@ export default function LoginForm() {
                 log in
             </Button>
 
-            <p className="text-center type-sm text-gray-700">
+            <p className="text-center type-sm text-ink">
                 Don&apos;t have an account?{' '}
                 <Link
                     href="/register"

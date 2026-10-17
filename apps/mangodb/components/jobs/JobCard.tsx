@@ -86,7 +86,7 @@ export default function JobCard({
                     flex-col
                     gap-[2.22vh]
                     rounded-[30px]
-                    bg-white
+                    bg-surface-white
                     pb-[2.314vh]
                     pt-[2.314vh]
                     pl-[2.29vw]

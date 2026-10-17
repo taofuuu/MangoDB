@@ -123,7 +123,7 @@ export default function Navbar() {
                     {state.status === 'signed-out' && (
                         <Link
                             href="/login"
-                            className="rounded-button bg-brand px-4 py-2 type-sm !font-[600] text-white transition-colors hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            className="rounded-button bg-brand px-4 py-2 type-sm !font-[600] text-surface-white transition-colors hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                         >
                             Log in
                         </Link>

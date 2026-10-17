@@ -159,7 +159,7 @@ export default function CertificateForm({
                     onClick={onClose}
                     disabled={isSubmitting}
                     aria-label="Close"
-                    className="text-ink-placeholder hover:text-gray-800 disabled:opacity-50"
+                    className="text-ink-placeholder hover:text-ink disabled:opacity-50"
                 >
                     ✕
                 </button>

@@ -108,7 +108,7 @@ export default function Home() {
 
                 <Link
                     href="/register"
-                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-dark"
+                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-surface-white transition hover:bg-brand-dark"
                 >
                     Sign Up
                 </Link>
@@ -123,12 +123,12 @@ export default function Home() {
                             <li key={route.href}>
                                 <Link
                                     href={route.href}
-                                    className="block rounded-lg border border-brand/30 bg-white p-3 text-left transition hover:bg-brand/10"
+                                    className="block rounded-lg border border-brand/30 bg-surface-white p-3 text-left transition hover:bg-brand/10"
                                 >
                                     <span className="block type-sm font-bold text-ink">
                                         {route.title}
                                     </span>
-                                    <span className="mt-0.5 block type-xs text-gray-600">
+                                    <span className="mt-0.5 block type-xs text-ink-soft">
                                         {route.detail}
                                     </span>
                                 </Link>

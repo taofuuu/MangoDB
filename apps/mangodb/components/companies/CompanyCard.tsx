@@ -15,7 +15,7 @@ export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
             type="button"
             onClick={() => onSelect(company.companyId)}
             aria-label={`View details for ${company.companyName}`}
-            className="flex h-[28.70vh] min-h-[28.70vh] w-full flex-col justify-between rounded-input border border-line bg-white p-[0.83vw] text-left shadow-sm transition hover:-translate-y-[0.19vh] hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+            className="flex h-[28.70vh] min-h-[28.70vh] w-full flex-col justify-between rounded-input border border-line bg-surface-white p-[0.83vw] text-left shadow-sm transition hover:-translate-y-[0.19vh] hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
         >
             <div className="min-w-0">
                 <div className="mb-[1.11vh] min-h-[2.22vh]">

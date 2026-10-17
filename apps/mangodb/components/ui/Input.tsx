@@ -46,7 +46,7 @@ export default function Input({
                 onChange={(e) => onChange(e.target.value)}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${inputId}-error` : undefined}
-                className={`h-[4.79vh] w-full rounded-input border bg-white px-[0.83vw] type-sm text-ink placeholder:text-line focus:ring-1 focus:outline-none ${
+                className={`h-[4.79vh] w-full rounded-input border bg-surface-white px-[0.83vw] type-sm text-ink placeholder:text-line focus:ring-1 focus:outline-none ${
                     error
                         ? 'border-danger focus:border-danger focus:ring-danger'
                         : 'border-brand focus:border-brand focus:ring-brand'

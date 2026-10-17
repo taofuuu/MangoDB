@@ -30,7 +30,7 @@ export default function PortfolioRow({
     );
 
     return (
-        <div className="flex w-full items-center gap-[1.25vw] rounded-[2px] border border-line bg-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
+        <div className="flex w-full items-center gap-[1.25vw] rounded-[2px] border border-line bg-surface-white p-[1.2vh] text-left shadow-[0_2px_6px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-md">
             {hasPortfolioImage(item.portfolioImage) ? (
                 <button
                     type="button"

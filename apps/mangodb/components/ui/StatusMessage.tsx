@@ -52,7 +52,7 @@ export default function StatusMessage({
         >
             <div className="flex items-center gap-3">
                 {isSuccess ? (
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-surface-white">
                         <svg
                             className="size-3.5"
                             fill="none"
@@ -70,7 +70,7 @@ export default function StatusMessage({
                     </span>
                 ) : (
                     <span
-                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-danger text-white font-bold type-sm font-sans"
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-danger text-surface-white font-bold type-sm font-sans"
                         aria-hidden="true"
                     >
                         !

@@ -18,8 +18,8 @@ const ROLES: Record<AccountType, readonly string[]> = {
 // terracotta on the admin list; companies/CompanyCard is what settled it, and
 // this file is now the one place that says so.
 const ROLE_FILL: Record<string, string> = {
-    Provider: 'bg-role-provider text-white',
-    Receiver: 'bg-brand-light text-white',
+    Provider: 'bg-role-provider text-surface-white',
+    Receiver: 'bg-brand-light text-surface-white',
 };
 
 type RoleTagsProps = {
