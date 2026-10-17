@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "FORBIDDEN",
-            "message": "Insufficient permissions to access this resource"
+            "message": "This job belongs to another company"
         }
     }
 }

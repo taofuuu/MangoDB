@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "CONFLICT",
-            "message": "Only an open job posting can be edited"
+            "message": "Only an open job can be edited"
         }
     }
 }

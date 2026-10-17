@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "CONFLICT",
-            "message": "You have already submitted a proposal for this job posting"
+            "message": "You have already sent a proposal to this job"
         }
     }
 }

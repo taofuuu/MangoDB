@@ -38,7 +38,7 @@
         ],
         "pagination": {
             "page": 1,
-            "pageSize": 6,
+            "pageSize": 12,
             "totalItems": 2,
             "totalPages": 1
         }

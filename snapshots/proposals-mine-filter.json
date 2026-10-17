@@ -1,5 +1,5 @@
 {
-    "request": "GET /proposals/mine?status=PENDING&page=1&limit=6",
+    "request": "GET /proposals/mine?status=PENDING&page=1&pageSize=6",
     "status": 200,
     "body": {
         "items": [

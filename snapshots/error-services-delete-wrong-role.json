@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "FORBIDDEN",
-            "message": "Insufficient permissions"
+            "message": "This service belongs to another company"
         }
     }
 }

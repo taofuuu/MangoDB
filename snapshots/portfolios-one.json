@@ -1,13 +1,13 @@
 {
-    "request": "GET /portfolios/85",
+    "request": "GET /portfolios/24",
     "status": 200,
     "body": {
-        "developmentDate": "2026-10-07",
-        "portfolioDescription": null,
-        "portfolioId": 85,
-        "portfolioImage": "<storage-url>",
-        "portfolioLink": "https://www.line.me/en/",
-        "portfolioName": "line",
-        "serviceId": 279
+        "developmentDate": "2026-01-15",
+        "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+        "portfolioId": 24,
+        "portfolioImage": "https://snapshot.local/portfolio.png",
+        "portfolioLink": "https://snapshot.local/portfolio",
+        "portfolioName": "Snapshot seed portfolio",
+        "serviceId": 25
     }
 }
