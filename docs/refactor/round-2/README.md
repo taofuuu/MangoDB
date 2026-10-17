@@ -18,8 +18,8 @@ DB column → backend DTO → shared type → frontend lib → component prop �
 | #                          | Phase                           | Owns                                                | Status  |
 | -------------------------- | ------------------------------- | --------------------------------------------------- | ------- |
 | [0](phase-0-safety-net.md) | Safety net                      | `scripts/`, `snapshots/`, `seed.ts`, tests, tooling | done    |
-| 1                          | Vocabulary                      | `docs/conventions.md`, ADRs 0020–0021               | next    |
-| 2                          | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | pending |
+| [1](phase-1-vocabulary.md) | Vocabulary                      | `docs/conventions.md`, ADRs 0020–0021               | done    |
+| 2                          | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | next    |
 | 3                          | Backend: one of each helper     | `apps/api/src/lib`                                  | pending |
 | 4                          | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | pending |
 | 5                          | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | pending |
