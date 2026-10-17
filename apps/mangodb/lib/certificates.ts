@@ -63,17 +63,15 @@ export function deleteCertificate(certificateId: number): Promise<void> {
     );
 }
 
-type CertificateDates = {
-    issueMonth?: number | string | null | undefined;
-    issueYear?: number | string | null | undefined;
-    expireMonth?: number | string | null | undefined;
-    expireYear?: number | string | null | undefined;
-};
-
 // The date line under a certificate: "Issued May 2024 · Expires May 2027".
 // Every part is optional, so it keeps whatever was filled in rather than
 // rendering a half-empty "Issued  ".
-export function formatCertificatePeriod(dates: CertificateDates): string {
+export function formatCertificatePeriod(
+    dates: Pick<
+        Certificate,
+        'issueMonth' | 'issueYear' | 'expireMonth' | 'expireYear'
+    >,
+): string {
     const issued = formatMonthYear(dates.issueMonth, dates.issueYear);
     const expires = formatMonthYear(dates.expireMonth, dates.expireYear);
 

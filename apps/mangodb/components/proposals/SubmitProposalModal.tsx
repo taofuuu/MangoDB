@@ -146,7 +146,7 @@ export default function SubmitProposalModal({
     };
 
     // One close path, so Escape and the backdrop clear the form in the same
-    // way as the X button, matching AddCertificateForm.
+    // way as the X button.
     const handleClose = useCallback(() => {
         resetForm();
         onClose();

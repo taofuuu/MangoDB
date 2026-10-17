@@ -2,11 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import AddCertificateForm from '@/components/certificates/AddCertificateForm';
-import EditCertificateForm, {
-    type CertificateData,
-} from '@/components/certificates/EditCertificateForm';
-import DeleteCertificateForm from '@/components/certificates/DeleteCertificateForm';
+import type { Certificate } from '@mangodb/shared';
+import CertificateForm from '@/components/certificates/CertificateForm';
+import DeleteCertificateModal from '@/components/certificates/DeleteCertificateModal';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import EmptyState from '@/components/ui/EmptyState';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
@@ -28,23 +26,19 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 export default function CertificatePage() {
     // Null means still loading.
-    const [certificates, setCertificates] = useState<CertificateData[] | null>(
+    const [certificates, setCertificates] = useState<Certificate[] | null>(
         null,
     );
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isRestricted, setIsRestricted] = useState(false);
 
+    // The form is open for a new certificate, or for the one being edited.
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-    // Certificate currently being edited.
     const [certificateToEdit, setCertificateToEdit] =
-        useState<CertificateData | null>(null);
-
-    // Certificate currently being deleted.
+        useState<Certificate | null>(null);
+    // The one the delete dialog asks about. Null keeps it closed.
     const [certificateToDelete, setCertificateToDelete] =
-        useState<CertificateData | null>(null);
+        useState<Certificate | null>(null);
 
     // The certificate image open full size. Null means the dialog is closed.
     const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
@@ -54,38 +48,7 @@ export default function CertificatePage() {
     // GET certificates
     useEffect(() => {
         listMyCertificates()
-            .then((data) => {
-                const mappedCertificates: CertificateData[] = data.map(
-                    (cert) => ({
-                        id: cert.certificateId,
-                        name: cert.certTitle,
-                        organize: cert.organization,
-
-                        ...(cert.issueMonth != null && {
-                            month: cert.issueMonth.toString(),
-                        }),
-                        ...(cert.issueYear != null && {
-                            year: cert.issueYear.toString(),
-                        }),
-                        ...(cert.expireMonth != null && {
-                            exMonth: cert.expireMonth.toString(),
-                        }),
-                        ...(cert.expireYear != null && {
-                            exYear: cert.expireYear.toString(),
-                        }),
-                        ...(cert.credentialId != null && {
-                            credID: cert.credentialId,
-                        }),
-                        ...(cert.credentialUrl != null && {
-                            credURL: cert.credentialUrl,
-                        }),
-
-                        certImage: cert.certImage ?? null,
-                    }),
-                );
-
-                setCertificates(mappedCertificates);
-            })
+            .then(setCertificates)
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
@@ -101,56 +64,28 @@ export default function CertificatePage() {
             });
     }, []);
 
-    // -------------------------
-    // ADD
-    // -------------------------
-    const handleAddCertificate = (newCertificate: CertificateData) => {
-        setCertificates((current) => [...(current ?? []), newCertificate]);
+    const handleAdded = (added: Certificate) => {
+        setCertificates((current) => [...(current ?? []), added]);
     };
 
-    // -------------------------
-    // EDIT
-    // -------------------------
-    const handleEditCertificate = (updatedCertificate: CertificateData) => {
+    const handleEdited = (updated: Certificate) => {
         setCertificates((current) =>
             (current ?? []).map((certificate) =>
-                certificate.id === updatedCertificate.id
-                    ? updatedCertificate
+                certificate.certificateId === updated.certificateId
+                    ? updated
                     : certificate,
             ),
         );
-
-        setCertificateToEdit(null);
-        setIsEditOpen(false);
     };
 
-    // -------------------------
-    // DELETE
-    // -------------------------
-    // DeleteCertificateForm has already called the API by this point; this
-    // only drops the row from the list.
-    const handleDeleteCertificate = () => {
-        if (!certificateToDelete) return;
-
+    // The dialog has already called the API; this drops the row.
+    const handleDeleted = (certificateId: number) => {
         setCertificates((current) =>
             (current ?? []).filter(
-                (certificate) => certificate.id !== certificateToDelete.id,
+                (certificate) => certificate.certificateId !== certificateId,
             ),
         );
-
-        setCertificateToDelete(null);
-        setIsDeleteOpen(false);
     };
-
-    // Every date part is optional, so this collapses to whatever was filled in
-    // rather than rendering a half-empty "Issue  ".
-    const formatPeriod = (certificate: CertificateData) =>
-        formatCertificatePeriod({
-            issueMonth: certificate.month,
-            issueYear: certificate.year,
-            expireMonth: certificate.exMonth,
-            expireYear: certificate.exYear,
-        });
 
     if (certificates === null && !loadError && !isRestricted) {
         return <div className="min-h-screen bg-surface" />;
@@ -206,7 +141,7 @@ export default function CertificatePage() {
                     {certificates !== null && (
                         <div>
                             {certificates.map((certificate) => (
-                                <div key={certificate.id}>
+                                <div key={certificate.certificateId}>
                                     <div className="flex w-full items-center justify-between pt-2 pl-6">
                                         <h2 className="type-lg">
                                             {/* An anchor, not a button:
@@ -219,17 +154,19 @@ export default function CertificatePage() {
                                                 which is what the Show
                                                 Credential button below does
                                                 too. */}
-                                            {certificate.credURL ? (
+                                            {certificate.credentialUrl ? (
                                                 <a
-                                                    href={certificate.credURL}
+                                                    href={
+                                                        certificate.credentialUrl
+                                                    }
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
                                                 >
-                                                    {certificate.name}
+                                                    {certificate.certTitle}
                                                 </a>
                                             ) : (
-                                                certificate.name
+                                                certificate.certTitle
                                             )}
                                         </h2>
                                         <button
@@ -238,7 +175,6 @@ export default function CertificatePage() {
                                                 setCertificateToEdit(
                                                     certificate,
                                                 );
-                                                setIsEditOpen(true);
                                             }}
                                             className="pr-6"
                                         >
@@ -251,18 +187,21 @@ export default function CertificatePage() {
                                         </button>
                                     </div>
                                     <p className="type-md pl-6">
-                                        {certificate.organize}
+                                        {certificate.organization}
                                     </p>
 
-                                    {formatPeriod(certificate) && (
+                                    {formatCertificatePeriod(certificate) && (
                                         <p className="type-md pl-6">
-                                            {formatPeriod(certificate)}
+                                            {formatCertificatePeriod(
+                                                certificate,
+                                            )}
                                         </p>
                                     )}
 
-                                    {certificate.credID && (
+                                    {certificate.credentialId && (
                                         <p className="type-md pl-6">
-                                            Credential ID: {certificate.credID}
+                                            Credential ID:{' '}
+                                            {certificate.credentialId}
                                         </p>
                                     )}
 
@@ -271,11 +210,13 @@ export default function CertificatePage() {
                                     {/* Show Credential */}
                                     <div className="pl-6 pb-1">
                                         <a
-                                            href={certificate.credURL ?? '#'}
+                                            href={
+                                                certificate.credentialUrl ?? '#'
+                                            }
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className={`flex h-[4vh] w-[13.8vw] items-center justify-center gap-[0.4vw] rounded-status border transition-colors ${
-                                                certificate.credURL
+                                                certificate.credentialUrl
                                                     ? 'hover:border-brand-light'
                                                     : 'pointer-events-none opacity-50'
                                             }`}
@@ -304,12 +245,12 @@ export default function CertificatePage() {
                                                     onClick={() =>
                                                         setExpandedImage({
                                                             title:
-                                                                certificate.name ??
+                                                                certificate.certTitle ??
                                                                 'Certificate',
                                                             src: certificate.certImage!,
                                                         })
                                                     }
-                                                    aria-label={`Expand the image for ${certificate.name ?? 'this certificate'}`}
+                                                    aria-label={`Expand the image for ${certificate.certTitle}`}
                                                     className="flex h-[10vh] w-[9.375vw] cursor-zoom-in items-center justify-center rounded-button border border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-dark"
                                                 >
                                                     <Image
@@ -327,7 +268,7 @@ export default function CertificatePage() {
                                             )}
 
                                             <p className="type-md">
-                                                {certificate.name}
+                                                {certificate.certTitle}
                                             </p>
                                         </div>
                                         {/* Delete */}
@@ -337,7 +278,6 @@ export default function CertificatePage() {
                                                 setCertificateToDelete(
                                                     certificate,
                                                 );
-                                                setIsDeleteOpen(true);
                                             }}
                                         >
                                             <Image
@@ -376,33 +316,25 @@ export default function CertificatePage() {
                 />
             )}
 
-            {/* ADD MODAL */}
-            <AddCertificateForm
-                isOpen={isAddOpen}
-                onClose={() => setIsAddOpen(false)}
-                onSave={handleAddCertificate}
-            />
+            {isAddOpen && (
+                <CertificateForm
+                    onClose={() => setIsAddOpen(false)}
+                    onSave={handleAdded}
+                />
+            )}
 
-            {/* EDIT MODAL */}
-            <EditCertificateForm
-                isOpen={isEditOpen}
-                initialData={certificateToEdit ?? undefined}
-                onClose={() => {
-                    setIsEditOpen(false);
-                    setCertificateToEdit(null);
-                }}
-                onSave={handleEditCertificate}
-            />
+            {certificateToEdit && (
+                <CertificateForm
+                    certificate={certificateToEdit}
+                    onClose={() => setCertificateToEdit(null)}
+                    onSave={handleEdited}
+                />
+            )}
 
-            {/* DELETE MODAL */}
-            <DeleteCertificateForm
-                isOpen={isDeleteOpen}
-                certificate={certificateToDelete ?? undefined}
-                onClose={() => {
-                    setIsDeleteOpen(false);
-                    setCertificateToDelete(null);
-                }}
-                onConfirm={handleDeleteCertificate}
+            <DeleteCertificateModal
+                certificate={certificateToDelete}
+                onClose={() => setCertificateToDelete(null)}
+                onDeleted={handleDeleted}
             />
         </main>
     );
