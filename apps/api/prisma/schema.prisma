@@ -17,8 +17,8 @@ datasource db {
 // `npm run db:pull` preserves these renames, so re-introspecting is safe.
 
 model Category {
-  catId           Int               @id @default(autoincrement()) @map("cat_id")
-  catName         String            @unique @map("cat_name") @db.VarChar(100)
+  categoryId      Int               @id @default(autoincrement()) @map("cat_id")
+  categoryName    String            @unique @map("cat_name") @db.VarChar(100)
   listingCategory ListingCategory[]
 
   @@map("category")
@@ -89,7 +89,7 @@ model CompanyType {
   @@map("company_type")
 }
 
-model JobRequirement {
+model Job {
   listingId    Int       @id @map("listing_id")
   locationPref String?   @map("location_pref") @db.VarChar(100)
   duration     String?   @db.VarChar(100)
@@ -109,7 +109,7 @@ model Listing {
   listingStatus   String            @map("listing_status") @db.VarChar(50)
   listingType     String            @map("listing_type") @db.VarChar(20)
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  jobRequirement  JobRequirement?
+  job             Job?
   company         Company?          @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   listingCategory ListingCategory[]
   proposal        Proposal[]
@@ -119,23 +119,23 @@ model Listing {
 }
 
 model ListingCategory {
-  listingId Int      @map("listing_id")
-  catId     Int      @map("cat_id")
-  category  Category @relation(fields: [catId], references: [catId], onDelete: Cascade, onUpdate: NoAction)
-  listing   Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
+  listingId  Int      @map("listing_id")
+  categoryId Int      @map("cat_id")
+  category   Category @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade, onUpdate: NoAction)
+  listing    Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([listingId, catId])
+  @@id([listingId, categoryId])
   @@map("listing_category")
 }
 
 model Project {
-  projId          Int               @id @default(autoincrement()) @map("proj_id")
+  projectId       Int               @id @default(autoincrement()) @map("proj_id")
   proposalId      Int               @unique @map("proposal_id")
   totalBudget     Decimal           @map("total_budget") @db.Decimal(12, 2)
   startDate       DateTime          @map("start_date") @db.Date
   endDate         DateTime?         @map("end_date") @db.Date
   comment         String?
-  status          String            @db.VarChar(50)
+  projectStatus   String            @map("status") @db.VarChar(50)
   proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
   projectContract ProjectContract[]
   rating          Rating[]
@@ -144,11 +144,11 @@ model Project {
 }
 
 model ProjectContract {
-  projId       Int     @map("proj_id")
+  projectId    Int     @map("proj_id")
   documentLink String  @map("document_link") @db.VarChar(255)
-  project      Project @relation(fields: [projId], references: [projId], onDelete: Cascade, onUpdate: NoAction)
+  project      Project @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([projId, documentLink])
+  @@id([projectId, documentLink])
   @@map("project_contract")
 }
 
@@ -163,7 +163,7 @@ model Proposal {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   project        Project?
   listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
-  company        Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  sender         Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([listingId, senderId])
   @@map("proposal")
@@ -183,8 +183,8 @@ model Rating {
   ratingId    Int      @id @default(autoincrement()) @map("rating_id")
   ratingTitle String   @map("rating_title") @db.VarChar(100)
   ratingScore Decimal  @map("rating_score") @db.Decimal(2, 1)
-  projId      Int?     @map("proj_id")
-  project     Project? @relation(fields: [projId], references: [projId], onDelete: Cascade, onUpdate: NoAction)
+  projectId   Int?     @map("proj_id")
+  project     Project? @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("rating")
 }

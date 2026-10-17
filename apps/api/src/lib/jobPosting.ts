@@ -18,7 +18,7 @@ export const jobPostingSelect = {
             companyName: true,
         },
     },
-    jobRequirement: {
+    job: {
         select: {
             locationPref: true,
             duration: true,
@@ -27,8 +27,8 @@ export const jobPostingSelect = {
     },
     listingCategory: {
         select: {
-            catId: true,
-            category: { select: { catName: true } },
+            categoryId: true,
+            category: { select: { categoryName: true } },
         },
     },
 } as const;
@@ -45,14 +45,14 @@ export type SelectedJobPosting = {
     maxBudget: number | null;
     listingStatus: string;
     createdAt: Date;
-    jobRequirement: {
+    job: {
         locationPref: string | null;
         duration: string | null;
         deadline: Date | null;
     } | null;
     listingCategory: {
-        catId: number;
-        category: { catName: string };
+        categoryId: number;
+        category: { categoryName: string };
     }[];
 };
 
@@ -68,13 +68,13 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
         listingStatus: row.listingStatus as ListingStatus,
-        locationPref: row.jobRequirement?.locationPref ?? null,
-        duration: row.jobRequirement?.duration ?? null,
-        deadline: row.jobRequirement?.deadline
-            ? row.jobRequirement.deadline.toISOString().slice(0, 10)
+        locationPref: row.job?.locationPref ?? null,
+        duration: row.job?.duration ?? null,
+        deadline: row.job?.deadline
+            ? row.job.deadline.toISOString().slice(0, 10)
             : null,
-        categoryIds: row.listingCategory.map((lc) => lc.catId),
-        categories: row.listingCategory.map((lc) => lc.category.catName),
+        categoryIds: row.listingCategory.map((lc) => lc.categoryId),
+        categories: row.listingCategory.map((lc) => lc.category.categoryName),
         createdAt: row.createdAt.toISOString(),
     };
 }

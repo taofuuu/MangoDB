@@ -23,7 +23,7 @@ export const companySummarySelect = {
         where: { listingType: 'SERVICE' },
         select: {
             listingCategory: {
-                select: { category: { select: { catName: true } } },
+                select: { category: { select: { categoryName: true } } },
             },
             service: serviceTechStackSelect,
         },
@@ -40,7 +40,7 @@ interface CompanySummaryRow {
     phone: string;
     website: string | null;
     listing: {
-        listingCategory: { category: { catName: string } }[];
+        listingCategory: { category: { categoryName: string } }[];
         service: ServiceTechStackRow;
     }[];
 }
@@ -50,7 +50,9 @@ export function toCompanySummary(row: CompanySummaryRow): CompanySummary {
     // it once.
     const categories = new Set(
         row.listing.flatMap((listing) =>
-            listing.listingCategory.map(({ category }) => category.catName),
+            listing.listingCategory.map(
+                ({ category }) => category.categoryName,
+            ),
         ),
     );
     const techStack = new Set(

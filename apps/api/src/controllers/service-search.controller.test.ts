@@ -50,7 +50,7 @@ type Row = {
     listingTitle: string;
     minBudget: number | null;
     maxBudget: number | null;
-    listingCategory: { category: { catName: string } }[];
+    listingCategory: { category: { categoryName: string } }[];
     service: null;
     company: Company;
 };

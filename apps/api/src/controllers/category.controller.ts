@@ -7,13 +7,20 @@ export async function listCategories(
 ): Promise<void> {
     const categories = await prisma.category.findMany({
         orderBy: {
-            catName: 'asc',
+            categoryName: 'asc',
         },
         select: {
-            catId: true,
-            catName: true,
+            categoryId: true,
+            categoryName: true,
         },
     });
 
-    res.json(categories);
+    // The wire still says catId / catName until round 2's Phase 2 flip;
+    // Prisma already says categoryId / categoryName.
+    res.json(
+        categories.map((c) => ({
+            catId: c.categoryId,
+            catName: c.categoryName,
+        })),
+    );
 }

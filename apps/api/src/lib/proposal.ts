@@ -57,13 +57,13 @@ export function toProposal(row: SelectedProposal): Proposal {
 // per row to show who each Provider is.
 export const postingProposalSelect = {
     ...proposalSelect,
-    company: {
+    sender: {
         select: { companyId: true, companyName: true, companyPhoto: true },
     },
 } as const;
 
 export type SelectedPostingProposal = SelectedProposal & {
-    company: CompanyBrief;
+    sender: CompanyBrief;
 };
 
 export function toPostingProposal(
@@ -72,9 +72,9 @@ export function toPostingProposal(
     return {
         ...toProposal(row),
         provider: {
-            companyId: row.company.companyId,
-            companyName: row.company.companyName,
-            companyPhoto: row.company.companyPhoto,
+            companyId: row.sender.companyId,
+            companyName: row.sender.companyName,
+            companyPhoto: row.sender.companyPhoto,
         },
     };
 }
@@ -148,30 +148,32 @@ export function toProposalStatusCounts(
 }
 
 const projectSelect = {
-    projId: true,
+    projectId: true,
     proposalId: true,
     totalBudget: true,
     startDate: true,
-    status: true,
+    projectStatus: true,
 } as const;
 
 type ProjectRow = {
-    projId: number;
+    projectId: number;
     proposalId: number;
     totalBudget: Prisma.Decimal;
     startDate: Date;
-    status: string;
+    projectStatus: string;
 };
 
 // Decimal and Date do not survive JSON as the frontend expects, so both are
 // converted here: budget to a number, the date-only column to YYYY-MM-DD.
 // The status cast is safe because this file only ever writes ProjectStatus values.
 function toProject(row: ProjectRow): Project {
+    // projId and status on the wire until round 2's Phase 2 flip.
     return {
-        ...row,
+        projId: row.projectId,
+        proposalId: row.proposalId,
         totalBudget: Number(row.totalBudget),
         startDate: row.startDate.toISOString().slice(0, 10),
-        status: row.status as ProjectStatus,
+        status: row.projectStatus as ProjectStatus,
     };
 }
 
@@ -247,7 +249,7 @@ export async function acceptProposalTx(
                 proposalId,
                 totalBudget: proposal.proposalBudget,
                 startDate: todayUtc,
-                status: 'ACTIVE' satisfies ProjectStatus,
+                projectStatus: 'ACTIVE' satisfies ProjectStatus,
             },
             select: projectSelect,
         });

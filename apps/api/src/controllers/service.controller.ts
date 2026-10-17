@@ -67,7 +67,7 @@ export async function createService(
             ...(catIds.length > 0
                 ? {
                       listingCategory: {
-                          create: catIds.map((catId) => ({ catId })),
+                          create: catIds.map((categoryId) => ({ categoryId })),
                       },
                   }
                 : {}),
@@ -131,8 +131,8 @@ export async function updateService(
                           listingCategory: {
                               deleteMany: {},
                               create: [...new Set(categoryIds)].map(
-                                  (catId) => ({
-                                      catId,
+                                  (categoryId) => ({
+                                      categoryId,
                                   }),
                               ),
                           },
@@ -183,7 +183,7 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
             { listingDesc: contains },
             {
                 listingCategory: {
-                    some: { category: { catName: contains } },
+                    some: { category: { categoryName: contains } },
                 },
             },
             {
@@ -226,7 +226,7 @@ function matchesFilters({
             listingCategory: {
                 some: {
                     category: {
-                        catName: { in: category, mode: 'insensitive' },
+                        categoryName: { in: category, mode: 'insensitive' },
                     },
                 },
             },
@@ -353,8 +353,8 @@ export async function getServiceFilterOptions(
 ): Promise<void> {
     const [categories, techStack] = await prisma.$transaction([
         prisma.category.findMany({
-            orderBy: { catName: 'asc' },
-            select: { catName: true },
+            orderBy: { categoryName: 'asc' },
+            select: { categoryName: true },
         }),
         prisma.techStack.findMany({
             where: {

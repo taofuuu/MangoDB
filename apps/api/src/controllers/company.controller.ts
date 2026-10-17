@@ -325,7 +325,9 @@ function matchesKeyword(word: string): Prisma.CompanyWhereInput {
                             { listingDesc: contains },
                             {
                                 listingCategory: {
-                                    some: { category: { catName: contains } },
+                                    some: {
+                                        category: { categoryName: contains },
+                                    },
                                 },
                             },
                             {

@@ -51,7 +51,7 @@ type Row = {
     maxBudget: number | null;
     createdAt: Date;
     company: { companyName: string; deletedAt: Date | null };
-    jobRequirement: null;
+    job: null;
     listingCategory: [];
 };
 
@@ -83,7 +83,7 @@ function job(
         maxBudget: 1000,
         createdAt: new Date(Date.UTC(2026, 0, listingId)),
         company: companies[companyId]!,
-        jobRequirement: null,
+        job: null,
         listingCategory: [],
     };
 }

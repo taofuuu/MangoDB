@@ -82,7 +82,7 @@ export const serviceSelect = {
     minBudget: true,
     maxBudget: true,
     listingStatus: true,
-    listingCategory: { select: { catId: true } },
+    listingCategory: { select: { categoryId: true } },
     service: serviceTechStackSelect,
     // Only the name: the company row also holds the sign-in email and
     // password hash (ADR 0001).
@@ -97,7 +97,7 @@ type SelectedService = {
     minBudget: number | null;
     maxBudget: number | null;
     listingStatus: string;
-    listingCategory: { catId: number }[];
+    listingCategory: { categoryId: number }[];
     service: ServiceTechStackRow;
     company: { companyName: string } | null;
 };
@@ -115,7 +115,7 @@ export function toService(row: SelectedService): ServiceListing {
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
         listingStatus: row.listingStatus,
-        categoryIds: row.listingCategory.map((c) => c.catId),
+        categoryIds: row.listingCategory.map((c) => c.categoryId),
         techStack: toTechStackNames(row.service),
     };
 }
@@ -164,7 +164,7 @@ export const serviceSummarySelect = {
     minBudget: true,
     maxBudget: true,
     listingCategory: {
-        select: { category: { select: { catName: true } } },
+        select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
     company: {
@@ -182,7 +182,7 @@ interface ServiceSummaryRow {
     listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
-    listingCategory: { category: { catName: string } }[];
+    listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
     company: {
         companyId: number;
@@ -204,7 +204,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
         maxBudget: row.maxBudget,
         // Sorted: Prisma returns related rows in no fixed order.
         categories: row.listingCategory
-            .map(({ category }) => category.catName)
+            .map(({ category }) => category.categoryName)
             .sort(),
         techStack: toTechStackNames(row.service),
         company: {
@@ -215,7 +215,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
     };
 }
 
-type ServiceFilterCategoryRow = { catName: string };
+type ServiceFilterCategoryRow = { categoryName: string };
 type ServiceFilterTechStackRow = { techStackName: string };
 
 // Keeps the lookup endpoint's wire shape explicit instead of returning raw
@@ -225,7 +225,7 @@ export function toServiceFilterOptions(
     techStack: ServiceFilterTechStackRow[],
 ): ServiceFilterOptions {
     return {
-        categories: categories.map(({ catName }) => catName),
+        categories: categories.map(({ categoryName }) => categoryName),
         techStack: techStack.map(({ techStackName }) => techStackName),
     };
 }

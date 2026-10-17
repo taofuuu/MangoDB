@@ -10,8 +10,8 @@ export async function assertCategoriesExist(
     if (uniqueCatIds.length === 0) return;
 
     const existingCats = await prisma.category.findMany({
-        where: { catId: { in: uniqueCatIds } },
-        select: { catId: true },
+        where: { categoryId: { in: uniqueCatIds } },
+        select: { categoryId: true },
     });
 
     if (existingCats.length !== uniqueCatIds.length) {

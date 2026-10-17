@@ -57,11 +57,11 @@ type ProposalRow = {
 };
 
 type ProjectRow = {
-    projId: number;
+    projectId: number;
     proposalId: number;
     totalBudget: number;
     startDate: Date;
-    status: string;
+    projectStatus: string;
 };
 
 let rows: Row[] = [];
@@ -79,8 +79,8 @@ const fakePrisma = {
     // first write, which is what the "changes nothing" tests check.
     $transaction: (work: (tx: unknown) => Promise<unknown>) => work(fakePrisma),
     project: {
-        create: async (args: { data: Omit<ProjectRow, 'projId'> }) => {
-            const row = { ...args.data, projId: projects.length + 1 };
+        create: async (args: { data: Omit<ProjectRow, 'projectId'> }) => {
+            const row = { ...args.data, projectId: projects.length + 1 };
             projects.push(row);
             return row;
         },

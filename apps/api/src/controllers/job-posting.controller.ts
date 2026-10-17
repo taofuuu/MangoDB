@@ -26,7 +26,7 @@ import {
 } from '../lib/jobPosting';
 
 // US2-6. Create and publish a job posting.
-// Validates body, verifies category existence, and creates listing + jobRequirement atomically.
+// Validates body, verifies category existence, and creates listing + job atomically.
 export async function createJobPosting(
     req: Request,
     res: Response,
@@ -45,7 +45,7 @@ export async function createJobPosting(
             maxBudget: body.maxBudget ?? null,
             listingStatus: 'OPEN',
             listingType: 'JOB',
-            jobRequirement: {
+            job: {
                 create: {
                     locationPref: body.locationPref ?? null,
                     duration: body.duration ?? null,
@@ -58,8 +58,8 @@ export async function createJobPosting(
                 ? {
                       listingCategory: {
                           create: [...new Set(body.categoryIds)].map(
-                              (catId) => ({
-                                  catId,
+                              (categoryId) => ({
+                                  categoryId,
                               }),
                           ),
                       },
@@ -288,7 +288,7 @@ export async function updateJobPosting(
             // upsert, not update: an older row may have no requirement row.
             ...(Object.keys(requirement).length > 0
                 ? {
-                      jobRequirement: {
+                      job: {
                           upsert: { create: requirement, update: requirement },
                       },
                   }
@@ -298,9 +298,11 @@ export async function updateJobPosting(
                 ? {
                       listingCategory: {
                           deleteMany: {},
-                          create: [...new Set(categoryIds)].map((catId) => ({
-                              catId,
-                          })),
+                          create: [...new Set(categoryIds)].map(
+                              (categoryId) => ({
+                                  categoryId,
+                              }),
+                          ),
                       },
                   }
                 : {}),

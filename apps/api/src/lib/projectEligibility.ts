@@ -14,12 +14,12 @@ const ONGOING_STATUS = 'ACTIVE' satisfies ProjectStatus;
 export async function hasOngoingProject(companyId: number): Promise<boolean> {
     const ongoingProject = await prisma.project.findFirst({
         where: {
-            status: ONGOING_STATUS,
+            projectStatus: ONGOING_STATUS,
             proposal: {
                 OR: [{ senderId: companyId }, { listing: { companyId } }],
             },
         },
-        select: { projId: true },
+        select: { projectId: true },
     });
 
     return ongoingProject !== null;
