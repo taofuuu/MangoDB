@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { RegisterAccountType, SessionResponse } from '@mangodb/shared';
+import type { RegisterAccountType, RegisterRequest } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
@@ -31,8 +31,7 @@ import {
     validateWebsite,
     toFormErrors,
 } from '@/lib/validation';
-import { apiFetch } from '@/lib/api';
-import { clearCacheInEveryTab } from '@/lib/apiCache';
+import { register } from '@/lib/session';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -208,11 +207,13 @@ export default function RegisterPage() {
     };
 
     const sendRegister = async () => {
+        // The role step's Next button is disabled until one is picked.
+        if (!accountType) return;
         setIsSubmitting(true);
 
         // Optional fields go out as undefined rather than an empty string,
         // which the API would read as a value and reject.
-        const payload = {
+        const payload: RegisterRequest = {
             companyName: companyInfo.companyName,
             companyDescription:
                 companyInfo.companyDescription.trim() || undefined,
@@ -223,23 +224,13 @@ export default function RegisterPage() {
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
             accountType,
             username: accountInfo.username,
-            password: accountInfo.password,
+            password: accountInfo.password ?? '',
             // Only reachable after Accept. The API takes nothing but `true`.
             tosAccepted: true,
         };
 
         try {
-            // The session is an httpOnly cookie set on this response, so
-            // there is nothing to store. The accessToken in the body is for
-            // callers that are not a browser — curl, Postman.
-            await apiFetch<SessionResponse>('/auth/register', {
-                method: 'POST',
-                body: JSON.stringify(payload),
-            });
-
-            // A new session: clear the cache in every tab, same as login does.
-            clearCacheInEveryTab();
-
+            await register(payload);
             setCurrentStep(RegisterStep.Success);
         } catch (error) {
             const { fields, message } = toFormErrors(error, REGISTER_FIELDS);
