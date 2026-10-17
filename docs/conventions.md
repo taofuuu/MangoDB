@@ -40,6 +40,15 @@ model ServicePortfolio {
 Why camelCase: it is what TypeScript, React and AI tools write by default. See
 [ADR 0000](adr/0000-camelcase-wire-format.md).
 
+**Spell the word out.** `categoryId`, `categoryName`, `projectId` — not
+`catId`, `catName`, `projId`. The column can keep its short name; `@map` does
+the rest. `certTitle` is the one abbreviation kept, because renaming it changes
+a lot and nothing new builds on it.
+
+**The company that owns a row is `company`**, a `CompanyBrief` —
+`{ companyId, companyName, companyPhoto }` — never a flat `companyName` beside
+the row's own fields.
+
 ---
 
 ## 2. URLs and endpoints
@@ -51,7 +60,7 @@ account is **`register`** — never `signup`.
 
 ### 2.2 Plural kebab-case nouns for collections
 
-`/companies`, `/portfolios`, `/certificates`, `/services`, `/job-postings`,
+`/companies`, `/portfolios`, `/certificates`, `/services`, `/jobs`,
 `/proposals`. Not `/jobPostings`, not `/job_postings`.
 
 ### 2.3 `/me` is one thing that is you. `/mine` is a list of yours
@@ -64,16 +73,16 @@ account is **`register`** — never `signup`.
 ### 2.4 Nest scoped collections, keep single resources top-level
 
 ```
-GET  /job-postings/:jobPostingId/proposals   the proposals on one posting
-POST /job-postings/:jobPostingId/proposals   submit one to that posting
-GET  /proposals/:proposalId                  one proposal, by its own id
+GET  /jobs/:jobId/proposals              the proposals on one job
+POST /jobs/:jobId/proposals              send one to that job
+POST /proposals/:proposalId/accept       one proposal, by its own id
 ```
 
 An id that names its row on its own does not need the parent in the path.
 
 ### 2.5 Path params carry the resource name
 
-`:companyId`, `:serviceId`, `:jobPostingId` — **never `:id`**. When the backlog
+`:companyId`, `:serviceId`, `:jobId` — **never `:id`**. When the backlog
 writes `:id`, read it as the qualified name.
 
 ### 2.6 Admin surfaces live under `/admin/`
@@ -99,7 +108,13 @@ Accepting also creates a project and rejects the other proposals —
 
 ### 2.9 Frontend routes mirror the API nouns
 
-`/register`, `/companies`, `/services`, `/job-postings`.
+`/register`, `/companies`, `/services`, `/jobs`. A page that lists a row's
+children nests the way the API does: `/jobs/[jobId]/proposals`.
+
+| Page                    | Route                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| Your own profile        | `/profile/view`, `/profile/edit`                                                            |
+| Another company's pages | `/companies/[companyId]`, and `/services`, `/jobs`, `/portfolios`, `/certificates` under it |
 
 ### 2.10 Search is a filtered collection
 
@@ -124,7 +139,10 @@ GET /companies?q=&orderBy=nameAsc&page=&pageSize=
 - Never `{ message, resource }`. The status code says it worked; the message is
   the frontend's to write.
 - `pagination` is the shared `PaginationMeta`:
-  `{ page, pageSize, totalItems, totalPages }`.
+  `{ page, pageSize, totalItems, totalPages }`. The whole body is the one
+  generic shared type `Paginated<T>`, not a new `XListResponse` per resource.
+- **A `/mine` list is paginated when the page shows it in pages**, and a bare
+  array otherwise. `/proposals/mine` pages; `/services/mine` does not.
 
 ---
 
@@ -144,6 +162,15 @@ GET /companies?q=&orderBy=nameAsc&page=&pageSize=
 
 401 is _who are you_; 403 is _I know who you are, and no_. Keep them apart.
 Fold 403 into 404 only when the row's existence is itself private.
+
+One rule, one code, everywhere:
+
+- **A state conflict is 409** — closed, not pending, already done. The same
+  rule on two routes never answers 409 on one and 400 on the other.
+- **A rule across two fields is 400 `VALIDATION_FAILED`**, with the field in
+  `details` — `minBudget` over `maxBudget`, an expiry before the issue date.
+- **A storage failure is 500.** An upload that fails on our side is not the
+  caller's fault.
 
 ---
 
@@ -172,13 +199,22 @@ One envelope, from `ApiError` and `errorHandler`:
 
 Stored values are SCREAMING_SNAKE_CASE, like `account_type`'s `PROVIDER` /
 `RECEIVER` / `BOTH` / `ADMIN`. The status columns are free-text `VarChar(50)`,
-so the types in `packages/shared` are the only enforcement:
+so the types in `packages/shared` are the only enforcement.
+
+**Every union is derived from a const array**, so the frontend can loop over
+the values — filter chips, a dropdown — without writing a second copy:
 
 ```ts
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
-export type ProposalStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type ListingStatus = (typeof LISTING_STATUSES)[number];
 ```
+
+- Each status field is named after its table: `listingStatus`,
+  `proposalStatus`, `projectStatus`.
+- A value that is never stored — a sort order — is camelCase: `nameAsc`,
+  `priceAsc`.
+- No bare string literal for a stored value in code: `LISTING_TYPES`, or
+  `'OPEN' satisfies ListingStatus`.
 
 The column stores the value (`OPEN`); the UI shows the label ("Open for
 Proposals"). Display text lives in the frontend, never in the column.
@@ -187,8 +223,8 @@ Proposals"). Display text lives in the frontend, never in the column.
 
 ## 7. What a `listing` is
 
-`listing` is the parent of both a Provider's service and a Receiver's job
-posting. `listing_type` says which one it is.
+`listing` is the parent of both a Provider's service and a Receiver's job.
+`listing_type` says which one it is.
 
 ```
 listing (listing_id, company_id, listing_type, listing_status, ...)
@@ -196,7 +232,17 @@ listing (listing_id, company_id, listing_type, listing_status, ...)
    +-- job_requirement  (listing_id, ...)   -> listing_type = JOB
 ```
 
-- Services and job postings **query the same table**. Always filter on
+**Above the database there are only two words: service and job**
+([ADR 0020](adr/0020-only-service-and-job-above-the-database.md)) —
+`/services` and `/jobs`, `Service` and `Job`, `serviceId` and `jobId`. The
+table `job_requirement` is the Prisma model `Job`, through `@@map`. Not "job
+posting", not "service listing".
+
+`listing` is only ever the parent. A proposal says `listingId`, because it can
+be sent to either kind
+([ADR 0021](adr/0021-proposal-sender-and-recipient.md)).
+
+- Services and jobs **query the same table**. Always filter on
   `listing_type`, not on which child row exists.
 - Before creating a table for a kind of listing, check it is not already
   `listing` plus a child. Usually the task is a migration that adds columns.
@@ -206,8 +252,11 @@ listing (listing_id, company_id, listing_type, listing_status, ...)
 ## 8. New columns
 
 - snake_case column, camelCase field, and the `@map` added at the same time.
-- Anything users sort or filter on is a number or a date, not free text — a
-  duration is an `Int` of days, not `"2 weeks"`.
+- Anything users sort or filter on is a number or a date, not free text. A
+  proposal's `duration` is a number of months
+  ([ADR 0007](adr/0007-proposal-duration-in-months.md)).
+  `job_requirement.duration` is still free text — a known exception, not a
+  pattern to copy.
 - A table whose rows are listed by time gets
   `created_at Timestamptz(6) @default(now())`.
 
@@ -231,7 +280,7 @@ exception, not a pattern to copy.
 
 Never turn a date-only value into a local `Date` and back: local midnight in
 UTC+7 is the day before in UTC. Split the string, or build the `Date` at UTC
-midnight (see `components/viewprofile/PortfolioList.tsx`).
+midnight (see `formatDateOnly` in `apps/mangodb/lib/dates.ts`).
 
 ---
 
@@ -241,8 +290,7 @@ A foreign key the row means nothing without is `NOT NULL`. A nullable one forces
 a dead null check in every controller that touches it.
 
 Still nullable, to fix in the next migration that touches each table:
-`listing.company_id`, `proposal.listing_id`, `proposal.sender_id`,
-`project.proposal_id`, `rating.proj_id`.
+`listing.company_id` and `rating.proj_id`.
 
 ---
 
@@ -264,6 +312,8 @@ Still nullable, to fix in the next migration that touches each table:
 `packages/shared` is the source of truth for anything that crosses the wire.
 
 - A resource with endpoints has one shared type — not a shape per component.
+- A shape only the UI uses — a view mode, a tab — stays in the web app. It is
+  not a wire type.
 - A `lib/` module never imports a type from a component.
 - Assert each request schema against its shared type in
   `apps/api/src/schemas/contract.ts`, so `tsc` fails when they drift.
@@ -277,7 +327,11 @@ A committed migration file, applied with `npm run db:migrate`. **Never
 database different from what is committed. Step by step:
 [CONTRIBUTING.md](../CONTRIBUTING.md#database).
 
-`npm run db:pull` is safe: re-introspection keeps `@map` renames.
+**Never `npm run db:pull` to bring `schema.prisma` up to date.** It rewrites
+the file from the database: it keeps `@map`, but drops every comment and some
+relation options, like `onDelete: Restrict` (PR #156 committed one by
+accident). Edit `schema.prisma` by hand and write the migration with
+`prisma migrate diff`, as CONTRIBUTING describes.
 
 ---
 
@@ -292,9 +346,29 @@ src/routes/<resource>.routes.ts           paths and guards — no logic
 src/lib/<resource>.ts                     the select, the DTO, shared checks
 ```
 
+- The four files share one kebab-case name: `job.schema.ts`,
+  `job.controller.ts`, `job.routes.ts`, `lib/job.ts`. Every file in `lib/` is
+  kebab-case, helpers too: `prisma-errors.ts`, `admin-company.ts`.
 - Controllers are `async function name(req, res): Promise<void>` and call
   `res.json(...)`, not `return res.json(...)`.
 - Every query has a `select`, so a new column never ships by accident.
 - Every response goes through a DTO in `lib/`.
 
 Step by step, with a worked example: [adding-a-resource.md](adding-a-resource.md).
+
+---
+
+## 16. Frontend file layout
+
+```
+app/<route>/page.tsx      a page; its URL mirrors the API (§2.9)
+components/<noun>/        one folder per API noun, plural
+components/ui/            generic pieces only: Button, ModalShell, Input, …
+lib/<noun>.ts             the requests for that noun
+```
+
+- Folders are the plural API nouns: `services`, `jobs`, `proposals`,
+  `companies`, `portfolios`, `certificates`, plus `profile`, `auth`,
+  `register`, `nav` and `ui`. A component for one resource does not go in
+  `ui/`.
+- One component per file, a default export, and the file named after it.
