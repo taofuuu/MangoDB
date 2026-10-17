@@ -19,9 +19,11 @@ export function listMyCertificates(): Promise<Certificate[]> {
 
 // The one read of someone else's: another company's certificates, for its
 // public profile. Any signed-in company may call it.
-export function listCompanyCertificates(
-    companyId: number,
-): Promise<Certificate[]> {
+export function listCertificates({
+    companyId,
+}: {
+    companyId: number;
+}): Promise<Certificate[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });
 
     const path = `/certificates?${query.toString()}`;

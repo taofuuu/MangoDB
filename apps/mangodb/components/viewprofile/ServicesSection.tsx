@@ -12,12 +12,12 @@ import ModalShell from '@/components/ui/ModalShell';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
-import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
+import { listJobs, listMyJobs } from '@/lib/jobs';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
     getService,
-    listCompanyServices,
+    listServices,
     listMyServices,
     toServiceSummary,
 } from '@/lib/services';
@@ -79,9 +79,8 @@ export default function ServicesSection({
         let cancelled = false;
 
         const loadServices: Promise<ServiceRow[]> = readOnly
-            ? listCompanyServices(companyId, 1, PROFILE_LIST_SIZE).then(
-                  (data) =>
-                      data.items.map((summary) => ({ summary, closed: false })),
+            ? listServices(1, PROFILE_LIST_SIZE, { companyId }).then((data) =>
+                  data.items.map((summary) => ({ summary, closed: false })),
               )
             : Promise.all([listMyServices(), listCategories()]).then(
                   ([mine, categories]) =>
@@ -98,13 +97,11 @@ export default function ServicesSection({
         ).includes('jobs')
             ? Promise.resolve([])
             : readOnly
-              ? listJobPostings(1, PROFILE_LIST_SIZE, {
+              ? listJobs(1, PROFILE_LIST_SIZE, {
                     companyId,
                     status: 'OPEN',
                 }).then((data) => data.items)
-              : listMyJobPostings(1, PROFILE_LIST_SIZE).then(
-                    (data) => data.items,
-                );
+              : listMyJobs(1, PROFILE_LIST_SIZE).then((data) => data.items);
 
         loadServices
             .then((rows) => {

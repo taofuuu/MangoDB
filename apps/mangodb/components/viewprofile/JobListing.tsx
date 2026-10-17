@@ -7,7 +7,7 @@ import JobDetailModal from '@/components/job/JobDetailModal';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
-import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
+import { listJobs, listMyJobs } from '@/lib/jobs';
 import { formatBudgetRange } from '@/lib/money';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
@@ -32,11 +32,11 @@ export default function JobListing({
         let cancelled = false;
 
         const request = readOnly
-            ? listJobPostings(1, PROFILE_LIST_SIZE, {
+            ? listJobs(1, PROFILE_LIST_SIZE, {
                   companyId,
                   status: 'OPEN',
               })
-            : listMyJobPostings(1, PROFILE_LIST_SIZE);
+            : listMyJobs(1, PROFILE_LIST_SIZE);
 
         request
             .then((data) => {

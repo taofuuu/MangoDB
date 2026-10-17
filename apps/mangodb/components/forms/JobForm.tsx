@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CategorySelector from '../ui/CategorySelector';
-import { createJobPosting, updateJobPosting } from '@/lib/jobPostings';
+import { createJob, updateJob } from '@/lib/jobs';
 import { toFormErrors } from '@/lib/validation';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
@@ -240,7 +240,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                     return;
                 }
 
-                await updateJobPosting(jobPostingId, data);
+                await updateJob(jobPostingId, data);
                 router.push('/job-postings/mine?success=updated');
             } else {
                 // Create mode: preserve the existing behavior.
@@ -255,7 +255,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                     categoryIds,
                 };
 
-                await createJobPosting(data);
+                await createJob(data);
                 router.push('/job-postings/mine?success=posted');
             }
         } catch (cause: unknown) {

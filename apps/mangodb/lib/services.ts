@@ -150,10 +150,10 @@ export async function getServiceFilterOptions(): Promise<ServiceFilterOptions> {
 // One company's open services, for its profile (page 1) and its full services
 // page. Same endpoint and shape as the search screen, so a row opens the same
 // ServiceDetailPanel.
-export function listCompanyServices(
-    companyId: number,
+export function listServices(
     page: number,
     pageSize: number,
+    { companyId }: { companyId: number },
 ): Promise<Paginated<ServiceSummary>> {
     const qs = new URLSearchParams({
         companyId: String(companyId),
@@ -166,7 +166,8 @@ export function listCompanyServices(
     return cachedGet(path, () => apiFetch<Paginated<ServiceSummary>>(path));
 }
 
-export async function listServices(
+// The search screen: the keyword, the sidebar's filters and the order.
+export async function searchServices(
     params: SearchServicesParams,
 ): Promise<Paginated<ServiceSummary>> {
     const { q, orderBy, page, pageSize, filters } = params;

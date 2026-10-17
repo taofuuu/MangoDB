@@ -26,7 +26,7 @@ import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
-import { createPortfolio, listServicePortfolios } from '@/lib/portfolios';
+import { createPortfolio, listPortfolios } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
 import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
@@ -178,7 +178,7 @@ export default function ServiceForm(props: ServiceFormProps) {
 
                 const [service, existingPortfolios] = await Promise.all([
                     getService(serviceId),
-                    listServicePortfolios(serviceId),
+                    listPortfolios({ serviceId }),
                 ]);
 
                 if (cancelled) return;

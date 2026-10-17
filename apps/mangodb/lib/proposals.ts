@@ -31,9 +31,7 @@ export function createProposal(
 }
 
 // US2-10. The proposals sent to one of the caller's jobs.
-export function getSubmittedProposals(
-    jobId: number,
-): Promise<ReceivedProposal[]> {
+export function listJobProposals(jobId: number): Promise<ReceivedProposal[]> {
     const path = `/jobs/${jobId}/proposals`;
     return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
 }

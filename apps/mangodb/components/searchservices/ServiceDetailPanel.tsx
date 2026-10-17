@@ -8,7 +8,7 @@ import { ExternalLink, X } from 'lucide-react';
 import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import { formatBudgetRange } from '@/lib/money';
-import { listServicePortfolios } from '@/lib/portfolios';
+import { listPortfolios } from '@/lib/portfolios';
 import type { ServiceSummary } from '@mangodb/shared';
 
 const portfolioDateFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -55,7 +55,7 @@ export function ServiceDetailPanel({
     useEffect(() => {
         let active = true;
 
-        void listServicePortfolios(service.serviceId)
+        void listPortfolios({ serviceId: service.serviceId })
             .then((items) => {
                 if (active) setPortfolios(items);
             })

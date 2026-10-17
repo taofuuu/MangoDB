@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
-import { listCompanyServices } from '@/lib/services';
+import { listServices } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
 import { OtherCompanyServiceCard } from '@/components/service/OtherCompanyServiceCard';
@@ -96,7 +96,7 @@ function CompanyServicesContent() {
         };
     }, [companyId]);
 
-    // 2. Fetch services using listCompanyServices
+    // 2. Fetch services using listServices
     useEffect(() => {
         if (!companyId || isNaN(companyId)) {
             return;
@@ -104,7 +104,7 @@ function CompanyServicesContent() {
 
         let active = true;
 
-        listCompanyServices(companyId, page, pageSize)
+        listServices(page, pageSize, { companyId })
             .then((res) => {
                 if (!active) return;
                 setError(null);

@@ -8,7 +8,7 @@ import type {
 } from '@mangodb/shared';
 import {
     EMPTY_SEARCH_SERVICES_FILTERS,
-    listServices,
+    searchServices,
     type SearchServicesFilters,
 } from './services';
 import { SERVICE_PAGE_SIZE } from './pagination';
@@ -53,7 +53,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
             setState((s) => ({ ...s, status: 'loading', error: null }));
 
             try {
-                const result = await listServices({
+                const result = await searchServices({
                     q: state.q,
                     orderBy: state.orderBy,
                     page,

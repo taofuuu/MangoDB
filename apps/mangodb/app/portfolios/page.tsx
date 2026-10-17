@@ -40,7 +40,7 @@ export default function PortfolioPage() {
     // revoked token lands in the same place.
     useEffect(() => {
         getMyProfile()
-            .then((profile) => listPortfolios(profile.companyId))
+            .then((profile) => listPortfolios({ companyId: profile.companyId }))
             .then(setItems)
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {

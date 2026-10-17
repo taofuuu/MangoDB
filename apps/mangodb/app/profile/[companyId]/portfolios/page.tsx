@@ -39,7 +39,10 @@ export default function CompanyPortfoliosPage() {
         // The profile gives the name for the heading, and its 404 is the
         // one place an unknown or deleted company shows up: /portfolios
         // answers an empty list for those.
-        Promise.all([getCompanyProfile(companyId), listPortfolios(companyId)])
+        Promise.all([
+            getCompanyProfile(companyId),
+            listPortfolios({ companyId }),
+        ])
             .then(([profile, items]) => {
                 if (cancelled) return;
                 setResult({

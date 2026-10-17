@@ -21,7 +21,7 @@ import { formatBudgetRange } from '@/lib/money';
 import JobDetailModal from './JobDetailModal';
 import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { describeError } from '@/lib/api';
-import { closeJobPosting } from '@/lib/jobPostings';
+import { closeJob } from '@/lib/jobs';
 
 interface JobBoxProps {
     job: Job;
@@ -45,7 +45,7 @@ export default function JobBox({
     // US2-14. A thrown error becomes the modal's message.
     const confirmClose = async () => {
         try {
-            await closeJobPosting(job.jobId);
+            await closeJob(job.jobId);
         } catch (err) {
             throw new Error(
                 describeError(err, {

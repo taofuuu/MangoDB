@@ -5,11 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import type { Job, ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from '@/components/proposals/view/StatsBadges';
 import {
-    getSubmittedProposals,
+    listJobProposals,
     acceptProposal,
     rejectProposal,
 } from '@/lib/proposals';
-import { getJobPosting } from '@/lib/jobPostings';
+import { getJob } from '@/lib/jobs';
 import { StatsBadges } from '@/components/proposals/view/StatsBadges';
 import { ProposalCard } from '@/components/proposals/view/ProposalCard';
 import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
@@ -81,7 +81,7 @@ function ProposalPageInner({
         if (!effectiveJobId) return;
 
         if (!initialJobTitle && !searchParams.get('title')) {
-            getJobPosting(effectiveJobId)
+            getJob(effectiveJobId)
                 .then((job: Job) => {
                     if (job?.listingTitle) {
                         setListingTitle(job.listingTitle);
@@ -99,7 +99,7 @@ function ProposalPageInner({
 
         let isMounted = true;
 
-        getSubmittedProposals(effectiveJobId)
+        listJobProposals(effectiveJobId)
             .then((data) => {
                 if (isMounted) {
                     setProposals(Array.isArray(data) ? data : []);

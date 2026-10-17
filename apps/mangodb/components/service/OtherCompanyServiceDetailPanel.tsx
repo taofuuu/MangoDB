@@ -5,7 +5,7 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import { Tag } from 'lucide-react';
-import { listServicePortfolios } from '@/lib/portfolios';
+import { listPortfolios } from '@/lib/portfolios';
 import { OtherCompanyPortfolioCard } from './OtherCompanyPortfolioCard';
 
 interface OtherCompanyServiceDetailPanelProps {
@@ -23,7 +23,7 @@ export function OtherCompanyServiceDetailPanel({
     useEffect(() => {
         let active = true;
 
-        void listServicePortfolios(service.serviceId)
+        void listPortfolios({ serviceId: service.serviceId })
             .then((data) => {
                 if (active) {
                     setPortfolios(data);

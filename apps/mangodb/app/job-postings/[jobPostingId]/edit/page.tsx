@@ -5,7 +5,7 @@ import { use, useEffect, useState } from 'react';
 import JobForm from '@/components/forms/JobForm';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import { getMyProfile } from '@/lib/companies';
-import { getJobPosting } from '@/lib/jobPostings';
+import { getJob } from '@/lib/jobs';
 import { describeError, isNotSignedIn } from '@/lib/api';
 
 import { isReceiverAccount } from '@/lib/roles';
@@ -52,7 +52,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                     return;
                 }
 
-                const posting = await getJobPosting(jobPostingId);
+                const posting = await getJob(jobPostingId);
 
                 if (cancelled) return;
 

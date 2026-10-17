@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import type { Certificate } from '@mangodb/shared';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { listCompanyCertificates } from '@/lib/certificates';
+import { listCertificates } from '@/lib/certificates';
 import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
 import { monthLabel } from '@/lib/dates';
 import { isStorageImage } from '@/lib/images';
@@ -55,7 +55,7 @@ export default function CompanyCertificatesPage() {
         // unknown or deleted company shows up.
         Promise.all([
             getCompanyProfile(companyId),
-            listCompanyCertificates(companyId),
+            listCertificates({ companyId }),
         ])
             .then(([profile, certificates]) => {
                 if (cancelled) return;

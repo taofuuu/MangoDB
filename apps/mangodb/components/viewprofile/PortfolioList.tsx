@@ -4,10 +4,7 @@ import Link from 'next/link';
 import type { ServicePortfolio } from '@mangodb/shared';
 import type { Certificate } from '@mangodb/shared';
 import { listPortfolios } from '@/lib/portfolios';
-import {
-    listMyCertificates,
-    listCompanyCertificates,
-} from '@/lib/certificates';
+import { listMyCertificates, listCertificates } from '@/lib/certificates';
 import { formatDateOnly, monthLabel } from '@/lib/dates';
 import ProfileItemDetailModal, {
     type ProfileItem,
@@ -53,11 +50,11 @@ export default function PortfolioCertificateList({
     const [selected, setSelected] = useState<ProfileItem | null>(null);
 
     useEffect(() => {
-        listPortfolios(companyId)
+        listPortfolios({ companyId })
             .then((items) => setPortfolioItems(items))
             .catch(() => setLoadError('Could not load portfolio items.'));
 
-        (readOnly ? listCompanyCertificates(companyId) : listMyCertificates())
+        (readOnly ? listCertificates({ companyId }) : listMyCertificates())
             .then((items) => setCertificateItems(items))
             .catch(() =>
                 setLoadError(
