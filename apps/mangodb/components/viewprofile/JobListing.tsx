@@ -140,7 +140,7 @@ export default function JobListing({
             <div className="mt-3 text-right">
                 <Link
                     href={
-                        readOnly ? `/profile/${companyId}/jobs` : '/jobs/mine'
+                        readOnly ? `/companies/${companyId}/jobs` : '/jobs/mine'
                     }
                     className="type-xs text-brand hover:underline font-medium"
                 >

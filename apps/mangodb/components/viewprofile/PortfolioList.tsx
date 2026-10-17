@@ -26,7 +26,7 @@ interface PortfolioCertificateListProps {
     // Another company's profile. Its certificates come from
     // GET /certificates?companyId=, since /certificates/mine is always the
     // viewer's own, and "See more" goes to its read-only pages under
-    // /profile/:id instead of your management pages.
+    // /companies/:id instead of your management pages.
     readOnly?: boolean;
 }
 
@@ -77,7 +77,7 @@ export default function PortfolioCertificateList({
     const seeMorePage =
         activeTab === 'portfolio' ? 'portfolios' : 'certificates';
     const seeMoreHref = readOnly
-        ? `/profile/${companyId}/${seeMorePage}`
+        ? `/companies/${companyId}/${seeMorePage}`
         : `/${seeMorePage}`;
 
     return (

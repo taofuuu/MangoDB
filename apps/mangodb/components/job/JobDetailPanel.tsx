@@ -81,7 +81,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                         <span className="type-sm text-brand">Company</span>
 
                         <Link
-                            href={`/profile/${job.company.companyId}`}
+                            href={`/companies/${job.company.companyId}`}
                             className="type-md text-ink pl-[0.5vw] hover:underline [overflow-wrap:anywhere]"
                         >
                             {job.company.companyName}

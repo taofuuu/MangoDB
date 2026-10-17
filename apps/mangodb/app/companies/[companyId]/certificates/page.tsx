@@ -25,7 +25,7 @@ type LoadResult =
     | { companyId: number; companyName: string; certificates: Certificate[] }
     | { companyId: number; error: string };
 
-// /profile/[companyId]/certificates: another company's certificates, opened
+// /companies/[companyId]/certificates: another company's certificates, opened
 // from See more on its profile. The same rows as /certificates, without Add,
 // Edit and Delete.
 export default function CompanyCertificatesPage() {
@@ -94,7 +94,7 @@ export default function CompanyCertificatesPage() {
                     <div className="flex w-full items-center pt-5">
                         {companyId !== null && (
                             <Link
-                                href={`/profile/${companyId}`}
+                                href={`/companies/${companyId}`}
                                 aria-label="Back to the company profile"
                                 className="type-lg pr-4"
                             >

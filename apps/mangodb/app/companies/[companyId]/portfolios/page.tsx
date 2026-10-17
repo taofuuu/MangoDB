@@ -26,7 +26,7 @@ type LoadResult =
     | { companyId: number; companyName: string; items: ServicePortfolio[] }
     | { companyId: number; error: string };
 
-// /profile/[companyId]/portfolios: another company's whole portfolio, opened
+// /companies/[companyId]/portfolios: another company's whole portfolio, opened
 // from See more on its profile. The same cards as /portfolios, without Edit
 // and Delete.
 export default function CompanyPortfoliosPage() {
@@ -97,7 +97,7 @@ export default function CompanyPortfoliosPage() {
                     <h1 className="type-hd !text-[48px] leading-none">
                         {companyId !== null && (
                             <Link
-                                href={`/profile/${companyId}`}
+                                href={`/companies/${companyId}`}
                                 aria-label="Back to the company profile"
                                 className="pr-4"
                             >

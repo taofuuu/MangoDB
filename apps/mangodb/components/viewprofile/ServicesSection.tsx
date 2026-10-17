@@ -274,7 +274,7 @@ export default function ServicesSection({
                         <Link
                             href={
                                 readOnly
-                                    ? `/profile/${companyId}/jobs`
+                                    ? `/companies/${companyId}/jobs`
                                     : '/jobs/mine'
                             }
                             className="type-xs text-brand hover:underline font-medium"
@@ -289,7 +289,7 @@ export default function ServicesSection({
                 {readOnly && activeTab === 'services' && (
                     <div className="mt-3 text-right">
                         <Link
-                            href={`/profile/${companyId}/services`}
+                            href={`/companies/${companyId}/services`}
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more

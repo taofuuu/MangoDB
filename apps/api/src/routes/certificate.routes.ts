@@ -20,7 +20,7 @@ certificateRoutes.get(
     listMyCertificates,
 );
 
-// One company's certificates, for its public profile (/profile/:companyId).
+// One company's certificates, for its public profile (/companies/:companyId).
 // Same callers as GET /companies/:companyId, which that page loads with it:
 // any company, not admins. companyId is a required query filter rather than
 // /companies/:companyId/certificates because certificates are top-level here

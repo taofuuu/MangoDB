@@ -103,7 +103,7 @@ export function ServiceDetailPanel({
                             size={44}
                         />
                         <Link
-                            href={`/profile/${service.company.companyId}`}
+                            href={`/companies/${service.company.companyId}`}
                             className="type-md text-ink hover:underline"
                         >
                             {service.company.companyName || '-'}

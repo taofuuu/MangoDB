@@ -144,7 +144,7 @@ function CompanyServicesContent() {
                     <h1 className="type-lg !font-bold text-ink">
                         {isValidCompanyId && (
                             <Link
-                                href={`/profile/${companyId}`}
+                                href={`/companies/${companyId}`}
                                 aria-label="Back to the company profile"
                                 className="pr-4"
                             >
