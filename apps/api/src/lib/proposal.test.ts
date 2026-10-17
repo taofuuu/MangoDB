@@ -2,20 +2,21 @@
  * Tests for the US2-9 helpers in lib/proposal.ts (the Provider's "Your
  * Proposals" page).
  *
- * toProviderProposal, one row of GET /proposals/mine:
- * - Each proposal carries the job's owner as `receiver` (id, name, photo), so
- *   the page can show who the proposal went to with no extra request per row.
- * - receiver is null when the listing has no owner row. The page shows a
- *   placeholder instead of crashing.
+ * toSentProposal, one row of GET /proposals/mine:
+ * - Each proposal carries the listing's owner as `recipient` (id, name,
+ *   photo), so the page can show who it went to with no extra request per row.
+ * - A listing with no owner is a broken row, so it is a 500 rather than a
+ *   blank recipient.
  * - The proposal's own fields keep the shared wire shape: Decimal becomes a
- *   number, Date becomes an ISO string, listingId is renamed jobPostingId.
+ *   number, Date becomes an ISO string, listingId and senderId keep their names
+ *   (ADR 0021).
  *
  * toProposalStatusCounts, the body of GET /proposals/mine/counts:
  * - groupBy leaves out a status with no rows, so each status must start at 0.
  * - total is the sum of all groups.
  *
  * How:
- * - toProviderProposal is a pure function, so the test feeds it a fake row.
+ * - toSentProposal is a pure function, so the test feeds it a fake row.
  * - lib/prisma is replaced with mock.module before lib/proposal loads. Loading
  *   the real one would build a Prisma client against the shared database.
  *
@@ -41,7 +42,7 @@ before(async () => {
     lib = await import('./proposal.js');
 });
 
-type Row = Parameters<typeof lib.toProviderProposal>[0];
+type Row = Parameters<typeof lib.toSentProposal>[0];
 
 function makeRow(company: Row['listing']['company']): Row {
     return {
@@ -57,9 +58,9 @@ function makeRow(company: Row['listing']['company']): Row {
     };
 }
 
-describe('toProviderProposal', () => {
+describe('toSentProposal', () => {
     it('adds the listing owner as recipient', () => {
-        const result = lib.toProviderProposal(
+        const result = lib.toSentProposal(
             makeRow({
                 companyId: 9,
                 companyName: 'Mango Co',
@@ -79,13 +80,13 @@ describe('toProviderProposal', () => {
     // missing owner is a broken row: a 500, not a blank recipient.
     it('is a 500 when the listing has no owner', () => {
         assert.throws(
-            () => lib.toProviderProposal(makeRow(null)),
+            () => lib.toSentProposal(makeRow(null)),
             (err: unknown) => err instanceof ApiError && err.status === 500,
         );
     });
 
     it('keeps the proposal fields in the wire shape', () => {
-        const result = lib.toProviderProposal(
+        const result = lib.toSentProposal(
             makeRow({
                 companyId: 9,
                 companyName: 'Mango Co',

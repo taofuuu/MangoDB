@@ -14,7 +14,7 @@ export function isDeadlineInFutureOrToday(dateStr: string): boolean {
 export const MIN_BUDGET_EXCEEDS_MAX =
     'Minimum budget cannot exceed maximum budget';
 
-export const jobPostingFields = {
+export const jobFields = {
     listingTitle: z
         .string()
         .trim()
@@ -70,8 +70,8 @@ export const jobPostingFields = {
 } as const;
 
 // strictObject so unexpected fields or typos are rejected with 400 VALIDATION_FAILED
-export const createJobPostingSchema = z
-    .strictObject(jobPostingFields)
+export const createJobSchema = z
+    .strictObject(jobFields)
     .refine(minBudgetDoesNotExceedMax, {
         message: MIN_BUDGET_EXCEEDS_MAX,
         path: ['minBudget'],
@@ -80,29 +80,29 @@ export const createJobPostingSchema = z
 // PATCH sends only what changed, so every field is optional. No budget refine
 // here: a body with one budget only means something next to the stored row,
 // so the controller checks the merged values instead.
-export const updateJobPostingSchema = z
+export const updateJobSchema = z
     .strictObject({
-        listingTitle: jobPostingFields.listingTitle.optional(),
-        listingDesc: jobPostingFields.listingDesc.optional(),
-        minBudget: jobPostingFields.minBudget,
-        maxBudget: jobPostingFields.maxBudget.optional(),
-        locationPref: jobPostingFields.locationPref,
-        duration: jobPostingFields.duration,
-        deadline: jobPostingFields.deadline,
-        categoryIds: jobPostingFields.categoryIds,
+        listingTitle: jobFields.listingTitle.optional(),
+        listingDesc: jobFields.listingDesc.optional(),
+        minBudget: jobFields.minBudget,
+        maxBudget: jobFields.maxBudget.optional(),
+        locationPref: jobFields.locationPref,
+        duration: jobFields.duration,
+        deadline: jobFields.deadline,
+        categoryIds: jobFields.categoryIds,
     })
     .refine((body) => Object.keys(body).length > 0, {
         message: 'Provide at least one field to update',
     });
 
-export const jobPostingIdParamSchema = z.object({
+export const jobIdParamSchema = z.object({
     jobId: int4Id,
 });
 
 // Query parameters for GET /jobs.
 // Supports status filtering (OPEN | CLOSED) and filtering by companyId.
 // Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
-export const jobPostingListQuerySchema = z.object({
+export const jobListQuerySchema = z.object({
     page: z.preprocess(
         (val) => (val === '' ? undefined : val),
         z.coerce.number().int().positive().default(1),

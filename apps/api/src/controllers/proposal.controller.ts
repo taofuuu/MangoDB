@@ -14,15 +14,15 @@ import {
     proposalIdParamSchema,
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
-import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
-import { assertJobPostingOwned } from '../lib/jobPosting';
+import { jobIdParamSchema } from '../schemas/job.schema';
+import { assertJobOwned } from '../lib/job';
 import {
-    postingProposalSelect,
+    receivedProposalSelect,
     proposalSelect,
-    providerProposalSelect,
-    toPostingProposal,
+    sentProposalSelect,
+    toReceivedProposal,
     toProposal,
-    toProviderProposal,
+    toSentProposal,
     toProposalStatusCounts,
     acceptProposalTx,
     rejectPendingProposal,
@@ -32,7 +32,7 @@ export async function createProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 
@@ -91,20 +91,20 @@ export async function createProposal(
 // history, not discovery (see Company.deletedAt).
 // Only the posting's owner may read them: the list carries every competing
 // Provider's price and terms.
-export async function listJobPostingProposals(
+export async function listJobProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
-    await assertJobPostingOwned(jobId, req.auth!.companyId);
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    await assertJobOwned(jobId, req.auth!.companyId);
 
     const proposals = await prisma.proposal.findMany({
         where: { listingId: jobId },
         orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-        select: postingProposalSelect,
+        select: receivedProposalSelect,
     });
 
-    res.json(proposals.map(toPostingProposal));
+    res.json(proposals.map(toReceivedProposal));
 }
 
 export async function acceptProposal(
@@ -151,12 +151,12 @@ export async function listMyProposals(
             skip: (page - 1) * pageSize,
             take: pageSize,
             orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-            select: providerProposalSelect,
+            select: sentProposalSelect,
         }),
     ]);
 
     const body: Paginated<SentProposal> = {
-        items: rows.map(toProviderProposal),
+        items: rows.map(toSentProposal),
         pagination: {
             page,
             pageSize,

@@ -13,26 +13,19 @@ import { assertCategoriesExist } from '../lib/categories';
 import { omitUndefined } from '../lib/objects';
 import { escapeLike } from '../lib/search';
 import {
-    createJobPostingSchema,
-    jobPostingIdParamSchema,
-    jobPostingListQuerySchema,
+    createJobSchema,
+    jobIdParamSchema,
+    jobListQuerySchema,
     MIN_BUDGET_EXCEEDS_MAX,
-    updateJobPostingSchema,
-} from '../schemas/job-posting.schema';
+    updateJobSchema,
+} from '../schemas/job.schema';
 import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
-import {
-    assertJobPostingOwned,
-    jobPostingSelect,
-    toJobPosting,
-} from '../lib/jobPosting';
+import { assertJobOwned, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + job atomically.
-export async function createJobPosting(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const body = parseBody(createJobPostingSchema, req.body);
+export async function createJob(req: Request, res: Response): Promise<void> {
+    const body = parseBody(createJobSchema, req.body);
     const companyId = req.auth!.companyId;
 
     if (body.categoryIds) await assertCategoriesExist(body.categoryIds);
@@ -67,10 +60,10 @@ export async function createJobPosting(
                   }
                 : {}),
         },
-        select: jobPostingSelect,
+        select: jobSelect,
     });
 
-    res.status(201).json(toJobPosting(created));
+    res.status(201).json(toJob(created));
 }
 
 // US3-4. One word matches the job's title or description, ignoring case.
@@ -86,12 +79,9 @@ function matchesKeyword(word: string): Prisma.ListingWhereInput {
 // US2-7. List job postings filtered by status with visibility rules:
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
-export async function listJobPostings(
-    req: Request,
-    res: Response,
-): Promise<void> {
+export async function listJobs(req: Request, res: Response): Promise<void> {
     const { page, pageSize, status, companyId, q } = parseQuery(
-        jobPostingListQuerySchema,
+        jobListQuerySchema,
         req.query,
     );
     const callerCompanyId = req.auth!.companyId;
@@ -136,11 +126,11 @@ export async function listJobPostings(
             orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
             skip: (page - 1) * pageSize,
             take: pageSize,
-            select: jobPostingSelect,
+            select: jobSelect,
         }),
     ]);
     const body: Paginated<Job> = {
-        items: postings.map(toJobPosting),
+        items: postings.map(toJob),
         pagination: {
             page,
             pageSize,
@@ -152,12 +142,9 @@ export async function listJobPostings(
 }
 
 //for own job posting
-export async function listMyJobPostings(
-    req: Request,
-    res: Response,
-): Promise<void> {
+export async function listMyJobs(req: Request, res: Response): Promise<void> {
     const { page, pageSize, status } = parseQuery(
-        jobPostingListQuerySchema,
+        jobListQuerySchema,
         req.query,
     );
 
@@ -176,11 +163,11 @@ export async function listMyJobPostings(
             orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
             skip: (page - 1) * pageSize,
             take: pageSize,
-            select: jobPostingSelect,
+            select: jobSelect,
         }),
     ]);
     const body: Paginated<Job> = {
-        items: postings.map(toJobPosting),
+        items: postings.map(toJob),
         pagination: {
             page,
             pageSize,
@@ -197,11 +184,8 @@ export async function listMyJobPostings(
 //   (companyId === req.auth.companyId).
 // - Anyone else gets 404 Not Found, the same as for a non-existent ID, a
 //   service ID, or a soft-deleted company's posting.
-export async function getJobPosting(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
+export async function getJob(req: Request, res: Response): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
 
     // A soft-deleted company's postings stay in the table, still OPEN, so
     // the where hides them here, the same as in the list.
@@ -211,7 +195,7 @@ export async function getJobPosting(
             listingType: 'JOB',
             company: { deletedAt: null },
         },
-        select: jobPostingSelect,
+        select: jobSelect,
     });
 
     if (!posting) {
@@ -230,20 +214,17 @@ export async function getJobPosting(
         throw ApiError.notFound('Job posting not found');
     }
 
-    res.json(toJobPosting(posting));
+    res.json(toJob(posting));
 }
 
 // US2-13. Edit a job posting. Only the owner may, and only while it is Open.
 // Send only the fields that change; categoryIds replaces the whole set.
-export async function updateJobPosting(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
-    const body = parseBody(updateJobPostingSchema, req.body);
+export async function updateJob(req: Request, res: Response): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    const body = parseBody(updateJobSchema, req.body);
 
     // 404 if no such posting, 403 if it is someone else's.
-    const existing = await assertJobPostingOwned(jobId, req.auth!.companyId);
+    const existing = await assertJobOwned(jobId, req.auth!.companyId);
     // Once closed, Providers' proposals were written against the old details.
     if (existing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
         throw ApiError.conflict('Only an open job posting can be edited');
@@ -305,23 +286,20 @@ export async function updateJobPosting(
                   }
                 : {}),
         },
-        select: jobPostingSelect,
+        select: jobSelect,
     });
 
-    res.json(toJobPosting(updated));
+    res.json(toJob(updated));
 }
 
 // US2-14. Close a job posting: it stops taking proposals, and every pending
 // proposal on it is rejected, in one transaction. Only the owner may, and
 // only while it is Open. Answers with the closed posting.
-export async function closeJobPosting(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
+export async function closeJob(req: Request, res: Response): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
 
     // 404 if no such posting, 403 if it is someone else's.
-    await assertJobPostingOwned(jobId, req.auth!.companyId);
+    await assertJobOwned(jobId, req.auth!.companyId);
 
     const closed = await prisma.$transaction(async (tx) => {
         // The status in the where is the Open check: if the posting is
@@ -347,9 +325,9 @@ export async function closeJobPosting(
 
         return tx.listing.findUniqueOrThrow({
             where: { listingId: jobId },
-            select: jobPostingSelect,
+            select: jobSelect,
         });
     });
 
-    res.json(toJobPosting(closed));
+    res.json(toJob(closed));
 }

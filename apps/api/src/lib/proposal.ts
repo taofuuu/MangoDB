@@ -56,17 +56,17 @@ export function toProposal(row: SelectedProposal): Proposal {
 // US2-10. A proposal as the listing's owner sees it in the proposal list: the
 // proposal plus the sender's name and photo, so the list needs no second call
 // per row to show who sent each one.
-export const postingProposalSelect = {
+export const receivedProposalSelect = {
     ...proposalSelect,
     sender: { select: companyBriefSelect },
 } as const;
 
-export type SelectedPostingProposal = SelectedProposal & {
+export type SelectedReceivedProposal = SelectedProposal & {
     sender: CompanyBrief;
 };
 
-export function toPostingProposal(
-    row: SelectedPostingProposal,
+export function toReceivedProposal(
+    row: SelectedReceivedProposal,
 ): ReceivedProposal {
     return {
         ...toProposal(row),
@@ -77,7 +77,7 @@ export function toPostingProposal(
 // US2-9. A proposal as its sender sees it in their own list: the proposal
 // plus the listing's title and its owner, so the page needs no extra request
 // per row. A soft-deleted owner is still shown: a proposal is history.
-export const providerProposalSelect = {
+export const sentProposalSelect = {
     ...proposalSelect,
     listing: {
         select: {
@@ -87,16 +87,14 @@ export const providerProposalSelect = {
     },
 } as const;
 
-export type SelectedProviderProposal = SelectedProposal & {
+export type SelectedSentProposal = SelectedProposal & {
     listing: {
         listingTitle: string;
         company: CompanyBrief | null;
     };
 };
 
-export function toProviderProposal(
-    row: SelectedProviderProposal,
-): SentProposal {
+export function toSentProposal(row: SelectedSentProposal): SentProposal {
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,

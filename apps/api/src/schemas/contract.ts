@@ -29,10 +29,7 @@ import type {
     updateCompanyProfileSchema,
 } from './company.schema';
 import type { deleteCompanyAccountBodySchema } from './admin-company.schema';
-import type {
-    createJobPostingSchema,
-    updateJobPostingSchema,
-} from './job-posting.schema';
+import type { createJobSchema, updateJobSchema } from './job.schema';
 import type { createProposalSchema } from './proposal.schema';
 import type {
     createServiceSchema,
@@ -77,11 +74,11 @@ type _ContractMatchesDeleteAccount = Assert<
     DeleteAccountInput
 >;
 
-type CreateJobInput = z.infer<typeof createJobPostingSchema>;
+type CreateJobInput = z.infer<typeof createJobSchema>;
 type _CreateJobMatchesContract = Assert<CreateJobInput, CreateJobRequest>;
 type _ContractMatchesCreateJob = Assert<CreateJobRequest, CreateJobInput>;
 
-type UpdateJobInput = z.infer<typeof updateJobPostingSchema>;
+type UpdateJobInput = z.infer<typeof updateJobSchema>;
 type _UpdateJobMatchesContract = Assert<UpdateJobInput, UpdateJobRequest>;
 type _ContractMatchesUpdateJob = Assert<UpdateJobRequest, UpdateJobInput>;
 

@@ -5,7 +5,7 @@ import { companyBriefSelect, toCompanyBrief } from './companyProfile';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
 // wire response deliberate rather than exposing whatever the table happens to have.
-export const jobPostingSelect = {
+export const jobSelect = {
     listingId: true,
     companyId: true,
     listingTitle: true,
@@ -30,7 +30,7 @@ export const jobPostingSelect = {
     },
 } as const;
 
-export type SelectedJobPosting = {
+export type SelectedJob = {
     listingId: number;
     companyId: number | null;
     company: CompanyBrief | null;
@@ -53,7 +53,7 @@ export type SelectedJobPosting = {
 
 // DTO function that shapes the Prisma row into the shared wire Job format.
 // Converts @db.Date to YYYY-MM-DD string per docs/conventions.md section 10.
-export function toJobPosting(row: SelectedJobPosting): Job {
+export function toJob(row: SelectedJob): Job {
     return {
         jobId: row.listingId,
         company: toCompanyBrief(row.company),
@@ -76,10 +76,10 @@ export function toJobPosting(row: SelectedJobPosting): Job {
 // Ownership verification helper for edit and close: 404 and 403 stay separate
 // because an open job posting is discoverable in public listings, so hiding it
 // buys nothing. GET /jobs/:jobId is stricter: a non-open posting is 404 to
-// anyone but its owner (job-posting.controller.ts, getJobPosting).
+// anyone but its owner (job.controller.ts, getJob).
 // Returns the row it read, so edit can check the status and budgets without a
 // second query.
-export async function assertJobPostingOwned(
+export async function assertJobOwned(
     jobId: number,
     companyId: number,
 ): Promise<{

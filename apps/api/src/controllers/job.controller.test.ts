@@ -1,7 +1,7 @@
 /*
  * Tests for GET /jobs, GET /jobs/:jobId and
- * POST /jobs/:jobId/close (listJobPostings, getJobPosting and
- * closeJobPosting in job-posting.controller.ts).
+ * POST /jobs/:jobId/close (listJobs, getJob and
+ * closeJob in job.controller.ts).
  *
  * What they cover:
  * - Each job carries its owner (company), on the list and on detail.
@@ -221,13 +221,13 @@ function moduleUrl(specifier: string): string {
     return pathToFileURL(require.resolve(specifier)).href;
 }
 
-let controller: typeof import('./job-posting.controller.js');
+let controller: typeof import('./job.controller.js');
 
 before(async () => {
     mock.module(moduleUrl('../lib/prisma'), {
         namedExports: { prisma: fakePrisma },
     });
-    controller = await import('./job-posting.controller.js');
+    controller = await import('./job.controller.js');
 });
 
 beforeEach(() => {
@@ -266,7 +266,7 @@ async function call(
 }
 
 function getOne(callerCompanyId: number, jobId: number) {
-    return call(controller.getJobPosting, callerCompanyId, {
+    return call(controller.getJob, callerCompanyId, {
         params: { jobId: String(jobId) },
     });
 }
@@ -320,7 +320,7 @@ describe('GET /jobs/:jobId', () => {
 
 describe('GET /jobs', () => {
     function list(callerCompanyId: number, query: Record<string, string> = {}) {
-        return call(controller.listJobPostings, callerCompanyId, {
+        return call(controller.listJobs, callerCompanyId, {
             query,
         }) as Promise<Paginated<Job>>;
     }
@@ -399,7 +399,7 @@ describe('GET /jobs', () => {
 
 describe('POST /jobs/:jobId/close', () => {
     function close(callerCompanyId: number, jobId: number) {
-        return call(controller.closeJobPosting, callerCompanyId, {
+        return call(controller.closeJob, callerCompanyId, {
             params: { jobId: String(jobId) },
         });
     }

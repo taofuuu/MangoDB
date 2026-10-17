@@ -5,7 +5,7 @@ import { companyRoutes } from './company.routes';
 import { serviceRoutes } from './service.routes';
 import { portfolioRoutes } from './portfolio.routes';
 import { certificateRoutes } from './certificate.routes';
-import { jobPostingRoutes } from './job-posting.routes';
+import { jobRoutes } from './job.routes';
 import { proposalRoutes } from './proposal.routes';
 import { categoryRoutes } from './category.routes';
 
@@ -17,6 +17,6 @@ routes.use('/companies', companyRoutes);
 routes.use('/services', serviceRoutes);
 routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
-routes.use('/jobs', jobPostingRoutes);
+routes.use('/jobs', jobRoutes);
 routes.use('/proposals', proposalRoutes);
 routes.use('/categories', categoryRoutes);
