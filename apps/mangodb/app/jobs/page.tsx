@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
 import Pagination from '@/components/ui/Pagination';
 import type { Job, Paginated } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
@@ -11,6 +12,22 @@ import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { listJobs } from '@/lib/jobs';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
+
+// The deadline and order boxes. Neither reaches GET /jobs yet (only the
+// keyword and page do); the round-2 Phase 7 page records it for Sprint 3.
+type DeadlineType = 'ANY' | 'BEFORE' | 'AFTER';
+const DEADLINE_OPTIONS: { label: string; value: DeadlineType }[] = [
+    { label: 'Any', value: 'ANY' },
+    { label: 'Before', value: 'BEFORE' },
+    { label: 'After', value: 'AFTER' },
+];
+
+type OrderType = 'DEFAULT' | 'BUDGET' | 'DEADLINE';
+const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
+    { label: 'Default', value: 'DEFAULT' },
+    { label: 'Budget', value: 'BUDGET' },
+    { label: 'Deadline', value: 'DEADLINE' },
+];
 
 export default function OtherJobPage() {
     const [page, setPage] = useState(1);
@@ -22,17 +39,13 @@ export default function OtherJobPage() {
     const [minBudget, setMinBudget] = useState('');
     const [maxBudget, setMaxBudget] = useState('');
 
-    const [deadlineType, setDeadlineType] = useState<'BEFORE' | 'AFTER' | ''>(
-        '',
-    );
-    const [isDeadlineOpen, setIsDeadlineOpen] = useState(false);
+    const [deadlineType, setDeadlineType] = useState<DeadlineType>('ANY');
     const [deadlineDate, setDeadlineDate] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const [result, setResult] = useState<Paginated<Job> | null>(null);
     //
-    const [orderType, setOrderType] = useState<'Budget' | 'Deadline' | ''>('');
-    const [isOrderOpen, setIsOrderOpen] = useState(false);
+    const [orderType, setOrderType] = useState<OrderType>('DEFAULT');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
@@ -265,7 +278,7 @@ export default function OtherJobPage() {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setDeadlineType('');
+                                            setDeadlineType('ANY');
                                             setDeadlineDate('');
                                             setPage(1);
                                         }}
@@ -276,69 +289,16 @@ export default function OtherJobPage() {
                                 </div>
 
                                 <div className="flex gap-[0.42vw]">
-                                    <div className="relative w-[6vw]">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setIsDeadlineOpen(
-                                                    (open) => !open,
-                                                )
-                                            }
-                                            className="flex h-[3.70vh] w-full items-center justify-between rounded-[6px] border border-brand bg-surface-white px-[0.5vw] type-sm hover:bg-fill-subtle"
-                                        >
-                                            <span>
-                                                {deadlineType === 'BEFORE'
-                                                    ? 'Before'
-                                                    : deadlineType === 'AFTER'
-                                                      ? 'After'
-                                                      : 'Any'}
-                                            </span>
-
-                                            <ChevronDown
-                                                className="h-[1.5vh] w-[1vw]"
-                                                aria-hidden="true"
-                                            />
-                                        </button>
-
-                                        {isDeadlineOpen && (
-                                            <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 w-full overflow-hidden rounded-[6px] border border-brand bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
-                                                {[
-                                                    {
-                                                        label: 'Any',
-                                                        value: '',
-                                                    },
-                                                    {
-                                                        label: 'Before',
-                                                        value: 'BEFORE',
-                                                    },
-                                                    {
-                                                        label: 'After',
-                                                        value: 'AFTER',
-                                                    },
-                                                ].map((option) => (
-                                                    <button
-                                                        key={option.label}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setDeadlineType(
-                                                                option.value as
-                                                                    | 'BEFORE'
-                                                                    | 'AFTER'
-                                                                    | '',
-                                                            );
-                                                            setPage(1);
-                                                            setIsDeadlineOpen(
-                                                                false,
-                                                            );
-                                                        }}
-                                                        className="w-full px-[0.5vw] py-[0.6vh] text-left type-sm hover:bg-fill-subtle"
-                                                    >
-                                                        {option.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Dropdown
+                                        value={deadlineType}
+                                        options={DEADLINE_OPTIONS}
+                                        onChange={(next) => {
+                                            setDeadlineType(next);
+                                            setPage(1);
+                                        }}
+                                        label="Deadline before or after"
+                                        className="w-[6vw] min-w-[90px]"
+                                    />
 
                                     <input
                                         type="date"
@@ -429,60 +389,16 @@ export default function OtherJobPage() {
                                     Order by:
                                 </span>
 
-                                <div className="relative w-[8.125vw]">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setIsOrderOpen((open) => !open)
-                                        }
-                                        className="flex h-[4.07vh] w-full items-center justify-between rounded-[10px] border border-line bg-surface-white px-[0.7vw] type-sm hover:bg-fill-subtle"
-                                    >
-                                        <span>{orderType || ''}</span>
-
-                                        <ChevronDown
-                                            className="h-[1.5vh] w-[1vw]"
-                                            aria-hidden="true"
-                                        />
-                                    </button>
-
-                                    {isOrderOpen && (
-                                        <div className="absolute left-0 top-[calc(100%+0.4vh)] z-50 h-[12vh] w-full overflow-hidden rounded-[10px] border border-line bg-surface-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setOrderType('');
-                                                    setPage(1);
-                                                    setIsOrderOpen(false);
-                                                }}
-                                                className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
-                                            />
-
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setOrderType('Budget');
-                                                    setPage(1);
-                                                    setIsOrderOpen(false);
-                                                }}
-                                                className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
-                                            >
-                                                Budget
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setOrderType('Deadline');
-                                                    setPage(1);
-                                                    setIsOrderOpen(false);
-                                                }}
-                                                className="flex h-1/3 w-full items-center px-[0.7vw] text-left type-sm hover:bg-fill-subtle"
-                                            >
-                                                Deadline
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                <Dropdown
+                                    value={orderType}
+                                    options={ORDER_OPTIONS}
+                                    onChange={(next) => {
+                                        setOrderType(next);
+                                        setPage(1);
+                                    }}
+                                    label="Order jobs by"
+                                    className="w-[8.125vw] min-w-[120px]"
+                                />
                             </div>
                         </div>
                     </div>

@@ -15,7 +15,12 @@ import { listCompanies } from '@/lib/companies';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
-import CompanyOrderDropdown from './CompanyOrderDropdown';
+import Dropdown from '@/components/ui/Dropdown';
+
+const ORDER_OPTIONS: { label: string; value: CompanySortOrder }[] = [
+    { label: 'Company name A–Z', value: 'nameAsc' },
+    { label: 'Company name Z–A', value: 'nameDesc' },
+];
 
 export default function CompanySearchPage() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -172,9 +177,12 @@ export default function CompanySearchPage() {
                     </div>
                     <div className="flex items-center gap-[1vw] self-end type-sm sm:self-auto">
                         <span>Order by:</span>
-                        <CompanyOrderDropdown
+                        <Dropdown
                             value={orderBy}
+                            options={ORDER_OPTIONS}
                             onChange={changeOrder}
+                            label="Company order"
+                            className="w-full sm:w-[13vw] sm:min-w-[190px]"
                         />
                     </div>
                 </div>

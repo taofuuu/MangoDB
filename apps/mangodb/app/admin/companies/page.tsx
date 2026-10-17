@@ -7,10 +7,11 @@ import type {
     CompanyAccountSummary,
     Paginated,
 } from '@mangodb/shared';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
 import Pagination from '@/components/ui/Pagination';
 import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
 import { getCompanyAccountDetail, listCompanyAccounts } from '@/lib/companies';
@@ -31,7 +32,6 @@ export default function AdminCompaniesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filter, setFilter] = useState<FilterOption>('ALL');
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [result, setResult] =
         useState<Paginated<CompanyAccountSummary> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +47,6 @@ export default function AdminCompaniesPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState<string | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
-    const filterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const nextSearch = searchQuery.trim();
@@ -60,32 +59,6 @@ export default function AdminCompaniesPage() {
 
         return () => clearTimeout(timer);
     }, [searchQuery, debouncedSearch]);
-
-    useEffect(() => {
-        if (!isFilterOpen) return;
-
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                filterRef.current &&
-                !filterRef.current.contains(event.target as Node)
-            ) {
-                setIsFilterOpen(false);
-            }
-        }
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') {
-                setIsFilterOpen(false);
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isFilterOpen]);
 
     useEffect(() => {
         let cancelled = false;
@@ -170,7 +143,6 @@ export default function AdminCompaniesPage() {
             setFilter(selected);
             setPage(1);
         }
-        setIsFilterOpen(false);
     };
 
     const pagination = result?.pagination;
@@ -235,53 +207,13 @@ export default function AdminCompaniesPage() {
                             )}
                         </div>
 
-                        <div ref={filterRef} className="relative">
-                            <button
-                                type="button"
-                                onClick={() => setIsFilterOpen((prev) => !prev)}
-                                aria-expanded={isFilterOpen}
-                                aria-haspopup="listbox"
-                                aria-label="Filter companies by account type"
-                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-line bg-white px-[0.63vw] type-xs !font-[500] text-ink hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                            >
-                                {filter}
-                                <ChevronDown
-                                    aria-hidden="true"
-                                    className={`h-[1.30vh] w-[0.73vw] text-ink-soft transition-transform duration-200 ${
-                                        isFilterOpen ? 'rotate-180' : ''
-                                    }`}
-                                />
-                            </button>
-
-                            {isFilterOpen && (
-                                <div
-                                    role="listbox"
-                                    aria-label="Account type options"
-                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-line bg-white py-[0.37vh] shadow-md"
-                                >
-                                    {FILTER_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            role="option"
-                                            aria-selected={
-                                                filter === option.value
-                                            }
-                                            onClick={() =>
-                                                handleFilterSelect(option.value)
-                                            }
-                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left type-xs !font-[500] transition-colors hover:bg-line ${
-                                                filter === option.value
-                                                    ? 'bg-brand/10 font-semibold text-brand'
-                                                    : 'text-ink'
-                                            }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <Dropdown
+                            value={filter}
+                            options={FILTER_OPTIONS}
+                            onChange={handleFilterSelect}
+                            label="Filter companies by account type"
+                            className="w-[9vw] min-w-[130px]"
+                        />
                     </div>
                 </header>
 
