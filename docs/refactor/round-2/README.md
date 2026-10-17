@@ -22,8 +22,8 @@ DB column → backend DTO → shared type → frontend lib → component prop �
 | [2](phase-2-names-at-the-source.md) | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | done    |
 | [3](phase-3-one-of-each-helper.md)  | Backend: one of each helper     | `apps/api/src/lib`                                  | done    |
 | [4](phase-4-wire-rules.md)          | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | done    |
-| 5                                   | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | next    |
-| 6                                   | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | pending |
+| [5](phase-5-template.md)            | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | done    |
+| 6                                   | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | next    |
 | 7                                   | Frontend: one set of primitives | `components/`                                       | pending |
 | 8                                   | Design tokens                   | `globals.css` and every colour literal              | pending |
 | 9                                   | Docs                            | `ai-brief.md`, READMEs, `CONTRIBUTING.md`           | pending |
