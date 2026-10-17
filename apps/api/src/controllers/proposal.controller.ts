@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type {
+    ListingStatus,
     Paginated,
     ProposalStatusCounts,
     SentProposal,
@@ -16,7 +17,12 @@ import {
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobIdParamSchema } from '../schemas/job.schema';
-import { assertListingOwned } from '../lib/listing';
+import {
+    assertListingOwned,
+    closeOpenListing,
+    rejectPendingProposals,
+} from '../lib/listing';
+import { createProjectFromProposal } from '../lib/project';
 import {
     receivedProposalSelect,
     proposalSelect,
@@ -25,8 +31,8 @@ import {
     toProposal,
     toSentProposal,
     toProposalStatusCounts,
-    acceptProposalTx,
-    rejectPendingProposal,
+    findPendingProposalFor,
+    setProposalStatus,
 } from '../lib/proposal';
 
 export async function createProposal(
@@ -108,23 +114,51 @@ export async function listJobProposals(
     res.json(proposals.map(toReceivedProposal));
 }
 
+// US2-11. Accepting a proposal on a job closes the job, rejects the other
+// proposals and opens a project, all or nothing. Each step is a lib helper,
+// so an accept that must leave its listing open (a hire request on a service)
+// leaves out closeOpenListing.
 export async function acceptProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    const project = await acceptProposalTx(proposalId, callerId);
+
+    const project = await prisma.$transaction(async (tx) => {
+        const proposal = await findPendingProposalFor(tx, proposalId, callerId);
+        if (
+            proposal.listing.listingStatus !== ('OPEN' satisfies ListingStatus)
+        ) {
+            throw ApiError.conflict('Listing has already been closed');
+        }
+
+        await closeOpenListing(
+            tx,
+            proposal.listingId,
+            'Listing has already been closed',
+        );
+        await setProposalStatus(tx, proposalId, 'ACCEPTED');
+        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        return createProjectFromProposal(tx, {
+            proposalId,
+            proposalBudget: proposal.proposalBudget,
+        });
+    });
+
     res.status(201).json(project);
 }
 
+// Rejecting one pending proposal touches no other row.
 export async function rejectProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    await rejectPendingProposal(proposalId, callerId);
+
+    await findPendingProposalFor(prisma, proposalId, callerId);
+    await setProposalStatus(prisma, proposalId, 'REJECTED');
     res.status(204).end();
 }
 
