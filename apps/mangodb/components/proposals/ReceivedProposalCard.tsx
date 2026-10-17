@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import Image from 'next/image';
 import type { ReceivedProposal } from '@mangodb/shared';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import ProposalStatusBadge from './ProposalStatusBadge';
 import { Clock, Calendar, Tag } from 'lucide-react';
@@ -45,27 +45,11 @@ export default function ReceivedProposalCard({
             >
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-[#437788] flex-shrink-0 flex items-center justify-center text-white overflow-hidden">
-                            {proposal.sender?.companyPhoto ? (
-                                <div className="relative w-full h-full overflow-hidden">
-                                    <Image
-                                        src={proposal.sender.companyPhoto}
-                                        alt={proposal.sender.companyName}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, 50vw"
-                                        className="object-cover"
-                                    />
-                                </div>
-                            ) : (
-                                <svg
-                                    className="w-6 h-6"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                </svg>
-                            )}
-                        </div>
+                        <CompanyAvatar
+                            name={companyName}
+                            photoUrl={proposal.sender?.companyPhoto ?? null}
+                            size={48}
+                        />
 
                         <div>
                             <div className="flex items-center gap-2">
