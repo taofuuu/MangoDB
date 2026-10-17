@@ -1,10 +1,10 @@
 'use client';
 
 import type { PublicCompanyProfile } from '@mangodb/shared';
-import CompanyCard, { toCompanyCardData } from './Companycard';
+import CompanyCard, { toCompanyCardData } from './ProviderCompanyCard';
 import ServicesSection from './ServicesSection';
 import ProjectTimeline from './ProjectTimeline';
-import PortfolioList from './PortfolioList';
+import PortfolioCertificateList from './PortfolioCertificateList';
 
 // The provider-shaped profile: the company card, its services, a project
 // timeline and its portfolio.
@@ -40,7 +40,7 @@ export default function ProviderProfileView({
                     <ProjectTimeline />
                 </div>
                 <div className="lg:col-span-2">
-                    <PortfolioList
+                    <PortfolioCertificateList
                         companyId={profile.companyId}
                         readOnly={readOnly}
                     />

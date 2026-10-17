@@ -23,7 +23,7 @@ export interface CompanyCardData {
     photoUrl: string | null;
 }
 
-interface CompanyCardProps {
+interface ProviderCompanyCardProps {
     data: CompanyCardData;
     // Another company's profile shows the same card with no way to edit it.
     readOnly?: boolean;
@@ -69,10 +69,10 @@ function Field({
     );
 }
 
-export default function CompanyCard({
+export default function ProviderCompanyCard({
     data,
     readOnly = false,
-}: CompanyCardProps) {
+}: ProviderCompanyCardProps) {
     return (
         <div className="flex h-[420px] w-full flex-col overflow-hidden rounded-popup border border-line bg-white p-8 shadow-sm md:flex-row md:gap-8">
             {/* Who the company is. Fixed rather than scrolled: it is short

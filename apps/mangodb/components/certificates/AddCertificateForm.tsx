@@ -14,13 +14,17 @@ import FileUpload from '../ui/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 
-type FormModalProps = {
+type AddCertificateFormProps = {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: CertificateData) => void;
 };
 
-export default function FormModal({ isOpen, onClose, onSave }: FormModalProps) {
+export default function AddCertificateForm({
+    isOpen,
+    onClose,
+    onSave,
+}: AddCertificateFormProps) {
     const [name, setName] = useState('');
     const [organize, setOrganize] = useState('');
     const [month, setMonth] = useState('');

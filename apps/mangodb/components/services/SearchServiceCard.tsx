@@ -8,7 +8,7 @@ function initials(name: string): string {
     return letters.join('') || '?';
 }
 
-export function SearchServiceCard({
+export default function SearchServiceCard({
     service,
     onViewDetail,
 }: {

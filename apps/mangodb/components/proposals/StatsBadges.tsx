@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Which proposals the page lists: all of them, or only the rejected ones. UI
 // state, not a wire type, so it lives here rather than in packages/shared.
 export type ViewMode = 'all' | 'rejected';
@@ -12,13 +10,13 @@ interface StatsBadgesProps {
     onSelectViewMode: (mode: ViewMode) => void;
 }
 
-export const StatsBadges: React.FC<StatsBadgesProps> = ({
+export default function StatsBadges({
     total,
     rejected,
     remain,
     viewMode,
     onSelectViewMode,
-}) => {
+}: StatsBadgesProps) {
     return (
         <div className="flex items-center gap-4 select-none">
             {/* Total Badge */}
@@ -52,4 +50,4 @@ export const StatsBadges: React.FC<StatsBadgesProps> = ({
             </div>
         </div>
     );
-};
+}

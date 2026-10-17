@@ -268,7 +268,7 @@ function PriceRange({
     );
 }
 
-export function SearchServicesFilterSidebar({
+export default function SearchServicesFilterSidebar({
     filters,
     options,
     optionsError,

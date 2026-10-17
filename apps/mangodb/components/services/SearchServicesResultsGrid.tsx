@@ -7,8 +7,8 @@ import type { SearchServicesMode } from '@/lib/useSearchServices';
 import Link from 'next/link';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import Pagination from '@/components/ui/Pagination';
-import { SearchServiceCard } from './SearchServiceCard';
-import { SearchServicesEmptyState } from './SearchServicesEmptyState';
+import SearchServiceCard from './SearchServiceCard';
+import SearchServicesEmptyState from './SearchServicesEmptyState';
 
 function CardSkeleton() {
     return (
@@ -50,7 +50,7 @@ function InfiniteScrollSentinel({
     );
 }
 
-export function SearchServicesResultsGrid({
+export default function SearchServicesResultsGrid({
     mode,
     items,
     status,

@@ -10,7 +10,7 @@ const ORDER_OPTIONS: { value: ServiceSortOrder; label: string }[] = [
     { value: 'priceDesc', label: 'Budget: high to low' },
 ];
 
-export function SearchServicesBar({
+export default function SearchServicesBar({
     onSearch,
     orderBy,
     onOrderByChange,

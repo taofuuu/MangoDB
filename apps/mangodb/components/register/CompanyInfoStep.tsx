@@ -26,7 +26,7 @@ export type CompanyInfoError = {
 
 type CompanyInfoStepProps = {
     value: CompanyInfo;
-    // The page's own state setter — see AccountStep for why it is updated
+    // The page's own state setter — see AccountInfoStep for why it is updated
     // directly rather than through a copy here.
     onChange: Dispatch<SetStateAction<CompanyInfo>>;
     errors?: CompanyInfoError;

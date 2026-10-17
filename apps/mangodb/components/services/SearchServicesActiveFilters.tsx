@@ -21,7 +21,7 @@ function describe(filters: SearchServicesFilters): string[] {
     return parts;
 }
 
-export function SearchServicesActiveFilters({
+export default function SearchServicesActiveFilters({
     filters,
 }: {
     filters: SearchServicesFilters;

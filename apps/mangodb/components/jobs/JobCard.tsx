@@ -24,7 +24,7 @@ import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { describeError } from '@/lib/api';
 import { closeJob } from '@/lib/jobs';
 
-interface JobBoxProps {
+interface JobCardProps {
     job: Job;
     isMyJobs: boolean;
     callFromSearchPage: boolean;
@@ -33,13 +33,13 @@ interface JobBoxProps {
     onClosed?: () => void;
 }
 
-export default function JobBox({
+export default function JobCard({
     job,
     isMyJobs,
     callFromSearchPage,
     onViewDetail,
     onClosed,
-}: JobBoxProps) {
+}: JobCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
@@ -227,7 +227,7 @@ export default function JobBox({
                             if (isMyJobs) {
                                 /*
                                  * My Jobs:
-                                 * fetch detail inside JobBox
+                                 * fetch detail inside JobCard
                                  */
                                 openDetail();
                             } else {

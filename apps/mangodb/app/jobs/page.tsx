@@ -5,7 +5,7 @@ import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import type { Job, Paginated } from '@mangodb/shared';
-import JobBox from '@/components/jobs/JobBox';
+import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { listJobs } from '@/lib/jobs';
@@ -540,7 +540,7 @@ export default function OtherJobPage() {
                                     ) : result && visibleJobs.length > 0 ? (
                                         <div className="flex flex-col gap-[3.87vh]">
                                             {visibleJobs.map((job) => (
-                                                <JobBox
+                                                <JobCard
                                                     key={job.jobId}
                                                     job={job}
                                                     isMyJobs={false}

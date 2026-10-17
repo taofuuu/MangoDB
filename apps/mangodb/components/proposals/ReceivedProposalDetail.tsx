@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from './StatsBadges';
 import Image from 'next/image';
@@ -8,7 +8,7 @@ import { Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 
-interface ProposalDetailProps {
+interface ReceivedProposalDetailProps {
     proposal: ReceivedProposal;
     viewMode: ViewMode;
     onClose: () => void;
@@ -16,13 +16,13 @@ interface ProposalDetailProps {
     onReject?: () => void;
 }
 
-export const ProposalDetail: React.FC<ProposalDetailProps> = ({
+export default function ReceivedProposalDetail({
     proposal,
     viewMode,
     onClose,
     onAccept,
     onReject,
-}) => {
+}: ReceivedProposalDetailProps) {
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
 
@@ -177,4 +177,4 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
             />
         </>
     );
-};
+}

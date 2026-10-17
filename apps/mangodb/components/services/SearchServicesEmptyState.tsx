@@ -1,4 +1,4 @@
-export function SearchServicesEmptyState() {
+export default function SearchServicesEmptyState() {
     return (
         <div className="flex flex-col items-center justify-center gap-1 py-24 text-center">
             <p className="type-lg text-ink">No services found</p>

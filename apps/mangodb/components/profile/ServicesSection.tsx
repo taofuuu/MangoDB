@@ -7,7 +7,7 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import JobDetailModal from '@/components/jobs/JobDetailModal';
-import { ServiceDetailPanel } from '@/components/services/ServiceDetailPanel';
+import ServiceDetailPanel from '@/components/services/ServiceDetailPanel';
 import ModalShell from '@/components/ui/ModalShell';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';

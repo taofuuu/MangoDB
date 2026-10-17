@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
 
-import JobBox from '@/components/jobs/JobBox';
+import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
@@ -68,7 +68,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      *
      * Used for Other Jobs / Company Jobs.
      *
-     * JobBox sends the complete job here.
+     * JobCard sends the complete job here.
      * The list already contains all job posting fields.
      * ============================================================
      */
@@ -148,7 +148,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      * Open Other Job detail
      *
-     * JobBox sends the complete job posting here.
+     * JobCard sends the complete job posting here.
      * No additional API request is needed.
      * ============================================================
      */
@@ -533,7 +533,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                         "
                                     >
                                         {result.items.map((job) => (
-                                            <JobBox
+                                            <JobCard
                                                 key={job.jobId}
                                                 job={job}
                                                 isMyJobs={isMyJobs}

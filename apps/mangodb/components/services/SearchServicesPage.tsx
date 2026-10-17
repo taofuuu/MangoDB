@@ -8,17 +8,17 @@ import {
     useSearchServices,
     type SearchServicesMode,
 } from '@/lib/useSearchServices';
-import { SearchServicesActiveFilters } from './SearchServicesActiveFilters';
-import { SearchServicesFilterSidebar } from './SearchServicesFilterSidebar';
-import { SearchServicesResultsGrid } from './SearchServicesResultsGrid';
-import { SearchServicesBar } from './SearchServicesBar';
-import { ServiceDetailPanel } from './ServiceDetailPanel';
+import SearchServicesActiveFilters from './SearchServicesActiveFilters';
+import SearchServicesFilterSidebar from './SearchServicesFilterSidebar';
+import SearchServicesResultsGrid from './SearchServicesResultsGrid';
+import SearchServicesBar from './SearchServicesBar';
+import ServiceDetailPanel from './ServiceDetailPanel';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // mode is a prop, not hardcoded, so whichever pagination style the final
 // design settles on (page numbers vs. infinite scroll) is a one-line change
 // where this component is rendered — see app/matching/page.tsx.
-export function SearchServicesPage({
+export default function SearchServicesPage({
     mode = 'pagination',
 }: {
     mode?: SearchServicesMode;

@@ -13,7 +13,7 @@ import CompanyInfoStep, {
 import AccountInfoStep, {
     AccountInfoError,
     type AccountInfo,
-} from '@/components/register/AccountStep';
+} from '@/components/register/AccountInfoStep';
 import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
 import FieldError from '@/components/ui/FieldError';
 import {

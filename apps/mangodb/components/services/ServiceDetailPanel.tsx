@@ -12,7 +12,7 @@ import { formatBudgetRange } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
 import type { ServiceSummary } from '@mangodb/shared';
 
-export function ServiceDetailPanel({
+export default function ServiceDetailPanel({
     service,
     onClose,
     titleId,

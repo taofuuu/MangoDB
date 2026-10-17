@@ -11,9 +11,9 @@ import {
 } from '@/lib/proposals';
 import { getJob } from '@/lib/jobs';
 import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
-import { StatsBadges } from '@/components/proposals/StatsBadges';
-import { ProposalCard } from '@/components/proposals/ProposalCard';
-import { ProposalDetail } from '@/components/proposals/ProposalDetail';
+import StatsBadges from '@/components/proposals/StatsBadges';
+import ReceivedProposalCard from '@/components/proposals/ReceivedProposalCard';
+import ReceivedProposalDetail from '@/components/proposals/ReceivedProposalDetail';
 import {
     NOT_SIGNED_IN,
     describeError,
@@ -264,7 +264,7 @@ export default function JobProposalsPage() {
                             {/* Scrollable card area */}
                             <div className="overflow-y-auto max-h-[70vh] pr-1 space-y-4 ">
                                 {pagedList.map((proposal) => (
-                                    <ProposalCard
+                                    <ReceivedProposalCard
                                         key={proposal.proposalId}
                                         proposal={proposal}
                                         isSelected={
@@ -324,7 +324,7 @@ export default function JobProposalsPage() {
                         {/* Right Column - Proposal Detail View */}
                         {selectedProposal && (
                             <div className="lg:col-span-8">
-                                <ProposalDetail
+                                <ReceivedProposalDetail
                                     proposal={selectedProposal}
                                     viewMode={viewMode}
                                     onClose={() => setSelectedId(null)}

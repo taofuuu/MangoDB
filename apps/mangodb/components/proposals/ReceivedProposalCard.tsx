@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from './StatsBadges';
@@ -7,7 +7,7 @@ import { Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 
-interface ProposalCardProps {
+interface ReceivedProposalCardProps {
     proposal: ReceivedProposal;
     isSelected: boolean;
     hasSelectedProposal: boolean;
@@ -16,14 +16,14 @@ interface ProposalCardProps {
     onReject: () => void;
 }
 
-export const ProposalCard: React.FC<ProposalCardProps> = ({
+export default function ReceivedProposalCard({
     proposal,
     isSelected,
     hasSelectedProposal,
     viewMode,
     onSelect,
     onReject,
-}) => {
+}: ReceivedProposalCardProps) {
     const [showRejectModal, setShowRejectModal] = useState(false);
 
     const companyName =
@@ -144,4 +144,4 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             />
         </>
     );
-};
+}

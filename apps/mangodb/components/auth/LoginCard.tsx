@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import DecorativePattern from './Decorate';
+import DecorativePattern from './DecorativePattern';
 import LoginForm from './LoginForm';
 
 export default function LoginCard() {
