@@ -1,6 +1,7 @@
 /*
- * Tests for GET /job-postings and GET /job-postings/:jobPostingId
- * (listJobPostings and getJobPosting in job-posting.controller.ts).
+ * Tests for GET /job-postings, GET /job-postings/:jobPostingId and
+ * POST /job-postings/:jobPostingId/close (listJobPostings, getJobPosting and
+ * closeJobPosting in job-posting.controller.ts).
  *
  * What they cover:
  * - Each job carries its owner's name (companyName), on the list and on detail.
@@ -12,6 +13,9 @@
  *   even when they are still OPEN (a soft delete does not close them).
  * - The keyword: each word matches on its own, and "%" is a plain character,
  *   not a wildcard that matches every job.
+ * - Close: the job turns CLOSED and its pending proposals are rejected.
+ *   Another company's job is 403 and a closed one is 409, and neither
+ *   changes anything.
  *
  * How:
  * - The test calls the controller functions directly with a fake req and a
@@ -152,14 +156,45 @@ function find(args: Args): Row[] {
     );
 }
 
+// Proposals on a job, for the close tests: only the fields close reads.
+type ProposalRow = { listingId: number; proposalStatus: string };
+let proposals: ProposalRow[] = [];
+
 const fakePrisma = {
     listing: {
         findUnique: async (args: Args) => find(args)[0] ?? null,
+        findUniqueOrThrow: async (args: Args) => {
+            const row = find(args)[0];
+            if (!row) throw new Error('fake prisma: no such row');
+            return row;
+        },
         findFirst: async (args: Args) => find(args)[0] ?? null,
         findMany: async (args: Args) => find(args),
         count: async (args: Args) => find({ where: args.where }).length,
+        updateMany: async (args: {
+            where: unknown;
+            data: { listingStatus: Row['listingStatus'] };
+        }) => {
+            const hits = rows.filter((r) => matches(r, args.where));
+            for (const r of hits) r.listingStatus = args.data.listingStatus;
+            return { count: hits.length };
+        },
     },
-    $transaction: (queries: Promise<unknown>[]) => Promise.all(queries),
+    proposal: {
+        updateMany: async (args: {
+            where: unknown;
+            data: { proposalStatus: string };
+        }) => {
+            const hits = proposals.filter((p) => matches(p, args.where));
+            for (const p of hits) p.proposalStatus = args.data.proposalStatus;
+            return { count: hits.length };
+        },
+    },
+    // Both forms Prisma has: a list of queries (the paged lists) or a
+    // callback given the client (close). No rollback in either.
+    $transaction: (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => (typeof work === 'function' ? work(fakePrisma) : Promise.all(work)),
 };
 
 function moduleUrl(specifier: string): string {
@@ -177,6 +212,7 @@ before(async () => {
 
 beforeEach(() => {
     rows = [];
+    proposals = [];
 });
 
 // Runs a controller as `callerCompanyId` and returns the JSON it sent,
@@ -338,5 +374,52 @@ describe('GET /job-postings', () => {
             body.items.map((j) => j.jobPostingId),
             [10],
         );
+    });
+});
+
+describe('POST /job-postings/:jobPostingId/close', () => {
+    function close(callerCompanyId: number, jobPostingId: number) {
+        return call(controller.closeJobPosting, callerCompanyId, {
+            params: { jobPostingId: String(jobPostingId) },
+        });
+    }
+
+    it('closes the job and rejects its pending proposals', async () => {
+        rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
+        proposals = [
+            { listingId: 1, proposalStatus: 'PENDING' },
+            { listingId: 1, proposalStatus: 'REJECTED' },
+            // Another job's proposal is not touched.
+            { listingId: 2, proposalStatus: 'PENDING' },
+        ];
+
+        const result = (await close(OWNER, 1)) as JobPosting;
+
+        assert.equal(result.listingStatus, 'CLOSED');
+        assert.deepEqual(
+            proposals.map((p) => p.proposalStatus),
+            ['REJECTED', 'REJECTED', 'PENDING'],
+        );
+    });
+
+    it("is 403 on another company's job and changes nothing", async () => {
+        rows = [job(1, OWNER, 'OPEN')];
+        proposals = [{ listingId: 1, proposalStatus: 'PENDING' }];
+
+        const result = await close(OTHER, 1);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 403);
+        assert.equal(rows[0]!.listingStatus, 'OPEN');
+        assert.equal(proposals[0]!.proposalStatus, 'PENDING');
+    });
+
+    it('is 409 on a job that is already closed', async () => {
+        rows = [job(1, OWNER, 'CLOSED')];
+
+        const result = await close(OWNER, 1);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 409);
     });
 });
