@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { formatDateOnly } from '@/lib/dates';
@@ -221,24 +222,37 @@ export default function JobCard({
                             : 'No job deadline provided.'}
                     </p>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (isMyJobs) {
-                                /*
-                                 * My Jobs:
-                                 * fetch detail inside JobCard
-                                 */
-                                openDetail();
-                            } else {
-                                /*
-                                 * Other Jobs:
-                                 * tell the parent which job was clicked.
-                                 */
-                                onViewDetail(job);
-                            }
-                        }}
-                        className="
+                    <div className="flex items-center gap-[0.5vw]">
+                        {/* Your own job, any status: a closed one still has
+                            the proposal that was accepted. */}
+                        {isMyJobs && (
+                            <Link
+                                href={`/jobs/${job.jobId}/proposals`}
+                                className="flex h-[4.07vh] w-[8.125vw] items-center justify-center gap-[0.5vw] rounded-[15px] border border-brand type-sm text-brand hover:bg-brand/10"
+                            >
+                                Proposals
+                                <ArrowRight size={15} />
+                            </Link>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isMyJobs) {
+                                    /*
+                                     * My Jobs:
+                                     * fetch detail inside JobCard
+                                     */
+                                    openDetail();
+                                } else {
+                                    /*
+                                     * Other Jobs:
+                                     * tell the parent which job was clicked.
+                                     */
+                                    onViewDetail(job);
+                                }
+                            }}
+                            className="
                             flex
                             h-[4.07vh]
                             w-[8.125vw]
@@ -252,10 +266,11 @@ export default function JobCard({
                             text-brand
                             hover:bg-brand/10
                         "
-                    >
-                        View Detail
-                        <ArrowRight size={15} />
-                    </button>
+                        >
+                            View Detail
+                            <ArrowRight size={15} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
