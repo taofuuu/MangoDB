@@ -2,7 +2,8 @@ import type { IdentityAvailability } from '@mangodb/shared';
 import { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
-import { uniqueViolationDetails } from './prisma-errors';
+import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
+import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
 
 export interface CompanyIdentityInput {
     username: string;
@@ -123,4 +124,17 @@ export async function assertCompanyIdentityAvailable(
             uniqueViolationDetails(taken),
         );
     }
+}
+
+// A username or email another company took between the availability check
+// and the write: the unique indexes are what actually enforce it. A 409 that
+// names each column, or null when err is something else.
+export function identityConflict(err: unknown): ApiError | null {
+    const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
+    return fields
+        ? ApiError.conflict(
+              'Username or email already registered',
+              uniqueViolationDetails(fields),
+          )
+        : null;
 }

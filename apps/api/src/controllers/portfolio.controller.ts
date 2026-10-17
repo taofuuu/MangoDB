@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import {
     assertPortfolioOwned,
+    portfolioLinkConflict,
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
@@ -11,14 +12,9 @@ import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 
 import { omitUndefined } from '../lib/objects';
-import {
-    isRecordNotFound,
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prisma-errors';
+import { isRecordNotFound, orNotFound } from '../lib/prisma-errors';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
-    PORTFOLIO_UNIQUE_FIELDS,
     createPortfolioSchema,
     portfolioIdParamSchema,
     updatePortfolioSchema,
@@ -79,14 +75,7 @@ export async function createPortfolio(
                 }),
         );
     } catch (err) {
-        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'This listing already has that portfolio link',
-                uniqueViolationDetails(fields),
-            );
-        }
-        throw err;
+        throw portfolioLinkConflict(err) ?? err;
     }
 
     res.status(201).json(toServicePortfolio(created));
@@ -150,15 +139,8 @@ export async function updatePortfolio(
               )
             : await save();
     } catch (err) {
-        // @@unique([listingId, portfolioLink]) — this listing already
-        // carries that link on some other row.
-        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'This listing already has that portfolio link',
-                uniqueViolationDetails(fields),
-            );
-        }
+        const conflict = portfolioLinkConflict(err);
+        if (conflict) throw conflict;
         // Deleted between assertPortfolioOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
@@ -181,21 +163,16 @@ export async function deletePortfolio(
 
     await assertPortfolioOwned(portfolioId, companyId);
 
-    let deleted;
-    try {
-        deleted = await prisma.servicePortfolio.delete({
+    const deleted = await orNotFound(
+        prisma.servicePortfolio.delete({
             where: {
                 portfolioId,
                 service: { listing: { companyId } },
             },
             select: { portfolioImage: true },
-        });
-    } catch (err) {
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Portfolio not found');
-        }
-        throw err;
-    }
+        }),
+        'Portfolio not found',
+    );
 
     // Best-effort cleanup of the image file: a failed remove logs but won't
     // block the 204, and the DB row is already gone either way.

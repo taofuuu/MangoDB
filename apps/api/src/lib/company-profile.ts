@@ -7,6 +7,7 @@ import type {
 import type { Prisma } from '../generated/prisma/client';
 import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
 import { ApiError } from './api-error';
+import { isUniqueViolation } from './prisma-errors';
 import { omitUndefined } from './objects';
 
 // A company in one line, the way a row it owns or sent shows it (conventions
@@ -188,4 +189,16 @@ export function companyProfileUpdateData(
             },
         }),
     };
+}
+
+// The one unique constraint a profile edit can reach: company_type is keyed on
+// (companyId, companyType), so a tag repeated inside one request collides with
+// itself. Username and email are not written here, so the code alone names
+// the constraint. A 409, or null when err is something else.
+export function companyTypeRepeat(err: unknown): ApiError | null {
+    return isUniqueViolation(err)
+        ? ApiError.conflict('Company types must not repeat', [
+              { field: 'companyType', message: 'Remove the duplicate tag' },
+          ])
+        : null;
 }

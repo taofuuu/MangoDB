@@ -14,12 +14,9 @@ import {
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import {
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prisma-errors';
-import {
     assertCompanyIdentityAvailable,
     checkCompanyIdentityAvailability,
+    identityConflict,
 } from '../lib/company-identity';
 import { companyProfileSelect, toCompanyProfile } from '../lib/company-profile';
 import { sendSession } from '../lib/session';
@@ -29,7 +26,6 @@ import {
     loginSchema,
     registerSchema,
 } from '../schemas/auth.schema';
-import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
 
 // Both login endpoints ask the same question, so they share the answer — and
 // share the defence. Both failures must look identical: same status, same body,
@@ -117,16 +113,8 @@ export async function register(req: Request, res: Response): Promise<void> {
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Two registrations can clear the check and race to here; the indexes
-        // are what actually enforce uniqueness.
-        const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'Username or email already registered',
-                uniqueViolationDetails(fields),
-            );
-        }
-        throw err;
+        // Two registrations can clear the check and race to here.
+        throw identityConflict(err) ?? err;
     }
 
     sendSession(res, toCompanyProfile(company), 201);

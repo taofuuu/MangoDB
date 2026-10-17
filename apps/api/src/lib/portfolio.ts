@@ -1,6 +1,8 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
+import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
+import { PORTFOLIO_UNIQUE_FIELDS } from '../schemas/portfolio.schema';
 import type { Prisma } from '../generated/prisma/client';
 
 // The columns a portfolio response may carry. Naming them keeps the response
@@ -72,4 +74,16 @@ export async function assertPortfolioOwned(
     }
 
     return { portfolioImage: portfolio.portfolioImage };
+}
+
+// @@unique([listingId, portfolioLink]): this service already carries that
+// link on another row. A 409, or null when err is something else.
+export function portfolioLinkConflict(err: unknown): ApiError | null {
+    const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
+    return fields
+        ? ApiError.conflict(
+              'This listing already has that portfolio link',
+              uniqueViolationDetails(fields),
+          )
+        : null;
 }

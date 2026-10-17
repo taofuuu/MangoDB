@@ -16,8 +16,9 @@ import { softDeleteCompany } from '../lib/company-deletion';
 import {
     PROVIDER_PROFILE_FIELDS,
     companyProfileUpdateData,
+    companyTypeRepeat,
 } from '../lib/company-profile';
-import { isRecordNotFound, isUniqueViolation } from '../lib/prisma-errors';
+import { isRecordNotFound } from '../lib/prisma-errors';
 import { hasOngoingProject } from '../lib/project-eligibility';
 import { escapeLike } from '../lib/search';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
@@ -174,15 +175,8 @@ export async function updateCompanyAccount(
             select: adminCompanyDetailSelect,
         });
     } catch (err) {
-        // Only one unique constraint is reachable from here: companyType is
-        // keyed on (companyId, companyType), so a tag repeated inside one
-        // request collides with itself. Username and email are not editable
-        // here at all, and nothing else this writes is unique.
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Company types must not repeat', [
-                { field: 'companyType', message: 'Remove the duplicate tag' },
-            ]);
-        }
+        const repeat = companyTypeRepeat(err);
+        if (repeat) throw repeat;
         // The company was soft-deleted between the lookup above and this
         // write, so the where clause no longer matches. That is the only way
         // to get here: no request path hard-deletes a company, the check

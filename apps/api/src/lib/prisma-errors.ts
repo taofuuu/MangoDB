@@ -1,4 +1,4 @@
-import type { ApiErrorDetail } from './api-error';
+import { ApiError, type ApiErrorDetail } from './api-error';
 
 type PrismaError = {
     code?: unknown;
@@ -55,4 +55,18 @@ export function uniqueViolationDetails(fields: string[]): ApiErrorDetail[] {
 export function isRecordNotFound(err: unknown): boolean {
     if (typeof err !== 'object' || err === null) return false;
     return (err as PrismaError).code === 'P2025';
+}
+
+// Runs a write that targets one row and turns P2025 (the row is gone) into a
+// 404. Anything else is rethrown unchanged.
+export async function orNotFound<T>(
+    write: Promise<T>,
+    message: string,
+): Promise<T> {
+    try {
+        return await write;
+    } catch (err) {
+        if (isRecordNotFound(err)) throw ApiError.notFound(message);
+        throw err;
+    }
 }

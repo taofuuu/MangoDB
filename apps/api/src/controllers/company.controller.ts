@@ -11,24 +11,23 @@ import { softDeleteCompany } from '../lib/company-deletion';
 import {
     companyProfileSelect,
     companyProfileUpdateData,
+    companyTypeRepeat,
     editsProviderFields,
     publicCompanyProfileSelect,
     toCompanyProfile,
     toPublicCompanyProfile,
 } from '../lib/company-profile';
-import { assertCompanyIdentityAvailable } from '../lib/company-identity';
+import {
+    assertCompanyIdentityAvailable,
+    identityConflict,
+} from '../lib/company-identity';
 import {
     companyKeywordWhere,
     companySummarySelect,
     toCompanySummary,
 } from '../lib/company-search';
 import { omitUndefined } from '../lib/objects';
-import {
-    isRecordNotFound,
-    isUniqueViolation,
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prisma-errors';
+import { isRecordNotFound } from '../lib/prisma-errors';
 import { hasOngoingProject } from '../lib/project-eligibility';
 import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
@@ -36,7 +35,6 @@ import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
-    COMPANY_UNIQUE_FIELDS,
     changeCredentialsSchema,
     companyIdParamSchema,
     companyListQuerySchema,
@@ -113,16 +111,8 @@ export async function updateMyProfile(
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Only one unique constraint is still reachable from here: companyType
-        // is keyed on (companyId, companyType), so a tag repeated inside one
-        // request collides with itself. Username and email moved to
-        // changeMyCredentials, and nothing else this writes is unique. So the
-        // code alone names the constraint — no need to match the index name.
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Company types must not repeat', [
-                { field: 'companyType', message: 'Remove the duplicate tag' },
-            ]);
-        }
+        const repeat = companyTypeRepeat(err);
+        if (repeat) throw repeat;
         // The company was deleted mid-session — its token is still valid. A
         // missing provider row cannot land here any more: the nested write
         // upserts it.
@@ -168,15 +158,9 @@ export async function changeMyCredentials(
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Another company can take the name between the check and the write;
-        // the indexes are what actually enforce uniqueness.
-        const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'Username or email already registered',
-                uniqueViolationDetails(fields),
-            );
-        }
+        // Another company can take the name between the check and the write.
+        const conflict = identityConflict(err);
+        if (conflict) throw conflict;
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company not found');
         }

@@ -6,7 +6,7 @@ import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { splitWords } from '../lib/search';
-import { isRecordNotFound } from '../lib/prisma-errors';
+import { orNotFound } from '../lib/prisma-errors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
@@ -105,8 +105,8 @@ export async function updateService(
     const techStackCreates = techNames?.map((techStackName) => ({
         techStack: { connect: { techStackName } },
     }));
-    try {
-        const updated = await prisma.listing.update({
+    const updated = await orNotFound(
+        prisma.listing.update({
             // Recheck owner and type in the write in case the row changed
             // between the authorization read and this operation.
             where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
@@ -136,15 +136,11 @@ export async function updateService(
                     : {}),
             },
             select: serviceSelect,
-        });
+        }),
+        'Service listing not found',
+    );
 
-        res.json(toService(updated));
-    } catch (err) {
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Service listing not found');
-        }
-        throw err;
-    }
+    res.json(toService(updated));
 }
 
 // Everything in the query but the keyword and paging, typed from the schema
@@ -404,17 +400,13 @@ export async function deleteService(
         select: { portfolioImage: true },
     });
 
-    try {
-        await prisma.listing.delete({
+    // A 404 if it was deleted between the ownership check and here.
+    await orNotFound(
+        prisma.listing.delete({
             where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
-        });
-    } catch (err) {
-        // Deleted between assertServiceOwned and here.
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Service listing not found');
-        }
-        throw err;
-    }
+        }),
+        'Service listing not found',
+    );
 
     // Best-effort cleanup of every portfolio image file: a failed remove
     // logs but won't block the 204, and the DB rows are already gone either
