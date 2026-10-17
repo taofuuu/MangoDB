@@ -1,6 +1,11 @@
-import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
+import type {
+    CompanyBrief,
+    Job,
+    ListingStatus,
+    ListingType,
+} from '@mangodb/shared';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
-import { containsWord } from './search';
+import { containsWord, splitWords } from './search';
 import { toDateOnly } from './dates';
 import type { Prisma } from '../generated/prisma/client';
 
@@ -76,4 +81,34 @@ export function toJob(row: JobRow): Job {
 export function jobKeywordWhere(word: string): Prisma.ListingWhereInput {
     const contains = containsWord(word);
     return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
+}
+
+// US2-7 / US3-4. Which jobs a list may return to the caller:
+// - Only jobs, and only of companies not soft-deleted (search is discovery).
+// - status, companyId and each keyword word narrow it.
+// - An OPEN job is visible to every company; a closed one only to its owner.
+export function jobSearchWhere(
+    filters: {
+        status?: ListingStatus | undefined;
+        companyId?: number | undefined;
+        q?: string | undefined;
+    },
+    callerId: number,
+): Prisma.ListingWhereInput {
+    const { status, companyId, q } = filters;
+    return {
+        AND: [
+            { listingType: 'JOB' satisfies ListingType },
+            ...(status ? [{ listingStatus: status }] : []),
+            ...(companyId ? [{ companyId }] : []),
+            { company: { deletedAt: null } },
+            ...splitWords(q).map(jobKeywordWhere),
+            {
+                OR: [
+                    { listingStatus: 'OPEN' satisfies ListingStatus },
+                    { companyId: callerId },
+                ],
+            },
+        ],
+    };
 }

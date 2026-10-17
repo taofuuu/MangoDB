@@ -4,14 +4,16 @@
 import type {
     CompanyBrief,
     ListingStatus,
+    ListingType,
     Service,
     ServiceFilterOptions,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
-import { containsWord } from './search';
+import { containsWord, splitWords } from './search';
 import type { Prisma } from '../generated/prisma/client';
+import type { ServiceListQuery } from '../schemas/service.schema';
 
 // The status a new service is created with. The allowed listing_status values
 // live in packages/shared (LISTING_STATUSES, ADR 0010).
@@ -145,6 +147,125 @@ export function serviceKeywordWhere(word: string): Prisma.ListingWhereInput {
         OR: [
             ...serviceTextMatches(word),
             { company: { companyName: containsWord(word) } },
+        ],
+    };
+}
+
+// Everything in the query but the keyword and paging, typed from the schema
+// so a new filter is added in one place.
+export type ServiceFilters = Omit<
+    ServiceListQuery,
+    'q' | 'orderBy' | 'page' | 'pageSize'
+>;
+
+// US3-2. Picking two names in one group finds services with either of them,
+// so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
+// so a filter for "react" still finds a service that stored "React".
+export function serviceFilterWhere({
+    category = [],
+    techStack = [],
+    minPrice,
+    maxPrice,
+    companyId,
+}: ServiceFilters): Prisma.ListingWhereInput[] {
+    const where: Prisma.ListingWhereInput[] = [];
+    // Only narrows: the OPEN and not-deleted rules in serviceSearchWhere still
+    // apply, so a deleted company's id gives an empty page, not a 404.
+    if (companyId !== undefined) {
+        where.push({ companyId });
+    }
+    if (category.length > 0) {
+        where.push({
+            listingCategory: {
+                some: {
+                    category: {
+                        categoryName: { in: category, mode: 'insensitive' },
+                    },
+                },
+            },
+        });
+    }
+    if (techStack.length > 0) {
+        // ADR 0009: the service's own stack, not its company's.
+        where.push({
+            service: {
+                serviceTechStack: {
+                    some: {
+                        techStack: {
+                            techStackName: {
+                                in: techStack,
+                                mode: 'insensitive',
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+    // Price keeps a service whose range overlaps the slider's, so a deal is
+    // possible somewhere inside both. A one-sided range is open-ended only on
+    // its missing side; a service with no price at all cannot match a filter.
+    if (maxPrice !== undefined) {
+        // Its lowest price fits under the slider's max.
+        where.push({ minBudget: { lte: maxPrice } });
+    }
+    if (minPrice !== undefined) {
+        // Its highest price reaches the slider's min.
+        where.push({
+            OR: [
+                { maxBudget: { gte: minPrice } },
+                // A declared minimum with no upper limit can still reach the
+                // requested threshold. An entirely unpriced service cannot.
+                {
+                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
+                },
+            ],
+        });
+    }
+    return where;
+}
+
+// Ordering is applied in the database, before pagination. Price ordering uses
+// the start of the service's range consistently in both directions. Missing
+// prices sort last because "Contact for pricing" must not be presented as the
+// cheapest option. listingId keeps pages stable when values tie.
+export function serviceOrderBy(
+    orderBy: ServiceListQuery['orderBy'],
+): Prisma.ListingOrderByWithRelationInput[] {
+    switch (orderBy) {
+        case 'priceAsc':
+            return [
+                { minBudget: { sort: 'asc', nulls: 'last' } },
+                { maxBudget: { sort: 'asc', nulls: 'last' } },
+                { listingId: 'desc' },
+            ];
+        case 'priceDesc':
+            return [
+                { minBudget: { sort: 'desc', nulls: 'last' } },
+                { maxBudget: { sort: 'desc', nulls: 'first' } },
+                { listingId: 'desc' },
+            ];
+        case 'newest':
+            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
+    }
+}
+
+// US3-1. Which services the search may return. Search is discovery, so
+// services of soft-deleted companies stay hidden: a soft delete leaves their
+// listings OPEN, so this filter is what does it.
+export function serviceSearchWhere({
+    q,
+    ...filters
+}: ServiceFilters & { q?: string | undefined }): Prisma.ListingWhereInput {
+    return {
+        listingType: 'SERVICE' satisfies ListingType,
+        listingStatus: 'OPEN' satisfies ListingStatus,
+        company: { deletedAt: null },
+        // T3.2.6. Keyword words and filters share one AND list, so a service
+        // must pass all of them. Two AND keys would let one replace the other.
+        AND: [
+            ...splitWords(q).map(serviceKeywordWhere),
+            ...serviceFilterWhere(filters),
         ],
     };
 }

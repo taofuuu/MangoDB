@@ -17,7 +17,6 @@ import {
     closeOpenListing,
     rejectPendingProposals,
 } from '../lib/listing';
-import { splitWords } from '../lib/search';
 import {
     createJobSchema,
     jobIdParamSchema,
@@ -25,7 +24,7 @@ import {
     MIN_BUDGET_EXCEEDS_MAX,
     updateJobSchema,
 } from '../schemas/job.schema';
-import { jobKeywordWhere, jobSelect, toJob } from '../lib/job';
+import { jobSearchWhere, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + job atomically.
@@ -69,39 +68,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
         jobListQuerySchema,
         req.query,
     );
-    const callerCompanyId = req.auth!.companyId;
-    const words = splitWords(q);
-
-    const where: Prisma.ListingWhereInput = {
-        AND: [
-            // 1. Base rule: only query job postings, never services
-            { listingType: 'JOB' },
-
-            // 2. Query filters
-            ...(status
-                ? [
-                      {
-                          listingStatus: status,
-                      },
-                  ]
-                : []),
-            ...(companyId ? [{ companyId }] : []),
-            // Search is discovery, so soft-deleted companies' postings stay hidden
-            { company: { deletedAt: null } },
-            ...words.map(jobKeywordWhere),
-
-            // 3. Visibility rules: callers can only see OPEN postings
-            // or postings they created themselves
-            {
-                OR: [
-                    {
-                        listingStatus: 'OPEN' satisfies ListingStatus,
-                    },
-                    { companyId: callerCompanyId },
-                ],
-            },
-        ],
-    };
+    const where = jobSearchWhere({ status, companyId, q }, req.auth!.companyId);
     const [totalItems, postings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
