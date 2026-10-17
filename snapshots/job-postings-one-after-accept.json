@@ -1,0 +1,20 @@
+{
+    "request": "GET /job-postings/<job_posting_id>",
+    "status": 200,
+    "body": {
+        "categories": [],
+        "categoryIds": [],
+        "companyId": 143,
+        "companyName": "Snapshot Seed Receiver",
+        "createdAt": "<timestamp>",
+        "deadline": null,
+        "duration": null,
+        "jobPostingId": "<job_posting_id>",
+        "listingDesc": "created by scripts/snapshot-api.sh",
+        "listingStatus": "CLOSED",
+        "listingTitle": "Snapshot Probe job posting to accept",
+        "locationPref": null,
+        "maxBudget": 100000,
+        "minBudget": null
+    }
+}

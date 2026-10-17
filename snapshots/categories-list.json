@@ -1,0 +1,42 @@
+{
+    "request": "GET /categories",
+    "status": 200,
+    "body": [
+        {
+            "catId": 5,
+            "catName": "Artificial Intelligence (AI)"
+        },
+        {
+            "catId": 8,
+            "catName": "Digital Marketing & SEO"
+        },
+        {
+            "catId": 7,
+            "catName": "ERP & CRM Systems"
+        },
+        {
+            "catId": 3,
+            "catName": "Hardware & IoT"
+        },
+        {
+            "catId": 4,
+            "catName": "IT Consulting & Security"
+        },
+        {
+            "catId": 2,
+            "catName": "Mobile App Development"
+        },
+        {
+            "catId": 12,
+            "catName": "Other"
+        },
+        {
+            "catId": 6,
+            "catName": "UI/UX Design"
+        },
+        {
+            "catId": 1,
+            "catName": "Web Development"
+        }
+    ]
+}

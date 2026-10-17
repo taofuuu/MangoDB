@@ -9,8 +9,9 @@
 #
 # Then:  git diff snapshots/
 #
-# There is no test runner in this project. Prettier, ESLint and tsc cannot tell
-# you that a response field changed name on the wire — this can.
+# npm test checks logic against a fake database. Neither it nor Prettier,
+# ESLint or tsc can tell you that a response field changed name on the wire —
+# this can.
 #
 # Needs: a running API, a seeded database, and scripts/.env.snapshot
 # (copy scripts/.env.snapshot.example). See docs/refactor/phase-0-safety-net.md.
@@ -81,6 +82,10 @@ NEW_PORTFOLIO_ID=""
 NEW_CERT_ID=""
 NEW_JOB_POSTING_ID=""
 NEW_PROPOSAL_ID=""
+# Accept (US2-11): a probe posting with one pending proposal. Accepting it
+# creates a project, which the cleanup has to delete before the posting.
+ACCEPT_POSTING_ID=""
+ACCEPT_PROPOSAL_ID=""
 PROVIDER_ID=""
 RECEIVER_ID=""
 ADMIN_ID=""
@@ -148,7 +153,13 @@ cleanup() {
     # shellcheck disable=SC2086
     listing_ids="$(echo $NEW_JOB_POSTING_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
-        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID $DELETED_JOB_POSTING_ID)"
+        $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_POSTING_ID $DELETED_JOB_POSTING_ID \
+        $ACCEPT_POSTING_ID)"
+    # project.proposal_id is ON DELETE RESTRICT, so the accepted proposal's
+    # project goes first, or deleting its posting fails.
+    if [ -n "$ACCEPT_PROPOSAL_ID" ]; then
+        run_db "prisma.project.deleteMany({ where: { proposalId: $ACCEPT_PROPOSAL_ID } })"
+    fi
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
     fi
@@ -264,6 +275,7 @@ echo
 
 echo "public"
 snap health GET /health
+snap categories-list GET /categories
 snap portfolios-list GET /portfolios
 PORTFOLIO_ID="$(jget 0.portfolio_id)"
 snap error-unauthorized GET /companies/me
@@ -299,13 +311,30 @@ TOKEN_ADMIN="$(jget accessToken)"
 require_token "$TOKEN_ADMIN" "the admin" auth-admin-login
 ADMIN_ID="$(jget company.company_id)"
 
+# An email of this run's own, not the provider's: failed sign-ins count per
+# email (10 in 15 minutes), and this must not spend the provider's. The answer
+# is the same either way, so an unknown email cannot be told from a wrong
+# password.
 snap error-login-wrong-password POST /auth/login \
     -H 'Content-Type: application/json' \
-    -d "{\"email\":\"$PROVIDER_EMAIL\",\"password\":\"definitely-not-it\"}"
+    -d "{\"email\":\"${RUN}@example.test\",\"password\":\"definitely-not-it\"}"
 
+# This one needs the real admin, so it does count one failure against the
+# admin's email per run. A full run takes minutes, so ten in 15 cannot happen.
 snap error-login-admin-at-company-door POST /auth/login \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
+
+# The login limit: ten wrong passwords, then the eleventh is the 429. Its own
+# email again, so no real account is locked out.
+LIMIT_EMAIL="${RUN}_limit@example.test"
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    api POST /auth/login -H 'Content-Type: application/json' \
+        -d "{\"email\":\"$LIMIT_EMAIL\",\"password\":\"wrong\"}" >/dev/null
+done
+snap error-login-too-many-requests POST /auth/login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$LIMIT_EMAIL\",\"password\":\"wrong\"}"
 
 # ---------------------------------------------------------------------------
 # 3. The caller's own account
@@ -1038,6 +1067,9 @@ snap error-services-one-closed-not-found GET "/services/$NEW_SERVICE_ID" \
 snap services-one-closed-owner GET "/services/$NEW_SERVICE_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
+# The provider's own list with no filter: OPEN and CLOSED together.
+snap services-mine GET /services/mine -H "$(bearer "$TOKEN_PROVIDER")"
+
 # The status filter on the provider's own list. Seeded services are all OPEN,
 # so the closed probe is the only CLOSED one the provider has.
 snap services-mine-closed GET "/services/mine?status=CLOSED" \
@@ -1355,6 +1387,61 @@ snap error-job-postings-close-rejected-proposal POST "/proposals/$CLOSE_PROPOSAL
 
 # Closing twice is a state conflict, not a second success.
 snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 16. Accept a proposal (US2-11)
+# ---------------------------------------------------------------------------
+
+echo
+echo "accept proposals"
+# A fresh posting with one pending proposal: section 8's proposal was
+# rejected in section 12, and section 15's posting is closed. Created with
+# api, not snap: both calls have their own snapshots above.
+api POST /job-postings -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Snapshot Probe job posting to accept","listingDesc":"created by scripts/snapshot-api.sh","maxBudget":100000}' >/dev/null
+ACCEPT_POSTING_ID="$(jget jobPostingId)"
+if [ -z "$ACCEPT_POSTING_ID" ]; then
+    echo "could not create the accept probe posting:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "job_posting_id=$ACCEPT_POSTING_ID")
+
+api POST "/job-postings/$ACCEPT_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":95000,"proposalTerms":"Accepted by the snapshot run.","duration":3}' >/dev/null
+ACCEPT_PROPOSAL_ID="$(jget proposalId)"
+if [ -z "$ACCEPT_PROPOSAL_ID" ]; then
+    echo "could not create the accept probe proposal:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "proposal_id=$ACCEPT_PROPOSAL_ID")
+
+snap error-proposals-accept-unauthorized POST "/proposals/$ACCEPT_PROPOSAL_ID/accept"
+
+# The provider sent the proposal but does not own the posting.
+snap error-proposals-accept-forbidden POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# 201 with the new project.
+snap proposals-accept POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+SUBS+=(--id "proj_id=$(jget projId)")
+# The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
+# purpose, so this one snapshot names today, and only here: a run-wide rule
+# would also catch any other date that happens to be today.
+node "$HELPER" normalize --request "$LAST_REQUEST" --status "$LAST_STATUS" \
+    "${SUBS[@]}" --text "today=$(date -u +%F)" <"$BODY" >"$OUT_DIR/proposals-accept.json"
+
+# Accepting closed the posting.
+snap job-postings-one-after-accept GET "/job-postings/$ACCEPT_POSTING_ID" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# A second accept is a state conflict, not a second project.
+snap error-proposals-accept-again POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo
