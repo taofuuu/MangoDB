@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type { Prisma } from '../generated/prisma/client';
 import type { ListingStatus, Paginated, ServiceSummary } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { escapeLike } from '../lib/search';
@@ -322,8 +323,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             // listingId breaks ties, so two services created in the same
             // instant never swap places between pages.
             orderBy: serviceOrderBy(orderBy),
@@ -333,12 +333,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
 
     const body: Paginated<ServiceSummary> = {
         items: listings.map(toServiceSummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);

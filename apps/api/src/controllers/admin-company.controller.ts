@@ -3,6 +3,7 @@ import type { CompanyAccountSummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from '../lib/api-error';
 import {
@@ -37,7 +38,6 @@ export async function listCompanyAccounts(
         companyAccountListQuerySchema,
         req.query,
     );
-    const skip = (page - 1) * pageSize;
     const keyword = q ? escapeLike(q) : undefined;
     // schema.prisma's rule for deletedAt: a discovery query filters it out.
     // includeDeleted is the opt-out, for an admin auditing removed accounts.
@@ -72,9 +72,8 @@ export async function listCompanyAccounts(
     const [totalItems, companies] = await prisma.$transaction([
         prisma.company.count({ where }),
         prisma.company.findMany({
-            skip,
+            ...pageArgs({ page, pageSize }),
             where,
-            take: pageSize,
             orderBy: [{ companyName: 'asc' }, { companyId: 'asc' }],
             select: adminCompanyListSelect,
         }),
@@ -82,12 +81,7 @@ export async function listCompanyAccounts(
 
     const body: Paginated<CompanyAccountSummary> = {
         items: companies.map(toCompanyAccountSummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);

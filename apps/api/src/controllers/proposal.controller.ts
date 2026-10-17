@@ -6,6 +6,7 @@ import type {
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
 import { isUniqueViolation } from '../lib/prisma-errors';
 import { parseParams, parseBody, parseQuery } from '../middleware/validate';
@@ -148,8 +149,7 @@ export async function listMyProposals(
         prisma.proposal.count({ where }),
         prisma.proposal.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
             select: sentProposalSelect,
         }),
@@ -157,12 +157,7 @@ export async function listMyProposals(
 
     const body: Paginated<SentProposal> = {
         items: rows.map(toSentProposal),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);

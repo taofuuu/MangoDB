@@ -7,6 +7,7 @@ import type {
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
@@ -124,19 +125,13 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
         prisma.listing.findMany({
             where,
             orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             select: jobSelect,
         }),
     ]);
     const body: Paginated<Job> = {
         items: postings.map(toJob),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
     res.json(body);
 }
@@ -161,19 +156,13 @@ export async function listMyJobs(req: Request, res: Response): Promise<void> {
         prisma.listing.findMany({
             where,
             orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             select: jobSelect,
         }),
     ]);
     const body: Paginated<Job> = {
         items: postings.map(toJob),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
     res.json(body);
 }

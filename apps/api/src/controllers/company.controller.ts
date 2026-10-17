@@ -5,6 +5,7 @@ import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
 import { softDeleteCompany } from '../lib/company-deletion';
 import {
@@ -374,8 +375,7 @@ export async function listCompanies(
         prisma.company.count({ where }),
         prisma.company.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             // companyId breaks ties, so two same-named companies never swap
             // places between pages.
             orderBy: [
@@ -388,12 +388,7 @@ export async function listCompanies(
 
     const body: Paginated<CompanySummary> = {
         items: companies.map(toCompanySummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);
