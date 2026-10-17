@@ -1,8 +1,8 @@
 import type { IdentityAvailability } from '@mangodb/shared';
 import { Prisma } from '../generated/prisma/client';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { prisma } from './prisma';
-import { uniqueViolationDetails } from './prismaErrors';
+import { uniqueViolationDetails } from './prisma-errors';
 
 export interface CompanyIdentityInput {
     username: string;

@@ -8,8 +8,8 @@ import type {
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
-import { ApiError } from '../lib/ApiError';
-import { assertCategoriesExist } from '../lib/categories';
+import { ApiError } from '../lib/api-error';
+import { assertCategoriesExist } from '../lib/category';
 import { omitUndefined } from '../lib/objects';
 import { escapeLike } from '../lib/search';
 import {

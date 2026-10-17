@@ -1,4 +1,4 @@
-import type { ApiErrorDetail } from './ApiError';
+import type { ApiErrorDetail } from './api-error';
 
 type PrismaError = {
     code?: unknown;

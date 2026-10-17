@@ -6,8 +6,8 @@ import type {
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { isUniqueViolation } from '../lib/prismaErrors';
+import { ApiError } from '../lib/api-error';
+import { isUniqueViolation } from '../lib/prisma-errors';
 import { parseParams, parseBody, parseQuery } from '../middleware/validate';
 import {
     createProposalSchema,

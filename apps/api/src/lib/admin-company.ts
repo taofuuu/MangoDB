@@ -3,7 +3,7 @@ import type {
     CompanyAccountDetail,
     CompanyAccountSummary,
 } from '@mangodb/shared';
-import { companyProfileSelect, toCompanyProfile } from './companyProfile';
+import { companyProfileSelect, toCompanyProfile } from './company-profile';
 
 const ratingSelect = {
     proposal: {

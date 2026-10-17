@@ -12,16 +12,16 @@ import {
     ownsReceiverRow,
 } from '../auth/roles';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     uniqueViolationDetails,
     uniqueViolationFields,
-} from '../lib/prismaErrors';
+} from '../lib/prisma-errors';
 import {
     assertCompanyIdentityAvailable,
     checkCompanyIdentityAvailability,
-} from '../lib/companyIdentity';
-import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+} from '../lib/company-identity';
+import { companyProfileSelect, toCompanyProfile } from '../lib/company-profile';
 import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import {

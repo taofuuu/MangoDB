@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { supabaseCredentials } from '../env';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 
 const BUCKETS = {
     CERTIFICATE: 'certificate',

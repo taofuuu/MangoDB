@@ -1,4 +1,4 @@
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { prisma } from './prisma';
 
 // Listing create and edit endpoints share this check so an unknown category

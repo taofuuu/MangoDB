@@ -1,6 +1,6 @@
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { prisma } from './prisma';
-import { companyBriefSelect, toCompanyBrief } from './companyProfile';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import type {
     CompanyBrief,
     ListingStatus,

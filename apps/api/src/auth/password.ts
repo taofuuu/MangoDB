@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import { prisma } from '../lib/prisma';
 
 // Cost factor. Raising this slows every login, so change it deliberately.

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import multer, { MulterError } from 'multer';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 

@@ -54,7 +54,7 @@ export const updatePortfolioSchema = z
     })
     .partial();
 
-// The columns a unique index can reject. prismaErrors uses this to decide which
+// The columns a unique index can reject. lib/prisma-errors.ts uses this to decide which
 // constraint names are worth reporting back to the caller.
 export const PORTFOLIO_UNIQUE_FIELDS = ['portfolioLink'] as const;
 

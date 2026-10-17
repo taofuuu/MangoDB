@@ -51,7 +51,7 @@ export const companyFields = {
     warrantyPolicy: z.string().trim().max(2000),
 } as const;
 
-// The columns a unique index can reject. prismaErrors uses this to decide which
+// The columns a unique index can reject. lib/prisma-errors.ts uses this to decide which
 // constraint names are worth reporting back to the caller.
 export const COMPANY_UNIQUE_FIELDS = ['username', 'email'] as const;
 

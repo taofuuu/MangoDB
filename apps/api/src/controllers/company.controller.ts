@@ -5,8 +5,8 @@ import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { softDeleteCompany } from '../lib/companyDeletion';
+import { ApiError } from '../lib/api-error';
+import { softDeleteCompany } from '../lib/company-deletion';
 import {
     companyProfileSelect,
     companyProfileUpdateData,
@@ -14,17 +14,17 @@ import {
     publicCompanyProfileSelect,
     toCompanyProfile,
     toPublicCompanyProfile,
-} from '../lib/companyProfile';
-import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
-import { companySummarySelect, toCompanySummary } from '../lib/companySearch';
+} from '../lib/company-profile';
+import { assertCompanyIdentityAvailable } from '../lib/company-identity';
+import { companySummarySelect, toCompanySummary } from '../lib/company-search';
 import { omitUndefined } from '../lib/objects';
 import {
     isRecordNotFound,
     isUniqueViolation,
     uniqueViolationDetails,
     uniqueViolationFields,
-} from '../lib/prismaErrors';
-import { hasOngoingProject } from '../lib/projectEligibility';
+} from '../lib/prisma-errors';
+import { hasOngoingProject } from '../lib/project-eligibility';
 import { escapeLike } from '../lib/search';
 import { sendSession } from '../lib/session';
 import {

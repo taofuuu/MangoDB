@@ -1,5 +1,5 @@
 import type { AccountType, UserRole } from '@mangodb/shared';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 // accountType is what the company signed up as; role is what its token says.
 // The two are the same idea in different cases, except BOTH.

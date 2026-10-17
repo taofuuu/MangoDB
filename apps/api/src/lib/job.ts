@@ -1,7 +1,7 @@
 import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
 import { prisma } from './prisma';
-import { ApiError } from './ApiError';
-import { companyBriefSelect, toCompanyBrief } from './companyProfile';
+import { ApiError } from './api-error';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
 // wire response deliberate rather than exposing whatever the table happens to have.

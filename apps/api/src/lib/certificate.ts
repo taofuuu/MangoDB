@@ -1,5 +1,5 @@
 import type { Certificate } from '@mangodb/shared';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { prisma } from './prisma';
 
 // The columns a certificate response may carry, and the shape it ships in.

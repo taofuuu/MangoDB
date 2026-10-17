@@ -9,8 +9,8 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
-import { ApiError } from './ApiError';
-import { companyBriefSelect, toCompanyBrief } from './companyProfile';
+import { ApiError } from './api-error';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
 
 // The status a new service is created with. The allowed listing_status values
 // live in packages/shared (LISTING_STATUSES, ADR 0010).

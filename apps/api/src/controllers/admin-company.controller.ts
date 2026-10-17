@@ -4,20 +4,20 @@ import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '../generated/prisma/client';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     adminCompanyDetailSelect,
     adminCompanyListSelect,
     toCompanyAccountDetail,
     toCompanyAccountSummary,
-} from '../lib/adminCompany';
-import { softDeleteCompany } from '../lib/companyDeletion';
+} from '../lib/admin-company';
+import { softDeleteCompany } from '../lib/company-deletion';
 import {
     PROVIDER_PROFILE_FIELDS,
     companyProfileUpdateData,
-} from '../lib/companyProfile';
-import { isRecordNotFound, isUniqueViolation } from '../lib/prismaErrors';
-import { hasOngoingProject } from '../lib/projectEligibility';
+} from '../lib/company-profile';
+import { isRecordNotFound, isUniqueViolation } from '../lib/prisma-errors';
+import { hasOngoingProject } from '../lib/project-eligibility';
 import { escapeLike } from '../lib/search';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {

@@ -6,7 +6,7 @@ import type {
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { omitUndefined } from './objects';
 
 // A company in one line, the way a row it owns or sent shows it (conventions

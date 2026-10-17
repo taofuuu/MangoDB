@@ -37,7 +37,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type { Job, Paginated } from '@mangodb/shared';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 // One listing row as the database would hold it, with its company joined in.
 type Row = {

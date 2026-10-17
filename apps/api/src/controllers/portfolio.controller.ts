@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     assertPortfolioOwned,
     portfolioSelect,
@@ -19,7 +19,7 @@ import {
     isRecordNotFound,
     uniqueViolationDetails,
     uniqueViolationFields,
-} from '../lib/prismaErrors';
+} from '../lib/prisma-errors';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     PORTFOLIO_UNIQUE_FIELDS,

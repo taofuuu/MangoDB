@@ -19,7 +19,7 @@ import {
     removeFromStorageByUrl,
     BUCKETS,
 } from '../lib/storage';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     assertCertificateOwned,
     certificateSelect,

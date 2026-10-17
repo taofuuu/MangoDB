@@ -27,7 +27,7 @@ import { before, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { Prisma } from '../generated/prisma/client';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 
 function moduleUrl(specifier: string): string {
     return pathToFileURL(require.resolve(specifier)).href;

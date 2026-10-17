@@ -1,6 +1,6 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { prisma } from './prisma';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 
 // The columns a portfolio response may carry. Naming them keeps the response
 // shape deliberate rather than "whatever the row has", and gives POST the

@@ -34,7 +34,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type { Proposal, ProposalStatusCounts } from '@mangodb/shared';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 type Row = { senderId: number; proposalStatus: string };
 

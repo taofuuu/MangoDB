@@ -2,10 +2,10 @@ import type { Request, Response } from 'express';
 import type { Prisma } from '../generated/prisma/client';
 import type { ListingStatus, Paginated, ServiceSummary } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { assertCategoriesExist } from '../lib/categories';
+import { ApiError } from '../lib/api-error';
+import { assertCategoriesExist } from '../lib/category';
 import { escapeLike } from '../lib/search';
-import { isRecordNotFound } from '../lib/prismaErrors';
+import { isRecordNotFound } from '../lib/prisma-errors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
