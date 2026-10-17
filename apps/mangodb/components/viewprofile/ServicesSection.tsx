@@ -91,7 +91,7 @@ export default function ServicesSection({
               );
 
         // Only a profile with a Job Listing tab asks for its jobs; GET
-        // /job-postings/mine is receiver-only anyway.
+        // /jobs/mine is receiver-only anyway.
         const loadJobs: Promise<Job[]> = !profileListingTabs(
             accountType,
         ).includes('jobs')
@@ -275,7 +275,7 @@ export default function ServicesSection({
                             href={
                                 readOnly
                                     ? `/profile/${companyId}/jobs`
-                                    : '/job-postings/mine'
+                                    : '/jobs/mine'
                             }
                             className="type-xs text-brand hover:underline font-medium"
                         >

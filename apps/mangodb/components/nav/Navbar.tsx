@@ -20,7 +20,7 @@ const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
 const NAV_LINKS = [
-    { href: '/job-postings', label: 'Search jobs', shortLabel: 'Jobs' },
+    { href: '/jobs', label: 'Search jobs', shortLabel: 'Jobs' },
     {
         href: '/services',
         label: 'Search services',

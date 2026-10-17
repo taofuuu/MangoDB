@@ -22,7 +22,7 @@ function CannotEdit({ message }: { message: string }) {
         <div className="flex flex-col min-h-screen items-center justify-center bg-surface px-6 gap-4">
             <p className="type-sm text-danger text-center">{message}</p>
             <Link
-                href="/job-postings/mine"
+                href="/jobs/mine"
                 className="rounded-button bg-brand px-4 py-2 type-sm text-surface-white hover:bg-brand-dark"
             >
                 Back to My Jobs
@@ -32,7 +32,7 @@ function CannotEdit({ message }: { message: string }) {
 }
 
 export default function EditJobPage() {
-    const jobId = parseId(useParams().jobPostingId);
+    const jobId = parseId(useParams().jobId);
     const me = useMyCompany('receiver');
     const companyId = me.status === 'ready' ? me.company.companyId : null;
     const [result, setResult] = useState<LoadResult | null>(null);
@@ -108,7 +108,7 @@ export default function EditJobPage() {
                 <div className="mt-[1px] ml-[7vw] flex w-full justify-center">
                     <JobForm
                         key={current.job.jobId}
-                        jobPostingId={current.job.jobId}
+                        jobId={current.job.jobId}
                         initialJob={current.job}
                     />
                 </div>

@@ -83,12 +83,12 @@ const ROUTES = [
         detail: 'US3-1 — search and filter service listings. Calls GET /services.',
     },
     {
-        href: '/job-postings',
+        href: '/jobs',
         title: 'View and search for job',
         detail: 'Epic 3: ทำเกิน ;-;',
     },
     {
-        href: '/job-postings/mine',
+        href: '/jobs/mine',
         title: 'View own job posting',
         detail: 'US2-7',
     },

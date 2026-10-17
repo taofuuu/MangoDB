@@ -13,8 +13,8 @@ import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // A receiver's job postings. Another company's profile (readOnly) shows only
-// OPEN ones, from GET /job-postings?companyId=. Your own shows every status,
-// from GET /job-postings/mine, so closed ones stay in view (US2-2).
+// OPEN ones, from GET /jobs?companyId=. Your own shows every status,
+// from GET /jobs/mine, so closed ones stay in view (US2-2).
 export default function JobListing({
     companyId,
     readOnly = false,
@@ -140,9 +140,7 @@ export default function JobListing({
             <div className="mt-3 text-right">
                 <Link
                     href={
-                        readOnly
-                            ? `/profile/${companyId}/jobs`
-                            : '/job-postings/mine'
+                        readOnly ? `/profile/${companyId}/jobs` : '/jobs/mine'
                     }
                     className="type-xs text-brand hover:underline font-medium"
                 >

@@ -215,7 +215,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     );
 
     const closePostSuccess = () => {
-        router.replace('/job-postings/mine', { scroll: false });
+        router.replace('/jobs/mine', { scroll: false });
     };
 
     /*
@@ -402,7 +402,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                         {/* Add Job */}
                         <Button
                             type="button"
-                            onClick={() => router.push('/job-postings/create')}
+                            onClick={() => router.push('/jobs/create')}
                             className="flex h-[4.17vh] w-[8.96vw] items-center justify-center gap-[0.42vw] "
                         >
                             <FilePlus size={18} aria-hidden="true" />
@@ -544,7 +544,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                                 onClosed={() => {
                                                     retryList();
                                                     router.replace(
-                                                        '/job-postings/mine?success=closed',
+                                                        '/jobs/mine?success=closed',
                                                         { scroll: false },
                                                     );
                                                 }}

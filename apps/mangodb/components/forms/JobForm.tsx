@@ -57,11 +57,11 @@ type JobErrors = Partial<
 >;
 
 type JobFormProps = {
-    jobPostingId?: number;
+    jobId?: number;
     initialJob?: Job;
 };
 
-export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
+export default function JobForm({ jobId, initialJob }: JobFormProps) {
     const [listingTitle, setListingTitle] = useState(
         initialJob?.listingTitle ?? '',
     );
@@ -197,7 +197,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
         try {
             setIsLoading(true);
 
-            if (jobPostingId !== undefined && initialJob) {
+            if (jobId !== undefined && initialJob) {
                 // Edit mode: send only fields that changed.
                 const data: UpdateJobRequest = {};
 
@@ -244,8 +244,8 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                     return;
                 }
 
-                await updateJob(jobPostingId, data);
-                router.push('/job-postings/mine?success=updated');
+                await updateJob(jobId, data);
+                router.push('/jobs/mine?success=updated');
             } else {
                 // Create mode: preserve the existing behavior.
                 const data: CreateJobRequest = {
@@ -260,7 +260,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                 };
 
                 await createJob(data);
-                router.push('/job-postings/mine?success=posted');
+                router.push('/jobs/mine?success=posted');
             }
         } catch (cause: unknown) {
             const { fields, message } = toFormErrors(cause, JOB_FIELDS);
@@ -408,11 +408,11 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                     type="submit"
                     isLoading={isLoading}
                     loadingLabel={
-                        jobPostingId !== undefined ? 'Saving...' : 'Posting...'
+                        jobId !== undefined ? 'Saving...' : 'Posting...'
                     }
                     className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light disabled:opacity-50"
                 >
-                    {jobPostingId !== undefined ? 'Save Changes' : 'Post'}
+                    {jobId !== undefined ? 'Save Changes' : 'Post'}
                 </Button>
             </div>
         </form>
