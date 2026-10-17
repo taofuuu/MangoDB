@@ -31,7 +31,7 @@ export const jobSelect = {
     },
 } as const satisfies Prisma.ListingSelect;
 
-export type SelectedJob = {
+export type JobRow = {
     listingId: number;
     companyId: number | null;
     company: CompanyBrief | null;
@@ -54,7 +54,7 @@ export type SelectedJob = {
 
 // DTO function that shapes the Prisma row into the shared wire Job format.
 // Converts @db.Date to YYYY-MM-DD string per docs/conventions.md section 10.
-export function toJob(row: SelectedJob): Job {
+export function toJob(row: JobRow): Job {
     return {
         jobId: row.listingId,
         company: toCompanyBrief(row.company),

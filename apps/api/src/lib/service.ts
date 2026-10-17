@@ -90,7 +90,7 @@ export const serviceSelect = {
     company: { select: companyBriefSelect },
 } as const satisfies Prisma.ListingSelect;
 
-type SelectedService = {
+type ServiceRow = {
     listingId: number;
     companyId: number | null;
     listingTitle: string;
@@ -103,7 +103,7 @@ type SelectedService = {
     company: CompanyBrief | null;
 };
 
-export function toService(row: SelectedService): Service {
+export function toService(row: ServiceRow): Service {
     return {
         // listing_id is the shared key under every listing; on the wire it
         // takes the resource's name, the way a job's is jobId.

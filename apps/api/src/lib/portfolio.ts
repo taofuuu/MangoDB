@@ -19,7 +19,7 @@ export const portfolioSelect = {
     portfolioLink: true,
 } as const satisfies Prisma.ServicePortfolioSelect;
 
-type SelectedPortfolio = {
+type PortfolioRow = {
     portfolioId: number;
     listingId: number;
     portfolioName: string;
@@ -34,7 +34,7 @@ type SelectedPortfolio = {
 // goes through here instead of handing the raw Prisma result to res.json.
 // @db.Date columns come back at UTC midnight, so slicing the ISO string is a
 // plain YYYY-MM-DD with no timezone drift.
-export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
+export function toServicePortfolio(row: PortfolioRow): ServicePortfolio {
     return {
         portfolioId: row.portfolioId,
         // The service's listing_id, named for the resource (GET /services/:serviceId).

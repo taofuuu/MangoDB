@@ -28,7 +28,7 @@ export const proposalSelect = {
     createdAt: true,
 } as const satisfies Prisma.ProposalSelect;
 
-export type SelectedProposal = {
+export type ProposalRow = {
     proposalId: number;
     listingId: number;
     senderId: number;
@@ -41,7 +41,7 @@ export type SelectedProposal = {
 
 // DTO function that shapes the Prisma row into the shared wire Proposal format.
 // Converts Prisma Decimal to number and Date to ISO-8601 UTC string.
-export function toProposal(row: SelectedProposal): Proposal {
+export function toProposal(row: ProposalRow): Proposal {
     return {
         proposalId: row.proposalId,
         listingId: row.listingId,
@@ -62,13 +62,11 @@ export const receivedProposalSelect = {
     sender: { select: companyBriefSelect },
 } as const satisfies Prisma.ProposalSelect;
 
-export type SelectedReceivedProposal = SelectedProposal & {
+export type ReceivedProposalRow = ProposalRow & {
     sender: CompanyBrief;
 };
 
-export function toReceivedProposal(
-    row: SelectedReceivedProposal,
-): ReceivedProposal {
+export function toReceivedProposal(row: ReceivedProposalRow): ReceivedProposal {
     return {
         ...toProposal(row),
         sender: toCompanyBrief(row.sender),
@@ -88,14 +86,14 @@ export const sentProposalSelect = {
     },
 } as const satisfies Prisma.ProposalSelect;
 
-export type SelectedSentProposal = SelectedProposal & {
+export type SentProposalRow = ProposalRow & {
     listing: {
         listingTitle: string;
         company: CompanyBrief | null;
     };
 };
 
-export function toSentProposal(row: SelectedSentProposal): SentProposal {
+export function toSentProposal(row: SentProposalRow): SentProposal {
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,
