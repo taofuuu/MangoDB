@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import multer, { MulterError } from 'multer';
 import { ApiError } from '../lib/api-error';
+import { IMAGE_EXTENSIONS } from '../lib/storage';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -8,10 +9,7 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_BYTES },
     fileFilter: (_req, file, cb) => {
-        // Allowlist, not image/*: image/svg+xml is a document the browser
-        // will execute scripts from when the public URL is opened directly.
-        const allowed = ['image/png', 'image/jpeg', 'image/webp'];
-        if (allowed.includes(file.mimetype)) {
+        if (Object.hasOwn(IMAGE_EXTENSIONS, file.mimetype)) {
             cb(null, true);
         } else {
             cb(

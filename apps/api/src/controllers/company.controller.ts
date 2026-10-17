@@ -32,12 +32,8 @@ import {
 import { hasOngoingProject } from '../lib/project-eligibility';
 import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
-import {
-    BUCKETS,
-    removeFromStorage,
-    removeFromStorageByUrl,
-    uploadToStorage,
-} from '../lib/storage';
+import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
+import { saveWithUpload } from '../lib/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     COMPANY_UNIQUE_FIELDS,
@@ -229,30 +225,20 @@ export async function updateMyPhoto(
         throw ApiError.notFound('Company not found');
     }
 
-    const uploaded = await uploadToStorage(
+    // The new photo replaces the old one, and saveWithUpload removes
+    // whichever file ends up unreferenced.
+    const company = await saveWithUpload(
         req.file,
         BUCKETS.PROFILE,
         'companies',
+        (companyPhoto) =>
+            prisma.company.update({
+                where: { companyId },
+                data: { companyPhoto },
+                select: companyProfileSelect,
+            }),
+        existing.companyPhoto,
     );
-
-    let company;
-    try {
-        company = await prisma.company.update({
-            where: { companyId },
-            data: { companyPhoto: uploaded.url },
-            select: companyProfileSelect,
-        });
-    } catch (err) {
-        // The row never pointed at it, so the object is an orphan.
-        await removeFromStorage(uploaded.path, BUCKETS.PROFILE);
-        throw err;
-    }
-
-    // The row points at the replacement now. Best-effort, matching the
-    // certificate and portfolio writes.
-    if (existing.companyPhoto) {
-        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
-    }
 
     res.json(toCompanyProfile(company));
 }

@@ -4,10 +4,8 @@
  * What they cover:
  * - The image is uploaded before the row is written. If the write fails, the
  *   uploaded image is removed again, so storage is not left holding a file no
- *   row points at. The same upload, write, roll back steps are copied in four
- *   more places (certificates, portfolio edit, company photo), which the
- *   round-2 refactor merges into one helper; this test is what proves the
- *   merged helper still rolls back.
+ *   row points at. Every upload goes through saveWithUpload (lib/upload.ts),
+ *   and lib/storage is the only thing mocked, so this runs the real helper.
  * - A saved row keeps its image.
  *
  * How:

@@ -8,7 +8,7 @@ const BUCKETS = {
     PROFILE: 'profile',
 } as const;
 
-type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
+export type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 let client: SupabaseClient | undefined;
 
@@ -27,7 +27,10 @@ export type UploadedImage = {
     url: string;
 };
 
-const EXTENSIONS: Record<string, string> = {
+// The image types an upload may be, each with the extension its stored file
+// gets. An allowlist, not image/*: image/svg+xml is a document the browser
+// will run scripts from when its public URL is opened directly.
+export const IMAGE_EXTENSIONS: Record<string, string> = {
     'image/png': 'png',
     'image/jpeg': 'jpg',
     'image/webp': 'webp',
@@ -38,7 +41,7 @@ export async function uploadToStorage(
     bucket: Bucket,
     folder: string,
 ): Promise<UploadedImage> {
-    const extension = EXTENSIONS[file.mimetype] ?? 'bin';
+    const extension = IMAGE_EXTENSIONS[file.mimetype] ?? 'bin';
     const random = Math.random().toString(36).substring(2);
 
     const path = `${folder}/${Date.now()}-${random}.${extension}`;

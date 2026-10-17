@@ -13,12 +13,8 @@ import {
     updateCertificateSchema,
 } from '../schemas/certificate.schema';
 
-import {
-    uploadToStorage,
-    removeFromStorage,
-    removeFromStorageByUrl,
-    BUCKETS,
-} from '../lib/storage';
+import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
+import { saveWithUpload } from '../lib/upload';
 import { ApiError } from '../lib/api-error';
 import {
     assertCertificateOwned,
@@ -35,23 +31,10 @@ export async function createCertificate(
 
     const body = parseBody(createCertificateSchema, req.body);
 
-    let certImage: string | null = null;
-    let certImagePath: string | null = null;
-
-    // Upload certificate image if one was provided
-    if (req.file) {
-        const uploaded = await uploadToStorage(
-            req.file,
-            BUCKETS.CERTIFICATE,
-            'certificates',
-        );
-
-        certImage = uploaded.url;
-        certImagePath = uploaded.path;
-    }
-
-    try {
-        const certificate = await prisma.certificate.create({
+    // The image is optional. With one, saveWithUpload removes it again if
+    // the row cannot be created.
+    const save = (certImage: string | null) =>
+        prisma.certificate.create({
             data: {
                 providerId,
 
@@ -72,16 +55,16 @@ export async function createCertificate(
             select: certificateSelect,
         });
 
-        res.status(201).json(toCertificate(certificate));
-        return;
-    } catch (error) {
-        // Database creation failed, so remove the uploaded file
-        if (certImagePath) {
-            await removeFromStorage(certImagePath, BUCKETS.CERTIFICATE);
-        }
+    const certificate = req.file
+        ? await saveWithUpload(
+              req.file,
+              BUCKETS.CERTIFICATE,
+              'certificates',
+              save,
+          )
+        : await save(null);
 
-        throw error;
-    }
+    res.status(201).json(toCertificate(certificate));
 }
 
 export async function listMyCertificates(
@@ -141,34 +124,27 @@ export async function updateCertificate(
     }
 
     // Multer keeps the file in memory; storage is not touched until ownership
-    // and the dates are known good. If the update later fails, this is removed.
-    const replacement = req.file
-        ? await uploadToStorage(req.file, BUCKETS.CERTIFICATE, 'certificates')
-        : null;
-
-    let updatedCertificate;
-    try {
-        updatedCertificate = await prisma.certificate.update({
+    // and the dates are known good. A replacement image takes the old one's
+    // place, and saveWithUpload removes whichever file ends up unreferenced.
+    const save = (certImage?: string) =>
+        prisma.certificate.update({
             where: { certificateId },
             data: {
                 ...omitUndefined(body),
-                ...(replacement ? { certImage: replacement.url } : {}),
+                ...(certImage ? { certImage } : {}),
             },
             select: certificateSelect,
         });
-    } catch (error) {
-        if (replacement) {
-            await removeFromStorage(replacement.path, BUCKETS.CERTIFICATE);
-        }
 
-        throw error;
-    }
-
-    // The row points at the replacement now, so the old object is unreferenced.
-    // Cleanup is best-effort, matching certificate deletion.
-    if (replacement && existing.certImage) {
-        await removeFromStorageByUrl(existing.certImage, BUCKETS.CERTIFICATE);
-    }
+    const updatedCertificate = req.file
+        ? await saveWithUpload(
+              req.file,
+              BUCKETS.CERTIFICATE,
+              'certificates',
+              save,
+              existing.certImage,
+          )
+        : await save();
 
     res.json(toCertificate(updatedCertificate));
 }
