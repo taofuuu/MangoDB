@@ -9,7 +9,7 @@ import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import { formatBudgetRange } from '@/lib/money';
 import { listServicePortfolios } from '@/lib/portfolios';
-import type { ServiceSummary } from '@/lib/services';
+import type { ServiceSummary } from '@mangodb/shared';
 
 const portfolioDateFormatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',

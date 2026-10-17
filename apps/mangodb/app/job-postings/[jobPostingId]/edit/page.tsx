@@ -12,7 +12,7 @@ import { isReceiverAccount } from '@/lib/roles';
 import { redirectToUnauthorized } from '@/lib/session';
 import Link from 'next/link';
 
-import type { JobPosting } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 
 type EditJobPageProps = {
     params: Promise<{
@@ -26,7 +26,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
     const isValidJobPostingId =
         Number.isSafeInteger(jobPostingId) && jobPostingId > 0;
 
-    const [job, setJob] = useState<JobPosting | null>(null);
+    const [job, setJob] = useState<Job | null>(null);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isRedirecting, setIsRedirecting] = useState(false);
@@ -57,7 +57,7 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 if (cancelled) return;
 
                 // Only the company that owns the posting can edit it.
-                if (posting.companyId !== profile.companyId) {
+                if (posting.company.companyId !== profile.companyId) {
                     setLoadError(
                         'You are not authorized to edit this job posting.',
                     );
@@ -169,8 +169,8 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 <div className="mt-[1px] ml-[7vw] flex w-full justify-center">
                     {job && (
                         <JobForm
-                            key={job.jobPostingId}
-                            jobPostingId={job.jobPostingId}
+                            key={job.jobId}
+                            jobPostingId={job.jobId}
                             initialJob={job}
                         />
                     )}

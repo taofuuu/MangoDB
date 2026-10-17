@@ -1,11 +1,12 @@
 import type {
     CreateProposalRequest,
-    PostingProposal,
+    Paginated,
     Project,
     Proposal,
-    ProposalListResponse,
     ProposalStatus,
     ProposalStatusCounts,
+    ReceivedProposal,
+    SentProposal,
 } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { cachedGet, invalidateAfter } from '@/lib/apiCache';
@@ -15,13 +16,13 @@ import { PROPOSAL_PAGE_SIZE } from './pagination';
 // certificate and portfolio helpers. The caller supplies the selected job
 // posting; the API derives the Provider from the signed-in session.
 export function createProposal(
-    jobPostingId: number,
+    jobId: number,
     body: CreateProposalRequest,
 ): Promise<Proposal> {
     // A new proposal changes /proposals/mine. Job postings carry no proposal
     // data, so nothing else needs clearing.
     return invalidateAfter(
-        apiFetch<Proposal>(`/job-postings/${jobPostingId}/proposals`, {
+        apiFetch<Proposal>(`/jobs/${jobId}/proposals`, {
             method: 'POST',
             body: JSON.stringify(body),
         }),
@@ -31,14 +32,11 @@ export function createProposal(
 
 // US2-10. Fetch submitted proposals for a given job posting listing ID
 export function getSubmittedProposals(
-    jobPostingId: number,
-): Promise<PostingProposal[]> {
-    return apiFetch<PostingProposal[]>(
-        `/job-postings/${jobPostingId}/proposals`,
-        {
-            method: 'GET',
-        },
-    );
+    jobId: number,
+): Promise<ReceivedProposal[]> {
+    return apiFetch<ReceivedProposal[]>(`/jobs/${jobId}/proposals`, {
+        method: 'GET',
+    });
 }
 
 // Accept a proposal (POST /proposals/:proposalId/accept)
@@ -63,7 +61,7 @@ export function listMyProposals(
     page: number = 1,
     pageSize: number = PROPOSAL_PAGE_SIZE,
     options?: GetMyProposalsOptions,
-): Promise<ProposalListResponse> {
+): Promise<Paginated<SentProposal>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -74,7 +72,7 @@ export function listMyProposals(
     }
 
     const path = `/proposals/mine?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<ProposalListResponse>(path));
+    return cachedGet(path, () => apiFetch<Paginated<SentProposal>>(path));
 }
 
 // The "dd/mm/yyyy hh:mm" stamp on a proposal card, in the viewer's local time.

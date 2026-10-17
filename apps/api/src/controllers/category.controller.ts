@@ -15,12 +15,5 @@ export async function listCategories(
         },
     });
 
-    // The wire still says catId / catName until round 2's Phase 2 flip;
-    // Prisma already says categoryId / categoryName.
-    res.json(
-        categories.map((c) => ({
-            catId: c.categoryId,
-            catName: c.categoryName,
-        })),
-    );
+    res.json(categories);
 }

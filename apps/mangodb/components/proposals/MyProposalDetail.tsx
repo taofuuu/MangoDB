@@ -1,13 +1,13 @@
 'use client';
 
-import type { ProviderProposal } from '@mangodb/shared';
+import type { SentProposal } from '@mangodb/shared';
 import { CalendarDays, Clock, Tag, X } from 'lucide-react';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import { formatProposalDateTime } from '@/lib/proposals';
 import ProposalStatusBadge from './ProposalStatusBadge';
 
 type MyProposalDetailProps = {
-    proposal: ProviderProposal;
+    proposal: SentProposal;
     onClose: () => void;
 };
 
@@ -25,7 +25,7 @@ export default function MyProposalDetail({
     proposal,
     onClose,
 }: MyProposalDetailProps) {
-    const receiverName = proposal.receiver?.companyName ?? 'Unknown company';
+    const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
 
     return (
         <section
@@ -35,7 +35,7 @@ export default function MyProposalDetail({
             <div className="flex items-start gap-4">
                 <CompanyAvatar
                     name={receiverName}
-                    photoUrl={proposal.receiver?.companyPhoto ?? null}
+                    photoUrl={proposal.recipient?.companyPhoto ?? null}
                     size={56}
                 />
                 <div className="min-w-0 flex-1">

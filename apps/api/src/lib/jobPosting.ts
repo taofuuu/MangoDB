@@ -1,6 +1,7 @@
-import type { JobPosting, ListingStatus } from '@mangodb/shared';
+import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
+import { companyBriefSelect, toCompanyBrief } from './companyProfile';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
 // wire response deliberate rather than exposing whatever the table happens to have.
@@ -13,11 +14,7 @@ export const jobPostingSelect = {
     maxBudget: true,
     listingStatus: true,
     createdAt: true,
-    company: {
-        select: {
-            companyName: true,
-        },
-    },
+    company: { select: companyBriefSelect },
     job: {
         select: {
             locationPref: true,
@@ -36,9 +33,7 @@ export const jobPostingSelect = {
 export type SelectedJobPosting = {
     listingId: number;
     companyId: number | null;
-    company: {
-        companyName: string;
-    } | null;
+    company: CompanyBrief | null;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -56,13 +51,12 @@ export type SelectedJobPosting = {
     }[];
 };
 
-// DTO function that shapes the Prisma row into the shared wire JobPosting format.
+// DTO function that shapes the Prisma row into the shared wire Job format.
 // Converts @db.Date to YYYY-MM-DD string per docs/conventions.md section 10.
-export function toJobPosting(row: SelectedJobPosting): JobPosting {
+export function toJobPosting(row: SelectedJobPosting): Job {
     return {
-        jobPostingId: row.listingId,
-        companyId: row.companyId!,
-        companyName: row.company?.companyName ?? '',
+        jobId: row.listingId,
+        company: toCompanyBrief(row.company),
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,
@@ -81,12 +75,12 @@ export function toJobPosting(row: SelectedJobPosting): JobPosting {
 
 // Ownership verification helper for edit and close: 404 and 403 stay separate
 // because an open job posting is discoverable in public listings, so hiding it
-// buys nothing. GET /job-postings/:id is stricter: a non-open posting is 404 to
+// buys nothing. GET /jobs/:jobId is stricter: a non-open posting is 404 to
 // anyone but its owner (job-posting.controller.ts, getJobPosting).
 // Returns the row it read, so edit can check the status and budgets without a
 // second query.
 export async function assertJobPostingOwned(
-    jobPostingId: number,
+    jobId: number,
     companyId: number,
 ): Promise<{
     listingStatus: string;
@@ -94,7 +88,7 @@ export async function assertJobPostingOwned(
     maxBudget: number | null;
 }> {
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobId },
         select: {
             companyId: true,
             listingType: true,

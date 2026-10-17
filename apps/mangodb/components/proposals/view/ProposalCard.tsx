@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import type { PostingProposal, ViewMode } from '@mangodb/shared';
+import type { ReceivedProposal } from '@mangodb/shared';
+import type { ViewMode } from './StatsBadges';
 import RejectProposalModal from './RejectProposalModal';
 import { Clock, Calendar, Tag } from 'lucide-react';
 
 interface ProposalCardProps {
-    proposal: PostingProposal;
+    proposal: ReceivedProposal;
     isSelected: boolean;
     hasSelectedProposal: boolean;
     viewMode: ViewMode;
@@ -24,8 +25,8 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
     const [showRejectModal, setShowRejectModal] = useState(false);
 
     const companyName =
-        proposal.provider?.companyName ??
-        `Provider #${proposal.provider?.companyId}`;
+        proposal.sender?.companyName ??
+        `Provider #${proposal.sender?.companyId}`;
 
     return (
         <>
@@ -46,11 +47,11 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-[#437788] flex-shrink-0 flex items-center justify-center text-white overflow-hidden">
-                            {proposal.provider?.companyPhoto ? (
+                            {proposal.sender?.companyPhoto ? (
                                 <div className="relative w-full h-full overflow-hidden">
                                     <Image
-                                        src={proposal.provider.companyPhoto}
-                                        alt={proposal.provider.companyName}
+                                        src={proposal.sender.companyPhoto}
+                                        alt={proposal.sender.companyName}
                                         fill
                                         sizes="(max-width: 768px) 100vw, 50vw"
                                         className="object-cover"

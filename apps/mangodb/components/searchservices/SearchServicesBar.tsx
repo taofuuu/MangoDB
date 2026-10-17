@@ -2,12 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
-import type { SearchServicesOrder } from '@mangodb/shared';
+import type { ServiceSortOrder } from '@mangodb/shared';
 
-const ORDER_OPTIONS: { value: SearchServicesOrder; label: string }[] = [
+const ORDER_OPTIONS: { value: ServiceSortOrder; label: string }[] = [
     { value: 'newest', label: 'Newest' },
-    { value: 'price-asc', label: 'Budget: low to high' },
-    { value: 'price-desc', label: 'Budget: high to low' },
+    { value: 'priceAsc', label: 'Budget: low to high' },
+    { value: 'priceDesc', label: 'Budget: high to low' },
 ];
 
 export function SearchServicesBar({
@@ -16,8 +16,8 @@ export function SearchServicesBar({
     onOrderByChange,
 }: {
     onSearch: (q: string) => void;
-    orderBy: SearchServicesOrder;
-    onOrderByChange: (orderBy: SearchServicesOrder) => void;
+    orderBy: ServiceSortOrder;
+    onOrderByChange: (orderBy: ServiceSortOrder) => void;
 }) {
     const [value, setValue] = useState('');
     const [orderMenuOpen, setOrderMenuOpen] = useState(false);

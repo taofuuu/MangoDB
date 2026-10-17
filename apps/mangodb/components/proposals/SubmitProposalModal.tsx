@@ -2,7 +2,7 @@
 
 import { useCallback, useId, useState } from 'react';
 import { MailCheck, X } from 'lucide-react';
-import type { JobPosting, Proposal } from '@mangodb/shared';
+import type { Job, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 import { formatBudgetRange } from '@/lib/money';
@@ -13,12 +13,12 @@ import {
     type ProposalErrors,
 } from '@/lib/validation';
 
-// JobPosting is the shared API shape. companyName is optional display-only
+// Job is the shared API shape. companyName is optional display-only
 // information because the job-posting endpoint currently returns companyId,
 // not the name. T2.7 may supply it when that view already has it.
 export type ProposalJobPosting = Pick<
-    JobPosting,
-    | 'jobPostingId'
+    Job,
+    | 'jobId'
     | 'listingTitle'
     | 'minBudget'
     | 'maxBudget'
@@ -216,7 +216,7 @@ export default function SubmitProposalModal({
 
         setIsSubmitting(true);
         try {
-            const proposal = await createProposal(jobPosting.jobPostingId, {
+            const proposal = await createProposal(jobPosting.jobId, {
                 proposalTerms: draft.proposalTerms,
                 proposalBudget: Number(draft.proposalBudget),
                 duration: Number(draft.estimatedDurationMonths),

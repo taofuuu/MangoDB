@@ -1,5 +1,5 @@
 {
-    "request": "POST /job-postings/2147483647/proposals",
+    "request": "POST /jobs/2147483647/proposals",
     "status": 404,
     "body": {
         "error": {

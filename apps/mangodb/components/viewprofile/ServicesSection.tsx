@@ -1,7 +1,11 @@
 'use client';
 import React, { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
-import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
+import type {
+    Job,
+    PublicCompanyProfile,
+    ServiceSummary,
+} from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
 import ModalShell from '@/components/ui/ModalShell';
@@ -16,7 +20,6 @@ import {
     listCompanyServices,
     listMyServices,
     toServiceSummary,
-    type ServiceSummary,
 } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -61,7 +64,7 @@ export default function ServicesSection({
     // null until the list answers, so "Loading…" shows instead of a
     // momentary "No services yet."
     const [services, setServices] = useState<ServiceRow[] | null>(null);
-    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
+    const [jobs, setJobs] = useState<Job[] | null>(null);
     // One per tab, so a failed services load does not hide the jobs.
     const [servicesError, setServicesError] = useState<string | null>(null);
     const [jobsError, setJobsError] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export default function ServicesSection({
         useState<ServiceSummary | null>(null);
     // Why another company's service could not be opened (T2.7.24).
     const [serviceError, setServiceError] = useState<string | null>(null);
-    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const serviceTitleId = useId();
 
     useEffect(() => {
@@ -83,18 +86,14 @@ export default function ServicesSection({
             : Promise.all([listMyServices(), listCategories()]).then(
                   ([mine, categories]) =>
                       mine.map((listing) => ({
-                          summary: toServiceSummary(listing, categories, {
-                              companyId,
-                              companyName,
-                              companyPhoto,
-                          }),
+                          summary: toServiceSummary(listing, categories),
                           closed: listing.listingStatus === 'CLOSED',
                       })),
               );
 
         // Only a profile with a Job Listing tab asks for its jobs; GET
         // /job-postings/mine is receiver-only anyway.
-        const loadJobs: Promise<JobPosting[]> = !profileListingTabs(
+        const loadJobs: Promise<Job[]> = !profileListingTabs(
             accountType,
         ).includes('jobs')
             ? Promise.resolve([])
@@ -150,7 +149,7 @@ export default function ServicesSection({
                   closed,
               })) ?? null)
             : (jobs?.map((job) => ({
-                  id: job.jobPostingId,
+                  id: job.jobId,
                   title: job.listingTitle,
                   body: job.listingDesc,
                   closed: job.listingStatus === 'CLOSED',
@@ -163,13 +162,7 @@ export default function ServicesSection({
         setServiceError(null);
         Promise.all([getService(serviceId), listCategories()])
             .then(([listing, categories]) => {
-                setSelectedService(
-                    toServiceSummary(listing, categories, {
-                        companyId,
-                        companyName: listing.companyName ?? companyName,
-                        companyPhoto,
-                    }),
-                );
+                setSelectedService(toServiceSummary(listing, categories));
             })
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
@@ -193,9 +186,7 @@ export default function ServicesSection({
                     ?.summary ?? null,
             );
         } else {
-            setSelectedJob(
-                jobs?.find((job) => job.jobPostingId === id) ?? null,
-            );
+            setSelectedJob(jobs?.find((job) => job.jobId === id) ?? null);
         }
     };
 

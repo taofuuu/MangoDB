@@ -9,42 +9,22 @@
 
 import type {
     Category,
-    CompanyBrief,
-    PaginationMeta as Pagination,
-    SearchServicesOrder,
+    CreateServiceRequest,
+    Paginated,
+    Service,
     ServiceFilterOptions,
-    ServiceListing,
-    ServiceListResponse,
+    ServiceSortOrder,
     ServiceSummary,
     UpdateServiceRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
 import { cachedGet, invalidateAfter } from './apiCache';
 
-export type {
-    Pagination,
-    SearchServicesOrder,
-    ServiceFilterOptions,
-    ServiceListResponse,
-    ServiceSummary,
-};
-
-export interface CreateServiceBody {
-    listingTitle: string;
-    listingDesc: string;
-    minBudget?: number;
-    maxBudget?: number;
-    categoryIds?: number[];
-    techStack?: string[];
-}
-
-export function createService(
-    body: CreateServiceBody,
-): Promise<ServiceListing> {
+export function createService(body: CreateServiceRequest): Promise<Service> {
     // '/services' covers search pages and filter-options, which can gain a new
     // tech stack name from this listing.
     return invalidateAfter(
-        apiFetch<ServiceListing>('/services', {
+        apiFetch<Service>('/services', {
             method: 'POST',
             body: JSON.stringify(body),
         }),
@@ -52,23 +32,24 @@ export function createService(
     );
 }
 
-export function getService(serviceId: number): Promise<ServiceListing> {
-    return apiFetch<ServiceListing>(`/services/${serviceId}`);
+export function getService(serviceId: number): Promise<Service> {
+    return apiFetch<Service>(`/services/${serviceId}`);
 }
 
-export function listMyServices(): Promise<ServiceListing[]> {
-    return apiFetch<ServiceListing[]>('/services/mine');
+export function listMyServices(): Promise<Service[]> {
+    return apiFetch<Service[]>('/services/mine');
 }
 
-// A ServiceListing (GET /services/mine) in the ServiceSummary shape the
+// A Service (GET /services/mine) in the ServiceSummary shape the
 // service detail panel takes. The listing holds category ids and the panel
 // shows names, so they are looked up in the catalog (GET /categories).
 export function toServiceSummary(
-    listing: ServiceListing,
+    listing: Service,
     categories: Category[],
-    company: CompanyBrief,
 ): ServiceSummary {
-    const names = new Map(categories.map((c) => [c.catId, c.catName]));
+    const names = new Map(
+        categories.map((c) => [c.categoryId, c.categoryName]),
+    );
 
     return {
         serviceId: listing.serviceId,
@@ -82,7 +63,7 @@ export function toServiceSummary(
             .filter((name): name is string => name !== undefined)
             .sort(),
         techStack: listing.techStack,
-        company,
+        company: listing.company,
     };
 }
 
@@ -91,9 +72,9 @@ export function toServiceSummary(
 export function updateService(
     serviceId: number,
     body: UpdateServiceRequest,
-): Promise<ServiceListing> {
+): Promise<Service> {
     return invalidateAfter(
-        apiFetch<ServiceListing>(`/services/${serviceId}`, {
+        apiFetch<Service>(`/services/${serviceId}`, {
             method: 'PATCH',
             body: JSON.stringify(body),
         }),
@@ -128,7 +109,7 @@ export const EMPTY_SEARCH_SERVICES_FILTERS: SearchServicesFilters = {
 
 export type SearchServicesParams = {
     q: string;
-    orderBy: SearchServicesOrder;
+    orderBy: ServiceSortOrder;
     page: number;
     pageSize: number;
     filters: SearchServicesFilters;
@@ -171,7 +152,7 @@ export function listCompanyServices(
     companyId: number,
     page: number,
     pageSize: number,
-): Promise<ServiceListResponse> {
+): Promise<Paginated<ServiceSummary>> {
     const qs = new URLSearchParams({
         companyId: String(companyId),
         orderBy: 'newest',
@@ -180,12 +161,12 @@ export function listCompanyServices(
     });
 
     const path = `/services?${qs.toString()}`;
-    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
+    return cachedGet(path, () => apiFetch<Paginated<ServiceSummary>>(path));
 }
 
 export async function listServices(
     params: SearchServicesParams,
-): Promise<ServiceListResponse> {
+): Promise<Paginated<ServiceSummary>> {
     const { q, orderBy, page, pageSize, filters } = params;
     const { minBudget, maxBudget } = filters;
 
@@ -215,5 +196,5 @@ export async function listServices(
     qs.set('pageSize', String(pageSize)); // API max is 50
 
     const path = `/services?${qs.toString()}`;
-    return cachedGet(path, () => apiFetch<ServiceListResponse>(path));
+    return cachedGet(path, () => apiFetch<Paginated<ServiceSummary>>(path));
 }

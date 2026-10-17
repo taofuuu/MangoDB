@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-    AccountType,
+    RegisterAccountType,
     CompanyAccountDetail,
-    CompanyAccountListResponse,
+    CompanyAccountSummary,
+    Paginated,
 } from '@mangodb/shared';
 import { ChevronDown, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
@@ -16,7 +17,7 @@ import { getCompanyAccountDetail, listCompanyAccounts } from '@/lib/companies';
 import { describeError, isForbidden, isNotSignedIn } from '@/lib/api';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
-type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
+type FilterOption = 'ALL' | RegisterAccountType;
 
 const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
     { value: 'ALL', label: 'ALL' },
@@ -31,9 +32,8 @@ export default function AdminCompaniesPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filter, setFilter] = useState<FilterOption>('ALL');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [result, setResult] = useState<CompanyAccountListResponse | null>(
-        null,
-    );
+    const [result, setResult] =
+        useState<Paginated<CompanyAccountSummary> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [adminAuthStatus, setAdminAuthStatus] = useState<

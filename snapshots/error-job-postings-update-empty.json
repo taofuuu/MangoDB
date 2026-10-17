@@ -1,5 +1,5 @@
 {
-    "request": "PATCH /job-postings/<job_posting_id>",
+    "request": "PATCH /jobs/<job_id>",
     "status": 400,
     "body": {
         "error": {

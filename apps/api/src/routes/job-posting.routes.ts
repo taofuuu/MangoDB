@@ -29,7 +29,7 @@ jobPostingRoutes.get('/', requireAuth, listJobPostings);
 
 // US2-7. Fetch a single job posting by ID with visibility rules.
 // Guards: authenticated as any Company account (provider, receiver, both) or Admin.
-jobPostingRoutes.get('/:jobPostingId', requireAuth, getJobPosting);
+jobPostingRoutes.get('/:jobId', requireAuth, getJobPosting);
 
 // US2-6. Create and publish a job posting.
 // Guards: authenticated and holding Receiver role (BOTH accounts also qualify).
@@ -45,7 +45,7 @@ jobPostingRoutes.post(
 // so a Provider is turned away before any lookup. Owning the posting is checked
 // in the controller; another Receiver gets 403.
 jobPostingRoutes.get(
-    '/:jobPostingId/proposals',
+    '/:jobId/proposals',
     requireAuth,
     requireRole('receiver'),
     listJobPostingProposals,
@@ -53,17 +53,17 @@ jobPostingRoutes.get(
 // US2-13. Edit a job posting: only the owner, only while it is Open.
 // Guards: authenticated only. No requireRole: owning the posting already means
 // a Receiver, and the ownership check lives in lib/jobPosting.ts.
-jobPostingRoutes.patch('/:jobPostingId', requireAuth, updateJobPosting);
+jobPostingRoutes.patch('/:jobId', requireAuth, updateJobPosting);
 
 // US2-14. Close a job posting and reject its pending proposals. An action
 // endpoint, not PATCH { listingStatus }, because it changes other rows too
 // (docs/conventions.md 2.7). Same guards and owner rule as edit.
-jobPostingRoutes.post('/:jobPostingId/close', requireAuth, closeJobPosting);
+jobPostingRoutes.post('/:jobId/close', requireAuth, closeJobPosting);
 
 // US2-8. Submit a proposal to an open job posting.
 // Guards: authenticated and holding Provider role (BOTH accounts also qualify).
 jobPostingRoutes.post(
-    '/:jobPostingId/proposals',
+    '/:jobId/proposals',
     requireAuth,
     requireRole('provider'),
     createProposal,

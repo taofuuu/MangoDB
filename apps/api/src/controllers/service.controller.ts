@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { Prisma } from '../generated/prisma/client';
-import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
+import type { ListingStatus, Paginated, ServiceSummary } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/ApiError';
 import { assertCategoriesExist } from '../lib/categories';
@@ -280,13 +280,13 @@ function serviceOrderBy(
     orderBy: ServiceListQuery['orderBy'],
 ): Prisma.ListingOrderByWithRelationInput[] {
     switch (orderBy) {
-        case 'price-asc':
+        case 'priceAsc':
             return [
                 { minBudget: { sort: 'asc', nulls: 'last' } },
                 { maxBudget: { sort: 'asc', nulls: 'last' } },
                 { listingId: 'desc' },
             ];
-        case 'price-desc':
+        case 'priceDesc':
             return [
                 { minBudget: { sort: 'desc', nulls: 'last' } },
                 { maxBudget: { sort: 'desc', nulls: 'first' } },
@@ -331,7 +331,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         }),
     ]);
 
-    const body: ServiceListResponse = {
+    const body: Paginated<ServiceSummary> = {
         items: listings.map(toServiceSummary),
         pagination: {
             page,

@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings/mine",
+    "request": "GET /jobs/mine",
     "status": 403,
     "body": {
         "error": {

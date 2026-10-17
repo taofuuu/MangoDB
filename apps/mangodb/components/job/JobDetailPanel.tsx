@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { CompanyProfile, JobPosting } from '@mangodb/shared';
+import type { CompanyProfile, Job } from '@mangodb/shared';
 
 import { ArrowLeft } from 'lucide-react';
 
@@ -14,7 +14,7 @@ import { isProviderAccount } from '@/lib/roles';
 import { redirectToUnauthorized } from '@/lib/session';
 
 interface JobDetailPanelProps {
-    job: JobPosting | null;
+    job: Job | null;
     onClose: () => void;
 }
 
@@ -42,7 +42,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
         viewer !== null &&
         isProviderAccount(viewer.accountType) &&
         job.listingStatus === 'OPEN' &&
-        job.companyId !== viewer.companyId;
+        job.company.companyId !== viewer.companyId;
 
     return (
         <div
@@ -91,10 +91,10 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                         <span className="type-sm text-brand">Company</span>
 
                         <Link
-                            href={`/profile/${job.companyId}`}
+                            href={`/profile/${job.company.companyId}`}
                             className="type-md text-ink pl-[0.5vw] hover:underline [overflow-wrap:anywhere]"
                         >
-                            {job.companyName}
+                            {job.company.companyName}
                         </Link>
                     </div>
 
@@ -210,7 +210,7 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
             {/* key: a different job starts with an empty form. */}
             {job && canSubmitProposal && (
                 <SubmitProposalModal
-                    key={job.jobPostingId}
+                    key={job.jobId}
                     isOpen={isProposalFormOpen}
                     jobPosting={job}
                     onClose={() => setIsProposalFormOpen(false)}

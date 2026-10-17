@@ -2,7 +2,8 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { JobPosting, PostingProposal, ViewMode } from '@mangodb/shared';
+import type { Job, ReceivedProposal } from '@mangodb/shared';
+import type { ViewMode } from '@/components/proposals/view/StatsBadges';
 import {
     getSubmittedProposals,
     acceptProposal,
@@ -65,7 +66,7 @@ function ProposalPageInner({
     const [listingTitle, setListingTitle] = useState<string>(
         initialJobTitle || searchParams.get('title') || 'Job Posting Proposals',
     );
-    const [proposals, setProposals] = useState<PostingProposal[]>([]);
+    const [proposals, setProposals] = useState<ReceivedProposal[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('all');
 
@@ -81,7 +82,7 @@ function ProposalPageInner({
 
         if (!initialJobTitle && !searchParams.get('title')) {
             getJobPosting(effectiveJobId)
-                .then((job: JobPosting) => {
+                .then((job: Job) => {
                     if (job?.listingTitle) {
                         setListingTitle(job.listingTitle);
                     }

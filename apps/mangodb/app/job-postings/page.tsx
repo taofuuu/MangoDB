@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
-import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
+import type { Job, Paginated } from '@mangodb/shared';
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
@@ -29,14 +29,14 @@ export default function OtherJobPage() {
     const [deadlineDate, setDeadlineDate] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    const [result, setResult] = useState<JobPostingListResponse | null>(null);
+    const [result, setResult] = useState<Paginated<Job> | null>(null);
     //
     const [orderType, setOrderType] = useState<'Budget' | 'Deadline' | ''>('');
     const [isOrderOpen, setIsOrderOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
-    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const filterRef = useRef<HTMLDivElement>(null);
@@ -120,7 +120,7 @@ export default function OtherJobPage() {
         };
     }, [page, reloadKey, debouncedSearch]);
 
-    const openDetail = (job: JobPosting) => {
+    const openDetail = (job: Job) => {
         setSelectedJob(job);
         setIsDetailOpen(true);
     };
@@ -541,7 +541,7 @@ export default function OtherJobPage() {
                                         <div className="flex flex-col gap-[3.87vh]">
                                             {visibleJobs.map((job) => (
                                                 <JobBox
-                                                    key={job.jobPostingId}
+                                                    key={job.jobId}
                                                     job={job}
                                                     isMyJobs={false}
                                                     callFromSearchPage={true}

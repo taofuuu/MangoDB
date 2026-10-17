@@ -26,6 +26,7 @@ import { before, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { Prisma } from '../generated/prisma/client';
+import { ApiError } from './ApiError';
 
 function moduleUrl(specifier: string): string {
     return pathToFileURL(require.resolve(specifier)).href;
@@ -57,7 +58,7 @@ function makeRow(company: Row['listing']['company']): Row {
 }
 
 describe('toProviderProposal', () => {
-    it('adds the job owner as receiver', () => {
+    it('adds the listing owner as recipient', () => {
         const result = lib.toProviderProposal(
             makeRow({
                 companyId: 9,
@@ -66,7 +67,7 @@ describe('toProviderProposal', () => {
             }),
         );
 
-        assert.deepEqual(result.receiver, {
+        assert.deepEqual(result.recipient, {
             companyId: 9,
             companyName: 'Mango Co',
             companyPhoto: 'https://example.com/m.png',
@@ -74,16 +75,25 @@ describe('toProviderProposal', () => {
         assert.equal(result.listingTitle, 'Build a landing page');
     });
 
-    it('gives a null receiver when the listing has no owner', () => {
-        const result = lib.toProviderProposal(makeRow(null));
-
-        assert.equal(result.receiver, null);
+    // No listing lacks an owner, and nothing creates one without, so a
+    // missing owner is a broken row: a 500, not a blank recipient.
+    it('is a 500 when the listing has no owner', () => {
+        assert.throws(
+            () => lib.toProviderProposal(makeRow(null)),
+            (err: unknown) => err instanceof ApiError && err.status === 500,
+        );
     });
 
     it('keeps the proposal fields in the wire shape', () => {
-        const result = lib.toProviderProposal(makeRow(null));
+        const result = lib.toProviderProposal(
+            makeRow({
+                companyId: 9,
+                companyName: 'Mango Co',
+                companyPhoto: null,
+            }),
+        );
 
-        assert.equal(result.jobPostingId, 42);
+        assert.equal(result.listingId, 42);
         assert.equal(result.proposalBudget, 15000.5);
         assert.equal(result.duration, 14);
         assert.equal(result.createdAt, '2026-10-01T08:30:00.000Z');

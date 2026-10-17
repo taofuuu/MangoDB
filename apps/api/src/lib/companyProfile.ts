@@ -1,11 +1,36 @@
 import type {
     AccountType,
+    CompanyBrief,
     CompanyProfile,
     PublicCompanyProfile,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
+import { ApiError } from './ApiError';
 import { omitUndefined } from './objects';
+
+// A company in one line, the way a row it owns or sent shows it (conventions
+// §1). Only these columns: the row also holds the sign-in email and password
+// hash (ADR 0001).
+export const companyBriefSelect = {
+    companyId: true,
+    companyName: true,
+    companyPhoto: true,
+} as const;
+
+// listing.company_id is still nullable in the schema (conventions §11), but
+// every path that creates a listing sets it and no row lacks one. A missing
+// owner is a broken row, so it is a 500 rather than a blank name.
+export function toCompanyBrief(company: CompanyBrief | null): CompanyBrief {
+    if (!company) {
+        throw new ApiError(500, 'INTERNAL', 'Listing has no owning company');
+    }
+    return {
+        companyId: company.companyId,
+        companyName: company.companyName,
+        companyPhoto: company.companyPhoto,
+    };
+}
 
 // The columns the API may return. Password is absent on purpose: it can't leak
 // from a response if it was never fetched.

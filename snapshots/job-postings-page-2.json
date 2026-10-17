@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings?status=OPEN&pageSize=1&page=2",
+    "request": "GET /jobs?status=OPEN&pageSize=1&page=2",
     "status": 200,
     "body": {
         "items": [
@@ -10,12 +10,15 @@
                 "categoryIds": [
                     4
                 ],
-                "companyId": 392,
-                "companyName": "Snapshot Seed Both",
+                "company": {
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2026-11-30",
                 "duration": "1 month",
-                "jobPostingId": 595,
+                "jobId": 595,
                 "listingDesc": "Pen test and code review of our web app before the public launch. ([demo] dummy data)",
                 "listingStatus": "OPEN",
                 "listingTitle": "[demo] Security audit before launch",

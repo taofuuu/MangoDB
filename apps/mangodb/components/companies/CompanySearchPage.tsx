@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { redirectToUnauthorized } from '@/lib/session';
 import type {
-    CompanyListResponse,
     CompanySortOrder,
     CompanySummary,
+    Paginated,
 } from '@mangodb/shared';
 import { Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -22,7 +22,9 @@ export default function CompanySearchPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [orderBy, setOrderBy] = useState<CompanySortOrder>('nameAsc');
     const [page, setPage] = useState(1);
-    const [result, setResult] = useState<CompanyListResponse | null>(null);
+    const [result, setResult] = useState<Paginated<CompanySummary> | null>(
+        null,
+    );
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);

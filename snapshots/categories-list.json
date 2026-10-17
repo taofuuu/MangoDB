@@ -3,40 +3,40 @@
     "status": 200,
     "body": [
         {
-            "catId": 5,
-            "catName": "Artificial Intelligence (AI)"
+            "categoryId": 5,
+            "categoryName": "Artificial Intelligence (AI)"
         },
         {
-            "catId": 8,
-            "catName": "Digital Marketing & SEO"
+            "categoryId": 8,
+            "categoryName": "Digital Marketing & SEO"
         },
         {
-            "catId": 7,
-            "catName": "ERP & CRM Systems"
+            "categoryId": 7,
+            "categoryName": "ERP & CRM Systems"
         },
         {
-            "catId": 3,
-            "catName": "Hardware & IoT"
+            "categoryId": 3,
+            "categoryName": "Hardware & IoT"
         },
         {
-            "catId": 4,
-            "catName": "IT Consulting & Security"
+            "categoryId": 4,
+            "categoryName": "IT Consulting & Security"
         },
         {
-            "catId": 2,
-            "catName": "Mobile App Development"
+            "categoryId": 2,
+            "categoryName": "Mobile App Development"
         },
         {
-            "catId": 12,
-            "catName": "Other"
+            "categoryId": 12,
+            "categoryName": "Other"
         },
         {
-            "catId": 6,
-            "catName": "UI/UX Design"
+            "categoryId": 6,
+            "categoryName": "UI/UX Design"
         },
         {
-            "catId": 1,
-            "catName": "Web Development"
+            "categoryId": 1,
+            "categoryName": "Web Development"
         }
     ]
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { JobPosting } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 
 import {
     MoreHorizontal,
@@ -24,10 +24,10 @@ import { describeError } from '@/lib/api';
 import { closeJobPosting } from '@/lib/jobPostings';
 
 interface JobBoxProps {
-    job: JobPosting;
+    job: Job;
     isMyJobs: boolean;
     callFromSearchPage: boolean;
-    onViewDetail: (job: JobPosting) => void;
+    onViewDetail: (job: Job) => void;
     // Called after the job is closed, so the list can reload.
     onClosed?: () => void;
 }
@@ -45,7 +45,7 @@ export default function JobBox({
     // US2-14. A thrown error becomes the modal's message.
     const confirmClose = async () => {
         try {
-            await closeJobPosting(job.jobPostingId);
+            await closeJobPosting(job.jobId);
         } catch (err) {
             throw new Error(
                 describeError(err, {
@@ -145,7 +145,7 @@ export default function JobBox({
                                         onClick={() => {
                                             setIsMenuOpen(false);
                                             router.push(
-                                                `/job-postings/${job.jobPostingId}/edit`,
+                                                `/job-postings/${job.jobId}/edit`,
                                             );
                                         }}
                                         className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
@@ -196,7 +196,7 @@ export default function JobBox({
 
                     {callFromSearchPage && (
                         <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
-                            {job.companyName}
+                            {job.company.companyName}
                         </p>
                     )}
                 </div>

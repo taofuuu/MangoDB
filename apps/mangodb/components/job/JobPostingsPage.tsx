@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
-import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
+import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
 
 import JobBox from '@/components/job/JobBox';
 import JobDetailPanel from '@/components/job/JobDetailPanel';
@@ -26,7 +26,8 @@ import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
 
-type JobStatus = '' | 'OPEN' | 'CLOSED';
+// '' is the All tab: no status filter.
+type JobStatus = '' | ListingStatus;
 
 // backHref puts a ← before the title. Only the pages opened from See more on
 // a profile pass it; /job-postings/by-company has no profile to go back to.
@@ -54,7 +55,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
 
     const [status, setStatus] = useState<JobStatus>('');
 
-    const [result, setResult] = useState<JobPostingListResponse | null>(null);
+    const [result, setResult] = useState<Paginated<Job> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isRestricted, setIsRestricted] = useState(false);
@@ -72,7 +73,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      * ============================================================
      */
 
-    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
     /*
      * ============================================================
@@ -153,7 +154,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
      */
 
     const isDetailPanelOpen = Boolean(selectedJob);
-    const openCompanyJobDetail = (job: JobPosting) => {
+    const openCompanyJobDetail = (job: Job) => {
         setSelectedJob(job);
     };
 
@@ -535,7 +536,7 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
                                     >
                                         {result.items.map((job) => (
                                             <JobBox
-                                                key={job.jobPostingId}
+                                                key={job.jobId}
                                                 job={job}
                                                 isMyJobs={isMyJobs}
                                                 callFromSearchPage={false}

@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import CategorySelector from '../ui/CategorySelector';
-import {
-    createJobPosting,
-    type CreateJobPosting,
-    updateJobPosting,
-    type UpdateJobPosting,
-} from '@/lib/jobPostings';
+import { createJobPosting, updateJobPosting } from '@/lib/jobPostings';
 import { toFormErrors } from '@/lib/validation';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
-import type { Category, JobPosting } from '@mangodb/shared';
+import type {
+    Category,
+    CreateJobRequest,
+    Job,
+    UpdateJobRequest,
+} from '@mangodb/shared';
 import { listCategories } from '@/lib/categories';
 import { describeError } from '@/lib/api';
 
@@ -56,7 +56,7 @@ type JobErrors = Partial<
 
 type JobFormProps = {
     jobPostingId?: number;
-    initialJob?: JobPosting;
+    initialJob?: Job;
 };
 
 export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
@@ -195,7 +195,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
 
             if (jobPostingId !== undefined && initialJob) {
                 // Edit mode: send only fields that changed.
-                const data: UpdateJobPosting = {};
+                const data: UpdateJobRequest = {};
 
                 if (normalizedTitle !== initialJob.listingTitle) {
                     data.listingTitle = normalizedTitle;
@@ -244,7 +244,7 @@ export default function JobForm({ jobPostingId, initialJob }: JobFormProps) {
                 router.push('/job-postings/mine?success=updated');
             } else {
                 // Create mode: preserve the existing behavior.
-                const data: CreateJobPosting = {
+                const data: CreateJobRequest = {
                     listingTitle: normalizedTitle,
                     listingDesc: normalizedDescription,
                     minBudget: parsedMinBudget,

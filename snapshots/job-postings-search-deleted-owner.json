@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings?q=<run>_d",
+    "request": "GET /jobs?q=<run>_d",
     "status": 200,
     "body": {
         "items": [],

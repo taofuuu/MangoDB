@@ -3,8 +3,11 @@
     "status": 200,
     "body": {
         "categoryIds": [],
-        "companyId": 142,
-        "companyName": "Snapshot Seed Provider",
+        "company": {
+            "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
+            "companyPhoto": null
+        },
         "listingDesc": "updated by scripts/snapshot-api.sh",
         "listingStatus": "OPEN",
         "listingTitle": "Snapshot Probe updated service <run>",

@@ -2,11 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { describeError, isNotSignedIn } from '@/lib/api';
-import {
-    getServiceFilterOptions,
-    type ServiceFilterOptions,
-    type ServiceSummary,
-} from '@/lib/services';
+import type { ServiceFilterOptions, ServiceSummary } from '@mangodb/shared';
+import { getServiceFilterOptions } from '@/lib/services';
 import {
     useSearchServices,
     type SearchServicesMode,

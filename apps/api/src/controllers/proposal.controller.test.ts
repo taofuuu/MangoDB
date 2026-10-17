@@ -3,7 +3,7 @@
  * - GET /proposals/mine/counts (getMyProposalCounts): the numbers on the
  *   Total / Pending / Accepted / Rejected chips of the Your Proposals page
  *   (US2-9).
- * - POST /job-postings/:id/proposals (createProposal, US2-8).
+ * - POST /jobs/:jobId/proposals (createProposal, US2-8).
  *
  * What they cover:
  * - The answer counts only the caller's own proposals. Another Provider's
@@ -266,7 +266,7 @@ describe('GET /proposals/mine/counts', () => {
     });
 });
 
-describe('POST /job-postings/:jobPostingId/proposals', () => {
+describe('POST /jobs/:jobId/proposals', () => {
     const OWNER = 1;
     const PROVIDER = 2;
 
@@ -282,10 +282,10 @@ describe('POST /job-postings/:jobPostingId/proposals', () => {
 
     // Sends a valid proposal as PROVIDER. Returns the status and JSON it
     // answered with, or the ApiError it threw.
-    async function propose(jobPostingId: number): Promise<unknown> {
+    async function propose(jobId: number): Promise<unknown> {
         const req = {
             auth: { companyId: PROVIDER },
-            params: { jobPostingId: String(jobPostingId) },
+            params: { jobId: String(jobId) },
             body: { proposalBudget: 5000, proposalTerms: 'Terms', duration: 1 },
         } as unknown as Request;
         let status = 200;
@@ -328,8 +328,8 @@ describe('POST /job-postings/:jobPostingId/proposals', () => {
         };
 
         assert.equal(result.status, 201);
-        assert.equal(result.body.jobPostingId, 10);
-        assert.equal(result.body.providerId, PROVIDER);
+        assert.equal(result.body.listingId, 10);
+        assert.equal(result.body.senderId, PROVIDER);
         assert.equal(rows.length, 1);
     });
 });
@@ -404,7 +404,7 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.equal(result.status, 201);
         assert.equal(result.body.proposalId, 1);
         assert.equal(result.body.totalBudget, 80000);
-        assert.equal(result.body.status, 'ACTIVE');
+        assert.equal(result.body.projectStatus, 'ACTIVE');
         assert.match(String(result.body.startDate), /^\d{4}-\d{2}-\d{2}$/);
         assert.equal(listings[0]!.listingStatus, 'CLOSED');
         assert.deepEqual(

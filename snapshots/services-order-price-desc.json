@@ -1,5 +1,5 @@
 {
-    "request": "GET /services?techStack=<run>&orderBy=price-desc",
+    "request": "GET /services?techStack=<run>&orderBy=priceDesc",
     "status": 200,
     "body": {
         "items": [

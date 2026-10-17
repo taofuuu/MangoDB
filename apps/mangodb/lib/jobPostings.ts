@@ -1,8 +1,9 @@
 import type {
-    JobPosting,
-    JobPostingListResponse,
-    CreateJobPostingRequest,
-    UpdateJobPostingRequest,
+    CreateJobRequest,
+    Job,
+    ListingStatus,
+    Paginated,
+    UpdateJobRequest,
 } from '@mangodb/shared';
 
 import { apiFetch } from './api';
@@ -10,7 +11,7 @@ import { cachedGet, invalidateAfter } from './apiCache';
 
 export interface GetJobPostingsOptions {
     companyId?: number;
-    status?: 'OPEN' | 'CLOSED';
+    status?: ListingStatus;
     q?: string;
 }
 
@@ -19,7 +20,7 @@ export function listJobPostings(
     page: number,
     pageSize: number,
     options?: GetJobPostingsOptions,
-): Promise<JobPostingListResponse> {
+): Promise<Paginated<Job>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -37,20 +38,20 @@ export function listJobPostings(
         query.set('q', options.q);
     }
 
-    const path = `/job-postings?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<JobPostingListResponse>(path));
+    const path = `/jobs?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<Job>>(path));
 }
 
 // GET own job postings
 export interface GetMyJobPostingsOptions {
-    status?: 'OPEN' | 'CLOSED';
+    status?: ListingStatus;
 }
 
 export function listMyJobPostings(
     page: number,
     pageSize: number,
     options?: GetMyJobPostingsOptions,
-): Promise<JobPostingListResponse> {
+): Promise<Paginated<Job>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -60,52 +61,48 @@ export function listMyJobPostings(
         query.set('status', options.status);
     }
 
-    const path = `/job-postings/mine?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<JobPostingListResponse>(path));
+    const path = `/jobs/mine?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<Job>>(path));
 }
 
 // GET one job posting
-export function getJobPosting(jobPostingId: number): Promise<JobPosting> {
-    const path = `/job-postings/${jobPostingId}`;
-    return cachedGet(path, () => apiFetch<JobPosting>(path));
+export function getJobPosting(jobId: number): Promise<Job> {
+    const path = `/jobs/${jobId}`;
+    return cachedGet(path, () => apiFetch<Job>(path));
 }
 
 //POST job
-export type CreateJobPosting = CreateJobPostingRequest;
-
-export function createJobPosting(data: CreateJobPosting): Promise<JobPosting> {
+export function createJobPosting(data: CreateJobRequest): Promise<Job> {
     return invalidateAfter(
-        apiFetch<JobPosting>('/job-postings', {
+        apiFetch<Job>('/jobs', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        '/job-postings',
+        '/jobs',
     );
 }
 
 // US2-14. Closes an open job posting and rejects its pending proposals.
 // The API answers 409 when the posting is not open any more.
-export function closeJobPosting(jobPostingId: number): Promise<JobPosting> {
+export function closeJobPosting(jobId: number): Promise<Job> {
     return invalidateAfter(
-        apiFetch<JobPosting>(`/job-postings/${jobPostingId}/close`, {
+        apiFetch<Job>(`/jobs/${jobId}/close`, {
             method: 'POST',
         }),
-        '/job-postings',
+        '/jobs',
     );
 }
 
 //UPDATE job
-export type UpdateJobPosting = UpdateJobPostingRequest;
-
 export function updateJobPosting(
-    jobPostingId: number,
-    data: UpdateJobPosting,
-): Promise<JobPosting> {
+    jobId: number,
+    data: UpdateJobRequest,
+): Promise<Job> {
     return invalidateAfter(
-        apiFetch<JobPosting>(`/job-postings/${jobPostingId}`, {
+        apiFetch<Job>(`/jobs/${jobId}`, {
             method: 'PATCH',
             body: JSON.stringify(data),
         }),
-        '/job-postings',
+        '/jobs',
     );
 }

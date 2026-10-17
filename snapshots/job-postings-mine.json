@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings/mine",
+    "request": "GET /jobs/mine",
     "status": 200,
     "body": {
         "items": [
@@ -10,12 +10,15 @@
                 "categoryIds": [
                     1
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2028-12-31",
                 "duration": "2 Months",
-                "jobPostingId": "<job_posting_id>",
+                "jobId": "<job_id>",
                 "listingDesc": "Looking for developer team",
                 "listingStatus": "CLOSED",
                 "listingTitle": "Snapshot Probe job posting",
@@ -30,12 +33,15 @@
                 "categoryIds": [
                     1
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2028-12-31",
                 "duration": "2 Months",
-                "jobPostingId": 73,
+                "jobId": 73,
                 "listingDesc": "Looking for developer team",
                 "listingStatus": "OPEN",
                 "listingTitle": "Snapshot Probe job posting",
@@ -50,12 +56,15 @@
                 "categoryIds": [
                     3
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2027-03-21",
                 "duration": "6 months",
-                "jobPostingId": 477,
+                "jobId": 477,
                 "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
                 "listingStatus": "OPEN",
                 "listingTitle": "[demo] Sales dashboard and reports",
@@ -70,12 +79,15 @@
                 "categoryIds": [
                     2
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2027-02-20",
                 "duration": "5 months",
-                "jobPostingId": 476,
+                "jobId": 476,
                 "listingDesc": "iOS and Android app where customers book and pay.\n\n([demo] dummy data)",
                 "listingStatus": "CLOSED",
                 "listingTitle": "[demo] Mobile app for customer bookings",
@@ -90,12 +102,15 @@
                 "categoryIds": [
                     1
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2027-01-19",
                 "duration": "4 months",
-                "jobPostingId": 475,
+                "jobId": 475,
                 "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
                 "listingStatus": "OPEN",
                 "listingTitle": "[demo] Inventory system rewrite",

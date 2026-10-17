@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LISTING_STATUSES, SEARCH_SERVICES_ORDERS } from '@mangodb/shared';
+import { LISTING_STATUSES, SERVICE_SORT_ORDERS } from '@mangodb/shared';
 import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
 
 // One category or tech name. cat_name and tech_stack_name are both
@@ -101,7 +101,7 @@ export const serviceListQuerySchema = z
                 .pipe(z.number().int().positive().max(INT4_MAX))
                 .optional(),
         ),
-        orderBy: z.enum(SEARCH_SERVICES_ORDERS).default('newest'),
+        orderBy: z.enum(SERVICE_SORT_ORDERS).default('newest'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(50).default(12),
     })
@@ -119,7 +119,7 @@ export const serviceListQuerySchema = z
 export type ServiceListQuery = z.infer<typeof serviceListQuerySchema>;
 
 // GET /services/mine. A blank ?status= means no filter, like GET
-// /job-postings. There is no DRAFT status (ADR 0010), so only OPEN and
+// /jobs. There is no DRAFT status (ADR 0010), so only OPEN and
 // CLOSED pass; anything else, DRAFT included, is a 400.
 export const serviceMineQuerySchema = z.object({
     status: z.preprocess(

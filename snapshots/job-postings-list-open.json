@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings?status=OPEN",
+    "request": "GET /jobs?status=OPEN",
     "status": 200,
     "body": {
         "items": [
@@ -10,12 +10,15 @@
                 "categoryIds": [
                     1
                 ],
-                "companyId": 143,
-                "companyName": "Snapshot Seed Receiver",
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2028-12-31",
                 "duration": "2 Months",
-                "jobPostingId": "<job_posting_id>",
+                "jobId": "<job_id>",
                 "listingDesc": "Looking for developer team",
                 "listingStatus": "OPEN",
                 "listingTitle": "Snapshot Probe job posting",
@@ -30,12 +33,15 @@
                 "categoryIds": [
                     4
                 ],
-                "companyId": 392,
-                "companyName": "Snapshot Seed Both",
+                "company": {
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2026-11-30",
                 "duration": "1 month",
-                "jobPostingId": 595,
+                "jobId": 595,
                 "listingDesc": "Pen test and code review of our web app before the public launch. ([demo] dummy data)",
                 "listingStatus": "OPEN",
                 "listingTitle": "[demo] Security audit before launch",
@@ -50,12 +56,15 @@
                 "categoryIds": [
                     7
                 ],
-                "companyId": 392,
-                "companyName": "Snapshot Seed Both",
+                "company": {
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2026-12-31",
                 "duration": "3 months",
-                "jobPostingId": 594,
+                "jobId": 594,
                 "listingDesc": "We want a small CRM to track leads and follow-ups for 10 sales staff. ([demo] dummy data)",
                 "listingStatus": "OPEN",
                 "listingTitle": "[demo] Need a CRM for our sales team",
@@ -78,12 +87,15 @@
                     7,
                     8
                 ],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2026-11-07",
                 "duration": null,
-                "jobPostingId": 380,
+                "jobId": 380,
                 "listingDesc": "Heterobobobwoooooo",
                 "listingStatus": "OPEN",
                 "listingTitle": "Fourier",
@@ -100,12 +112,15 @@
                     3,
                     4
                 ],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 368,
+                "jobId": 368,
                 "listingDesc": "full laew",
                 "listingStatus": "OPEN",
                 "listingTitle": "Fourier",
@@ -116,12 +131,15 @@
             {
                 "categories": [],
                 "categoryIds": [],
-                "companyId": 109,
-                "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                "company": {
+                    "companyId": 109,
+                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 367,
+                "jobId": 367,
                 "listingDesc": "f",
                 "listingStatus": "OPEN",
                 "listingTitle": "minnie",
@@ -136,12 +154,15 @@
                 "categoryIds": [
                     3
                 ],
-                "companyId": 109,
-                "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                "company": {
+                    "companyId": 109,
+                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 366,
+                "jobId": 366,
                 "listingDesc": "so sleepy",
                 "listingStatus": "OPEN",
                 "listingTitle": "Minnie",
@@ -156,12 +177,15 @@
                 "categoryIds": [
                     12
                 ],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": "2026-10-15",
                 "duration": "1 week",
-                "jobPostingId": 365,
+                "jobId": 365,
                 "listingDesc": "spiderman against the world",
                 "listingStatus": "OPEN",
                 "listingTitle": "spider web",
@@ -172,12 +196,15 @@
             {
                 "categories": [],
                 "categoryIds": [],
-                "companyId": 352,
-                "companyName": "Palaze Receiver",
+                "company": {
+                    "companyId": 352,
+                    "companyName": "Palaze Receiver",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 363,
+                "jobId": 363,
                 "listingDesc": "y no 1 sent proposal",
                 "listingStatus": "OPEN",
                 "listingTitle": "Test no proposal job ",
@@ -188,12 +215,15 @@
             {
                 "categories": [],
                 "categoryIds": [],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 362,
+                "jobId": 362,
                 "listingDesc": "testAgainagainAndAgain",
                 "listingStatus": "OPEN",
                 "listingTitle": "testAgain",
@@ -204,12 +234,15 @@
             {
                 "categories": [],
                 "categoryIds": [],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 361,
+                "jobId": 361,
                 "listingDesc": "testAgainagainAndAgain",
                 "listingStatus": "OPEN",
                 "listingTitle": "testAgain",
@@ -224,12 +257,15 @@
                 "categoryIds": [
                     4
                 ],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
                 "createdAt": "<timestamp>",
                 "deadline": null,
                 "duration": null,
-                "jobPostingId": 360,
+                "jobId": 360,
                 "listingDesc": "testAgainagainAndAgainwowowowowowoowoowoowwooowwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwpkdddddddddddddddddddddddddddddddddddddddd;cvMWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWiqhwfuehquhgoegfoiqenvknroigoenrvqonvongqenroivnqionerivnqnerivnienvineivniq23456789000000000000000000000000000000000000000000000wcdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWVQEWW",
                 "listingStatus": "OPEN",
                 "listingTitle": "testAgain",

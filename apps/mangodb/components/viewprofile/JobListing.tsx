@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { JobPosting } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
@@ -24,9 +24,9 @@ export default function JobListing({
 }) {
     // null until the list answers, so "Loading…" shows instead of a
     // momentary "No job listings yet."
-    const [jobs, setJobs] = useState<JobPosting[] | null>(null);
+    const [jobs, setJobs] = useState<Job[] | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -81,7 +81,7 @@ export default function JobListing({
                 )}
                 {jobs?.map((job) => (
                     <div
-                        key={job.jobPostingId}
+                        key={job.jobId}
                         className="bg-white rounded-button px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between shadow-sm border border-line shrink-0"
                     >
                         <div className="flex flex-1 items-center gap-2">

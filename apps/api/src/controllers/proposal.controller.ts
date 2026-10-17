@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import type {
-    ProposalListResponse,
+    Paginated,
     ProposalStatusCounts,
+    SentProposal,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
@@ -31,14 +32,14 @@ export async function createProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 
     // A soft-deleted company's postings stay OPEN in the table, so the where
-    // hides them here, the same 404 that GET /job-postings/:id gives.
+    // hides them here, the same 404 that GET /jobs/:jobId gives.
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId, company: { deletedAt: null } },
+        where: { listingId: jobId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -64,7 +65,7 @@ export async function createProposal(
     try {
         const proposal = await prisma.proposal.create({
             data: {
-                listingId: jobPostingId,
+                listingId: jobId,
                 senderId: callerCompanyId,
                 proposalBudget: body.proposalBudget,
                 proposalTerms: body.proposalTerms,
@@ -94,11 +95,11 @@ export async function listJobPostingProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
-    await assertJobPostingOwned(jobPostingId, req.auth!.companyId);
+    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
+    await assertJobPostingOwned(jobId, req.auth!.companyId);
 
     const proposals = await prisma.proposal.findMany({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobId },
         orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
         select: postingProposalSelect,
     });
@@ -154,7 +155,7 @@ export async function listMyProposals(
         }),
     ]);
 
-    const body: ProposalListResponse = {
+    const body: Paginated<SentProposal> = {
         items: rows.map(toProviderProposal),
         pagination: {
             page,

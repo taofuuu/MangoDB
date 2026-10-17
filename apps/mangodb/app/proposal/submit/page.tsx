@@ -13,10 +13,10 @@ import { isProviderAccount } from '@/lib/roles';
 import { redirectToUnauthorized } from '@/lib/session';
 
 // Temporary local page for checking the T2.8 modal layout. The real job-detail
-// page will supply its selected JobPosting when T2.7 integrates this component.
+// page will supply its selected Job when T2.7 integrates this component.
 // TODO(T2.7): apply this same session/Provider guard before showing its trigger.
 const previewPosting: ProposalJobPosting = {
-    jobPostingId: 1,
+    jobId: 1,
     listingTitle: '<job posting name>',
     companyName: '<company name>',
     minBudget: null,

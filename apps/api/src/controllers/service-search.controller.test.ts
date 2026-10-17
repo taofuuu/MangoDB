@@ -31,7 +31,7 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
-import type { ServiceListResponse } from '@mangodb/shared';
+import type { Paginated, ServiceSummary } from '@mangodb/shared';
 import { ApiError } from '../lib/ApiError';
 
 type Company = {
@@ -183,7 +183,7 @@ async function search(query: Record<string, string>): Promise<unknown> {
 }
 
 function ids(result: unknown): number[] {
-    const body = result as ServiceListResponse;
+    const body = result as Paginated<ServiceSummary>;
     assert.ok(
         Array.isArray(body.items),
         `no items in ${JSON.stringify(result)}`,
@@ -206,7 +206,10 @@ describe('GET /services?companyId=', () => {
         const result = await search({ companyId: String(ALPHA) });
 
         assert.deepEqual(ids(result), [10, 11]);
-        assert.equal((result as ServiceListResponse).pagination.totalItems, 2);
+        assert.equal(
+            (result as Paginated<ServiceSummary>).pagination.totalItems,
+            2,
+        );
     });
 
     it("still hides that company's closed services", async () => {

@@ -1,10 +1,10 @@
 /*
- * Tests for GET /job-postings, GET /job-postings/:jobPostingId and
- * POST /job-postings/:jobPostingId/close (listJobPostings, getJobPosting and
+ * Tests for GET /jobs, GET /jobs/:jobId and
+ * POST /jobs/:jobId/close (listJobPostings, getJobPosting and
  * closeJobPosting in job-posting.controller.ts).
  *
  * What they cover:
- * - Each job carries its owner's name (companyName), on the list and on detail.
+ * - Each job carries its owner (company), on the list and on detail.
  * - Detail: another company's closed job is 404, not 403. A closed job is not
  *   public, so a 403 would tell the caller that the id exists
  *   (docs/conventions.md: fold 403 into 404 when existence is private).
@@ -36,7 +36,7 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
-import type { JobPosting, JobPostingListResponse } from '@mangodb/shared';
+import type { Job, Paginated } from '@mangodb/shared';
 import { ApiError } from '../lib/ApiError';
 
 // One listing row as the database would hold it, with its company joined in.
@@ -50,7 +50,12 @@ type Row = {
     minBudget: number | null;
     maxBudget: number | null;
     createdAt: Date;
-    company: { companyName: string; deletedAt: Date | null };
+    company: {
+        companyId: number;
+        companyName: string;
+        companyPhoto: string | null;
+        deletedAt: Date | null;
+    };
     job: null;
     listingCategory: [];
 };
@@ -60,9 +65,24 @@ const OTHER = 2;
 const GONE = 3; // a soft-deleted company
 
 const companies: Record<number, Row['company']> = {
-    [OWNER]: { companyName: 'Owner Co', deletedAt: null },
-    [OTHER]: { companyName: 'Other Co', deletedAt: null },
-    [GONE]: { companyName: 'Gone Co', deletedAt: new Date('2026-01-01') },
+    [OWNER]: {
+        companyId: OWNER,
+        companyName: 'Owner Co',
+        companyPhoto: null,
+        deletedAt: null,
+    },
+    [OTHER]: {
+        companyId: OTHER,
+        companyName: 'Other Co',
+        companyPhoto: null,
+        deletedAt: null,
+    },
+    [GONE]: {
+        companyId: GONE,
+        companyName: 'Gone Co',
+        companyPhoto: null,
+        deletedAt: new Date('2026-01-01'),
+    },
 };
 
 let rows: Row[] = [];
@@ -245,9 +265,9 @@ async function call(
     return body;
 }
 
-function getOne(callerCompanyId: number, jobPostingId: number) {
+function getOne(callerCompanyId: number, jobId: number) {
     return call(controller.getJobPosting, callerCompanyId, {
-        params: { jobPostingId: String(jobPostingId) },
+        params: { jobId: String(jobId) },
     });
 }
 
@@ -260,7 +280,7 @@ function assertNotFound(result: unknown): void {
     assert.equal(result.code, 'NOT_FOUND');
 }
 
-describe('GET /job-postings/:jobPostingId', () => {
+describe('GET /jobs/:jobId', () => {
     it("answers 404, not 403, for another company's closed job", async () => {
         rows = [job(10, OWNER, 'CLOSED')];
 
@@ -276,18 +296,18 @@ describe('GET /job-postings/:jobPostingId', () => {
     it("carries the owner's name", async () => {
         rows = [job(10, OWNER, 'OPEN')];
 
-        const body = (await getOne(OTHER, 10)) as JobPosting;
+        const body = (await getOne(OTHER, 10)) as Job;
 
-        assert.equal(body.jobPostingId, 10);
-        assert.equal(body.companyName, 'Owner Co');
+        assert.equal(body.jobId, 10);
+        assert.equal(body.company.companyName, 'Owner Co');
     });
 
     it('still shows the owner its own closed job', async () => {
         rows = [job(10, OWNER, 'CLOSED')];
 
-        const body = (await getOne(OWNER, 10)) as JobPosting;
+        const body = (await getOne(OWNER, 10)) as Job;
 
-        assert.equal(body.jobPostingId, 10);
+        assert.equal(body.jobId, 10);
         assert.equal(body.listingStatus, 'CLOSED');
     });
 
@@ -298,11 +318,11 @@ describe('GET /job-postings/:jobPostingId', () => {
     });
 });
 
-describe('GET /job-postings', () => {
+describe('GET /jobs', () => {
     function list(callerCompanyId: number, query: Record<string, string> = {}) {
         return call(controller.listJobPostings, callerCompanyId, {
             query,
-        }) as Promise<JobPostingListResponse>;
+        }) as Promise<Paginated<Job>>;
     }
 
     it("gives each job its owner's name", async () => {
@@ -311,7 +331,7 @@ describe('GET /job-postings', () => {
         const body = await list(OTHER);
 
         assert.deepEqual(
-            body.items.map((j) => [j.jobPostingId, j.companyName]),
+            body.items.map((j) => [j.jobId, j.company.companyName]),
             [
                 [11, 'Other Co'],
                 [10, 'Owner Co'],
@@ -329,7 +349,7 @@ describe('GET /job-postings', () => {
         const body = await list(OTHER);
 
         assert.deepEqual(
-            body.items.map((j) => j.jobPostingId),
+            body.items.map((j) => j.jobId),
             [10],
         );
         assert.equal(body.pagination.totalItems, 1);
@@ -353,7 +373,7 @@ describe('GET /job-postings', () => {
         const body = await list(OTHER, { q: '%' });
 
         assert.deepEqual(
-            body.items.map((j) => j.jobPostingId),
+            body.items.map((j) => j.jobId),
             [10],
         );
     });
@@ -371,16 +391,16 @@ describe('GET /job-postings', () => {
         const body = await list(OTHER, { q: 'react payment' });
 
         assert.deepEqual(
-            body.items.map((j) => j.jobPostingId),
+            body.items.map((j) => j.jobId),
             [10],
         );
     });
 });
 
-describe('POST /job-postings/:jobPostingId/close', () => {
-    function close(callerCompanyId: number, jobPostingId: number) {
+describe('POST /jobs/:jobId/close', () => {
+    function close(callerCompanyId: number, jobId: number) {
         return call(controller.closeJobPosting, callerCompanyId, {
-            params: { jobPostingId: String(jobPostingId) },
+            params: { jobId: String(jobId) },
         });
     }
 
@@ -393,7 +413,7 @@ describe('POST /job-postings/:jobPostingId/close', () => {
             { listingId: 2, proposalStatus: 'PENDING' },
         ];
 
-        const result = (await close(OWNER, 1)) as JobPosting;
+        const result = (await close(OWNER, 1)) as Job;
 
         assert.equal(result.listingStatus, 'CLOSED');
         assert.deepEqual(

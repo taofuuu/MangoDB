@@ -6,34 +6,34 @@
             {
                 "createdAt": "<timestamp>",
                 "duration": 2,
-                "jobPostingId": "<job_posting_id>",
+                "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe job posting",
                 "proposalBudget": 80000,
                 "proposalId": "<proposal_id>",
                 "proposalStatus": "PENDING",
                 "proposalTerms": "Full-stack development in 2 months with agile delivery.",
-                "providerId": 142,
-                "receiver": {
+                "recipient": {
                     "companyId": 143,
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
-                }
+                },
+                "senderId": 142
             },
             {
                 "createdAt": "<timestamp>",
                 "duration": 1,
-                "jobPostingId": 405,
+                "listingId": 405,
                 "listingTitle": "[demo] Sales dashboard and reports",
                 "proposalBudget": 999,
                 "proposalId": 210,
                 "proposalStatus": "PENDING",
                 "proposalTerms": "kdkklsf",
-                "providerId": 142,
-                "receiver": {
+                "recipient": {
                     "companyId": 6,
                     "companyName": "RoboTech Industries",
                     "companyPhoto": null
-                }
+                },
+                "senderId": 142
             }
         ],
         "pagination": {

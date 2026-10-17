@@ -2,7 +2,8 @@ import type { Request, Response } from 'express';
 import type {
     ListingStatus,
     ProposalStatus,
-    JobPostingListResponse,
+    Job,
+    Paginated,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
@@ -138,7 +139,7 @@ export async function listJobPostings(
             select: jobPostingSelect,
         }),
     ]);
-    const body: JobPostingListResponse = {
+    const body: Paginated<Job> = {
         items: postings.map(toJobPosting),
         pagination: {
             page,
@@ -178,7 +179,7 @@ export async function listMyJobPostings(
             select: jobPostingSelect,
         }),
     ]);
-    const body: JobPostingListResponse = {
+    const body: Paginated<Job> = {
         items: postings.map(toJobPosting),
         pagination: {
             page,
@@ -200,13 +201,13 @@ export async function getJobPosting(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
 
     // A soft-deleted company's postings stay in the table, still OPEN, so
     // the where hides them here, the same as in the list.
     const posting = await prisma.listing.findUnique({
         where: {
-            listingId: jobPostingId,
+            listingId: jobId,
             listingType: 'JOB',
             company: { deletedAt: null },
         },
@@ -238,14 +239,11 @@ export async function updateJobPosting(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
     const body = parseBody(updateJobPostingSchema, req.body);
 
     // 404 if no such posting, 403 if it is someone else's.
-    const existing = await assertJobPostingOwned(
-        jobPostingId,
-        req.auth!.companyId,
-    );
+    const existing = await assertJobPostingOwned(jobId, req.auth!.companyId);
     // Once closed, Providers' proposals were written against the old details.
     if (existing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
         throw ApiError.conflict('Only an open job posting can be edited');
@@ -282,7 +280,7 @@ export async function updateJobPosting(
     });
 
     const updated = await prisma.listing.update({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobId },
         data: {
             ...omitUndefined(listingFields),
             // upsert, not update: an older row may have no requirement row.
@@ -320,17 +318,17 @@ export async function closeJobPosting(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobPostingIdParamSchema, req.params);
 
     // 404 if no such posting, 403 if it is someone else's.
-    await assertJobPostingOwned(jobPostingId, req.auth!.companyId);
+    await assertJobPostingOwned(jobId, req.auth!.companyId);
 
     const closed = await prisma.$transaction(async (tx) => {
         // The status in the where is the Open check: if the posting is
         // already closed, or an accept closed it a moment ago, nothing matches.
         const { count } = await tx.listing.updateMany({
             where: {
-                listingId: jobPostingId,
+                listingId: jobId,
                 listingStatus: 'OPEN' satisfies ListingStatus,
             },
             data: { listingStatus: 'CLOSED' satisfies ListingStatus },
@@ -341,14 +339,14 @@ export async function closeJobPosting(
 
         await tx.proposal.updateMany({
             where: {
-                listingId: jobPostingId,
+                listingId: jobId,
                 proposalStatus: 'PENDING' satisfies ProposalStatus,
             },
             data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
         });
 
         return tx.listing.findUniqueOrThrow({
-            where: { listingId: jobPostingId },
+            where: { listingId: jobId },
             select: jobPostingSelect,
         });
     });

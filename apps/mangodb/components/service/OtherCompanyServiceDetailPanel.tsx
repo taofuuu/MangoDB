@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type {
-    ServiceListing,
+    Service,
     ServicePortfolio,
     ServiceSummary,
 } from '@mangodb/shared';
@@ -9,7 +9,7 @@ import { listServicePortfolios } from '@/lib/portfolios';
 import { OtherCompanyPortfolioCard } from './OtherCompanyPortfolioCard';
 
 interface OtherCompanyServiceDetailPanelProps {
-    service: ServiceListing | ServiceSummary;
+    service: Service | ServiceSummary;
 }
 
 export function OtherCompanyServiceDetailPanel({

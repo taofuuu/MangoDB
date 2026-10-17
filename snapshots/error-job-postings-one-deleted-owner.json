@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings/<deleted_job_posting_id>",
+    "request": "GET /jobs/<deleted_job_id>",
     "status": 404,
     "body": {
         "error": {

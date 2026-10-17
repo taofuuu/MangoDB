@@ -721,28 +721,29 @@ A_LIVE=0
 
 echo
 echo "job postings"
-snap error-job-postings-unauthorized POST /job-postings \
+snap error-job-postings-unauthorized POST /jobs \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Unauthorized"}'
 
-snap error-job-postings-forbidden-provider POST /job-postings \
+snap error-job-postings-forbidden-provider POST /jobs \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Provider cannot post job","listingDesc":"desc","maxBudget":10000}'
 
-snap error-job-postings-validation POST /job-postings \
+snap error-job-postings-validation POST /jobs \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"","listingDesc":"","minBudget":20000,"maxBudget":10000,"deadline":"2020-01-01","categoryIds":[99999]}'
 
-snap job-postings-create POST /job-postings \
+snap job-postings-create POST /jobs \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe job posting\",\"listingDesc\":\"Looking for developer team\",\"minBudget\":50000,\"maxBudget\":150000,\"locationPref\":\"Remote\",\"duration\":\"2 Months\",\"deadline\":\"2028-12-31\",\"categoryIds\":[1]}"
-NEW_JOB_POSTING_ID="$(jget jobPostingId)"
+NEW_JOB_POSTING_ID="$(jget jobId)"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    SUBS+=(--id "job_posting_id=$NEW_JOB_POSTING_ID")
+    # listing_id too: a proposal names the job it was sent to as listingId.
+    SUBS+=(--id "job_id=$NEW_JOB_POSTING_ID" --id "listing_id=$NEW_JOB_POSTING_ID")
     resnap job-postings-create
 fi
 
@@ -750,66 +751,66 @@ fi
 # 9. View and search job postings, visibility rules (US2-2, US2-7, US3-4)
 # ---------------------------------------------------------------------------
 
-snap error-job-postings-list-unauthorized GET /job-postings
+snap error-job-postings-list-unauthorized GET /jobs
 
-snap error-job-postings-list-invalid-status GET /job-postings?status=INVALID \
+snap error-job-postings-list-invalid-status GET /jobs?status=INVALID \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap job-postings-list-open GET /job-postings?status=OPEN \
+snap job-postings-list-open GET /jobs?status=OPEN \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # T3.4.3. ?q= keeps only jobs whose title or description matches. No job
 # holds the run id, so the second search is always empty.
-snap job-postings-search GET "/job-postings?q=Snapshot%20Probe%20job" \
+snap job-postings-search GET "/jobs?q=Snapshot%20Probe%20job" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap job-postings-search-no-match GET "/job-postings?q=$RUN" \
+snap job-postings-search-no-match GET "/jobs?q=$RUN" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # One job per page, so page 2 holds a different job under the same total.
-snap job-postings-page-1 GET "/job-postings?status=OPEN&pageSize=1&page=1" \
+snap job-postings-page-1 GET "/jobs?status=OPEN&pageSize=1&page=1" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap job-postings-page-2 GET "/job-postings?status=OPEN&pageSize=1&page=2" \
+snap job-postings-page-2 GET "/jobs?status=OPEN&pageSize=1&page=2" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
 fi
 
-snap job-postings-list-closed-provider GET /job-postings?status=CLOSED \
+snap job-postings-list-closed-provider GET /jobs?status=CLOSED \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap job-postings-list-closed-receiver GET /job-postings?status=CLOSED \
+snap job-postings-list-closed-receiver GET /jobs?status=CLOSED \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T2.2.9. The owner's own list keeps the job closed just above: every status.
-snap job-postings-mine GET /job-postings/mine \
+snap job-postings-mine GET /jobs/mine \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-job-postings-mine-forbidden-provider GET /job-postings/mine \
+snap error-job-postings-mine-forbidden-provider GET /jobs/mine \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap error-job-postings-one-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID"
+snap error-job-postings-one-unauthorized GET "/jobs/$NEW_JOB_POSTING_ID"
 
-snap error-job-postings-one-invalid-id GET /job-postings/not-a-number \
+snap error-job-postings-one-invalid-id GET /jobs/not-a-number \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-job-postings-one-not-found GET /job-postings/2147483647 \
+snap error-job-postings-one-not-found GET /jobs/2147483647 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Another company's closed job is private, so it is 404, not 403.
-snap error-job-postings-one-closed-not-found GET "/job-postings/$NEW_JOB_POSTING_ID" \
+snap error-job-postings-one-closed-not-found GET "/jobs/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap job-postings-one-closed-receiver GET "/job-postings/$NEW_JOB_POSTING_ID" \
+snap job-postings-one-closed-receiver GET "/jobs/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'OPEN' } })"
 fi
 
-snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
+snap job-postings-one-open GET "/jobs/$NEW_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # ---------------------------------------------------------------------------
@@ -819,26 +820,26 @@ snap job-postings-one-open GET "/job-postings/$NEW_JOB_POSTING_ID" \
 echo
 echo "submit proposals"
 
-snap error-proposals-unauthorized POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-unauthorized POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
 
-snap error-proposals-forbidden-receiver POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-forbidden-receiver POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
 
-snap error-proposals-invalid-id POST /job-postings/not-a-number/proposals \
+snap error-proposals-invalid-id POST /jobs/not-a-number/proposals \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
 
-snap error-proposals-not-found POST /job-postings/2147483647/proposals \
+snap error-proposals-not-found POST /jobs/2147483647/proposals \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
 
-snap error-proposals-validation POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-validation POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
@@ -847,7 +848,7 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
 fi
 
-snap error-proposals-own-posting POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-own-posting POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
@@ -858,7 +859,7 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
 fi
 
-snap error-proposals-closed POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-closed POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
@@ -868,7 +869,7 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID, listingStatus: 'OPEN' } })"
 fi
 
-snap proposals-create POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap proposals-create POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
@@ -879,21 +880,21 @@ if [ -n "$NEW_PROPOSAL_ID" ]; then
     resnap proposals-create
 fi
 
-snap error-proposals-repeat POST "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-proposals-repeat POST "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}'
 
 # US2-10. The proposals on the posting: the one just created, with its Provider.
-snap error-posting-proposals-unauthorized GET "/job-postings/$NEW_JOB_POSTING_ID/proposals"
+snap error-posting-proposals-unauthorized GET "/jobs/$NEW_JOB_POSTING_ID/proposals"
 
-snap error-posting-proposals-invalid-id GET /job-postings/not-a-number/proposals \
+snap error-posting-proposals-invalid-id GET /jobs/not-a-number/proposals \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-posting-proposals-not-found GET /job-postings/2147483647/proposals \
+snap error-posting-proposals-not-found GET /jobs/2147483647/proposals \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-snap error-posting-proposals-forbidden-provider GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-posting-proposals-forbidden-provider GET "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # Another Receiver: hand the posting to a different company for one call, so the
@@ -902,14 +903,14 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $PROVIDER_ID } })"
 fi
 
-snap error-posting-proposals-forbidden-receiver GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap error-posting-proposals-forbidden-receiver GET "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { companyId: $RECEIVER_ID } })"
 fi
 
-snap posting-proposals-list GET "/job-postings/$NEW_JOB_POSTING_ID/proposals" \
+snap posting-proposals-list GET "/jobs/$NEW_JOB_POSTING_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
@@ -996,24 +997,24 @@ if [ -z "$TOKEN_D" ]; then
     exit 1
 fi
 D_LIVE=1
-api POST /job-postings -H "$(bearer "$TOKEN_D")" \
+api POST /jobs -H "$(bearer "$TOKEN_D")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe deleted job ${RUN}_d\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
-DELETED_JOB_POSTING_ID="$(jget jobPostingId)"
+DELETED_JOB_POSTING_ID="$(jget jobId)"
 if [ -z "$DELETED_JOB_POSTING_ID" ]; then
     echo "could not create probe D's job posting:" >&2
     cat "$BODY" >&2
     exit 1
 fi
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")")" = 204 ] && D_LIVE=0
-SUBS+=(--id "deleted_job_posting_id=$DELETED_JOB_POSTING_ID")
+SUBS+=(--id "deleted_job_id=$DELETED_JOB_POSTING_ID")
 
 # A deleted company's open job is hidden from the list...
-snap job-postings-search-deleted-owner GET "/job-postings?q=${RUN}_d" \
+snap job-postings-search-deleted-owner GET "/jobs?q=${RUN}_d" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ...and is 404 on detail.
-snap error-job-postings-one-deleted-owner GET "/job-postings/$DELETED_JOB_POSTING_ID" \
+snap error-job-postings-one-deleted-owner GET "/jobs/$DELETED_JOB_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # GET /services/:serviceId. Any company reads an open service of an active
@@ -1220,11 +1221,11 @@ snap services-filter-price-empty GET \
 # Sorting happens before pagination. A missing starting price is unknown, not
 # the cheapest option, so the no-min probe is last in both directions.
 snap services-order-price-asc GET \
-    "/services?techStack=$RUN&orderBy=price-asc" \
+    "/services?techStack=$RUN&orderBy=priceAsc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap services-order-price-desc GET \
-    "/services?techStack=$RUN&orderBy=price-desc" \
+    "/services?techStack=$RUN&orderBy=priceDesc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Slider ends that cross are a 400 the filter panel can show.
@@ -1260,65 +1261,65 @@ echo "edit job postings"
 # The probe posting from section 8, Open and owned by the receiver again
 # since section 10.
 if [ -n "$NEW_JOB_POSTING_ID" ]; then
-    snap error-job-postings-update-unauthorized PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-unauthorized PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H 'Content-Type: application/json' \
         -d '{"listingTitle":"Unauthorized edit"}'
 
-    snap error-job-postings-update-not-found PATCH /job-postings/2147483647 \
+    snap error-job-postings-update-not-found PATCH /jobs/2147483647 \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingTitle":"Nobody owns this"}'
 
     # T2.13.9: the provider can see the posting but does not own it.
-    snap error-job-postings-update-forbidden PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-forbidden PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_PROVIDER")" -H 'Content-Type: application/json' \
         -d '{"listingTitle":"Not my posting"}'
 
     # T2.13.6: a partial edit. Fields left out keep their values, and the
     # categories are swapped for the new set.
-    snap job-postings-update PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap job-postings-update PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingTitle":"Snapshot Probe job posting edited","maxBudget":200000,"deadline":"2029-06-30","categoryIds":[2]}'
 
-    snap job-postings-update-persisted GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap job-postings-update-persisted GET "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")"
 
     # T2.13.7: every one of these is a 400, and the GET after them shows
     # the posting exactly as job-postings-update-persisted left it.
-    snap error-job-postings-update-validation PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-validation PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingTitle":"","maxBudget":-5,"deadline":"2020-01-01"}'
 
     # Only one budget sent: 250000 is over the stored max of 200000.
-    snap error-job-postings-update-budget PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-budget PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"minBudget":250000}'
 
     # Only the max sent: 40000 is under the stored min of 50000, and the error
     # names maxBudget, the field the form changed.
-    snap error-job-postings-update-budget-max PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-budget-max PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"maxBudget":40000}'
 
-    snap error-job-postings-update-unknown-category PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-unknown-category PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"categoryIds":[99999]}'
 
-    snap error-job-postings-update-empty PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-empty PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{}'
 
     # A misspelled key is a 400, not a 200 that wrote nothing.
-    snap error-job-postings-update-unknown-key PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-unknown-key PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingTitel":"Typo"}'
 
-    snap job-postings-update-unchanged GET "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap job-postings-update-unchanged GET "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")"
 
     # T2.13.8: a Closed posting cannot be edited, even by its owner.
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { listingStatus: 'CLOSED' } })"
 
-    snap error-job-postings-update-closed PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap error-job-postings-update-closed PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingTitle":"Too late"}'
 
@@ -1328,11 +1329,11 @@ if [ -n "$NEW_JOB_POSTING_ID" ]; then
     # no budget still saves, and the bad budgets come back untouched.
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_POSTING_ID }, data: { minBudget: 300000 } })"
 
-    snap job-postings-update-bad-stored-budget PATCH "/job-postings/$NEW_JOB_POSTING_ID" \
+    snap job-postings-update-bad-stored-budget PATCH "/jobs/$NEW_JOB_POSTING_ID" \
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingDesc":"Edited while the stored budgets are wrong"}'
 else
-    echo "  --  skip   PATCH /job-postings/:jobPostingId (no probe posting)"
+    echo "  --  skip   PATCH /jobs/:jobPostingId (no probe posting)"
 fi
 
 # ---------------------------------------------------------------------------
@@ -1343,19 +1344,20 @@ echo
 echo "close job postings"
 # A fresh posting, because section 8's has only a rejected proposal and the
 # provider cannot send it a second one. Created with api, not snap: POST
-# /job-postings has its own tests (US2-6).
-api POST /job-postings -H "$(bearer "$TOKEN_RECEIVER")" \
+# /jobs has its own tests (US2-6).
+api POST /jobs -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Snapshot Probe job posting to close","listingDesc":"created by scripts/snapshot-api.sh","maxBudget":100000}' >/dev/null
-CLOSE_POSTING_ID="$(jget jobPostingId)"
+CLOSE_POSTING_ID="$(jget jobId)"
 if [ -z "$CLOSE_POSTING_ID" ]; then
     echo "could not create the close probe posting:" >&2
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "job_posting_id=$CLOSE_POSTING_ID")
+# listing_id too: a proposal names the job it was sent to as listingId.
+SUBS+=(--id "job_id=$CLOSE_POSTING_ID" --id "listing_id=$CLOSE_POSTING_ID")
 
-api POST "/job-postings/$CLOSE_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
+api POST "/jobs/$CLOSE_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":90000,"proposalTerms":"Pending until the posting closes.","duration":1}' >/dev/null
 CLOSE_PROPOSAL_ID="$(jget proposalId)"
@@ -1366,17 +1368,17 @@ if [ -z "$CLOSE_PROPOSAL_ID" ]; then
 fi
 SUBS+=(--id "proposal_id=$CLOSE_PROPOSAL_ID")
 
-snap error-job-postings-close-unauthorized POST "/job-postings/$CLOSE_POSTING_ID/close"
+snap error-job-postings-close-unauthorized POST "/jobs/$CLOSE_POSTING_ID/close"
 
-snap error-job-postings-close-not-found POST /job-postings/2147483647/close \
+snap error-job-postings-close-not-found POST /jobs/2147483647/close \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T2.14.8: the provider can see the posting but does not own it.
-snap error-job-postings-close-forbidden POST "/job-postings/$CLOSE_POSTING_ID/close" \
+snap error-job-postings-close-forbidden POST "/jobs/$CLOSE_POSTING_ID/close" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # T2.14.6: the answer is the posting, now CLOSED.
-snap job-postings-close POST "/job-postings/$CLOSE_POSTING_ID/close" \
+snap job-postings-close POST "/jobs/$CLOSE_POSTING_ID/close" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # T2.14.6: the proposal was rejected along with it. Nothing reads a proposal's
@@ -1386,7 +1388,7 @@ snap error-job-postings-close-rejected-proposal POST "/proposals/$CLOSE_PROPOSAL
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # Closing twice is a state conflict, not a second success.
-snap error-job-postings-close-again POST "/job-postings/$CLOSE_POSTING_ID/close" \
+snap error-job-postings-close-again POST "/jobs/$CLOSE_POSTING_ID/close" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
@@ -1398,18 +1400,19 @@ echo "accept proposals"
 # A fresh posting with one pending proposal: section 8's proposal was
 # rejected in section 12, and section 15's posting is closed. Created with
 # api, not snap: both calls have their own snapshots above.
-api POST /job-postings -H "$(bearer "$TOKEN_RECEIVER")" \
+api POST /jobs -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
     -d '{"listingTitle":"Snapshot Probe job posting to accept","listingDesc":"created by scripts/snapshot-api.sh","maxBudget":100000}' >/dev/null
-ACCEPT_POSTING_ID="$(jget jobPostingId)"
+ACCEPT_POSTING_ID="$(jget jobId)"
 if [ -z "$ACCEPT_POSTING_ID" ]; then
     echo "could not create the accept probe posting:" >&2
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "job_posting_id=$ACCEPT_POSTING_ID")
+# listing_id too: a proposal names the job it was sent to as listingId.
+SUBS+=(--id "job_id=$ACCEPT_POSTING_ID" --id "listing_id=$ACCEPT_POSTING_ID")
 
-api POST "/job-postings/$ACCEPT_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
+api POST "/jobs/$ACCEPT_POSTING_ID/proposals" -H "$(bearer "$TOKEN_PROVIDER")" \
     -H 'Content-Type: application/json' \
     -d '{"proposalBudget":95000,"proposalTerms":"Accepted by the snapshot run.","duration":3}' >/dev/null
 ACCEPT_PROPOSAL_ID="$(jget proposalId)"
@@ -1429,7 +1432,7 @@ snap error-proposals-accept-forbidden POST "/proposals/$ACCEPT_PROPOSAL_ID/accep
 # 201 with the new project.
 snap proposals-accept POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
-SUBS+=(--id "proj_id=$(jget projId)")
+SUBS+=(--id "project_id=$(jget projectId)")
 # The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
 # purpose, so this one snapshot names today, and only here: a run-wide rule
 # would also catch any other date that happens to be today.
@@ -1437,7 +1440,7 @@ node "$HELPER" normalize --request "$LAST_REQUEST" --status "$LAST_STATUS" \
     "${SUBS[@]}" --text "today=$(date -u +%F)" <"$BODY" >"$OUT_DIR/proposals-accept.json"
 
 # Accepting closed the posting.
-snap job-postings-one-after-accept GET "/job-postings/$ACCEPT_POSTING_ID" \
+snap job-postings-one-after-accept GET "/jobs/$ACCEPT_POSTING_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # A second accept is a state conflict, not a second project.

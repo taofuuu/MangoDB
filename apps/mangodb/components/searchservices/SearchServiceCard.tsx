@@ -1,5 +1,5 @@
 import { formatBudgetRange } from '@/lib/money';
-import type { ServiceSummary } from '@/lib/services';
+import type { ServiceSummary } from '@mangodb/shared';
 import { Tag, Wallet } from 'lucide-react';
 
 function initials(name: string): string {

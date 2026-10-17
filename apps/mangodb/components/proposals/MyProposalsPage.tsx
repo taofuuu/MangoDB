@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type {
-    ProposalListResponse,
+    Paginated,
     ProposalStatus,
     ProposalStatusCounts,
-    ProviderProposal,
+    SentProposal,
 } from '@mangodb/shared';
 import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -56,12 +56,12 @@ function EmptyState() {
 export default function MyProposalsPage() {
     const [status, setStatus] = useState<ProposalStatus | undefined>();
     const [page, setPage] = useState(1);
-    const [result, setResult] = useState<ProposalListResponse | null>(null);
+    const [result, setResult] = useState<Paginated<SentProposal> | null>(null);
     const [counts, setCounts] = useState<ProposalStatusCounts | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
-    const [selected, setSelected] = useState<ProviderProposal | null>(null);
+    const [selected, setSelected] = useState<SentProposal | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

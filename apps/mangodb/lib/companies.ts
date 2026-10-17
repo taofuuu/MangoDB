@@ -1,14 +1,15 @@
 import type {
     AccountType,
-    CompanyAccountDetail,
-    CompanyAccountListResponse,
-    CompanyListResponse,
-    PublicCompanyProfile,
-    CompanySortOrder,
     ChangeCredentialsRequest,
     ChangeCredentialsResponse,
+    CompanyAccountDetail,
+    CompanyAccountSummary,
     CompanyProfile,
+    CompanySortOrder,
+    CompanySummary,
     DeleteCompanyAccountRequest,
+    Paginated,
+    PublicCompanyProfile,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -85,7 +86,7 @@ export function listCompanyAccounts(
     page: number,
     pageSize: number,
     options?: GetCompanyAccountsOptions,
-): Promise<CompanyAccountListResponse> {
+): Promise<Paginated<CompanyAccountSummary>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -102,7 +103,9 @@ export function listCompanyAccounts(
     }
 
     const path = `/admin/companies?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<CompanyAccountListResponse>(path));
+    return cachedGet(path, () =>
+        apiFetch<Paginated<CompanyAccountSummary>>(path),
+    );
 }
 
 export function getCompanyAccountDetail(
@@ -120,7 +123,7 @@ export function listCompanies(
     pageSize: number,
     q?: string,
     orderBy: CompanySortOrder = 'nameAsc',
-): Promise<CompanyListResponse> {
+): Promise<Paginated<CompanySummary>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -131,7 +134,9 @@ export function listCompanies(
         query.set('q', q.trim());
     }
 
-    return apiFetch<CompanyListResponse>(`/companies?${query.toString()}`);
+    return apiFetch<Paginated<CompanySummary>>(
+        `/companies?${query.toString()}`,
+    );
 }
 
 export function getCompanyProfile(

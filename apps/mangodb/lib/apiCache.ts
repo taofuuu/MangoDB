@@ -64,8 +64,8 @@ export function cachedGet<T>(
 }
 
 // Drops every entry whose key starts with one of `prefixes`, e.g.
-// '/certificates'. A prefix also matches longer paths: '/job-postings' drops
-// '/job-postings/mine?page=1' too.
+// '/certificates'. A prefix also matches longer paths: '/jobs' drops
+// '/jobs/mine?page=1' too.
 export function invalidateCache(...prefixes: string[]): void {
     for (const key of cache.keys()) {
         if (prefixes.some((prefix) => key.startsWith(prefix))) {

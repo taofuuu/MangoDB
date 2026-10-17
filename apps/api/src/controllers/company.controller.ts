@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import type { CompanyListResponse } from '@mangodb/shared';
+import type { CompanySummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
@@ -386,7 +386,7 @@ export async function listCompanies(
         }),
     ]);
 
-    const body: CompanyListResponse = {
+    const body: Paginated<CompanySummary> = {
         items: companies.map(toCompanySummary),
         pagination: {
             page,

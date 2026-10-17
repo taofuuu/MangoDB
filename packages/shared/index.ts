@@ -1,15 +1,24 @@
 // Field names are camelCase, here and everywhere above the database. See
-// docs/conventions.md section 1.
+// docs/conventions.md section 1. Every union below is derived from a const
+// array, so the frontend can loop over the values (section 6).
+
+// A page of a list: GET endpoints that page answer with this (section 3).
+export interface Paginated<T> {
+    items: T[];
+    pagination: PaginationMeta;
+}
 
 // 'both' mirrors accountType BOTH: one company that offers and requests work.
 // What a role is allowed to do is a separate question — see auth/roles.ts.
-export type UserRole = 'provider' | 'receiver' | 'both' | 'admin';
+export const USER_ROLES = ['provider', 'receiver', 'both', 'admin'] as const;
+export type UserRole = (typeof USER_ROLES)[number];
 
 // Stored in company.account_type, uppercase as the seeded rows have it. ADMIN
 // is deliberately absent from registerSchema, so the public signup form can
 // never mint one. An admin is a company row with accountType ADMIN and no
 // provider or receiver row — there is no separate admin table.
-export type AccountType = 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
+export const ACCOUNT_TYPES = ['PROVIDER', 'RECEIVER', 'BOTH', 'ADMIN'] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 // What a signup may ask for. Narrower than AccountType on purpose:
 // registerSchema rejects ADMIN at runtime, so the contract the frontend
@@ -35,28 +44,32 @@ export interface AuthTokenClaims extends AuthTokenPayload {
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
-// Ordering choices supported by the public service-search endpoint. Keeping
-// the values here prevents the web app and API schema from drifting apart.
-export const SEARCH_SERVICES_ORDERS = [
-    'newest',
-    'price-asc',
-    'price-desc',
-] as const;
-export type SearchServicesOrder = (typeof SEARCH_SERVICES_ORDERS)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export const PROJECT_STATUSES = ['ACTIVE', 'COMPLETED', 'CANCELLED'] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+// listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
+export const LISTING_TYPES = ['SERVICE', 'JOB'] as const;
+export type ListingType = (typeof LISTING_TYPES)[number];
+
+// Ordering choices of the service search. Never stored, so camelCase like
+// COMPANY_SORT_ORDERS (section 6).
+export const SERVICE_SORT_ORDERS = ['newest', 'priceAsc', 'priceDesc'] as const;
+export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.
-export type ApiErrorCode =
-    | 'BAD_REQUEST'
-    | 'VALIDATION_FAILED'
-    | 'UNAUTHORIZED'
-    | 'FORBIDDEN'
-    | 'NOT_FOUND'
-    | 'CONFLICT'
-    | 'TOO_MANY_REQUESTS'
-    | 'INTERNAL';
+export const API_ERROR_CODES = [
+    'BAD_REQUEST',
+    'VALIDATION_FAILED',
+    'UNAUTHORIZED',
+    'FORBIDDEN',
+    'NOT_FOUND',
+    'CONFLICT',
+    'TOO_MANY_REQUESTS',
+    'INTERNAL',
+] as const;
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
 
 // One per bad field, so a form can show each message beside its own input.
 export interface ApiErrorDetail {
@@ -152,11 +165,6 @@ export interface PaginationMeta {
     totalPages: number;
 }
 
-export interface CompanyAccountListResponse {
-    items: CompanyAccountSummary[];
-    pagination: PaginationMeta;
-}
-
 // US3-6. One company search result card. The full public profile is fetched
 // only when its detail panel opens. categories and techStack are every one
 // used by the company's services (ADR 0009: tech stack is per service).
@@ -176,11 +184,6 @@ export interface CompanySummary {
 export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
 export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
-export interface CompanyListResponse {
-    items: CompanySummary[];
-    pagination: PaginationMeta;
-}
-
 // US3-1. One service search result card: the service, with a short profile of
 // the company that offers it (ADR 0001). techStack is this service's own.
 export interface ServiceSummary {
@@ -192,11 +195,6 @@ export interface ServiceSummary {
     categories: string[];
     techStack: string[];
     company: CompanyBrief;
-}
-
-export interface ServiceListResponse {
-    items: ServiceSummary[];
-    pagination: PaginationMeta;
 }
 
 // T3.2.2. Values the service-search filter controls can offer. Categories are
@@ -264,20 +262,18 @@ export interface IdentityAvailability {
     emailAvailable: boolean;
 }
 
-// A service listing as POST /services, GET /services/mine and
-// GET /services/:serviceId return it. serviceId is the row's listing_id, named
-// for the resource the way JobPosting's jobPostingId is. companyName is the
-// owner's name; null only on an orphaned listing (conventions section 11).
-export interface ServiceListing {
+// A service as POST /services, GET /services/mine and GET /services/:serviceId
+// return it. serviceId is the row's listing_id, named for the resource the way
+// a job's is jobId. company is the Provider that offers it.
+export interface Service {
     serviceId: number;
-    companyId: number | null;
-    companyName: string | null;
+    company: CompanyBrief;
     type: 'SERVICE';
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
-    listingStatus: string;
+    listingStatus: ListingStatus;
     categoryIds: number[];
     techStack: string[];
 }
@@ -312,11 +308,11 @@ export interface Certificate {
     expireYear: number | null;
 }
 
-// US2-6. A Receiver's job posting. jobPostingId matches listing.listingId.
-export interface JobPosting {
-    jobPostingId: number;
-    companyId: number;
-    companyName: string;
+// US2-6. A Receiver's job. jobId matches listing.listingId. company is the
+// Receiver that posted it.
+export interface Job {
+    jobId: number;
+    company: CompanyBrief;
     listingTitle: string;
     listingDesc: string;
     minBudget: number | null;
@@ -331,13 +327,8 @@ export interface JobPosting {
     createdAt?: string | undefined;
 }
 
-export interface JobPostingListResponse {
-    items: JobPosting[];
-    pagination: PaginationMeta;
-}
-
-// What POST /job-postings accepts. Validated by createJobPostingSchema.
-export interface CreateJobPostingRequest {
+// What POST /jobs accepts. Validated by createJobPostingSchema.
+export interface CreateJobRequest {
     listingTitle: string;
     listingDesc: string;
     minBudget?: number | null | undefined;
@@ -348,14 +339,15 @@ export interface CreateJobPostingRequest {
     categoryIds?: number[] | undefined;
 }
 
-// What POST /services accepts. Validated by createServiceSchema.
+// What POST /services accepts. Validated by createServiceSchema. A new
+// service always starts OPEN, so there is no listingStatus here.
 export interface CreateServiceRequest {
     listingTitle: string;
     listingDesc: string;
-    minBudget?: number | null | undefined;
-    maxBudget?: number | null | undefined;
-    listingStatus?: ListingStatus | undefined;
+    minBudget?: number | undefined;
+    maxBudget?: number | undefined;
     categoryIds?: number[] | undefined;
+    techStack?: string[] | undefined;
 }
 
 // What PATCH /services/:serviceId accepts. Send only what changed;
@@ -369,9 +361,9 @@ export interface UpdateServiceRequest {
     techStack?: string[] | undefined;
 }
 
-// What PATCH /job-postings/:jobPostingId accepts. Send only what changed;
-// categoryIds replaces the whole set. Validated by updateJobPostingSchema.
-export interface UpdateJobPostingRequest {
+// What PATCH /jobs/:jobId accepts. Send only what changed; categoryIds
+// replaces the whole set. Validated by updateJobPostingSchema.
+export interface UpdateJobRequest {
     listingTitle?: string | undefined;
     listingDesc?: string | undefined;
     minBudget?: number | null | undefined;
@@ -382,11 +374,13 @@ export interface UpdateJobPostingRequest {
     categoryIds?: number[] | undefined;
 }
 
-// US2-8. A Provider's proposal on a job posting.
+// US2-8. A proposal sent to a listing (ADR 0021). Today every listing it is
+// sent to is a job; the names say sender and listing so a hire request on a
+// service can use the same row.
 export interface Proposal {
     proposalId: number;
-    jobPostingId: number;
-    providerId: number;
+    listingId: number;
+    senderId: number;
     proposalBudget: number;
     proposalTerms: string;
     duration: number;
@@ -394,29 +388,21 @@ export interface Proposal {
     createdAt: string;
 }
 
-// US2-9. One row of GET /proposals/mine: the proposal, with the job posting's
-// title and the company that posted it, so the list needs no extra request
-// per row. receiver is null when the listing has no owner row.
-export interface ProviderProposal extends Proposal {
+// US2-9. One row of GET /proposals/mine, as the sender sees it: the proposal,
+// with the listing's title and the company it was sent to, so the list needs
+// no extra request per row.
+export interface SentProposal extends Proposal {
     listingTitle: string;
-    receiver: CompanyBrief | null;
+    recipient: CompanyBrief;
 }
 
-// US2-9. GET /proposals/mine/counts: how many proposals the Provider has sent,
-// by status. Its own endpoint so the list stays { items, pagination }
+// US2-9. GET /proposals/mine/counts: how many proposals the caller has sent,
+// in total and by status. Its own endpoint so the list stays paginated
 // (conventions §3) and the page's chips stay put while the list is filtered.
-export interface ProposalStatusCounts {
-    total: number;
-    pending: number;
-    accepted: number;
-    rejected: number;
-}
-
-// US2-9. Paginated proposals response for provider tracking.
-export interface ProposalListResponse {
-    items: ProviderProposal[];
-    pagination: PaginationMeta;
-}
+export type ProposalStatusCounts = { total: number } & Record<
+    Lowercase<ProposalStatus>,
+    number
+>;
 
 // A company in one line: enough to show who it is beside something it sent
 // or owns, with no second request.
@@ -426,13 +412,14 @@ export interface CompanyBrief {
     companyPhoto: string | null;
 }
 
-// US2-10. One row of GET /job-postings/:jobPostingId/proposals: the proposal,
-// with a short profile of the Provider that sent it so the Receiver can choose.
-export interface PostingProposal extends Proposal {
-    provider: CompanyBrief;
+// US2-10. One row of GET /jobs/:jobId/proposals, as the listing's owner sees
+// it: the proposal, with a short profile of the company that sent it, so the
+// owner can choose.
+export interface ReceivedProposal extends Proposal {
+    sender: CompanyBrief;
 }
 
-// What POST /job-postings/:jobPostingId/proposals accepts.
+// What POST /jobs/:jobId/proposals accepts.
 export interface CreateProposalRequest {
     proposalBudget: number;
     proposalTerms: string;
@@ -441,17 +428,16 @@ export interface CreateProposalRequest {
 
 // The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
 export interface Project {
-    projId: number;
+    projectId: number;
     proposalId: number;
     totalBudget: number;
     // YYYY-MM-DD date string per conventions section 10
     startDate: string;
-    status: ProjectStatus;
+    projectStatus: ProjectStatus;
 }
 
-export type ViewMode = 'all' | 'rejected';
-// listing category
+// GET /categories. The fixed catalog a listing picks from (ADR 0002).
 export interface Category {
-    catId: number;
-    catName: string;
+    categoryId: number;
+    categoryName: string;
 }

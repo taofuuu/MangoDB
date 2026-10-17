@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import type { PostingProposal, ViewMode } from '@mangodb/shared';
+import type { ReceivedProposal } from '@mangodb/shared';
+import type { ViewMode } from './StatsBadges';
 import Image from 'next/image';
 import AcceptProposalModal from './AcceptProposalModal';
 import RejectProposalModal from './RejectProposalModal';
 import { Clock, Calendar, Tag } from 'lucide-react';
 
 interface ProposalDetailProps {
-    proposal: PostingProposal;
+    proposal: ReceivedProposal;
     viewMode: ViewMode;
     onClose: () => void;
     onAccept?: () => void;
@@ -24,8 +25,8 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
     const [showRejectModal, setShowRejectModal] = useState(false);
 
     const companyName =
-        proposal.provider?.companyName ??
-        `Provider #${proposal.provider?.companyId}`;
+        proposal.sender?.companyName ??
+        `Provider #${proposal.sender?.companyId}`;
 
     const handleConfirmAccept = () => {
         setShowAcceptModal(false);
@@ -49,11 +50,11 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                 <div className="flex items-start justify-between pb-4 border-b border-[#497B93]">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-[#437788] flex-shrink-0 flex items-center justify-center text-white overflow-hidden">
-                            {proposal.provider?.companyPhoto ? (
+                            {proposal.sender?.companyPhoto ? (
                                 <div className="relative w-full h-full overflow-hidden">
                                     <Image
-                                        src={proposal.provider.companyPhoto}
-                                        alt={proposal.provider.companyName}
+                                        src={proposal.sender.companyPhoto}
+                                        alt={proposal.sender.companyName}
                                         fill
                                         sizes="(max-width: 768px) 100vw, 50vw"
                                         className="object-cover"
@@ -73,8 +74,8 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-slate-800">
-                                    {proposal.provider?.companyName ||
-                                        `Provider #${proposal.provider?.companyId}`}
+                                    {proposal.sender?.companyName ||
+                                        `Provider #${proposal.sender?.companyId}`}
                                 </span>
                             </div>
 

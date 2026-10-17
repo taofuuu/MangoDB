@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { JobPosting } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 
 import {
     X,
@@ -17,7 +17,7 @@ import ModalShell from '@/components/ui/ModalShell';
 import { formatBudgetRange } from '@/lib/money';
 
 interface JobDetailModalProps {
-    job: JobPosting;
+    job: Job;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -292,10 +292,10 @@ export default function JobDetailModal({
                             {/* The posting's own company: this popup also opens
                                 from another company's profile. */}
                             <Link
-                                href={`/profile/${job.companyId}`}
+                                href={`/profile/${job.company.companyId}`}
                                 className="!font-[600] text-ink hover:underline"
                             >
-                                {job.companyName}
+                                {job.company.companyName}
                             </Link>
 
                             <Building2 size={20} color="black" />

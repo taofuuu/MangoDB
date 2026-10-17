@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import type { CompanyAccountListResponse } from '@mangodb/shared';
+import type { CompanyAccountSummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
@@ -80,7 +80,7 @@ export async function listCompanyAccounts(
         }),
     ]);
 
-    const body: CompanyAccountListResponse = {
+    const body: Paginated<CompanyAccountSummary> = {
         items: companies.map(toCompanyAccountSummary),
         pagination: {
             page,

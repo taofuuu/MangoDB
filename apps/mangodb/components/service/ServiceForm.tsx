@@ -182,7 +182,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                 ]);
 
                 if (cancelled) return;
-                if (service.companyId !== profile.companyId) {
+                if (service.company.companyId !== profile.companyId) {
                     setLoadError(
                         'You can only edit services owned by your company.',
                     );

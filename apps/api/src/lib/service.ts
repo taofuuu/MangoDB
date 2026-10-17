@@ -2,13 +2,15 @@
 // single source of truth for its values. Browse filters and proposal logic
 // should import from here instead of hardcoding strings.
 import type {
+    CompanyBrief,
     ListingStatus,
+    Service,
     ServiceFilterOptions,
-    ServiceListing,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './ApiError';
+import { companyBriefSelect, toCompanyBrief } from './companyProfile';
 
 // The status a new service is created with. The allowed listing_status values
 // live in packages/shared (LISTING_STATUSES, ADR 0010).
@@ -84,9 +86,7 @@ export const serviceSelect = {
     listingStatus: true,
     listingCategory: { select: { categoryId: true } },
     service: serviceTechStackSelect,
-    // Only the name: the company row also holds the sign-in email and
-    // password hash (ADR 0001).
-    company: { select: { companyName: true } },
+    company: { select: companyBriefSelect },
 } as const;
 
 type SelectedService = {
@@ -99,22 +99,22 @@ type SelectedService = {
     listingStatus: string;
     listingCategory: { categoryId: number }[];
     service: ServiceTechStackRow;
-    company: { companyName: string } | null;
+    company: CompanyBrief | null;
 };
 
-export function toService(row: SelectedService): ServiceListing {
+export function toService(row: SelectedService): Service {
     return {
         // listing_id is the shared key under every listing; on the wire it
-        // takes the resource's name, the way a job posting's is jobPostingId.
+        // takes the resource's name, the way a job's is jobId.
         serviceId: row.listingId,
-        companyId: row.companyId,
-        companyName: row.company?.companyName ?? null,
+        company: toCompanyBrief(row.company),
         type: 'SERVICE',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
-        listingStatus: row.listingStatus,
+        // Only ever written from LISTING_STATUSES (conventions §6).
+        listingStatus: row.listingStatus as ListingStatus,
         categoryIds: row.listingCategory.map((c) => c.categoryId),
         techStack: toTechStackNames(row.service),
     };
@@ -167,13 +167,7 @@ export const serviceSummarySelect = {
         select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
-    company: {
-        select: {
-            companyId: true,
-            companyName: true,
-            companyPhoto: true,
-        },
-    },
+    company: { select: companyBriefSelect },
 } as const;
 
 interface ServiceSummaryRow {
@@ -184,18 +178,10 @@ interface ServiceSummaryRow {
     maxBudget: number | null;
     listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    } | null;
+    company: CompanyBrief | null;
 }
 
 export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
-    // The search only returns listings that have a company; company_id is
-    // still nullable in the schema (conventions §11).
-    const company = row.company!;
-
     return {
         serviceId: row.listingId,
         listingTitle: row.listingTitle,
@@ -207,11 +193,7 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             .map(({ category }) => category.categoryName)
             .sort(),
         techStack: toTechStackNames(row.service),
-        company: {
-            companyId: company.companyId,
-            companyName: company.companyName,
-            companyPhoto: company.companyPhoto,
-        },
+        company: toCompanyBrief(row.company),
     };
 }
 

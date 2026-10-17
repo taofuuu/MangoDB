@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { ServiceListing } from '@mangodb/shared';
+import type { Service } from '@mangodb/shared';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { listMyServices } from '@/lib/services';
 
 export default function ServiceEditPicker() {
-    const [services, setServices] = useState<ServiceListing[] | null>(null);
+    const [services, setServices] = useState<Service[] | null>(null);
     const [query, setQuery] = useState('');
     const [loadError, setLoadError] = useState<string | null>(null);
 

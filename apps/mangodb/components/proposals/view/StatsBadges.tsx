@@ -1,5 +1,8 @@
 import React from 'react';
-import type { ViewMode } from '@mangodb/shared';
+
+// Which proposals the page lists: all of them, or only the rejected ones. UI
+// state, not a wire type, so it lives here rather than in packages/shared.
+export type ViewMode = 'all' | 'rejected';
 
 interface StatsBadgesProps {
     total: number;

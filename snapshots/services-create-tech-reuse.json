@@ -3,8 +3,11 @@
     "status": 201,
     "body": {
         "categoryIds": [],
-        "companyId": 142,
-        "companyName": "Snapshot Seed Provider",
+        "company": {
+            "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
+            "companyPhoto": null
+        },
         "listingDesc": "created by scripts/snapshot-api.sh",
         "listingStatus": "OPEN",
         "listingTitle": "Snapshot Probe reuse service",

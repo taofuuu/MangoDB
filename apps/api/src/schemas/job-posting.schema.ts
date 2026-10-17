@@ -96,10 +96,10 @@ export const updateJobPostingSchema = z
     });
 
 export const jobPostingIdParamSchema = z.object({
-    jobPostingId: int4Id,
+    jobId: int4Id,
 });
 
-// Query parameters for GET /job-postings.
+// Query parameters for GET /jobs.
 // Supports status filtering (OPEN | CLOSED) and filtering by companyId.
 // Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
 export const jobPostingListQuerySchema = z.object({

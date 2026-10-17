@@ -17,6 +17,6 @@ routes.use('/companies', companyRoutes);
 routes.use('/services', serviceRoutes);
 routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
-routes.use('/job-postings', jobPostingRoutes);
+routes.use('/jobs', jobPostingRoutes);
 routes.use('/proposals', proposalRoutes);
 routes.use('/categories', categoryRoutes);

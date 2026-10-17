@@ -6,8 +6,11 @@
             "categoryIds": [
                 1
             ],
-            "companyId": 142,
-            "companyName": "Snapshot Seed Provider",
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
             "listingDesc": "created by scripts/snapshot-api.sh",
             "listingStatus": "CLOSED",
             "listingTitle": "Snapshot Probe service <run>",
@@ -22,8 +25,11 @@
         },
         {
             "categoryIds": [],
-            "companyId": 142,
-            "companyName": "Snapshot Seed Provider",
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
             "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
             "listingStatus": "OPEN",
             "listingTitle": "Snapshot seed service listing",
@@ -37,8 +43,11 @@
             "categoryIds": [
                 4
             ],
-            "companyId": 142,
-            "companyName": "Snapshot Seed Provider",
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
             "listingDesc": "We design, build and host web apps end to end.\n\n([demo] dummy data)",
             "listingStatus": "OPEN",
             "listingTitle": "[demo] Full-stack web development",

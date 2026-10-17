@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type {
+    PaginationMeta,
+    ServiceSortOrder,
+    ServiceSummary,
+} from '@mangodb/shared';
 import {
     EMPTY_SEARCH_SERVICES_FILTERS,
     listServices,
-    type Pagination,
     type SearchServicesFilters,
-    type SearchServicesOrder,
-    type ServiceSummary,
 } from './services';
 import { SERVICE_PAGE_SIZE } from './pagination';
 
@@ -15,12 +17,12 @@ export type SearchServicesMode = 'pagination' | 'infinite';
 
 type State = {
     q: string;
-    orderBy: SearchServicesOrder;
+    orderBy: ServiceSortOrder;
     filters: SearchServicesFilters;
     page: number;
     pageSize: number;
     items: ServiceSummary[];
-    pagination: Pagination | null;
+    pagination: PaginationMeta | null;
     status: 'idle' | 'loading' | 'loaded' | 'error';
     error: unknown;
 };
@@ -91,7 +93,7 @@ export function useSearchServices(mode: SearchServicesMode = 'pagination') {
         setState((s) => ({ ...s, q }));
     }, []);
 
-    const setOrderBy = useCallback((orderBy: SearchServicesOrder) => {
+    const setOrderBy = useCallback((orderBy: ServiceSortOrder) => {
         setState((s) => ({ ...s, orderBy, page: 1 }));
     }, []);
 

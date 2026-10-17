@@ -7,18 +7,20 @@
 // are types, so `tsc` fails here if a schema and its shared type disagree about
 // a field name, a type, or which fields are optional.
 //
-// With no test runner in this project, this is the cheapest real safety
-// available. Add a line here whenever a request body gets a shared type.
+// The unit tests check what a handler does; only this checks that the two
+// sides agree on the shape. Add a line here whenever a request body gets a
+// shared type.
 
 import type { z } from 'zod';
 import type {
     ChangeCredentialsRequest,
-    CreateJobPostingRequest,
+    CreateJobRequest,
     CreateProposalRequest,
+    CreateServiceRequest,
     DeleteCompanyAccountRequest,
     RegisterRequest,
     UpdateCompanyProfileRequest,
-    UpdateJobPostingRequest,
+    UpdateJobRequest,
     UpdateServiceRequest,
 } from '@mangodb/shared';
 import type { registerSchema } from './auth.schema';
@@ -32,7 +34,10 @@ import type {
     updateJobPostingSchema,
 } from './job-posting.schema';
 import type { createProposalSchema } from './proposal.schema';
-import type { updateServiceSchema } from './service.schema';
+import type {
+    createServiceSchema,
+    updateServiceSchema,
+} from './service.schema';
 
 // Fails to compile unless T is assignable to U. Both directions are asserted
 // below, so neither side may carry a field the other does not.
@@ -72,24 +77,24 @@ type _ContractMatchesDeleteAccount = Assert<
     DeleteAccountInput
 >;
 
-type CreateJobPostingInput = z.infer<typeof createJobPostingSchema>;
-type _CreateJobPostingMatchesContract = Assert<
-    CreateJobPostingInput,
-    CreateJobPostingRequest
->;
-type _ContractMatchesCreateJobPosting = Assert<
-    CreateJobPostingRequest,
-    CreateJobPostingInput
->;
+type CreateJobInput = z.infer<typeof createJobPostingSchema>;
+type _CreateJobMatchesContract = Assert<CreateJobInput, CreateJobRequest>;
+type _ContractMatchesCreateJob = Assert<CreateJobRequest, CreateJobInput>;
 
-type UpdateJobPostingInput = z.infer<typeof updateJobPostingSchema>;
-type _UpdateJobPostingMatchesContract = Assert<
-    UpdateJobPostingInput,
-    UpdateJobPostingRequest
+type UpdateJobInput = z.infer<typeof updateJobPostingSchema>;
+type _UpdateJobMatchesContract = Assert<UpdateJobInput, UpdateJobRequest>;
+type _ContractMatchesUpdateJob = Assert<UpdateJobRequest, UpdateJobInput>;
+
+// z.input, not z.infer: categoryIds and techStack have defaults, so after
+// parsing they are always there, but a client may leave them out.
+type CreateServiceInput = z.input<typeof createServiceSchema>;
+type _CreateServiceMatchesContract = Assert<
+    CreateServiceInput,
+    CreateServiceRequest
 >;
-type _ContractMatchesUpdateJobPosting = Assert<
-    UpdateJobPostingRequest,
-    UpdateJobPostingInput
+type _ContractMatchesCreateService = Assert<
+    CreateServiceRequest,
+    CreateServiceInput
 >;
 
 type UpdateServiceInput = z.infer<typeof updateServiceSchema>;

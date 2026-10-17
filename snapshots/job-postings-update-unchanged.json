@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings/<job_posting_id>",
+    "request": "GET /jobs/<job_id>",
     "status": 200,
     "body": {
         "categories": [
@@ -8,12 +8,15 @@
         "categoryIds": [
             2
         ],
-        "companyId": 143,
-        "companyName": "Snapshot Seed Receiver",
+        "company": {
+            "companyId": 143,
+            "companyName": "Snapshot Seed Receiver",
+            "companyPhoto": null
+        },
         "createdAt": "<timestamp>",
         "deadline": "2029-06-30",
         "duration": "2 Months",
-        "jobPostingId": "<job_posting_id>",
+        "jobId": "<job_id>",
         "listingDesc": "Looking for developer team",
         "listingStatus": "OPEN",
         "listingTitle": "Snapshot Probe job posting edited",

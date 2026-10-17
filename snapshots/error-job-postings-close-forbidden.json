@@ -1,5 +1,5 @@
 {
-    "request": "POST /job-postings/<job_posting_id>/close",
+    "request": "POST /jobs/<job_id>/close",
     "status": 403,
     "body": {
         "error": {

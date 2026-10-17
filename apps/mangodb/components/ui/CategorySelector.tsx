@@ -50,7 +50,7 @@ export default function CategorySelector({
                 >
                     {selectedIds.map((id) => {
                         const category = categories.find(
-                            (item) => item.catId === id,
+                            (item) => item.categoryId === id,
                         );
 
                         if (!category) return null;
@@ -60,12 +60,12 @@ export default function CategorySelector({
                                 key={id}
                                 className="inline-flex items-center gap-2 rounded-full bg-brand/10 px-3 py-1 type-sm text-brand"
                             >
-                                {category.catName}
+                                {category.categoryName}
 
                                 <button
                                     type="button"
                                     onClick={() => removeCategory(id)}
-                                    aria-label={`Remove ${category.catName}`}
+                                    aria-label={`Remove ${category.categoryName}`}
                                     className="font-semibold hover:text-danger"
                                 >
                                     ×
@@ -101,24 +101,26 @@ export default function CategorySelector({
                         ) : (
                             categories.map((category) => {
                                 const selected = selectedIds.includes(
-                                    category.catId,
+                                    category.categoryId,
                                 );
 
                                 return (
                                     <label
-                                        key={category.catId}
+                                        key={category.categoryId}
                                         className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 type-sm text-ink hover:bg-brand/10"
                                     >
                                         <input
                                             type="checkbox"
                                             checked={selected}
                                             onChange={() =>
-                                                toggleCategory(category.catId)
+                                                toggleCategory(
+                                                    category.categoryId,
+                                                )
                                             }
                                             className="h-4 w-4 accent-brand"
                                         />
 
-                                        {category.catName}
+                                        {category.categoryName}
                                     </label>
                                 );
                             })

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProposalStatus, ProviderProposal } from '@mangodb/shared';
+import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { CalendarDays } from 'lucide-react';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
 import { formatProposalDateTime } from '@/lib/proposals';
@@ -15,12 +15,12 @@ const BORDER: Record<ProposalStatus, string> = {
 };
 
 type MyProposalCardProps = {
-    proposal: ProviderProposal;
+    proposal: SentProposal;
     isSelected: boolean;
     // The detail panel is open, so the card is narrower: the date and badge
     // move under the title instead of sitting on the right.
     isCompact: boolean;
-    onSelect: (proposal: ProviderProposal) => void;
+    onSelect: (proposal: SentProposal) => void;
 };
 
 export default function MyProposalCard({
@@ -29,7 +29,7 @@ export default function MyProposalCard({
     isCompact,
     onSelect,
 }: MyProposalCardProps) {
-    const receiverName = proposal.receiver?.companyName ?? 'Unknown company';
+    const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
 
     return (
         <button
@@ -42,7 +42,7 @@ export default function MyProposalCard({
         >
             <CompanyAvatar
                 name={receiverName}
-                photoUrl={proposal.receiver?.companyPhoto ?? null}
+                photoUrl={proposal.recipient?.companyPhoto ?? null}
                 size={48}
             />
 

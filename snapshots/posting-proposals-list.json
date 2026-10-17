@@ -1,21 +1,21 @@
 {
-    "request": "GET /job-postings/<job_posting_id>/proposals",
+    "request": "GET /jobs/<job_id>/proposals",
     "status": 200,
     "body": [
         {
             "createdAt": "<timestamp>",
             "duration": 2,
-            "jobPostingId": "<job_posting_id>",
+            "listingId": "<listing_id>",
             "proposalBudget": 80000,
             "proposalId": "<proposal_id>",
             "proposalStatus": "PENDING",
             "proposalTerms": "Full-stack development in 2 months with agile delivery.",
-            "provider": {
+            "sender": {
                 "companyId": 142,
                 "companyName": "Snapshot Seed Provider",
                 "companyPhoto": null
             },
-            "providerId": 142
+            "senderId": 142
         }
     ]
 }

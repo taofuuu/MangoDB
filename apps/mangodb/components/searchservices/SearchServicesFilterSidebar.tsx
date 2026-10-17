@@ -2,10 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import type {
-    SearchServicesFilters,
-    ServiceFilterOptions,
-} from '@/lib/services';
+import type { ServiceFilterOptions } from '@mangodb/shared';
+import type { SearchServicesFilters } from '@/lib/services';
 
 function FilterGroup({
     label,

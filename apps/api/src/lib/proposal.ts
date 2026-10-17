@@ -1,15 +1,16 @@
 import { ApiError } from './ApiError';
 import { prisma } from './prisma';
+import { companyBriefSelect, toCompanyBrief } from './companyProfile';
 import type {
     CompanyBrief,
-    PostingProposal,
-    Proposal,
-    ProposalStatus,
-    ProposalStatusCounts,
-    ProviderProposal,
     ListingStatus,
     Project,
     ProjectStatus,
+    Proposal,
+    ProposalStatus,
+    ProposalStatusCounts,
+    ReceivedProposal,
+    SentProposal,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 
@@ -42,8 +43,8 @@ export type SelectedProposal = {
 export function toProposal(row: SelectedProposal): Proposal {
     return {
         proposalId: row.proposalId,
-        jobPostingId: row.listingId,
-        providerId: row.senderId,
+        listingId: row.listingId,
+        senderId: row.senderId,
         proposalBudget: Number(row.proposalBudget),
         proposalTerms: row.proposalTerms,
         duration: Number(row.duration),
@@ -52,14 +53,12 @@ export function toProposal(row: SelectedProposal): Proposal {
     };
 }
 
-// US2-10. A proposal as the posting's owner sees it in the proposal list: the
+// US2-10. A proposal as the listing's owner sees it in the proposal list: the
 // proposal plus the sender's name and photo, so the list needs no second call
-// per row to show who each Provider is.
+// per row to show who sent each one.
 export const postingProposalSelect = {
     ...proposalSelect,
-    sender: {
-        select: { companyId: true, companyName: true, companyPhoto: true },
-    },
+    sender: { select: companyBriefSelect },
 } as const;
 
 export type SelectedPostingProposal = SelectedProposal & {
@@ -68,32 +67,22 @@ export type SelectedPostingProposal = SelectedProposal & {
 
 export function toPostingProposal(
     row: SelectedPostingProposal,
-): PostingProposal {
+): ReceivedProposal {
     return {
         ...toProposal(row),
-        provider: {
-            companyId: row.sender.companyId,
-            companyName: row.sender.companyName,
-            companyPhoto: row.sender.companyPhoto,
-        },
+        sender: toCompanyBrief(row.sender),
     };
 }
 
-// US2-9. A proposal as the Provider sees it in their own list: the proposal
-// plus the job posting's title and its owner, so the page needs no extra
-// request per row. A soft-deleted owner is still shown: a proposal is history.
+// US2-9. A proposal as its sender sees it in their own list: the proposal
+// plus the listing's title and its owner, so the page needs no extra request
+// per row. A soft-deleted owner is still shown: a proposal is history.
 export const providerProposalSelect = {
     ...proposalSelect,
     listing: {
         select: {
             listingTitle: true,
-            company: {
-                select: {
-                    companyId: true,
-                    companyName: true,
-                    companyPhoto: true,
-                },
-            },
+            company: { select: companyBriefSelect },
         },
     },
 } as const;
@@ -107,18 +96,11 @@ export type SelectedProviderProposal = SelectedProposal & {
 
 export function toProviderProposal(
     row: SelectedProviderProposal,
-): ProviderProposal {
-    const owner = row.listing.company;
+): SentProposal {
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,
-        receiver: owner
-            ? {
-                  companyId: owner.companyId,
-                  companyName: owner.companyName,
-                  companyPhoto: owner.companyPhoto,
-              }
-            : null,
+        recipient: toCompanyBrief(row.listing.company),
     };
 }
 
@@ -167,13 +149,11 @@ type ProjectRow = {
 // converted here: budget to a number, the date-only column to YYYY-MM-DD.
 // The status cast is safe because this file only ever writes ProjectStatus values.
 function toProject(row: ProjectRow): Project {
-    // projId and status on the wire until round 2's Phase 2 flip.
     return {
-        projId: row.projectId,
-        proposalId: row.proposalId,
+        ...row,
         totalBudget: Number(row.totalBudget),
         startDate: row.startDate.toISOString().slice(0, 10),
-        status: row.projectStatus as ProjectStatus,
+        projectStatus: row.projectStatus as ProjectStatus,
     };
 }
 

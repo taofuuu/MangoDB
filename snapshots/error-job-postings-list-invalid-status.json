@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings?status=INVALID",
+    "request": "GET /jobs?status=INVALID",
     "status": 400,
     "body": {
         "error": {

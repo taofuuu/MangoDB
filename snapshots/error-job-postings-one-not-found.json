@@ -1,5 +1,5 @@
 {
-    "request": "GET /job-postings/2147483647",
+    "request": "GET /jobs/2147483647",
     "status": 404,
     "body": {
         "error": {
