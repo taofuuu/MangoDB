@@ -20,8 +20,8 @@ DB column → backend DTO → shared type → frontend lib → component prop �
 | [0](phase-0-safety-net.md)          | Safety net                      | `scripts/`, `snapshots/`, `seed.ts`, tests, tooling | done    |
 | [1](phase-1-vocabulary.md)          | Vocabulary                      | `docs/conventions.md`, ADRs 0020–0021               | done    |
 | [2](phase-2-names-at-the-source.md) | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | done    |
-| 3                                   | Backend: one of each helper     | `apps/api/src/lib`                                  | next    |
-| 4                                   | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | pending |
+| [3](phase-3-one-of-each-helper.md)  | Backend: one of each helper     | `apps/api/src/lib`                                  | done    |
+| 4                                   | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | next    |
 | 5                                   | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | pending |
 | 6                                   | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | pending |
 | 7                                   | Frontend: one set of primitives | `components/`                                       | pending |
