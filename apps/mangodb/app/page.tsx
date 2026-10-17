@@ -93,11 +93,6 @@ const ROUTES = [
         detail: 'US2-7',
     },
     {
-        href: '/job-postings/by-company',
-        title: 'View job posting by company (Just for test)',
-        detail: 'US2-7',
-    },
-    {
         href: '/proposal/view',
         title: 'View proposal',
         detail: 'US2-10',

@@ -29,9 +29,9 @@ import ModalShell from '../ui/ModalShell';
 // '' is the All tab: no status filter.
 type JobStatus = '' | ListingStatus;
 
-// backHref puts a ← before the title. Only the pages opened from See more on
-// a profile pass it; /job-postings/by-company has no profile to go back to.
-type JobPostingsPageProps = { backHref?: string } & (
+// backHref puts a ← before the title, back to the profile the list was
+// opened from.
+type JobPostingsPageProps = { backHref: string } & (
     | {
           view: 'mine';
       }
@@ -282,15 +282,13 @@ export default function JobPostingsPage(props: JobPostingsPageProps) {
     `}
                 >
                     <span className="type-lg">
-                        {props.backHref && (
-                            <Link
-                                href={props.backHref}
-                                aria-label="Back to the company profile"
-                                className="pr-4"
-                            >
-                                ←
-                            </Link>
-                        )}
+                        <Link
+                            href={props.backHref}
+                            aria-label="Back to the company profile"
+                            className="pr-4"
+                        >
+                            ←
+                        </Link>
                         {isMyJobs ? 'My Jobs' : 'Jobs'}
                     </span>
 
