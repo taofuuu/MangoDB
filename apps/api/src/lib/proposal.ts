@@ -1,11 +1,12 @@
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import { closeOpenListing, rejectPendingProposals } from './listing';
+import { createProjectFromProposal } from './project';
 import type {
     CompanyBrief,
     ListingStatus,
     Project,
-    ProjectStatus,
     Proposal,
     ProposalStatus,
     ProposalStatusCounts,
@@ -127,111 +128,75 @@ export function toProposalStatusCounts(
     return counts;
 }
 
-const projectSelect = {
-    projectId: true,
-    proposalId: true,
-    totalBudget: true,
-    startDate: true,
-    projectStatus: true,
-} as const satisfies Prisma.ProjectSelect;
-
-type ProjectRow = {
-    projectId: number;
-    proposalId: number;
-    totalBudget: Prisma.Decimal;
-    startDate: Date;
-    projectStatus: string;
-};
-
-// Decimal and Date do not survive JSON as the frontend expects, so both are
-// converted here: budget to a number, the date-only column to YYYY-MM-DD.
-// The status cast is safe because this file only ever writes ProjectStatus values.
-function toProject(row: ProjectRow): Project {
-    return {
-        ...row,
-        totalBudget: Number(row.totalBudget),
-        startDate: row.startDate.toISOString().slice(0, 10),
-        projectStatus: row.projectStatus as ProjectStatus,
-    };
+// The proposal an accept or reject acts on, read for its listing's owner:
+// 404 for an unknown id, 403 when the caller does not own the listing it was
+// sent to, 409 when it has been accepted or rejected already.
+async function findPendingProposalFor(
+    client: Prisma.TransactionClient,
+    proposalId: number,
+    callerId: number,
+) {
+    const proposal = await client.proposal.findUnique({
+        where: { proposalId },
+        select: {
+            listingId: true,
+            proposalStatus: true,
+            proposalBudget: true,
+            listing: { select: { listingStatus: true, companyId: true } },
+        },
+    });
+    if (!proposal) throw ApiError.notFound('Proposal not found');
+    if (callerId !== proposal.listing.companyId)
+        throw ApiError.forbidden('You do not own this listing');
+    if (proposal.proposalStatus !== ('PENDING' satisfies ProposalStatus))
+        throw ApiError.conflict('Proposal is not pending');
+    return proposal;
 }
 
+// Moves one PENDING proposal to ACCEPTED or REJECTED. The status in the
+// where is the check: a concurrent accept or reject leaves nothing to match.
+async function setProposalStatus(
+    client: Prisma.TransactionClient,
+    proposalId: number,
+    proposalStatus: Exclude<ProposalStatus, 'PENDING'>,
+): Promise<void> {
+    const { count } = await client.proposal.updateMany({
+        where: {
+            proposalId,
+            proposalStatus: 'PENDING' satisfies ProposalStatus,
+        },
+        data: { proposalStatus },
+    });
+    if (count === 0)
+        throw ApiError.conflict(
+            'Proposal has already been accepted or rejected',
+        );
+}
+
+// US2-11. Accepting a proposal on a job closes the job, rejects the other
+// proposals and opens a project, all or nothing. Each step is its own helper,
+// so an accept that must leave its listing open (a hire request on a
+// service) can leave out closeOpenListing.
 export async function acceptProposalTx(
     proposalId: number,
     callerId: number,
 ): Promise<Project> {
     return prisma.$transaction(async (tx) => {
-        const proposal = await tx.proposal.findUnique({
-            where: {
-                proposalId: proposalId,
-            },
-            select: {
-                listingId: true,
-                proposalStatus: true,
-                proposalBudget: true,
-                listing: {
-                    select: {
-                        listingId: true,
-                        listingStatus: true,
-                        companyId: true,
-                    },
-                },
-            },
-        });
-        if (!proposal) throw ApiError.notFound('Proposal not found');
-        if (!proposal.listing) throw ApiError.notFound('Listing not found');
-        if (callerId !== proposal.listing.companyId)
-            throw ApiError.forbidden('You do not own this listing');
-        if (proposal.proposalStatus !== ('PENDING' satisfies ProposalStatus))
-            throw ApiError.conflict('Proposal is not pending');
+        const proposal = await findPendingProposalFor(tx, proposalId, callerId);
         if (proposal.listing.listingStatus !== ('OPEN' satisfies ListingStatus))
             throw ApiError.conflict('Listing has already been closed');
-        const { count: closedCount } = await tx.listing.updateMany({
-            where: {
-                listingId: proposal.listing.listingId,
-                listingStatus: 'OPEN' satisfies ListingStatus,
-            },
-            data: {
-                listingStatus: 'CLOSED' satisfies ListingStatus,
-            },
-        });
-        if (closedCount === 0)
-            throw ApiError.conflict('Listing has already been closed');
-        const { count: acceptedCount } = await tx.proposal.updateMany({
-            where: {
-                proposalId: proposalId,
-                proposalStatus: 'PENDING' satisfies ProposalStatus,
-            },
-            data: {
-                proposalStatus: 'ACCEPTED' satisfies ProposalStatus,
-            },
-        });
-        if (acceptedCount === 0)
-            throw ApiError.conflict(
-                'Proposal has already been accepted or rejected',
-            );
-        await tx.proposal.updateMany({
-            where: {
-                listingId: proposal.listingId,
-                proposalId: { not: proposalId },
-                proposalStatus: 'PENDING' satisfies ProposalStatus,
-            },
-            data: {
-                proposalStatus: 'REJECTED' satisfies ProposalStatus,
-            },
-        });
-        const todayUtc = new Date();
-        todayUtc.setUTCHours(0, 0, 0, 0);
 
-        const project = await tx.project.create({
-            data: {
-                proposalId,
-                totalBudget: proposal.proposalBudget,
-                startDate: todayUtc,
-                projectStatus: 'ACTIVE' satisfies ProjectStatus,
-            },
-            select: projectSelect,
+        await closeOpenListing(
+            tx,
+            proposal.listingId,
+            'Listing has already been closed',
+        );
+        await setProposalStatus(tx, proposalId, 'ACCEPTED');
+        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        return createProjectFromProposal(tx, {
+            proposalId,
+            proposalBudget: proposal.proposalBudget,
         });
-        return toProject(project);
     });
 }
 
@@ -239,36 +204,6 @@ export async function rejectPendingProposal(
     proposalId: number,
     callerId: number,
 ): Promise<void> {
-    const proposal = await prisma.proposal.findUnique({
-        where: {
-            proposalId: proposalId,
-        },
-        select: {
-            proposalStatus: true,
-            listing: {
-                select: {
-                    companyId: true,
-                },
-            },
-        },
-    });
-    if (!proposal) throw ApiError.notFound('Proposal not found');
-    if (!proposal.listing) throw ApiError.notFound('Listing not found');
-    if (callerId !== proposal.listing.companyId)
-        throw ApiError.forbidden('You do not own this listing');
-    if (proposal.proposalStatus !== ('PENDING' satisfies ProposalStatus))
-        throw ApiError.conflict('Proposal is not pending');
-    const { count: rejectedCount } = await prisma.proposal.updateMany({
-        where: {
-            proposalId: proposalId,
-            proposalStatus: 'PENDING' satisfies ProposalStatus,
-        },
-        data: {
-            proposalStatus: 'REJECTED' satisfies ProposalStatus,
-        },
-    });
-    if (rejectedCount === 0)
-        throw ApiError.conflict(
-            'Proposal has already been accepted or rejected',
-        );
+    await findPendingProposalFor(prisma, proposalId, callerId);
+    await setProposalStatus(prisma, proposalId, 'REJECTED');
 }
