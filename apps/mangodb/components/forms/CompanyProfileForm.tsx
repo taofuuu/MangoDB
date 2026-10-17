@@ -1,10 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type {
-    CompanyProfile,
-    UpdateCompanyProfileRequest,
-} from '@mangodb/shared';
+import type { UpdateCompanyProfileRequest } from '@mangodb/shared';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
@@ -12,27 +9,12 @@ import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
 import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
-import { normalizePhone, normalizeWebsiteUrl } from '@/lib/validation';
+import {
+    normalizePhone,
+    normalizeWebsiteUrl,
+    type ProfileFormData,
+} from '@/lib/validation/company';
 import { isProviderAccount } from '@/lib/roles';
-
-export type ProfileFormData = Pick<
-    CompanyProfile,
-    | 'companyName'
-    | 'companyDescription'
-    | 'contactEmail'
-    | 'phone'
-    | 'website'
-    | 'address'
-    | 'companyType'
-    | 'accountType'
-    // Provider-only columns. A RECEIVER company reads null for both, which is
-    // why the two fields below are not rendered for one.
-    | 'serviceTerm'
-    | 'warrantyPolicy'
-    // The saved photo's URL. Read-only here — the file goes up on its own
-    // request, so nothing in this form writes it.
-    | 'companyPhoto'
->;
 
 // An empty input means "cleared", and the API spells that null. Sending ''
 // would store an empty string in most columns and fail outright on website,
@@ -49,8 +31,8 @@ function orNull(value: string | null): string | null {
 // which also keeps the body from ever being empty — the API rejects {} as a
 // client bug.
 //
-// It lives beside ProfileFormData rather than in lib/companies.ts so the API
-// layer stays free of anything form-shaped.
+// It lives with the form rather than in lib/companies.ts so the API layer
+// stays free of anything form-shaped.
 export function toUpdateRequest(
     data: ProfileFormData,
 ): UpdateCompanyProfileRequest {

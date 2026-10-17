@@ -21,13 +21,13 @@ import {
 } from '@/lib/companies';
 import {
     PROFILE_FIELDS,
-    toFormErrors,
     validateProfile,
     type ProfileErrors,
-} from '@/lib/validation';
+    type ProfileFormData,
+} from '@/lib/validation/company';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
-    ProfileFormData,
     toUpdateRequest,
 } from '@/components/forms/CompanyProfileForm';
 

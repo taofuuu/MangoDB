@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import FieldError from '@/components/ui/FieldError';
 import { ApiRequestError } from '@/lib/api';
-import { toFormErrors, type FieldErrors } from '@/lib/validation';
+import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 
 export type EditAccountMode = 'username' | 'email' | 'password';
 

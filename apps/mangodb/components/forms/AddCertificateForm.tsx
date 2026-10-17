@@ -9,7 +9,7 @@ import {
     type CertificateErrors,
 } from './EditCertificateForm';
 import { createCertificate } from '@/lib/certificates';
-import { toFormErrors } from '@/lib/validation';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import FileUpload from '../sm-detail/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';

@@ -17,20 +17,22 @@ import AccountInfoStep, {
 import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
 import FieldError from '@/components/ui/FieldError';
 import {
+    validateConfirmPassword,
+    validatePassword,
+    validateUsername,
+} from '@/lib/validation/auth';
+import {
     normalizePhone,
     normalizeWebsiteUrl,
     validateCompanyDescription,
     validateCompanyName,
     validateCompanyType,
-    validateConfirmPassword,
     validateContactEmail,
     validateLocation,
-    validatePassword,
     validatePhone,
-    validateUsername,
     validateWebsite,
-    toFormErrors,
-} from '@/lib/validation';
+} from '@/lib/validation/company';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import { register } from '@/lib/session';
 
 // Which input each field the API can reject belongs under. Username and

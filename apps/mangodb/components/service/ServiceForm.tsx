@@ -4,15 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import {
-    toFormErrors,
     SERVICE_FIELDS,
     validateServiceTitle,
     validateServiceDescription,
     validateServiceCategory,
     validateServiceTechStack,
     validateServiceBudgets,
-} from '@/lib/validation';
+} from '@/lib/validation/service';
 import {
     createService,
     deleteService,

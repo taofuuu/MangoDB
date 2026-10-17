@@ -8,11 +8,11 @@ import ModalShell from '@/components/ui/ModalShell';
 import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { createProposal } from '@/lib/proposals';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import {
-    toFormErrors,
     validateProposalForm,
     type ProposalErrors,
-} from '@/lib/validation';
+} from '@/lib/validation/proposal';
 
 // Job is the shared API shape. companyName is optional display-only
 // information because the job-posting endpoint currently returns companyId,

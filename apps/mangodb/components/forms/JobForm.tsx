@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import CategorySelector from '../ui/CategorySelector';
 import { createJob, updateJob } from '@/lib/jobs';
-import { toFormErrors } from '@/lib/validation';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
 import type {
@@ -27,7 +27,7 @@ import {
     validateJobDeadline,
     validateJobDuration,
     validateJobLocation,
-} from '@/lib/validation';
+} from '@/lib/validation/job';
 
 const JOB_FIELDS = {
     listingTitle: 'title',

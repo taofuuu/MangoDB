@@ -5,7 +5,7 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import FileUpload from '@/components/sm-detail/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import { updatePortfolio } from '@/lib/portfolios';
-import { toFormErrors, type FieldErrors } from '@/lib/validation';
+import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 import ModalShell from '@/components/ui/ModalShell';
 
 type EditPortfolioFormProps = {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Tag from '../ui/Tag';
 import FieldError from '../ui/FieldError';
-import { PREDEFINED_COMPANY_TYPES } from '@/lib/validation';
+import { PREDEFINED_COMPANY_TYPES } from '@/lib/validation/company';
 
 type CompanyTypeFieldProps = {
     label: string;
