@@ -6,6 +6,7 @@
             {
                 "accountType": "PROVIDER",
                 "categories": [
+                    "Hardware & IoT",
                     "Mobile App Development",
                     "Web Development"
                 ],
@@ -15,29 +16,48 @@
                 "companyPhoto": null,
                 "contactEmail": null,
                 "phone": "0812345678",
-                "techStack": [],
+                "techStack": [
+                    "AWS",
+                    "Docker",
+                    "Express",
+                    "Firebase",
+                    "Google Cloud",
+                    "GraphQL",
+                    "Kotlin",
+                    "MongoDB",
+                    "MySQL",
+                    "Next.js",
+                    "Node.js",
+                    "PostgreSQL",
+                    "Prisma",
+                    "React",
+                    "Redis",
+                    "Redux",
+                    "Supabase",
+                    "Tailwind CSS",
+                    "TypeScript",
+                    "Vite"
+                ],
                 "website": null
             },
             {
-                "accountType": "PROVIDER",
-                "categories": [
-                    "Mobile App Development"
-                ],
-                "companyDescription": "Mobile App Development Agency (iOS/Android)",
-                "companyId": 3,
-                "companyName": "AppSynth",
+                "accountType": "RECEIVER",
+                "categories": [],
+                "companyDescription": null,
+                "companyId": 393,
+                "companyName": "aongzera",
                 "companyPhoto": null,
                 "contactEmail": null,
-                "phone": "023333333",
+                "phone": "0812345678",
                 "techStack": [],
-                "website": "www.appsynth.com"
+                "website": null
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 53,
-            "totalPages": 27
+            "totalItems": 58,
+            "totalPages": 29
         }
     }
 }

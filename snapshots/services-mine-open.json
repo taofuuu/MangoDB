@@ -14,6 +14,24 @@
             "serviceId": 25,
             "techStack": [],
             "type": "SERVICE"
+        },
+        {
+            "categoryIds": [
+                4
+            ],
+            "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
+            "listingDesc": "We design, build and host web apps end to end.\n\n([demo] dummy data)",
+            "listingStatus": "OPEN",
+            "listingTitle": "[demo] Full-stack web development",
+            "maxBudget": 150000,
+            "minBudget": 30000,
+            "serviceId": 505,
+            "techStack": [
+                "Node.js",
+                "React"
+            ],
+            "type": "SERVICE"
         }
     ]
 }

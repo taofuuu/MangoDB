@@ -42,12 +42,72 @@
                 "locationPref": "Remote",
                 "maxBudget": 150000,
                 "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "Hardware & IoT"
+                ],
+                "categoryIds": [
+                    3
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2027-03-21",
+                "duration": "6 months",
+                "jobPostingId": 477,
+                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Sales dashboard and reports",
+                "locationPref": "Chiang Mai",
+                "maxBudget": 100000,
+                "minBudget": 60000
+            },
+            {
+                "categories": [
+                    "Mobile App Development"
+                ],
+                "categoryIds": [
+                    2
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2027-02-20",
+                "duration": "5 months",
+                "jobPostingId": 476,
+                "listingDesc": "iOS and Android app where customers book and pay.\n\n([demo] dummy data)",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[demo] Mobile app for customer bookings",
+                "locationPref": "Remote",
+                "maxBudget": 75000,
+                "minBudget": 45000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "createdAt": "<timestamp>",
+                "deadline": "2027-01-19",
+                "duration": "4 months",
+                "jobPostingId": 475,
+                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Inventory system rewrite",
+                "locationPref": "Bangkok",
+                "maxBudget": 50000,
+                "minBudget": 30000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 2,
+            "totalItems": 5,
             "totalPages": 1
         }
     }

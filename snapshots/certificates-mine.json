@@ -4,6 +4,30 @@
     "body": [
         {
             "certImage": null,
+            "certTitle": "[demo] Google Professional Cloud Developer",
+            "certificateId": 140,
+            "credentialId": "DEMO-142-1",
+            "credentialUrl": "https://example.com/credential",
+            "expireMonth": 2,
+            "expireYear": 2028,
+            "issueMonth": 2,
+            "issueYear": 2024,
+            "organization": "Google Cloud"
+        },
+        {
+            "certImage": null,
+            "certTitle": "[demo] AWS Certified Solutions Architect",
+            "certificateId": 139,
+            "credentialId": "DEMO-142-0",
+            "credentialUrl": "https://example.com/credential",
+            "expireMonth": 1,
+            "expireYear": 2027,
+            "issueMonth": 1,
+            "issueYear": 2023,
+            "organization": "Amazon Web Services"
+        },
+        {
+            "certImage": null,
             "certTitle": "Snapshot seed certificate",
             "certificateId": 50,
             "credentialId": "SNAPSHOT-0001",

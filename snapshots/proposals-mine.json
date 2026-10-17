@@ -18,12 +18,28 @@
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 }
+            },
+            {
+                "createdAt": "<timestamp>",
+                "duration": 1,
+                "jobPostingId": 405,
+                "listingTitle": "[demo] Sales dashboard and reports",
+                "proposalBudget": 999,
+                "proposalId": 210,
+                "proposalStatus": "PENDING",
+                "proposalTerms": "kdkklsf",
+                "providerId": 142,
+                "receiver": {
+                    "companyId": 6,
+                    "companyName": "RoboTech Industries",
+                    "companyPhoto": null
+                }
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 6,
-            "totalItems": 1,
+            "totalItems": 2,
             "totalPages": 1
         }
     }

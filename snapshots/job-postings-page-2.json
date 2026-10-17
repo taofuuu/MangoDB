@@ -4,27 +4,31 @@
     "body": {
         "items": [
             {
-                "categories": [],
-                "categoryIds": [],
-                "companyId": 248,
-                "companyName": "บ. ริโภคจำนวน จำกัด",
+                "categories": [
+                    "IT Consulting & Security"
+                ],
+                "categoryIds": [
+                    4
+                ],
+                "companyId": 392,
+                "companyName": "Snapshot Seed Both",
                 "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobPostingId": 170,
-                "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
+                "deadline": "2026-11-30",
+                "duration": "1 month",
+                "jobPostingId": 595,
+                "listingDesc": "Pen test and code review of our web app before the public launch. ([demo] dummy data)",
                 "listingStatus": "OPEN",
-                "listingTitle": "Mobile Application Development",
-                "locationPref": null,
-                "maxBudget": 200000,
-                "minBudget": 100000
+                "listingTitle": "[demo] Security audit before launch",
+                "locationPref": "Remote",
+                "maxBudget": 90000,
+                "minBudget": null
             }
         ],
         "pagination": {
             "page": 2,
             "pageSize": 1,
-            "totalItems": 13,
-            "totalPages": 13
+            "totalItems": 111,
+            "totalPages": 111
         }
     }
 }

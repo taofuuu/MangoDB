@@ -10,6 +10,7 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
+                "listingDesc": "created by scripts/snapshot-api.sh",
                 "listingTitle": "Snapshot Probe no-min service <run>",
                 "maxBudget": 30000,
                 "minBudget": null,
@@ -25,6 +26,7 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
+                "listingDesc": "created by scripts/snapshot-api.sh",
                 "listingTitle": "Snapshot Probe wide service <run>",
                 "maxBudget": 200000,
                 "minBudget": 50000,
@@ -42,6 +44,7 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
+                "listingDesc": "created by scripts/snapshot-api.sh",
                 "listingTitle": "Snapshot Probe mobile service <run>",
                 "maxBudget": 120000,
                 "minBudget": 80000,
@@ -59,6 +62,7 @@
                     "companyName": "Snapshot Seed Provider",
                     "companyPhoto": null
                 },
+                "listingDesc": "created by scripts/snapshot-api.sh",
                 "listingTitle": "Snapshot Probe web service <run>",
                 "maxBudget": 50000,
                 "minBudget": 10000,
