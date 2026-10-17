@@ -356,7 +356,7 @@ export default function ServicesSection({
                     <div className="mt-3 text-right">
                         <Link
                             href="/services/create"
-                            className="type-xs text-brand hover:underline font-medium"
+                            className="type-xs text-brand hover:underline !font-medium"
                         >
                             + Create Service
                         </Link>
