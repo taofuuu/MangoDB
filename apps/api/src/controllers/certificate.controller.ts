@@ -120,7 +120,11 @@ export async function updateCertificate(
     const existing = await assertCertificateOwned(certificateId, providerId);
 
     if (!expiryIsOnOrAfterIssue({ ...existing, ...omitUndefined(body) })) {
-        throw ApiError.badRequest(EXPIRY_BEFORE_ISSUE);
+        // A rule across two fields, named on the one the form shows it under,
+        // the same field the create schema's refine names.
+        throw ApiError.validationFailed([
+            { field: 'expireYear', message: EXPIRY_BEFORE_ISSUE },
+        ]);
     }
 
     // Multer keeps the file in memory; storage is not touched until ownership

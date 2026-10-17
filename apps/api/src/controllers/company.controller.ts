@@ -28,7 +28,10 @@ import {
 } from '../lib/company-search';
 import { omitUndefined } from '../lib/objects';
 import { isRecordNotFound } from '../lib/prisma-errors';
-import { hasOngoingProject } from '../lib/project-eligibility';
+import {
+    hasOngoingProject,
+    ONGOING_PROJECT_BLOCKS_DELETE,
+} from '../lib/project-eligibility';
 import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
@@ -269,9 +272,7 @@ export async function deleteMyAccount(
     const companyId = req.auth!.companyId;
 
     if (await hasOngoingProject(companyId)) {
-        throw ApiError.conflict(
-            'Account deletion is blocked while the company has an ongoing project',
-        );
+        throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);
     }
 
     await softDeleteCompany(companyId);

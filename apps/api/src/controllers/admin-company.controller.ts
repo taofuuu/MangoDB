@@ -19,7 +19,10 @@ import {
     companyTypeRepeat,
 } from '../lib/company-profile';
 import { isRecordNotFound } from '../lib/prisma-errors';
-import { hasOngoingProject } from '../lib/project-eligibility';
+import {
+    hasOngoingProject,
+    ONGOING_PROJECT_BLOCKS_DELETE,
+} from '../lib/project-eligibility';
 import { escapeLike } from '../lib/search';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
@@ -240,9 +243,7 @@ export async function deleteCompanyAccount(
     // Step 2: is it on an ongoing project? projectEligibility owns that rule
     // and the definition of "ongoing" (status ACTIVE).
     if (await hasOngoingProject(companyId)) {
-        throw ApiError.badRequest(
-            'Company has active projects and cannot be deleted',
-        );
+        throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);
     }
 
     // Step 3 + 4: soft-delete it, then respond. softDeleteCompany's guard

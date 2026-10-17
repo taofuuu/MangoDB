@@ -24,3 +24,8 @@ export async function hasOngoingProject(companyId: number): Promise<boolean> {
 
     return ongoingProject !== null;
 }
+
+// The one answer for both doors that delete a company: the company itself
+// and an admin. A state conflict, so 409 (conventions §4).
+export const ONGOING_PROJECT_BLOCKS_DELETE =
+    'A company with an ongoing project cannot be deleted';
