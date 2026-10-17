@@ -7,7 +7,7 @@ import type { Job } from '@mangodb/shared';
 import { ArrowLeft } from 'lucide-react';
 
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
-import { formatDateOnly } from '@/lib/dates';
+import { formatDate, formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { isProviderAccount } from '@/lib/roles';
 import { useMyCompany } from '@/lib/useMyCompany';
@@ -15,9 +15,16 @@ import { useMyCompany } from '@/lib/useMyCompany';
 interface JobDetailPanelProps {
     job: Job | null;
     onClose: () => void;
+    // Set when the panel sits in a dialog, so the dialog can name itself by
+    // the heading (aria-labelledby). The search page's side panel needs none.
+    titleId?: string;
 }
 
-export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
+export default function JobDetailPanel({
+    job,
+    onClose,
+    titleId,
+}: JobDetailPanelProps) {
     // Who is looking decides whether Add Proposal shows. getMyProfile is
     // cached, so the many panels that open in a session ask the API once. A
     // 401 redirects; any other failure just hides the button.
@@ -56,7 +63,10 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                     <span className="type-sm text-brand">Job Detail</span>
 
                     {job && (
-                        <h2 className="type-lg !font-[700] text-ink">
+                        <h2
+                            id={titleId}
+                            className="type-lg !font-[700] text-ink"
+                        >
                             {job.listingTitle}
                         </h2>
                     )}
@@ -172,6 +182,16 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                                 : 'No deadline'}
                         </p>
                     </div>
+
+                    {/* Posted */}
+                    {job.createdAt && (
+                        <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
+                            <span className="type-sm text-brand">Posted</span>
+                            <p className="type-md text-ink pl-[0.5vw]">
+                                {formatDate(job.createdAt)}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Bottom action */}
                     {canSubmitProposal && (
