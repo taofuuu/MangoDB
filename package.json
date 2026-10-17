@@ -26,7 +26,7 @@
         "build": "npm run build --workspaces --if-present",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "verify": "npm run format:check && npm run lint && npm run typecheck"
+        "verify": "npm run format:check && npm run lint && npm run typecheck && npm test"
     },
     "devDependencies": {
         "husky": "^9.1.7",
