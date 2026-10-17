@@ -26,7 +26,7 @@ DB column → backend DTO → shared type → frontend lib → component prop �
 | [6](phase-6-one-way-to-call-it.md)    | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | done   |
 | [7](phase-7-one-set-of-primitives.md) | Frontend: one set of primitives | `components/`                                       | done   |
 | [8](phase-8-design-tokens.md)         | Design tokens                   | `globals.css` and every colour literal              | done   |
-| 9                                     | Docs                            | `ai-brief.md`, READMEs, `CONTRIBUTING.md`           | next   |
+| [9](phase-9-docs.md)                  | Docs                            | `ai-brief.md`, READMEs, `CONTRIBUTING.md`           | done   |
 
 ## How it runs
 
