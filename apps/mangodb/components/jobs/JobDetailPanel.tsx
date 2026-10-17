@@ -7,6 +7,7 @@ import type { Job } from '@mangodb/shared';
 import { ArrowLeft } from 'lucide-react';
 
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
+import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { isProviderAccount } from '@/lib/roles';
 import { useMyCompany } from '@/lib/useMyCompany';
@@ -166,7 +167,9 @@ export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
                         <span className="type-sm text-brand">Deadline</span>
 
                         <p className="type-md text-ink pl-[0.5vw] [overflow-wrap:anywhere]">
-                            {job.deadline ?? 'No deadline'}
+                            {job.deadline
+                                ? formatDateOnly(job.deadline)
+                                : 'No deadline'}
                         </p>
                     </div>
 
