@@ -1,67 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import JobForm from '@/components/forms/JobForm';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
-import { getMyProfile } from '@/lib/companies';
-import { isReceiverAccount } from '@/lib/roles';
-import { redirectToUnauthorized } from '@/lib/session';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import PageGate from '@/components/auth/PageGate';
+import { useMyCompany } from '@/lib/useMyCompany';
 
 export default function CreateJobPage() {
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-    const [loadError, setLoadError] = useState<string | null>(null);
+    const me = useMyCompany('receiver');
 
-    useEffect(() => {
-        getMyProfile()
-            .then((profile) => {
-                const hasReceiverRole = isReceiverAccount(profile.accountType);
-                setIsAuthorized(hasReceiverRole);
-            })
-            .catch((err: unknown) => {
-                if (isNotSignedIn(err)) {
-                    setLoadError(NOT_SIGNED_IN);
-                    setIsAuthorized(false);
-                    redirectToUnauthorized();
-                    return;
-                }
-
-                setLoadError(describeError(err));
-                setIsAuthorized(false);
-            });
-    }, []);
-
-    // Wait until the user's role has been checked.
-    if (isAuthorized === null && !loadError) {
-        return <div className="min-h-screen bg-surface" />;
-    }
-
-    if (loadError === NOT_SIGNED_IN) {
-        return <div className="min-h-screen bg-surface" />;
-    }
-
-    // Role-restricted for non-receivers
-    if (isAuthorized === false && !loadError) {
+    if (me.status !== 'ready') {
         return (
-            <UnauthorizedPage
-                variant="danger"
-                icon="shield"
-                title="Access Restricted"
-                badge="Insufficient permissions"
-                message="You need a Receiver account to create job postings."
-                showLogin={false}
+            <PageGate
+                state={me}
+                roleMessage="You need a Receiver account to create job postings."
             />
-        );
-    }
-
-    if (loadError) {
-        return (
-            <div className="min-h-screen bg-surface flex items-center justify-center px-6">
-                <p className="type-sm text-danger text-center">
-                    Unable to verify your permissions: {loadError}
-                </p>
-            </div>
         );
     }
 

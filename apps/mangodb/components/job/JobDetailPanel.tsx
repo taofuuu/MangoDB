@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import type { CompanyProfile, Job } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 
 import { ArrowLeft } from 'lucide-react';
 
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
-import { isNotSignedIn } from '@/lib/api';
-import { getMyProfile } from '@/lib/companies';
 import { formatBudgetRange } from '@/lib/money';
 import { isProviderAccount } from '@/lib/roles';
-import { redirectToUnauthorized } from '@/lib/session';
+import { useMyCompany } from '@/lib/useMyCompany';
 
 interface JobDetailPanelProps {
     job: Job | null;
@@ -19,20 +17,12 @@ interface JobDetailPanelProps {
 }
 
 export default function JobDetailPanel({ job, onClose }: JobDetailPanelProps) {
-    const [viewer, setViewer] = useState<CompanyProfile | null>(null);
-    const [isProposalFormOpen, setIsProposalFormOpen] = useState(false);
-
     // Who is looking decides whether Add Proposal shows. getMyProfile is
-    // cached, so the many panels that open in a session ask the API once.
-    useEffect(() => {
-        getMyProfile()
-            .then(setViewer)
-            .catch((cause: unknown) => {
-                // The session ended after the list loaded: same redirect as
-                // the page guard. Any other failure just hides the button.
-                if (isNotSignedIn(cause)) redirectToUnauthorized();
-            });
-    }, []);
+    // cached, so the many panels that open in a session ask the API once. A
+    // 401 redirects; any other failure just hides the button.
+    const me = useMyCompany();
+    const viewer = me.status === 'ready' ? me.company : null;
+    const [isProposalFormOpen, setIsProposalFormOpen] = useState(false);
 
     // US2-8. The API would refuse the other cases anyway (403 for a
     // Receiver-only account or your own posting, 409 for a closed one), so

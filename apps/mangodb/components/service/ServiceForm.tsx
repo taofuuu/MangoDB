@@ -24,10 +24,9 @@ import {
 import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
-import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
+import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { getMyProfile } from '@/lib/companies';
-import { isProviderAccount } from '@/lib/roles';
+import { useMyCompany } from '@/lib/useMyCompany';
 import { createPortfolio, listPortfolios } from '@/lib/portfolios';
 import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
 import Button from '@/components/ui/Button';
@@ -123,7 +122,10 @@ export default function ServiceForm(props: ServiceFormProps) {
     const serviceId = props.mode === 'edit' ? props.serviceId : null;
 
     // ── ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL BEFORE ANY RETURNS ──
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+    const me = useMyCompany('provider');
+    const companyId = me.status === 'ready' ? me.company.companyId : null;
+    // Add has nothing to load; Edit is loaded once the service arrives.
+    const [isLoaded, setIsLoaded] = useState(serviceId === null);
     const [loadError, setLoadError] = useState<string | null>(null);
 
     // Form fields state
@@ -160,35 +162,25 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // ── AUTHORIZATION ──
+    // ── EDIT: LOAD THE SERVICE ──
+    // Waits for useMyCompany, since only the owning company may edit.
     useEffect(() => {
+        if (serviceId === null || companyId === null) return;
+
         let cancelled = false;
 
-        async function loadPage() {
+        async function loadService(id: number) {
             try {
-                const profile = await getMyProfile();
-                const hasProviderRole = isProviderAccount(profile.accountType);
-                if (!hasProviderRole || cancelled) {
-                    if (!cancelled) setIsAuthorized(false);
-                    return;
-                }
-
-                if (serviceId === null) {
-                    setIsAuthorized(true);
-                    return;
-                }
-
                 const [service, existingPortfolios] = await Promise.all([
-                    getService(serviceId),
-                    listPortfolios({ serviceId }),
+                    getService(id),
+                    listPortfolios({ serviceId: id }),
                 ]);
 
                 if (cancelled) return;
-                if (service.company.companyId !== profile.companyId) {
+                if (service.company.companyId !== companyId) {
                     setLoadError(
                         'You can only edit services owned by your company.',
                     );
-                    setIsAuthorized(false);
                     return;
                 }
 
@@ -215,25 +207,23 @@ export default function ServiceForm(props: ServiceFormProps) {
                 setMaxBudget(loadedSnapshot.maxBudget);
                 setSavedPortfolios(existingPortfolios);
                 setInitialValues(loadedSnapshot);
-                setIsAuthorized(hasProviderRole);
+                setIsLoaded(true);
             } catch (err: unknown) {
                 if (cancelled) return;
                 if (isNotSignedIn(err)) {
                     setLoadError(NOT_SIGNED_IN);
-                    setIsAuthorized(false);
                     redirectToUnauthorized();
                     return;
                 }
                 setLoadError(describeError(err));
-                setIsAuthorized(false);
             }
         }
 
-        void loadPage();
+        void loadService(serviceId);
         return () => {
             cancelled = true;
         };
-    }, [serviceId]);
+    }, [serviceId, companyId]);
 
     const currentSnapshot = serializeService({
         title,
@@ -514,24 +504,16 @@ export default function ServiceForm(props: ServiceFormProps) {
     };
 
     // ── EARLY RETURNS PLACED AFTER ALL HOOKS ──
-    if (isAuthorized === null && !loadError) {
-        return <div className="min-h-screen bg-surface" />;
-    }
-
-    if (isAuthorized === false && !loadError) {
+    if (me.status !== 'ready') {
         return (
-            <UnauthorizedPage
-                variant="danger"
-                icon="shield"
-                title="Access Restricted"
-                badge="Insufficient permissions"
-                message={
+            <PageGate
+                state={me}
+                roleMessage={
                     <p>
                         You need a <strong>Provider</strong> account to create
                         or manage service listings.
                     </p>
                 }
-                showLogin={false}
             />
         );
     }
@@ -540,7 +522,7 @@ export default function ServiceForm(props: ServiceFormProps) {
         return <div className="min-h-screen bg-surface" />;
     }
 
-    if (!isAuthorized && loadError) {
+    if (loadError) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-surface px-6">
                 <div className="max-w-lg rounded-popup border border-line bg-surface-white p-8 text-center shadow-sm">
@@ -564,6 +546,10 @@ export default function ServiceForm(props: ServiceFormProps) {
         );
     }
 
+    if (!isLoaded) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     return (
         <div className="min-h-screen bg-surface py-12 px-6 flex justify-center text-ink">
             <div className="w-full max-w-[1100px]">
@@ -574,12 +560,6 @@ export default function ServiceForm(props: ServiceFormProps) {
                 <p className="type-sm text-ink-soft font-medium mb-6">
                     * Indicates required
                 </p>
-
-                {loadError && loadError !== NOT_SIGNED_IN && (
-                    <p className="mb-4 type-sm font-medium text-danger">
-                        {loadError}
-                    </p>
-                )}
 
                 <form onSubmit={handleSubmit} noValidate>
                     <div className="flex flex-col md:flex-row gap-6 items-stretch">
