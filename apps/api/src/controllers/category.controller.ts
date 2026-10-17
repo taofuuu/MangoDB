@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { prisma } from '../lib/prisma'; // Adjust this import to match your project
+import { prisma } from '../lib/prisma';
 
 export async function listCategories(
     _req: Request,

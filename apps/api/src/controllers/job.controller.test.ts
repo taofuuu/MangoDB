@@ -20,7 +20,7 @@
  * How:
  * - The test calls the controller functions directly with a fake req and a
  *   fake res that records the JSON body. A thrown ApiError is the error answer
- *   (express-async-errors hands it to errorHandler in the real app).
+ *   (Express 5 hands a rejected handler's error to errorHandler in the real app).
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database. The fake keeps job rows in an
  *   array and answers findUnique / findFirst / findMany / count by reading the

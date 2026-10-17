@@ -5,7 +5,7 @@ import { FRONTEND_URL } from './env';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
-// Builds the app without listening so tests can drive it with supertest.
+// Builds the app without listening; index.ts starts it on a port.
 export function createApp() {
     const app = express();
 
