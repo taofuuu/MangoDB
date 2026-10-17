@@ -107,7 +107,7 @@ export default function ProfileItemDetailModal({
             isOpen
             onClose={onClose}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.08vw]"
             panelClassName="flex max-h-[92vh] w-full max-w-[40rem] flex-col gap-4 overflow-y-auto rounded-popup bg-surface-white p-6 shadow-xl"
         >
             <div className="flex items-start justify-between gap-4">

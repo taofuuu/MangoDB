@@ -291,7 +291,7 @@ export default function SearchServicesFilterSidebar({
     };
 
     return (
-        <aside className="rounded-status w-full max-w-[300px] shrink-0 self-start bg-panel p-5">
+        <aside className="rounded-status w-full max-w-[300px] shrink-0 self-start bg-fill-subtle p-5">
             <div className="mb-1 flex items-center justify-between border-b border-brand-light pb-3">
                 <h2 className="type-md text-ink">Filters</h2>
                 <button

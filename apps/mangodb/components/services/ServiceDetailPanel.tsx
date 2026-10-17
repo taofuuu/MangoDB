@@ -65,7 +65,7 @@ export default function ServiceDetailPanel({
                 px-[1.5vw]
                 py-[2.5vh]
                 text-left
-                shadow-[0_0_8px_rgba(73,123,147,0.25)]
+                shadow-[0_0_8px_color-mix(in_srgb,var(--color-brand)_25%,transparent)]
             "
         >
             {/* Header */}

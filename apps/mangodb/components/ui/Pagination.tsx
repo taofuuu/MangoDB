@@ -57,7 +57,7 @@ export default function Pagination({
                         variant="outline"
                         disabled={isLoading}
                         onClick={() => onPageChange(page - 1)}
-                        className="h-[4.63vh] border-pagination-border px-[1.04vw] type-sm"
+                        className="h-[4.63vh] border-line px-[1.04vw] type-sm"
                     >
                         Previous
                     </Button>
@@ -68,7 +68,7 @@ export default function Pagination({
                         variant="outline"
                         disabled={isLoading}
                         onClick={() => onPageChange(page + 1)}
-                        className="h-[4.63vh] border-pagination-border px-[1.04vw] type-sm"
+                        className="h-[4.63vh] border-line px-[1.04vw] type-sm"
                     >
                         Next
                     </Button>

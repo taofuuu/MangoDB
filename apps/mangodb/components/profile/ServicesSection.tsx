@@ -304,7 +304,7 @@ export default function ServicesSection({
                 isOpen={selectedService !== null}
                 onClose={() => setSelectedService(null)}
                 labelledBy={serviceTitleId}
-                backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-[2.08vw]"
+                backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.08vw]"
             >
                 {selectedService && (
                     <ServiceDetailPanel

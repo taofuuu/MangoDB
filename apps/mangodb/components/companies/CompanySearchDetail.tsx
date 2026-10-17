@@ -13,7 +13,7 @@ import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
-    'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_rgba(73,123,147,0.25)]';
+    'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_color-mix(in_srgb,var(--color-brand)_25%,transparent)]';
 const listDetailPanelClassName = `${detailPanelBaseClassName} w-[34vw]`;
 const popupDetailPanelClassName = `${detailPanelBaseClassName} w-full max-w-[calc(100vw-2rem)] sm:w-[45vw]`;
 

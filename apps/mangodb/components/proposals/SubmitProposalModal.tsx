@@ -62,7 +62,7 @@ function ProposalSubmissionConfirmationModal({
             isOpen={isOpen}
             onClose={onClose}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             panelClassName="w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
         >
             <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export default function SubmitProposalModal({
             onClose={handleClose}
             isBusy={isSubmitting}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             panelClassName="h-[72.2222vh] w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
         >
             {/* -------------header----------------- */}

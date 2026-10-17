@@ -61,7 +61,7 @@ export default function Navbar() {
     return (
         // The page's cream with a grey line and a soft shadow in the brand's
         // deep teal. The accents inside stay teal, the app's action colour.
-        <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_rgb(30_67_83/0.18)]">
+        <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_color-mix(in_srgb,var(--color-brand-deep)_18%,transparent)]">
             <nav className="flex h-16 items-center justify-between gap-6 px-[2.19vw]">
                 <Link
                     href="/"

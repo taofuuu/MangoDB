@@ -244,7 +244,7 @@ export default function EditAccountModal({
             // closing would hide the error if it fails.
             isBusy={isSaving}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
             panelClassName="w-full max-w-[440px] rounded-xl bg-surface text-ink p-6 shadow-xl border border-line"
         >
             {/* Header */}

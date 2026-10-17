@@ -80,7 +80,7 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                 hidden={!isOpen}
                 // Grows out of the avatar's corner on open. starting: is
                 // @starting-style, which animates the switch out of `hidden`.
-                className="absolute right-0 top-full z-40 mt-3 w-64 origin-top-right rounded-2xl bg-surface-white p-1.5 shadow-[0_16px_40px_-12px_rgb(30_67_83/0.45)] ring-1 ring-brand-deep/10 transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
+                className="absolute right-0 top-full z-40 mt-3 w-64 origin-top-right rounded-2xl bg-surface-white p-1.5 shadow-[0_16px_40px_-12px_color-mix(in_srgb,var(--color-brand-deep)_45%,transparent)] ring-1 ring-brand-deep/10 transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
             >
                 <div className="mb-1 rounded-xl bg-brand-tint px-3 py-2.5">
                     <p className="type-xs text-ink-soft">Signed in as</p>

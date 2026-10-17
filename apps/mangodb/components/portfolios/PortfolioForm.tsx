@@ -229,7 +229,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
             onClose={onClose}
             isBusy={isSaving}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             panelClassName="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-md:h-[90vh]"
         >
             <header className="flex items-center justify-between">
