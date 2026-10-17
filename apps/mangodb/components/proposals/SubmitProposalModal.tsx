@@ -5,8 +5,8 @@ import { MailCheck, X } from 'lucide-react';
 import type { Job, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
-import { formatDateOnly } from '@/lib/dates';
-import { formatBudgetRange } from '@/lib/money';
+import { formatDateOnly, formatMonths } from '@/lib/dates';
+import { formatBaht, formatBudgetRange } from '@/lib/money';
 import { createProposal } from '@/lib/proposals';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import {
@@ -49,10 +49,6 @@ const PROPOSAL_FIELDS = {
     duration: 'estimatedDurationMonths',
 } as const;
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-});
-
 function ProposalSubmissionConfirmationModal({
     isOpen,
     jobPosting,
@@ -92,13 +88,13 @@ function ProposalSubmissionConfirmationModal({
                 <div>
                     <dt className="type-sm text-ink">Your quoted price</dt>
                     <dd className="mt-1 type-sm text-ink">
-                        {NUMBER_FORMATTER.format(proposal.proposalBudget)}
+                        {formatBaht(proposal.proposalBudget)}
                     </dd>
                 </div>
                 <div>
                     <dt className="type-sm text-ink">Estimated duration</dt>
                     <dd className="mt-1 type-sm text-ink">
-                        {NUMBER_FORMATTER.format(proposal.duration)} months
+                        {formatMonths(proposal.duration)}
                     </dd>
                 </div>
             </dl>
