@@ -1,6 +1,7 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
+import { toDateOnly } from './dates';
 import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
 import { PORTFOLIO_UNIQUE_FIELDS } from '../schemas/portfolio.schema';
 import type { Prisma } from '../generated/prisma/client';
@@ -40,7 +41,7 @@ export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
         serviceId: row.listingId,
         portfolioName: row.portfolioName,
         portfolioDescription: row.portfolioDescription,
-        developmentDate: row.developmentDate.toISOString().slice(0, 10),
+        developmentDate: toDateOnly(row.developmentDate),
         portfolioImage: row.portfolioImage,
         portfolioLink: row.portfolioLink,
     };

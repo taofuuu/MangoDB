@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import { LISTING_STATUSES } from '@mangodb/shared';
 import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
+import { toDateOnly } from '../lib/dates';
 
 function todayUtcString(): string {
-    return new Date().toISOString().slice(0, 10);
+    return toDateOnly(new Date());
 }
 
 // Check that the deadline is today or in the future

@@ -1,5 +1,6 @@
 import type { Project, ProjectStatus } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
+import { toDateOnly } from './dates';
 
 // The columns a project response carries.
 export const projectSelect = {
@@ -25,7 +26,7 @@ export function toProject(row: ProjectRow): Project {
     return {
         ...row,
         totalBudget: Number(row.totalBudget),
-        startDate: row.startDate.toISOString().slice(0, 10),
+        startDate: toDateOnly(row.startDate),
         projectStatus: row.projectStatus as ProjectStatus,
     };
 }

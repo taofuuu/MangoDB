@@ -7,6 +7,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { omitUndefined } from '../lib/objects';
+import { fromDateOnly } from '../lib/dates';
 import {
     assertBudgetRange,
     assertListingOwned,
@@ -48,7 +49,7 @@ export async function createJob(req: Request, res: Response): Promise<void> {
                     locationPref: body.locationPref ?? null,
                     duration: body.duration ?? null,
                     deadline: body.deadline
-                        ? new Date(`${body.deadline}T00:00:00Z`)
+                        ? fromDateOnly(body.deadline)
                         : null,
                 },
             },
@@ -207,8 +208,7 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
     const requirement = omitUndefined({
         locationPref,
         duration,
-        deadline:
-            deadline == null ? deadline : new Date(`${deadline}T00:00:00Z`),
+        deadline: deadline == null ? deadline : fromDateOnly(deadline),
     });
 
     const updated = await prisma.listing.update({

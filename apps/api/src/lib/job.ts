@@ -1,6 +1,7 @@
 import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord } from './search';
+import { toDateOnly } from './dates';
 import type { Prisma } from '../generated/prisma/client';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
@@ -64,9 +65,7 @@ export function toJob(row: SelectedJob): Job {
         listingStatus: row.listingStatus as ListingStatus,
         locationPref: row.job?.locationPref ?? null,
         duration: row.job?.duration ?? null,
-        deadline: row.job?.deadline
-            ? row.job.deadline.toISOString().slice(0, 10)
-            : null,
+        deadline: row.job?.deadline ? toDateOnly(row.job.deadline) : null,
         categoryIds: row.listingCategory.map((lc) => lc.categoryId),
         categories: row.listingCategory.map((lc) => lc.category.categoryName),
         createdAt: row.createdAt.toISOString(),

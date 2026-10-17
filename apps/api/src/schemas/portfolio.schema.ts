@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { httpUrl, int4Id } from './common.schema';
+import { fromDateOnly } from '../lib/dates';
 
 // Path params arrive as strings, so this coerces before the integer check —
 // the same reason parseQuery's schemas need z.coerce.
@@ -18,9 +19,7 @@ export const portfolioFields = {
     // Date-only column (@db.Date): a YYYY-MM-DD string, then a Date at UTC
     // midnight. z.coerce.date() would also take a full timestamp, and a client
     // in UTC+7 sending one would store the day before.
-    developmentDate: z.iso
-        .date()
-        .transform((day) => new Date(`${day}T00:00:00Z`)),
+    developmentDate: z.iso.date().transform(fromDateOnly),
     portfolioImage: httpUrl,
     portfolioLink: httpUrl,
 } as const;
