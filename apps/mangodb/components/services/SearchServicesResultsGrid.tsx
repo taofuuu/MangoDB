@@ -7,7 +7,7 @@ import type { SearchServicesMode } from '@/lib/useSearchServices';
 import Link from 'next/link';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import Pagination from '@/components/ui/Pagination';
-import SearchServiceCard from './SearchServiceCard';
+import ServiceCard from './ServiceCard';
 import EmptyState from '@/components/ui/EmptyState';
 
 function CardSkeleton() {
@@ -129,7 +129,7 @@ export default function SearchServicesResultsGrid({
                 className="flex max-h-[calc(100vh-280px)] min-h-[320px] flex-col gap-4 overflow-y-auto px-2 py-2"
             >
                 {items.map((service) => (
-                    <SearchServiceCard
+                    <ServiceCard
                         key={service.serviceId}
                         service={service}
                         onViewDetail={onViewDetail}
