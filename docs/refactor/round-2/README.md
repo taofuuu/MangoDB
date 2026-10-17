@@ -15,18 +15,18 @@ same ten phases, in the same order, because names flow one way:
 DB column → backend DTO → shared type → frontend lib → component prop → UI text
 ```
 
-| #                                     | Phase                           | Owns                                                | Status  |
-| ------------------------------------- | ------------------------------- | --------------------------------------------------- | ------- |
-| [0](phase-0-safety-net.md)            | Safety net                      | `scripts/`, `snapshots/`, `seed.ts`, tests, tooling | done    |
-| [1](phase-1-vocabulary.md)            | Vocabulary                      | `docs/conventions.md`, ADRs 0020–0021               | done    |
-| [2](phase-2-names-at-the-source.md)   | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | done    |
-| [3](phase-3-one-of-each-helper.md)    | Backend: one of each helper     | `apps/api/src/lib`                                  | done    |
-| [4](phase-4-wire-rules.md)            | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | done    |
-| [5](phase-5-template.md)              | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | done    |
-| [6](phase-6-one-way-to-call-it.md)    | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | done    |
-| [7](phase-7-one-set-of-primitives.md) | Frontend: one set of primitives | `components/`                                       | done    |
-| 8                                     | Design tokens                   | `globals.css` and every colour literal              | next    |
-| 9                                     | Docs                            | `ai-brief.md`, READMEs, `CONTRIBUTING.md`           | pending |
+| #                                     | Phase                           | Owns                                                | Status |
+| ------------------------------------- | ------------------------------- | --------------------------------------------------- | ------ |
+| [0](phase-0-safety-net.md)            | Safety net                      | `scripts/`, `snapshots/`, `seed.ts`, tests, tooling | done   |
+| [1](phase-1-vocabulary.md)            | Vocabulary                      | `docs/conventions.md`, ADRs 0020–0021               | done   |
+| [2](phase-2-names-at-the-source.md)   | Names at the source             | `schema.prisma`, `packages/shared`, the wire        | done   |
+| [3](phase-3-one-of-each-helper.md)    | Backend: one of each helper     | `apps/api/src/lib`                                  | done   |
+| [4](phase-4-wire-rules.md)            | Backend: wire rules             | `routes`, `controllers`, `schemas`                  | done   |
+| [5](phase-5-template.md)              | Template                        | `docs/adding-a-resource.md`, `apps/api/README.md`   | done   |
+| [6](phase-6-one-way-to-call-it.md)    | Frontend: one way to call it    | `apps/mangodb/lib`, `app/` routes and guards        | done   |
+| [7](phase-7-one-set-of-primitives.md) | Frontend: one set of primitives | `components/`                                       | done   |
+| [8](phase-8-design-tokens.md)         | Design tokens                   | `globals.css` and every colour literal              | done   |
+| 9                                     | Docs                            | `ai-brief.md`, READMEs, `CONTRIBUTING.md`           | next   |
 
 ## How it runs
 
