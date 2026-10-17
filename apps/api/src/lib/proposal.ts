@@ -62,7 +62,7 @@ export const receivedProposalSelect = {
     sender: { select: companyBriefSelect },
 } as const satisfies Prisma.ProposalSelect;
 
-export type ReceivedProposalRow = ProposalRow & {
+type ReceivedProposalRow = ProposalRow & {
     sender: CompanyBrief;
 };
 
@@ -86,7 +86,7 @@ export const sentProposalSelect = {
     },
 } as const satisfies Prisma.ProposalSelect;
 
-export type SentProposalRow = ProposalRow & {
+type SentProposalRow = ProposalRow & {
     listing: {
         listingTitle: string;
         company: CompanyBrief | null;

@@ -8,14 +8,14 @@ function todayUtcString(): string {
 }
 
 // Check that the deadline is today or in the future
-export function isDeadlineInFutureOrToday(dateStr: string): boolean {
+function isDeadlineInFutureOrToday(dateStr: string): boolean {
     return dateStr >= todayUtcString();
 }
 
 export const MIN_BUDGET_EXCEEDS_MAX =
     'Minimum budget cannot exceed maximum budget';
 
-export const jobFields = {
+const jobFields = {
     listingTitle: z
         .string()
         .trim()

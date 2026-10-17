@@ -13,7 +13,7 @@ export const portfolioIdParamSchema = z.object({
 // serviceId are not here: portfolioId names the row, and moving a sample to
 // a different service is a different operation than editing it in place,
 // needing a fresh ownership check against the destination.
-export const portfolioFields = {
+const portfolioFields = {
     portfolioName: z.string().trim().min(1).max(255),
     portfolioDescription: z.string().trim().max(2000),
     // Date-only column (@db.Date): a YYYY-MM-DD string, then a Date at UTC

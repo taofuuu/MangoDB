@@ -23,7 +23,7 @@ const COOKIE_OPTIONS = {
 // Register, login, and a credential change all hand back a company and a token
 // to act as it. One place decides what that pair looks like, so the three
 // cannot drift on the claims they mint.
-export function issueSession(company: CompanyProfile): SessionResponse {
+function issueSession(company: CompanyProfile): SessionResponse {
     const accessToken = signAccessToken({
         sub: String(company.companyId),
         role: accountTypeToRole(company.accountType),

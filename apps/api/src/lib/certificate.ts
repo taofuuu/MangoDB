@@ -22,12 +22,6 @@ export const certificateSelect = {
     organization: true,
 } as const satisfies Prisma.CertificateSelect;
 
-// The row and the response are the same shape now: the select names exactly
-// the columns the shared type declares, so there is nothing left to map.
-// toCertificate stays as the one place that would change if they diverge.
-export type CertificateRow = Certificate;
-export type CertificateResponse = Certificate;
-
 // The ownership check both the update and the delete handler need, written
 // once. Another provider's certificate answers 404, not 403. Since
 // GET /certificates?companyId=, its ids are discoverable, so by
@@ -36,7 +30,7 @@ export type CertificateResponse = Certificate;
 export async function assertCertificateOwned(
     certificateId: number,
     providerId: number,
-): Promise<CertificateRow> {
+): Promise<Certificate> {
     const certificate = await prisma.certificate.findFirst({
         where: { certificateId, providerId },
         select: certificateSelect,
@@ -49,7 +43,10 @@ export async function assertCertificateOwned(
     return certificate;
 }
 
-export function toCertificate(row: CertificateRow): CertificateResponse {
+// The row and the response are the same shape: the select names exactly
+// the columns the shared type declares. This stays the one place that would
+// change if they diverge.
+export function toCertificate(row: Certificate): Certificate {
     return {
         certificateId: row.certificateId,
         certTitle: row.certTitle,

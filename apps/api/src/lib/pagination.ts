@@ -1,7 +1,7 @@
 import type { PaginationMeta } from '@mangodb/shared';
 
 // The page a list query asked for, as its schema parsed it.
-export type PageQuery = { page: number; pageSize: number };
+type PageQuery = { page: number; pageSize: number };
 
 // Which rows one page covers. Spread into findMany: { ...pageArgs(query) }.
 export function pageArgs({ page, pageSize }: PageQuery): {

@@ -107,10 +107,7 @@ export const publicCompanyProfileSelect = {
     provider: { select: { serviceTerm: true, warrantyPolicy: true } },
 } as const satisfies Prisma.CompanySelect;
 
-export type PublicCompanyProfileRow = Omit<
-    CompanyProfileRow,
-    'username' | 'email'
->;
+type PublicCompanyProfileRow = Omit<CompanyProfileRow, 'username' | 'email'>;
 
 // Same flattening as toCompanyProfile, copied on purpose. Calling that one
 // instead would need a full row, and its spread would put username and email

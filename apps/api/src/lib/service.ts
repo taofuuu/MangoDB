@@ -42,7 +42,7 @@ export function toTechStackNames(service: ServiceTechStackRow): string[] {
 // ADR 0009. The spelling to store for each tech name. One already in
 // tech_stack is reused whatever its case, so "react" links to "React" instead
 // of adding a second row. A new name keeps the case it was typed in.
-export async function resolveTechStack(names: string[]): Promise<string[]> {
+async function resolveTechStack(names: string[]): Promise<string[]> {
     // "React" and "react" in one request are one tech, spelled as typed first.
     const typed = names.filter(
         (name, i) =>

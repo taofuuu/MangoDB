@@ -2,7 +2,9 @@ import type { Project, ProjectStatus } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { toDateOnly } from './dates';
 
-// The columns a project response carries.
+// The columns a project response carries. Exported with toProject for the
+// project endpoints to come; accept reaches both through
+// createProjectFromProposal.
 export const projectSelect = {
     projectId: true,
     proposalId: true,

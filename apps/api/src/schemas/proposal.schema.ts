@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { PROPOSAL_STATUSES } from '@mangodb/shared';
 import { int4Id } from './common.schema';
 
-export const proposalFields = {
+const proposalFields = {
     proposalBudget: z.coerce
         .number({ message: 'Proposal budget is required' })
         .positive('Proposal budget must be greater than zero')
@@ -60,5 +60,3 @@ export const proposalListQuerySchema = z
         pageSize: data.pageSize ?? data.limit ?? 6,
         status: data.status,
     }));
-
-export type ProposalListQuery = z.infer<typeof proposalListQuerySchema>;

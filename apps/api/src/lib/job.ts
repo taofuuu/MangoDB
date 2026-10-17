@@ -31,7 +31,7 @@ export const jobSelect = {
     },
 } as const satisfies Prisma.ListingSelect;
 
-export type JobRow = {
+type JobRow = {
     listingId: number;
     companyId: number | null;
     company: CompanyBrief | null;

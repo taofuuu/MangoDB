@@ -5,26 +5,26 @@ import { prisma } from './prisma';
 import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
 import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
 
-export interface CompanyIdentityInput {
+interface CompanyIdentityInput {
     username: string;
     email: string;
 }
 
 // An edit (US1-5) may change only one of the two, or neither.
-export interface PartialCompanyIdentityInput {
+interface PartialCompanyIdentityInput {
     username?: string | undefined;
     email?: string | undefined;
 }
 
 // The wire shape of POST /auth/check-availability, named once in
 // packages/shared so the frontend codes against the same thing.
-export type CompanyIdentityAvailability = IdentityAvailability;
+type CompanyIdentityAvailability = IdentityAvailability;
 
-export function normalizeUsername(username: string): string {
+function normalizeUsername(username: string): string {
     return username.trim().toLowerCase();
 }
 
-export function normalizeEmail(email: string): string {
+function normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
 }
 

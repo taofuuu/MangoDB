@@ -22,7 +22,7 @@ function getSupabase(): SupabaseClient {
     return client;
 }
 
-export type UploadedImage = {
+type UploadedImage = {
     path: string;
     url: string;
 };

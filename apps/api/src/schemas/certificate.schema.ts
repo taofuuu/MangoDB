@@ -37,7 +37,7 @@ function currentYear(): number {
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
     z.preprocess((value) => (value === '' ? null : value), schema);
 
-export const certificateFields = {
+const certificateFields = {
     certTitle: z.string().trim().max(255),
     organization: z.string().trim().max(255),
 
@@ -93,7 +93,7 @@ export const certificateFields = {
 export const EXPIRY_BEFORE_ISSUE =
     'Expiration date cannot be before the issue date';
 
-export interface CertificateDates {
+interface CertificateDates {
     issueMonth?: number | null | undefined;
     issueYear?: number | null | undefined;
     expireMonth?: number | null | undefined;
