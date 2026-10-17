@@ -9,10 +9,12 @@ import SearchBar from '@/components/ui/SearchBar';
 import type { Job, Paginated } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
+import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { listJobs } from '@/lib/jobs';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
+import { useMyCompany } from '@/lib/useMyCompany';
 
 // The deadline and order boxes. Neither reaches GET /jobs yet (only the
 // keyword and page do); the round-2 Phase 7 page records it for Sprint 3.
@@ -30,7 +32,24 @@ const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
     { label: 'Deadline', value: 'DEADLINE' },
 ];
 
-export default function OtherJobPage() {
+// Job search is a Provider's (US3-4). GET /jobs stays open to receivers too,
+// because another company's profile lists its jobs through it.
+export default function JobsPage() {
+    const me = useMyCompany('provider');
+
+    if (me.status !== 'ready') {
+        return (
+            <PageGate
+                state={me}
+                roleMessage="You need a Provider account to search job postings."
+            />
+        );
+    }
+
+    return <OtherJobPage />;
+}
+
+function OtherJobPage() {
     const [page, setPage] = useState(1);
     // The settled keyword, from SearchBar.
     const [search, setSearch] = useState('');
