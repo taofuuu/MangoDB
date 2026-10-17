@@ -2,9 +2,8 @@ import { useState } from 'react';
 import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from './StatsBadges';
 import Image from 'next/image';
-import AcceptProposalModal from './AcceptProposalModal';
-import RejectProposalModal from './RejectProposalModal';
-import { Clock, Calendar, Tag } from 'lucide-react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { CircleCheck, Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 
@@ -12,8 +11,9 @@ interface ReceivedProposalDetailProps {
     proposal: ReceivedProposal;
     viewMode: ViewMode;
     onClose: () => void;
-    onAccept?: () => void;
-    onReject?: () => void;
+    // Both throw on failure, so the dialog can show why.
+    onAccept: () => Promise<void>;
+    onReject: () => Promise<void>;
 }
 
 export default function ReceivedProposalDetail({
@@ -30,15 +30,6 @@ export default function ReceivedProposalDetail({
         proposal.sender?.companyName ??
         `Provider #${proposal.sender?.companyId}`;
 
-    const handleConfirmAccept = () => {
-        setShowAcceptModal(false);
-        onAccept?.();
-    };
-
-    const handleConfirmReject = () => {
-        setShowRejectModal(false);
-        onReject?.();
-    };
     return (
         <>
             <div
@@ -162,18 +153,43 @@ export default function ReceivedProposalDetail({
                 </div>
             </div>
 
-            <AcceptProposalModal
+            <ConfirmModal
                 isOpen={showAcceptModal}
-                companyName={companyName}
                 onClose={() => setShowAcceptModal(false)}
-                onConfirm={handleConfirmAccept}
+                onConfirm={onAccept}
+                title="Accept this proposal?"
+                description={
+                    <>
+                        Please review the proposal details before accepting.
+                        Once you accept, a project with{' '}
+                        <strong>{companyName}</strong> will be created and your
+                        job posting will close.
+                    </>
+                }
+                icon={
+                    <CircleCheck
+                        aria-hidden="true"
+                        className="h-[4.6vh] min-h-[38px] w-[3vw] min-w-[44px] shrink-0 text-brand"
+                    />
+                }
+                confirmLabel="Accept proposal"
+                confirmVariant="primary"
+                pendingLabel="Accepting..."
             />
 
-            <RejectProposalModal
+            <ConfirmModal
                 isOpen={showRejectModal}
-                companyName={companyName}
                 onClose={() => setShowRejectModal(false)}
-                onConfirm={handleConfirmReject}
+                onConfirm={onReject}
+                title="Reject this proposal?"
+                description={
+                    <>
+                        The proposal from <strong>{companyName}</strong> will be
+                        rejected. This can&apos;t be undone.
+                    </>
+                }
+                confirmLabel="Reject proposal"
+                pendingLabel="Rejecting..."
             />
         </>
     );

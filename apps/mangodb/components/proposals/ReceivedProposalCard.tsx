@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from './StatsBadges';
-import RejectProposalModal from './RejectProposalModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
@@ -13,7 +13,8 @@ interface ReceivedProposalCardProps {
     hasSelectedProposal: boolean;
     viewMode: ViewMode;
     onSelect: () => void;
-    onReject: () => void;
+    // Throws on failure, so the dialog can show why.
+    onReject: () => Promise<void>;
 }
 
 export default function ReceivedProposalCard({
@@ -133,14 +134,19 @@ export default function ReceivedProposalCard({
                 </div>
             </div>
 
-            <RejectProposalModal
+            <ConfirmModal
                 isOpen={showRejectModal}
-                companyName={companyName}
                 onClose={() => setShowRejectModal(false)}
-                onConfirm={() => {
-                    setShowRejectModal(false);
-                    onReject();
-                }}
+                onConfirm={onReject}
+                title="Reject this proposal?"
+                description={
+                    <>
+                        The proposal from <strong>{companyName}</strong> will be
+                        rejected. This can&apos;t be undone.
+                    </>
+                }
+                confirmLabel="Reject proposal"
+                pendingLabel="Rejecting..."
             />
         </>
     );

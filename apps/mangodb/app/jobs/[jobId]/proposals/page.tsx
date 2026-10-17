@@ -116,50 +116,49 @@ export default function JobProposalsPage() {
 
     const selectedProposal = proposals.find((p) => p.proposalId === selectedId);
 
-    // Handle rejection via API call
+    // Rethrown as a message, so the confirmation dialog shows it.
     const handleReject = async (proposalId: number) => {
         try {
             await rejectProposal(proposalId);
-
-            setProposals((prev) =>
-                prev.map((p) =>
-                    p.proposalId === proposalId
-                        ? { ...p, proposalStatus: 'REJECTED' }
-                        : p,
-                ),
-            );
-
-            if (selectedId === proposalId) {
-                setSelectedId(null);
-            }
         } catch (err) {
-            console.error('Failed to reject proposal:', err);
-            alert(describeError(err));
+            throw new Error(describeError(err));
+        }
+
+        setProposals((prev) =>
+            prev.map((p) =>
+                p.proposalId === proposalId
+                    ? { ...p, proposalStatus: 'REJECTED' }
+                    : p,
+            ),
+        );
+
+        if (selectedId === proposalId) {
+            setSelectedId(null);
         }
     };
 
-    // Handle acceptance via API call
+    // Accepting rejects every other pending proposal, so the list shows that
+    // without a refetch.
     const handleAccept = async (proposalId: number) => {
         try {
             await acceptProposal(proposalId);
-
-            setProposals((prev) =>
-                prev.map((p) => {
-                    if (p.proposalId === proposalId) {
-                        return { ...p, proposalStatus: 'ACCEPTED' };
-                    }
-                    if (p.proposalStatus === 'PENDING') {
-                        return { ...p, proposalStatus: 'REJECTED' };
-                    }
-                    return p;
-                }),
-            );
-
-            setSelectedId(null);
         } catch (err) {
-            console.error('Failed to accept proposal:', err);
-            alert(describeError(err));
+            throw new Error(describeError(err));
         }
+
+        setProposals((prev) =>
+            prev.map((p) => {
+                if (p.proposalId === proposalId) {
+                    return { ...p, proposalStatus: 'ACCEPTED' };
+                }
+                if (p.proposalStatus === 'PENDING') {
+                    return { ...p, proposalStatus: 'REJECTED' };
+                }
+                return p;
+            }),
+        );
+
+        setSelectedId(null);
     };
 
     const [currentPage, setCurrentPage] = useState(1);
