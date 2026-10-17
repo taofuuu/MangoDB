@@ -372,3 +372,9 @@ lib/<noun>.ts             the requests for that noun
   `register`, `nav` and `ui`. A component for one resource does not go in
   `ui/`.
 - One component per file, a default export, and the file named after it.
+- `lib/` also holds the shared helpers: `dates`, `money`, `pagination`, the
+  form rules in `validation/<schema>.ts`, and the hooks `useMyCompany` and
+  `useSearchServices`. A component formats a date or an amount through them,
+  never on its own.
+- An add form and an edit form for one thing are one component with a mode,
+  mounted only while open.

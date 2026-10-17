@@ -3,7 +3,8 @@
 > **If you change this page, check `docs/ai-brief.md`.** It restates parts of
 > this page for chat AIs that cannot follow a link.
 
-How to add an endpoint so it looks like the rest of the API. The rules are in
+How to add a resource so it looks like the rest of the app: the endpoint
+first, then the page that uses it. The rules are in
 [conventions.md](conventions.md); this page is the order to apply them in, and
 the helpers that already do each part.
 
@@ -11,7 +12,8 @@ the helpers that already do each part.
 back to — does not exist and is not planned. It is used here because its
 names collide with nothing real, so nobody copies half of it by mistake. Every
 helper it calls does exist. For a real resource built this way, read
-`job.schema.ts`, `lib/job.ts`, `job.controller.ts` and `job.routes.ts`.
+`job.schema.ts`, `lib/job.ts`, `job.controller.ts` and `job.routes.ts`, and on
+the frontend `lib/jobs.ts`, `app/jobs/mine/page.tsx` and `components/jobs/`.
 
 ## The order
 
@@ -21,6 +23,8 @@ Work outwards from the database. Each step depends on the one before it.
 1. schema.prisma → 2. schemas/ → 3. lib/ → 4. controllers/ → 5. routes/
                                                                   ↓
              8. say it exists ← 7. snapshots ← 6. shared type + tests
+                    ↓
+9. web lib/ → 10. the page → 11. components/ → 12. check it in the browser
 ```
 
 ---
@@ -417,6 +421,144 @@ _why_ in a comment beside the route, then tell the team in the group chat.
 
 ---
 
+## 9. The requests — `apps/mangodb/lib/bookmarks.ts`
+
+One file per noun holds every request for it, named after the API: `list…`
+for a collection, `get…` for one, then the verb. Reads go through `cachedGet`,
+writes through `invalidateAfter` with the prefixes they make stale:
+
+```ts
+import type {
+    Bookmark,
+    CreateBookmarkRequest,
+    Paginated,
+} from '@mangodb/shared';
+import { apiFetch } from './api';
+import { cachedGet, invalidateAfter } from './apiCache';
+
+export function listMyBookmarks(
+    page: number,
+    pageSize: number,
+): Promise<Paginated<Bookmark>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/bookmarks/mine?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<Bookmark>>(path));
+}
+
+export function createBookmark(body: CreateBookmarkRequest): Promise<Bookmark> {
+    return invalidateAfter(
+        apiFetch<Bookmark>('/bookmarks', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/bookmarks',
+    );
+}
+```
+
+A write that skips `invalidateAfter` leaves the old list on screen for up to
+30 seconds. The page size is a constant in `lib/pagination.ts`
+(`BOOKMARK_PAGE_SIZE`), not a number in the page.
+
+---
+
+## 10. The page — `apps/mangodb/app/bookmarks/page.tsx`
+
+The URL mirrors the API ([conventions §2.9](conventions.md#29-frontend-routes-mirror-the-api-nouns)).
+A page that needs the signed-in company starts with `useMyCompany` and shows
+`PageGate` until it is ready; a 401 while loading redirects:
+
+```tsx
+'use client';
+
+export default function BookmarksPage() {
+    const me = useMyCompany('receiver');
+    const [page, setPage] = useState(1);
+    const [result, setResult] = useState<Paginated<Bookmark> | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (me.status !== 'ready') return;
+        let cancelled = false;
+        listMyBookmarks(page, BOOKMARK_PAGE_SIZE)
+            .then((data) => {
+                if (!cancelled) setResult(data);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setError(describeError(err));
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [me.status, page]);
+
+    if (me.status !== 'ready') {
+        return (
+            <PageGate state={me} roleMessage="You need a Receiver account." />
+        );
+    }
+
+    return (
+        <main className="min-h-screen bg-surface">
+            <h1 className="type-hd">Bookmarks</h1>
+            {error && <p className="type-sm text-danger">{error}</p>}
+            {result?.items.length === 0 && (
+                <EmptyState title="No bookmarks yet" />
+            )}
+            {result?.items.map((bookmark) => (
+                <BookmarkCard key={bookmark.bookmarkId} bookmark={bookmark} />
+            ))}
+            <Pagination
+                pagination={result?.pagination}
+                onPageChange={setPage}
+                ariaLabel="Bookmark pages"
+            />
+        </main>
+    );
+}
+```
+
+An id in the URL (`/bookmarks/[bookmarkId]`) goes through `parseId` first;
+`null` is shown as not found.
+
+---
+
+## 11. The components — `apps/mangodb/components/bookmarks/`
+
+- **One default export per file, named after it**: `BookmarkCard.tsx`
+  exports `BookmarkCard`. A piece that knows no resource goes in `ui/`
+  instead.
+- **Reuse before you write.** `ConfirmModal` for "are you sure", with an async
+  `onConfirm` that throws so the dialog shows the error; `SuccessModal`,
+  `Dropdown`, `SearchBar`, `EmptyState`, `StatusBadge`, `StatusTabs`,
+  `CompanyAvatar`, `Input`, `Textarea`, `FieldError`, `Pagination`.
+- **Add and edit are one form with a mode**, mounted only while open. Its
+  checks live in `lib/validation/bookmark.ts`, worded as the API words them;
+  an API failure goes through `toFormErrors` and under the input it names.
+- **Dates and money through `lib/`**: `formatDate(bookmark.createdAt)`,
+  `formatBaht`, `formatDateOnly`. Never `new Date(day)` or `toLocaleString`.
+- **Tokens only**: `bg-surface-white`, `text-ink-soft`, `border-line`, and the
+  `type-*` scale, with `!font-[n]` for a different weight.
+
+---
+
+## 12. Check it in the browser
+
+`npm run verify` again, then start both dev servers, sign in as a seeded
+`snapshot_` account (`npm run db:seed -w api` creates them), and walk the page:
+the list, the empty state, an error, and a signed-out visit, which must land
+on `/unauthorized`. The console stays clean.
+
+---
+
 ## Checklist
 
 ```
@@ -428,5 +570,9 @@ _why_ in a comment beside the route, then tell the team in the group chat.
 [ ] shared type in packages/shared, Paginated<T> for lists, asserted in schemas/contract.ts
 [ ] unit test for what a snapshot cannot see
 [ ] snapshot calls added, with cleanup and id rules, the diff read
-[ ] npm run verify passes (format, lint, typecheck, tests)
+[ ] web lib/<noun>.ts: cachedGet reads, invalidateAfter writes, page size in lib/pagination
+[ ] page: URL mirrors the API, useMyCompany + PageGate, 401 redirects, parseId for ids
+[ ] components: in components/<noun>/, existing ui pieces reused, one form with a mode
+[ ] dates and money through lib/, tokens and type-* only
+[ ] npm run verify passes (format, lint, typecheck, tests), and the page walked in the browser
 ```
