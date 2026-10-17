@@ -13,7 +13,6 @@
     "license": "ISC",
     "author": "",
     "type": "commonjs",
-    "main": "server.js",
     "workspaces": [
         "apps/*",
         "packages/*"

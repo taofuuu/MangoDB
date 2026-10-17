@@ -2,7 +2,8 @@ node_modules
 .env
 .DS_Store
 Claude.md
-AGENTS.md
+# Personal agent instructions at the root only, like /CLAUDE.md below.
+/AGENTS.md
 
 # graphify — derived knowledge graph + local agent integration
 graphify-out/
