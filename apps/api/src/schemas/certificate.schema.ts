@@ -24,9 +24,9 @@ const EARLIEST_CERT_YEAR = 1990;
 // How far ahead an expiry may sit.
 const MAX_YEARS_AHEAD = 50;
 
-// A function, not a constant. Evaluated at module load, `new Date()` freezes
-// the year the process started, so a server left running over New Year starts
-// rejecting certificates issued in January.
+// Called per request, inside .refine(). Passed to .max() it ran once, when
+// this file loaded, so a server left running over New Year kept the old year
+// and rejected certificates issued in January.
 function currentYear(): number {
     return new Date().getFullYear();
 }
@@ -52,7 +52,10 @@ export const certificateFields = {
                 EARLIEST_CERT_YEAR,
                 `Issue year must be ${EARLIEST_CERT_YEAR} or later`,
             )
-            .max(currentYear(), 'Issue year cannot be in the future')
+            .refine(
+                (year) => year <= currentYear(),
+                'Issue year cannot be in the future',
+            )
             .nullable()
             .optional(),
     ),
@@ -69,8 +72,8 @@ export const certificateFields = {
             )
             // An expiry may be in the future — that is what an expiry is — but
             // not by a century. Without a ceiling this accepted 999999.
-            .max(
-                currentYear() + MAX_YEARS_AHEAD,
+            .refine(
+                (year) => year <= currentYear() + MAX_YEARS_AHEAD,
                 `Expiration year cannot be more than ${MAX_YEARS_AHEAD} years away`,
             )
             .nullable()
