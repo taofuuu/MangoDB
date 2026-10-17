@@ -1,8 +1,8 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import type { Job, ReceivedProposal } from '@mangodb/shared';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from '@/components/proposals/view/StatsBadges';
 import {
     listJobProposals,
@@ -14,7 +14,15 @@ import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import { StatsBadges } from '@/components/proposals/view/StatsBadges';
 import { ProposalCard } from '@/components/proposals/view/ProposalCard';
 import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
-import { describeError } from '@/lib/api';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isNotSignedIn,
+    parseId,
+} from '@/lib/api';
+import { redirectToUnauthorized } from '@/lib/session';
+
+const NOT_FOUND = 'This job could not be found.';
 
 // Empty State Component
 const EmptyState: React.FC<{ message?: string }> = ({
@@ -48,89 +56,51 @@ const EmptyState: React.FC<{ message?: string }> = ({
     </div>
 );
 
-interface ProposalPageInnerProps {
-    initialJobPostingId?: number | undefined;
-    initialJobTitle?: string | undefined;
-}
+// US2-10. The proposals sent to one of your jobs, opened from the job.
+export default function JobProposalsPage() {
+    const jobId = parseId(useParams().jobId);
 
-function ProposalPageInner({
-    initialJobPostingId,
-    initialJobTitle,
-}: ProposalPageInnerProps) {
-    const searchParams = useSearchParams();
-    const queryId = searchParams.get('jobPostingId') || searchParams.get('id');
-    const parsedJobId = queryId ? Number(queryId) : undefined;
-    const effectiveJobId =
-        initialJobPostingId ??
-        (parsedJobId && !isNaN(parsedJobId) ? parsedJobId : undefined);
-
-    const [listingTitle, setListingTitle] = useState<string>(
-        initialJobTitle || searchParams.get('title') || 'Job Posting Proposals',
-    );
+    const [listingTitle, setListingTitle] = useState('Job Posting Proposals');
     const [proposals, setProposals] = useState<ReceivedProposal[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('all');
-
-    // Initialize loading to true only if effectiveJobId exists
-    const [isLoading, setIsLoading] = useState<boolean>(
-        Boolean(effectiveJobId),
-    );
+    const [isLoading, setIsLoading] = useState(jobId !== null);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch job posting title if id is provided but title is default
+    // The job gives the heading, and the list is its proposals. Only the
+    // job's owner may read them; anyone else gets the API's 403 message.
     useEffect(() => {
-        if (!effectiveJobId) return;
-
-        if (!initialJobTitle && !searchParams.get('title')) {
-            getJob(effectiveJobId)
-                .then((job: Job) => {
-                    if (job?.listingTitle) {
-                        setListingTitle(job.listingTitle);
-                    }
-                })
-                .catch(() => {
-                    // Ignore failure to fetch title, keep fallback
-                });
-        }
-    }, [effectiveJobId, initialJobTitle, searchParams]);
-
-    // Fetch submitted proposals for this listing from backend
-    useEffect(() => {
-        if (!effectiveJobId) return;
+        if (jobId === null) return;
 
         let isMounted = true;
 
-        listJobProposals(effectiveJobId)
-            .then((data) => {
-                if (isMounted) {
-                    setProposals(Array.isArray(data) ? data : []);
-                    setError(null);
-                }
+        Promise.all([getJob(jobId), listJobProposals(jobId)])
+            .then(([job, data]) => {
+                if (!isMounted) return;
+                setListingTitle(job.listingTitle);
+                setProposals(data);
+                setError(null);
             })
-            .catch((err) => {
-                if (isMounted) {
-                    console.error('Failed to load proposals:', err);
-                    setError(describeError(err));
+            .catch((err: unknown) => {
+                if (!isMounted) return;
+                if (isNotSignedIn(err)) {
+                    setError(NOT_SIGNED_IN);
+                    redirectToUnauthorized();
+                    return;
                 }
+                setError(describeError(err, { 404: NOT_FOUND }));
             })
             .finally(() => {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
+                if (isMounted) setIsLoading(false);
             });
 
         return () => {
             isMounted = false;
         };
-    }, [effectiveJobId]);
+    }, [jobId]);
 
-    // Derive validation state dynamically during render
-    const missingIdError = !effectiveJobId
-        ? 'Please specify a valid jobPostingId in the URL, e.g. /proposal/view?jobPostingId=1'
-        : null;
-
-    const activeError = missingIdError || error;
-    const activeIsLoading = effectiveJobId ? isLoading : false;
+    const activeError = jobId === null ? NOT_FOUND : error;
+    const activeIsLoading = jobId !== null && isLoading;
 
     const totalCount = proposals.length;
     const rejectedCount = proposals.filter(
@@ -204,6 +174,10 @@ function ProposalPageInner({
         (safePage - 1) * RECEIVED_PROPOSAL_PAGE_SIZE,
         safePage * RECEIVED_PROPOSAL_PAGE_SIZE,
     );
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     return (
         <div className="min-h-screen bg-[#FFFDF9] font-sans p-6 flex flex-col items-center">
@@ -371,27 +345,5 @@ function ProposalPageInner({
                 )}
             </div>
         </div>
-    );
-}
-
-export default function ProposalPage(props: {
-    jobPostingId?: number;
-    listingTitle?: string;
-}) {
-    return (
-        <Suspense
-            fallback={
-                <div className="min-h-screen bg-[#FFFDF9] font-sans p-6 flex flex-col items-center">
-                    <div className="w-full max-w-6xl py-20 text-center text-slate-500 text-sm">
-                        Loading proposals...
-                    </div>
-                </div>
-            }
-        >
-            <ProposalPageInner
-                initialJobPostingId={props.jobPostingId}
-                initialJobTitle={props.listingTitle}
-            />
-        </Suspense>
     );
 }
