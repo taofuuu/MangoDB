@@ -4,6 +4,7 @@ import {
     serviceTechStackSelect,
     toTechStackNames,
 } from './service';
+import type { Prisma } from '../generated/prisma/client';
 
 // What one search result card needs. Kept apart from the query itself: when
 // sorting by price arrives, only the step that picks the page of ids changes.
@@ -28,7 +29,7 @@ export const companySummarySelect = {
             service: serviceTechStackSelect,
         },
     },
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 interface CompanySummaryRow {
     companyId: number;

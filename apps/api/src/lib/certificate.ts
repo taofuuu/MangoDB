@@ -1,6 +1,7 @@
 import type { Certificate } from '@mangodb/shared';
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
+import type { Prisma } from '../generated/prisma/client';
 
 // The columns a certificate response may carry, and the shape it ships in.
 // Until this file existed the four certificate handlers returned raw Prisma
@@ -19,7 +20,7 @@ export const certificateSelect = {
     issueMonth: true,
     issueYear: true,
     organization: true,
-} as const;
+} as const satisfies Prisma.CertificateSelect;
 
 // The row and the response are the same shape now: the select names exactly
 // the columns the shared type declares, so there is nothing left to map.

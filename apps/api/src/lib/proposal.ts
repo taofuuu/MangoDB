@@ -25,7 +25,7 @@ export const proposalSelect = {
     duration: true,
     proposalStatus: true,
     createdAt: true,
-} as const;
+} as const satisfies Prisma.ProposalSelect;
 
 export type SelectedProposal = {
     proposalId: number;
@@ -59,7 +59,7 @@ export function toProposal(row: SelectedProposal): Proposal {
 export const receivedProposalSelect = {
     ...proposalSelect,
     sender: { select: companyBriefSelect },
-} as const;
+} as const satisfies Prisma.ProposalSelect;
 
 export type SelectedReceivedProposal = SelectedProposal & {
     sender: CompanyBrief;
@@ -85,7 +85,7 @@ export const sentProposalSelect = {
             company: { select: companyBriefSelect },
         },
     },
-} as const;
+} as const satisfies Prisma.ProposalSelect;
 
 export type SelectedSentProposal = SelectedProposal & {
     listing: {
@@ -133,7 +133,7 @@ const projectSelect = {
     totalBudget: true,
     startDate: true,
     projectStatus: true,
-} as const;
+} as const satisfies Prisma.ProjectSelect;
 
 type ProjectRow = {
     projectId: number;

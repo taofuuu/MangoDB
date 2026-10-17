@@ -2,6 +2,7 @@ import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import type { Prisma } from '../generated/prisma/client';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
 // wire response deliberate rather than exposing whatever the table happens to have.
@@ -28,7 +29,7 @@ export const jobSelect = {
             category: { select: { categoryName: true } },
         },
     },
-} as const;
+} as const satisfies Prisma.ListingSelect;
 
 export type SelectedJob = {
     listingId: number;

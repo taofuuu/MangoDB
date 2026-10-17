@@ -11,6 +11,7 @@ import type {
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import type { Prisma } from '../generated/prisma/client';
 
 // The status a new service is created with. The allowed listing_status values
 // live in packages/shared (LISTING_STATUSES, ADR 0010).
@@ -24,7 +25,7 @@ export const serviceTechStackSelect = {
             select: { techStack: { select: { techStackName: true } } },
         },
     },
-} as const;
+} as const satisfies Prisma.ServiceDefaultArgs;
 
 export type ServiceTechStackRow = {
     serviceTechStack: { techStack: { techStackName: string } }[];
@@ -87,7 +88,7 @@ export const serviceSelect = {
     listingCategory: { select: { categoryId: true } },
     service: serviceTechStackSelect,
     company: { select: companyBriefSelect },
-} as const;
+} as const satisfies Prisma.ListingSelect;
 
 type SelectedService = {
     listingId: number;
@@ -168,7 +169,7 @@ export const serviceSummarySelect = {
     },
     service: serviceTechStackSelect,
     company: { select: companyBriefSelect },
-} as const;
+} as const satisfies Prisma.ListingSelect;
 
 interface ServiceSummaryRow {
     listingId: number;

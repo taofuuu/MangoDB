@@ -1,6 +1,7 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { prisma } from './prisma';
 import { ApiError } from './api-error';
+import type { Prisma } from '../generated/prisma/client';
 
 // The columns a portfolio response may carry. Naming them keeps the response
 // shape deliberate rather than "whatever the row has", and gives POST the
@@ -13,7 +14,7 @@ export const portfolioSelect = {
     developmentDate: true,
     portfolioImage: true,
     portfolioLink: true,
-} as const;
+} as const satisfies Prisma.ServicePortfolioSelect;
 
 type SelectedPortfolio = {
     portfolioId: number;

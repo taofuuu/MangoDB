@@ -4,6 +4,7 @@ import type {
     CompanyAccountSummary,
 } from '@mangodb/shared';
 import { companyProfileSelect, toCompanyProfile } from './company-profile';
+import type { Prisma } from '../generated/prisma/client';
 
 const ratingSelect = {
     proposal: {
@@ -15,7 +16,7 @@ const ratingSelect = {
             },
         },
     },
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 // A strict subset of companyProfileSelect, derived rather than restated: the
 // list card shows less than the detail panel, and picking the columns out by
@@ -31,13 +32,13 @@ export const adminCompanyListSelect = {
     accountType,
     deletedAt: true,
     ...ratingSelect,
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 export const adminCompanyDetailSelect = {
     ...companyProfileSelect,
     ...ratingSelect,
     deletedAt: true,
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 interface RatingSource {
     proposal: {

@@ -16,7 +16,7 @@ export const companyBriefSelect = {
     companyId: true,
     companyName: true,
     companyPhoto: true,
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 // listing.company_id is still nullable in the schema (conventions §11), but
 // every path that creates a listing sets it and no row lacks one. A missing
@@ -49,7 +49,7 @@ export const companyProfileSelect = {
     companyType: { select: { companyType: true } },
     // Null for a RECEIVER company, which owns no provider row.
     provider: { select: { serviceTerm: true, warrantyPolicy: true } },
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 // What that select hands back, before toCompanyProfile tidies it.
 export interface CompanyProfileRow {
@@ -104,7 +104,7 @@ export const publicCompanyProfileSelect = {
     accountType: true,
     companyType: { select: { companyType: true } },
     provider: { select: { serviceTerm: true, warrantyPolicy: true } },
-} as const;
+} as const satisfies Prisma.CompanySelect;
 
 export type PublicCompanyProfileRow = Omit<
     CompanyProfileRow,
