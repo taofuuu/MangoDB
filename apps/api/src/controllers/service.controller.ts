@@ -10,8 +10,14 @@ import { isRecordNotFound } from '../lib/prisma-errors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
+    assertBudgetRange,
+    assertListingOwned,
+    assertListingVisible,
+    categoryCreate,
+    categoryReplace,
+} from '../lib/listing';
+import {
     DEFAULT_LISTING_STATUS,
-    assertServiceOwned,
     ensureTechStack,
     serviceKeywordWhere,
     serviceSelect,
@@ -30,7 +36,6 @@ import {
     serviceMineQuerySchema,
     updateServiceSchema,
 } from '../schemas/service.schema';
-import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -42,8 +47,7 @@ export async function createService(
     const data = parseBody(createServiceSchema, req.body);
     const { companyId } = req.auth!;
 
-    const catIds = [...new Set(data.categoryIds)];
-    await assertCategoriesExist(catIds);
+    await assertCategoriesExist(data.categoryIds);
 
     const techNames = await ensureTechStack(data.techStack);
 
@@ -66,13 +70,7 @@ export async function createService(
                     },
                 },
             },
-            ...(catIds.length > 0
-                ? {
-                      listingCategory: {
-                          create: catIds.map((categoryId) => ({ categoryId })),
-                      },
-                  }
-                : {}),
+            listingCategory: categoryCreate(data.categoryIds),
         },
         select: serviceSelect,
     });
@@ -91,22 +89,8 @@ export async function updateService(
     const { companyId } = req.auth!;
 
     // 404 for an unknown/non-service id; 403 for another provider's service.
-    const existing = await assertServiceOwned(serviceId, companyId);
-
-    const sentBudget =
-        body.minBudget !== undefined || body.maxBudget !== undefined;
-    if (
-        sentBudget &&
-        !minBudgetDoesNotExceedMax({
-            ...existing,
-            ...omitUndefined(body),
-        })
-    ) {
-        const field = body.minBudget === undefined ? 'maxBudget' : 'minBudget';
-        throw ApiError.validationFailed([
-            { field, message: SERVICE_BUDGET_RANGE_ERROR },
-        ]);
-    }
+    const existing = await assertListingOwned(serviceId, 'SERVICE', companyId);
+    assertBudgetRange(existing, body, SERVICE_BUDGET_RANGE_ERROR);
 
     if (body.categoryIds !== undefined) {
         await assertCategoriesExist(body.categoryIds);
@@ -129,16 +113,7 @@ export async function updateService(
             data: {
                 ...omitUndefined(listingFields),
                 ...(categoryIds !== undefined
-                    ? {
-                          listingCategory: {
-                              deleteMany: {},
-                              create: [...new Set(categoryIds)].map(
-                                  (categoryId) => ({
-                                      categoryId,
-                                  }),
-                              ),
-                          },
-                      }
+                    ? { listingCategory: categoryReplace(categoryIds) }
                     : {}),
                 ...(techStackCreates !== undefined
                     ? {
@@ -386,18 +361,11 @@ export async function getService(req: Request, res: Response): Promise<void> {
         select: serviceSelect,
     });
 
-    if (!listing) {
-        throw ApiError.notFound('Listing not found');
-    }
-
-    if (
-        listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
-        listing.companyId !== companyId
-    ) {
-        throw ApiError.notFound('Listing not found');
-    }
-
-    res.status(200).json(toService(listing));
+    res.status(200).json(
+        toService(
+            assertListingVisible(listing, companyId, 'Listing not found'),
+        ),
+    );
 }
 
 // DELETE /services/:serviceId. Hard delete. listingCategory, the service row
@@ -415,7 +383,7 @@ export async function deleteService(
 
     // Checked before the write, same split as deletePortfolio: 404 for an
     // unknown/non-SERVICE id, 403 for another company's.
-    await assertServiceOwned(serviceId, companyId);
+    await assertListingOwned(serviceId, 'SERVICE', companyId);
 
     // US2-4: a service with at least one project linked to it can't be
     // deleted. A project links to the listing through its proposal.

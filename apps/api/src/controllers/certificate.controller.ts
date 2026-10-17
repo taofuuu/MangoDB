@@ -134,14 +134,7 @@ export async function updateCertificate(
     // Read before any write, for the ownership check and for the dates the
     // rule below needs — a PATCH may send one half of a date pair, so the rule
     // only means anything against the merged state.
-    const existing = await prisma.certificate.findFirst({
-        where: { certificateId, providerId },
-        select: certificateSelect,
-    });
-
-    if (!existing) {
-        throw ApiError.notFound('Certificate not found');
-    }
+    const existing = await assertCertificateOwned(certificateId, providerId);
 
     if (!expiryIsOnOrAfterIssue({ ...existing, ...omitUndefined(body) })) {
         throw ApiError.badRequest(EXPIRY_BEFORE_ISSUE);

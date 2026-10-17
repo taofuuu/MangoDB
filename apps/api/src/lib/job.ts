@@ -1,6 +1,4 @@
 import type { CompanyBrief, Job, ListingStatus } from '@mangodb/shared';
-import { prisma } from './prisma';
-import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord } from './search';
 import type { Prisma } from '../generated/prisma/client';
@@ -79,41 +77,4 @@ export function toJob(row: SelectedJob): Job {
 export function jobKeywordWhere(word: string): Prisma.ListingWhereInput {
     const contains = containsWord(word);
     return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
-}
-
-// Ownership verification helper for edit and close: 404 and 403 stay separate
-// because an open job posting is discoverable in public listings, so hiding it
-// buys nothing. GET /jobs/:jobId is stricter: a non-open posting is 404 to
-// anyone but its owner (job.controller.ts, getJob).
-// Returns the row it read, so edit can check the status and budgets without a
-// second query.
-export async function assertJobOwned(
-    jobId: number,
-    companyId: number,
-): Promise<{
-    listingStatus: string;
-    minBudget: number | null;
-    maxBudget: number | null;
-}> {
-    const posting = await prisma.listing.findUnique({
-        where: { listingId: jobId },
-        select: {
-            companyId: true,
-            listingType: true,
-            listingStatus: true,
-            minBudget: true,
-            maxBudget: true,
-        },
-    });
-
-    if (!posting || posting.listingType !== 'JOB') {
-        throw ApiError.notFound('Job posting not found');
-    }
-    if (posting.companyId !== companyId) {
-        throw ApiError.forbidden(
-            'Insufficient permissions to access this resource',
-        );
-    }
-
-    return posting;
 }

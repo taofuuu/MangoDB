@@ -36,10 +36,10 @@ export type CertificateResponse = Certificate;
 export async function assertCertificateOwned(
     certificateId: number,
     providerId: number,
-): Promise<{ certImage: string | null }> {
+): Promise<CertificateRow> {
     const certificate = await prisma.certificate.findFirst({
         where: { certificateId, providerId },
-        select: { certImage: true },
+        select: certificateSelect,
     });
 
     if (!certificate) {

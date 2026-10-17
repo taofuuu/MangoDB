@@ -16,7 +16,7 @@ import {
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobIdParamSchema } from '../schemas/job.schema';
-import { assertJobOwned } from '../lib/job';
+import { assertListingOwned } from '../lib/listing';
 import {
     receivedProposalSelect,
     proposalSelect,
@@ -97,7 +97,7 @@ export async function listJobProposals(
     res: Response,
 ): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
-    await assertJobOwned(jobId, req.auth!.companyId);
+    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
 
     const proposals = await prisma.proposal.findMany({
         where: { listingId: jobId },

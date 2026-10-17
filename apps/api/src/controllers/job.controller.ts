@@ -1,10 +1,5 @@
 import type { Request, Response } from 'express';
-import type {
-    ListingStatus,
-    ProposalStatus,
-    Job,
-    Paginated,
-} from '@mangodb/shared';
+import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
@@ -12,6 +7,15 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { ApiError } from '../lib/api-error';
 import { assertCategoriesExist } from '../lib/category';
 import { omitUndefined } from '../lib/objects';
+import {
+    assertBudgetRange,
+    assertListingOwned,
+    assertListingVisible,
+    categoryCreate,
+    categoryReplace,
+    closeOpenListing,
+    rejectPendingProposals,
+} from '../lib/listing';
 import { splitWords } from '../lib/search';
 import {
     createJobSchema,
@@ -20,8 +24,7 @@ import {
     MIN_BUDGET_EXCEEDS_MAX,
     updateJobSchema,
 } from '../schemas/job.schema';
-import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
-import { assertJobOwned, jobKeywordWhere, jobSelect, toJob } from '../lib/job';
+import { jobKeywordWhere, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + job atomically.
@@ -49,17 +52,7 @@ export async function createJob(req: Request, res: Response): Promise<void> {
                         : null,
                 },
             },
-            ...(body.categoryIds && body.categoryIds.length > 0
-                ? {
-                      listingCategory: {
-                          create: [...new Set(body.categoryIds)].map(
-                              (categoryId) => ({
-                                  categoryId,
-                              }),
-                          ),
-                      },
-                  }
-                : {}),
+            listingCategory: categoryCreate(body.categoryIds ?? []),
         },
         select: jobSelect,
     });
@@ -175,23 +168,15 @@ export async function getJob(req: Request, res: Response): Promise<void> {
         select: jobSelect,
     });
 
-    if (!posting) {
-        throw ApiError.notFound('Job posting not found');
-    }
-
-    const callerCompanyId = req.auth!.companyId;
-    const isOwner = posting.companyId === callerCompanyId;
-
-    // A non-open posting is private to its owner, so to anyone else it does
-    // not exist: 404, not 403 (docs/conventions.md, 403 vs 404).
-    if (
-        posting.listingStatus !== ('OPEN' satisfies ListingStatus) &&
-        !isOwner
-    ) {
-        throw ApiError.notFound('Job posting not found');
-    }
-
-    res.json(toJob(posting));
+    res.json(
+        toJob(
+            assertListingVisible(
+                posting,
+                req.auth!.companyId,
+                'Job posting not found',
+            ),
+        ),
+    );
 }
 
 // US2-13. Edit a job posting. Only the owner may, and only while it is Open.
@@ -201,28 +186,17 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
     const body = parseBody(updateJobSchema, req.body);
 
     // 404 if no such posting, 403 if it is someone else's.
-    const existing = await assertJobOwned(jobId, req.auth!.companyId);
+    const existing = await assertListingOwned(
+        jobId,
+        'JOB',
+        req.auth!.companyId,
+    );
     // Once closed, Providers' proposals were written against the old details.
     if (existing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
         throw ApiError.conflict('Only an open job posting can be edited');
     }
 
-    // A PATCH may send one budget only, so the rule is checked against the
-    // stored row with the body laid over it. Only when a budget is sent, so a
-    // row saved with bad budgets can still have its other fields edited.
-    const sentBudget =
-        body.minBudget !== undefined || body.maxBudget !== undefined;
-    if (
-        sentBudget &&
-        !minBudgetDoesNotExceedMax({ ...existing, ...omitUndefined(body) })
-    ) {
-        // Name the budget that was sent, so the form shows the error under
-        // that input. Both sent: minBudget, the same as create.
-        const field = body.minBudget === undefined ? 'maxBudget' : 'minBudget';
-        throw ApiError.validationFailed([
-            { field, message: MIN_BUDGET_EXCEEDS_MAX },
-        ]);
-    }
+    assertBudgetRange(existing, body, MIN_BUDGET_EXCEEDS_MAX);
 
     if (body.categoryIds) await assertCategoriesExist(body.categoryIds);
 
@@ -249,18 +223,8 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
                       },
                   }
                 : {}),
-            // Delete then create swaps the whole set; [] clears it.
             ...(categoryIds
-                ? {
-                      listingCategory: {
-                          deleteMany: {},
-                          create: [...new Set(categoryIds)].map(
-                              (categoryId) => ({
-                                  categoryId,
-                              }),
-                          ),
-                      },
-                  }
+                ? { listingCategory: categoryReplace(categoryIds) }
                 : {}),
         },
         select: jobSelect,
@@ -276,29 +240,15 @@ export async function closeJob(req: Request, res: Response): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
 
     // 404 if no such posting, 403 if it is someone else's.
-    await assertJobOwned(jobId, req.auth!.companyId);
+    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
 
     const closed = await prisma.$transaction(async (tx) => {
-        // The status in the where is the Open check: if the posting is
-        // already closed, or an accept closed it a moment ago, nothing matches.
-        const { count } = await tx.listing.updateMany({
-            where: {
-                listingId: jobId,
-                listingStatus: 'OPEN' satisfies ListingStatus,
-            },
-            data: { listingStatus: 'CLOSED' satisfies ListingStatus },
-        });
-        if (count === 0) {
-            throw ApiError.conflict('Only an open job posting can be closed');
-        }
-
-        await tx.proposal.updateMany({
-            where: {
-                listingId: jobId,
-                proposalStatus: 'PENDING' satisfies ProposalStatus,
-            },
-            data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
-        });
+        await closeOpenListing(
+            tx,
+            jobId,
+            'Only an open job posting can be closed',
+        );
+        await rejectPendingProposals(tx, jobId);
 
         return tx.listing.findUniqueOrThrow({
             where: { listingId: jobId },
