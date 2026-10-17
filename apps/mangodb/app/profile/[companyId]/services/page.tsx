@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
-import { describeError, isNotSignedIn } from '@/lib/api';
+import { describeError, isNotSignedIn, parseId } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
 import { listServices } from '@/lib/services';
@@ -46,11 +46,8 @@ function EmptyState() {
 }
 
 function CompanyServicesContent() {
-    const params = useParams<{ companyId: string }>();
-    const companyId = /^\d+$/.test(params.companyId)
-        ? Number(params.companyId)
-        : null;
-    const isValidCompanyId = companyId !== null && companyId >= 1;
+    const companyId = parseId(useParams().companyId);
+    const isValidCompanyId = companyId !== null;
 
     const [companyName, setCompanyName] = useState<string>('');
     const [page, setPage] = useState(1);
@@ -64,7 +61,7 @@ function CompanyServicesContent() {
 
     // 1. Fetch company profile to get company name
     useEffect(() => {
-        if (!companyId || isNaN(companyId)) {
+        if (companyId === null) {
             return;
         }
 
@@ -98,7 +95,7 @@ function CompanyServicesContent() {
 
     // 2. Fetch services using listServices
     useEffect(() => {
-        if (!companyId || isNaN(companyId)) {
+        if (companyId === null) {
             return;
         }
 

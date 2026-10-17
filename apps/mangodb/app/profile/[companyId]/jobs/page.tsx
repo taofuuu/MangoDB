@@ -3,14 +3,14 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { parseId } from '@/lib/api';
 import JobPostingsPage from '@/components/job/JobPostingsPage';
-import { parseCompanyId } from '@/lib/companies';
 
 // /profile/[companyId]/jobs: every OPEN job posting of one company, opened
 // from See more on its profile. The company comes from the path, so there is
 // no search box; JobPostingsPage's company view does the list and paging.
 export default function CompanyJobsPage() {
-    const companyId = parseCompanyId(useParams().companyId);
+    const companyId = parseId(useParams().companyId);
 
     if (companyId === null) {
         return (

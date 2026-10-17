@@ -5,15 +5,16 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { PublicCompanyProfile } from '@mangodb/shared';
 import {
-    ApiRequestError,
     NOT_SIGNED_IN,
     describeError,
     isNotSignedIn,
+    parseId,
 } from '@/lib/api';
-import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
+import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
 import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
+import { redirectToUnauthorized } from '@/lib/session';
 
 const NOT_FOUND = 'not-found';
 const ADMIN = 'admin';
@@ -25,23 +26,11 @@ type LoadResult =
     | { companyId: number; profile: PublicCompanyProfile }
     | { companyId: number; error: string };
 
-function toLoadError(err: unknown): string {
-    if (isNotSignedIn(err)) return NOT_SIGNED_IN;
-    if (err instanceof ApiRequestError) {
-        // Unknown, soft-deleted, and administrator accounts are all 404.
-        if (err.status === 404) return NOT_FOUND;
-        // The route is for companies; an administrator has its own account
-        // pages and the API turns it away.
-        if (err.status === 403) return ADMIN;
-    }
-    return describeError(err);
-}
-
 // T2.7.17. Another company's profile: the same views as /profile/view, from
 // GET /companies/:companyId, with nothing on them that edits. The layout
 // follows the company's accountType, exactly as it does for your own.
 export default function CompanyProfilePage() {
-    const companyId = parseCompanyId(useParams().companyId);
+    const companyId = parseId(useParams().companyId);
     const [result, setResult] = useState<LoadResult | null>(null);
 
     useEffect(() => {
@@ -53,9 +42,19 @@ export default function CompanyProfilePage() {
                 if (!cancelled) setResult({ companyId, profile });
             })
             .catch((err: unknown) => {
-                if (!cancelled) {
-                    setResult({ companyId, error: toLoadError(err) });
+                if (cancelled) return;
+                if (isNotSignedIn(err)) {
+                    setResult({ companyId, error: NOT_SIGNED_IN });
+                    redirectToUnauthorized();
+                    return;
                 }
+                // Unknown, soft-deleted and administrator accounts are all
+                // 404. A 403 is an administrator caller: it has its own
+                // account pages and the API turns it away.
+                setResult({
+                    companyId,
+                    error: describeError(err, { 404: NOT_FOUND, 403: ADMIN }),
+                });
             });
 
         return () => {
@@ -73,6 +72,10 @@ export default function CompanyProfilePage() {
               ? current.error
               : null;
 
+    if (loadError === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
+
     if (profile && isProviderAccount(profile.accountType)) {
         return <ProviderProfileView profile={profile} readOnly />;
     }
@@ -83,16 +86,6 @@ export default function CompanyProfilePage() {
 
     return (
         <div className="min-h-screen bg-surface p-6">
-            {loadError === NOT_SIGNED_IN && (
-                <p className="type-sm">
-                    You are not signed in.{' '}
-                    <Link href="/login" className="underline">
-                        Log in
-                    </Link>
-                    , then come back.
-                </p>
-            )}
-
             {loadError === NOT_FOUND && (
                 <p className="type-sm">
                     This company could not be found. It may have deleted its
@@ -113,14 +106,11 @@ export default function CompanyProfilePage() {
                 </p>
             )}
 
-            {loadError &&
-                loadError !== NOT_SIGNED_IN &&
-                loadError !== NOT_FOUND &&
-                loadError !== ADMIN && (
-                    <p role="alert" className="type-sm text-danger">
-                        {loadError}
-                    </p>
-                )}
+            {loadError && loadError !== NOT_FOUND && loadError !== ADMIN && (
+                <p role="alert" className="type-sm text-danger">
+                    {loadError}
+                </p>
+            )}
 
             {!loadError && !profile && <p className="type-sm">Loading…</p>}
         </div>

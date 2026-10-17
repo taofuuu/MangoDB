@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import FieldError from '@/components/ui/FieldError';
-import { ApiRequestError } from '@/lib/api';
+import { isNotSignedIn } from '@/lib/api';
 import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 
 export type EditAccountMode = 'username' | 'email' | 'password';
@@ -220,7 +220,7 @@ export default function EditAccountModal({
 
             // A 401 names no field, but on this endpoint it means one thing:
             // the current password was wrong. So it goes under that box.
-            if (err instanceof ApiRequestError && err.status === 401) {
+            if (isNotSignedIn(err)) {
                 setErrors({ currentPassword: message ?? FAILURES[mode] });
             } else {
                 setErrors(fields);

@@ -6,9 +6,14 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Certificate } from '@mangodb/shared';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isNotSignedIn,
+    parseId,
+} from '@/lib/api';
 import { formatCertificatePeriod, listCertificates } from '@/lib/certificates';
-import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
+import { getCompanyProfile } from '@/lib/companies';
 import { isStorageImage } from '@/lib/images';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -24,7 +29,7 @@ type LoadResult =
 // from See more on its profile. The same rows as /certificates, without Add,
 // Edit and Delete.
 export default function CompanyCertificatesPage() {
-    const companyId = parseCompanyId(useParams().companyId);
+    const companyId = parseId(useParams().companyId);
     const [result, setResult] = useState<LoadResult | null>(null);
     const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
         null,

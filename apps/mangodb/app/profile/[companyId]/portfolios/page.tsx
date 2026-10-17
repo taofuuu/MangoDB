@@ -8,8 +8,13 @@ import PortfolioCard from '@/components/portfolio/PortfolioCard';
 import PortfolioRow from '@/components/portfolio/PortfolioRow';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
+import {
+    NOT_SIGNED_IN,
+    describeError,
+    isNotSignedIn,
+    parseId,
+} from '@/lib/api';
+import { getCompanyProfile } from '@/lib/companies';
 import { listPortfolios } from '@/lib/portfolios';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -25,7 +30,7 @@ type LoadResult =
 // from See more on its profile. The same cards as /portfolios, without Edit
 // and Delete.
 export default function CompanyPortfoliosPage() {
-    const companyId = parseCompanyId(useParams().companyId);
+    const companyId = parseId(useParams().companyId);
     const [result, setResult] = useState<LoadResult | null>(null);
     const [view, setView] = useState<PortfolioView>('grid');
     const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(
