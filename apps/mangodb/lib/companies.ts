@@ -134,15 +134,15 @@ export function listCompanies(
         query.set('q', q.trim());
     }
 
-    return apiFetch<Paginated<CompanySummary>>(
-        `/companies?${query.toString()}`,
-    );
+    const path = `/companies?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompanySummary>>(path));
 }
 
 export function getCompanyProfile(
     companyId: number,
 ): Promise<PublicCompanyProfile> {
-    return apiFetch<PublicCompanyProfile>(`/companies/${companyId}`);
+    const path = `/companies/${companyId}`;
+    return cachedGet(path, () => apiFetch<PublicCompanyProfile>(path));
 }
 
 export function updateCompanyAccount(

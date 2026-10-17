@@ -24,7 +24,8 @@ export function listCompanyCertificates(
 ): Promise<Certificate[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });
 
-    return apiFetch<Certificate[]>(`/certificates?${query.toString()}`);
+    const path = `/certificates?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Certificate[]>(path));
 }
 
 // FormData, not JSON: both writes carry the image, so the whole body is

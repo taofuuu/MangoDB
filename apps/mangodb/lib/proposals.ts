@@ -30,27 +30,36 @@ export function createProposal(
     );
 }
 
-// US2-10. Fetch submitted proposals for a given job posting listing ID
+// US2-10. The proposals sent to one of the caller's jobs.
 export function getSubmittedProposals(
     jobId: number,
 ): Promise<ReceivedProposal[]> {
-    return apiFetch<ReceivedProposal[]>(`/jobs/${jobId}/proposals`, {
-        method: 'GET',
-    });
+    const path = `/jobs/${jobId}/proposals`;
+    return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
 }
 
-// Accept a proposal (POST /proposals/:proposalId/accept)
+// POST /proposals/:proposalId/accept. Accepting closes the job and rejects the
+// other proposals, so the job lists and every proposal list are stale after it.
 export function acceptProposal(proposalId: number): Promise<Project> {
-    return apiFetch<Project>(`/proposals/${proposalId}/accept`, {
-        method: 'POST',
-    });
+    return invalidateAfter(
+        apiFetch<Project>(`/proposals/${proposalId}/accept`, {
+            method: 'POST',
+        }),
+        '/jobs',
+        '/proposals',
+    );
 }
 
-// Reject a proposal (POST /proposals/:proposalId/reject)
+// POST /proposals/:proposalId/reject. Only that proposal changes, but it is
+// shown in the job's proposal list and in its sender's.
 export function rejectProposal(proposalId: number): Promise<void> {
-    return apiFetch<void>(`/proposals/${proposalId}/reject`, {
-        method: 'POST',
-    });
+    return invalidateAfter(
+        apiFetch<void>(`/proposals/${proposalId}/reject`, {
+            method: 'POST',
+        }),
+        '/jobs',
+        '/proposals',
+    );
 }
 export interface GetMyProposalsOptions {
     status?: ProposalStatus | undefined;

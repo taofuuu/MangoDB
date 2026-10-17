@@ -33,11 +33,13 @@ export function createService(body: CreateServiceRequest): Promise<Service> {
 }
 
 export function getService(serviceId: number): Promise<Service> {
-    return apiFetch<Service>(`/services/${serviceId}`);
+    const path = `/services/${serviceId}`;
+    return cachedGet(path, () => apiFetch<Service>(path));
 }
 
 export function listMyServices(): Promise<Service[]> {
-    return apiFetch<Service[]>('/services/mine');
+    const path = '/services/mine';
+    return cachedGet(path, () => apiFetch<Service[]>(path));
 }
 
 // A Service (GET /services/mine) in the ServiceSummary shape the
