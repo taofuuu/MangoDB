@@ -10,6 +10,7 @@ import {
     rejectProposal,
 } from '@/lib/proposals';
 import { getJob } from '@/lib/jobs';
+import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import { StatsBadges } from '@/components/proposals/view/StatsBadges';
 import { ProposalCard } from '@/components/proposals/view/ProposalCard';
 import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
@@ -191,18 +192,17 @@ function ProposalPageInner({
         }
     };
 
-    const ITEMS_PER_PAGE = 5;
     const [currentPage, setCurrentPage] = useState(1);
 
     // safePage clamps currentPage to valid range if totalPages shrinks
     const totalPages = Math.max(
         1,
-        Math.ceil(activeList.length / ITEMS_PER_PAGE),
+        Math.ceil(activeList.length / RECEIVED_PROPOSAL_PAGE_SIZE),
     );
     const safePage = Math.min(currentPage, totalPages);
     const pagedList = activeList.slice(
-        (safePage - 1) * ITEMS_PER_PAGE,
-        safePage * ITEMS_PER_PAGE,
+        (safePage - 1) * RECEIVED_PROPOSAL_PAGE_SIZE,
+        safePage * RECEIVED_PROPOSAL_PAGE_SIZE,
     );
 
     return (

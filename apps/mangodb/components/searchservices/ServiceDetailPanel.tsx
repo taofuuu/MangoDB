@@ -7,25 +7,10 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import { ExternalLink, X } from 'lucide-react';
 import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
 import type { ServiceSummary } from '@mangodb/shared';
-
-const portfolioDateFormatter = new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-});
-
-function formatPortfolioDate(date: string): string {
-    const [year, month, day] = date.split('-').map(Number);
-    if (!year || !month || !day) return date;
-
-    return portfolioDateFormatter.format(
-        new Date(Date.UTC(year, month - 1, day)),
-    );
-}
 
 export function ServiceDetailPanel({
     service,
@@ -266,7 +251,7 @@ export function ServiceDetailPanel({
                                             />
                                         </a>
                                         <p className="mt-0.5 type-xs text-ink-soft">
-                                            {formatPortfolioDate(
+                                            {formatDateOnly(
                                                 portfolio.developmentDate,
                                             )}
                                         </p>

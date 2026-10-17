@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
+import { formatDate, formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 
 interface JobDetailModalProps {
@@ -236,14 +237,7 @@ export default function JobDetailModal({
 
                             <div className="text-ink">
                                 {job.deadline
-                                    ? new Date(job.deadline).toLocaleDateString(
-                                          'en-GB',
-                                          {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          },
-                                      )
+                                    ? formatDateOnly(job.deadline)
                                     : 'No job deadline provided'}
                             </div>
 
@@ -316,14 +310,7 @@ export default function JobDetailModal({
                         >
                             Created at :{' '}
                             {job.createdAt
-                                ? new Date(job.createdAt).toLocaleDateString(
-                                      'en-GB',
-                                      {
-                                          day: 'numeric',
-                                          month: 'short',
-                                          year: 'numeric',
-                                      },
-                                  )
+                                ? formatDate(job.createdAt)
                                 : 'No creation date provided'}
                         </div>
                     </div>

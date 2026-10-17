@@ -5,6 +5,7 @@ import type {
     ServiceSummary,
 } from '@mangodb/shared';
 import { Tag } from 'lucide-react';
+import { formatBaht } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
 import { OtherCompanyPortfolioCard } from './OtherCompanyPortfolioCard';
 
@@ -88,7 +89,7 @@ export function OtherCompanyServiceDetailPanel({
                                     </span>
                                     <span className="mt-1 block type-xs  font-semibold">
                                         {service.minBudget != null
-                                            ? `${service.minBudget.toLocaleString('en-US')} baht`
+                                            ? formatBaht(service.minBudget)
                                             : '-'}
                                     </span>
                                 </div>
@@ -105,7 +106,7 @@ export function OtherCompanyServiceDetailPanel({
                                     </span>
                                     <span className="mt-1 block type-xs font-semibold">
                                         {service.maxBudget != null
-                                            ? `${service.maxBudget.toLocaleString('en-US')} baht`
+                                            ? formatBaht(service.maxBudget)
                                             : '-'}
                                     </span>
                                 </div>

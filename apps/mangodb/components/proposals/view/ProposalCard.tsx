@@ -4,6 +4,8 @@ import type { ReceivedProposal } from '@mangodb/shared';
 import type { ViewMode } from './StatsBadges';
 import RejectProposalModal from './RejectProposalModal';
 import { Clock, Calendar, Tag } from 'lucide-react';
+import { formatDate, formatMonths } from '@/lib/dates';
+import { formatBaht } from '@/lib/money';
 
 interface ProposalCardProps {
     proposal: ReceivedProposal;
@@ -77,25 +79,20 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
 
                             <div className="flex items-center gap-1.5 text-xs text-[#497B93] mt-0.5">
                                 <Calendar className="h-4 w-4 text-[#497B93]" />
-                                <span>
-                                    {new Date(
-                                        proposal.createdAt,
-                                    ).toLocaleDateString()}
-                                </span>
+                                <span>{formatDate(proposal.createdAt)}</span>
                             </div>
 
                             <div className="flex items-center gap-3 text-xs text-[#497B93] mt-1">
                                 <div className="flex items-center gap-1 text-xs text-[#497B93]">
                                     <Tag className="h-4 w-4 text-[#497B93]" />
                                     <span>
-                                        {proposal.proposalBudget.toLocaleString()}
+                                        {formatBaht(proposal.proposalBudget)}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1 text-xs text-[#497B93]">
                                     <Clock className="h-4 w-4 text-[#497B93]" />
                                     <span>
-                                        {proposal.duration} month
-                                        {proposal.duration > 1 ? 's' : ''}
+                                        {formatMonths(proposal.duration)}
                                     </span>
                                 </div>
                             </div>

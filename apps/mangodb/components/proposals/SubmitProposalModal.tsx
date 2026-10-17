@@ -5,6 +5,7 @@ import { MailCheck, X } from 'lucide-react';
 import type { Job, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
+import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { createProposal } from '@/lib/proposals';
 import {
@@ -51,32 +52,6 @@ const PROPOSAL_FIELDS = {
 const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 2,
 });
-
-const MONTHS = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-] as const;
-
-// deadline is a date-only wire value. Splitting it avoids shifting the day in
-// a UTC+7 browser, as required by docs/conventions.md section 10.
-function formatDeadline(deadline: string | null): string {
-    if (!deadline) return 'Not specified';
-
-    const [year, month, day] = deadline.split('-').map(Number);
-    if (!year || !month || !day || !MONTHS[month - 1]) return deadline;
-
-    return `${day} ${MONTHS[month - 1]} ${year}`;
-}
 
 function ProposalSubmissionConfirmationModal({
     isOpen,
@@ -288,7 +263,9 @@ export default function SubmitProposalModal({
                             Deadline
                         </dt>
                         <dd className="type-xs text-ink">
-                            {formatDeadline(jobPosting.deadline)}
+                            {jobPosting.deadline
+                                ? formatDateOnly(jobPosting.deadline)
+                                : 'Not specified'}
                         </dd>
                     </div>
                     <div>

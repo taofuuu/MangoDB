@@ -5,6 +5,8 @@ import Image from 'next/image';
 import AcceptProposalModal from './AcceptProposalModal';
 import RejectProposalModal from './RejectProposalModal';
 import { Clock, Calendar, Tag } from 'lucide-react';
+import { formatDate, formatMonths } from '@/lib/dates';
+import { formatBaht } from '@/lib/money';
 
 interface ProposalDetailProps {
     proposal: ReceivedProposal;
@@ -81,10 +83,7 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
 
                             <div className="flex items-center gap-1 text-xs text-[#497B93] mt-0.5">
                                 <Calendar className="h-4 w-4 text-[#497B93]" />
-                                Submitted:{' '}
-                                {new Date(
-                                    proposal.createdAt,
-                                ).toLocaleDateString()}
+                                Submitted: {formatDate(proposal.createdAt)}
                             </div>
 
                             <div className="flex items-center gap-6 text-xs text-[#497B93] mt-2">
@@ -95,7 +94,9 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                                     <div className="flex items-center gap-1 text-xs text-[#497B93]">
                                         <Tag className="h-4 w-4 text-[#497B93]" />
                                         <div className="font-semibold">
-                                            {proposal.proposalBudget.toLocaleString()}
+                                            {formatBaht(
+                                                proposal.proposalBudget,
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -107,8 +108,7 @@ export const ProposalDetail: React.FC<ProposalDetailProps> = ({
                                     <div className="flex items-center gap-1 text-xs text-[#497B93]">
                                         <Clock className="h-4 w-4 text-[#497B93]" />
                                         <div className="font-semibold">
-                                            {proposal.duration} month
-                                            {proposal.duration > 1 ? 's' : ''}
+                                            {formatMonths(proposal.duration)}
                                         </div>
                                     </div>
                                 </div>

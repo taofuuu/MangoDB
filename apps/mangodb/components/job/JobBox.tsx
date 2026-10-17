@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 
 import JobDetailModal from './JobDetailModal';
@@ -215,7 +216,9 @@ export default function JobBox({
 
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <CalendarClock size={22} aria-hidden="true" />
-                        {job.deadline || 'No job deadline provided.'}
+                        {job.deadline
+                            ? formatDateOnly(job.deadline)
+                            : 'No job deadline provided.'}
                     </p>
 
                     <button

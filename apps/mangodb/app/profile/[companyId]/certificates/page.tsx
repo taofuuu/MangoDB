@@ -7,9 +7,8 @@ import { useParams } from 'next/navigation';
 import type { Certificate } from '@mangodb/shared';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { listCertificates } from '@/lib/certificates';
+import { formatCertificatePeriod, listCertificates } from '@/lib/certificates';
 import { getCompanyProfile, parseCompanyId } from '@/lib/companies';
-import { monthLabel } from '@/lib/dates';
 import { isStorageImage } from '@/lib/images';
 import { redirectToUnauthorized } from '@/lib/session';
 
@@ -20,22 +19,6 @@ const NOT_FOUND = 'This company could not be found.';
 type LoadResult =
     | { companyId: number; companyName: string; certificates: Certificate[] }
     | { companyId: number; error: string };
-
-// Every date part is optional, so this collapses to whatever was filled in
-// rather than rendering a half-empty "Issue  ".
-function formatPeriod(cert: Certificate): string {
-    const issued = [monthLabel(cert.issueMonth?.toString()), cert.issueYear]
-        .filter(Boolean)
-        .join(' ');
-    const expires = [monthLabel(cert.expireMonth?.toString()), cert.expireYear]
-        .filter(Boolean)
-        .join(' ');
-
-    if (issued && expires) return `Issued ${issued} · Expires ${expires}`;
-    if (issued) return `Issued ${issued}`;
-    if (expires) return `Expires ${expires}`;
-    return '';
-}
 
 // /profile/[companyId]/certificates: another company's certificates, opened
 // from See more on its profile. The same rows as /certificates, without Add,
@@ -159,9 +142,9 @@ export default function CompanyCertificatesPage() {
                             </div>
                             <p className="type-md pl-6">{cert.organization}</p>
 
-                            {formatPeriod(cert) && (
+                            {formatCertificatePeriod(cert) && (
                                 <p className="type-md pl-6">
-                                    {formatPeriod(cert)}
+                                    {formatCertificatePeriod(cert)}
                                 </p>
                             )}
 

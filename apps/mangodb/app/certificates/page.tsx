@@ -15,8 +15,10 @@ import {
     isForbidden,
     isNotSignedIn,
 } from '@/lib/api';
-import { listMyCertificates } from '@/lib/certificates';
-import { monthLabel } from '@/lib/dates';
+import {
+    formatCertificatePeriod,
+    listMyCertificates,
+} from '@/lib/certificates';
 import { isStorageImage } from '@/lib/images';
 import Image from 'next/image';
 import edit from '@/public/edit.png';
@@ -141,19 +143,13 @@ export default function CertificatePage() {
 
     // Every date part is optional, so this collapses to whatever was filled in
     // rather than rendering a half-empty "Issue  ".
-    const formatPeriod = (certificate: CertificateData) => {
-        const issued = [monthLabel(certificate.month), certificate.year]
-            .filter(Boolean)
-            .join(' ');
-        const expires = [monthLabel(certificate.exMonth), certificate.exYear]
-            .filter(Boolean)
-            .join(' ');
-
-        if (issued && expires) return `Issued ${issued} · Expires ${expires}`;
-        if (issued) return `Issued ${issued}`;
-        if (expires) return `Expires ${expires}`;
-        return '';
-    };
+    const formatPeriod = (certificate: CertificateData) =>
+        formatCertificatePeriod({
+            issueMonth: certificate.month,
+            issueYear: certificate.year,
+            expireMonth: certificate.exMonth,
+            expireYear: certificate.exYear,
+        });
 
     if (certificates === null && !loadError && !isRestricted) {
         return <div className="min-h-screen bg-surface" />;

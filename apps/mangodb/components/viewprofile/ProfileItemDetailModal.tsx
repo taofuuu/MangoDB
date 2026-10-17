@@ -6,17 +6,12 @@ import type { Certificate, ServicePortfolio } from '@mangodb/shared';
 import { X } from 'lucide-react';
 import { hasPortfolioImage } from '@/components/portfolio/portfolioImage';
 import ModalShell from '@/components/ui/ModalShell';
-import { formatDateOnly, monthLabel } from '@/lib/dates';
+import { formatDateOnly, formatMonthYear } from '@/lib/dates';
 import { isStorageImage } from '@/lib/images';
 
 export type ProfileItem =
     | { kind: 'portfolio'; item: ServicePortfolio }
     | { kind: 'certificate'; item: Certificate };
-
-function formatMonth(month: number | null, year: number | null): string {
-    if (!month || !year) return '—';
-    return `${monthLabel(String(month))} ${year}`;
-}
 
 // A link column is free text. Only http(s) becomes an anchor, so a stored
 // "javascript:" value is shown as text instead of being clickable.
@@ -76,10 +71,13 @@ function toView(entry: ProfileItem): {
         description: null,
         rows: [
             { label: 'Organization', value: c.organization || '—' },
-            { label: 'Issued', value: formatMonth(c.issueMonth, c.issueYear) },
+            {
+                label: 'Issued',
+                value: formatMonthYear(c.issueMonth, c.issueYear) || '—',
+            },
             {
                 label: 'Expires',
-                value: formatMonth(c.expireMonth, c.expireYear),
+                value: formatMonthYear(c.expireMonth, c.expireYear) || '—',
             },
             { label: 'Credential ID', value: c.credentialId || '—' },
             {

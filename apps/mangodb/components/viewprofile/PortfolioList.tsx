@@ -5,7 +5,7 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import type { Certificate } from '@mangodb/shared';
 import { listPortfolios } from '@/lib/portfolios';
 import { listMyCertificates, listCertificates } from '@/lib/certificates';
-import { formatDateOnly, monthLabel } from '@/lib/dates';
+import { formatDateOnly, formatMonthYear } from '@/lib/dates';
 import ProfileItemDetailModal, {
     type ProfileItem,
 } from './ProfileItemDetailModal';
@@ -13,11 +13,6 @@ import ProfileItemDetailModal, {
 // Matches the card's fixed-height design: enough to preview at a glance,
 // the rest lives behind "See more" instead of an in-card scrollbar.
 const MAX_VISIBLE_ITEMS = 3;
-
-function formatCertificateDate(cert: Certificate): string {
-    if (!cert.issueMonth || !cert.issueYear) return '—';
-    return `${monthLabel(String(cert.issueMonth))} ${cert.issueYear}`;
-}
 
 interface DisplayItem {
     id: number;
@@ -74,7 +69,7 @@ export default function PortfolioCertificateList({
             : certificateItems.map((item) => ({
                   id: item.certificateId,
                   title: item.certTitle,
-                  date: formatCertificateDate(item),
+                  date: formatMonthYear(item.issueMonth, item.issueYear) || '—',
                   entry: { kind: 'certificate', item },
               }));
 

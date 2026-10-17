@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
+import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
 import { listServices } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
@@ -53,7 +54,6 @@ function CompanyServicesContent() {
 
     const [companyName, setCompanyName] = useState<string>('');
     const [page, setPage] = useState(1);
-    const pageSize = 5;
 
     const [services, setServices] = useState<ServiceSummary[]>([]);
     const [pagination, setPagination] = useState<PaginationMeta | null>(null);
@@ -104,7 +104,7 @@ function CompanyServicesContent() {
 
         let active = true;
 
-        listServices(page, pageSize, { companyId })
+        listServices(page, COMPANY_SERVICES_PAGE_SIZE, { companyId })
             .then((res) => {
                 if (!active) return;
                 setError(null);

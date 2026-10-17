@@ -3,7 +3,7 @@
 import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { CalendarDays } from 'lucide-react';
 import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import { formatProposalDateTime } from '@/lib/proposals';
+import { formatDateTime } from '@/lib/dates';
 import ProposalStatusBadge from './ProposalStatusBadge';
 
 // The card's outline follows its status, as in the design: blue when
@@ -66,7 +66,7 @@ export default function MyProposalCard({
                     <p className="flex items-center gap-1 whitespace-nowrap type-xs text-brand">
                         <CalendarDays aria-hidden="true" className="size-4" />
                         <time dateTime={proposal.createdAt}>
-                            {formatProposalDateTime(proposal.createdAt)}
+                            {formatDateTime(proposal.createdAt)}
                         </time>
                     </p>
                     <ProposalStatusBadge

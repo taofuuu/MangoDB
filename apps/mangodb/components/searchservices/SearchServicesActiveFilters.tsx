@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { formatBudgetRange } from '@/lib/money';
 import type { SearchServicesFilters } from '@/lib/services';
 
 function describe(filters: SearchServicesFilters): string[] {
@@ -13,15 +14,9 @@ function describe(filters: SearchServicesFilters): string[] {
         parts.push(`Tech Stack : ${filters.techStack.join(', ')}`);
     }
     if (filters.minBudget != null || filters.maxBudget != null) {
-        if (filters.minBudget != null && filters.maxBudget != null) {
-            parts.push(
-                `Budget : ${filters.minBudget.toLocaleString()} - ${filters.maxBudget.toLocaleString()}`,
-            );
-        } else if (filters.minBudget != null) {
-            parts.push(`Budget : From ${filters.minBudget.toLocaleString()}`);
-        } else if (filters.maxBudget != null) {
-            parts.push(`Budget : Up to ${filters.maxBudget.toLocaleString()}`);
-        }
+        parts.push(
+            `Budget : ${formatBudgetRange(filters.minBudget, filters.maxBudget)}`,
+        );
     }
     return parts;
 }
