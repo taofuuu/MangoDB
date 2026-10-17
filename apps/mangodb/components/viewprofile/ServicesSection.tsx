@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { JobPosting, PublicCompanyProfile } from '@mangodb/shared';
 import JobDetailModal from '@/components/job/JobDetailModal';
 import { ServiceDetailPanel } from '@/components/searchservices/ServiceDetailPanel';
+import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import ModalShell from '@/components/ui/ModalShell';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
@@ -12,6 +13,7 @@ import { listJobPostings, listMyJobPostings } from '@/lib/jobPostings';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
+    deleteService,
     getService,
     listCompanyServices,
     listMyServices,
@@ -43,7 +45,8 @@ interface ServiceRow {
 // (readOnly) shows only OPEN ones, from the public lists filtered by
 // companyId. Your own shows every status, from the /mine lists, so you can
 // keep track of closed ones too (US2-2). Details opens the same views the
-// search pages use.
+// search pages use. On your own Services tab you can also create a
+// service, and edit or delete each one (T2.2.14).
 export default function ServicesSection({
     profile,
     readOnly = false,
@@ -70,6 +73,9 @@ export default function ServicesSection({
     // Why another company's service could not be opened (T2.7.24).
     const [serviceError, setServiceError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
+    const [serviceToDelete, setServiceToDelete] = useState<DisplayItem | null>(
+        null,
+    );
     const serviceTitleId = useId();
 
     useEffect(() => {
@@ -199,6 +205,31 @@ export default function ServicesSection({
         }
     };
 
+    // Thrown errors become the modal's message, as on the edit page (US2-4).
+    const deleteOwnService = async (serviceId: number) => {
+        try {
+            await deleteService(serviceId);
+        } catch (err) {
+            if (isNotSignedIn(err)) {
+                redirectToUnauthorized();
+                return;
+            }
+            throw new Error(
+                describeError(err, {
+                    409: 'This service has a project linked to it, so it cannot be deleted.',
+                }),
+            );
+        }
+        setServices(
+            (rows) =>
+                rows?.filter(
+                    ({ summary }) => summary.serviceId !== serviceId,
+                ) ?? null,
+        );
+    };
+
+    const canManageServices = !readOnly && activeTab === 'services';
+
     return (
         <div className="flex flex-col md:flex-row gap-4 bg-gray-50 max-w-5xl mx-auto rounded-popup">
             <main className="bg-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
@@ -262,14 +293,39 @@ export default function ServicesSection({
                                         className="ml-auto shrink-0 bg-danger-tint text-danger"
                                     />
                                 )}
-                                <button
-                                    type="button"
-                                    onClick={() => openDetail(item.id)}
-                                    aria-label={`Details for ${item.title}`}
-                                    className="shrink-0 type-xs text-brand hover:underline !font-medium"
-                                >
-                                    Details
-                                </button>
+                                {/* One group, so justify-between does not
+                                    spread Edit and Delete across the row. */}
+                                <div className="flex shrink-0 items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => openDetail(item.id)}
+                                        aria-label={`Details for ${item.title}`}
+                                        className="shrink-0 type-xs text-brand hover:underline !font-medium"
+                                    >
+                                        Details
+                                    </button>
+                                    {canManageServices && (
+                                        <>
+                                            <Link
+                                                href={`/services/${item.id}/edit`}
+                                                aria-label={`Edit ${item.title}`}
+                                                className="shrink-0 type-xs text-brand hover:underline !font-medium"
+                                            >
+                                                Edit
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setServiceToDelete(item)
+                                                }
+                                                aria-label={`Delete ${item.title}`}
+                                                className="shrink-0 type-xs text-danger hover:underline !font-medium"
+                                            >
+                                                Delete
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                             <p className="type-xs text-gray-600 leading-relaxed line-clamp-2">
                                 {item.body || 'No description provided.'}
@@ -292,6 +348,17 @@ export default function ServicesSection({
                             className="type-xs text-brand hover:underline font-medium"
                         >
                             See more
+                        </Link>
+                    </div>
+                )}
+
+                {canManageServices && (
+                    <div className="mt-3 text-right">
+                        <Link
+                            href="/services/create"
+                            className="type-xs text-brand hover:underline font-medium"
+                        >
+                            + Create Service
                         </Link>
                     </div>
                 )}
@@ -326,6 +393,19 @@ export default function ServicesSection({
                     />
                 )}
             </ModalShell>
+
+            <DeleteConfirmationModal
+                isOpen={serviceToDelete !== null}
+                onClose={() => setServiceToDelete(null)}
+                onConfirm={
+                    serviceToDelete
+                        ? () => deleteOwnService(serviceToDelete.id)
+                        : undefined
+                }
+                title="Delete this service listing?"
+                description={`${serviceToDelete?.title || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
+                confirmLabel="Delete listing"
+            />
 
             {selectedJob && (
                 <JobDetailModal
