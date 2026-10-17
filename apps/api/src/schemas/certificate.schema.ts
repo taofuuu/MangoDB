@@ -1,20 +1,14 @@
 import { z } from 'zod';
-import { INT4_MAX, httpUrl, int4Id } from './common.schema';
+import { blankToNull, httpUrl, int4Id, queryId } from './common.schema';
 
 export const certificateIdParamSchema = z.object({
     certificateId: int4Id,
 });
 
-// GET /certificates?companyId=. Required: unlike GET /portfolios, a bare
-// request does not list every company's certificates. Digits only, the same
-// rule as ?companyId= on GET /services: Number() alone would read "0x10" as 16
-// and "1e3" as 1000.
+// GET /certificates?companyId=. Required: a bare request does not list every
+// company's certificates.
 export const certificateListQuerySchema = z.object({
-    companyId: z
-        .string()
-        .regex(/^\d+$/, 'companyId must be a whole number')
-        .transform(Number)
-        .pipe(z.number().int().positive().max(INT4_MAX)),
+    companyId: queryId('companyId'),
 });
 
 // A floor on typos, not a real rule: certificates predate the platform, but a
@@ -32,10 +26,10 @@ function currentYear(): number {
 }
 
 // Both forms post multipart because they carry the image, so every field
-// arrives as a string and a cleared input arrives as ''. Without this,
-// z.coerce.number() reads '' as 0 and a cleared month is stored as month zero.
+// arrives as a string and a cleared input arrives as ''. blankToNull keeps
+// z.coerce.number() from reading it as 0, a month of zero.
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
-    z.preprocess((value) => (value === '' ? null : value), schema);
+    z.preprocess(blankToNull, schema);
 
 const certificateFields = {
     certTitle: z.string().trim().max(255),

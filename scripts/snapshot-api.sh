@@ -276,8 +276,7 @@ echo
 echo "public"
 snap health GET /health
 snap categories-list GET /categories
-snap portfolios-list GET /portfolios
-PORTFOLIO_ID="$(jget 0.portfolio_id)"
+snap error-portfolios-list-no-filter GET /portfolios
 snap error-unauthorized GET /companies/me
 snap error-unknown-route GET /no-such-route
 snap error-bad-path-param GET /portfolios/not-a-number
@@ -365,6 +364,8 @@ snap auth-check-availability-taken POST /auth/check-availability \
 echo
 echo "portfolios + certificates"
 snap portfolios-by-company GET "/portfolios?companyId=$PROVIDER_ID"
+# A seeded portfolio, for the call below that reads one by id.
+PORTFOLIO_ID="$(jget 0.portfolio_id)"
 SERVICE_ID="$(jget 0.serviceId)"
 
 if [ -n "$PORTFOLIO_ID" ]; then
@@ -934,7 +935,7 @@ snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVAL
 snap proposals-mine GET /proposals/mine \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&limit=6" \
+snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&pageSize=6" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts

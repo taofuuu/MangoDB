@@ -82,9 +82,7 @@ type UpdateJobInput = z.infer<typeof updateJobSchema>;
 type _UpdateJobMatchesContract = Assert<UpdateJobInput, UpdateJobRequest>;
 type _ContractMatchesUpdateJob = Assert<UpdateJobRequest, UpdateJobInput>;
 
-// z.input, not z.infer: categoryIds and techStack have defaults, so after
-// parsing they are always there, but a client may leave them out.
-type CreateServiceInput = z.input<typeof createServiceSchema>;
+type CreateServiceInput = z.infer<typeof createServiceSchema>;
 type _CreateServiceMatchesContract = Assert<
     CreateServiceInput,
     CreateServiceRequest

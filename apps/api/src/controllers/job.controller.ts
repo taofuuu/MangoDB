@@ -21,9 +21,10 @@ import {
     createJobSchema,
     jobIdParamSchema,
     jobListQuerySchema,
-    MIN_BUDGET_EXCEEDS_MAX,
+    jobMineQuerySchema,
     updateJobSchema,
 } from '../schemas/job.schema';
+import { BUDGET_RANGE_ERROR } from '../schemas/listing.schema';
 import { jobSearchWhere, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
@@ -88,7 +89,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
 //for own job posting
 export async function listMyJobs(req: Request, res: Response): Promise<void> {
     const { page, pageSize, status } = parseQuery(
-        jobListQuerySchema,
+        jobMineQuerySchema,
         req.query,
     );
 
@@ -164,7 +165,7 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
         throw ApiError.conflict('Only an open job posting can be edited');
     }
 
-    assertBudgetRange(existing, body, MIN_BUDGET_EXCEEDS_MAX);
+    assertBudgetRange(existing, body, BUDGET_RANGE_ERROR);
 
     if (body.categoryIds) await assertCategoriesExist(body.categoryIds);
 

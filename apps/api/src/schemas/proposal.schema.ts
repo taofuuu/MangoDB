@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { PROPOSAL_STATUSES } from '@mangodb/shared';
-import { int4Id } from './common.schema';
+import { blankToUndefined, int4Id, pageQueryFields } from './common.schema';
 
 const proposalFields = {
     proposalBudget: z.coerce
@@ -28,35 +28,11 @@ export const proposalIdParamSchema = z.object({
     proposalId: int4Id,
 });
 
-function emptyOrTrim(val: unknown): unknown {
-    if (typeof val === 'string') {
-        const trimmed = val.trim();
-        return trimmed === '' ? undefined : trimmed;
-    }
-    return val;
-}
-
-// US2-9. Query parameters for GET /proposals/mine.
-// Defaults pageSize to 6 proposals per page (supporting limit as alias).
-// Preprocesses empty or whitespace-only strings to undefined so blank query params (e.g. ?status= or ?page= ) do not fail validation.
-export const proposalListQuerySchema = z
-    .object({
-        page: z.preprocess(
-            emptyOrTrim,
-            z.coerce.number().int().positive().default(1),
-        ),
-        pageSize: z.preprocess(
-            emptyOrTrim,
-            z.coerce.number().int().min(1).max(50).optional(),
-        ),
-        limit: z.preprocess(
-            emptyOrTrim,
-            z.coerce.number().int().min(1).max(50).optional(),
-        ),
-        status: z.preprocess(emptyOrTrim, z.enum(PROPOSAL_STATUSES).optional()),
-    })
-    .transform((data) => ({
-        page: data.page,
-        pageSize: data.pageSize ?? data.limit ?? 6,
-        status: data.status,
-    }));
+// US2-9. GET /proposals/mine: the same paging as every list, and a status.
+export const proposalListQuerySchema = z.object({
+    ...pageQueryFields,
+    status: z.preprocess(
+        blankToUndefined,
+        z.enum(PROPOSAL_STATUSES).optional(),
+    ),
+});

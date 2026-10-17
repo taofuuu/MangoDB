@@ -43,3 +43,45 @@ export const thaiPhone = z
     .refine((value) => /^0\d{8,9}$/.test(value), {
         message: 'Use a Thai phone number, e.g. 0812345678',
     });
+
+// A blank value (empty or only spaces) was not really sent: ?page= is page
+// 1, ?status= is no filter. Without this, z.coerce reads '' as 0.
+export function blankToUndefined(value: unknown): unknown {
+    return typeof value === 'string' && value.trim() === '' ? undefined : value;
+}
+
+// A cleared input in a form is null: the field is emptied, not left alone.
+// Multipart sends every field as a string, so a cleared one arrives as ''.
+export function blankToNull(value: unknown): unknown {
+    return typeof value === 'string' && value.trim() === '' ? null : value;
+}
+
+// The paging every list takes: page 1 and 12 rows unless asked, at most 50,
+// so one request cannot pull a whole table into memory (conventions §3).
+export const pageQueryFields = {
+    page: z.preprocess(
+        blankToUndefined,
+        z.coerce.number().int().positive().default(1),
+    ),
+    pageSize: z.preprocess(
+        blankToUndefined,
+        z.coerce.number().int().min(1).max(50).default(12),
+    ),
+} as const;
+
+// An id in the query string, like ?companyId=. Digits only: Number() alone
+// would read "0x10" as 16 and "1e3" as 1000, so those are a 400, as are
+// "abc" and 0.
+export function queryId(name: string) {
+    return z
+        .string()
+        .regex(/^\d+$/, `${name} must be a whole number`)
+        .transform(Number)
+        .pipe(z.number().int().positive().max(INT4_MAX));
+}
+
+// The same id as an optional filter: blank means the filter is not used.
+// .optional() sits inside the preprocess, so a blank value counts as absent.
+export function optionalQueryId(name: string) {
+    return z.preprocess(blankToUndefined, queryId(name).optional());
+}

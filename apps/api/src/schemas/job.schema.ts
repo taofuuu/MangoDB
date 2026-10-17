@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { LISTING_STATUSES } from '@mangodb/shared';
-import { INT4_MAX, int4Id, minBudgetDoesNotExceedMax } from './common.schema';
+import {
+    blankToUndefined,
+    optionalQueryId,
+    int4Id,
+    minBudgetDoesNotExceedMax,
+    pageQueryFields,
+} from './common.schema';
+import { BUDGET_RANGE_ERROR, listingFields } from './listing.schema';
 import { toDateOnly } from '../lib/dates';
 
 function todayUtcString(): string {
@@ -12,39 +19,11 @@ function isDeadlineInFutureOrToday(dateStr: string): boolean {
     return dateStr >= todayUtcString();
 }
 
-export const MIN_BUDGET_EXCEEDS_MAX =
-    'Minimum budget cannot exceed maximum budget';
-
 const jobFields = {
-    listingTitle: z
-        .string()
-        .trim()
-        .min(1, 'Title is required')
-        .max(255, 'Title cannot exceed 255 characters'),
-    listingDesc: z
-        .string()
-        .trim()
-        .min(1, 'Description is required')
-        .max(10000, 'Description cannot exceed 10000 characters'),
-    minBudget: z.preprocess(
-        (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
-        z.coerce
-            .number()
-            .int('Minimum budget must be an integer')
-            .min(0, 'Minimum budget cannot be negative')
-            .max(INT4_MAX, 'Minimum budget exceeds maximum allowed')
-            .nullable()
-            .optional(),
-    ),
-    maxBudget: z.preprocess(
-        (val) =>
-            typeof val === 'string' && val.trim() === '' ? undefined : val,
-        z.coerce
-            .number({ message: 'Maximum budget is required' })
-            .int('Maximum budget must be an integer')
-            .positive('Maximum budget must be greater than zero')
-            .max(INT4_MAX, 'Maximum budget exceeds maximum allowed'),
-    ),
+    listingTitle: listingFields.listingTitle,
+    listingDesc: listingFields.listingDesc,
+    minBudget: listingFields.minBudget.optional(),
+    maxBudget: listingFields.maxBudget,
     locationPref: z
         .string()
         .trim()
@@ -64,17 +43,14 @@ const jobFields = {
         })
         .nullable()
         .optional(),
-    categoryIds: z
-        .array(int4Id)
-        .max(10, 'Cannot select more than 10 categories')
-        .optional(),
+    categoryIds: listingFields.categoryIds.optional(),
 } as const;
 
 // strictObject so unexpected fields or typos are rejected with 400 VALIDATION_FAILED
 export const createJobSchema = z
     .strictObject(jobFields)
     .refine(minBudgetDoesNotExceedMax, {
-        message: MIN_BUDGET_EXCEEDS_MAX,
+        message: BUDGET_RANGE_ERROR,
         path: ['minBudget'],
     });
 
@@ -104,24 +80,14 @@ export const jobIdParamSchema = z.object({
 // Supports status filtering (OPEN | CLOSED) and filtering by companyId.
 // Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
 export const jobListQuerySchema = z.object({
-    page: z.preprocess(
-        (val) => (val === '' ? undefined : val),
-        z.coerce.number().int().positive().default(1),
-    ),
-    pageSize: z.preprocess(
-        (val) => (val === '' ? undefined : val),
-        z.coerce.number().int().min(1).max(50).default(12),
-    ),
-    status: z.preprocess(
-        (val) => (val === '' ? undefined : val),
-        z.enum(LISTING_STATUSES).optional(),
-    ),
-    companyId: z.preprocess(
-        (val) => (val === '' ? undefined : val),
-        int4Id.optional(),
-    ),
-    q: z.preprocess(
-        (value) => (value === '' ? undefined : value),
-        z.string().trim().max(100).optional(),
-    ),
+    ...pageQueryFields,
+    status: z.preprocess(blankToUndefined, z.enum(LISTING_STATUSES).optional()),
+    companyId: optionalQueryId('companyId'),
+    q: z.preprocess(blankToUndefined, z.string().trim().max(100).optional()),
+});
+
+// GET /jobs/mine. The caller's own jobs, so no keyword or company filter.
+export const jobMineQuerySchema = z.object({
+    ...pageQueryFields,
+    status: z.preprocess(blankToUndefined, z.enum(LISTING_STATUSES).optional()),
 });

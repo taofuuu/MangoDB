@@ -29,11 +29,11 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createServiceSchema,
     serviceIdParamSchema,
-    SERVICE_BUDGET_RANGE_ERROR,
     serviceListQuerySchema,
     serviceMineQuerySchema,
     updateServiceSchema,
 } from '../schemas/service.schema';
+import { BUDGET_RANGE_ERROR } from '../schemas/listing.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -45,9 +45,10 @@ export async function createService(
     const data = parseBody(createServiceSchema, req.body);
     const { companyId } = req.auth!;
 
-    await assertCategoriesExist(data.categoryIds);
+    const categoryIds = data.categoryIds ?? [];
+    await assertCategoriesExist(categoryIds);
 
-    const techNames = await ensureTechStack(data.techStack);
+    const techNames = await ensureTechStack(data.techStack ?? []);
 
     const created = await prisma.listing.create({
         data: {
@@ -68,7 +69,7 @@ export async function createService(
                     },
                 },
             },
-            listingCategory: categoryCreate(data.categoryIds),
+            listingCategory: categoryCreate(categoryIds),
         },
         select: serviceSelect,
     });
@@ -88,7 +89,7 @@ export async function updateService(
 
     // 404 for an unknown/non-service id; 403 for another provider's service.
     const existing = await assertListingOwned(serviceId, 'SERVICE', companyId);
-    assertBudgetRange(existing, body, SERVICE_BUDGET_RANGE_ERROR);
+    assertBudgetRange(existing, body, BUDGET_RANGE_ERROR);
 
     if (body.categoryIds !== undefined) {
         await assertCategoriesExist(body.categoryIds);

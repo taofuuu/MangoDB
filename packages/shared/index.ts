@@ -344,7 +344,7 @@ export interface CreateJobRequest {
 export interface CreateServiceRequest {
     listingTitle: string;
     listingDesc: string;
-    minBudget?: number | undefined;
+    minBudget?: number | null | undefined;
     maxBudget?: number | undefined;
     categoryIds?: number[] | undefined;
     techStack?: string[] | undefined;

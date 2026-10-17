@@ -101,9 +101,6 @@ export async function updatePortfolio(
     const existing = await assertPortfolioOwned(portfolioId, companyId);
 
     const updateData = omitUndefined(data);
-    if (updateData.portfolioDescription === '') {
-        updateData.portfolioDescription = null;
-    }
 
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolioLink back to its current
