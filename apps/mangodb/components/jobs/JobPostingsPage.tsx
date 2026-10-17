@@ -5,8 +5,8 @@ import Link from 'next/link';
 
 import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
 
-import JobBox from '@/components/job/JobBox';
-import JobDetailPanel from '@/components/job/JobDetailPanel';
+import JobBox from '@/components/jobs/JobBox';
+import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';

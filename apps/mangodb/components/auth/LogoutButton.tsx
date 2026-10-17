@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from 'react';
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
-import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
+import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 import { logout, redirectToLogin } from '@/lib/session';
 
 // logout() ends the session on the server — the token is revoked and the

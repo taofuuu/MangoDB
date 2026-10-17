@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import TextField from '@/components/sm-detail/TextField';
+import TextField from '@/components/auth/TextField';
 import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 import { login, sanitizeReturnUrl } from '@/lib/session';

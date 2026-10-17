@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { parseId } from '@/lib/api';
-import JobPostingsPage from '@/components/job/JobPostingsPage';
+import JobPostingsPage from '@/components/jobs/JobPostingsPage';
 
 // /companies/[companyId]/jobs: every OPEN job posting of one company, opened
 // from See more on its profile. The company comes from the path, so there is

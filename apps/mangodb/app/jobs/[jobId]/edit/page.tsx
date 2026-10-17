@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Job } from '@mangodb/shared';
-import JobForm from '@/components/forms/JobForm';
+import JobForm from '@/components/jobs/JobForm';
 import PageGate from '@/components/auth/PageGate';
 import { describeError, isNotSignedIn, parseId } from '@/lib/api';
 import { getJob } from '@/lib/jobs';

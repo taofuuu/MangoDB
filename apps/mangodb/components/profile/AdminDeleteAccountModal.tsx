@@ -5,7 +5,7 @@ import Image from 'next/image';
 import binIcon from '@/assets/icons/bin.png';
 import DeleteConfirmationModal, {
     type DeleteModalProps,
-} from './DeleteConfirmationModal';
+} from '../ui/DeleteConfirmationModal';
 
 type AdminDeleteAccountModalProps = Omit<DeleteModalProps, 'onConfirm'> & {
     // The account being removed, shown in the title so the admin can see which

@@ -1,7 +1,7 @@
 'use client';
 
 import type { AccountType } from '@mangodb/shared';
-import Tag from './Tag';
+import Tag from '../ui/Tag';
 
 // Which chips an account type wears. An administrator offers and requests
 // nothing, so it wears none — the key still has to be here, because

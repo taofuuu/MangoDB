@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CategorySelector from '../ui/CategorySelector';
+import CategorySelector from './CategorySelector';
 import { createJob, updateJob } from '@/lib/jobs';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import FieldError from '@/components/ui/FieldError';

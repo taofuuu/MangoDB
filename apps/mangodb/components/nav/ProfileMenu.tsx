@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import LogoutButton from '@/components/auth/LogoutButton';
-import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 
 // The avatar button and the small panel it opens, like GitHub's profile menu:
 // who is signed in at the top, then View profile, Edit profile, Settings and

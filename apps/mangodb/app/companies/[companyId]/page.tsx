@@ -12,8 +12,8 @@ import {
 } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
-import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
-import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
+import ProviderProfileView from '@/components/profile/ProviderProfileView';
+import ReceiverProfileView from '@/components/profile/ReceiverProfileView';
 import { redirectToUnauthorized } from '@/lib/session';
 
 const NOT_FOUND = 'not-found';

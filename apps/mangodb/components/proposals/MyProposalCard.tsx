@@ -2,7 +2,7 @@
 
 import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { CalendarDays } from 'lucide-react';
-import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime } from '@/lib/dates';
 import ProposalStatusBadge from './ProposalStatusBadge';
 

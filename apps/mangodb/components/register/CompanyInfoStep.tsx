@@ -1,8 +1,8 @@
 'use client';
 
-import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
+import { SimpleTextInput } from '@/components/register/SimpleTextInput';
 import type { Dispatch, SetStateAction } from 'react';
-import CompanyTypeField from '../forms/CompanyTypeField';
+import CompanyTypeField from '../profile/CompanyTypeField';
 
 export type CompanyInfo = {
     companyName: string;

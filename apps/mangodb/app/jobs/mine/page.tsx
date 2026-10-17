@@ -1,4 +1,4 @@
-import JobPostingsPage from '@/components/job/JobPostingsPage';
+import JobPostingsPage from '@/components/jobs/JobPostingsPage';
 import { Suspense } from 'react';
 
 export default function Page() {

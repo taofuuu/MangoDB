@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ServicePortfolio } from '@mangodb/shared';
-import PortfolioCard from '@/components/portfolio/PortfolioCard';
-import PortfolioRow from '@/components/portfolio/PortfolioRow';
+import PortfolioCard from '@/components/portfolios/PortfolioCard';
+import PortfolioRow from '@/components/portfolios/PortfolioRow';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
-import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
+import ViewToggle, { PortfolioView } from '@/components/portfolios/ViewToggle';
 import {
     NOT_SIGNED_IN,
     describeError,

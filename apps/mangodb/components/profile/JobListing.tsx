@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Job } from '@mangodb/shared';
-import JobDetailModal from '@/components/job/JobDetailModal';
+import JobDetailModal from '@/components/jobs/JobDetailModal';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';

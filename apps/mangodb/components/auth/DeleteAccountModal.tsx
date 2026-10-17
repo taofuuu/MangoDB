@@ -5,7 +5,7 @@ import Image from 'next/image';
 import binIcon from '@/assets/icons/bin.png';
 import DeleteConfirmationModal, {
     type DeleteModalProps,
-} from './DeleteConfirmationModal';
+} from '../ui/DeleteConfirmationModal';
 
 type DeleteAccountModalProps = Omit<DeleteModalProps, 'onConfirm'> & {
     expectedEmail: string;

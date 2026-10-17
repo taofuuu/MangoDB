@@ -7,7 +7,7 @@ import type {
 import { Tag } from 'lucide-react';
 import { formatBaht } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
-import { OtherCompanyPortfolioCard } from './OtherCompanyPortfolioCard';
+import { OtherCompanyPortfolioCard } from '../portfolios/OtherCompanyPortfolioCard';
 
 interface OtherCompanyServiceDetailPanelProps {
     service: Service | ServiceSummary;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { ReceivedProposal } from '@mangodb/shared';
-import type { ViewMode } from '@/components/proposals/view/StatsBadges';
+import type { ViewMode } from '@/components/proposals/StatsBadges';
 import {
     listJobProposals,
     acceptProposal,
@@ -11,9 +11,9 @@ import {
 } from '@/lib/proposals';
 import { getJob } from '@/lib/jobs';
 import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
-import { StatsBadges } from '@/components/proposals/view/StatsBadges';
-import { ProposalCard } from '@/components/proposals/view/ProposalCard';
-import { ProposalDetail } from '@/components/proposals/view/ProposalDetail';
+import { StatsBadges } from '@/components/proposals/StatsBadges';
+import { ProposalCard } from '@/components/proposals/ProposalCard';
+import { ProposalDetail } from '@/components/proposals/ProposalDetail';
 import {
     NOT_SIGNED_IN,
     describeError,

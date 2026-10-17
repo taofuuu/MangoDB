@@ -29,7 +29,7 @@ import { toFormErrors } from '@/lib/validation/formErrors';
 import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
     toUpdateRequest,
-} from '@/components/forms/CompanyProfileForm';
+} from '@/components/profile/CompanyProfileForm';
 
 function EditProfilePageInner() {
     const router = useRouter();

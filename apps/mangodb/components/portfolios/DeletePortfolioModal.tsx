@@ -2,7 +2,7 @@
 
 import DeleteConfirmationModal, {
     type DeleteModalProps,
-} from './DeleteConfirmationModal';
+} from '../ui/DeleteConfirmationModal';
 
 export default function DeletePortfolioModal(props: DeleteModalProps) {
     return <DeleteConfirmationModal {...props} title="Delete Portfolio" />;

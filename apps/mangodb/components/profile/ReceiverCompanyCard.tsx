@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import type { AccountType, PublicCompanyProfile } from '@mangodb/shared';
-import RoleTags from '../ui/RoleTags';
-import CompanyAvatar from './CompanyAvatar';
+import RoleTags from '../companies/RoleTags';
+import CompanyAvatar from '../companies/CompanyAvatar';
 import Tag from '../ui/Tag';
 
 export interface ReceiverCompanyCardData {

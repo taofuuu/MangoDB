@@ -12,10 +12,10 @@ import {
 } from '@/lib/companies';
 import { redirectToLogin, redirectToUnauthorized } from '@/lib/session';
 import LogoutButton from '@/components/auth/LogoutButton';
-import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
+import DeleteAccountModal from '@/components/auth/DeleteAccountModal';
 import EditAccountModal, {
     type EditAccountMode,
-} from '@/components/forms/EditAccountModal';
+} from '@/components/auth/EditAccountModal';
 
 const LABELS: Record<EditAccountMode, string> = {
     username: 'Username',

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
 import DeleteConfirmationModal, {
     type DeleteModalProps,
-} from './DeleteConfirmationModal';
+} from '../ui/DeleteConfirmationModal';
 
 export default function LogoutConfirmationModal(props: DeleteModalProps) {
     return (

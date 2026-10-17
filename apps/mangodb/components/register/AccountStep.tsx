@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
+import { SimpleTextInput } from '@/components/register/SimpleTextInput';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type AccountInfo = {

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import AddCertificateForm from '@/components/forms/AddCertificateForm';
+import AddCertificateForm from '@/components/certificates/AddCertificateForm';
 import EditCertificateForm, {
     type CertificateData,
-} from '@/components/forms/EditCertificateForm';
-import DeleteCertificateForm from '@/components/forms/DeleteCertificateForm';
+} from '@/components/certificates/EditCertificateForm';
+import DeleteCertificateForm from '@/components/certificates/DeleteCertificateForm';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import {

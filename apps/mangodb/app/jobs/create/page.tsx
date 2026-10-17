@@ -1,6 +1,6 @@
 'use client';
 
-import JobForm from '@/components/forms/JobForm';
+import JobForm from '@/components/jobs/JobForm';
 import PageGate from '@/components/auth/PageGate';
 import { useMyCompany } from '@/lib/useMyCompany';
 

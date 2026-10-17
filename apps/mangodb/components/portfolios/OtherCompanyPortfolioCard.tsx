@@ -1,8 +1,8 @@
 import React from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import Image from 'next/image';
-import PortfolioDots from '@/components/portfolio/PortfolioDots';
-import { portfolioImageSrc } from '@/components/portfolio/portfolioImage';
+import PortfolioDots from '@/components/portfolios/PortfolioDots';
+import { portfolioImageSrc } from '@/components/portfolios/portfolioImage';
 
 interface OtherCompanyPortfolioCardProps {
     item: ServicePortfolio;

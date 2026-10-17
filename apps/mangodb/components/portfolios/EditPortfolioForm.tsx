@@ -1,34 +1,34 @@
 'use client';
 
-import { useId, useState, useCallback } from 'react';
+import { useId, useState } from 'react';
+import type { ServicePortfolio } from '@mangodb/shared';
+import FileUpload from '@/components/ui/FileUpload';
 import FieldError from '@/components/ui/FieldError';
+import { updatePortfolio } from '@/lib/portfolios';
+import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 import ModalShell from '@/components/ui/ModalShell';
-import FileUpload from '@/components/sm-detail/FileUpload';
 
-export interface PendingPortfolio {
-    id: string;
-    name: string;
-    description: string;
-    link: string;
-    developmentDate: string;
-    image: File | null;
-}
-
-type Errors = Partial<
-    Record<
-        'name' | 'description' | 'link' | 'developmentDate' | 'image',
-        string
-    >
->;
-
-type Props = {
-    isOpen: boolean;
+type EditPortfolioFormProps = {
+    portfolio: ServicePortfolio;
     onClose: () => void;
-    onAdd: (item: PendingPortfolio) => void;
+    onSave: (portfolio: ServicePortfolio) => void;
 };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+// Which input on this form each API field belongs under.
+const PORTFOLIO_FIELDS = {
+    portfolioName: 'name',
+    portfolioDescription: 'description',
+    portfolioLink: 'link',
+    developmentDate: 'developmentDate',
+    portfolioImage: 'image',
+} as const;
+
+type PortfolioErrors = FieldErrors<
+    (typeof PORTFOLIO_FIELDS)[keyof typeof PORTFOLIO_FIELDS]
+>;
 
 function daysInMonth(year: string, month: string): number {
     const numericYear = Number(year);
@@ -39,53 +39,42 @@ function daysInMonth(year: string, month: string): number {
         : 31;
 }
 
-function getTodayParts() {
-    const now = new Date();
-    return {
-        year: String(now.getFullYear()),
-        month: String(now.getMonth() + 1),
-        day: String(now.getDate()),
-    };
-}
-
-export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
+export default function EditPortfolioForm({
+    portfolio,
+    onClose,
+    onSave,
+}: EditPortfolioFormProps) {
     const titleId = useId();
-    const todayParts = getTodayParts();
-
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [link, setLink] = useState('');
-    const [day, setDay] = useState(todayParts.day);
-    const [month, setMonth] = useState(todayParts.month);
-    const [year, setYear] = useState(todayParts.year);
+    const [initialYear, initialMonth, initialDay] =
+        portfolio.developmentDate.split('-');
+    const [name, setName] = useState(portfolio.portfolioName);
+    const [description, setDescription] = useState(
+        portfolio.portfolioDescription ?? '',
+    );
+    const [link, setLink] = useState(portfolio.portfolioLink);
+    const [day, setDay] = useState(String(Number(initialDay) || ''));
+    const [month, setMonth] = useState(String(Number(initialMonth) || ''));
+    const [year, setYear] = useState(initialYear ?? '');
     const [image, setImage] = useState<File | null>(null);
-    const [errors, setErrors] = useState<Errors>({});
+    const [errors, setErrors] = useState<PortfolioErrors>({});
+    // Only what no input can hold: offline, or a 500.
+    const [formError, setFormError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const clearError = (field: keyof Errors) =>
+    // Touching a box clears what was wrong with it, so a field the user has
+    // already fixed stops looking broken.
+    const clearError = (field: keyof PortfolioErrors) =>
         setErrors((prev) => ({ ...prev, [field]: undefined }));
 
-    const reset = () => {
-        const freshToday = getTodayParts();
-        setName('');
-        setDescription('');
-        setLink('');
-        setDay(freshToday.day);
-        setMonth(freshToday.month);
-        setYear(freshToday.year);
-        setImage(null);
-        setErrors({});
-    };
-
-    const handleClose = useCallback(() => {
-        reset();
-        onClose();
-    }, [onClose]);
-
-    // Year options calculation
     const currentYear = new Date().getFullYear();
+    const latestYear = Math.max(
+        Number(initialYear) || currentYear,
+        currentYear,
+    );
+    const earliestYear = Math.min(Number(initialYear) || currentYear, 1950);
     const years = Array.from(
-        { length: currentYear - 1950 + 1 },
-        (_, index) => currentYear - index,
+        { length: latestYear - earliestYear + 1 },
+        (_, index) => latestYear - index,
     );
     const dayCount = daysInMonth(year, month);
     const days = Array.from({ length: dayCount }, (_, index) => index + 1);
@@ -132,39 +121,43 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
         setImage(file);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const next: Errors = {};
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setErrors({});
+        setFormError(null);
 
-        if (!name.trim()) next.name = 'Name is required.';
-        if (!link.trim()) next.link = 'Portfolio link is required.';
-        else if (!/^https?:\/\//i.test(link))
-            next.link = 'Must be a valid URL starting with http(s)://';
-
-        if (!day || !month || !year || Number(day) > dayCount) {
-            next.developmentDate = 'Choose a valid development date.';
-        }
-
-        if (!image) next.image = 'Image is required.';
-
-        if (Object.keys(next).length) {
-            setErrors(next);
+        if (Number(day) > dayCount) {
+            setErrors({
+                developmentDate: 'Choose a valid development date.',
+            });
             return;
         }
 
         const developmentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        const body = new FormData();
+        body.append('portfolioName', name);
+        body.append('portfolioDescription', description);
+        body.append('portfolioLink', link);
+        body.append('developmentDate', developmentDate);
+        if (image) {
+            body.append('portfolioImage', image);
+        }
 
-        onAdd({
-            id: crypto.randomUUID(),
-            name: name.trim(),
-            description: description.trim(),
-            link: link.trim(),
-            developmentDate,
-            image,
-        });
-
-        reset();
-        onClose();
+        setIsSaving(true);
+        try {
+            const updated = await updatePortfolio(portfolio.portfolioId, body);
+            onSave(updated);
+            onClose();
+        } catch (submitError) {
+            const { fields, message } = toFormErrors(
+                submitError,
+                PORTFOLIO_FIELDS,
+            );
+            setErrors(fields);
+            setFormError(message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const selectClassName =
@@ -172,21 +165,23 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
 
     return (
         <ModalShell
-            isOpen={isOpen}
-            onClose={handleClose}
+            isOpen
+            onClose={onClose}
+            isBusy={isSaving}
             labelledBy={titleId}
             backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName="modal-scrollbar h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-md:h-[90vh]"
+            panelClassName="h-[92vh] w-full max-w-[45vw] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-md:h-[90vh]"
         >
             <header className="flex items-center justify-between">
                 <h2 id={titleId} className="type-lg">
-                    Add Portfolio
+                    Edit Portfolio
                 </h2>
                 <button
                     type="button"
-                    onClick={handleClose}
-                    aria-label="Close add portfolio"
-                    className="text-ink-placeholder hover:text-gray-800"
+                    onClick={onClose}
+                    disabled={isSaving}
+                    aria-label="Close edit portfolio"
+                    className="text-ink-placeholder hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     X
                 </button>
@@ -197,7 +192,6 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
 
             <form onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                    {/* Name */}
                     <div>
                         <label
                             className="block type-sm"
@@ -208,19 +202,18 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                         <input
                             id="portfolio-name"
                             type="text"
+                            required
                             maxLength={255}
                             value={name}
                             onChange={(event) => {
                                 setName(event.target.value);
                                 clearError('name');
                             }}
-                            placeholder="Ex. E-commerce Platform Redesign"
                             className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                         <FieldError message={errors.name} />
                     </div>
 
-                    {/* Description */}
                     <div>
                         <label
                             className="block type-sm"
@@ -236,13 +229,11 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                                 setDescription(event.target.value);
                                 clearError('description');
                             }}
-                            placeholder="Brief description of the work done..."
                             className="h-[9.65vh] w-full resize-none rounded-input border border-brand bg-surface-white/80 px-1.5 py-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                         <FieldError message={errors.description} />
                     </div>
 
-                    {/* Link */}
                     <div>
                         <label
                             className="block type-sm font-medium"
@@ -253,27 +244,27 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                         <input
                             id="portfolio-link"
                             type="url"
+                            required
                             maxLength={255}
                             value={link}
                             onChange={(event) => {
                                 setLink(event.target.value);
                                 clearError('link');
                             }}
-                            placeholder="https://example.com/project"
                             className="h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
                         <FieldError message={errors.link} />
                     </div>
 
-                    {/* Development Date Selectors */}
                     <fieldset>
                         <legend className="type-sm !font-[500]">
-                            Development date*
+                            Development date
                         </legend>
                         <div className="flex gap-2 max-sm:flex-col">
                             <label className="min-w-0 flex-1 type-sm">
                                 Date
                                 <select
+                                    required
                                     value={day}
                                     onChange={(event) => {
                                         setDay(event.target.value);
@@ -291,6 +282,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                             <label className="min-w-0 flex-1 type-sm">
                                 Month
                                 <select
+                                    required
                                     value={month}
                                     onChange={(event) =>
                                         handleMonthChange(event.target.value)
@@ -310,6 +302,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                             <label className="min-w-0 flex-1 type-sm">
                                 Year
                                 <select
+                                    required
                                     value={year}
                                     onChange={(event) =>
                                         handleYearChange(event.target.value)
@@ -327,7 +320,6 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                         <FieldError message={errors.developmentDate} />
                     </fieldset>
 
-                    {/* Image Upload */}
                     <FileUpload
                         value={image}
                         onChange={handleImageChange}
@@ -339,12 +331,14 @@ export default function AddPortfolioModal({ isOpen, onClose, onAdd }: Props) {
                 </div>
 
                 <hr className="border-brand-dark/50" />
+                <FieldError message={formError} />
                 <div className="flex items-center justify-end gap-3 pt-4">
                     <button
                         type="submit"
-                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand"
+                        disabled={isSaving}
+                        className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Add
+                        {isSaving ? 'Saving…' : 'Save'}
                     </button>
                 </div>
             </form>

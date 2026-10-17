@@ -4,8 +4,8 @@ import Link from 'next/link';
 import PageGate from '@/components/auth/PageGate';
 import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
 import { useMyCompany } from '@/lib/useMyCompany';
-import ProviderProfileView from '@/components/viewprofile/ProviderProfileView';
-import ReceiverProfileView from '@/components/viewprofile/ReceiverProfileView';
+import ProviderProfileView from '@/components/profile/ProviderProfileView';
+import ReceiverProfileView from '@/components/profile/ReceiverProfileView';
 
 // US1-4. One route for "my profile", rather than the /provider and /receiver
 // pair it replaces. The role was never the caller's to choose: the layout

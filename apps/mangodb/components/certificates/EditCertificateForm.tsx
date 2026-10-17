@@ -1,11 +1,11 @@
 'use client';
 
 import { useId, useState } from 'react';
-import MonthDropdown from '../sm-detail/MonthDropdown';
-import YearDropdown from '../sm-detail/YearDropdown';
+import MonthDropdown from './MonthDropdown';
+import YearDropdown from './YearDropdown';
 import { updateCertificate } from '@/lib/certificates';
 import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
-import FileUpload from '../sm-detail/FileUpload';
+import FileUpload from '../ui/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 

@@ -7,8 +7,8 @@ import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
-import ProfilePhotoPanel from '../profile/ProfilePhotoPanel';
-import AdminDeleteAccountModal from '../ui/AdminDeleteAccountModal';
+import ProfilePhotoPanel from './ProfilePhotoPanel';
+import AdminDeleteAccountModal from './AdminDeleteAccountModal';
 import {
     normalizePhone,
     normalizeWebsiteUrl,

@@ -10,8 +10,8 @@ import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
 import { listServices } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
-import { OtherCompanyServiceCard } from '@/components/service/OtherCompanyServiceCard';
-import { OtherCompanyServiceDetailPanel } from '@/components/service/OtherCompanyServiceDetailPanel';
+import { OtherCompanyServiceCard } from '@/components/services/OtherCompanyServiceCard';
+import { OtherCompanyServiceDetailPanel } from '@/components/services/OtherCompanyServiceDetailPanel';
 
 function EmptyState() {
     return (

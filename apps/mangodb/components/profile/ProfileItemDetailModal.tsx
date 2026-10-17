@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useId } from 'react';
 import type { Certificate, ServicePortfolio } from '@mangodb/shared';
 import { X } from 'lucide-react';
-import { hasPortfolioImage } from '@/components/portfolio/portfolioImage';
+import { hasPortfolioImage } from '@/components/portfolios/portfolioImage';
 import ModalShell from '@/components/ui/ModalShell';
 import { formatDateOnly, formatMonthYear } from '@/lib/dates';
 import { isStorageImage } from '@/lib/images';

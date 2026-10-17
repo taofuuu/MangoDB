@@ -2,7 +2,7 @@
 
 import type { CompanySummary } from '@mangodb/shared';
 import { ArrowRight, Globe, Mail, Phone } from 'lucide-react';
-import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 
 type CompanySearchCardProps = {
     company: CompanySummary;

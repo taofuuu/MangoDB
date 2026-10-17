@@ -21,14 +21,16 @@ import {
     getService,
     updateService,
 } from '@/lib/services';
-import AddPortfolioModal, { type PendingPortfolio } from './AddPortfolioModal';
+import AddPortfolioModal, {
+    type PendingPortfolio,
+} from '../portfolios/AddPortfolioModal';
 import SuccessModal from './SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { useMyCompany } from '@/lib/useMyCompany';
 import { createPortfolio, listPortfolios } from '@/lib/portfolios';
-import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
+import EditPortfolioForm from '@/components/portfolios/EditPortfolioForm';
 import Button from '@/components/ui/Button';
 import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
 import { redirectToUnauthorized } from '@/lib/session';

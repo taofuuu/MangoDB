@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Category } from '@mangodb/shared';
-import FieldError from './FieldError';
+import FieldError from '../ui/FieldError';
 
 type CategorySelectorProps = {
     categories: Category[];
