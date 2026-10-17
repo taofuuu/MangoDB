@@ -1,3 +1,5 @@
+import type { Category } from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
 
@@ -22,4 +24,14 @@ export async function assertCategoriesExist(
             },
         ]);
     }
+}
+
+// GET /categories: the catalog, as the shared type names it.
+export const categorySelect = {
+    categoryId: true,
+    categoryName: true,
+} as const satisfies Prisma.CategorySelect;
+
+export function toCategory(row: Category): Category {
+    return { categoryId: row.categoryId, categoryName: row.categoryName };
 }
