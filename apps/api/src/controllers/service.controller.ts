@@ -11,6 +11,7 @@ import {
     assertBudgetRange,
     assertListingOwned,
     assertListingVisible,
+    LISTING_MESSAGES,
     categoryCreate,
     categoryReplace,
 } from '../lib/listing';
@@ -136,7 +137,7 @@ export async function updateService(
             },
             select: serviceSelect,
         }),
-        'Service listing not found',
+        LISTING_MESSAGES.SERVICE.notFound,
     );
 
     res.json(toService(updated));
@@ -248,9 +249,7 @@ export async function getService(req: Request, res: Response): Promise<void> {
     });
 
     res.status(200).json(
-        toService(
-            assertListingVisible(listing, companyId, 'Listing not found'),
-        ),
+        toService(assertListingVisible(listing, companyId, 'SERVICE')),
     );
 }
 
@@ -295,7 +294,7 @@ export async function deleteService(
         prisma.listing.delete({
             where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
         }),
-        'Service listing not found',
+        LISTING_MESSAGES.SERVICE.notFound,
     );
 
     // Best-effort cleanup of every portfolio image file: a failed remove

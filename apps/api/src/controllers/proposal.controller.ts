@@ -19,6 +19,7 @@ import {
 import { jobIdParamSchema } from '../schemas/job.schema';
 import {
     assertListingOwned,
+    LISTING_MESSAGES,
     closeOpenListing,
     rejectPendingProposals,
 } from '../lib/listing';
@@ -56,17 +57,15 @@ export async function createProposal(
     });
 
     if (!posting || posting.listingType !== 'JOB') {
-        throw ApiError.notFound('Job posting not found');
+        throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
     }
 
     if (posting.companyId === callerCompanyId) {
-        throw ApiError.forbidden(
-            'Cannot submit a proposal to your own job posting',
-        );
+        throw ApiError.forbidden('You cannot send a proposal to your own job');
     }
 
     if (posting.listingStatus !== 'OPEN') {
-        throw ApiError.conflict('Job posting is not open for proposals');
+        throw ApiError.conflict('This job is not open for proposals');
     }
 
     try {
@@ -86,7 +85,7 @@ export async function createProposal(
     } catch (err) {
         if (isUniqueViolation(err)) {
             throw ApiError.conflict(
-                'You have already submitted a proposal for this job posting',
+                'You have already sent a proposal to this job',
             );
         }
         throw err;

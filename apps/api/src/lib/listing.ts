@@ -14,19 +14,19 @@ import { prisma } from './prisma';
 
 type Budgets = { minBudget: number | null; maxBudget: number | null };
 
-// What each kind of listing is called in its errors. Phase 4 of the round-2
-// refactor makes the two say the same thing; until then each keeps its own.
-const OWNERSHIP_MESSAGES: Record<
+// The errors that name a listing: one wording, with each kind's own noun
+// (ADR 0020). Every handler that answers one of these reads it from here.
+export const LISTING_MESSAGES: Record<
     ListingType,
     { notFound: string; forbidden: string }
 > = {
     SERVICE: {
-        notFound: 'Service listing not found',
-        forbidden: 'This listing belongs to another company',
+        notFound: 'Service not found',
+        forbidden: 'This service belongs to another company',
     },
     JOB: {
-        notFound: 'Job posting not found',
-        forbidden: 'Insufficient permissions to access this resource',
+        notFound: 'Job not found',
+        forbidden: 'This job belongs to another company',
     },
 };
 
@@ -51,7 +51,7 @@ export async function assertListingOwned(
         },
     });
 
-    const messages = OWNERSHIP_MESSAGES[listingType];
+    const messages = LISTING_MESSAGES[listingType];
     if (!listing || listing.listingType !== listingType) {
         throw ApiError.notFound(messages.notFound);
     }
@@ -68,13 +68,13 @@ export async function assertListingOwned(
 // companies, the same way the search does.
 export function assertListingVisible<
     T extends { listingStatus: string; companyId: number | null },
->(listing: T | null, callerId: number, notFoundMessage: string): T {
+>(listing: T | null, callerId: number, listingType: ListingType): T {
     if (
         !listing ||
         (listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
             listing.companyId !== callerId)
     ) {
-        throw ApiError.notFound(notFoundMessage);
+        throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
     return listing;
 }

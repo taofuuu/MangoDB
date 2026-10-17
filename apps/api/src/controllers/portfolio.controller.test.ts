@@ -33,8 +33,15 @@ let removed: string[] = [];
 let createFails = false;
 
 const fakePrisma = {
-    service: {
-        findUnique: async () => ({ listing: { companyId: OWNER } }),
+    // The ownership check: OWNER's open service.
+    listing: {
+        findUnique: async () => ({
+            companyId: OWNER,
+            listingType: 'SERVICE',
+            listingStatus: 'OPEN',
+            minBudget: null,
+            maxBudget: null,
+        }),
     },
     servicePortfolio: {
         create: async (args: {

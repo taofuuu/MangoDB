@@ -8,6 +8,7 @@ import {
     toServicePortfolio,
 } from '../lib/portfolio';
 
+import { assertListingOwned } from '../lib/listing';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 
@@ -35,19 +36,9 @@ export async function createPortfolio(
     const data = parseBody(createPortfolioSchema, req.body);
     const companyId = req.auth!.companyId;
 
-    // 3. AUTHORIZATION & OWNERSHIP CHECK before Upload file
-    const service = await prisma.service.findUnique({
-        where: { listingId: data.serviceId },
-        select: { listing: { select: { companyId: true } } },
-    });
-
-    if (!service) {
-        throw ApiError.notFound('Service listing not found');
-    }
-
-    if (service.listing.companyId !== companyId) {
-        throw ApiError.forbidden('This service belongs to another company');
-    }
+    // 3. 404 for an unknown service, 403 for another company's, before any
+    // upload.
+    await assertListingOwned(data.serviceId, 'SERVICE', companyId);
 
     // 4. after authorization, upload the image and store the row. If the
     // row cannot be written, saveWithUpload removes the image again.

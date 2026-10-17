@@ -137,15 +137,7 @@ export async function getJob(req: Request, res: Response): Promise<void> {
         select: jobSelect,
     });
 
-    res.json(
-        toJob(
-            assertListingVisible(
-                posting,
-                req.auth!.companyId,
-                'Job posting not found',
-            ),
-        ),
-    );
+    res.json(toJob(assertListingVisible(posting, req.auth!.companyId, 'JOB')));
 }
 
 // US2-13. Edit a job posting. Only the owner may, and only while it is Open.
@@ -162,7 +154,7 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
     );
     // Once closed, Providers' proposals were written against the old details.
     if (existing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
-        throw ApiError.conflict('Only an open job posting can be edited');
+        throw ApiError.conflict('Only an open job can be edited');
     }
 
     assertBudgetRange(existing, body, BUDGET_RANGE_ERROR);
@@ -211,11 +203,7 @@ export async function closeJob(req: Request, res: Response): Promise<void> {
     await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
 
     const closed = await prisma.$transaction(async (tx) => {
-        await closeOpenListing(
-            tx,
-            jobId,
-            'Only an open job posting can be closed',
-        );
+        await closeOpenListing(tx, jobId, 'Only an open job can be closed');
         await rejectPendingProposals(tx, jobId);
 
         return tx.listing.findUniqueOrThrow({
