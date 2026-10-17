@@ -6,7 +6,8 @@ import type { CompanyAccountDetail } from '@mangodb/shared';
 import { Star, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ModalShell from '@/components/ui/ModalShell';
-import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
+import { isProviderAccount } from '@/lib/roles';
+import RoleTags from './RoleTags';
 
 interface CompanyDetailModalProps {
     company: CompanyAccountDetail | null;
@@ -40,10 +41,9 @@ export default function CompanyDetailModal({
     const router = useRouter();
     const titleId = useId();
 
-    // ?? '': the modal renders before the fetch lands, and both predicates
-    // answer false for a type they do not recognise.
+    // ?? '': the modal renders before the fetch lands, and the predicate
+    // answers false for a type it does not recognise.
     const isProvider = isProviderAccount(company?.accountType ?? '');
-    const isReceiver = isReceiverAccount(company?.accountType ?? '');
 
     // The parent mounts this only while a company is open, so it is always
     // open here.
@@ -95,16 +95,11 @@ export default function CompanyDetailModal({
             {company && !isLoading && !error && (
                 <>
                     <div className="mb-[1.85vh] flex flex-wrap items-center gap-[0.52vw]">
-                        {isProvider && (
-                            <span className="rounded-status bg-role-provider px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
-                                Provider
-                            </span>
-                        )}
-                        {isReceiver && (
-                            <span className="rounded-status bg-brand-light px-[0.83vw] py-[0.37vh] type-xs !font-[600] text-white">
-                                Receiver
-                            </span>
-                        )}
+                        <RoleTags
+                            accountType={company.accountType}
+                            className="flex-wrap gap-[0.52vw]"
+                            tagClassName="h-auto px-[0.83vw] py-[0.37vh] type-xs !font-[600]"
+                        />
                         <span className="ml-auto inline-flex items-center gap-[0.31vw] type-sm text-ink-soft">
                             <Star
                                 aria-hidden="true"
