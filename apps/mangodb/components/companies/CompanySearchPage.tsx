@@ -7,7 +7,7 @@ import type {
     CompanySummary,
     Paginated,
 } from '@mangodb/shared';
-import { Search, X } from 'lucide-react';
+import SearchBar from '@/components/ui/SearchBar';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
@@ -23,8 +23,8 @@ const ORDER_OPTIONS: { label: string; value: CompanySortOrder }[] = [
 ];
 
 export default function CompanySearchPage() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
+    // The settled keyword, from SearchBar.
+    const [search, setSearch] = useState('');
     const [orderBy, setOrderBy] = useState<CompanySortOrder>('nameAsc');
     const [page, setPage] = useState(1);
     const [result, setResult] = useState<Paginated<CompanySummary> | null>(
@@ -38,31 +38,13 @@ export default function CompanySearchPage() {
     const listRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const nextSearch = searchQuery.trim();
-        if (nextSearch === debouncedSearch) return;
-
-        const timer = window.setTimeout(() => {
-            setDebouncedSearch(nextSearch);
-            setPage(1);
-            setSelectedCompany(null);
-        }, 300);
-
-        return () => window.clearTimeout(timer);
-    }, [searchQuery, debouncedSearch]);
-
-    useEffect(() => {
         let cancelled = false;
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoading(true);
         setError(null);
 
-        listCompanies(
-            page,
-            COMPANY_PAGE_SIZE,
-            debouncedSearch || undefined,
-            orderBy,
-        )
+        listCompanies(page, COMPANY_PAGE_SIZE, search || undefined, orderBy)
             .then((data) => {
                 if (cancelled) return;
                 setResult(data);
@@ -84,7 +66,7 @@ export default function CompanySearchPage() {
         return () => {
             cancelled = true;
         };
-    }, [page, debouncedSearch, orderBy, reloadKey]);
+    }, [page, search, orderBy, reloadKey]);
 
     const changePage = useCallback((nextPage: number) => {
         setPage(nextPage);
@@ -97,9 +79,8 @@ export default function CompanySearchPage() {
         setSelectedCompany(null);
     };
 
-    const clearSearch = () => {
-        setSearchQuery('');
-        setDebouncedSearch('');
+    const handleSearch = (q: string) => {
+        setSearch(q);
         setPage(1);
         setSelectedCompany(null);
     };
@@ -144,37 +125,10 @@ export default function CompanySearchPage() {
                             : 'w-full lg:mx-auto lg:w-[56.56vw]'
                     }`}
                 >
-                    <div className="relative h-[4.07vh] w-full min-w-[180px] sm:w-[27.86vw]">
-                        <Search
-                            aria-hidden="true"
-                            className="pointer-events-none absolute left-[0.6vw] top-1/2 h-[2vh] w-[2vw] -translate-y-1/2 text-ink-placeholder"
-                        />
-                        <input
-                            type="text"
-                            role="searchbox"
-                            value={searchQuery}
-                            onChange={(event) =>
-                                setSearchQuery(event.target.value)
-                            }
-                            maxLength={100}
-                            placeholder="Search"
-                            aria-label="Search companies by keyword"
-                            className="h-full w-full rounded-[50px] border border-line bg-surface-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={clearSearch}
-                                aria-label="Clear search"
-                                className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                            >
-                                <X
-                                    aria-hidden="true"
-                                    className="h-[1.48vh] w-[0.73vw]"
-                                />
-                            </button>
-                        )}
-                    </div>
+                    <SearchBar
+                        onSearch={handleSearch}
+                        label="Search companies by keyword"
+                    />
                     <div className="flex items-center gap-[1vw] self-end type-sm sm:self-auto">
                         <span>Order by:</span>
                         <Dropdown
@@ -245,7 +199,7 @@ export default function CompanySearchPage() {
                                             No companies found
                                         </h2>
                                         <p className="mt-[0.74vh] type-sm text-ink-soft">
-                                            {debouncedSearch
+                                            {search
                                                 ? 'Try a broader company name, service, or technology.'
                                                 : 'There are no companies available to browse yet.'}
                                         </p>

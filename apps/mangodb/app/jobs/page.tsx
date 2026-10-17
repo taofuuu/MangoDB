@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
 import Pagination from '@/components/ui/Pagination';
+import SearchBar from '@/components/ui/SearchBar';
 import type { Job, Paginated } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
@@ -31,8 +31,8 @@ const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
 
 export default function OtherJobPage() {
     const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
+    // The settled keyword, from SearchBar.
+    const [search, setSearch] = useState('');
     //filter part (not currently used)
     const [categories, setCategories] = useState<string[]>([]);
 
@@ -53,18 +53,6 @@ export default function OtherJobPage() {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const filterRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const nextSearch = searchQuery.trim();
-        if (nextSearch === debouncedSearch) return;
-
-        const timer = setTimeout(() => {
-            setDebouncedSearch(nextSearch);
-            setPage(1);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery, debouncedSearch]);
 
     useEffect(() => {
         if (!isFilterOpen) return;
@@ -101,7 +89,7 @@ export default function OtherJobPage() {
 
         listJobs(page, JOB_PAGE_SIZE, {
             status: 'OPEN',
-            q: debouncedSearch,
+            q: search,
         })
             .then((data) => {
                 if (cancelled) return;
@@ -131,7 +119,7 @@ export default function OtherJobPage() {
         return () => {
             cancelled = true;
         };
-    }, [page, reloadKey, debouncedSearch]);
+    }, [page, reloadKey, search]);
 
     const openDetail = (job: Job) => {
         setSelectedJob(job);
@@ -151,13 +139,8 @@ export default function OtherJobPage() {
         setReloadKey((key) => key + 1);
     };
 
-    const handleSearchChange = (value: string) => {
-        setSearchQuery(value);
-    };
-
-    const clearSearch = () => {
-        setSearchQuery('');
-        setDebouncedSearch('');
+    const handleSearch = (q: string) => {
+        setSearch(q);
         setPage(1);
     };
 
@@ -350,38 +333,11 @@ export default function OtherJobPage() {
                         {/* Search + Order */}
                         <div className="flex w-full items-center">
                             {/* Search */}
-                            <div className="relative h-[4.07vh] w-[27.86vw] min-w-[180px]">
-                                <Search
-                                    aria-hidden="true"
-                                    className="pointer-events-none absolute left-[0.6vw] top-1/2 h-[2vh] w-[2vw] -translate-y-1/2 text-ink-placeholder"
-                                />
-
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                        handleSearchChange(e.target.value)
-                                    }
-                                    maxLength={100}
-                                    placeholder="Search"
-                                    aria-label="Search jobs by keyword"
-                                    className="h-full w-full rounded-[50px] border border-line bg-surface-white pl-[3vw] pr-[3vw] type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
-                                />
-
-                                {searchQuery && (
-                                    <button
-                                        type="button"
-                                        onClick={clearSearch}
-                                        aria-label="Clear search"
-                                        className="absolute right-[1vw] top-1/2 -translate-y-1/2 rounded-full p-[0.16vw] type-sm text-ink-placeholder hover:bg-line hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                                    >
-                                        <X
-                                            aria-hidden="true"
-                                            className="h-[1.48vh] w-[0.73vw]"
-                                        />
-                                    </button>
-                                )}
-                            </div>
+                            <SearchBar
+                                onSearch={handleSearch}
+                                label="Search jobs by keyword"
+                                className="w-[27.86vw]"
+                            />
 
                             {/* Order by */}
                             <div className="ml-auto flex items-center gap-[1vw] type-sm">
@@ -467,7 +423,7 @@ export default function OtherJobPage() {
                                         </div>
                                     ) : (
                                         <p className="py-[9.26vh] text-center type-md text-ink-soft">
-                                            {debouncedSearch ||
+                                            {search ||
                                             categories.length > 0 ||
                                             minBudget !== '' ||
                                             maxBudget !== '' ||
