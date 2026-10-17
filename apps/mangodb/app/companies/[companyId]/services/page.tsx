@@ -8,42 +8,11 @@ import { describeError, isNotSignedIn, parseId } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
 import { listServices } from '@/lib/services';
+import EmptyState from '@/components/ui/EmptyState';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
 import { OtherCompanyServiceCard } from '@/components/services/OtherCompanyServiceCard';
 import { OtherCompanyServiceDetailPanel } from '@/components/services/OtherCompanyServiceDetailPanel';
-
-function EmptyState() {
-    return (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            {/* Slashed card icon from Figma mock */}
-            <div className="w-28 h-28 mb-6 text-ink-placeholder">
-                <svg
-                    width="100"
-                    height="100"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <g clipPath="url(#clip0_17_17355)">
-                        <path
-                            d="M3.09011 4.44C2.70011 4.83 2.70011 5.46 3.09011 5.85L5.12011 7.88L5.00011 8.01V19C5.00011 20.1 5.90011 21 7.00011 21H17.0001C17.3501 21 17.6801 20.9 17.9701 20.74L19.1401 21.91C19.5301 22.3 20.1601 22.3 20.5501 21.91C20.9401 21.52 20.9401 20.89 20.5501 20.5L4.50011 4.44C4.11011 4.05 3.48011 4.05 3.09011 4.44ZM19.0001 16.11V5C19.0001 3.9 18.1001 3 17.0001 3H10.0101L7.95011 5.06L19.0001 16.11Z"
-                            fill="currentColor"
-                        />
-                    </g>
-                    <defs>
-                        <clipPath id="clip0_17_17355">
-                            <rect width="24" height="24" fill="white" />
-                        </clipPath>
-                    </defs>
-                </svg>
-            </div>
-            <p className="type-sm text-ink-placeholder">
-                No listing for this company
-            </p>
-        </div>
-    );
-}
 
 function CompanyServicesContent() {
     const companyId = parseId(useParams().companyId);
@@ -178,7 +147,7 @@ function CompanyServicesContent() {
                         {error}
                     </div>
                 ) : services.length === 0 ? (
-                    <EmptyState />
+                    <EmptyState title="No listing for this company" />
                 ) : (
                     <div
                         className={`grid gap-6 transition-all ${

@@ -8,6 +8,7 @@ import EditCertificateForm, {
 } from '@/components/certificates/EditCertificateForm';
 import DeleteCertificateForm from '@/components/certificates/DeleteCertificateForm';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
+import EmptyState from '@/components/ui/EmptyState';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import {
     NOT_SIGNED_IN,
@@ -196,9 +197,10 @@ export default function CertificatePage() {
 
                     {/* Empty */}
                     {certificates !== null && certificates.length === 0 && (
-                        <p className="mt-8">
-                            No certificates yet. Add one with the + button.
-                        </p>
+                        <EmptyState
+                            title="No certificates yet"
+                            message="Add one with the + button."
+                        />
                     )}
                     {/* Certificate List */}
                     {certificates !== null && (

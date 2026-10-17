@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import Pagination from '@/components/ui/Pagination';
 import SearchServiceCard from './SearchServiceCard';
-import SearchServicesEmptyState from './SearchServicesEmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 
 function CardSkeleton() {
     return (
@@ -111,7 +111,12 @@ export default function SearchServicesResultsGrid({
     }
 
     if (status === 'loaded' && items.length === 0) {
-        return <SearchServicesEmptyState />;
+        return (
+            <EmptyState
+                title="No services found"
+                message="Try adjusting or clearing your filters to see more results."
+            />
+        );
     }
 
     return (

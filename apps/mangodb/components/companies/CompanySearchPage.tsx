@@ -16,6 +16,7 @@ import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
 import Dropdown from '@/components/ui/Dropdown';
+import EmptyState from '@/components/ui/EmptyState';
 
 const ORDER_OPTIONS: { label: string; value: CompanySortOrder }[] = [
     { label: 'Company name A–Z', value: 'nameAsc' },
@@ -194,16 +195,14 @@ export default function CompanySearchPage() {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-[9.26vh] text-center">
-                                        <h2 className="type-md !font-[600] text-ink">
-                                            No companies found
-                                        </h2>
-                                        <p className="mt-[0.74vh] type-sm text-ink-soft">
-                                            {search
+                                    <EmptyState
+                                        title="No companies found"
+                                        message={
+                                            search
                                                 ? 'Try a broader company name, service, or technology.'
-                                                : 'There are no companies available to browse yet.'}
-                                        </p>
-                                    </div>
+                                                : 'There are no companies available to browse yet.'
+                                        }
+                                    />
                                 )}
                             </div>
 

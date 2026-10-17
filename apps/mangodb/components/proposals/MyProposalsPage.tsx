@@ -10,6 +10,7 @@ import type {
 } from '@mangodb/shared';
 import { FileX2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProposalCounts, listMyProposals } from '@/lib/proposals';
@@ -30,28 +31,6 @@ const CHIPS: {
     { label: 'Accepted', status: 'ACCEPTED', count: 'accepted' },
     { label: 'Rejected', status: 'REJECTED', count: 'rejected' },
 ];
-
-function EmptyState() {
-    return (
-        <div className="flex flex-col items-center py-[10vh] text-center">
-            <FileX2
-                aria-hidden="true"
-                strokeWidth={1.5}
-                className="size-24 text-fill-muted"
-            />
-            <h2 className="mt-4 type-md text-ink">No Proposal Yet</h2>
-            <p className="mt-1 type-xs text-ink-soft">
-                Search for jobs to offer your proposal and it will show up here.
-            </p>
-            <Link
-                href="/jobs"
-                className="mt-4 rounded-button bg-brand px-6 py-2 type-xs text-surface-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-                Search for Jobs
-            </Link>
-        </div>
-    );
-}
 
 export default function MyProposalsPage() {
     const [status, setStatus] = useState<ProposalStatus | undefined>();
@@ -209,7 +188,19 @@ export default function MyProposalsPage() {
                         </div>
                     )}
 
-                    {!error && hasNone && <EmptyState />}
+                    {!error && hasNone && (
+                        <EmptyState
+                            title="No Proposal Yet"
+                            message="Search for jobs to offer your proposal and it will show up here."
+                            action={{ href: '/jobs', label: 'Search for Jobs' }}
+                            icon={
+                                <FileX2
+                                    strokeWidth={1.5}
+                                    className="size-24 text-fill-muted"
+                                />
+                            }
+                        />
+                    )}
 
                     {!error && !hasNone && (
                         <>

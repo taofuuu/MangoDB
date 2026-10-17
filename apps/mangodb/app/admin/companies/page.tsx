@@ -11,6 +11,7 @@ import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
+import EmptyState from '@/components/ui/EmptyState';
 import SearchBar from '@/components/ui/SearchBar';
 import Pagination from '@/components/ui/Pagination';
 import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
@@ -222,11 +223,13 @@ export default function AdminCompaniesPage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="py-[9.26vh] text-center type-md text-ink-soft">
-                                {search || filter !== 'ALL'
-                                    ? 'No Company accounts found matching your search or filter.'
-                                    : 'No Company accounts found.'}
-                            </p>
+                            <EmptyState
+                                title="No company accounts found"
+                                {...((search || filter !== 'ALL') && {
+                                    message:
+                                        'Try a broader keyword or another account type.',
+                                })}
+                            />
                         )}
                     </div>
                 )}

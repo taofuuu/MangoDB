@@ -7,6 +7,7 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import PortfolioCard from '@/components/portfolios/PortfolioCard';
 import PortfolioRow from '@/components/portfolios/PortfolioRow';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
+import EmptyState from '@/components/ui/EmptyState';
 import ViewToggle, { PortfolioView } from '@/components/portfolios/ViewToggle';
 import {
     NOT_SIGNED_IN,
@@ -131,9 +132,7 @@ export default function CompanyPortfoliosPage() {
             )}
 
             {items?.length === 0 && (
-                <p className="mt-[4.5vh] type-md !font-[400] text-ink-soft">
-                    No portfolio items yet.
-                </p>
+                <EmptyState title="No portfolio items yet" />
             )}
 
             {items && view === 'grid' && (

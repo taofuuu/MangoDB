@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { Certificate } from '@mangodb/shared';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
+import EmptyState from '@/components/ui/EmptyState';
 import {
     NOT_SIGNED_IN,
     describeError,
@@ -122,7 +123,7 @@ export default function CompanyCertificatesPage() {
                     )}
 
                     {certificates?.length === 0 && (
-                        <p className="mt-8">No certificates yet.</p>
+                        <EmptyState title="No certificates yet" />
                     )}
 
                     {certificates?.map((cert) => (

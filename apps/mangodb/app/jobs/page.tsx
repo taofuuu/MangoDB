@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Dropdown from '@/components/ui/Dropdown';
+import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import SearchBar from '@/components/ui/SearchBar';
 import type { Job, Paginated } from '@mangodb/shared';
@@ -422,15 +423,17 @@ export default function OtherJobPage() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="py-[9.26vh] text-center type-md text-ink-soft">
-                                            {search ||
-                                            categories.length > 0 ||
-                                            minBudget !== '' ||
-                                            maxBudget !== '' ||
-                                            deadlineDate
-                                                ? 'No job postings found matching your search or filter.'
-                                                : 'No job postings found.'}
-                                        </p>
+                                        <EmptyState
+                                            title="No job postings found"
+                                            {...((search ||
+                                                categories.length > 0 ||
+                                                minBudget !== '' ||
+                                                maxBudget !== '' ||
+                                                deadlineDate) && {
+                                                message:
+                                                    'Try a broader keyword or fewer filters.',
+                                            })}
+                                        />
                                     )}
                                 </div>
                             )}
