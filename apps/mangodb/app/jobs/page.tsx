@@ -449,7 +449,7 @@ export default function OtherJobPage() {
                         {/* DETAIL PANEL                                      */}
                         {/* ================================================= */}
                         {isDetailOpen && selectedJob && (
-                            <div className="h-[72.63vh] w-[35vw] shrink-0">
+                            <div className="h-[72.63vh] w-[35vw] shrink-0 motion-safe:animate-slide-in">
                                 <JobDetailPanel
                                     job={selectedJob}
                                     onClose={closeDetail}

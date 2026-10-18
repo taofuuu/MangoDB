@@ -96,6 +96,21 @@
        filter panel, a menu row's hover. Much lighter than fill-muted.
        panel (#F1F3F5) was ΔE 0.5 from it and is merged in. */
     --color-fill-subtle: #f3f4f6;
+
+    /* A search page's detail panel slides in from the right when it opens.
+       Used as motion-safe:animate-slide-in, so reduced motion skips it. */
+    --animate-slide-in: slide-in 300ms ease-out;
+
+    @keyframes slide-in {
+        from {
+            transform: translateX(2rem);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
 }
 
 body {

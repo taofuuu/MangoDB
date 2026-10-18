@@ -136,7 +136,9 @@ export default function SearchServicesPage({
                             {results}
                         </div>
 
-                        <div className="h-[72.63vh] w-[35vw] shrink-0">
+                        {/* Slides in once; picking another service swaps the
+                            panel inside without sliding again. */}
+                        <div className="h-[72.63vh] w-[35vw] shrink-0 motion-safe:animate-slide-in">
                             <ServiceDetailPanel
                                 key={selectedService.serviceId}
                                 service={selectedService}
