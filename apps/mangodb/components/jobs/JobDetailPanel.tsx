@@ -6,6 +6,7 @@ import type { Job } from '@mangodb/shared';
 
 import { ArrowLeft } from 'lucide-react';
 
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import SubmitProposalModal from '@/components/proposals/SubmitProposalModal';
 import { formatDate, formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
@@ -91,12 +92,19 @@ export default function JobDetailPanel({
                     <div className="flex flex-col gap-[0.6vh]">
                         <span className="type-sm text-brand">Company</span>
 
-                        <Link
-                            href={`/companies/${job.company.companyId}`}
-                            className="type-md text-ink pl-[0.5vw] hover:underline [overflow-wrap:anywhere]"
-                        >
-                            {job.company.companyName}
-                        </Link>
+                        <div className="flex items-center gap-3 pl-[0.5vw]">
+                            <CompanyAvatar
+                                name={job.company.companyName}
+                                photoUrl={job.company.companyPhoto}
+                                size={44}
+                            />
+                            <Link
+                                href={`/companies/${job.company.companyId}`}
+                                className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
+                            >
+                                {job.company.companyName}
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Categories */}
@@ -110,7 +118,7 @@ export default function JobDetailPanel({
                                         key={category}
                                         className="
                                             rounded-status
-                                            bg-accent-tint
+                                            bg-accent
                                             px-[0.63vw]
                                             py-[0.19vh]
                                             type-sm
