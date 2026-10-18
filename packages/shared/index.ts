@@ -327,7 +327,7 @@ export interface Job {
     createdAt?: string | undefined;
 }
 
-// What POST /jobs accepts. Validated by createJobPostingSchema.
+// What POST /jobs accepts. Validated by createJobSchema.
 export interface CreateJobRequest {
     listingTitle: string;
     listingDesc: string;
@@ -362,7 +362,7 @@ export interface UpdateServiceRequest {
 }
 
 // What PATCH /jobs/:jobId accepts. Send only what changed; categoryIds
-// replaces the whole set. Validated by updateJobPostingSchema.
+// replaces the whole set. Validated by updateJobSchema.
 export interface UpdateJobRequest {
     listingTitle?: string | undefined;
     listingDesc?: string | undefined;
