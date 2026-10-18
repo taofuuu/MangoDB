@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
-import { ExternalLink, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { portfolioImageSrc } from '@/components/portfolios/portfolioImage';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateOnly } from '@/lib/dates';
@@ -84,7 +84,7 @@ export default function ServiceDetailPanel({
                     aria-label="Close service detail"
                     className="rounded-full p-2 transition hover:bg-fill-subtle"
                 >
-                    <X size={22} />
+                    <ArrowLeft size={22} />
                 </button>
             </div>
 
