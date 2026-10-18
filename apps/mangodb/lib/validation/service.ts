@@ -1,3 +1,5 @@
+import { validateCategoryIds } from './listing';
+
 export const SERVICE_FIELDS = {
     listingTitle: 'title',
     listingDesc: 'description',
@@ -7,11 +9,13 @@ export const SERVICE_FIELDS = {
     maxBudget: 'maxBudget',
 } as const;
 
+// A service needs at least one category, and at most the 10 every listing
+// allows (the API's listingFields.categoryIds).
 export function validateServiceCategory(categoryIds: number[]): string | null {
     if (!categoryIds || categoryIds.length === 0) {
         return 'Select at least one category.';
     }
-    return null;
+    return validateCategoryIds(categoryIds);
 }
 
 export const PREDEFINED_TECH_STACKS = [
