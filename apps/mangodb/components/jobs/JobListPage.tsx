@@ -262,24 +262,26 @@ export default function JobListPage(props: JobListPageProps) {
     }
 
     return (
+        // overflow-x-clip: the detail panel slides in from 2rem to the right,
+        // which would otherwise widen the page for a moment.
         <main
             className="
                 min-h-screen
+                overflow-x-clip
                 bg-surface
                 px-[1.67vw]
                 py-[2.96vh]
             "
         >
+            {/* Centred while it is only the list. With a job open, list and
+                panel start at the left edge, as on the search pages; it used
+                to shift 8vw left as well, which pushed the cards off screen. */}
             <div
                 className={`
                     flex
                     w-fit
                     flex-col
                     gap-[2.595vh]
-                    transition-transform
-                    duration-300
-                    ease-in-out
-                    ${selectedJob ? 'translate-x-[-8vw]' : 'translate-x-0'}
                     ${selectedJob ? '' : 'mx-auto'}
                 `}
             >
@@ -536,10 +538,12 @@ export default function JobListPage(props: JobListPageProps) {
                     </div>
 
                     {!isMyJobs && selectedJob && (
-                        <JobDetailPanel
-                            job={selectedJob}
-                            onClose={closeDetailPanel}
-                        />
+                        <div className="shrink-0 motion-safe:animate-slide-in">
+                            <JobDetailPanel
+                                job={selectedJob}
+                                onClose={closeDetailPanel}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
