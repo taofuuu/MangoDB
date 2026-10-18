@@ -17,29 +17,13 @@
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
-                "senderId": 142
-            },
-            {
-                "createdAt": "<timestamp>",
-                "duration": 1,
-                "listingId": 405,
-                "listingTitle": "[demo] Sales dashboard and reports",
-                "proposalBudget": 999,
-                "proposalId": 210,
-                "proposalStatus": "PENDING",
-                "proposalTerms": "kdkklsf",
-                "recipient": {
-                    "companyId": 6,
-                    "companyName": "RoboTech Industries",
-                    "companyPhoto": null
-                },
-                "senderId": 142
+                "senderId": "<sender_id>"
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 6,
-            "totalItems": 2,
+            "totalItems": 1,
             "totalPages": 1
         }
     }

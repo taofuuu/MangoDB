@@ -100,6 +100,9 @@ TOKEN_C=""
 C_LIVE=0
 TOKEN_D=""
 D_LIVE=0
+# Probe E: the Provider whose own proposal list section 10b records.
+TOKEN_E=""
+E_LIVE=0
 DELETED_JOB_ID=""
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
@@ -198,6 +201,10 @@ cleanup() {
     if [ "$D_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_D"
+    fi
+    if [ "$E_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_E"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -932,19 +939,45 @@ snap error-proposals-mine-forbidden-admin GET /proposals/mine \
 snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVALID" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap proposals-mine GET /proposals/mine \
-    -H "$(bearer "$TOKEN_PROVIDER")"
-
-snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&pageSize=6" \
-    -H "$(bearer "$TOKEN_PROVIDER")"
-
 snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
 
 snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# The lists below come from probe E, a Provider only this run can sign in as,
+# so they hold just the one proposal it sends here. The seed provider is a
+# shared login: a proposal someone once sent by hand from it sat in these
+# snapshots as a real row.
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe E\",\"username\":\"${RUN}e\",\"email\":\"${RUN}e@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0833333333\",\"accountType\":\"PROVIDER\",\"companyType\":[\"Software House\"],\"tosAccepted\":true}" >/dev/null
+TOKEN_E="$(jget accessToken)"
+if [ -z "$TOKEN_E" ]; then
+    echo "could not register probe E:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+E_LIVE=1
+# New every run; on a proposal it is the senderId.
+SUBS+=(--id "sender_id=$(jget company.companyId)")
+
+api POST "/jobs/$NEW_JOB_ID/proposals" -H "$(bearer "$TOKEN_E")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":80000,"proposalTerms":"Full-stack development in 2 months with agile delivery.","duration":2}' >/dev/null
+E_PROPOSAL_ID="$(jget proposalId)"
+if [ -n "$E_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$E_PROPOSAL_ID")
+fi
+
+snap proposals-mine GET /proposals/mine \
+    -H "$(bearer "$TOKEN_E")"
+
+snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&pageSize=6" \
+    -H "$(bearer "$TOKEN_E")"
+
 snap proposals-mine-counts GET /proposals/mine/counts \
-    -H "$(bearer "$TOKEN_PROVIDER")"
+    -H "$(bearer "$TOKEN_E")"
+
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_E")")" = 204 ] && E_LIVE=0
 
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
