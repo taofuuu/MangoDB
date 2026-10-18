@@ -75,6 +75,28 @@ export default function JobCard({
 
     const router = useRouter();
 
+    const actionButtonClass =
+        'flex h-[4.07vh] w-[8.125vw] items-center justify-center gap-[0.5vw] rounded-[15px] border border-brand type-sm text-brand hover:bg-brand/10';
+
+    const viewDetailButton = (
+        <button
+            type="button"
+            onClick={() => {
+                if (isMyJobs) {
+                    // My Jobs: fetch the detail inside JobCard.
+                    openDetail();
+                } else {
+                    // Other jobs: tell the parent which job was clicked.
+                    onViewDetail(job);
+                }
+            }}
+            className={actionButtonClass}
+        >
+            View Detail
+            <ArrowRight size={15} />
+        </button>
+    );
+
     return (
         <>
             <div
@@ -203,7 +225,9 @@ export default function JobCard({
                     )}
                 </div>
 
-                {/* Budget + Location + Deadline + View Detail */}
+                {/* Budget + Location + Deadline + View Detail. My Jobs adds a
+                    Proposals button, and two buttons do not fit beside the
+                    details, so there they get a row of their own. */}
                 <div className="flex w-full items-center justify-between">
                     <p className="flex items-center gap-[0.52vw] line-clamp-4 type-sm leading-relaxed">
                         <Wallet size={20} />
@@ -222,56 +246,23 @@ export default function JobCard({
                             : 'No job deadline provided.'}
                     </p>
 
-                    <div className="flex items-center gap-[0.5vw]">
-                        {/* Your own job, any status: a closed one still has
-                            the proposal that was accepted. */}
-                        {isMyJobs && (
-                            <Link
-                                href={`/jobs/${job.jobId}/proposals`}
-                                className="flex h-[4.07vh] w-[8.125vw] items-center justify-center gap-[0.5vw] rounded-[15px] border border-brand type-sm text-brand hover:bg-brand/10"
-                            >
-                                Proposals
-                                <ArrowRight size={15} />
-                            </Link>
-                        )}
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (isMyJobs) {
-                                    /*
-                                     * My Jobs:
-                                     * fetch detail inside JobCard
-                                     */
-                                    openDetail();
-                                } else {
-                                    /*
-                                     * Other Jobs:
-                                     * tell the parent which job was clicked.
-                                     */
-                                    onViewDetail(job);
-                                }
-                            }}
-                            className="
-                            flex
-                            h-[4.07vh]
-                            w-[8.125vw]
-                            items-center
-                            justify-center
-                            gap-[0.5vw]
-                            rounded-[15px]
-                            border
-                            border-brand
-                            type-sm
-                            text-brand
-                            hover:bg-brand/10
-                        "
-                        >
-                            View Detail
-                            <ArrowRight size={15} />
-                        </button>
-                    </div>
+                    {!isMyJobs && viewDetailButton}
                 </div>
+
+                {isMyJobs && (
+                    <div className="flex w-full justify-end gap-[0.5vw]">
+                        {/* Any status: a closed job still has the proposal
+                            that was accepted. */}
+                        <Link
+                            href={`/jobs/${job.jobId}/proposals`}
+                            className={actionButtonClass}
+                        >
+                            Proposals
+                            <ArrowRight size={15} />
+                        </Link>
+                        {viewDetailButton}
+                    </div>
+                )}
             </div>
 
             {isMyJobs && (
