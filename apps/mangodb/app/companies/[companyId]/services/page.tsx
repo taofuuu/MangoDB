@@ -4,7 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { PaginationMeta, ServiceSummary } from '@mangodb/shared';
-import { describeError, isNotSignedIn, parseId } from '@/lib/api';
+import {
+    describeError,
+    isNotSignedIn,
+    NOT_SIGNED_IN,
+    parseId,
+} from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
 import { listServices } from '@/lib/services';
@@ -46,6 +51,7 @@ function CompanyServicesContent() {
             .catch((err) => {
                 if (!active) return;
                 if (isNotSignedIn(err)) {
+                    setError(NOT_SIGNED_IN);
                     redirectToUnauthorized();
                     return;
                 }
@@ -88,7 +94,10 @@ function CompanyServicesContent() {
             })
             .catch((err) => {
                 if (!active) return;
+                // The sentinel keeps the page blank while the redirect runs,
+                // instead of flashing "No listing for this company".
                 if (isNotSignedIn(err)) {
+                    setError(NOT_SIGNED_IN);
                     redirectToUnauthorized();
                     return;
                 }
@@ -104,6 +113,10 @@ function CompanyServicesContent() {
     }, [companyId, page]);
 
     const titlePrefix = companyName ? `${companyName}’s` : 'Company name’s';
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     return (
         <main className="min-h-screen bg-surface px-6 lg:px-12 py-8">
