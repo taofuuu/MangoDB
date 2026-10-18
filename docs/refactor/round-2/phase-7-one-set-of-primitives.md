@@ -20,17 +20,17 @@ elements trails, as the plan allows; the numbers are under What is left.
 
 ## One of each
 
-| Was                                                                                                                                     | Now                                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `DeleteConfirmationModal`, `AcceptProposalModal`, `RejectProposalModal`                                                                 | `ui/ConfirmModal`                                                     |
-| `services/SuccessModal` and the inline Account Deleted dialog                                                                           | `ui/SuccessModal`                                                     |
-| `CompanyDetailModal`, `EditAccountModal`, the account-settings dialog on their own overlay code                                         | all on `ModalShell`                                                   |
-| 7 hand-written pick-one lists (`CompanyOrderDropdown`, services order, admin filter, certificate month and year, the two `/jobs` boxes) | `ui/Dropdown`                                                         |
-| 4 keyword boxes, 3 with their own debounce                                                                                              | `ui/SearchBar`                                                        |
-| 4 `EmptyState` copies and 7 inline empty messages                                                                                       | `ui/EmptyState`                                                       |
-| `ProposalStatusBadge` styles, coloured "Accepted" / "Rejected" text                                                                     | `ui/StatusBadge`; `ProposalStatusBadge` maps statuses onto its tones  |
-| 3 status filters (Your Proposals, My Jobs, received proposals)                                                                          | `ui/StatusTabs`                                                       |
-| `TextField`, `SimpleTextInput`                                                                                                          | `ui/Input`; the login card keeps its own sizes with `variant="login"` |
+| Was                                                                                                                                     | Now                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `DeleteConfirmationModal`, `AcceptProposalModal`, `RejectProposalModal`                                                                 | `ui/ConfirmModal`                                                        |
+| `services/SuccessModal` and the inline Account Deleted dialog                                                                           | `ui/SuccessModal`                                                        |
+| `CompanyDetailModal`, `EditAccountModal`, the account-settings dialog on their own overlay code                                         | all on `ModalShell`                                                      |
+| 7 hand-written pick-one lists (`CompanyOrderDropdown`, services order, admin filter, certificate month and year, the two `/jobs` boxes) | `ui/Dropdown`                                                            |
+| 4 keyword boxes, 3 with their own debounce                                                                                              | `ui/SearchBar`                                                           |
+| 4 `EmptyState` copies and 7 inline empty messages                                                                                       | `ui/EmptyState`                                                          |
+| `ProposalStatusBadge` styles, coloured "Accepted" / "Rejected" text                                                                     | `ui/StatusBadge`; `ProposalStatusBadge` maps statuses onto its tones     |
+| 3 status filters (Your Proposals, My Jobs, received proposals)                                                                          | `ui/StatusTabs`; My Jobs keeps its coloured pills with `variant="pills"` |
+| `TextField`, `SimpleTextInput`                                                                                                          | `ui/Input`; the login card keeps its own sizes with `variant="login"`    |
 
 ## Merged
 
