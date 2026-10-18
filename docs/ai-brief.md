@@ -315,6 +315,7 @@ tappable.
 | "It worked"               | `SuccessModal`                                                 |
 | A pick-one box            | `Dropdown` — keyboard, outside click, Escape                   |
 | A keyword box             | `SearchBar` — owns the 300 ms wait and the clear button        |
+| A pick-many filter        | `FilterGroup` — chosen values as tags, a + for the rest        |
 | A list with nothing in it | `EmptyState`                                                   |
 | A status pill / filter    | `StatusBadge` (tone), `StatusTabs`                             |
 | A company's picture       | `CompanyAvatar` — guards the host, falls back to initials      |
