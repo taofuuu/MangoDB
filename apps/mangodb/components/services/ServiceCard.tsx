@@ -1,36 +1,27 @@
 import type { ServiceSummary } from '@mangodb/shared';
 import { Tag, Wallet } from 'lucide-react';
-import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import { initials } from '@/components/companies/CompanyAvatar';
 import { formatBudgetRange } from '@/lib/money';
 
 type ServiceCardProps = {
     service: ServiceSummary;
     onViewDetail: (service: ServiceSummary) => void;
-    // Ringed while its detail panel is open beside the list.
-    isSelected?: boolean;
 };
 
-// One service in a list: the search results and a company's services page.
+// One service in the search results. A company's own services page uses
+// CompanyServiceCard instead: the design draws the two differently.
 export default function ServiceCard({
     service,
     onViewDetail,
-    isSelected = false,
 }: ServiceCardProps) {
     return (
-        <div
-            className={`rounded-button border bg-surface-white p-5 shadow-card ${
-                isSelected
-                    ? 'border-brand ring-2 ring-brand/20'
-                    : 'border-brand-light'
-            }`}
-        >
+        <div className="rounded-button border border-brand-light bg-surface-white p-5 shadow-card">
             <div className="flex items-stretch justify-between gap-4">
                 <div className="flex items-start gap-3">
-                    <CompanyAvatar
-                        name={service.company.companyName}
-                        photoUrl={service.company.companyPhoto}
-                        size={56}
-                    />
+                    {/* Initials only, never the photo, as the search design draws it. */}
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent type-md font-semibold text-surface-white">
+                        {initials(service.company.companyName)}
+                    </div>
 
                     <div>
                         <h3 className="type-md text-ink">

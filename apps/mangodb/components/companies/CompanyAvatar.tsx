@@ -20,7 +20,9 @@ type CompanyAvatarProps = {
 // Grey, on fill-muted: the same circle ProfilePhotoPanel draws for an empty
 // photo, so the view and the edit page agree about what "no photo yet" looks
 // like. It was a red initial on a gold disc, which read as a warning.
-function initials(name: string): string {
+// Exported for the search ServiceCard, which keeps white initials on its
+// yellow disc.
+export function initials(name: string): string {
     const letters = name
         .trim()
         .split(/\s+/)
