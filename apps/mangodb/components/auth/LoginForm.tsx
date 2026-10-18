@@ -83,6 +83,7 @@ export default function LoginForm() {
                     setIdentifierError(null);
                 }}
                 error={identifierError ?? undefined}
+                variant="login"
                 required
             />
 
@@ -98,6 +99,7 @@ export default function LoginForm() {
                         setPasswordError(null);
                     }}
                     error={passwordError ?? undefined}
+                    variant="login"
                     required
                 />
                 {/* No "Forgot password" link yet: there is no page or story
