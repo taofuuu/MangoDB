@@ -1334,7 +1334,7 @@ if [ -n "$NEW_JOB_ID" ]; then
         -H "$(bearer "$TOKEN_RECEIVER")" -H 'Content-Type: application/json' \
         -d '{"listingDesc":"Edited while the stored budgets are wrong"}'
 else
-    echo "  --  skip   PATCH /jobs/:jobPostingId (no probe posting)"
+    echo "  --  skip   PATCH /jobs/:jobId (no probe job)"
 fi
 
 # ---------------------------------------------------------------------------
