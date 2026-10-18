@@ -30,10 +30,19 @@ import StatusTabs, { type StatusTab } from '../ui/StatusTabs';
 // '' is the All tab: no status filter.
 type JobStatus = '' | ListingStatus;
 
+// Each pill fills with its own colour when chosen, as the design draws it.
 const STATUS_TABS: StatusTab<JobStatus>[] = [
-    { label: 'All', value: '' },
-    { label: 'Open', value: 'OPEN' },
-    { label: 'Closed', value: 'CLOSED' },
+    { label: 'ALL', value: '', activeClass: 'bg-accent text-surface-white' },
+    {
+        label: 'OPEN',
+        value: 'OPEN',
+        activeClass: 'bg-brand text-surface-white',
+    },
+    {
+        label: 'CLOSED',
+        value: 'CLOSED',
+        activeClass: 'bg-danger text-surface-white',
+    },
 ];
 
 // backHref puts a ← before the title, back to the profile the list was
@@ -337,6 +346,7 @@ export default function JobListPage(props: JobListPageProps) {
                                 closeDetailPanel();
                             }}
                             label="Filter jobs by status"
+                            variant="pills"
                         />
 
                         {/* Add Job */}
