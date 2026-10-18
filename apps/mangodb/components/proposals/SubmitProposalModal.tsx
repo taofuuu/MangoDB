@@ -17,7 +17,7 @@ import {
 // Job is the shared API shape. companyName is optional display-only
 // information because the job-posting endpoint currently returns companyId,
 // not the name. T2.7 may supply it when that view already has it.
-export type ProposalJobPosting = Pick<
+export type ProposalJob = Pick<
     Job,
     | 'jobId'
     | 'listingTitle'
@@ -31,13 +31,13 @@ export type ProposalJobPosting = Pick<
 
 type SubmitProposalModalProps = {
     isOpen: boolean;
-    jobPosting: ProposalJobPosting;
+    job: ProposalJob;
     onClose: () => void;
 };
 
 type ProposalSubmissionConfirmationModalProps = {
     isOpen: boolean;
-    jobPosting: ProposalJobPosting;
+    job: ProposalJob;
     proposal: Proposal;
     onClose: () => void;
 };
@@ -51,7 +51,7 @@ const PROPOSAL_FIELDS = {
 
 function ProposalSubmissionConfirmationModal({
     isOpen,
-    jobPosting,
+    job,
     proposal,
     onClose,
 }: ProposalSubmissionConfirmationModalProps) {
@@ -73,8 +73,8 @@ function ProposalSubmissionConfirmationModal({
             </div>
 
             <p className="my-[2.22vh] type-md !font-[600]">
-                Your proposal for {jobPosting.listingTitle} has been sent to{' '}
-                {jobPosting.companyName ?? 'the company'}.
+                Your proposal for {job.listingTitle} has been sent to{' '}
+                {job.companyName ?? 'the company'}.
             </p>
 
             <div>
@@ -116,7 +116,7 @@ function ProposalSubmissionConfirmationModal({
 
 export default function SubmitProposalModal({
     isOpen,
-    jobPosting,
+    job,
     onClose,
 }: SubmitProposalModalProps) {
     const [proposalTerms, setProposalTerms] = useState('');
@@ -161,7 +161,7 @@ export default function SubmitProposalModal({
         return (
             <ProposalSubmissionConfirmationModal
                 isOpen
-                jobPosting={jobPosting}
+                job={job}
                 proposal={submittedProposal}
                 onClose={handleClose}
             />
@@ -187,7 +187,7 @@ export default function SubmitProposalModal({
 
         setIsSubmitting(true);
         try {
-            const proposal = await createProposal(jobPosting.jobId, {
+            const proposal = await createProposal(job.jobId, {
                 proposalTerms: draft.proposalTerms,
                 proposalBudget: Number(draft.proposalBudget),
                 duration: Number(draft.estimatedDurationMonths),
@@ -235,23 +235,16 @@ export default function SubmitProposalModal({
             </p>
 
             <section aria-label="Job posting summary">
-                <h3 className="type-sm !font-[600]">
-                    {jobPosting.listingTitle}
-                </h3>
-                {jobPosting.companyName && (
-                    <p className="mt-1 type-sm">
-                        Posted by {jobPosting.companyName}
-                    </p>
+                <h3 className="type-sm !font-[600]">{job.listingTitle}</h3>
+                {job.companyName && (
+                    <p className="mt-1 type-sm">Posted by {job.companyName}</p>
                 )}
 
                 <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <div>
                         <dt className="type-xs text-ink-placeholder">Budget</dt>
                         <dd className="type-xs text-ink">
-                            {formatBudgetRange(
-                                jobPosting.minBudget,
-                                jobPosting.maxBudget,
-                            )}
+                            {formatBudgetRange(job.minBudget, job.maxBudget)}
                         </dd>
                     </div>
                     <div>
@@ -259,8 +252,8 @@ export default function SubmitProposalModal({
                             Deadline
                         </dt>
                         <dd className="type-xs text-ink">
-                            {jobPosting.deadline
-                                ? formatDateOnly(jobPosting.deadline)
+                            {job.deadline
+                                ? formatDateOnly(job.deadline)
                                 : 'Not specified'}
                         </dd>
                     </div>
@@ -269,7 +262,7 @@ export default function SubmitProposalModal({
                             Location
                         </dt>
                         <dd className="type-xs text-ink">
-                            {jobPosting.locationPref ?? 'Not specified'}
+                            {job.locationPref ?? 'Not specified'}
                         </dd>
                     </div>
                 </dl>

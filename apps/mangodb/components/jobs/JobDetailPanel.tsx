@@ -225,7 +225,7 @@ export default function JobDetailPanel({
                 <SubmitProposalModal
                     key={job.jobId}
                     isOpen={isProposalFormOpen}
-                    jobPosting={job}
+                    job={job}
                     onClose={() => setIsProposalFormOpen(false)}
                 />
             )}
