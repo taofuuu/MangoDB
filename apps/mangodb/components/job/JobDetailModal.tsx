@@ -5,6 +5,7 @@ import type { JobPosting } from '@mangodb/shared';
 
 import {
     X,
+    ArrowRight,
     Wallet,
     MapPin,
     CalendarClock,
@@ -20,12 +21,15 @@ interface JobDetailModalProps {
     job: JobPosting;
     isOpen: boolean;
     onClose: () => void;
+    // Your own job: show the link to its proposal list (US2-10).
+    isOwnJob?: boolean;
 }
 
 export default function JobDetailModal({
     job,
     isOpen,
     onClose,
+    isOwnJob = false,
 }: JobDetailModalProps) {
     return (
         <ModalShell
@@ -327,6 +331,31 @@ export default function JobDetailModal({
                                 : 'No creation date provided'}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {isOwnJob && (
+                <div className="flex justify-end pt-[2vh] pr-[2vw]">
+                    <Link
+                        href={`/proposal/view?jobPostingId=${job.jobPostingId}`}
+                        className="
+                            flex
+                            h-[4.07vh]
+                            items-center
+                            justify-center
+                            gap-[0.5vw]
+                            rounded-[15px]
+                            border
+                            border-brand
+                            px-[1.25vw]
+                            type-sm
+                            text-brand
+                            hover:bg-brand/10
+                        "
+                    >
+                        View Proposals
+                        <ArrowRight size={15} aria-hidden="true" />
+                    </Link>
                 </div>
             )}
         </ModalShell>

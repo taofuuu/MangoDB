@@ -155,6 +155,7 @@ export default function JobListing({
                     job={selectedJob}
                     isOpen
                     onClose={() => setSelectedJob(null)}
+                    isOwnJob={!readOnly}
                 />
             )}
         </div>

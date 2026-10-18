@@ -332,6 +332,7 @@ export default function ServicesSection({
                     job={selectedJob}
                     isOpen
                     onClose={() => setSelectedJob(null)}
+                    isOwnJob={!readOnly}
                 />
             )}
         </div>

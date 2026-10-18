@@ -7,6 +7,7 @@ import {
     ArrowRight,
     CalendarClock,
     Edit,
+    FileText,
     FileX,
     MapPin,
     Wallet,
@@ -110,10 +111,10 @@ export default function JobBox({
                         {job.listingTitle}
                     </h2>
 
-                    {/* More menu - only for My Jobs, and only while OPEN:
-                        Edit and Close are its only actions. There is no
-                        Delete yet — no story and no DELETE endpoint. */}
-                    {isMyJobs && job.listingStatus === 'OPEN' && (
+                    {/* More menu - only for My Jobs. View Proposals is always
+                        there (US2-10); Edit and Close only while OPEN. There
+                        is no Delete yet — no story and no DELETE endpoint. */}
+                    {isMyJobs && (
                         <div className="relative">
                             <button
                                 type="button"
@@ -145,26 +146,44 @@ export default function JobBox({
                                         onClick={() => {
                                             setIsMenuOpen(false);
                                             router.push(
-                                                `/job-postings/${job.jobPostingId}/edit`,
+                                                `/proposal/view?jobPostingId=${job.jobPostingId}`,
                                             );
                                         }}
                                         className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
                                     >
-                                        <Edit size={15} />
-                                        Edit
+                                        <FileText size={15} />
+                                        View Proposals
                                     </button>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsMenuOpen(false);
-                                            setIsCloseModalOpen(true);
-                                        }}
-                                        className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
-                                    >
-                                        <FileX size={15} />
-                                        Close
-                                    </button>
+                                    {job.listingStatus === 'OPEN' && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    router.push(
+                                                        `/job-postings/${job.jobPostingId}/edit`,
+                                                    );
+                                                }}
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <Edit size={15} />
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    setIsCloseModalOpen(true);
+                                                }}
+                                                className="flex w-full items-center gap-[0.5vw] rounded-md px-3 py-2 text-left hover:bg-fill-subtle"
+                                            >
+                                                <FileX size={15} />
+                                                Close
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -261,6 +280,7 @@ export default function JobBox({
                     job={job}
                     isOpen={isDetailOpen}
                     onClose={closeDetail}
+                    isOwnJob
                 />
             )}
             <DeleteConfirmationModal
