@@ -284,9 +284,11 @@ export default function ServicesSection({
                     </div>
                 )}
 
-                {/* Another company's profile previews its services; the
-                    full list, with paging, is its services page. */}
-                {readOnly && activeTab === 'services' && (
+                {/* The full list, with paging, is the company's services
+                    page. Shown on your own profile too, like every other See
+                    more: there is no own-services page yet, so it opens the
+                    public one, which lists only OPEN services. */}
+                {activeTab === 'services' && (
                     <div className="mt-3 text-right">
                         <Link
                             href={`/companies/${companyId}/services`}
