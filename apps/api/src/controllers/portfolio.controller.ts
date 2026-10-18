@@ -179,8 +179,9 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
     res.json(toServicePortfolio(portfolio));
 }
 
-// Public: fetching all portfolios, optionally narrowed to one service or one
-// company (GET /portfolios?serviceId=123, ?companyId=4, or both).
+// Public: the portfolios of one service or one company
+// (GET /portfolios?serviceId=123, ?companyId=4, or both). With neither, the
+// schema answers 400, so the whole table is never returned.
 export async function listPortfolios(
     req: Request,
     res: Response,
@@ -191,7 +192,7 @@ export async function listPortfolios(
     );
 
     // One where object rather than a conditional spread of the whole key, so
-    // the two filters can combine. An empty one matches everything.
+    // the two filters can combine. The schema guarantees at least one is set.
     const portfolios = await prisma.servicePortfolio.findMany({
         where: {
             ...(serviceId ? { listingId: serviceId } : {}),
