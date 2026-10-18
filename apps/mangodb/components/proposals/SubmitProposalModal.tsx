@@ -14,20 +14,17 @@ import {
     type ProposalErrors,
 } from '@/lib/validation/proposal';
 
-// Job is the shared API shape. companyName is optional display-only
-// information because the job-posting endpoint currently returns companyId,
-// not the name. T2.7 may supply it when that view already has it.
+// The parts of a job the modal shows. company is the Receiver that posted it.
 export type ProposalJob = Pick<
     Job,
     | 'jobId'
+    | 'company'
     | 'listingTitle'
     | 'minBudget'
     | 'maxBudget'
     | 'deadline'
     | 'locationPref'
-> & {
-    companyName?: string | undefined;
-};
+>;
 
 type SubmitProposalModalProps = {
     isOpen: boolean;
@@ -74,7 +71,7 @@ function ProposalSubmissionConfirmationModal({
 
             <p className="my-[2.22vh] type-md !font-[600]">
                 Your proposal for {job.listingTitle} has been sent to{' '}
-                {job.companyName ?? 'the company'}.
+                {job.company.companyName}.
             </p>
 
             <div>
@@ -236,9 +233,9 @@ export default function SubmitProposalModal({
 
             <section aria-label="Job posting summary">
                 <h3 className="type-sm !font-[600]">{job.listingTitle}</h3>
-                {job.companyName && (
-                    <p className="mt-1 type-sm">Posted by {job.companyName}</p>
-                )}
+                <p className="mt-1 type-sm">
+                    Posted by {job.company.companyName}
+                </p>
 
                 <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <div>
