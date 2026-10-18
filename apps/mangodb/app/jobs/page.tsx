@@ -313,7 +313,7 @@ export default function OtherJobPage() {
                     transition-all
                     duration-300
                     justify-center
-                    ${isDetailOpen ? ' w-[93vw]' : 'w-[56.56vw]'}
+                    ${isDetailOpen ? ' w-[91vw]' : 'w-[56.56vw]'}
                         `}
                     >
                         <div className="flex items-baseline gap-[1vw]">
@@ -330,7 +330,7 @@ export default function OtherJobPage() {
                         border-0
                         border-t
                         border-brand/50
-                        ${isDetailOpen ? 'w-[91vw]' : 'w-[55.1vw]'}
+                        ${isDetailOpen ? 'w-[91vw]' : 'w-[56.56vw]'}
                     `}
                         />
 
