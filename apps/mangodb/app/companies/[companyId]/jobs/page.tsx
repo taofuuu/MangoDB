@@ -4,11 +4,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { parseId } from '@/lib/api';
-import JobPostingsPage from '@/components/jobs/JobPostingsPage';
+import JobListPage from '@/components/jobs/JobListPage';
 
 // /companies/[companyId]/jobs: every OPEN job posting of one company, opened
 // from See more on its profile. The company comes from the path, so there is
-// no search box; JobPostingsPage's company view does the list and paging.
+// no search box; JobListPage's company view does the list and paging.
 export default function CompanyJobsPage() {
     const companyId = parseId(useParams().companyId);
 
@@ -25,10 +25,10 @@ export default function CompanyJobsPage() {
         );
     }
 
-    // JobPostingsPage reads useSearchParams, which needs a Suspense boundary.
+    // JobListPage reads useSearchParams, which needs a Suspense boundary.
     return (
         <Suspense fallback={<div className="min-h-screen bg-surface" />}>
-            <JobPostingsPage
+            <JobListPage
                 view="company"
                 companyId={companyId}
                 backHref={`/companies/${companyId}`}

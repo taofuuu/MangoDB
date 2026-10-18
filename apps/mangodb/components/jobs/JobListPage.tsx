@@ -38,7 +38,7 @@ const STATUS_TABS: StatusTab<JobStatus>[] = [
 
 // backHref puts a ← before the title, back to the profile the list was
 // opened from.
-type JobPostingsPageProps = { backHref: string } & (
+type JobListPageProps = { backHref: string } & (
     | {
           view: 'mine';
       }
@@ -48,7 +48,7 @@ type JobPostingsPageProps = { backHref: string } & (
       }
 );
 
-export default function JobPostingsPage(props: JobPostingsPageProps) {
+export default function JobListPage(props: JobListPageProps) {
     const companyId = props.view === 'company' ? props.companyId : undefined;
     const isMyJobs = props.view === 'mine';
 
