@@ -11,7 +11,7 @@ import { listServices } from '@/lib/services';
 import EmptyState from '@/components/ui/EmptyState';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
-import ServiceCard from '@/components/services/ServiceCard';
+import CompanyServiceCard from '@/components/services/CompanyServiceCard';
 import ServiceDetailPanel from '@/components/services/ServiceDetailPanel';
 
 function CompanyServicesContent() {
@@ -164,7 +164,7 @@ function CompanyServicesContent() {
                         >
                             <div className="flex flex-col space-y-4 max-h-[75vh] overflow-y-auto pr-1">
                                 {services.map((service) => (
-                                    <ServiceCard
+                                    <CompanyServiceCard
                                         key={service.serviceId}
                                         service={service}
                                         isSelected={
