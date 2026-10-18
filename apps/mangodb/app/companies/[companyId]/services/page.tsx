@@ -118,12 +118,25 @@ function CompanyServicesContent() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    const isDetailOpen = selectedService !== null;
+
+    // The same layout as a company's jobs page (JobListPage): the list
+    // centred on its own, then list and panel side by side, the panel
+    // sliding in from the right. overflow-x-clip keeps that slide from
+    // widening the page for a moment.
     return (
-        <main className="min-h-screen bg-surface px-6 lg:px-12 py-8">
-            <div className="mx-auto max-w-6xl">
-                {/* Header Title */}
-                <div className="mb-6">
-                    <h1 className="type-lg !font-bold text-ink">
+        <main className="min-h-screen overflow-x-clip bg-surface px-[1.67vw] py-[2.96vh]">
+            <div
+                className={`flex w-fit flex-col gap-[2.595vh] ${
+                    isDetailOpen ? '' : 'mx-auto'
+                }`}
+            >
+                <div
+                    className={`flex flex-col gap-[1.3vh] transition-all duration-300 ${
+                        isDetailOpen ? 'ml-[2vw] w-[91vw]' : 'ml-0 w-[56.56vw]'
+                    }`}
+                >
+                    <h1 className="type-lg text-ink">
                         {isValidCompanyId && (
                             <Link
                                 href={`/companies/${companyId}`}
@@ -137,86 +150,76 @@ function CompanyServicesContent() {
                             ? `${companyName}’s Services`
                             : `${titlePrefix} listing`}
                     </h1>
-                    <div className="h-px bg-brand/30 mt-3 w-full" />
+                    <hr className="w-full shrink-0 border-0 border-t border-brand/50" />
                 </div>
 
-                {!isValidCompanyId ? (
-                    <div className="py-20 text-center text-ink-soft">
-                        <p className="type-sm">
-                            This company could not be found.
-                        </p>
-                    </div>
-                ) : isLoading && services.length === 0 ? (
-                    <div className="flex flex-col gap-4 py-8">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="h-32 w-full animate-pulse rounded-[20px] bg-line/60"
-                            />
-                        ))}
-                    </div>
-                ) : error ? (
-                    <div className="py-20 text-center text-danger type-sm">
-                        {error}
-                    </div>
-                ) : services.length === 0 ? (
-                    <EmptyState title="No listing for this company" />
-                ) : (
-                    <div
-                        className={`grid gap-6 transition-all ${
-                            selectedService
-                                ? 'grid-cols-1 lg:grid-cols-12'
-                                : 'grid-cols-1 max-w-6xl'
-                        }`}
-                    >
-                        {/* Service Cards List */}
-                        <div
-                            className={`flex flex-col space-y-4 ${
-                                selectedService ? 'lg:col-span-5' : 'w-full'
-                            }`}
-                        >
-                            <div className="flex flex-col space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-                                {services.map((service) => (
-                                    <CompanyServiceCard
-                                        key={service.serviceId}
-                                        service={service}
-                                        isSelected={
-                                            selectedService?.serviceId ===
-                                            service.serviceId
-                                        }
-                                        onViewDetail={() => {
-                                            setSelectedService((prev) =>
-                                                prev?.serviceId ===
+                <div
+                    className={`mt-[2vh] flex items-start transition-all duration-300 ${
+                        isDetailOpen ? 'ml-[2vw] gap-[1.5vw]' : ''
+                    }`}
+                >
+                    <div className="flex h-[72.63vh] w-[56.56vw] flex-col">
+                        <div className="min-h-0 flex-1 overflow-y-auto pr-[0.63vw]">
+                            {!isValidCompanyId ? (
+                                <p className="py-20 text-center type-sm text-ink-soft">
+                                    This company could not be found.
+                                </p>
+                            ) : isLoading && services.length === 0 ? (
+                                <div className="flex flex-col gap-4 pt-[1vh] pl-[0.5vw]">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="h-32 w-full animate-pulse rounded-[20px] bg-line/60"
+                                        />
+                                    ))}
+                                </div>
+                            ) : error ? (
+                                <p className="py-20 text-center type-sm text-danger">
+                                    {error}
+                                </p>
+                            ) : services.length === 0 ? (
+                                <EmptyState title="No listing for this company" />
+                            ) : (
+                                <div className="flex flex-col gap-4 pt-[1vh] pl-[0.5vw]">
+                                    {services.map((service) => (
+                                        <CompanyServiceCard
+                                            key={service.serviceId}
+                                            service={service}
+                                            isSelected={
+                                                selectedService?.serviceId ===
                                                 service.serviceId
-                                                    ? null
-                                                    : service,
-                                            );
-                                        }}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Pagination */}
-                            <Pagination
-                                pagination={pagination}
-                                onPageChange={setPage}
-                                ariaLabel="Company services pages"
-                                isLoading={isLoading}
-                            />
+                                            }
+                                            // As on the jobs page: View
+                                            // Detail opens, the panel's ←
+                                            // closes.
+                                            onViewDetail={setSelectedService}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        {/* Service Detail Panel */}
-                        {selectedService && (
-                            <div className="lg:col-span-7">
-                                <ServiceDetailPanel
-                                    key={selectedService.serviceId}
-                                    service={selectedService}
-                                    onClose={() => setSelectedService(null)}
-                                />
-                            </div>
-                        )}
+                        <Pagination
+                            pagination={pagination}
+                            onPageChange={setPage}
+                            ariaLabel="Company services pages"
+                            isLoading={isLoading}
+                            className="px-[0.5vw]"
+                        />
                     </div>
-                )}
+
+                    {/* Slides in once; picking another service swaps the
+                        panel inside without sliding again. */}
+                    {selectedService && (
+                        <div className="shrink-0 motion-safe:animate-slide-in">
+                            <ServiceDetailPanel
+                                key={selectedService.serviceId}
+                                service={selectedService}
+                                onClose={() => setSelectedService(null)}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
         </main>
     );
