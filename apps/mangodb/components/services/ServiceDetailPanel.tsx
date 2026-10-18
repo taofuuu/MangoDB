@@ -104,7 +104,7 @@ export default function ServiceDetailPanel({
                         />
                         <Link
                             href={`/companies/${service.company.companyId}`}
-                            className="type-md text-ink hover:underline"
+                            className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
                         >
                             {service.company.companyName || '-'}
                         </Link>
