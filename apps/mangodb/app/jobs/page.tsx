@@ -157,7 +157,10 @@ export default function OtherJobPage() {
     }
 
     return (
-        <main className="min-h-screen bg-surface flex py-[3vh] px-[2.67vw]">
+        // overflow-x-clip: the detail panel slides in from 2rem to the right,
+        // which would otherwise make the page wider than the window for a
+        // moment and let it scroll sideways.
+        <main className="min-h-screen bg-surface flex overflow-x-clip py-[3vh] px-[2.67vw]">
             <div
                 className={`
                     flex

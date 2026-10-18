@@ -127,7 +127,9 @@ export default function SearchServicesPage({
 
     if (selectedService) {
         return (
-            <main className="min-h-screen bg-surface px-[1.67vw] py-[2.96vh]">
+            // overflow-x-clip: the panel slides in from 2rem to the right,
+            // which would otherwise widen the page for a moment.
+            <main className="min-h-screen overflow-x-clip bg-surface px-[1.67vw] py-[2.96vh]">
                 <div className="mx-auto max-w-[93.75vw]">
                     <div className="ml-[2vw] w-[91vw]">{headerAndSearch}</div>
 
