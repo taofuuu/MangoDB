@@ -8,11 +8,17 @@ import type {
     SentProposal,
 } from '@mangodb/shared';
 import { FileX2 } from 'lucide-react';
+import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import StatusTabs from '@/components/ui/StatusTabs';
-import { describeError, isNotSignedIn } from '@/lib/api';
+import {
+    describeError,
+    isForbidden,
+    isNotSignedIn,
+    NOT_SIGNED_IN,
+} from '@/lib/api';
 import { getMyProposalCounts, listMyProposals } from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
@@ -39,6 +45,8 @@ export default function MyProposalsPage() {
     const [counts, setCounts] = useState<ProposalStatusCounts | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // A 403: the account is not a Provider, so it has no proposals to list.
+    const [isRestricted, setIsRestricted] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     const [selected, setSelected] = useState<SentProposal | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
@@ -59,16 +67,20 @@ export default function MyProposalsPage() {
             .catch((requestError: unknown) => {
                 if (cancelled) return;
 
+                // The sentinel keeps the page blank while the redirect runs,
+                // instead of flashing the heading and tabs.
                 if (isNotSignedIn(requestError)) {
+                    setError(NOT_SIGNED_IN);
                     redirectToUnauthorized();
                     return;
                 }
 
-                setError(
-                    describeError(requestError, {
-                        403: 'Only Provider accounts send proposals, so there is nothing to show here.',
-                    }),
-                );
+                if (isForbidden(requestError)) {
+                    setIsRestricted(true);
+                    return;
+                }
+
+                setError(describeError(requestError));
             })
             .finally(() => {
                 if (!cancelled) setIsLoading(false);
@@ -108,6 +120,23 @@ export default function MyProposalsPage() {
         setPage(1);
         setSelected(null);
     };
+
+    if (isRestricted) {
+        return (
+            <UnauthorizedPage
+                variant="danger"
+                icon="shield"
+                title="Access Restricted"
+                badge="Insufficient permissions"
+                message="You need a Provider account to send and view proposals."
+                showLogin={false}
+            />
+        );
+    }
+
+    if (error === NOT_SIGNED_IN) {
+        return <div className="min-h-screen bg-surface" />;
+    }
 
     if (isLoading && !result && !error) {
         return (
