@@ -19,9 +19,7 @@ import { useRouter } from 'next/navigation';
 import { formatBudgetRange } from '@/lib/money';
 
 import JobDetailModal from './JobDetailModal';
-import DeleteConfirmationModal from '@/components/ui/DeleteConfirmationModal';
-import { describeError } from '@/lib/api';
-import { closeJobPosting } from '@/lib/jobPostings';
+import CloseJobConfirmModal from './CloseJobConfirmModal';
 
 interface JobBoxProps {
     job: JobPosting;
@@ -41,20 +39,6 @@ export default function JobBox({
 }: JobBoxProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
-
-    // US2-14. A thrown error becomes the modal's message.
-    const confirmClose = async () => {
-        try {
-            await closeJobPosting(job.jobPostingId);
-        } catch (err) {
-            throw new Error(
-                describeError(err, {
-                    409: 'This job posting is already closed.',
-                }),
-            );
-        }
-        onClosed?.();
-    };
 
     /*
      * These are only needed for My Jobs.
@@ -261,16 +245,17 @@ export default function JobBox({
                     job={job}
                     isOpen={isDetailOpen}
                     onClose={closeDetail}
+                    onClosed={() => {
+                        closeDetail();
+                        onClosed?.();
+                    }}
                 />
             )}
-            <DeleteConfirmationModal
+            <CloseJobConfirmModal
+                jobPostingId={job.jobPostingId}
                 isOpen={isCloseModalOpen}
                 onClose={() => setIsCloseModalOpen(false)}
-                onConfirm={confirmClose}
-                title="Close Job Posting"
-                description="It stops receiving proposals, and its pending proposals are rejected. A closed job posting cannot be reopened."
-                confirmLabel="Yes, Close"
-                pendingLabel="Closing..."
+                onClosed={onClosed}
             />
         </>
     );

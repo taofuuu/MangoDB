@@ -72,6 +72,20 @@ export default function ServicesSection({
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
     const serviceTitleId = useId();
 
+    // Your own job, closed from its detail popup (US2-14): show it as Closed
+    // without asking for the list again.
+    const markJobClosed = (jobPostingId: number) => {
+        setJobs(
+            (prev) =>
+                prev?.map((job) =>
+                    job.jobPostingId === jobPostingId
+                        ? { ...job, listingStatus: 'CLOSED' }
+                        : job,
+                ) ?? null,
+        );
+        setSelectedJob(null);
+    };
+
     useEffect(() => {
         let cancelled = false;
 
@@ -332,6 +346,11 @@ export default function ServicesSection({
                     job={selectedJob}
                     isOpen
                     onClose={() => setSelectedJob(null)}
+                    onClosed={
+                        readOnly
+                            ? undefined
+                            : () => markJobClosed(selectedJob.jobPostingId)
+                    }
                 />
             )}
         </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import type { JobPosting } from '@mangodb/shared';
 
@@ -11,25 +12,36 @@ import {
     Hourglass,
     Building2,
     Tag,
+    FileX,
 } from 'lucide-react';
 
 import ModalShell from '@/components/ui/ModalShell';
+import CloseJobConfirmModal from './CloseJobConfirmModal';
 import { formatBudgetRange } from '@/lib/money';
 
 interface JobDetailModalProps {
     job: JobPosting;
     isOpen: boolean;
     onClose: () => void;
+    // Only for your own job (US2-14). With it, an OPEN job shows Close, and
+    // this is called once the job is closed.
+    onClosed?: (() => void) | undefined;
 }
 
 export default function JobDetailModal({
     job,
     isOpen,
     onClose,
+    onClosed,
 }: JobDetailModalProps) {
-    return (
+    // The confirmation takes the detail's place rather than stacking on top:
+    // two open ModalShells would both answer Escape.
+    const [isConfirmingClose, setIsConfirmingClose] = useState(false);
+    const canClose = Boolean(onClosed) && job.listingStatus === 'OPEN';
+
+    const detail = (
         <ModalShell
-            isOpen={isOpen}
+            isOpen={isOpen && !isConfirmingClose}
             onClose={onClose}
             role="dialog"
             labelledBy="job-detail-title"
@@ -329,6 +341,47 @@ export default function JobDetailModal({
                     </div>
                 </div>
             )}
+
+            {canClose && (
+                <div className="flex justify-end pt-[2vh] pr-[2vw]">
+                    <button
+                        type="button"
+                        onClick={() => setIsConfirmingClose(true)}
+                        className="
+                            flex
+                            h-[4.07vh]
+                            items-center
+                            justify-center
+                            gap-[0.5vw]
+                            rounded-[15px]
+                            border
+                            border-danger
+                            px-[1.25vw]
+                            type-sm
+                            text-danger
+                            hover:bg-danger/10
+                        "
+                    >
+                        <FileX size={15} aria-hidden="true" />
+                        Close Job
+                    </button>
+                </div>
+            )}
         </ModalShell>
+    );
+
+    return (
+        <>
+            {detail}
+            <CloseJobConfirmModal
+                jobPostingId={job.jobPostingId}
+                isOpen={isOpen && isConfirmingClose}
+                onClose={() => setIsConfirmingClose(false)}
+                onClosed={() => {
+                    setIsConfirmingClose(false);
+                    onClosed?.();
+                }}
+            />
+        </>
     );
 }

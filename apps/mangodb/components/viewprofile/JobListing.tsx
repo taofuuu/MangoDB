@@ -28,6 +28,20 @@ export default function JobListing({
     const [loadError, setLoadError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
 
+    // Your own job, closed from its detail popup (US2-14): show it as Closed
+    // without asking for the list again.
+    const markJobClosed = (jobPostingId: number) => {
+        setJobs(
+            (prev) =>
+                prev?.map((job) =>
+                    job.jobPostingId === jobPostingId
+                        ? { ...job, listingStatus: 'CLOSED' }
+                        : job,
+                ) ?? null,
+        );
+        setSelectedJob(null);
+    };
+
     useEffect(() => {
         let cancelled = false;
 
@@ -155,6 +169,11 @@ export default function JobListing({
                     job={selectedJob}
                     isOpen
                     onClose={() => setSelectedJob(null)}
+                    onClosed={
+                        readOnly
+                            ? undefined
+                            : () => markJobClosed(selectedJob.jobPostingId)
+                    }
                 />
             )}
         </div>
