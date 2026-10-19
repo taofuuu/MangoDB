@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
+import SuccessModal from '@/components/ui/SuccessModal';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
 import { COMPANY_SERVICES_PAGE_SIZE } from '@/lib/pagination';
@@ -60,6 +61,7 @@ function MyServices() {
     const [pendingDelete, setPendingDelete] = useState<ServiceSummary | null>(
         null,
     );
+    const [showDeleted, setShowDeleted] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -108,7 +110,8 @@ function MyServices() {
         router.push(`/services/${service.serviceId}/edit`);
     };
 
-    // A thrown error becomes the modal's message.
+    // A thrown error becomes the modal's message. On success the card goes
+    // and "Service deleted" shows, as US2-4 asks.
     const confirmDelete = async () => {
         if (!pendingDelete) return;
         const { serviceId } = pendingDelete;
@@ -127,6 +130,7 @@ function MyServices() {
         setSelectedService((current) =>
             current?.serviceId === serviceId ? null : current,
         );
+        setShowDeleted(true);
     };
 
     if (error === NOT_SIGNED_IN) {
@@ -264,6 +268,12 @@ function MyServices() {
                 description={`${pendingDelete?.listingTitle || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
                 confirmLabel="Delete listing"
                 pendingLabel="Deleting..."
+            />
+
+            <SuccessModal
+                isOpen={showDeleted}
+                onClose={() => setShowDeleted(false)}
+                title="Service deleted"
             />
         </main>
     );

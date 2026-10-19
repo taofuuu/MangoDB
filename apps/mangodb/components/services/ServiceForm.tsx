@@ -143,6 +143,7 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeletedModal, setShowDeletedModal] = useState(false);
     const [createdServiceId, setCreatedServiceId] = useState<number | null>(
         null,
     );
@@ -417,7 +418,8 @@ export default function ServiceForm(props: ServiceFormProps) {
     // US2-4. Thrown errors become the modal's message, so the 409 for a
     // service with a project gets a sentence the Provider can act on.
     // isSubmitting is shared with Save, so Save and Cancel stay disabled while
-    // the delete runs. It stays true on success: the page is leaving.
+    // the delete runs. It stays true on success: the service is gone, and
+    // closing "Service deleted" leaves the page.
     const handleDelete = async () => {
         if (serviceId === null || isSubmitting) return;
         setIsSubmitting(true);
@@ -431,7 +433,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                 }),
             );
         }
-        router.replace('/profile/view');
+        setShowDeletedModal(true);
     };
 
     const handleCancel = () => {
@@ -736,6 +738,12 @@ export default function ServiceForm(props: ServiceFormProps) {
                 title="Delete this service listing?"
                 description={`${initialValues?.title || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
                 confirmLabel="Delete listing"
+            />
+
+            <SuccessModal
+                isOpen={showDeletedModal}
+                onClose={() => router.replace('/profile/view')}
+                title="Service deleted"
             />
 
             <UnsavedChangesModal
