@@ -106,6 +106,9 @@ export function usePortfolioForm(props: PortfolioFormProps) {
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        // ServiceForm opens this modal from inside its own <form>, and React
+        // passes a submit up through the portal, which would save the service.
+        event.stopPropagation();
         setFormError(null);
 
         const newErrors = validate(values, props.mode === 'add');
