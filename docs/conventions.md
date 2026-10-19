@@ -374,8 +374,8 @@ lib/<noun>.ts             the requests for that noun
 - One component per file, a default export, and the file named after it.
 - `lib/` also holds the shared helpers: `dates`, `money`, `pagination`, the
   form rules in `validation/<schema>.ts`, and the hooks `useMyCompany`,
-  `useSearchServices` and `useCategories`. A component formats a date or an
-  amount through them, never on its own.
+  `useSearchServices`, `useJobList` and `useCategories`. A component formats
+  a date or an amount through them, never on its own.
 - An add form and an edit form for one thing are one component with a mode,
   mounted only while open.
 - A form's values, checks and save live in a `use<Thing>Form` hook beside it

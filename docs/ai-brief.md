@@ -253,6 +253,7 @@ as not found.
 | A page size                  | the constants in `lib/pagination`                        |
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
 | The category list for a form | `useCategories()` in `lib/useCategories`                 |
+| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`               |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
@@ -328,6 +329,7 @@ tappable.
 | Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
+| A password box            | `PasswordInput` — `Input` with a show/hide eye                 |
 
 An add form and an edit form for the same thing are one component with a mode
 (`PortfolioForm`, `CertificateForm`, `ServiceForm`, `JobForm`), mounted only
