@@ -33,6 +33,27 @@ and 27 raw `<input>` elements, and Phase 8 named all 51 colours but did not
 merge the duplicates, which is a design decision. Each page says exactly what it
 left.
 
+## Round 2, before Sprint 3
+
+Sprint 2 added about 14k lines and the copies came back, so the same ten
+phases ran again on one branch, `refactor/round-2`, landing as one pull
+request. Its pages are in [round-2/](round-2/README.md):
+
+| #                                             | Phase                           |
+| --------------------------------------------- | ------------------------------- |
+| [0](round-2/phase-0-safety-net.md)            | Safety net                      |
+| [1](round-2/phase-1-vocabulary.md)            | Vocabulary                      |
+| [2](round-2/phase-2-names-at-the-source.md)   | Names at the source             |
+| [3](round-2/phase-3-one-of-each-helper.md)    | Backend: one of each helper     |
+| [4](round-2/phase-4-wire-rules.md)            | Backend: wire rules             |
+| [5](round-2/phase-5-template.md)              | Template                        |
+| [6](round-2/phase-6-one-way-to-call-it.md)    | Frontend: one way to call it    |
+| [7](round-2/phase-7-one-set-of-primitives.md) | Frontend: one set of primitives |
+| [8](round-2/phase-8-design-tokens.md)         | Design tokens                   |
+| [9](round-2/phase-9-docs.md)                  | Docs                            |
+
+Where a round-2 page and a Sprint 1 page disagree, round 2 is the newer.
+
 ## The one rule that sets the order
 
 Names flow one direction:

@@ -1,0 +1,284 @@
+{
+    "request": "GET /jobs?status=OPEN",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobId": "<job_id>",
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "IT Consulting & Security"
+                ],
+                "categoryIds": [
+                    4
+                ],
+                "company": {
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-11-30",
+                "duration": "1 month",
+                "jobId": 595,
+                "listingDesc": "Pen test and code review of our web app before the public launch. ([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Security audit before launch",
+                "locationPref": "Remote",
+                "maxBudget": 90000,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "ERP & CRM Systems"
+                ],
+                "categoryIds": [
+                    7
+                ],
+                "company": {
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": "3 months",
+                "jobId": 594,
+                "listingDesc": "We want a small CRM to track leads and follow-ups for 10 sales staff. ([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Need a CRM for our sales team",
+                "locationPref": "Bangkok",
+                "maxBudget": 200000,
+                "minBudget": 80000
+            },
+            {
+                "categories": [
+                    "Web Development",
+                    "Hardware & IoT",
+                    "UI/UX Design",
+                    "ERP & CRM Systems",
+                    "Digital Marketing & SEO"
+                ],
+                "categoryIds": [
+                    1,
+                    3,
+                    6,
+                    7,
+                    8
+                ],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-11-07",
+                "duration": null,
+                "jobId": 380,
+                "listingDesc": "Heterobobobwoooooo",
+                "listingStatus": "OPEN",
+                "listingTitle": "Fourier",
+                "locationPref": null,
+                "maxBudget": 1,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "Hardware & IoT",
+                    "IT Consulting & Security"
+                ],
+                "categoryIds": [
+                    3,
+                    4
+                ],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 368,
+                "listingDesc": "full laew",
+                "listingStatus": "OPEN",
+                "listingTitle": "Fourier",
+                "locationPref": null,
+                "maxBudget": 10,
+                "minBudget": null
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 109,
+                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 367,
+                "listingDesc": "f",
+                "listingStatus": "OPEN",
+                "listingTitle": "minnie",
+                "locationPref": null,
+                "maxBudget": null,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "Hardware & IoT"
+                ],
+                "categoryIds": [
+                    3
+                ],
+                "company": {
+                    "companyId": 109,
+                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 366,
+                "listingDesc": "so sleepy",
+                "listingStatus": "OPEN",
+                "listingTitle": "Minnie",
+                "locationPref": null,
+                "maxBudget": 500000,
+                "minBudget": 1100
+            },
+            {
+                "categories": [
+                    "Other"
+                ],
+                "categoryIds": [
+                    12
+                ],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-10-15",
+                "duration": "1 week",
+                "jobId": 365,
+                "listingDesc": "spiderman against the world",
+                "listingStatus": "OPEN",
+                "listingTitle": "spider web",
+                "locationPref": "hybrid",
+                "maxBudget": 100000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 352,
+                    "companyName": "Palaze Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 363,
+                "listingDesc": "y no 1 sent proposal",
+                "listingStatus": "OPEN",
+                "listingTitle": "Test no proposal job ",
+                "locationPref": null,
+                "maxBudget": null,
+                "minBudget": null
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 362,
+                "listingDesc": "testAgainagainAndAgain",
+                "listingStatus": "OPEN",
+                "listingTitle": "testAgain",
+                "locationPref": null,
+                "maxBudget": null,
+                "minBudget": null
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 361,
+                "listingDesc": "testAgainagainAndAgain",
+                "listingStatus": "OPEN",
+                "listingTitle": "testAgain",
+                "locationPref": null,
+                "maxBudget": null,
+                "minBudget": null
+            },
+            {
+                "categories": [
+                    "IT Consulting & Security"
+                ],
+                "categoryIds": [
+                    4
+                ],
+                "company": {
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 360,
+                "listingDesc": "testAgainagainAndAgainwowowowowowoowoowoowwooowwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwpkdddddddddddddddddddddddddddddddddddddddd;cvMWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWiqhwfuehquhgoegfoiqenvknroigoenrvqonvongqenroivnqionerivnqnerivnienvineivniq23456789000000000000000000000000000000000000000000000wcdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWVQEWW",
+                "listingStatus": "OPEN",
+                "listingTitle": "testAgain",
+                "locationPref": null,
+                "maxBudget": 8000,
+                "minBudget": null
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 111,
+            "totalPages": 10
+        }
+    }
+}

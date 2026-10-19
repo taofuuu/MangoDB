@@ -1,0 +1,10 @@
+{
+    "request": "POST /auth/login",
+    "status": 429,
+    "body": {
+        "error": {
+            "code": "TOO_MANY_REQUESTS",
+            "message": "Too many failed sign-in attempts. Try again in 15 minutes."
+        }
+    }
+}

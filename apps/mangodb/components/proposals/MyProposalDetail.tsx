@@ -1,23 +1,16 @@
 'use client';
 
-import type { ProviderProposal } from '@mangodb/shared';
+import type { SentProposal } from '@mangodb/shared';
 import { CalendarDays, Clock, Tag, X } from 'lucide-react';
-import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
-import { formatProposalDateTime } from '@/lib/proposals';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import { formatDateTime, formatMonths } from '@/lib/dates';
+import { formatBaht } from '@/lib/money';
 import ProposalStatusBadge from './ProposalStatusBadge';
 
 type MyProposalDetailProps = {
-    proposal: ProviderProposal;
+    proposal: SentProposal;
     onClose: () => void;
 };
-
-// Fixed en-US grouping (9,999), like SubmitProposalModal, so the price reads
-// the same whatever the browser's locale is.
-const PRICE_FORMAT = new Intl.NumberFormat('en-US');
-
-function formatDuration(duration: number): string {
-    return `${duration} ${duration === 1 ? 'month' : 'months'}`;
-}
 
 // The right-hand panel: everything the Provider sent, read back to them.
 // Everything here is already in the list row, so opening it needs no request.
@@ -25,7 +18,7 @@ export default function MyProposalDetail({
     proposal,
     onClose,
 }: MyProposalDetailProps) {
-    const receiverName = proposal.receiver?.companyName ?? 'Unknown company';
+    const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
 
     return (
         <section
@@ -35,7 +28,7 @@ export default function MyProposalDetail({
             <div className="flex items-start gap-4">
                 <CompanyAvatar
                     name={receiverName}
-                    photoUrl={proposal.receiver?.companyPhoto ?? null}
+                    photoUrl={proposal.recipient?.companyPhoto ?? null}
                     size={56}
                 />
                 <div className="min-w-0 flex-1">
@@ -46,7 +39,7 @@ export default function MyProposalDetail({
                     <p className="mt-0.5 flex items-center gap-1 type-xs text-brand">
                         <CalendarDays aria-hidden="true" className="size-4" />
                         <time dateTime={proposal.createdAt}>
-                            {formatProposalDateTime(proposal.createdAt)}
+                            {formatDateTime(proposal.createdAt)}
                         </time>
                     </p>
                 </div>
@@ -66,7 +59,7 @@ export default function MyProposalDetail({
                     <div className="type-xs">
                         <p>Offered Price</p>
                         <p className="text-ink">
-                            {PRICE_FORMAT.format(proposal.proposalBudget)} baht
+                            {formatBaht(proposal.proposalBudget)}
                         </p>
                     </div>
                 </div>
@@ -75,7 +68,7 @@ export default function MyProposalDetail({
                     <div className="type-xs">
                         <p>Estimated Duration</p>
                         <p className="text-ink">
-                            {formatDuration(proposal.duration)}
+                            {formatMonths(proposal.duration)}
                         </p>
                     </div>
                 </div>

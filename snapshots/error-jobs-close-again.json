@@ -1,0 +1,10 @@
+{
+    "request": "POST /jobs/<job_id>/close",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Only an open job can be closed"
+        }
+    }
+}

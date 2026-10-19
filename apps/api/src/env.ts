@@ -54,6 +54,10 @@ export function supabaseCredentials(): { url: string; key: string } {
     };
 }
 
+// Only src/seed.ts reads this: the password its snapshot_ accounts get. The
+// default is fine for a local database and is meant to look like what it is.
+export const SEED_PASSWORD = optional('SEED_PASSWORD', 'snapshot-dev-password');
+
 // Unset means "allow any origin", which is fine locally and is not fine
 // deployed. app.ts decides what to do about that; this only reports the value.
 export const FRONTEND_URL = process.env.FRONTEND_URL;

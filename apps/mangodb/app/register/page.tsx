@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { RegisterAccountType, SessionResponse } from '@mangodb/shared';
+import type { RegisterAccountType, RegisterRequest } from '@mangodb/shared';
 import { useRouter } from 'next/navigation';
 
 import RegisterLayout from '@/components/register/RegisterLayout';
@@ -13,26 +13,27 @@ import CompanyInfoStep, {
 import AccountInfoStep, {
     AccountInfoError,
     type AccountInfo,
-} from '@/components/register/AccountStep';
+} from '@/components/register/AccountInfoStep';
 import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
 import FieldError from '@/components/ui/FieldError';
+import {
+    validateConfirmPassword,
+    validatePassword,
+    validateUsername,
+} from '@/lib/validation/auth';
 import {
     normalizePhone,
     normalizeWebsiteUrl,
     validateCompanyDescription,
     validateCompanyName,
     validateCompanyType,
-    validateConfirmPassword,
     validateContactEmail,
     validateLocation,
-    validatePassword,
     validatePhone,
-    validateUsername,
     validateWebsite,
-    toFormErrors,
-} from '@/lib/validation';
-import { apiFetch } from '@/lib/api';
-import { clearCacheInEveryTab } from '@/lib/apiCache';
+} from '@/lib/validation/company';
+import { toFormErrors } from '@/lib/validation/formErrors';
+import { register } from '@/lib/session';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -208,11 +209,13 @@ export default function RegisterPage() {
     };
 
     const sendRegister = async () => {
+        // The role step's Next button is disabled until one is picked.
+        if (!accountType) return;
         setIsSubmitting(true);
 
         // Optional fields go out as undefined rather than an empty string,
         // which the API would read as a value and reject.
-        const payload = {
+        const payload: RegisterRequest = {
             companyName: companyInfo.companyName,
             companyDescription:
                 companyInfo.companyDescription.trim() || undefined,
@@ -223,23 +226,13 @@ export default function RegisterPage() {
             website: normalizeWebsiteUrl(companyInfo.website) ?? undefined,
             accountType,
             username: accountInfo.username,
-            password: accountInfo.password,
+            password: accountInfo.password ?? '',
             // Only reachable after Accept. The API takes nothing but `true`.
             tosAccepted: true,
         };
 
         try {
-            // The session is an httpOnly cookie set on this response, so
-            // there is nothing to store. The accessToken in the body is for
-            // callers that are not a browser — curl, Postman.
-            await apiFetch<SessionResponse>('/auth/register', {
-                method: 'POST',
-                body: JSON.stringify(payload),
-            });
-
-            // A new session: clear the cache in every tab, same as login does.
-            clearCacheInEveryTab();
-
+            await register(payload);
             setCurrentStep(RegisterStep.Success);
         } catch (error) {
             const { fields, message } = toFormErrors(error, REGISTER_FIELDS);
@@ -333,7 +326,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md border border-red-200 bg-red-50 p-3 type-sm font-medium text-red-600">
+                <div className="my-2 rounded-md border border-danger-tint bg-danger-wash p-3 type-sm font-medium text-danger">
                     {errorMessage}
                 </div>
             )}
@@ -370,13 +363,11 @@ export default function RegisterPage() {
 
             {currentStep === RegisterStep.Success && (
                 <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 text-3xl font-bold">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-tint text-brand type-hd !font-[700]">
                         ✓
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-800">
-                        Success
-                    </h1>
-                    <p className="mt-2 text-gray-600">
+                    <h1 className="type-hd !font-[700] text-ink">Success</h1>
+                    <p className="mt-2 text-ink-soft">
                         Your account has been created successfully.
                     </p>
                     <button

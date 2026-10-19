@@ -1,8 +1,8 @@
 'use client';
 
-import { SimpleTextInput } from '@/components/sm-detail/SimpleTextInput';
+import Input from '@/components/ui/Input';
 import type { Dispatch, SetStateAction } from 'react';
-import CompanyTypeField from '../forms/CompanyTypeField';
+import CompanyTypeField from '../profile/CompanyTypeField';
 
 export type CompanyInfo = {
     companyName: string;
@@ -26,7 +26,7 @@ export type CompanyInfoError = {
 
 type CompanyInfoStepProps = {
     value: CompanyInfo;
-    // The page's own state setter — see AccountStep for why it is updated
+    // The page's own state setter — see AccountInfoStep for why it is updated
     // directly rather than through a copy here.
     onChange: Dispatch<SetStateAction<CompanyInfo>>;
     errors?: CompanyInfoError;
@@ -90,20 +90,21 @@ export default function CompanyInfoStep({
 
     return (
         <div className="company-info-page flex flex-col gap-5 my-5">
-            <SimpleTextInput
-                title="Company Name"
+            <Input
+                label="Company Name*"
+                value={value.companyName ?? ''}
                 onChange={handleUpdateCompanyName}
-                initValue={value ? value.companyName : ''}
-                error={errors?.companyNameError || ''}
-                required
+                error={errors?.companyNameError}
                 maxLength={255}
+                placeholder="Type here..."
             />
-            <SimpleTextInput
-                title="Company Description"
+            <Input
+                label="Company Description"
+                value={value.companyDescription ?? ''}
                 onChange={handleUpdateCompanyDescription}
-                initValue={value ? value.companyDescription : ''}
-                error={errors?.companyDescriptionError || ''}
+                error={errors?.companyDescriptionError}
                 maxLength={2000}
+                placeholder="Type here..."
             />
 
             <CompanyTypeField
@@ -114,38 +115,40 @@ export default function CompanyInfoStep({
             />
 
             <div className="flex gap-4">
-                <SimpleTextInput
-                    title="Phone Number"
+                <Input
+                    label="Phone Number*"
+                    value={value.phoneNumber ?? ''}
                     onChange={handleUpdatePhoneNumber}
-                    initValue={value ? value.phoneNumber : ''}
-                    error={errors?.phoneNumberError || ''}
-                    required
+                    error={errors?.phoneNumberError}
                     type="tel"
                     maxLength={20}
+                    placeholder="Type here..."
                 />
-                <SimpleTextInput
-                    title="Email"
+                <Input
+                    label="Email*"
+                    value={value.email ?? ''}
                     onChange={handleUpdateEmail}
-                    initValue={value ? value.email : ''}
-                    error={errors?.emailError || ''}
-                    required
+                    error={errors?.emailError}
                     type="email"
                     maxLength={100}
+                    placeholder="Type here..."
                 />
             </div>
-            <SimpleTextInput
-                title="Address"
+            <Input
+                label="Address"
+                value={value.address ?? ''}
                 onChange={handleUpdateAddress}
-                initValue={value ? value.address : ''}
-                error={errors?.addressError || ''}
+                error={errors?.addressError}
                 maxLength={500}
+                placeholder="Type here..."
             />
-            <SimpleTextInput
-                title="Website"
+            <Input
+                label="Website"
+                value={value.website ?? ''}
                 onChange={handleUpdateWebsite}
-                initValue={value ? value.website : ''}
-                error={errors?.websiteError || ''}
+                error={errors?.websiteError}
                 maxLength={255}
+                placeholder="Type here..."
             />
         </div>
     );

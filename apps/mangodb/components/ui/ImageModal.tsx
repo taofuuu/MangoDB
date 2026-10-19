@@ -38,7 +38,7 @@ export default function ImageModal({ image, onClose }: ImageModalProps) {
             <div className="flex items-center justify-between gap-[1vw]">
                 <h2
                     id={titleId}
-                    className="truncate type-lg !font-[700] text-white"
+                    className="truncate type-lg !font-[700] text-surface-white"
                 >
                     {image.title}
                 </h2>
@@ -47,7 +47,7 @@ export default function ImageModal({ image, onClose }: ImageModalProps) {
                     type="button"
                     onClick={onClose}
                     aria-label="Close image"
-                    className="shrink-0 cursor-pointer px-[0.5vw] type-lg text-white/70 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="shrink-0 cursor-pointer px-[0.5vw] type-lg text-surface-white/70 transition-colors hover:text-surface-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface-white"
                 >
                     ✕
                 </button>

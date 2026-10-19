@@ -28,17 +28,13 @@ portfolioRoutes.post(
     createPortfolio,
 );
 
+// Owner-only: owning the portfolio is checked in the handler, so the role is
+// checked on create only.
 portfolioRoutes.patch(
     '/:portfolioId',
     requireAuth,
-    requireRole('provider'),
     uploadImage('portfolioImage'),
     updatePortfolio,
 );
 
-portfolioRoutes.delete(
-    '/:portfolioId',
-    requireAuth,
-    requireRole('provider'),
-    deletePortfolio,
-);
+portfolioRoutes.delete('/:portfolioId', requireAuth, deletePortfolio);

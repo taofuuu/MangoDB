@@ -1,10 +1,10 @@
 import Image from 'next/image';
-import DecorativePattern from './Decorate';
+import DecorativePattern from './DecorativePattern';
 import LoginForm from './LoginForm';
 
 export default function LoginCard() {
     return (
-        <div className="relative z-10 flex w-full max-w-4xl overflow-hidden rounded-[32px] bg-white p-4 shadow-2xl shadow-black/10">
+        <div className="relative z-10 flex w-full max-w-4xl overflow-hidden rounded-[32px] bg-surface-white p-4 shadow-2xl shadow-black/10">
             {/* Decorative inset panel — echoes the page's background pattern, floating inside the card */}
             <DecorativePattern
                 className="hidden shrink-0 rounded-3xl rounded-br-[calc(100vh*1366/2192)] md:block md:w-[300px] lg:w-[340px]"
@@ -21,10 +21,10 @@ export default function LoginCard() {
                         height={82}
                         priority
                     />
-                    <h1 className="text-2xl font-bold text-gray-900 sm:text-[36px]">
+                    <h1 className="type-lg !font-[700] text-ink sm:!text-[36px]">
                         MangoDB Cooperation
                     </h1>
-                    <p className="type-sm text-gray-600">
+                    <p className="type-sm text-ink-soft">
                         Welcome to B-B Business
                     </p>
                 </div>

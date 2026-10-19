@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import LoginCard from '@/components/auth/LoginCard';
-import DecorativePattern from '@/components/auth/Decorate';
+import DecorativePattern from '@/components/auth/DecorativePattern';
 
 export default function LoginPage() {
     return (

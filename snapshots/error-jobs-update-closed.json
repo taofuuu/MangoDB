@@ -1,0 +1,10 @@
+{
+    "request": "PATCH /jobs/<job_id>",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Only an open job can be edited"
+        }
+    }
+}

@@ -1,17 +1,30 @@
 import type { Request, Response } from 'express';
-import type { Prisma } from '../generated/prisma/client';
-import type { ListingStatus, ServiceListResponse } from '@mangodb/shared';
+import type {
+    ListingStatus,
+    ListingType,
+    Paginated,
+    ServiceSummary,
+} from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { assertCategoriesExist } from '../lib/categories';
-import { escapeLike } from '../lib/search';
-import { isRecordNotFound } from '../lib/prismaErrors';
+import { pageArgs, toPagination } from '../lib/pagination';
+import { ApiError } from '../lib/api-error';
+import { assertCategoriesExist } from '../lib/category';
+import { orNotFound } from '../lib/prisma-errors';
 import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
 import { omitUndefined } from '../lib/objects';
 import {
+    assertBudgetRange,
+    assertListingOwned,
+    assertListingVisible,
+    LISTING_MESSAGES,
+    categoryCreate,
+    categoryReplace,
+} from '../lib/listing';
+import {
     DEFAULT_LISTING_STATUS,
-    assertServiceOwned,
     ensureTechStack,
+    serviceOrderBy,
+    serviceSearchWhere,
     serviceSelect,
     serviceSummarySelect,
     toServiceFilterOptions,
@@ -22,13 +35,11 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createServiceSchema,
     serviceIdParamSchema,
-    SERVICE_BUDGET_RANGE_ERROR,
-    type ServiceListQuery,
     serviceListQuerySchema,
     serviceMineQuerySchema,
     updateServiceSchema,
 } from '../schemas/service.schema';
-import { minBudgetDoesNotExceedMax } from '../schemas/common.schema';
+import { BUDGET_RANGE_ERROR } from '../schemas/listing.schema';
 
 // Create and publish a service listing (provider-only; see routes).
 // Validates body, verifies category existence, and creates listing + service
@@ -40,10 +51,10 @@ export async function createService(
     const data = parseBody(createServiceSchema, req.body);
     const { companyId } = req.auth!;
 
-    const catIds = [...new Set(data.categoryIds)];
-    await assertCategoriesExist(catIds);
+    const categoryIds = data.categoryIds ?? [];
+    await assertCategoriesExist(categoryIds);
 
-    const techNames = await ensureTechStack(data.techStack);
+    const techNames = await ensureTechStack(data.techStack ?? []);
 
     const created = await prisma.listing.create({
         data: {
@@ -53,7 +64,7 @@ export async function createService(
             minBudget: data.minBudget ?? null,
             maxBudget: data.maxBudget ?? null,
             listingStatus: DEFAULT_LISTING_STATUS,
-            listingType: 'SERVICE',
+            listingType: 'SERVICE' satisfies ListingType,
             // ADR 0009. Each tech links to its tech_stack row, added above.
             service: {
                 create: {
@@ -64,13 +75,7 @@ export async function createService(
                     },
                 },
             },
-            ...(catIds.length > 0
-                ? {
-                      listingCategory: {
-                          create: catIds.map((catId) => ({ catId })),
-                      },
-                  }
-                : {}),
+            listingCategory: categoryCreate(categoryIds),
         },
         select: serviceSelect,
     });
@@ -89,22 +94,8 @@ export async function updateService(
     const { companyId } = req.auth!;
 
     // 404 for an unknown/non-service id; 403 for another provider's service.
-    const existing = await assertServiceOwned(serviceId, companyId);
-
-    const sentBudget =
-        body.minBudget !== undefined || body.maxBudget !== undefined;
-    if (
-        sentBudget &&
-        !minBudgetDoesNotExceedMax({
-            ...existing,
-            ...omitUndefined(body),
-        })
-    ) {
-        const field = body.minBudget === undefined ? 'maxBudget' : 'minBudget';
-        throw ApiError.validationFailed([
-            { field, message: SERVICE_BUDGET_RANGE_ERROR },
-        ]);
-    }
+    const existing = await assertListingOwned(serviceId, 'SERVICE', companyId);
+    assertBudgetRange(existing, body, BUDGET_RANGE_ERROR);
 
     if (body.categoryIds !== undefined) {
         await assertCategoriesExist(body.categoryIds);
@@ -119,24 +110,19 @@ export async function updateService(
     const techStackCreates = techNames?.map((techStackName) => ({
         techStack: { connect: { techStackName } },
     }));
-    try {
-        const updated = await prisma.listing.update({
+    const updated = await orNotFound(
+        prisma.listing.update({
             // Recheck owner and type in the write in case the row changed
             // between the authorization read and this operation.
-            where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
+            where: {
+                listingId: serviceId,
+                companyId,
+                listingType: 'SERVICE' satisfies ListingType,
+            },
             data: {
                 ...omitUndefined(listingFields),
                 ...(categoryIds !== undefined
-                    ? {
-                          listingCategory: {
-                              deleteMany: {},
-                              create: [...new Set(categoryIds)].map(
-                                  (catId) => ({
-                                      catId,
-                                  }),
-                              ),
-                          },
-                      }
+                    ? { listingCategory: categoryReplace(categoryIds) }
                     : {}),
                 ...(techStackCreates !== undefined
                     ? {
@@ -159,142 +145,11 @@ export async function updateService(
                     : {}),
             },
             select: serviceSelect,
-        });
+        }),
+        LISTING_MESSAGES.SERVICE.notFound,
+    );
 
-        res.json(toService(updated));
-    } catch (err) {
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Service listing not found');
-        }
-        throw err;
-    }
-}
-
-// US3-1. One word matches the service's title, description, category or tech
-// stack, or its company's name, ignoring case.
-function matchesKeyword(word: string): Prisma.ListingWhereInput {
-    const contains = {
-        contains: escapeLike(word),
-        mode: 'insensitive',
-    } as const;
-    return {
-        OR: [
-            { listingTitle: contains },
-            { listingDesc: contains },
-            {
-                listingCategory: {
-                    some: { category: { catName: contains } },
-                },
-            },
-            {
-                service: {
-                    serviceTechStack: {
-                        some: { techStack: { techStackName: contains } },
-                    },
-                },
-            },
-            { company: { companyName: contains } },
-        ],
-    };
-}
-
-// Everything in the query but the keyword and paging, typed from the schema
-// so a new filter is added in one place.
-type ServiceFilters = Omit<
-    ServiceListQuery,
-    'q' | 'orderBy' | 'page' | 'pageSize'
->;
-
-// US3-2. Picking two names in one group finds services with either of them,
-// so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
-// so a filter for "react" still finds a service that stored "React".
-function matchesFilters({
-    category = [],
-    techStack = [],
-    minPrice,
-    maxPrice,
-    companyId,
-}: ServiceFilters): Prisma.ListingWhereInput[] {
-    const where: Prisma.ListingWhereInput[] = [];
-    // Only narrows: the OPEN and not-deleted rules in listServices still
-    // apply, so a deleted company's id gives an empty page, not a 404.
-    if (companyId !== undefined) {
-        where.push({ companyId });
-    }
-    if (category.length > 0) {
-        where.push({
-            listingCategory: {
-                some: {
-                    category: {
-                        catName: { in: category, mode: 'insensitive' },
-                    },
-                },
-            },
-        });
-    }
-    if (techStack.length > 0) {
-        // ADR 0009: the service's own stack, not its company's.
-        where.push({
-            service: {
-                serviceTechStack: {
-                    some: {
-                        techStack: {
-                            techStackName: {
-                                in: techStack,
-                                mode: 'insensitive',
-                            },
-                        },
-                    },
-                },
-            },
-        });
-    }
-    // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. A one-sided range is open-ended only on
-    // its missing side; a service with no price at all cannot match a filter.
-    if (maxPrice !== undefined) {
-        // Its lowest price fits under the slider's max.
-        where.push({ minBudget: { lte: maxPrice } });
-    }
-    if (minPrice !== undefined) {
-        // Its highest price reaches the slider's min.
-        where.push({
-            OR: [
-                { maxBudget: { gte: minPrice } },
-                // A declared minimum with no upper limit can still reach the
-                // requested threshold. An entirely unpriced service cannot.
-                {
-                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
-                },
-            ],
-        });
-    }
-    return where;
-}
-
-// Ordering is applied in the database, before pagination. Price ordering uses
-// the start of the service's range consistently in both directions. Missing
-// prices sort last because "Contact for pricing" must not be presented as the
-// cheapest option. listingId keeps pages stable when values tie.
-function serviceOrderBy(
-    orderBy: ServiceListQuery['orderBy'],
-): Prisma.ListingOrderByWithRelationInput[] {
-    switch (orderBy) {
-        case 'price-asc':
-            return [
-                { minBudget: { sort: 'asc', nulls: 'last' } },
-                { maxBudget: { sort: 'asc', nulls: 'last' } },
-                { listingId: 'desc' },
-            ];
-        case 'price-desc':
-            return [
-                { minBudget: { sort: 'desc', nulls: 'last' } },
-                { maxBudget: { sort: 'desc', nulls: 'first' } },
-                { listingId: 'desc' },
-            ];
-        case 'newest':
-            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
-    }
+    res.json(toService(updated));
 }
 
 // US3-1. One page of open services for the search screen in the requested
@@ -305,25 +160,12 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         serviceListQuerySchema,
         req.query,
     );
-    // Each word is matched on its own, so "react payment" finds a service
-    // whose title says payment and whose company's stack has React.
-    const words = q?.split(/\s+/).filter(Boolean) ?? [];
-    // Search is discovery, so services of soft-deleted companies stay hidden.
-    // A soft delete leaves their listings OPEN, so this filter is what does it.
-    const where: Prisma.ListingWhereInput = {
-        listingType: 'SERVICE',
-        listingStatus: 'OPEN' satisfies ListingStatus,
-        company: { deletedAt: null },
-        // T3.2.6. Keyword words and filters share one AND list, so a service
-        // must pass all of them. Two AND keys would let one replace the other.
-        AND: [...words.map(matchesKeyword), ...matchesFilters(filters)],
-    };
+    const where = serviceSearchWhere({ q, ...filters });
     const [totalItems, listings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             // listingId breaks ties, so two services created in the same
             // instant never swap places between pages.
             orderBy: serviceOrderBy(orderBy),
@@ -331,14 +173,9 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         }),
     ]);
 
-    const body: ServiceListResponse = {
+    const body: Paginated<ServiceSummary> = {
         items: listings.map(toServiceSummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);
@@ -353,8 +190,8 @@ export async function getServiceFilterOptions(
 ): Promise<void> {
     const [categories, techStack] = await prisma.$transaction([
         prisma.category.findMany({
-            orderBy: { catName: 'asc' },
-            select: { catName: true },
+            orderBy: { categoryName: 'asc' },
+            select: { categoryName: true },
         }),
         prisma.techStack.findMany({
             where: {
@@ -362,8 +199,8 @@ export async function getServiceFilterOptions(
                     some: {
                         service: {
                             listing: {
-                                listingType: 'SERVICE',
-                                listingStatus: 'OPEN',
+                                listingType: 'SERVICE' satisfies ListingType,
+                                listingStatus: 'OPEN' satisfies ListingStatus,
                                 company: { deletedAt: null },
                             },
                         },
@@ -382,23 +219,20 @@ export async function listMyServices(
     req: Request,
     res: Response,
 ): Promise<void> {
-    if (!req.auth?.companyId) {
-        throw ApiError.unauthorized('Company ID is required');
-    }
-    const { companyId } = req.auth;
+    const { companyId } = req.auth!;
     const { status } = parseQuery(serviceMineQuerySchema, req.query);
 
     const listings = await prisma.listing.findMany({
         where: {
             companyId,
-            listingType: 'SERVICE', // Defensive: explicit type filter
+            listingType: 'SERVICE' satisfies ListingType,
             ...(status ? { listingStatus: status } : {}),
         },
         orderBy: { createdAt: 'desc' },
         select: serviceSelect,
     });
 
-    res.status(200).json(listings.map(toService));
+    res.json(listings.map(toService));
 }
 
 // GET /services/:serviceId. Any company can read an OPEN service of an active
@@ -414,24 +248,13 @@ export async function getService(req: Request, res: Response): Promise<void> {
     const listing = await prisma.listing.findUnique({
         where: {
             listingId: serviceId,
-            listingType: 'SERVICE', // Defensive: explicit type filter
+            listingType: 'SERVICE' satisfies ListingType,
             company: { deletedAt: null },
         },
         select: serviceSelect,
     });
 
-    if (!listing) {
-        throw ApiError.notFound('Listing not found');
-    }
-
-    if (
-        listing.listingStatus !== ('OPEN' satisfies ListingStatus) &&
-        listing.companyId !== companyId
-    ) {
-        throw ApiError.notFound('Listing not found');
-    }
-
-    res.status(200).json(toService(listing));
+    res.json(toService(assertListingVisible(listing, companyId, 'SERVICE')));
 }
 
 // DELETE /services/:serviceId. Hard delete. listingCategory, the service row
@@ -449,7 +272,7 @@ export async function deleteService(
 
     // Checked before the write, same split as deletePortfolio: 404 for an
     // unknown/non-SERVICE id, 403 for another company's.
-    await assertServiceOwned(serviceId, companyId);
+    await assertListingOwned(serviceId, 'SERVICE', companyId);
 
     // US2-4: a service with at least one project linked to it can't be
     // deleted. A project links to the listing through its proposal.
@@ -470,17 +293,17 @@ export async function deleteService(
         select: { portfolioImage: true },
     });
 
-    try {
-        await prisma.listing.delete({
-            where: { listingId: serviceId, companyId, listingType: 'SERVICE' },
-        });
-    } catch (err) {
-        // Deleted between assertServiceOwned and here.
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Service listing not found');
-        }
-        throw err;
-    }
+    // A 404 if it was deleted between the ownership check and here.
+    await orNotFound(
+        prisma.listing.delete({
+            where: {
+                listingId: serviceId,
+                companyId,
+                listingType: 'SERVICE' satisfies ListingType,
+            },
+        }),
+        LISTING_MESSAGES.SERVICE.notFound,
+    );
 
     // Best-effort cleanup of every portfolio image file: a failed remove
     // logs but won't block the 204, and the DB rows are already gone either

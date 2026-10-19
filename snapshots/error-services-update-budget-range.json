@@ -7,7 +7,7 @@
             "details": [
                 {
                     "field": "minBudget",
-                    "message": "minBudget must be less than or equal to maxBudget"
+                    "message": "Minimum budget cannot exceed maximum budget"
                 }
             ],
             "message": "Request body is invalid"

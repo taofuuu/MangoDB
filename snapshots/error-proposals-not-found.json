@@ -1,10 +1,10 @@
 {
-    "request": "POST /job-postings/2147483647/proposals",
+    "request": "POST /jobs/2147483647/proposals",
     "status": 404,
     "body": {
         "error": {
             "code": "NOT_FOUND",
-            "message": "Job posting not found"
+            "message": "Job not found"
         }
     }
 }

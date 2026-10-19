@@ -21,15 +21,15 @@ import {
 } from '@/lib/companies';
 import {
     PROFILE_FIELDS,
-    toFormErrors,
     validateProfile,
     type ProfileErrors,
-} from '@/lib/validation';
+    type ProfileFormData,
+} from '@/lib/validation/company';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import type { StatusMessageData } from '@/components/ui/StatusMessage';
 import CompanyProfileForm, {
-    ProfileFormData,
     toUpdateRequest,
-} from '@/components/forms/CompanyProfileForm';
+} from '@/components/profile/CompanyProfileForm';
 
 function EditProfilePageInner() {
     const router = useRouter();
@@ -178,7 +178,7 @@ function EditProfilePageInner() {
     };
 
     // US6-4. The confirm modal collects the admin's own password and hands it
-    // here. Deliberately uncaught: DeleteConfirmationModal's onConfirm already
+    // here. Deliberately uncaught: ConfirmModal's onConfirm already
     // catches and shows a thrown error's .message as the modal's error line,
     // so a wrong password (401) surfaces there instead of navigating away.
     const handleDeleteAccount = async (adminPassword: string) => {

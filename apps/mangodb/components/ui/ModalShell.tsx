@@ -11,7 +11,7 @@ import { createPortal } from 'react-dom';
 
 // The overlay behaviour every modal in this app needs, written once.
 //
-// There were seven modal shells. One — DeleteConfirmationModal — had the full
+// There were seven modal shells. One — now ConfirmModal — had the full
 // lifecycle; three had no `useEffect` around the overlay at all, so pressing
 // Escape did nothing, the page behind kept scrolling, and closing the modal
 // dropped focus to the top of the document. None of the seven trapped focus, so

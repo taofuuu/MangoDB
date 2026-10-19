@@ -5,15 +5,15 @@ import Link from 'next/link';
 import type { CompanySummary, PublicCompanyProfile } from '@mangodb/shared';
 import { X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import CompanyAvatar from '@/components/viewprofile/CompanyAvatar';
+import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import ModalShell from '@/components/ui/ModalShell';
-import RoleTags from '@/components/ui/RoleTags';
+import RoleTags from '@/components/companies/RoleTags';
 import { describeError } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { isProviderAccount } from '@/lib/roles';
 
 const detailPanelBaseClassName =
-    'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_rgba(73,123,147,0.25)]';
+    'flex h-[72.63vh] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] text-left shadow-[0_0_8px_color-mix(in_srgb,var(--color-brand)_25%,transparent)]';
 const listDetailPanelClassName = `${detailPanelBaseClassName} w-[34vw]`;
 const popupDetailPanelClassName = `${detailPanelBaseClassName} w-full max-w-[calc(100vw-2rem)] sm:w-[45vw]`;
 
@@ -109,7 +109,7 @@ function DetailBody({
             {/* The panel is a summary; the profile page has the rest, such
                 as portfolio and certificates. */}
             <Link
-                href={`/profile/${company.companyId}`}
+                href={`/companies/${company.companyId}`}
                 className="mt-[1.85vh] self-start type-sm !font-[600] text-brand hover:underline"
             >
                 View full profile

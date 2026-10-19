@@ -1,11 +1,12 @@
 import type {
     CreateProposalRequest,
-    PostingProposal,
+    Paginated,
     Project,
     Proposal,
-    ProposalListResponse,
     ProposalStatus,
     ProposalStatusCounts,
+    ReceivedProposal,
+    SentProposal,
 } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { cachedGet, invalidateAfter } from '@/lib/apiCache';
@@ -15,13 +16,13 @@ import { PROPOSAL_PAGE_SIZE } from './pagination';
 // certificate and portfolio helpers. The caller supplies the selected job
 // posting; the API derives the Provider from the signed-in session.
 export function createProposal(
-    jobPostingId: number,
+    jobId: number,
     body: CreateProposalRequest,
 ): Promise<Proposal> {
     // A new proposal changes /proposals/mine. Job postings carry no proposal
     // data, so nothing else needs clearing.
     return invalidateAfter(
-        apiFetch<Proposal>(`/job-postings/${jobPostingId}/proposals`, {
+        apiFetch<Proposal>(`/jobs/${jobId}/proposals`, {
             method: 'POST',
             body: JSON.stringify(body),
         }),
@@ -29,30 +30,34 @@ export function createProposal(
     );
 }
 
-// US2-10. Fetch submitted proposals for a given job posting listing ID
-export function getSubmittedProposals(
-    jobPostingId: number,
-): Promise<PostingProposal[]> {
-    return apiFetch<PostingProposal[]>(
-        `/job-postings/${jobPostingId}/proposals`,
-        {
-            method: 'GET',
-        },
+// US2-10. The proposals sent to one of the caller's jobs.
+export function listJobProposals(jobId: number): Promise<ReceivedProposal[]> {
+    const path = `/jobs/${jobId}/proposals`;
+    return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
+}
+
+// POST /proposals/:proposalId/accept. Accepting closes the job and rejects the
+// other proposals, so the job lists and every proposal list are stale after it.
+export function acceptProposal(proposalId: number): Promise<Project> {
+    return invalidateAfter(
+        apiFetch<Project>(`/proposals/${proposalId}/accept`, {
+            method: 'POST',
+        }),
+        '/jobs',
+        '/proposals',
     );
 }
 
-// Accept a proposal (POST /proposals/:proposalId/accept)
-export function acceptProposal(proposalId: number): Promise<Project> {
-    return apiFetch<Project>(`/proposals/${proposalId}/accept`, {
-        method: 'POST',
-    });
-}
-
-// Reject a proposal (POST /proposals/:proposalId/reject)
+// POST /proposals/:proposalId/reject. Only that proposal changes, but it is
+// shown in the job's proposal list and in its sender's.
 export function rejectProposal(proposalId: number): Promise<void> {
-    return apiFetch<void>(`/proposals/${proposalId}/reject`, {
-        method: 'POST',
-    });
+    return invalidateAfter(
+        apiFetch<void>(`/proposals/${proposalId}/reject`, {
+            method: 'POST',
+        }),
+        '/jobs',
+        '/proposals',
+    );
 }
 export interface GetMyProposalsOptions {
     status?: ProposalStatus | undefined;
@@ -63,7 +68,7 @@ export function listMyProposals(
     page: number = 1,
     pageSize: number = PROPOSAL_PAGE_SIZE,
     options?: GetMyProposalsOptions,
-): Promise<ProposalListResponse> {
+): Promise<Paginated<SentProposal>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -74,20 +79,7 @@ export function listMyProposals(
     }
 
     const path = `/proposals/mine?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<ProposalListResponse>(path));
-}
-
-// The "dd/mm/yyyy hh:mm" stamp on a proposal card, in the viewer's local time.
-// Built by hand rather than with toLocaleString, whose order and separators
-// change with the browser's locale.
-export function formatProposalDateTime(iso: string): string {
-    const date = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, '0');
-
-    return (
-        `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ` +
-        `${pad(date.getHours())}:${pad(date.getMinutes())}`
-    );
+    return cachedGet(path, () => apiFetch<Paginated<SentProposal>>(path));
 }
 
 // US2-9. The numbers on the Your Proposals chips. createProposal's

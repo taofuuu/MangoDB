@@ -1,97 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# apps/mangodb — the web app
 
-## Getting Started
+Next.js 16 (App Router), React 19 and Tailwind v4. The rules for writing code
+here are in [`docs/conventions.md`](../../docs/conventions.md) (§16 is this
+app's layout) and, shorter, in [`docs/ai-brief.md`](../../docs/ai-brief.md).
+This page is how to run it and where things are.
 
-First, run the development server:
+## Run it
+
+Node 22 or newer. From the repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp apps/mangodb/.env.example apps/mangodb/.env
+npm run dev -w api
+npm run dev -w mangodb
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Talking to the API
-
-Pages that read or write data need `apps/api` running on port 4000.
-
-**The browser never calls the API directly.** `next.config.ts` rewrites
-`/api/*` to the API server, so every request the browser makes is same-origin.
-That is what lets the session cookie work with no CORS involved, and keeps it
-working when the two halves are deployed to different hosts. The API's address
-is `API_URL` — a server-side variable, not `NEXT_PUBLIC_*`, because only the
-Next server needs to know it. See `.env.example`.
-
-### The session is a cookie, and nothing here stores it
-
-`POST /auth/login` sets an httpOnly cookie on its response and the browser
-carries it from there. There is **nothing in `localStorage`**, no token to
-attach and no `setToken` to call — httpOnly means JavaScript cannot read the
-cookie, which is the point: an injected script cannot steal a session it cannot
-see.
-
-`lib/session.ts` has `login`, `adminLogin`, `logout` and `redirectToLogin`.
-None of them stores anything; they report who signed in.
-
-### Calling an endpoint
-
-`lib/api.ts` is the shared client. `apiFetch` sends credentials, sets the right
-content type (and stays out of the way for `FormData`), and turns the API's
-error envelope into an `ApiRequestError` carrying the error `code` and one
-`details[]` entry per rejected field — what a form needs to put a message
-beside the right input.
-
-Two helpers come with it, and using them is the convention rather than a
-suggestion:
-
-- `describeError(err, overrides?)` — the sentence to show the user. Pass
-  per-status overrides for page-specific wording; do not write a seventh
-  version of this function.
-- `isNotSignedIn(err)` / `NOT_SIGNED_IN` — for the "log in, then come back"
-  branch, which is not an error the user caused.
-
-**Every endpoint gets a function in `lib/`** — `companies.ts`, `portfolios.ts`,
-`certificate.ts`, `session.ts`. Calling `apiFetch` inline from a component is
-why renaming one endpoint used to touch four files.
+The app is on [http://localhost:3000](http://localhost:3000). Pages that read
+or write data need the API running on port 4000 (the second command).
 
 Sign in at [`/login`](http://localhost:3000/login), or
 [`/admin/login`](http://localhost:3000/admin/login) for an administrator.
-`npm run db:seed -w api` creates accounts you can use — the 20 original seeded
-companies cannot log in, their `password` column holds a plain string rather
-than a hash.
+`npm run db:seed -w api` creates the `snapshot_` accounts you can use. The 20
+original seeded companies cannot sign in: their `password` column holds a
+plain string, not a hash.
 
-### Styling
+## Check it
 
-Colours are tokens, not hex literals: `bg-brand`, `text-ink`, `border-line`.
-They are declared in `app/globals.css`. The project's type scale is `type-hd`
-through `type-xs` — **not** `text-lg` etc., which are Tailwind's own.
+```bash
+npm run verify          # format, lint, typecheck and unit tests, both apps
+npm test -w mangodb     # only this app's unit tests (lib/**/*.test.ts)
+npm run build -w mangodb
+```
 
-Native scrollbars are styled globally in `app/globals.css`. Do not add a
-page-specific scrollbar class; any element that becomes scrollable picks up the
-shared `#AFAFAF` colour. WebKit/Blink scrollbar width scales from the 1920px
-reference but is clamped to a usable 6–10px range; Firefox uses its native
-`thin` width.
+CI runs `verify` and `build` on every pull request.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Talking to the API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**The browser never calls the API directly.** `next.config.ts` rewrites
+`/api/*` to the API server, so every request is same-origin. That lets the
+session cookie work with no CORS, and keeps working when the two halves are
+deployed to different hosts. The API's address is `API_URL`, a server-side
+variable rather than `NEXT_PUBLIC_*`, because only the Next server needs it.
 
-## Learn More
+**The session is an httpOnly cookie, and nothing here stores it.**
+`POST /auth/login` sets it and the browser carries it. There is nothing in
+`localStorage` and no token to attach. JavaScript cannot read the cookie,
+which is the point: an injected script cannot steal a session it cannot see.
+`lib/session.ts` has `login`, `adminLogin`, `register`, `logout` and
+`redirectToUnauthorized`.
 
-To learn more about Next.js, take a look at the following resources:
+**Every endpoint has a function in `lib/<noun>.ts`** (`jobs.ts`,
+`services.ts`, `proposals.ts`, …). Reads go through `cachedGet`, writes through
+`invalidateAfter`. `lib/api.ts` is the client underneath: `apiFetch`, and the
+`ApiRequestError` it throws, with `describeError(err)` for the sentence to
+show and `isNotSignedIn(err)` for the redirect.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things are
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Folder               | Holds                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `app/<route>/`       | One page per URL. URLs mirror the API: `/jobs/[jobId]/proposals`                         |
+| `components/<noun>/` | One folder per API noun: `jobs`, `services`, `proposals`, …                              |
+| `components/ui/`     | Pieces that know no resource: `ModalShell`, `Dropdown`, …                                |
+| `lib/`               | Requests, and the helpers: `dates`, `money`, `pagination`, `validation/`, `useMyCompany` |
 
-## Deploy on Vercel
+## Styling
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Colours are tokens declared in `app/globals.css` (`bg-brand`, `text-ink`,
+`border-line`), never hex values or Tailwind's own palette. Sizes are the
+`type-hd` to `type-xs` scale, not Tailwind's `text-*`. Figma is drawn at
+1920×1080, so a pixel size becomes `vw`/`vh` against that frame.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Native scrollbars are styled once, globally, in `app/globals.css`; do not add
+a page-specific scrollbar class.

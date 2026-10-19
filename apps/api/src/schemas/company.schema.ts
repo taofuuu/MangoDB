@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { COMPANY_SORT_ORDERS } from '@mangodb/shared';
-import { httpUrl, int4Id, thaiPhone } from './common.schema';
+import { httpUrl, int4Id, thaiPhone, pageQueryFields } from './common.schema';
 import { BCRYPT_MAX_BYTES, fitsBcryptLimit } from '../auth/password';
 
 // One definition per editable column, shared by registration (US1-1) and the
@@ -51,7 +51,7 @@ export const companyFields = {
     warrantyPolicy: z.string().trim().max(2000),
 } as const;
 
-// The columns a unique index can reject. prismaErrors uses this to decide which
+// The columns a unique index can reject. lib/prisma-errors.ts uses this to decide which
 // constraint names are worth reporting back to the caller.
 export const COMPANY_UNIQUE_FIELDS = ['username', 'email'] as const;
 
@@ -98,8 +98,9 @@ export type UpdateCompanyProfileInput = z.infer<
 // password, because each one is a way to take the account over: move the email
 // and you own the login, change the password and the owner is locked out. A
 // token alone is not enough for that.
+// strictObject: a misspelled key is a 400, not a 200 that changed nothing.
 export const changeCredentialsSchema = z
-    .object({
+    .strictObject({
         currentPassword: companyFields.passwordAttempt,
         username: companyFields.username,
         email: companyFields.email,
@@ -130,6 +131,5 @@ export const companyListQuerySchema = z.object({
     // bounds how many words one request can split into.
     q: z.string().trim().max(100).optional(),
     orderBy: z.enum(COMPANY_SORT_ORDERS).default('nameAsc'),
-    page: z.coerce.number().int().positive().default(1),
-    pageSize: z.coerce.number().int().min(1).max(50).default(12),
+    ...pageQueryFields,
 });

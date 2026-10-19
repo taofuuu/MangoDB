@@ -3,8 +3,14 @@
     "status": 400,
     "body": {
         "error": {
-            "code": "BAD_REQUEST",
-            "message": "Expiration date cannot be before the issue date"
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "expireYear",
+                    "message": "Expiration date cannot be before the issue date"
+                }
+            ],
+            "message": "Request body is invalid"
         }
     }
 }

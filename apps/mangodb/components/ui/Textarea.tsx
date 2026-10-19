@@ -41,7 +41,7 @@ export default function Textarea({
                 onChange={(e) => onChange(e.target.value)}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${inputId}-error` : undefined}
-                className={`block w-full resize-none rounded-input border border-brand bg-white px-[0.83vw] py-[1vh] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none ${className} ${
+                className={`block w-full resize-none rounded-input border border-brand bg-surface-white px-[0.83vw] py-[1vh] type-sm text-ink placeholder:text-line focus:ring-1 focus:ring-brand focus:outline-none ${className} ${
                     error
                         ? 'border-danger focus:border-danger focus:ring-danger'
                         : 'border-brand focus:border-brand focus:ring-brand'

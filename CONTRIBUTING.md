@@ -2,8 +2,6 @@
 
 When contributing to this repository, please first discuss the change you wish to make via /issue with team members before making a change.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
-
 ## Commit Messages
 
 Write clear commit message for easier reviews and bug fixing. One commit should contains only a specific change (by the following types below), and **commit often**
@@ -18,10 +16,13 @@ Try follow these conventional commit format:
 - `fix` : Fix bug of `feat` commits
 - `refactor` : Restructure the code, doesn't change code's behaviour
 - `perf` : special `refactor` commit, that improve performance
-- `style` : white-space, formatiing, missing indent/semi-colon etc.
+- `style` : white-space, formatting, missing indent/semi-colon etc.
 - `docs` : Documentation commits
+- `test` : Adding or fixing tests, snapshots included
 - `chore` : Miscellaneous commits (e.g. modifying `.gitignore`)
-- `(scope)`: Scope of the commit (optional)
+- `(scope)`: Scope of the commit (optional): `web`, `api`, `shared`, `scripts`, `snapshots`
+
+No AI attribution in a commit or a pull request: no `Co-Authored-By` line for an assistant, no "Generated with" line.
 
 ## Git Workflow
 
@@ -46,8 +47,9 @@ Create new branch to work on a specific task (e.g. new feature, bug fix)
 
 Try using this naming convention
 
-- `feature/feature-name`
-- `bugfix/bug-description`
+- `feat/short-name` for a feature
+- `fix/short-description` for a bug fix
+- `docs/`, `refactor/` or `test/` when that is the whole branch, the same words as the commit types
 
 #### Create Branch
 
@@ -121,7 +123,7 @@ After pushing the branch to remote repo, to merge seperate branch back to `main`
 2. Select `Files changed`
 3. Review and Check changes.
     - Leaves comment if there is/are any notice by pointing at that line of code and click the `+` sign
-    - Add Suggestion ![alt text](image.png) to suggest a commit to the code
+    - Add Suggestion ![the suggestion button](docs/images/github-suggestion-button.png) to suggest a commit to the code
 4. After finish reviewing changes, select `Review Changes`
     - If the code **needs correction or changes**, select `Request changes`
       and write your suggestion
@@ -132,12 +134,33 @@ After pushing the branch to remote repo, to merge seperate branch back to `main`
 
 After PR successfully merged, select `Delete branch` to clean branch history
 
+## Before You Push
+
+Node 22 or newer. Then, from the repository root:
+
+```
+npm run verify
+```
+
+It runs Prettier, ESLint, the TypeScript check and the unit tests for both
+apps, the same as CI. `npm test` runs only the tests, and `npm run build` the
+production build (CI runs that too).
+
+- **Accounts to sign in with:** `npm run db:seed -w api` creates the
+  `snapshot_` provider, receiver and admin accounts. It touches only rows
+  named `snapshot_`.
+- **If you changed an API response,** run `bash scripts/snapshot-api.sh` with
+  the API running, then `git diff snapshots/`, and commit what changed with a
+  line on why. Do not commit while the script runs: the pre-commit hook moves
+  files under it.
+
 ## Database
 
 One shared Supabase database. There is no local database on your machine.
 
 - **Never** run `prisma migrate dev`. It deletes columns that are missing from your branch's schema.
 - **Never** add or change columns in the Supabase web UI.
+- **Never** run `npm run db:pull`. It rewrites `schema.prisma` from the database, which strips every comment and drops relation options such as `onDelete: Restrict`.
 - All `npm run db:*` commands run from the repo root.
 
 ### After You Pull

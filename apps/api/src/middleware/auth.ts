@@ -2,8 +2,8 @@ import type { NextFunction, Request, Response } from 'express';
 import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
-import { ApiError } from '../lib/ApiError';
-import { isCompanyDeleted } from '../lib/companyDeletion';
+import { ApiError } from '../lib/api-error';
+import { isCompanyDeleted } from '../lib/company-deletion';
 import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';

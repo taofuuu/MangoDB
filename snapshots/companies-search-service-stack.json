@@ -6,6 +6,7 @@
             {
                 "accountType": "PROVIDER",
                 "categories": [
+                    "IT Consulting & Security",
                     "Web Development"
                 ],
                 "companyDescription": null,
@@ -15,6 +16,8 @@
                 "contactEmail": null,
                 "phone": "0810000001",
                 "techStack": [
+                    "Node.js",
+                    "React",
                     "<run>-Node.js",
                     "<run>-React"
                 ],

@@ -25,8 +25,10 @@ The bits worth knowing before you start:
 - **Check whether the table already exists.** `listing`, `service`,
   `job_requirement`, `proposal` and `project` all do, and three Sprint 2 tasks
   are worded as if they do not.
-- **`prisma migrate dev --create-only`**, read the SQL, then
-  `npm run db:migrate`. Never plain `migrate dev`, never the dashboard.
+- **`prisma migrate diff`**, read the SQL, then `npm run db:migrate`, as
+  `CONTRIBUTING.md` describes. Never `migrate dev`, not even with
+  `--create-only`, and never the dashboard. (This line said `--create-only`
+  until round 2 Phase 9.)
 - **The ownership check has two right shapes** — 403 separate from 404, or
   folded into it — and which one is right depends on whether the ids are
   discoverable. Say which you picked and why, or the next person picks the other.

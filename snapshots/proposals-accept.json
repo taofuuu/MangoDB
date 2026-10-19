@@ -1,0 +1,11 @@
+{
+    "request": "POST /proposals/<proposal_id>/accept",
+    "status": 201,
+    "body": {
+        "projectId": "<project_id>",
+        "projectStatus": "ACTIVE",
+        "proposalId": "<proposal_id>",
+        "startDate": "<today>",
+        "totalBudget": 95000
+    }
+}

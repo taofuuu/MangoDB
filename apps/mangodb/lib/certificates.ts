@@ -1,6 +1,7 @@
 import type { Certificate } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { cachedGet, invalidateAfter } from '@/lib/apiCache';
+import { formatMonthYear } from '@/lib/dates';
 
 // Every certificate request in one place, so a path or a method is written
 // once. Three of these four used to be `apiFetch` called inline from a form,
@@ -19,12 +20,15 @@ export function listMyCertificates(): Promise<Certificate[]> {
 
 // The one read of someone else's: another company's certificates, for its
 // public profile. Any signed-in company may call it.
-export function listCompanyCertificates(
-    companyId: number,
-): Promise<Certificate[]> {
+export function listCertificates({
+    companyId,
+}: {
+    companyId: number;
+}): Promise<Certificate[]> {
     const query = new URLSearchParams({ companyId: String(companyId) });
 
-    return apiFetch<Certificate[]>(`/certificates?${query.toString()}`);
+    const path = `/certificates?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Certificate[]>(path));
 }
 
 // FormData, not JSON: both writes carry the image, so the whole body is
@@ -57,4 +61,22 @@ export function deleteCertificate(certificateId: number): Promise<void> {
         }),
         '/certificates',
     );
+}
+
+// The date line under a certificate: "Issued May 2024 · Expires May 2027".
+// Every part is optional, so it keeps whatever was filled in rather than
+// rendering a half-empty "Issued  ".
+export function formatCertificatePeriod(
+    dates: Pick<
+        Certificate,
+        'issueMonth' | 'issueYear' | 'expireMonth' | 'expireYear'
+    >,
+): string {
+    const issued = formatMonthYear(dates.issueMonth, dates.issueYear);
+    const expires = formatMonthYear(dates.expireMonth, dates.expireYear);
+
+    if (issued && expires) return `Issued ${issued} · Expires ${expires}`;
+    if (issued) return `Issued ${issued}`;
+    if (expires) return `Expires ${expires}`;
+    return '';
 }

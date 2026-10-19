@@ -4,7 +4,8 @@
 
 ## Status
 
-Accepted
+Accepted. The "existing names do not match yet" consequence is superseded by
+[ADR 0020](0020-only-service-and-job-above-the-database.md), which renames them.
 
 ## Context
 

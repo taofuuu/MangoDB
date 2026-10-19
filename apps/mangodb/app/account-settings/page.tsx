@@ -12,10 +12,11 @@ import {
 } from '@/lib/companies';
 import { redirectToLogin, redirectToUnauthorized } from '@/lib/session';
 import LogoutButton from '@/components/auth/LogoutButton';
-import DeleteAccountModal from '@/components/ui/DeleteAccountModal';
+import DeleteAccountModal from '@/components/auth/DeleteAccountModal';
+import SuccessModal from '@/components/ui/SuccessModal';
 import EditAccountModal, {
     type EditAccountMode,
-} from '@/components/forms/EditAccountModal';
+} from '@/components/auth/EditAccountModal';
 
 const LABELS: Record<EditAccountMode, string> = {
     username: 'Username',
@@ -95,7 +96,7 @@ export default function AccountPage() {
         try {
             await deleteMyAccount();
         } catch (err) {
-            // Rethrown so DeleteConfirmationModal catches and displays the error (e.g. 409 ongoing project)
+            // Rethrown so ConfirmModal catches and displays the error (e.g. 409 ongoing project)
             throw new Error(describeError(err));
         }
 
@@ -114,7 +115,7 @@ export default function AccountPage() {
     return (
         <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">
-                <header className="border-b border-gray-200 pb-4">
+                <header className="border-b border-line pb-4">
                     <h1 className="type-lg font-bold text-ink">
                         Account Settings
                     </h1>
@@ -145,16 +146,16 @@ export default function AccountPage() {
                         )}
 
                         {/* Account Information Card with Segmented Rows */}
-                        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                            <div className="p-6 pb-4 border-b border-gray-100">
+                        <div className="rounded-xl border border-line bg-surface-white shadow-sm overflow-hidden">
+                            <div className="p-6 pb-4 border-b border-line">
                                 <h2 className="type-md font-semibold text-ink">
                                     Account Information
                                 </h2>
                             </div>
 
-                            <div className="divide-y divide-gray-100">
+                            <div className="divide-y divide-line">
                                 {/* 1. Username Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Username
@@ -169,7 +170,7 @@ export default function AccountPage() {
                                             openEditModal('username')
                                         }
                                         aria-label="Edit Username"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -182,7 +183,7 @@ export default function AccountPage() {
                                 </div>
 
                                 {/* 2. Email Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Email
@@ -195,7 +196,7 @@ export default function AccountPage() {
                                         type="button"
                                         onClick={() => openEditModal('email')}
                                         aria-label="Edit Email"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -208,7 +209,7 @@ export default function AccountPage() {
                                 </div>
 
                                 {/* 3. Change Password Row */}
-                                <div className="flex items-center justify-between p-6 py-4 hover:bg-gray-50/50 transition-colors">
+                                <div className="flex items-center justify-between p-6 py-4 hover:bg-fill-subtle/50 transition-colors">
                                     <div>
                                         <span className="block type-xs text-ink-soft">
                                             Password
@@ -223,7 +224,7 @@ export default function AccountPage() {
                                             openEditModal('password')
                                         }
                                         aria-label="Change Password"
-                                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                        className="p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer"
                                     >
                                         <Image
                                             src={penIcon}
@@ -238,7 +239,7 @@ export default function AccountPage() {
                         </div>
 
                         {/* Session */}
-                        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-white p-6 shadow-sm">
                             <div>
                                 <h2 className="type-md font-semibold text-ink">
                                     Logout
@@ -253,7 +254,7 @@ export default function AccountPage() {
                         </div>
 
                         {/* Danger Zone */}
-                        <div className="rounded-xl border border-red-200 bg-red-50/40 p-6 shadow-sm">
+                        <div className="rounded-xl border border-danger-tint bg-danger-wash/40 p-6 shadow-sm">
                             <h2 className="type-md font-semibold text-danger">
                                 Danger Zone
                             </h2>
@@ -297,57 +298,14 @@ export default function AccountPage() {
                 onConfirm={handleDeleteAccount}
             />
 
-            {/* Deletion Result Modal */}
-            {deletionSuccess && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-[2.6vh]">
-                    <section
-                        role="alertdialog"
-                        aria-modal="true"
-                        aria-labelledby="deletion-result-title"
-                        aria-describedby="deletion-result-desc"
-                        className="rounded-[20px] max-h-[92vh] w-full max-w-[24vw] min-w-[280px] bg-surface text-ink px-[1.8vw] py-[2.6vh] shadow-xl text-center max-md:max-w-[75vw] max-sm:max-w-[90vw] max-md:px-[4vw]"
-                    >
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger-tint text-danger">
-                            <svg
-                                className="h-6 w-6"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                                aria-hidden="true"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
-                        </div>
-                        <h2
-                            id="deletion-result-title"
-                            className="type-md font-semibold text-ink mt-3"
-                        >
-                            Account Deleted
-                        </h2>
-                        <p
-                            id="deletion-result-desc"
-                            className="type-xs text-ink-soft mt-2 leading-relaxed"
-                        >
-                            Your account has been successfully deleted. Please
-                            note that records of your past projects and reviews
-                            have been retained. You will now be redirected to
-                            the login page.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={redirectToLogin}
-                            className="mt-5 w-full rounded-[14px] h-[3.8vh] min-h-[34px] px-3 bg-danger type-xs text-surface font-semibold transition-colors hover:bg-danger-hover cursor-pointer"
-                        >
-                            Go to Login
-                        </button>
-                    </section>
-                </div>
-            )}
+            {/* The account is gone; every way out goes to the login page. */}
+            <SuccessModal
+                isOpen={deletionSuccess}
+                onClose={redirectToLogin}
+                title="Account Deleted"
+                message="Your account has been successfully deleted. Please note that records of your past projects and reviews have been retained. You will now be redirected to the login page."
+                actionLabel="Go to Login"
+            />
         </main>
     );
 }

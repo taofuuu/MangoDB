@@ -1,0 +1,27 @@
+{
+    "request": "GET /jobs/<job_id>",
+    "status": 200,
+    "body": {
+        "categories": [
+            "Web Development"
+        ],
+        "categoryIds": [
+            1
+        ],
+        "company": {
+            "companyId": 143,
+            "companyName": "Snapshot Seed Receiver",
+            "companyPhoto": null
+        },
+        "createdAt": "<timestamp>",
+        "deadline": "2028-12-31",
+        "duration": "2 Months",
+        "jobId": "<job_id>",
+        "listingDesc": "Looking for developer team",
+        "listingStatus": "CLOSED",
+        "listingTitle": "Snapshot Probe job posting",
+        "locationPref": "Remote",
+        "maxBudget": 150000,
+        "minBudget": 50000
+    }
+}

@@ -3,14 +3,14 @@
     "status": 400,
     "body": {
         "error": {
-            "code": "BAD_REQUEST",
+            "code": "VALIDATION_FAILED",
             "details": [
                 {
                     "field": "photo",
                     "message": "Choose an image first"
                 }
             ],
-            "message": "Provide an image to upload"
+            "message": "Request body is invalid"
         }
     }
 }

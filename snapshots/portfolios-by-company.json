@@ -10,6 +10,15 @@
             "portfolioLink": "https://snapshot.local/portfolio",
             "portfolioName": "Snapshot seed portfolio",
             "serviceId": 25
+        },
+        {
+            "developmentDate": "2025-01-15",
+            "portfolioDescription": "A past project shown as an example of this service. ([demo] dummy data)",
+            "portfolioId": 95,
+            "portfolioImage": "https://placeholder.example.com/no-image.png",
+            "portfolioLink": "https://example.com/demo/142/0",
+            "portfolioName": "[demo] Retail POS platform",
+            "serviceId": 505
         }
     ]
 }

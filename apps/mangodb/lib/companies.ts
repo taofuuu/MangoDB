@@ -1,14 +1,15 @@
 import type {
     AccountType,
-    CompanyAccountDetail,
-    CompanyAccountListResponse,
-    CompanyListResponse,
-    PublicCompanyProfile,
-    CompanySortOrder,
     ChangeCredentialsRequest,
     ChangeCredentialsResponse,
+    CompanyAccountDetail,
+    CompanyAccountSummary,
     CompanyProfile,
+    CompanySortOrder,
+    CompanySummary,
     DeleteCompanyAccountRequest,
+    Paginated,
+    PublicCompanyProfile,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -18,21 +19,6 @@ import { cachedGet, invalidateAfter } from './apiCache';
 // name and photo are copied into service cards, job postings and the admin
 // list, and deleting a company hides its listings everywhere. These writes are
 // rare, so a full refetch costs little.
-
-// The API's ids are int4, so anything else could never name a company. Caught
-// here rather than sent, because the API answers a malformed id with 400, and
-// to the reader "/profile/abc" is just as much a company that is not there.
-const MAX_INT4 = 2_147_483_647;
-
-// The [companyId] segment of /profile/[companyId] and the pages under it.
-export function parseCompanyId(
-    raw: string | string[] | undefined,
-): number | null {
-    if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
-
-    const id = Number(raw);
-    return id >= 1 && id <= MAX_INT4 ? id : null;
-}
 
 export interface GetCompanyAccountsOptions {
     q?: string | undefined;
@@ -85,7 +71,7 @@ export function listCompanyAccounts(
     page: number,
     pageSize: number,
     options?: GetCompanyAccountsOptions,
-): Promise<CompanyAccountListResponse> {
+): Promise<Paginated<CompanyAccountSummary>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -102,7 +88,9 @@ export function listCompanyAccounts(
     }
 
     const path = `/admin/companies?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<CompanyAccountListResponse>(path));
+    return cachedGet(path, () =>
+        apiFetch<Paginated<CompanyAccountSummary>>(path),
+    );
 }
 
 export function getCompanyAccountDetail(
@@ -120,7 +108,7 @@ export function listCompanies(
     pageSize: number,
     q?: string,
     orderBy: CompanySortOrder = 'nameAsc',
-): Promise<CompanyListResponse> {
+): Promise<Paginated<CompanySummary>> {
     const query = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
@@ -131,13 +119,15 @@ export function listCompanies(
         query.set('q', q.trim());
     }
 
-    return apiFetch<CompanyListResponse>(`/companies?${query.toString()}`);
+    const path = `/companies?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompanySummary>>(path));
 }
 
 export function getCompanyProfile(
     companyId: number,
 ): Promise<PublicCompanyProfile> {
-    return apiFetch<PublicCompanyProfile>(`/companies/${companyId}`);
+    const path = `/companies/${companyId}`;
+    return cachedGet(path, () => apiFetch<PublicCompanyProfile>(path));
 }
 
 export function updateCompanyAccount(

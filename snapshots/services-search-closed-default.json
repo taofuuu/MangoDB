@@ -5,58 +5,67 @@
         "items": [
             {
                 "categories": [
-                    "Mobile App Development",
-                    "Web Development"
+                    "UI/UX Design"
                 ],
                 "company": {
-                    "companyId": 231,
-                    "companyName": "Acme Solutions Ltd.",
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
                     "companyPhoto": null
                 },
-                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
-                "maxBudget": 50000,
-                "minBudget": null,
-                "serviceId": 60,
-                "techStack": []
+                "listingDesc": "A two-week review of your app flows, with a report and Figma redesigns of the worst screens. ([demo] dummy data)",
+                "listingTitle": "[demo] UX review of your product",
+                "maxBudget": 60000,
+                "minBudget": 25000,
+                "serviceId": 593,
+                "techStack": [
+                    "Figma"
+                ]
             },
             {
                 "categories": [
-                    "Mobile App Development",
-                    "Web Development"
+                    "Mobile App Development"
                 ],
                 "company": {
-                    "companyId": 231,
-                    "companyName": "Acme Solutions Ltd.",
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
                     "companyPhoto": null
                 },
-                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
-                "maxBudget": 50000,
-                "minBudget": 15000,
-                "serviceId": 59,
-                "techStack": []
+                "listingDesc": "One React Native codebase for both stores, with push notifications and analytics. ([demo] dummy data)",
+                "listingTitle": "[demo] Mobile app for iOS and Android",
+                "maxBudget": 400000,
+                "minBudget": 150000,
+                "serviceId": 592,
+                "techStack": [
+                    "Firebase",
+                    "React Native"
+                ]
             },
             {
                 "categories": [
-                    "Mobile App Development",
                     "Web Development"
                 ],
                 "company": {
-                    "companyId": 231,
-                    "companyName": "Acme Solutions Ltd.",
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
                     "companyPhoto": null
                 },
-                "listingTitle": "บริการพัฒนา Web Application ด้วย Node.js และ React",
-                "maxBudget": 50000,
-                "minBudget": 15000,
-                "serviceId": 58,
-                "techStack": []
+                "listingDesc": "We build fast, SEO-friendly company websites with Next.js and a simple CMS. ([demo] dummy data)",
+                "listingTitle": "[demo] Company website in Next.js",
+                "maxBudget": 120000,
+                "minBudget": 40000,
+                "serviceId": 591,
+                "techStack": [
+                    "Next.js",
+                    "Tailwind CSS",
+                    "TypeScript"
+                ]
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 3,
-            "totalItems": 35,
-            "totalPages": 12
+            "totalItems": 106,
+            "totalPages": 36
         }
     }
 }

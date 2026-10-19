@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "FORBIDDEN",
-            "message": "This listing belongs to another company"
+            "message": "This service belongs to another company"
         }
     }
 }

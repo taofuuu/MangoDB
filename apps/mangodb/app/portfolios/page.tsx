@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { redirectToUnauthorized } from '@/lib/session';
 import type { ServicePortfolio } from '@mangodb/shared';
-import PortfolioCard from '@/components/portfolio/PortfolioCard';
-import PortfolioRow from '@/components/portfolio/PortfolioRow';
+import PortfolioCard from '@/components/portfolios/PortfolioCard';
+import PortfolioRow from '@/components/portfolios/PortfolioRow';
 import ImageModal, { type ExpandedImage } from '@/components/ui/ImageModal';
-import ViewToggle, { PortfolioView } from '@/components/portfolio/ViewToggle';
-import DeletePortfolioModal from '@/components/ui/DeletePortfolioModal';
-import EditPortfolioForm from '@/components/forms/EditPortfolioForm';
+import EmptyState from '@/components/ui/EmptyState';
+import ViewToggle, { PortfolioView } from '@/components/portfolios/ViewToggle';
+import DeletePortfolioModal from '@/components/portfolios/DeletePortfolioModal';
+import PortfolioForm from '@/components/portfolios/PortfolioForm';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 import { listPortfolios, deletePortfolio } from '@/lib/portfolios';
@@ -40,7 +41,7 @@ export default function PortfolioPage() {
     // revoked token lands in the same place.
     useEffect(() => {
         getMyProfile()
-            .then((profile) => listPortfolios(profile.companyId))
+            .then((profile) => listPortfolios({ companyId: profile.companyId }))
             .then(setItems)
             .catch((err: unknown) => {
                 if (isNotSignedIn(err)) {
@@ -116,9 +117,7 @@ export default function PortfolioPage() {
             )}
 
             {items?.length === 0 && (
-                <p className="mt-[4.5vh] type-md !font-[400] text-ink-soft">
-                    No portfolio items yet.
-                </p>
+                <EmptyState title="No portfolio items yet" />
             )}
 
             {items && view === 'grid' && (
@@ -163,7 +162,8 @@ export default function PortfolioPage() {
             />
 
             {pendingEdit && (
-                <EditPortfolioForm
+                <PortfolioForm
+                    mode="edit"
                     key={pendingEdit.portfolioId}
                     portfolio={pendingEdit}
                     onClose={() => setPendingEdit(null)}

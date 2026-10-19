@@ -12,8 +12,10 @@
 // rewrite that seed, this adds a small set of accounts that are ours: one
 // prefix on every name, so this script can only ever touch rows it created.
 //
-// It does not replace the existing seed data and does not delete anything.
+// It does not replace the existing seed data. The one thing it deletes is the
+// spent probe accounts the snapshot script leaves behind (pruneProbeAccounts).
 
+import { IS_PRODUCTION, SEED_PASSWORD } from './env';
 import { prisma } from './lib/prisma';
 import { hashPassword } from './auth/password';
 
@@ -21,10 +23,9 @@ import { hashPassword } from './auth/password';
 // this file's and never somebody's real test account.
 const PREFIX = 'snapshot';
 
-// Overridable, because the same password ends up in scripts/.env.snapshot and
-// some people will want their own. The default is fine for a local database
-// and is meant to look like what it is.
-const PASSWORD = process.env.SEED_PASSWORD ?? 'snapshot-dev-password';
+// SEED_PASSWORD in .env, because the same password ends up in
+// scripts/.env.snapshot and some people will want their own.
+const PASSWORD = SEED_PASSWORD;
 
 const LISTING_TITLE = 'Snapshot seed service listing';
 const PORTFOLIO_LINK = 'https://snapshot.local/portfolio';
@@ -140,8 +141,8 @@ async function upsertListing(providerId: number): Promise<number> {
             select: { listingId: true },
         }));
 
-    // The child row is what makes this listing a service rather than a job
-    // posting — see Phase 1e, nothing else distinguishes the two today.
+    // listingType says this is a service; the service row is what the
+    // service endpoints join on, so it has to exist as well.
     await prisma.service.upsert({
         where: { listingId: listing.listingId },
         update: {},
@@ -231,7 +232,7 @@ async function pruneProbeAccounts(): Promise<number> {
 
 async function main(): Promise<void> {
     // These are known credentials. On a real deployment that is an open door.
-    if (process.env.NODE_ENV === 'production') {
+    if (IS_PRODUCTION) {
         throw new Error('Refusing to seed with NODE_ENV=production');
     }
 

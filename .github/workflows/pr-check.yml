@@ -42,13 +42,10 @@ jobs:
                   # prisma.config.ts's env("DIRECT_URL") presence check.
                   DIRECT_URL: 'postgresql://user:password@localhost:5432/placeholder'
 
-            # Format, lint and typecheck. Same command anyone can run locally.
+            # Format, lint, typecheck and the unit tests. Same command anyone can
+            # run locally. The tests mock the database and storage, so no secrets.
             - name: Verify
               run: npm run verify
-
-            # Unit tests. They mock the database and storage, so no secrets.
-            - name: Test
-              run: npm test
 
             - name: Build
               run: npm run build

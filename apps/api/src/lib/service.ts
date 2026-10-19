@@ -2,13 +2,18 @@
 // single source of truth for its values. Browse filters and proposal logic
 // should import from here instead of hardcoding strings.
 import type {
+    CompanyBrief,
     ListingStatus,
+    ListingType,
+    Service,
     ServiceFilterOptions,
-    ServiceListing,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from './prisma';
-import { ApiError } from './ApiError';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
+import { containsWord, splitWords } from './search';
+import type { Prisma } from '../generated/prisma/client';
+import type { ServiceListQuery } from '../schemas/service.schema';
 
 // The status a new service is created with. The allowed listing_status values
 // live in packages/shared (LISTING_STATUSES, ADR 0010).
@@ -22,7 +27,7 @@ export const serviceTechStackSelect = {
             select: { techStack: { select: { techStackName: true } } },
         },
     },
-} as const;
+} as const satisfies Prisma.ServiceDefaultArgs;
 
 export type ServiceTechStackRow = {
     serviceTechStack: { techStack: { techStackName: string } }[];
@@ -39,7 +44,7 @@ export function toTechStackNames(service: ServiceTechStackRow): string[] {
 // ADR 0009. The spelling to store for each tech name. One already in
 // tech_stack is reused whatever its case, so "react" links to "React" instead
 // of adding a second row. A new name keeps the case it was typed in.
-export async function resolveTechStack(names: string[]): Promise<string[]> {
+async function resolveTechStack(names: string[]): Promise<string[]> {
     // "React" and "react" in one request are one tech, spelled as typed first.
     const typed = names.filter(
         (name, i) =>
@@ -82,14 +87,12 @@ export const serviceSelect = {
     minBudget: true,
     maxBudget: true,
     listingStatus: true,
-    listingCategory: { select: { catId: true } },
+    listingCategory: { select: { categoryId: true } },
     service: serviceTechStackSelect,
-    // Only the name: the company row also holds the sign-in email and
-    // password hash (ADR 0001).
-    company: { select: { companyName: true } },
-} as const;
+    company: { select: companyBriefSelect },
+} as const satisfies Prisma.ListingSelect;
 
-type SelectedService = {
+type ServiceRow = {
     listingId: number;
     companyId: number | null;
     listingTitle: string;
@@ -97,61 +100,173 @@ type SelectedService = {
     minBudget: number | null;
     maxBudget: number | null;
     listingStatus: string;
-    listingCategory: { catId: number }[];
+    listingCategory: { categoryId: number }[];
     service: ServiceTechStackRow;
-    company: { companyName: string } | null;
+    company: CompanyBrief | null;
 };
 
-export function toService(row: SelectedService): ServiceListing {
+export function toService(row: ServiceRow): Service {
     return {
         // listing_id is the shared key under every listing; on the wire it
-        // takes the resource's name, the way a job posting's is jobPostingId.
+        // takes the resource's name, the way a job's is jobId.
         serviceId: row.listingId,
-        companyId: row.companyId,
-        companyName: row.company?.companyName ?? null,
+        company: toCompanyBrief(row.company),
         type: 'SERVICE',
         listingTitle: row.listingTitle,
         listingDesc: row.listingDesc,
         minBudget: row.minBudget,
         maxBudget: row.maxBudget,
-        listingStatus: row.listingStatus,
-        categoryIds: row.listingCategory.map((c) => c.catId),
+        // Only ever written from LISTING_STATUSES (conventions §6).
+        listingStatus: row.listingStatus as ListingStatus,
+        categoryIds: row.listingCategory.map((c) => c.categoryId),
         techStack: toTechStackNames(row.service),
     };
 }
 
-// Checked before any write, same split as assertPortfolioOwned (lib/
-// portfolio.ts): 404 for an id that doesn't exist or isn't a SERVICE
-// listing, 403 for one that exists but belongs to another company. A JOB
-// listing with this id is treated as not-found here — it isn't this
-// endpoint's resource, and 403 would wrongly confirm it exists.
-export async function assertServiceOwned(
-    serviceId: number,
-    companyId: number,
-): Promise<{ minBudget: number | null; maxBudget: number | null }> {
-    const listing = await prisma.listing.findUnique({
-        where: { listingId: serviceId },
-        select: {
-            companyId: true,
-            listingType: true,
-            minBudget: true,
-            maxBudget: true,
+// US3-1. Where one word may appear on a service itself: its title,
+// description, a category or a tech name. The company search reuses it.
+export function serviceTextMatches(word: string): Prisma.ListingWhereInput[] {
+    const contains = containsWord(word);
+    return [
+        { listingTitle: contains },
+        { listingDesc: contains },
+        { listingCategory: { some: { category: { categoryName: contains } } } },
+        {
+            service: {
+                serviceTechStack: {
+                    some: { techStack: { techStackName: contains } },
+                },
+            },
         },
-    });
+    ];
+}
 
-    if (!listing || listing.listingType !== 'SERVICE') {
-        throw ApiError.notFound('Service listing not found');
-    }
-
-    // companyId is nullable on an orphaned listing, which never equals a
-    // real companyId, so that case lands on 403 without a branch of its own.
-    if (listing.companyId !== companyId) {
-        throw ApiError.forbidden('This listing belongs to another company');
-    }
-
+// US3-1. One word matches the service itself or its company's name.
+export function serviceKeywordWhere(word: string): Prisma.ListingWhereInput {
     return {
-        minBudget: listing.minBudget,
-        maxBudget: listing.maxBudget,
+        OR: [
+            ...serviceTextMatches(word),
+            { company: { companyName: containsWord(word) } },
+        ],
+    };
+}
+
+// Everything in the query but the keyword and paging, typed from the schema
+// so a new filter is added in one place.
+export type ServiceFilters = Omit<
+    ServiceListQuery,
+    'q' | 'orderBy' | 'page' | 'pageSize'
+>;
+
+// US3-2. Picking two names in one group finds services with either of them,
+// so Web + Mobile widens the list. Each group used narrows it. Case is ignored,
+// so a filter for "react" still finds a service that stored "React".
+export function serviceFilterWhere({
+    category = [],
+    techStack = [],
+    minPrice,
+    maxPrice,
+    companyId,
+}: ServiceFilters): Prisma.ListingWhereInput[] {
+    const where: Prisma.ListingWhereInput[] = [];
+    // Only narrows: the OPEN and not-deleted rules in serviceSearchWhere still
+    // apply, so a deleted company's id gives an empty page, not a 404.
+    if (companyId !== undefined) {
+        where.push({ companyId });
+    }
+    if (category.length > 0) {
+        where.push({
+            listingCategory: {
+                some: {
+                    category: {
+                        categoryName: { in: category, mode: 'insensitive' },
+                    },
+                },
+            },
+        });
+    }
+    if (techStack.length > 0) {
+        // ADR 0009: the service's own stack, not its company's.
+        where.push({
+            service: {
+                serviceTechStack: {
+                    some: {
+                        techStack: {
+                            techStackName: {
+                                in: techStack,
+                                mode: 'insensitive',
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+    // Price keeps a service whose range overlaps the slider's, so a deal is
+    // possible somewhere inside both. A one-sided range is open-ended only on
+    // its missing side; a service with no price at all cannot match a filter.
+    if (maxPrice !== undefined) {
+        // Its lowest price fits under the slider's max.
+        where.push({ minBudget: { lte: maxPrice } });
+    }
+    if (minPrice !== undefined) {
+        // Its highest price reaches the slider's min.
+        where.push({
+            OR: [
+                { maxBudget: { gte: minPrice } },
+                // A declared minimum with no upper limit can still reach the
+                // requested threshold. An entirely unpriced service cannot.
+                {
+                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
+                },
+            ],
+        });
+    }
+    return where;
+}
+
+// Ordering is applied in the database, before pagination. Price ordering uses
+// the start of the service's range consistently in both directions. Missing
+// prices sort last because "Contact for pricing" must not be presented as the
+// cheapest option. listingId keeps pages stable when values tie.
+export function serviceOrderBy(
+    orderBy: ServiceListQuery['orderBy'],
+): Prisma.ListingOrderByWithRelationInput[] {
+    switch (orderBy) {
+        case 'priceAsc':
+            return [
+                { minBudget: { sort: 'asc', nulls: 'last' } },
+                { maxBudget: { sort: 'asc', nulls: 'last' } },
+                { listingId: 'desc' },
+            ];
+        case 'priceDesc':
+            return [
+                { minBudget: { sort: 'desc', nulls: 'last' } },
+                { maxBudget: { sort: 'desc', nulls: 'first' } },
+                { listingId: 'desc' },
+            ];
+        case 'newest':
+            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
+    }
+}
+
+// US3-1. Which services the search may return. Search is discovery, so
+// services of soft-deleted companies stay hidden: a soft delete leaves their
+// listings OPEN, so this filter is what does it.
+export function serviceSearchWhere({
+    q,
+    ...filters
+}: ServiceFilters & { q?: string | undefined }): Prisma.ListingWhereInput {
+    return {
+        listingType: 'SERVICE' satisfies ListingType,
+        listingStatus: 'OPEN' satisfies ListingStatus,
+        company: { deletedAt: null },
+        // T3.2.6. Keyword words and filters share one AND list, so a service
+        // must pass all of them. Two AND keys would let one replace the other.
+        AND: [
+            ...splitWords(q).map(serviceKeywordWhere),
+            ...serviceFilterWhere(filters),
+        ],
     };
 }
 
@@ -164,17 +279,11 @@ export const serviceSummarySelect = {
     minBudget: true,
     maxBudget: true,
     listingCategory: {
-        select: { category: { select: { catName: true } } },
+        select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
-    company: {
-        select: {
-            companyId: true,
-            companyName: true,
-            companyPhoto: true,
-        },
-    },
-} as const;
+    company: { select: companyBriefSelect },
+} as const satisfies Prisma.ListingSelect;
 
 interface ServiceSummaryRow {
     listingId: number;
@@ -182,20 +291,12 @@ interface ServiceSummaryRow {
     listingDesc: string;
     minBudget: number | null;
     maxBudget: number | null;
-    listingCategory: { category: { catName: string } }[];
+    listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
-    company: {
-        companyId: number;
-        companyName: string;
-        companyPhoto: string | null;
-    } | null;
+    company: CompanyBrief | null;
 }
 
 export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
-    // The search only returns listings that have a company; company_id is
-    // still nullable in the schema (conventions §11).
-    const company = row.company!;
-
     return {
         serviceId: row.listingId,
         listingTitle: row.listingTitle,
@@ -204,18 +305,14 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
         maxBudget: row.maxBudget,
         // Sorted: Prisma returns related rows in no fixed order.
         categories: row.listingCategory
-            .map(({ category }) => category.catName)
+            .map(({ category }) => category.categoryName)
             .sort(),
         techStack: toTechStackNames(row.service),
-        company: {
-            companyId: company.companyId,
-            companyName: company.companyName,
-            companyPhoto: company.companyPhoto,
-        },
+        company: toCompanyBrief(row.company),
     };
 }
 
-type ServiceFilterCategoryRow = { catName: string };
+type ServiceFilterCategoryRow = { categoryName: string };
 type ServiceFilterTechStackRow = { techStackName: string };
 
 // Keeps the lookup endpoint's wire shape explicit instead of returning raw
@@ -225,7 +322,7 @@ export function toServiceFilterOptions(
     techStack: ServiceFilterTechStackRow[],
 ): ServiceFilterOptions {
     return {
-        categories: categories.map(({ catName }) => catName),
+        categories: categories.map(({ categoryName }) => categoryName),
         techStack: techStack.map(({ techStackName }) => techStackName),
     };
 }

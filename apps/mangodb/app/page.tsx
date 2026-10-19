@@ -83,24 +83,14 @@ const ROUTES = [
         detail: 'US3-1 — search and filter service listings. Calls GET /services.',
     },
     {
-        href: '/job-postings',
+        href: '/jobs',
         title: 'View and search for job',
         detail: 'Epic 3: ทำเกิน ;-;',
     },
     {
-        href: '/job-postings/mine',
+        href: '/jobs/mine',
         title: 'View own job posting',
         detail: 'US2-7',
-    },
-    {
-        href: '/job-postings/by-company',
-        title: 'View job posting by company (Just for test)',
-        detail: 'US2-7',
-    },
-    {
-        href: '/proposal/view',
-        title: 'View proposal',
-        detail: 'US2-10',
     },
     {
         href: '/unauthorized',
@@ -113,12 +103,12 @@ export default function Home() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
             <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
-                <h1 className="text-4xl font-bold text-ink">MangoDB</h1>
+                <h1 className="type-hd !font-[700] text-ink">MangoDB</h1>
                 <p className="mt-3 text-brand">Welcome to MangoDB.</p>
 
                 <Link
                     href="/register"
-                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-white transition hover:bg-brand-dark"
+                    className="mt-6 inline-block w-full rounded-[20px] bg-brand px-8 py-3 font-bold text-surface-white transition hover:bg-brand-dark"
                 >
                     Sign Up
                 </Link>
@@ -133,12 +123,12 @@ export default function Home() {
                             <li key={route.href}>
                                 <Link
                                     href={route.href}
-                                    className="block rounded-lg border border-brand/30 bg-white p-3 text-left transition hover:bg-brand/10"
+                                    className="block rounded-lg border border-brand/30 bg-surface-white p-3 text-left transition hover:bg-brand/10"
                                 >
                                     <span className="block type-sm font-bold text-ink">
                                         {route.title}
                                     </span>
-                                    <span className="mt-0.5 block type-xs text-gray-600">
+                                    <span className="mt-0.5 block type-xs text-ink-soft">
                                         {route.detail}
                                     </span>
                                 </Link>

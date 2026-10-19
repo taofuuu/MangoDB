@@ -3,6 +3,9 @@
 **Status: done.** Ships `scripts/snapshot-api.sh`, its node helper,
 `apps/api/src/seed.ts`, and the 46-file `snapshots/` baseline.
 
+> Round 2 re-recorded the baseline and added calls; see
+> [round-2/phase-0-safety-net.md](round-2/phase-0-safety-net.md).
+
 ## What problem this solves
 
 There are no automated tests. The 75 "Test: Done" rows in the sprint sheet are

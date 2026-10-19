@@ -1,6 +1,6 @@
 import type { CompanyAccountSummary } from '@mangodb/shared';
 import { Star } from 'lucide-react';
-import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
+import RoleTags from './RoleTags';
 
 interface CompanyCardProps {
     company: CompanyAccountSummary;
@@ -8,8 +8,6 @@ interface CompanyCardProps {
 }
 
 export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
-    const isProvider = isProviderAccount(company.accountType);
-    const isReceiver = isReceiverAccount(company.accountType);
     const roundedRating = Math.round(company.averageRating ?? 0);
 
     return (
@@ -17,20 +15,15 @@ export default function CompanyCard({ company, onSelect }: CompanyCardProps) {
             type="button"
             onClick={() => onSelect(company.companyId)}
             aria-label={`View details for ${company.companyName}`}
-            className="flex h-[28.70vh] min-h-[28.70vh] w-full flex-col justify-between rounded-input border border-line bg-white p-[0.83vw] text-left shadow-sm transition hover:-translate-y-[0.19vh] hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+            className="flex h-[28.70vh] min-h-[28.70vh] w-full flex-col justify-between rounded-input border border-line bg-surface-white p-[0.83vw] text-left shadow-sm transition hover:-translate-y-[0.19vh] hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
         >
             <div className="min-w-0">
-                <div className="mb-[1.11vh] flex min-h-[2.22vh] flex-wrap gap-[0.42vw]">
-                    {isProvider && (
-                        <span className="rounded-status bg-role-provider px-[0.63vw] py-[0.19vh] type-xs !font-[600] text-white">
-                            Provider
-                        </span>
-                    )}
-                    {isReceiver && (
-                        <span className="rounded-status bg-brand-light px-[0.63vw] py-[0.19vh] type-xs !font-[600] text-white">
-                            Receiver
-                        </span>
-                    )}
+                <div className="mb-[1.11vh] min-h-[2.22vh]">
+                    <RoleTags
+                        accountType={company.accountType}
+                        className="flex-wrap gap-[0.42vw]"
+                        tagClassName="h-auto px-[0.63vw] py-[0.19vh] type-xs !font-[600]"
+                    />
                 </div>
 
                 <h2 className="mb-[0.56vh] truncate type-md !font-[700] text-ink">

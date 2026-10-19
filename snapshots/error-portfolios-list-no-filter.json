@@ -1,0 +1,16 @@
+{
+    "request": "GET /portfolios",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "companyId",
+                    "message": "Provide companyId or serviceId"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

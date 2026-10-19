@@ -1,6 +1,10 @@
 import type { ServicePortfolio } from '@mangodb/shared';
 import { prisma } from './prisma';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
+import { toDateOnly } from './dates';
+import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
+import { PORTFOLIO_UNIQUE_FIELDS } from '../schemas/portfolio.schema';
+import type { Prisma } from '../generated/prisma/client';
 
 // The columns a portfolio response may carry. Naming them keeps the response
 // shape deliberate rather than "whatever the row has", and gives POST the
@@ -13,9 +17,9 @@ export const portfolioSelect = {
     developmentDate: true,
     portfolioImage: true,
     portfolioLink: true,
-} as const;
+} as const satisfies Prisma.ServicePortfolioSelect;
 
-type SelectedPortfolio = {
+type PortfolioRow = {
     portfolioId: number;
     listingId: number;
     portfolioName: string;
@@ -30,14 +34,14 @@ type SelectedPortfolio = {
 // goes through here instead of handing the raw Prisma result to res.json.
 // @db.Date columns come back at UTC midnight, so slicing the ISO string is a
 // plain YYYY-MM-DD with no timezone drift.
-export function toServicePortfolio(row: SelectedPortfolio): ServicePortfolio {
+export function toServicePortfolio(row: PortfolioRow): ServicePortfolio {
     return {
         portfolioId: row.portfolioId,
         // The service's listing_id, named for the resource (GET /services/:serviceId).
         serviceId: row.listingId,
         portfolioName: row.portfolioName,
         portfolioDescription: row.portfolioDescription,
-        developmentDate: row.developmentDate.toISOString().slice(0, 10),
+        developmentDate: toDateOnly(row.developmentDate),
         portfolioImage: row.portfolioImage,
         portfolioLink: row.portfolioLink,
     };
@@ -71,4 +75,16 @@ export async function assertPortfolioOwned(
     }
 
     return { portfolioImage: portfolio.portfolioImage };
+}
+
+// @@unique([listingId, portfolioLink]): this service already carries that
+// link on another row. A 409, or null when err is something else.
+export function portfolioLinkConflict(err: unknown): ApiError | null {
+    const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
+    return fields
+        ? ApiError.conflict(
+              'This listing already has that portfolio link',
+              uniqueViolationDetails(fields),
+          )
+        : null;
 }

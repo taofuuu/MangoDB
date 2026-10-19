@@ -35,11 +35,15 @@ export async function revokeToken(jti: string, exp: number): Promise<void> {
         where: { jti },
         create: { jti, expiresAt },
         update: { expiresAt },
+        select: { jti: true },
     });
 }
 
 export async function isTokenRevoked(jti: string): Promise<boolean> {
-    const revoked = await prisma.revokedToken.findUnique({ where: { jti } });
+    const revoked = await prisma.revokedToken.findUnique({
+        where: { jti },
+        select: { expiresAt: true },
+    });
     if (!revoked) {
         return false;
     }

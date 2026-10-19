@@ -1,12 +1,12 @@
 {
-    "request": "POST /job-postings/not-a-number/proposals",
+    "request": "POST /jobs/not-a-number/proposals",
     "status": 400,
     "body": {
         "error": {
             "code": "BAD_REQUEST",
             "details": [
                 {
-                    "field": "jobPostingId",
+                    "field": "jobId",
                     "message": "Invalid input: expected number, received NaN"
                 }
             ],
