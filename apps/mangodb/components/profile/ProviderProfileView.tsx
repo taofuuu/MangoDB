@@ -1,7 +1,7 @@
 'use client';
 
 import type { PublicCompanyProfile } from '@mangodb/shared';
-import CompanyCard, { toCompanyCardData } from './ProviderCompanyCard';
+import CompanyProfileCard from './CompanyProfileCard';
 import ServicesSection from './ServicesSection';
 import ProjectTimeline from './ProjectTimeline';
 import PortfolioCertificateList from './PortfolioCertificateList';
@@ -28,8 +28,9 @@ export default function ProviderProfileView({
                 column was too tight for a tab switcher and a list. */}
             <main className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3">
-                    <CompanyCard
-                        data={toCompanyCardData(profile)}
+                    <CompanyProfileCard
+                        profile={profile}
+                        layout="wide"
                         readOnly={readOnly}
                     />
                 </div>
