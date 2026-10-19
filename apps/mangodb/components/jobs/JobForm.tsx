@@ -1,19 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CategorySelector from './CategorySelector';
 import { createJob, updateJob } from '@/lib/jobs';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
-import type {
-    Category,
-    CreateJobRequest,
-    Job,
-    UpdateJobRequest,
-} from '@mangodb/shared';
-import { listCategories } from '@/lib/categories';
-import { describeError } from '@/lib/api';
+import type { CreateJobRequest, Job, UpdateJobRequest } from '@mangodb/shared';
+import { useCategories } from '@/lib/useCategories';
 
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -82,9 +76,6 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
         initialJob?.deadline?.slice(0, 10) ?? '',
     );
 
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
-    const [categoriesError, setCategoriesError] = useState<string | null>(null);
     const [categoryIds, setCategoryIds] = useState<number[]>(
         initialJob?.categoryIds ?? [],
     );
@@ -94,24 +85,11 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
-
-    useEffect(() => {
-        async function fetchCategories() {
-            try {
-                setIsCategoriesLoading(true);
-                setCategoriesError(null);
-
-                const data = await listCategories();
-                setCategories(data);
-            } catch (error: unknown) {
-                setCategoriesError(describeError(error));
-            } finally {
-                setIsCategoriesLoading(false);
-            }
-        }
-
-        void fetchCategories();
-    }, []);
+    const {
+        categories,
+        loading: isCategoriesLoading,
+        error: categoriesError,
+    } = useCategories();
 
     const clearError = (field: keyof JobErrors) => {
         setErrors((prev) => ({

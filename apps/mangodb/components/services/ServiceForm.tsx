@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type {
-    Category,
-    ServicePortfolio,
-    UpdateServiceRequest,
-} from '@mangodb/shared';
+import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import {
@@ -28,7 +24,7 @@ import {
 import type { PendingPortfolio } from '@/components/portfolios/PortfolioForm';
 import ServicePortfolios from './ServicePortfolios';
 import TechStackInput from './TechStackInput';
-import { listCategories } from '@/lib/categories';
+import { useCategories } from '@/lib/useCategories';
 import SuccessModal from '@/components/ui/SuccessModal';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import PageGate from '@/components/auth/PageGate';
@@ -120,9 +116,12 @@ export default function ServiceForm(props: ServiceFormProps) {
     const companyId = me.status === 'ready' ? me.company.companyId : null;
     // Add has nothing to load; Edit is loaded once the service arrives.
     const [isLoaded, setIsLoaded] = useState(serviceId === null);
-    // The catalog (ADR 0002). Null while it loads.
-    const [categories, setCategories] = useState<Category[] | null>(null);
-    const [categoriesError, setCategoriesError] = useState<string | null>(null);
+    // The catalog (ADR 0002).
+    const {
+        categories,
+        loading: categoriesLoading,
+        error: categoriesError,
+    } = useCategories();
     const [loadError, setLoadError] = useState<string | null>(null);
 
     // Form fields state
@@ -154,12 +153,6 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [errors, setErrors] = useState<ServiceErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        listCategories()
-            .then(setCategories)
-            .catch((err: unknown) => setCategoriesError(describeError(err)));
-    }, []);
 
     // ── EDIT: LOAD THE SERVICE ──
     // Waits for useMyCompany, since only the owning company may edit.
@@ -557,13 +550,13 @@ export default function ServiceForm(props: ServiceFormProps) {
                                     {categoriesError && (
                                         <FieldError message={categoriesError} />
                                     )}
-                                    {!categories && !categoriesError && (
+                                    {categoriesLoading && (
                                         <p className="type-sm text-ink-placeholder">
                                             Loading categories...
                                         </p>
                                     )}
                                     <div className="flex flex-wrap gap-2">
-                                        {(categories ?? []).map((cat) => {
+                                        {categories.map((cat) => {
                                             const isSelected =
                                                 selectedCategoryIds.includes(
                                                     cat.categoryId,
