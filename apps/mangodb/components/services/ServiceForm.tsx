@@ -139,9 +139,10 @@ export default function ServiceForm(props: ServiceFormProps) {
     const [savedPortfolios, setSavedPortfolios] = useState<ServicePortfolio[]>(
         [],
     );
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showLeaveModal, setShowLeaveModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // At most one modal is open at a time.
+    const [openModal, setOpenModal] = useState<
+        'success' | 'leave' | 'delete' | null
+    >(null);
     const [createdServiceId, setCreatedServiceId] = useState<number | null>(
         null,
     );
@@ -394,12 +395,12 @@ export default function ServiceForm(props: ServiceFormProps) {
             minBudget,
             maxBudget,
         });
-        setShowSuccessModal(true);
+        setOpenModal('success');
         setIsSubmitting(false);
     };
 
     const handleSuccessConfirm = () => {
-        setShowSuccessModal(false);
+        setOpenModal(null);
         if (isEditMode) {
             router.back();
             return;
@@ -429,7 +430,7 @@ export default function ServiceForm(props: ServiceFormProps) {
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
-            setShowLeaveModal(true);
+            setOpenModal('leave');
             return;
         }
         router.back();
@@ -676,7 +677,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                             <Button
                                 type="button"
                                 variant="danger"
-                                onClick={() => setShowDeleteModal(true)}
+                                onClick={() => setOpenModal('delete')}
                                 disabled={isSubmitting}
                                 className="mr-auto px-5 py-2 type-sm font-semibold disabled:opacity-60"
                             >
@@ -713,7 +714,7 @@ export default function ServiceForm(props: ServiceFormProps) {
             </div>
 
             <SuccessModal
-                isOpen={showSuccessModal}
+                isOpen={openModal === 'success'}
                 onClose={handleSuccessConfirm}
                 title={
                     isEditMode
@@ -723,8 +724,8 @@ export default function ServiceForm(props: ServiceFormProps) {
             />
 
             <ConfirmModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
+                isOpen={openModal === 'delete'}
+                onClose={() => setOpenModal(null)}
                 onConfirm={handleDelete}
                 title="Delete this service listing?"
                 description={`${initialValues?.title || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
@@ -732,10 +733,10 @@ export default function ServiceForm(props: ServiceFormProps) {
             />
 
             <UnsavedChangesModal
-                isOpen={showLeaveModal}
-                onKeepEditing={() => setShowLeaveModal(false)}
+                isOpen={openModal === 'leave'}
+                onKeepEditing={() => setOpenModal(null)}
                 onDiscard={() => {
-                    setShowLeaveModal(false);
+                    setOpenModal(null);
                     router.back();
                 }}
             />
