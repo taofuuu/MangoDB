@@ -11,17 +11,23 @@ import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
 import type { ServiceSummary } from '@mangodb/shared';
+import ServiceActionsMenu from './ServiceActionsMenu';
 
 export default function ServiceDetailPanel({
     service,
     onClose,
     titleId,
+    onEdit,
+    onDelete,
 }: {
     service: ServiceSummary;
     onClose: () => void;
     // Set when the panel sits in a dialog, so the dialog can name itself by
     // the heading (aria-labelledby). The search page's side panel needs none.
     titleId?: string;
+    // Your own service only (My Services): the ⋯ menu beside the ←.
+    onEdit?: (service: ServiceSummary) => void;
+    onDelete?: (service: ServiceSummary) => void;
 }) {
     const [portfolios, setPortfolios] = useState<ServicePortfolio[] | null>(
         null,
@@ -78,14 +84,24 @@ export default function ServiceDetailPanel({
                     </h2>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close service detail"
-                    className="rounded-full p-2 transition hover:bg-fill-subtle"
-                >
-                    <ArrowLeft size={22} />
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                    {onEdit && onDelete && (
+                        <ServiceActionsMenu
+                            service={service}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                        />
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close service detail"
+                        className="rounded-full p-2 transition hover:bg-fill-subtle"
+                    >
+                        <ArrowLeft size={22} />
+                    </button>
+                </div>
             </div>
 
             <hr className="my-[2vh] border-0 border-t border-brand/30" />

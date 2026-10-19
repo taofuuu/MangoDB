@@ -1,12 +1,18 @@
 import type { ServiceSummary } from '@mangodb/shared';
 import { Tag } from 'lucide-react';
+import StatusBadge from '@/components/ui/StatusBadge';
 import { formatBudgetRange } from '@/lib/money';
+import ServiceActionsMenu from './ServiceActionsMenu';
 
 type CompanyServiceCardProps = {
     service: ServiceSummary;
     onViewDetail: (service: ServiceSummary) => void;
     // Ringed while its detail panel is open beside the list.
     isSelected?: boolean;
+    // Your own services only (My Services): a Closed badge and the ⋯ menu.
+    closed?: boolean;
+    onEdit?: (service: ServiceSummary) => void;
+    onDelete?: (service: ServiceSummary) => void;
 };
 
 // One service on a company's services page. The page title already names the
@@ -16,6 +22,9 @@ export default function CompanyServiceCard({
     service,
     onViewDetail,
     isSelected = false,
+    closed = false,
+    onEdit,
+    onDelete,
 }: CompanyServiceCardProps) {
     // Two tech stack chips, then "+ N" for the rest.
     const visibleTechStack = service.techStack.slice(0, 2);
@@ -43,9 +52,12 @@ export default function CompanyServiceCard({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <h3 className="truncate type-md !font-[700]">
-                        {service.listingTitle}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="truncate type-md !font-[700]">
+                            {service.listingTitle}
+                        </h3>
+                        {closed && <StatusBadge label="Closed" tone="danger" />}
+                    </div>
 
                     {service.categories.length > 0 && (
                         <p className="mt-0.5 type-xs text-ink-soft">
@@ -83,7 +95,15 @@ export default function CompanyServiceCard({
                 </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-end justify-end self-stretch">
+            <div className="flex shrink-0 flex-col items-end self-stretch">
+                {onEdit && onDelete && (
+                    <ServiceActionsMenu
+                        service={service}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
+                )}
+
                 <button
                     type="button"
                     onClick={(e) => {
@@ -91,7 +111,8 @@ export default function CompanyServiceCard({
                         e.stopPropagation();
                         onViewDetail(service);
                     }}
-                    className="flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:border-brand hover:bg-brand/10"
+                    // mt-auto keeps it at the bottom, under the menu or not.
+                    className="mt-auto flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:border-brand hover:bg-brand/10"
                 >
                     view detail →
                 </button>

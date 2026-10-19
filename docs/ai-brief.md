@@ -240,7 +240,7 @@ if (me.status !== 'ready') {
 | Jobs: search, yours, new, edit         | `/jobs`, `/jobs/mine`, `/jobs/create`, `/jobs/[jobId]/edit`                           |
 | The proposals sent to one of your jobs | `/jobs/[jobId]/proposals`                                                             |
 | The proposals you sent                 | `/proposals`                                                                          |
-| Services: search, new, edit            | `/services`, `/services/create`, `/services/[serviceId]/edit`                         |
+| Services: search, yours, new, edit     | `/services`, `/services/mine`, `/services/create`, `/services/[serviceId]/edit`       |
 
 An id from the URL goes through `parseId` (from `@/lib/api`); `null` is shown
 as not found.
@@ -393,8 +393,6 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   `/jobs` send nothing yet.
 - A delivery duration on a service. Its price is the listing's
   `minBudget`/`maxBudget` range, the same columns a job uses.
-- An Edit button for your own services. `/services/[serviceId]/edit` is
-  reached only through the temporary `/dev/services/edit` picker.
 - Projects, quotations and reviews beyond the project row that accepting a
   proposal creates — Sprint 3 builds them.
 
