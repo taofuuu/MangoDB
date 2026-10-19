@@ -7,6 +7,10 @@ import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 import { updatePortfolio } from '@/lib/portfolios';
 import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
+import DevelopmentDateFields, {
+    daysInMonth,
+    type DateParts,
+} from './DevelopmentDateFields';
 
 // A portfolio added to a service that is not saved yet. ServiceForm uploads
 // it once the service exists, since a portfolio needs a serviceId.
@@ -41,17 +45,8 @@ type PortfolioErrors = FieldErrors<
     (typeof PORTFOLIO_FIELDS)[keyof typeof PORTFOLIO_FIELDS]
 >;
 
-function daysInMonth(year: string, month: string): number {
-    const numericYear = Number(year);
-    const numericMonth = Number(month);
-
-    return numericYear > 0 && numericMonth > 0
-        ? new Date(numericYear, numericMonth, 0).getDate()
-        : 31;
-}
-
 // The date to start from: the saved one when editing, today when adding.
-function startingDate(portfolio: ServicePortfolio | null) {
+function startingDate(portfolio: ServicePortfolio | null): DateParts {
     if (portfolio) {
         const [year = '', month, day] = portfolio.developmentDate.split('-');
         return {
@@ -81,9 +76,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
         portfolio?.portfolioDescription ?? '',
     );
     const [link, setLink] = useState(portfolio?.portfolioLink ?? '');
-    const [day, setDay] = useState(start.day);
-    const [month, setMonth] = useState(start.month);
-    const [year, setYear] = useState(start.year);
+    const [date, setDate] = useState(start);
     const [image, setImage] = useState<File | null>(null);
     const [errors, setErrors] = useState<PortfolioErrors>({});
     // Only what no input can hold: offline, or a 500.
@@ -99,31 +92,6 @@ export default function PortfolioForm(props: PortfolioFormProps) {
     const currentYear = new Date().getFullYear();
     const latestYear = Math.max(Number(start.year) || currentYear, currentYear);
     const earliestYear = Math.min(Number(start.year) || currentYear, 1950);
-    const years = Array.from(
-        { length: latestYear - earliestYear + 1 },
-        (_, index) => latestYear - index,
-    );
-    const dayCount = daysInMonth(year, month);
-    const days = Array.from({ length: dayCount }, (_, index) => index + 1);
-
-    const clampDay = (nextYear: string, nextMonth: string) => {
-        const nextDayCount = daysInMonth(nextYear, nextMonth);
-        setDay((currentDay) =>
-            String(Math.min(Number(currentDay), nextDayCount)),
-        );
-    };
-
-    const handleMonthChange = (nextMonth: string) => {
-        setMonth(nextMonth);
-        clampDay(year, nextMonth);
-        clearError('developmentDate');
-    };
-
-    const handleYearChange = (nextYear: string) => {
-        setYear(nextYear);
-        clampDay(nextYear, month);
-        clearError('developmentDate');
-    };
 
     // What can be checked without the API. A new portfolio needs its image;
     // an edited one keeps the saved image unless a new one is chosen.
@@ -134,7 +102,8 @@ export default function PortfolioForm(props: PortfolioFormProps) {
         else if (!/^https?:\/\//i.test(link.trim())) {
             next.link = 'Must be a valid URL starting with http(s)://';
         }
-        if (!day || !month || !year || Number(day) > dayCount) {
+        const { year, month, day } = date;
+        if (!day || !month || !year || Number(day) > daysInMonth(year, month)) {
             next.developmentDate = 'Choose a valid development date.';
         }
         if (props.mode === 'add' && !image) next.image = 'Image is required.';
@@ -149,6 +118,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
         setErrors(fieldErrors);
         if (Object.keys(fieldErrors).length > 0) return;
 
+        const { year, month, day } = date;
         const developmentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
         if (props.mode === 'add') {
@@ -194,8 +164,6 @@ export default function PortfolioForm(props: PortfolioFormProps) {
     const title = props.mode === 'add' ? 'Add Portfolio' : 'Edit Portfolio';
     const inputClassName =
         'h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand';
-    const selectClassName =
-        'h-[4.89vh] w-full rounded-input border border-brand-dark bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand';
 
     return (
         <ModalShell
@@ -295,60 +263,15 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                         <legend className="type-sm !font-[500]">
                             Development date*
                         </legend>
-                        <div className="flex gap-2 max-sm:flex-col">
-                            <label className="min-w-0 flex-1 type-sm">
-                                Date
-                                <select
-                                    value={day}
-                                    onChange={(event) => {
-                                        setDay(event.target.value);
-                                        clearError('developmentDate');
-                                    }}
-                                    className={selectClassName}
-                                >
-                                    {days.map((value) => (
-                                        <option key={value} value={value}>
-                                            {value}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label className="min-w-0 flex-1 type-sm">
-                                Month
-                                <select
-                                    value={month}
-                                    onChange={(event) =>
-                                        handleMonthChange(event.target.value)
-                                    }
-                                    className={selectClassName}
-                                >
-                                    {Array.from(
-                                        { length: 12 },
-                                        (_, index) => index + 1,
-                                    ).map((value) => (
-                                        <option key={value} value={value}>
-                                            {value}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label className="min-w-0 flex-1 type-sm">
-                                Year
-                                <select
-                                    value={year}
-                                    onChange={(event) =>
-                                        handleYearChange(event.target.value)
-                                    }
-                                    className={selectClassName}
-                                >
-                                    {years.map((value) => (
-                                        <option key={value} value={value}>
-                                            {value}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                        </div>
+                        <DevelopmentDateFields
+                            value={date}
+                            onChange={(next) => {
+                                setDate(next);
+                                clearError('developmentDate');
+                            }}
+                            minYear={earliestYear}
+                            maxYear={latestYear}
+                        />
                         <FieldError message={errors.developmentDate} />
                     </fieldset>
 
