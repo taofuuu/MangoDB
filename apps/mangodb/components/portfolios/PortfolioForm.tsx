@@ -1,16 +1,12 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import type { ServicePortfolio } from '@mangodb/shared';
 import FileUpload from '@/components/ui/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
-import { updatePortfolio } from '@/lib/portfolios';
-import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
-import DevelopmentDateFields, {
-    daysInMonth,
-    type DateParts,
-} from './DevelopmentDateFields';
+import DevelopmentDateFields from './DevelopmentDateFields';
+import { usePortfolioForm } from './usePortfolioForm';
 
 // A portfolio added to a service that is not saved yet. ServiceForm uploads
 // it once the service exists, since a portfolio needs a serviceId.
@@ -23,7 +19,7 @@ export interface PendingPortfolio {
     image: File | null;
 }
 
-type PortfolioFormProps = { onClose: () => void } & (
+export type PortfolioFormProps = { onClose: () => void } & (
     | { mode: 'add'; onAdd: (item: PendingPortfolio) => void }
     | {
           mode: 'edit';
@@ -32,136 +28,33 @@ type PortfolioFormProps = { onClose: () => void } & (
       }
 );
 
-// Which input on this form each API field belongs under.
-const PORTFOLIO_FIELDS = {
-    portfolioName: 'name',
-    portfolioDescription: 'description',
-    portfolioLink: 'link',
-    developmentDate: 'developmentDate',
-    portfolioImage: 'image',
-} as const;
-
-type PortfolioErrors = FieldErrors<
-    (typeof PORTFOLIO_FIELDS)[keyof typeof PORTFOLIO_FIELDS]
->;
-
-// The date to start from: the saved one when editing, today when adding.
-function startingDate(portfolio: ServicePortfolio | null): DateParts {
-    if (portfolio) {
-        const [year = '', month, day] = portfolio.developmentDate.split('-');
-        return {
-            year,
-            month: String(Number(month) || ''),
-            day: String(Number(day) || ''),
-        };
-    }
-    const now = new Date();
-    return {
-        year: String(now.getFullYear()),
-        month: String(now.getMonth() + 1),
-        day: String(now.getDate()),
-    };
-}
-
 // Add a portfolio to a service, or edit a saved one. Mounted while open, so
-// every opening starts from a fresh form.
+// every opening starts from a fresh form. The values and save live in
+// usePortfolioForm.
 export default function PortfolioForm(props: PortfolioFormProps) {
     const { onClose } = props;
-    const portfolio = props.mode === 'edit' ? props.portfolio : null;
     const titleId = useId();
-    const start = startingDate(portfolio);
-
-    const [name, setName] = useState(portfolio?.portfolioName ?? '');
-    const [description, setDescription] = useState(
-        portfolio?.portfolioDescription ?? '',
-    );
-    const [link, setLink] = useState(portfolio?.portfolioLink ?? '');
-    const [date, setDate] = useState(start);
-    const [image, setImage] = useState<File | null>(null);
-    const [errors, setErrors] = useState<PortfolioErrors>({});
-    // Only what no input can hold: offline, or a 500.
-    const [formError, setFormError] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-
-    // Touching a box clears what was wrong with it, so a field the user has
-    // already fixed stops looking broken.
-    const clearError = (field: keyof PortfolioErrors) =>
-        setErrors((prev) => ({ ...prev, [field]: undefined }));
+    const {
+        values,
+        setField,
+        setFieldError,
+        errors,
+        formError,
+        isSaving,
+        isEditing,
+        handleSubmit,
+    } = usePortfolioForm(props);
 
     // Back to 1950, and forward to the saved year if it is in the future.
     const currentYear = new Date().getFullYear();
-    const latestYear = Math.max(Number(start.year) || currentYear, currentYear);
-    const earliestYear = Math.min(Number(start.year) || currentYear, 1950);
+    const savedYear =
+        props.mode === 'edit'
+            ? Number(props.portfolio.developmentDate.split('-')[0])
+            : 0;
+    const latestYear = Math.max(savedYear || currentYear, currentYear);
+    const earliestYear = Math.min(savedYear || currentYear, 1950);
 
-    // What can be checked without the API. A new portfolio needs its image;
-    // an edited one keeps the saved image unless a new one is chosen.
-    const checkFields = (): PortfolioErrors => {
-        const next: PortfolioErrors = {};
-        if (!name.trim()) next.name = 'Name is required.';
-        if (!link.trim()) next.link = 'Portfolio link is required.';
-        else if (!/^https?:\/\//i.test(link.trim())) {
-            next.link = 'Must be a valid URL starting with http(s)://';
-        }
-        const { year, month, day } = date;
-        if (!day || !month || !year || Number(day) > daysInMonth(year, month)) {
-            next.developmentDate = 'Choose a valid development date.';
-        }
-        if (props.mode === 'add' && !image) next.image = 'Image is required.';
-        return next;
-    };
-
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setFormError(null);
-
-        const fieldErrors = checkFields();
-        setErrors(fieldErrors);
-        if (Object.keys(fieldErrors).length > 0) return;
-
-        const { year, month, day } = date;
-        const developmentDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-        if (props.mode === 'add') {
-            props.onAdd({
-                id: crypto.randomUUID(),
-                name: name.trim(),
-                description: description.trim(),
-                link: link.trim(),
-                developmentDate,
-                image,
-            });
-            onClose();
-            return;
-        }
-
-        const body = new FormData();
-        body.append('portfolioName', name);
-        body.append('portfolioDescription', description);
-        body.append('portfolioLink', link);
-        body.append('developmentDate', developmentDate);
-        if (image) body.append('portfolioImage', image);
-
-        setIsSaving(true);
-        try {
-            const updated = await updatePortfolio(
-                props.portfolio.portfolioId,
-                body,
-            );
-            props.onSave(updated);
-            onClose();
-        } catch (submitError) {
-            const { fields, message } = toFormErrors(
-                submitError,
-                PORTFOLIO_FIELDS,
-            );
-            setErrors(fields);
-            setFormError(message);
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const title = props.mode === 'add' ? 'Add Portfolio' : 'Edit Portfolio';
+    const title = isEditing ? 'Edit Portfolio' : 'Add Portfolio';
     const inputClassName =
         'h-[4.07vh] w-full rounded-input border border-brand bg-surface-white/80 px-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand';
 
@@ -205,11 +98,10 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                             id="portfolio-name"
                             type="text"
                             maxLength={255}
-                            value={name}
-                            onChange={(event) => {
-                                setName(event.target.value);
-                                clearError('name');
-                            }}
+                            value={values.name}
+                            onChange={(event) =>
+                                setField('name', event.target.value)
+                            }
                             placeholder="Ex. E-commerce Platform Redesign"
                             className={inputClassName}
                         />
@@ -226,11 +118,10 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                         <textarea
                             id="portfolio-description"
                             maxLength={2000}
-                            value={description}
-                            onChange={(event) => {
-                                setDescription(event.target.value);
-                                clearError('description');
-                            }}
+                            value={values.description}
+                            onChange={(event) =>
+                                setField('description', event.target.value)
+                            }
                             placeholder="Brief description of the work done..."
                             className="h-[9.65vh] w-full resize-none rounded-input border border-brand bg-surface-white/80 px-1.5 py-1.5 type-sm text-ink focus:outline-none focus:ring-1 focus:ring-brand"
                         />
@@ -248,11 +139,10 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                             id="portfolio-link"
                             type="url"
                             maxLength={255}
-                            value={link}
-                            onChange={(event) => {
-                                setLink(event.target.value);
-                                clearError('link');
-                            }}
+                            value={values.link}
+                            onChange={(event) =>
+                                setField('link', event.target.value)
+                            }
                             placeholder="https://example.com/project"
                             className={inputClassName}
                         />
@@ -264,11 +154,10 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                             Development date*
                         </legend>
                         <DevelopmentDateFields
-                            value={date}
-                            onChange={(next) => {
-                                setDate(next);
-                                clearError('developmentDate');
-                            }}
+                            value={values.developmentDate}
+                            onChange={(next) =>
+                                setField('developmentDate', next)
+                            }
                             minYear={earliestYear}
                             maxYear={latestYear}
                         />
@@ -276,14 +165,9 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                     </fieldset>
 
                     <FileUpload
-                        value={image}
-                        onChange={(file) => {
-                            setImage(file);
-                            clearError('image');
-                        }}
-                        onError={(message) =>
-                            setErrors((prev) => ({ ...prev, image: message }))
-                        }
+                        value={values.image}
+                        onChange={(file) => setField('image', file)}
+                        onError={(message) => setFieldError('image', message)}
                         accept="image/png,image/jpeg,image/webp"
                         label="Upload Image"
                         className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -299,11 +183,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                         disabled={isSaving}
                         className="h-[4vh] w-[7vw] rounded-status bg-brand-dark type-sm font-[500] text-surface transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {props.mode === 'add'
-                            ? 'Add'
-                            : isSaving
-                              ? 'Saving…'
-                              : 'Save'}
+                        {!isEditing ? 'Add' : isSaving ? 'Saving…' : 'Save'}
                     </button>
                 </div>
             </form>
