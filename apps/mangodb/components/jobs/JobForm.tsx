@@ -154,18 +154,6 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
 
         const parsedMaxBudget = Number(maxBudget);
 
-        if (
-            !maxBudget.trim() ||
-            !Number.isFinite(parsedMaxBudget) ||
-            parsedMaxBudget <= 0
-        ) {
-            setErrors((prev) => ({
-                ...prev,
-                maxBudget: 'Maximum budget must be a positive number.',
-            }));
-            return;
-        }
-
         const normalizedTitle = listingTitle.trim();
         const normalizedDescription = listingDesc.trim();
         const normalizedLocation = locationPref.trim() || null;
