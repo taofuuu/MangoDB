@@ -1,0 +1,27 @@
+{
+    "request": "GET /jobs/<job_id>",
+    "status": 200,
+    "body": {
+        "categories": [
+            "Mobile App Development"
+        ],
+        "categoryIds": [
+            2
+        ],
+        "company": {
+            "companyId": 143,
+            "companyName": "Snapshot Seed Receiver",
+            "companyPhoto": null
+        },
+        "createdAt": "<timestamp>",
+        "deadline": "2029-06-30",
+        "duration": "2 Months",
+        "jobId": "<job_id>",
+        "listingDesc": "Looking for developer team",
+        "listingStatus": "OPEN",
+        "listingTitle": "Snapshot Probe job posting edited",
+        "locationPref": "Remote",
+        "maxBudget": 200000,
+        "minBudget": 50000
+    }
+}

@@ -6,7 +6,7 @@ type ButtonVariant = 'primary' | 'outline' | 'danger' | 'muted';
 // caller passes that through className rather than picking from a size prop.
 const variants: Record<ButtonVariant, string> = {
     primary: 'bg-brand text-surface hover:bg-brand-dark',
-    outline: 'border border-brand bg-white text-ink hover:bg-brand/10',
+    outline: 'border border-brand bg-surface-white text-ink hover:bg-brand/10',
     danger: 'bg-danger text-surface hover:bg-danger-hover',
     muted: 'bg-fill-muted text-surface-white hover:bg-ink-placeholder',
 };

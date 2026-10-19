@@ -1,4 +1,8 @@
-import type { CompanyProfile, SessionResponse } from '@mangodb/shared';
+import type {
+    CompanyProfile,
+    RegisterRequest,
+    SessionResponse,
+} from '@mangodb/shared';
 import { apiFetch, isNotSignedIn } from './api';
 import { clearCacheInEveryTab } from './apiCache';
 
@@ -38,6 +42,21 @@ export function adminLogin(
     password: string,
 ): Promise<CompanyProfile> {
     return authenticate('/auth/admin/login', email, password);
+}
+
+// US1-1. Creates the company and signs it in: the API sets the session cookie
+// on this response, the same as login. The accessToken in the body is for
+// callers that are not a browser, so it is not kept.
+export async function register(body: RegisterRequest): Promise<CompanyProfile> {
+    const { company } = await apiFetch<SessionResponse>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(body),
+    });
+
+    // A new session, so the same cache clearing as login.
+    clearCacheInEveryTab();
+
+    return company;
 }
 
 // US1-3. POST /auth/logout puts the token's jti on the server's denylist and

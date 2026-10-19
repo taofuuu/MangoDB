@@ -14,6 +14,16 @@
                 "ratingCount": 0
             },
             {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 393,
+                "companyName": "aongzera",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
                 "accountType": "PROVIDER",
                 "averageRating": null,
                 "companyDescription": "Mobile App Development Agency (iOS/Android)",
@@ -104,16 +114,6 @@
                 "ratingCount": 0
             },
             {
-                "accountType": "BOTH",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 109,
-                "companyName": "Dev BOTH Co.",
-                "deletedAt": null,
-                "phone": "020000000",
-                "ratingCount": 0
-            },
-            {
                 "accountType": "PROVIDER",
                 "averageRating": null,
                 "companyDescription": "Leading provider of database solutions and infrastructure services.",
@@ -127,7 +127,7 @@
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 53,
+            "totalItems": 58,
             "totalPages": 5
         }
     }

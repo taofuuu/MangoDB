@@ -204,12 +204,12 @@ describe('invalidateCache / clearCache', () => {
         const jobs = countingLoad('jobs');
 
         await cachedGet('/companies/me', me);
-        await cachedGet('/job-postings?page=1', jobs);
+        await cachedGet('/jobs?page=1', jobs);
 
         clearCache();
 
         await cachedGet('/companies/me', me);
-        await cachedGet('/job-postings?page=1', jobs);
+        await cachedGet('/jobs?page=1', jobs);
         assert.equal(me.mock.callCount(), 2);
         assert.equal(jobs.mock.callCount(), 2);
     });
@@ -247,12 +247,12 @@ describe('invalidateAfter', () => {
         const me = countingLoad('me');
         const jobs = countingLoad('jobs');
         await cachedGet('/companies/me', me);
-        await cachedGet('/job-postings?page=1', jobs);
+        await cachedGet('/jobs?page=1', jobs);
 
         await invalidateAfter(Promise.resolve(undefined));
 
         await cachedGet('/companies/me', me);
-        await cachedGet('/job-postings?page=1', jobs);
+        await cachedGet('/jobs?page=1', jobs);
         assert.equal(me.mock.callCount(), 2);
         assert.equal(jobs.mock.callCount(), 2);
     });

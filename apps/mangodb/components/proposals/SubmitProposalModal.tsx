@@ -1,43 +1,35 @@
 'use client';
 
 import { useCallback, useId, useState } from 'react';
-import { MailCheck, X } from 'lucide-react';
-import type { JobPosting, Proposal } from '@mangodb/shared';
+import { X } from 'lucide-react';
+import type { Job, Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
+import ProposalReceiptModal from './ProposalReceiptModal';
+import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { createProposal } from '@/lib/proposals';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import {
-    toFormErrors,
     validateProposalForm,
     type ProposalErrors,
-} from '@/lib/validation';
+} from '@/lib/validation/proposal';
 
-// JobPosting is the shared API shape. companyName is optional display-only
-// information because the job-posting endpoint currently returns companyId,
-// not the name. T2.7 may supply it when that view already has it.
-export type ProposalJobPosting = Pick<
-    JobPosting,
-    | 'jobPostingId'
+// The parts of a job the modal shows. company is the Receiver that posted it.
+export type ProposalJob = Pick<
+    Job,
+    | 'jobId'
+    | 'company'
     | 'listingTitle'
     | 'minBudget'
     | 'maxBudget'
     | 'deadline'
     | 'locationPref'
-> & {
-    companyName?: string | undefined;
-};
+>;
 
 type SubmitProposalModalProps = {
     isOpen: boolean;
-    jobPosting: ProposalJobPosting;
-    onClose: () => void;
-};
-
-type ProposalSubmissionConfirmationModalProps = {
-    isOpen: boolean;
-    jobPosting: ProposalJobPosting;
-    proposal: Proposal;
+    job: ProposalJob;
     onClose: () => void;
 };
 
@@ -48,104 +40,9 @@ const PROPOSAL_FIELDS = {
     duration: 'estimatedDurationMonths',
 } as const;
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 2,
-});
-
-const MONTHS = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-] as const;
-
-// deadline is a date-only wire value. Splitting it avoids shifting the day in
-// a UTC+7 browser, as required by docs/conventions.md section 10.
-function formatDeadline(deadline: string | null): string {
-    if (!deadline) return 'Not specified';
-
-    const [year, month, day] = deadline.split('-').map(Number);
-    if (!year || !month || !day || !MONTHS[month - 1]) return deadline;
-
-    return `${day} ${MONTHS[month - 1]} ${year}`;
-}
-
-function ProposalSubmissionConfirmationModal({
-    isOpen,
-    jobPosting,
-    proposal,
-    onClose,
-}: ProposalSubmissionConfirmationModalProps) {
-    const titleId = useId();
-
-    return (
-        <ModalShell
-            isOpen={isOpen}
-            onClose={onClose}
-            labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            panelClassName="w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
-        >
-            <div className="flex items-center gap-2">
-                <MailCheck className="size-6 text-ink" aria-hidden="true" />
-                <h2 id={titleId} className="type-md">
-                    Proposal submitted
-                </h2>
-            </div>
-
-            <p className="my-[2.22vh] type-md !font-[600]">
-                Your proposal for {jobPosting.listingTitle} has been sent to{' '}
-                {jobPosting.companyName ?? 'the company'}.
-            </p>
-
-            <div>
-                <p className="type-sm text-ink">Proposal term</p>
-                <p className="mt-1 whitespace-pre-wrap type-sm text-ink">
-                    {proposal.proposalTerms}
-                </p>
-            </div>
-
-            <dl className="mt-[2.22vh] grid grid-cols-2 gap-[3vw]">
-                <div>
-                    <dt className="type-sm text-ink">Your quoted price</dt>
-                    <dd className="mt-1 type-sm text-ink">
-                        {NUMBER_FORMATTER.format(proposal.proposalBudget)}
-                    </dd>
-                </div>
-                <div>
-                    <dt className="type-sm text-ink">Estimated duration</dt>
-                    <dd className="mt-1 type-sm text-ink">
-                        {NUMBER_FORMATTER.format(proposal.duration)} months
-                    </dd>
-                </div>
-            </dl>
-
-            <hr className="mt-[2.22vh] border-line" />
-
-            <div className="flex justify-end pt-4">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="h-[4vh] min-w-[80px] rounded-status bg-fill-muted px-6 type-sm font-[500] text-ink transition-colors hover:bg-line"
-                >
-                    Close
-                </button>
-            </div>
-        </ModalShell>
-    );
-}
-
 export default function SubmitProposalModal({
     isOpen,
-    jobPosting,
+    job,
     onClose,
 }: SubmitProposalModalProps) {
     const [proposalTerms, setProposalTerms] = useState('');
@@ -175,7 +72,7 @@ export default function SubmitProposalModal({
     };
 
     // One close path, so Escape and the backdrop clear the form in the same
-    // way as the X button, matching AddCertificateForm.
+    // way as the X button.
     const handleClose = useCallback(() => {
         resetForm();
         onClose();
@@ -188,9 +85,9 @@ export default function SubmitProposalModal({
 
     if (submittedProposal) {
         return (
-            <ProposalSubmissionConfirmationModal
+            <ProposalReceiptModal
                 isOpen
-                jobPosting={jobPosting}
+                job={job}
                 proposal={submittedProposal}
                 onClose={handleClose}
             />
@@ -216,7 +113,7 @@ export default function SubmitProposalModal({
 
         setIsSubmitting(true);
         try {
-            const proposal = await createProposal(jobPosting.jobPostingId, {
+            const proposal = await createProposal(job.jobId, {
                 proposalTerms: draft.proposalTerms,
                 proposalBudget: Number(draft.proposalBudget),
                 duration: Number(draft.estimatedDurationMonths),
@@ -237,7 +134,7 @@ export default function SubmitProposalModal({
             onClose={handleClose}
             isBusy={isSubmitting}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
             panelClassName="h-[72.2222vh] w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
         >
             {/* -------------header----------------- */}
@@ -264,23 +161,16 @@ export default function SubmitProposalModal({
             </p>
 
             <section aria-label="Job posting summary">
-                <h3 className="type-sm !font-[600]">
-                    {jobPosting.listingTitle}
-                </h3>
-                {jobPosting.companyName && (
-                    <p className="mt-1 type-sm">
-                        Posted by {jobPosting.companyName}
-                    </p>
-                )}
+                <h3 className="type-sm !font-[600]">{job.listingTitle}</h3>
+                <p className="mt-1 type-sm">
+                    Posted by {job.company.companyName}
+                </p>
 
                 <dl className="my-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <div>
                         <dt className="type-xs text-ink-placeholder">Budget</dt>
                         <dd className="type-xs text-ink">
-                            {formatBudgetRange(
-                                jobPosting.minBudget,
-                                jobPosting.maxBudget,
-                            )}
+                            {formatBudgetRange(job.minBudget, job.maxBudget)}
                         </dd>
                     </div>
                     <div>
@@ -288,7 +178,9 @@ export default function SubmitProposalModal({
                             Deadline
                         </dt>
                         <dd className="type-xs text-ink">
-                            {formatDeadline(jobPosting.deadline)}
+                            {job.deadline
+                                ? formatDateOnly(job.deadline)
+                                : 'Not specified'}
                         </dd>
                     </div>
                     <div>
@@ -296,13 +188,13 @@ export default function SubmitProposalModal({
                             Location
                         </dt>
                         <dd className="type-xs text-ink">
-                            {jobPosting.locationPref ?? 'Not specified'}
+                            {job.locationPref ?? 'Not specified'}
                         </dd>
                     </div>
                 </dl>
             </section>
 
-            <p className="my-2 type-sm !text-[12px]">*Indicates required</p>
+            <p className="my-2 type-xs">*Indicates required</p>
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-2">

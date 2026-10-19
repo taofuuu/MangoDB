@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import ServiceForm from '@/components/service/ServiceForm';
+import ServiceForm from '@/components/services/ServiceForm';
 
 const INT4_MAX = 2_147_483_647;
 

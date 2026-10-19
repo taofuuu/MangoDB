@@ -53,9 +53,22 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
 // The sentinel a page stores instead of a message when the failure was "you are
 // not signed in" — that case renders a sign-in prompt rather than an error. It
 // was the literal string 'no-token' in seventeen places across six pages,
-// which
-// is a typo away from a page that never shows the prompt.
+// which is a typo away from a page that never shows the prompt.
 export const NOT_SIGNED_IN = 'not-signed-in';
+
+// The API's ids are int4, so anything else could never name a row. Caught
+// here rather than sent: the API answers a malformed id with 400, and to the
+// reader "/jobs/abc" is just as much a job that is not there.
+const MAX_INT4 = 2_147_483_647;
+
+// An id segment from the URL, [companyId] or [jobId]. Null when it could not
+// name a row, which the page shows as not found.
+export function parseId(raw: string | string[] | undefined): number | null {
+    if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
+
+    const id = Number(raw);
+    return id >= 1 && id <= MAX_INT4 ? id : null;
+}
 
 // Six pages wrote this comparison inline as part of a longer .catch ladder.
 export function isNotSignedIn(err: unknown): boolean {

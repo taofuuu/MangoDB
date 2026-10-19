@@ -1,23 +1,28 @@
 import type { Request, Response } from 'express';
-import type { CompanyAccountListResponse } from '@mangodb/shared';
+import type { CompanyAccountSummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword } from '../auth/password';
 import { ownsProviderRow } from '../auth/roles';
 import { prisma } from '../lib/prisma';
+import { pageArgs, toPagination } from '../lib/pagination';
 import type { Prisma } from '../generated/prisma/client';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     adminCompanyDetailSelect,
     adminCompanyListSelect,
     toCompanyAccountDetail,
     toCompanyAccountSummary,
-} from '../lib/adminCompany';
-import { softDeleteCompany } from '../lib/companyDeletion';
+} from '../lib/admin-company';
+import { softDeleteCompany } from '../lib/company-deletion';
 import {
     PROVIDER_PROFILE_FIELDS,
     companyProfileUpdateData,
-} from '../lib/companyProfile';
-import { isRecordNotFound, isUniqueViolation } from '../lib/prismaErrors';
-import { hasOngoingProject } from '../lib/projectEligibility';
+    companyTypeRepeat,
+} from '../lib/company-profile';
+import { isRecordNotFound } from '../lib/prisma-errors';
+import {
+    hasOngoingProject,
+    ONGOING_PROJECT_BLOCKS_DELETE,
+} from '../lib/project-eligibility';
 import { escapeLike } from '../lib/search';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
@@ -37,7 +42,6 @@ export async function listCompanyAccounts(
         companyAccountListQuerySchema,
         req.query,
     );
-    const skip = (page - 1) * pageSize;
     const keyword = q ? escapeLike(q) : undefined;
     // schema.prisma's rule for deletedAt: a discovery query filters it out.
     // includeDeleted is the opt-out, for an admin auditing removed accounts.
@@ -72,22 +76,16 @@ export async function listCompanyAccounts(
     const [totalItems, companies] = await prisma.$transaction([
         prisma.company.count({ where }),
         prisma.company.findMany({
-            skip,
+            ...pageArgs({ page, pageSize }),
             where,
-            take: pageSize,
             orderBy: [{ companyName: 'asc' }, { companyId: 'asc' }],
             select: adminCompanyListSelect,
         }),
     ]);
 
-    const body: CompanyAccountListResponse = {
+    const body: Paginated<CompanyAccountSummary> = {
         items: companies.map(toCompanyAccountSummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);
@@ -180,15 +178,8 @@ export async function updateCompanyAccount(
             select: adminCompanyDetailSelect,
         });
     } catch (err) {
-        // Only one unique constraint is reachable from here: companyType is
-        // keyed on (companyId, companyType), so a tag repeated inside one
-        // request collides with itself. Username and email are not editable
-        // here at all, and nothing else this writes is unique.
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Company types must not repeat', [
-                { field: 'companyType', message: 'Remove the duplicate tag' },
-            ]);
-        }
+        const repeat = companyTypeRepeat(err);
+        if (repeat) throw repeat;
         // The company was soft-deleted between the lookup above and this
         // write, so the where clause no longer matches. That is the only way
         // to get here: no request path hard-deletes a company, the check
@@ -252,9 +243,7 @@ export async function deleteCompanyAccount(
     // Step 2: is it on an ongoing project? projectEligibility owns that rule
     // and the definition of "ongoing" (status ACTIVE).
     if (await hasOngoingProject(companyId)) {
-        throw ApiError.badRequest(
-            'Company has active projects and cannot be deleted',
-        );
+        throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);
     }
 
     // Step 3 + 4: soft-delete it, then respond. softDeleteCompany's guard

@@ -1,0 +1,201 @@
+import type {
+    AccountType,
+    CompanyBrief,
+    CompanyProfile,
+    PublicCompanyProfile,
+} from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
+import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
+import { ApiError } from './api-error';
+import { isUniqueViolation } from './prisma-errors';
+import { omitUndefined } from './objects';
+
+// A company in one line, the way a row it owns or sent shows it (conventions
+// §1). Only these columns: the row also holds the sign-in email and password
+// hash (ADR 0001).
+export const companyBriefSelect = {
+    companyId: true,
+    companyName: true,
+    companyPhoto: true,
+} as const satisfies Prisma.CompanySelect;
+
+// listing.company_id is still nullable in the schema (conventions §11), but
+// every path that creates a listing sets it and no row lacks one. A missing
+// owner is a broken row, so it is a 500 rather than a blank name.
+export function toCompanyBrief(company: CompanyBrief | null): CompanyBrief {
+    if (!company) {
+        throw new ApiError(500, 'INTERNAL', 'Listing has no owning company');
+    }
+    return {
+        companyId: company.companyId,
+        companyName: company.companyName,
+        companyPhoto: company.companyPhoto,
+    };
+}
+
+// The columns the API may return. Password is absent on purpose: it can't leak
+// from a response if it was never fetched.
+export const companyProfileSelect = {
+    companyId: true,
+    companyName: true,
+    companyDescription: true,
+    username: true,
+    email: true,
+    contactEmail: true,
+    phone: true,
+    address: true,
+    website: true,
+    companyPhoto: true,
+    accountType: true,
+    companyType: { select: { companyType: true } },
+    // Null for a RECEIVER company, which owns no provider row.
+    provider: { select: { serviceTerm: true, warrantyPolicy: true } },
+} as const satisfies Prisma.CompanySelect;
+
+// What that select hands back, before toCompanyProfile tidies it.
+export interface CompanyProfileRow {
+    companyId: number;
+    companyName: string;
+    companyDescription: string | null;
+    username: string;
+    email: string;
+    contactEmail: string | null;
+    phone: string;
+    address: string | null;
+    website: string | null;
+    companyPhoto: string | null;
+    // A VarChar column, so Prisma types it as string; registerSchema is what
+    // guarantees it's one of the three account types.
+    accountType: string;
+    companyType: { companyType: string }[];
+    provider: {
+        serviceTerm: string | null;
+        warrantyPolicy: string | null;
+    } | null;
+}
+
+// Flattens the tag join rows to plain strings and the provider row to two
+// columns, so callers get one flat object rather than a shape to walk.
+export function toCompanyProfile(company: CompanyProfileRow): CompanyProfile {
+    // provider is pulled out of the spread on purpose: leaving it in would put
+    // the nested row in the response alongside the flattened columns.
+    const { provider, ...rest } = company;
+
+    return {
+        ...rest,
+        accountType: company.accountType as AccountType,
+        companyType: company.companyType.map((tag) => tag.companyType),
+        serviceTerm: provider?.serviceTerm ?? null,
+        warrantyPolicy: provider?.warrantyPolicy ?? null,
+    };
+}
+
+// GET /companies/:companyId. Its own list rather than companyProfileSelect
+// with two keys removed: a column added to that select later must not reach
+// another company until someone decides it is public.
+export const publicCompanyProfileSelect = {
+    companyId: true,
+    companyName: true,
+    companyDescription: true,
+    contactEmail: true,
+    phone: true,
+    address: true,
+    website: true,
+    companyPhoto: true,
+    accountType: true,
+    companyType: { select: { companyType: true } },
+    provider: { select: { serviceTerm: true, warrantyPolicy: true } },
+} as const satisfies Prisma.CompanySelect;
+
+type PublicCompanyProfileRow = Omit<CompanyProfileRow, 'username' | 'email'>;
+
+// Same flattening as toCompanyProfile, copied on purpose. Calling that one
+// instead would need a full row, and its spread would put username and email
+// back into the response.
+export function toPublicCompanyProfile(
+    company: PublicCompanyProfileRow,
+): PublicCompanyProfile {
+    const { provider, ...rest } = company;
+
+    return {
+        ...rest,
+        accountType: company.accountType as AccountType,
+        companyType: company.companyType.map((tag) => tag.companyType),
+        serviceTerm: provider?.serviceTerm ?? null,
+        warrantyPolicy: provider?.warrantyPolicy ?? null,
+    };
+}
+
+// The two profile columns that live on `provider` rather than on `company`.
+// Named once so the schema, the write, and the error that reports them cannot
+// disagree about which fields are provider-only.
+export const PROVIDER_PROFILE_FIELDS = [
+    'serviceTerm',
+    'warrantyPolicy',
+] as const;
+
+// `in`, not a truthiness check: zod drops absent keys, so this is the one way
+// to tell "left alone" from an explicit null that means "clear it".
+export function editsProviderFields(body: UpdateCompanyProfileInput): boolean {
+    return PROVIDER_PROFILE_FIELDS.some((field) => field in body);
+}
+
+// US1-5 and US6-3 write the same columns — a company editing itself, and an
+// administrator editing that company — so the shape of the write lives here
+// rather than being copied into a second controller. It builds the `data` and
+// stops there: each caller picks its own select, because the two answer with
+// different bodies.
+//
+// Whether the caller is *allowed* to send the provider fields is deliberately
+// not decided here: US1-5 asks the caller's token, US6-3 asks the target row,
+// and those are two different questions with two different answers.
+export function companyProfileUpdateData(
+    body: UpdateCompanyProfileInput,
+): Prisma.CompanyUpdateInput {
+    const { companyType, serviceTerm, warrantyPolicy, ...columns } = body;
+
+    return {
+        // omitUndefined, not a plain spread: exactOptionalPropertyTypes is on
+        // and Prisma's update input declares its columns without `| undefined`.
+        ...omitUndefined(columns),
+        // Tags are a set, not a list to append to: the request carries the
+        // whole set, so the rows it replaces go. A nested write is one
+        // transaction, so the company is never left untagged.
+        ...(companyType && {
+            companyType: {
+                deleteMany: {},
+                create: companyType.map((tag) => ({
+                    companyType: tag,
+                })),
+            },
+        }),
+        // A second table, same transaction. omitUndefined keeps a body that
+        // sent only one of the two from clearing the other.
+        //
+        // upsert, not update: accountType says the company owns a provider
+        // row, but no constraint enforces it, so an imported or hand-edited
+        // company can be missing one. update would throw P2025 there, which
+        // both callers translate into "not found" for a company that plainly
+        // exists. Creating the row is the repair.
+        ...(editsProviderFields(body) && {
+            provider: {
+                upsert: {
+                    create: omitUndefined({ serviceTerm, warrantyPolicy }),
+                    update: omitUndefined({ serviceTerm, warrantyPolicy }),
+                },
+            },
+        }),
+    };
+}
+
+// The one unique constraint a profile edit can reach: company_type is keyed on
+// (companyId, companyType), so a tag repeated inside one request collides with
+// itself. Username and email are not written here, so the code alone names
+// the constraint. A 409, or null when err is something else.
+export function companyTypeRepeat(err: unknown): ApiError | null {
+    return isUniqueViolation(err)
+        ? ApiError.conflict('Company types must not repeat', [
+              { field: 'companyType', message: 'Remove the duplicate tag' },
+          ])
+        : null;
+}

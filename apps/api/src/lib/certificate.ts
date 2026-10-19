@@ -1,6 +1,7 @@
 import type { Certificate } from '@mangodb/shared';
-import { ApiError } from './ApiError';
+import { ApiError } from './api-error';
 import { prisma } from './prisma';
+import type { Prisma } from '../generated/prisma/client';
 
 // The columns a certificate response may carry, and the shape it ships in.
 // Until this file existed the four certificate handlers returned raw Prisma
@@ -19,13 +20,7 @@ export const certificateSelect = {
     issueMonth: true,
     issueYear: true,
     organization: true,
-} as const;
-
-// The row and the response are the same shape now: the select names exactly
-// the columns the shared type declares, so there is nothing left to map.
-// toCertificate stays as the one place that would change if they diverge.
-export type CertificateRow = Certificate;
-export type CertificateResponse = Certificate;
+} as const satisfies Prisma.CertificateSelect;
 
 // The ownership check both the update and the delete handler need, written
 // once. Another provider's certificate answers 404, not 403. Since
@@ -35,10 +30,10 @@ export type CertificateResponse = Certificate;
 export async function assertCertificateOwned(
     certificateId: number,
     providerId: number,
-): Promise<{ certImage: string | null }> {
+): Promise<Certificate> {
     const certificate = await prisma.certificate.findFirst({
         where: { certificateId, providerId },
-        select: { certImage: true },
+        select: certificateSelect,
     });
 
     if (!certificate) {
@@ -48,7 +43,10 @@ export async function assertCertificateOwned(
     return certificate;
 }
 
-export function toCertificate(row: CertificateRow): CertificateResponse {
+// The row and the response are the same shape: the select names exactly
+// the columns the shared type declares. This stays the one place that would
+// change if they diverge.
+export function toCertificate(row: Certificate): Certificate {
     return {
         certificateId: row.certificateId,
         certTitle: row.certTitle,

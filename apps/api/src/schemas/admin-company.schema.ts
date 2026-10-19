@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { int4Id } from './common.schema';
+import { int4Id, pageQueryFields } from './common.schema';
 import { companyFields } from './company.schema';
 
 // Keep pages bounded so one request cannot pull the full Company table into
@@ -11,8 +11,7 @@ export const companyAccountListQuerySchema = z.object({
         .enum(['true', 'false'])
         .optional()
         .transform((v) => v === 'true'),
-    page: z.coerce.number().int().positive().default(1),
-    pageSize: z.coerce.number().int().min(1).max(50).default(12),
+    ...pageQueryFields,
 });
 
 export const companyAccountIdParamSchema = z.object({

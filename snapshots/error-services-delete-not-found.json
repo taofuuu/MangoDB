@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "NOT_FOUND",
-            "message": "Service listing not found"
+            "message": "Service not found"
         }
     }
 }

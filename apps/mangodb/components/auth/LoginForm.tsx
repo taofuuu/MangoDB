@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import TextField from '@/components/sm-detail/TextField';
+import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 import { login, sanitizeReturnUrl } from '@/lib/session';
@@ -72,32 +72,34 @@ export default function LoginForm() {
             className="flex w-full flex-col gap-4"
             noValidate
         >
-            <TextField
+            <Input
                 id="identifier"
                 label="Email address"
                 type="text"
                 autoComplete="email"
                 value={identifier}
-                onChange={(e) => {
-                    setIdentifier(e.target.value);
+                onChange={(next) => {
+                    setIdentifier(next);
                     setIdentifierError(null);
                 }}
                 error={identifierError ?? undefined}
+                variant="login"
                 required
             />
 
             <div className="flex flex-col gap-1.5">
-                <TextField
+                <Input
                     id="password"
                     label="Password"
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => {
-                        setPassword(e.target.value);
+                    onChange={(next) => {
+                        setPassword(next);
                         setPasswordError(null);
                     }}
                     error={passwordError ?? undefined}
+                    variant="login"
                     required
                 />
                 {/* No "Forgot password" link yet: there is no page or story
@@ -108,7 +110,7 @@ export default function LoginForm() {
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
-                className={`type-sm text-red-600 min-h-5 -mt-2 ${
+                className={`type-sm text-danger min-h-5 -mt-2 ${
                     error ? 'visible' : 'invisible'
                 }`}
             >
@@ -124,7 +126,7 @@ export default function LoginForm() {
                 log in
             </Button>
 
-            <p className="text-center type-sm text-gray-700">
+            <p className="text-center type-sm text-ink">
                 Don&apos;t have an account?{' '}
                 <Link
                     href="/register"

@@ -1,27 +1,19 @@
 import type { Request, Response } from 'express';
-import type { CompanyProfile } from '@mangodb/shared';
 import { revokeToken } from '../auth/tokenDenylist';
-import {
-    dummyPasswordHash,
-    hashPassword,
-    verifyPassword,
-} from '../auth/password';
+import { hashPassword, verifyCredentials } from '../auth/password';
 import {
     accountTypeToRole,
     ownsProviderRow,
     ownsReceiverRow,
 } from '../auth/roles';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import {
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prismaErrors';
+import { ApiError } from '../lib/api-error';
 import {
     assertCompanyIdentityAvailable,
     checkCompanyIdentityAvailability,
-} from '../lib/companyIdentity';
-import { companyProfileSelect, toCompanyProfile } from '../lib/companyProfile';
+    identityConflict,
+} from '../lib/company-identity';
+import { companyProfileSelect, toCompanyProfile } from '../lib/company-profile';
 import { sendSession } from '../lib/session';
 import { parseBody } from '../middleware/validate';
 import {
@@ -29,44 +21,6 @@ import {
     loginSchema,
     registerSchema,
 } from '../schemas/auth.schema';
-import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
-
-// Both login endpoints ask the same question, so they share the answer — and
-// share the defence. Both failures must look identical: same status, same body,
-// same time. bcrypt.compare is slow by design, so short-circuiting on a missing
-// row answered ~7x faster than a wrong password did, and that gap alone told an
-// attacker which emails were registered. Comparing against a throwaway hash on
-// the miss path makes every attempt pay the same cost.
-async function verifyCredentials(
-    email: string,
-    password: string,
-): Promise<CompanyProfile> {
-    // companyProfileSelect leaves password out on purpose, but verifying needs
-    // the stored hash. Ask for it alongside and drop it before returning —
-    // one round trip instead of a second lookup. deletedAt rides along the
-    // same way, for the login-blocking check below.
-    const company = await prisma.company.findUnique({
-        where: { email },
-        select: { ...companyProfileSelect, password: true, deletedAt: true },
-    });
-
-    const storedHash = company?.password ?? (await dummyPasswordHash());
-    const passwordMatches = await verifyPassword(password, storedHash);
-
-    // US1-6 / US6-4. A deleted account fails the same way a wrong password
-    // does: same message, same status, and — because verifyPassword above
-    // always ran against this row's real stored hash — the same timing. A
-    // distinct "this account was deleted" response would hand a prober a way
-    // to enumerate deleted accounts that a wrong-password response does not.
-    if (!company || company.deletedAt || !passwordMatches) {
-        throw ApiError.unauthorized('Invalid email or password');
-    }
-
-    // The hash never leaves this function: split it off, return the rest.
-    const { password: _hash, deletedAt: _deletedAt, ...row } = company;
-
-    return toCompanyProfile(row);
-}
 
 // US1-1. Creates the company, its industry tags, and the provider/receiver row
 // its account type implies — one nested create, so one transaction. Returns a
@@ -117,16 +71,8 @@ export async function register(req: Request, res: Response): Promise<void> {
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Two registrations can clear the check and race to here; the indexes
-        // are what actually enforce uniqueness.
-        const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'Username or email already registered',
-                uniqueViolationDetails(fields),
-            );
-        }
-        throw err;
+        // Two registrations can clear the check and race to here.
+        throw identityConflict(err) ?? err;
     }
 
     sendSession(res, toCompanyProfile(company), 201);

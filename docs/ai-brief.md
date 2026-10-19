@@ -6,8 +6,9 @@ rules themselves rather than pointing at files you cannot open. Paths below are
 written from the repository root, in case you have more of it than this file.
 
 Nine people build this with different AI assistants. That is how the same idea
-ended up existing in three or four shapes and why a 62-commit refactor was
-needed to cut it back to one. Everything below exists to stop that recurring.
+ended up existing in three or four shapes, and why two refactors (after Sprint
+1, and again before Sprint 3) were needed to cut it back to one. Everything
+below exists to stop that recurring.
 
 **If something is not in this file and not in the code you were given, say you
 don't know.** Do not invent an endpoint, a column, a helper or a colour. A
@@ -29,6 +30,18 @@ A B2B marketplace. Companies register as a **Provider** (offers services), a
 The browser only ever talks to the Next server. `/api/*` is proxied to Express,
 so every request is same-origin and the session cookie works with no CORS.
 
+The words, from the database up:
+
+- A **listing** is one row in the `listing` table. It is either a **service**
+  (a Provider offers work) or a **job** (a Receiver asks for it). Above the
+  database it is always "service" or "job", never "service listing" or "job
+  posting".
+- A **proposal** is a Provider's offer on a job. Its **sender** is the company
+  that wrote it, its **recipient** the company that owns the job, and it
+  points at the job by `listingId`.
+- Accepting a proposal creates a **project**. Projects, quotations and reviews
+  are Sprint 3's.
+
 ---
 
 ## 2. Naming — the rule that breaks most often
@@ -46,6 +59,11 @@ React prop       companyName
 Assistants get this wrong constantly, because most API tutorials use snake_case
 and because this codebase _used_ to. If you see `profile.company_name` in
 something you are asked to extend, it is old code — write `companyName`.
+
+Words are spelled out: `categoryId`, `categoryName`, `projectId`, not `catId`
+or `projId`. A status field is named after its row: `listingStatus`,
+`proposalStatus`, `projectStatus`. The company that owns something is always
+`company: CompanyBrief` (`companyId`, `companyName`, `companyPhoto`).
 
 Names also flow one direction. Rename with this arrow or you rename twice:
 
@@ -111,11 +129,28 @@ Produced by `ApiError` and a shared error handler. In a controller:
 
 ```ts
 throw ApiError.badRequest('Provide at least one field to update');
-// also: validationFailed, unauthorized, forbidden, notFound, conflict
+// also: validationFailed, unauthorized, forbidden, notFound, conflict,
+// tooManyRequests
 ```
 
 **Never `throw new Error(...)` on a request path** — that is a 500 with no
 message.
+
+### Helpers that already exist — use them
+
+| Need                                | Helper                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| Paging a list                       | `pageQueryFields` in the schema, `pageArgs` + `toPagination` in the controller |
+| An id in a query string             | `queryId(name)`, `optionalQueryId(name)`                                       |
+| A cleared field / a param not sent  | `blankToNull` / `blankToUndefined`                                             |
+| "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
+| A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
+| Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
+| Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
+| A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
+
+Every `select` constant is `as const satisfies Prisma.<Model>Select`, so a
+field that does not exist fails `tsc` instead of failing at runtime.
 
 ### Controller shape
 
@@ -186,6 +221,42 @@ A page that loads data redirects to `/unauthorized` when `isNotSignedIn(err)`,
 renders the error when it is anything else, or renders a neutral surface gate
 while the data is loading.
 
+A page that needs the signed-in company does not call `getMyProfile` itself:
+
+```tsx
+const me = useMyCompany('provider'); // or 'receiver', or no role
+if (me.status !== 'ready') {
+    return <PageGate state={me} roleMessage="You need a Provider account …" />;
+}
+// me.company is the signed-in company from here on
+```
+
+### Pages and where their pieces live
+
+| Page                                   | Route                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------- |
+| Your own profile                       | `/profile/view`, `/profile/edit`                                                      |
+| Another company                        | `/companies/[companyId]` and `…/services`, `…/jobs`, `…/portfolios`, `…/certificates` |
+| Jobs: search, yours, new, edit         | `/jobs`, `/jobs/mine`, `/jobs/create`, `/jobs/[jobId]/edit`                           |
+| The proposals sent to one of your jobs | `/jobs/[jobId]/proposals`                                                             |
+| The proposals you sent                 | `/proposals`                                                                          |
+| Services: search, new, edit            | `/services`, `/services/create`, `/services/[serviceId]/edit`                         |
+
+An id from the URL goes through `parseId` (from `@/lib/api`); `null` is shown
+as not found.
+
+| Need                         | From                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| A date column (`2026-09-01`) | `formatDateOnly` in `lib/dates` — never `new Date(day)`  |
+| A timestamp                  | `formatDate`, `formatDateTime` in `lib/dates`            |
+| An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
+| A page size                  | the constants in `lib/pagination`                        |
+| A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
+
+Components live in one folder per API noun (`components/jobs`,
+`components/services`, …); `components/ui` holds only pieces that know no
+resource. One default export per file, named after the file.
+
 ### Errors belong to the field they name
 
 Not a banner at the top, not a line beside the Save button. `toFormErrors(err,
@@ -202,6 +273,9 @@ leftover that belongs to no field.
 | `type-md` (18px/500) | `text-lg`  |
 | `type-sm` (14px/400) | `text-sm`  |
 | `type-xs` (12px/400) | `text-xs`  |
+
+A `type-*` class sets its own weight and sits outside Tailwind's layers, so it
+beats `font-semibold` beside it. Write the weight as `!font-[600]`.
 
 ### Colour — never a hex literal
 
@@ -221,7 +295,10 @@ Radii: `rounded-input` (4px), `rounded-button` (12px), `rounded-status` (20px),
 
 If none fits, ask whether the design needs a new colour — usually an existing
 one is close enough. Four danger reds became one and nineteen greys became five
-in the refactor; do not start that over.
+in the refactor; do not start that over. Tailwind's own palette (`gray-500`,
+`slate-700`, `bg-white`) is a colour literal too. Greys go by role: headings
+`ink`, helper lines `ink-soft`, placeholders and dates `ink-placeholder`,
+borders `line`, light fills `fill-subtle`.
 
 ### Sizing
 
@@ -234,6 +311,14 @@ tappable.
 | Need                      | Component                                                      |
 | ------------------------- | -------------------------------------------------------------- |
 | A modal                   | `ModalShell` — Escape, backdrop click, scroll lock, focus trap |
+| "Are you sure?"           | `ConfirmModal` — async `onConfirm`, shows its error            |
+| "It worked"               | `SuccessModal`                                                 |
+| A pick-one box            | `Dropdown` — keyboard, outside click, Escape                   |
+| A keyword box             | `SearchBar` — owns the 300 ms wait and the clear button        |
+| A pick-many filter        | `FilterGroup` — chosen values as tags, a + for the rest        |
+| A list with nothing in it | `EmptyState`                                                   |
+| A status pill / filter    | `StatusBadge` (tone), `StatusTabs`                             |
+| A company's picture       | `CompanyAvatar` — guards the host, falls back to initials      |
 | One field's error         | `FieldError`                                                   |
 | An image at full size     | `ImageModal`                                                   |
 | Provider/Receiver chips   | `RoleTags`                                                     |
@@ -242,6 +327,10 @@ tappable.
 | Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
+
+An add form and an edit form for the same thing are one component with a mode
+(`PortfolioForm`, `CertificateForm`, `ServiceForm`, `JobForm`), mounted only
+while open.
 
 Seven hand-rolled modal shells existed before `ModalShell`, and four of them
 ignored the Escape key. That is the pattern to avoid.
@@ -265,21 +354,29 @@ reaches a screen reader as "textbox". Display values as a label and a `<p>`.
 
 Every row has really happened on this codebase.
 
-| Wrong                                                  | Right                              |
-| ------------------------------------------------------ | ---------------------------------- |
-| `profile.company_name`                                 | `profile.companyName`              |
-| `className="text-sm"`                                  | `className="type-sm"`              |
-| `bg-[#497B93]`                                         | `bg-brand`                         |
-| `setError('no-token')`                                 | `setLoadError(NOT_SIGNED_IN)`      |
-| `err instanceof ApiRequestError && err.status === 401` | `isNotSignedIn(err)`               |
-| Hand-written "Could not reach the server"              | `describeError(err)`               |
-| `<textarea readOnly value={x} />` to display a value   | a label and a `<p>`                |
-| `<img src={row.imageUrl} />`                           | host-guard, then `next/image`      |
-| `<Image fill />` with no `sizes`                       | always pass `sizes`                |
-| A new modal wrapper                                    | `ModalShell`                       |
-| Error text beside the submit button                    | `FieldError` under the input       |
-| `throw new Error('...')` in a controller               | `throw ApiError.badRequest('...')` |
-| `{ message: 'Created', thing }`                        | the bare `thing`, with 201         |
+| Wrong                                                  | Right                               |
+| ------------------------------------------------------ | ----------------------------------- |
+| `profile.company_name`                                 | `profile.companyName`               |
+| `className="text-sm"`                                  | `className="type-sm"`               |
+| `bg-[#497B93]`                                         | `bg-brand`                          |
+| `setError('no-token')`                                 | `setLoadError(NOT_SIGNED_IN)`       |
+| `err instanceof ApiRequestError && err.status === 401` | `isNotSignedIn(err)`                |
+| Hand-written "Could not reach the server"              | `describeError(err)`                |
+| `<textarea readOnly value={x} />` to display a value   | a label and a `<p>`                 |
+| `<img src={row.imageUrl} />`                           | host-guard, then `next/image`       |
+| `<Image fill />` with no `sizes`                       | always pass `sizes`                 |
+| A new modal wrapper                                    | `ModalShell`                        |
+| Error text beside the submit button                    | `FieldError` under the input        |
+| `throw new Error('...')` in a controller               | `throw ApiError.badRequest('...')`  |
+| `{ message: 'Created', thing }`                        | the bare `thing`, with 201          |
+| `/job-postings`, `JobPosting`, `jobPostingId`          | `/jobs`, `Job`, `jobId`             |
+| `catId`, `projId`, `provider` on a proposal            | `categoryId`, `projectId`, `sender` |
+| `new Date(job.deadline).toLocaleDateString()`          | `formatDateOnly(job.deadline)`      |
+| `` `฿${n.toLocaleString()}` ``                         | `formatBaht(n)`                     |
+| `getMyProfile()` and a role check in a page            | `useMyCompany(role)` + `PageGate`   |
+| `type-sm font-semibold`                                | `type-sm !font-[600]`               |
+| `text-gray-500`, `bg-white`                            | `text-ink-soft`, `bg-surface-white` |
+| `alert(describeError(err))` after a confirm            | throw it; `ConfirmModal` shows it   |
 
 ---
 
@@ -291,18 +388,28 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
-- A price or delivery duration on a service — `service` holds only `listing_id`
+- Job search filters beyond the keyword. `GET /jobs` takes `q`, `companyId`,
+  `status` and paging. The category, budget, deadline and order controls on
+  `/jobs` send nothing yet.
+- A delivery duration on a service. Its price is the listing's
+  `minBudget`/`maxBudget` range, the same columns a job uses.
+- An Edit button for your own services. `/services/[serviceId]/edit` is
+  reached only through the temporary `/dev/services/edit` picker.
+- Projects, quotations and reviews beyond the project row that accepting a
+  proposal creates — Sprint 3 builds them.
 
 ---
 
 ## 7. Before you hand code back
 
-- It must pass `npm run verify` — Prettier, ESLint, `tsc --noEmit`
+- It must pass `npm run verify` — Prettier, ESLint, `tsc --noEmit` and the
+  unit tests (`npm test`, Node's own runner). Node 22 or newer.
 - 4-space indent, single quotes, semicolons, trailing commas (Prettier decides)
 - Do not claim something works because the code looks right. Say what you
   verified and what you did not.
 - If you changed an API response shape, say so — there is a recorded snapshot
-  baseline that has to be re-recorded.
+  baseline (`bash scripts/snapshot-api.sh`, then `git diff snapshots/`) that
+  has to be re-recorded.
 - Migrations run against a database nine people share. Never
   `prisma migrate dev`, never the Supabase dashboard. Flag that a migration is
   needed rather than assuming it can just be applied.
@@ -316,15 +423,15 @@ nothing else. If you _do_ have the repo, these hold the detail this file
 summarises — read them rather than guessing, and treat them as the authority
 where they are more specific:
 
-| File                            | What it is                                                              |
-| ------------------------------- | ----------------------------------------------------------------------- |
-| `packages/shared/index.ts`      | Every wire type. The answer to "what is this field called"              |
-| `docs/conventions.md`           | The rules in full, 15 sections. Wins over this file on any disagreement |
-| `docs/adding-a-resource.md`     | Adding an endpoint, step by step, with a checklist                      |
-| `apps/mangodb/app/globals.css`  | The colour tokens and type scale, with a note on why each exists        |
-| `apps/api/prisma/schema.prisma` | The real columns                                                        |
-| `apps/api/src/routes/`          | Whether an endpoint exists at all                                       |
-| `docs/refactor/README.md`       | Why the codebase looks like this                                        |
+| File                            | What it is                                                               |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `packages/shared/index.ts`      | Every wire type. The answer to "what is this field called"               |
+| `docs/conventions.md`           | The rules in full, 16 sections. Wins over this file on any disagreement  |
+| `docs/adding-a-resource.md`     | Adding an endpoint, step by step, with a checklist                       |
+| `apps/mangodb/app/globals.css`  | The colour tokens and type scale, with a note on why each exists         |
+| `apps/api/prisma/schema.prisma` | The real columns                                                         |
+| `apps/api/src/routes/`          | Whether an endpoint exists at all                                        |
+| `docs/refactor/README.md`       | Why the codebase looks like this; round 2 is in `docs/refactor/round-2/` |
 
 ---
 

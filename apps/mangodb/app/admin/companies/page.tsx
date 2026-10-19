@@ -2,21 +2,24 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-    AccountType,
+    RegisterAccountType,
     CompanyAccountDetail,
-    CompanyAccountListResponse,
+    CompanyAccountSummary,
+    Paginated,
 } from '@mangodb/shared';
-import { ChevronDown, Search, X } from 'lucide-react';
 import CompanyCard from '@/components/companies/CompanyCard';
 import CompanyDetailModal from '@/components/companies/CompanyDetailModal';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
+import EmptyState from '@/components/ui/EmptyState';
+import SearchBar from '@/components/ui/SearchBar';
 import Pagination from '@/components/ui/Pagination';
 import AdminUnauthorizedPage from '@/components/auth/AdminUnauthorizedPage';
 import { getCompanyAccountDetail, listCompanyAccounts } from '@/lib/companies';
 import { describeError, isForbidden, isNotSignedIn } from '@/lib/api';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
 
-type FilterOption = 'ALL' | Exclude<AccountType, 'ADMIN'>;
+type FilterOption = 'ALL' | RegisterAccountType;
 
 const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
     { value: 'ALL', label: 'ALL' },
@@ -27,13 +30,11 @@ const FILTER_OPTIONS: { value: FilterOption; label: string }[] = [
 
 export default function AdminCompaniesPage() {
     const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
+    // The settled keyword, from SearchBar.
+    const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<FilterOption>('ALL');
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [result, setResult] = useState<CompanyAccountListResponse | null>(
-        null,
-    );
+    const [result, setResult] =
+        useState<Paginated<CompanyAccountSummary> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [adminAuthStatus, setAdminAuthStatus] = useState<
@@ -47,45 +48,6 @@ export default function AdminCompaniesPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState<string | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
-    const filterRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const nextSearch = searchQuery.trim();
-        if (nextSearch === debouncedSearch) return;
-
-        const timer = setTimeout(() => {
-            setDebouncedSearch(nextSearch);
-            setPage(1);
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery, debouncedSearch]);
-
-    useEffect(() => {
-        if (!isFilterOpen) return;
-
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                filterRef.current &&
-                !filterRef.current.contains(event.target as Node)
-            ) {
-                setIsFilterOpen(false);
-            }
-        }
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') {
-                setIsFilterOpen(false);
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isFilterOpen]);
 
     useEffect(() => {
         let cancelled = false;
@@ -96,7 +58,7 @@ export default function AdminCompaniesPage() {
         setAdminAuthStatus(null);
 
         listCompanyAccounts(page, COMPANY_PAGE_SIZE, {
-            q: debouncedSearch || undefined,
+            q: search || undefined,
             filter: filter === 'ALL' ? undefined : filter,
         })
             .then((data) => {
@@ -124,7 +86,7 @@ export default function AdminCompaniesPage() {
         return () => {
             cancelled = true;
         };
-    }, [page, debouncedSearch, filter, reloadKey]);
+    }, [page, search, filter, reloadKey]);
 
     const closeDetail = useCallback(() => {
         setIsDetailOpen(false);
@@ -155,13 +117,8 @@ export default function AdminCompaniesPage() {
         setReloadKey((key) => key + 1);
     };
 
-    const handleSearchChange = (value: string) => {
-        setSearchQuery(value);
-    };
-
-    const clearSearch = () => {
-        setSearchQuery('');
-        setDebouncedSearch('');
+    const handleSearch = (q: string) => {
+        setSearch(q);
         setPage(1);
     };
 
@@ -170,7 +127,6 @@ export default function AdminCompaniesPage() {
             setFilter(selected);
             setPage(1);
         }
-        setIsFilterOpen(false);
     };
 
     const pagination = result?.pagination;
@@ -204,84 +160,20 @@ export default function AdminCompaniesPage() {
                     </div>
 
                     <div className="mt-[0.74vh] flex flex-wrap items-center gap-[0.63vw]">
-                        <div className="relative flex items-center">
-                            <Search
-                                aria-hidden="true"
-                                className="pointer-events-none absolute left-[0.63vw] h-[1.67vh] w-[0.83vw] text-ink-placeholder"
-                            />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) =>
-                                    handleSearchChange(e.target.value)
-                                }
-                                maxLength={100}
-                                placeholder="Search companies..."
-                                aria-label="Search companies by keyword"
-                                className="h-[3.70vh] w-[14vw] min-w-[180px] rounded-button border border-line bg-white pl-[1.88vw] pr-[1.67vw] type-xs text-ink placeholder:text-ink-placeholder focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none"
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    onClick={clearSearch}
-                                    aria-label="Clear search"
-                                    className="absolute right-[0.52vw] rounded-full p-[0.16vw] text-ink-placeholder hover:bg-line hover:text-ink focus-visible:outline-none"
-                                >
-                                    <X
-                                        aria-hidden="true"
-                                        className="h-[1.48vh] w-[0.73vw]"
-                                    />
-                                </button>
-                            )}
-                        </div>
+                        <SearchBar
+                            onSearch={handleSearch}
+                            label="Search companies by keyword"
+                            placeholder="Search companies..."
+                            className="w-[14vw]"
+                        />
 
-                        <div ref={filterRef} className="relative">
-                            <button
-                                type="button"
-                                onClick={() => setIsFilterOpen((prev) => !prev)}
-                                aria-expanded={isFilterOpen}
-                                aria-haspopup="listbox"
-                                aria-label="Filter companies by account type"
-                                className="flex h-[3.70vh] items-center gap-[0.31vw] rounded-button border border-line bg-white px-[0.63vw] type-xs !font-[500] text-ink hover:bg-line focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                            >
-                                {filter}
-                                <ChevronDown
-                                    aria-hidden="true"
-                                    className={`h-[1.30vh] w-[0.73vw] text-ink-soft transition-transform duration-200 ${
-                                        isFilterOpen ? 'rotate-180' : ''
-                                    }`}
-                                />
-                            </button>
-
-                            {isFilterOpen && (
-                                <div
-                                    role="listbox"
-                                    aria-label="Account type options"
-                                    className="absolute right-0 top-full z-50 mt-[0.37vh] min-w-[7.5vw] rounded-button border border-line bg-white py-[0.37vh] shadow-md"
-                                >
-                                    {FILTER_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            role="option"
-                                            aria-selected={
-                                                filter === option.value
-                                            }
-                                            onClick={() =>
-                                                handleFilterSelect(option.value)
-                                            }
-                                            className={`block w-full px-[0.83vw] py-[0.74vh] text-left type-xs !font-[500] transition-colors hover:bg-line ${
-                                                filter === option.value
-                                                    ? 'bg-brand/10 font-semibold text-brand'
-                                                    : 'text-ink'
-                                            }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <Dropdown
+                            value={filter}
+                            options={FILTER_OPTIONS}
+                            onChange={handleFilterSelect}
+                            label="Filter companies by account type"
+                            className="w-[9vw] min-w-[130px]"
+                        />
                     </div>
                 </header>
 
@@ -331,11 +223,13 @@ export default function AdminCompaniesPage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="py-[9.26vh] text-center type-md text-ink-soft">
-                                {debouncedSearch || filter !== 'ALL'
-                                    ? 'No Company accounts found matching your search or filter.'
-                                    : 'No Company accounts found.'}
-                            </p>
+                            <EmptyState
+                                title="No company accounts found"
+                                {...((search || filter !== 'ALL') && {
+                                    message:
+                                        'Try a broader keyword or another account type.',
+                                })}
+                            />
                         )}
                     </div>
                 )}

@@ -1,0 +1,10 @@
+{
+    "request": "PATCH /jobs/<job_id>",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "This job belongs to another company"
+        }
+    }
+}

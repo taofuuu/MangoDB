@@ -1,13 +1,13 @@
 {
-    "request": "GET /portfolios/16",
+    "request": "GET /portfolios/24",
     "status": 200,
     "body": {
-        "developmentDate": "2026-03-02",
-        "portfolioDescription": "Patient self-booking with SMS reminders and a staff rota view.",
-        "portfolioId": 16,
-        "portfolioImage": "<storage-url>",
-        "portfolioLink": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "portfolioName": "Portfolio Test",
-        "serviceId": 23
+        "developmentDate": "2026-01-15",
+        "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
+        "portfolioId": 24,
+        "portfolioImage": "https://snapshot.local/portfolio.png",
+        "portfolioLink": "https://snapshot.local/portfolio",
+        "portfolioName": "Snapshot seed portfolio",
+        "serviceId": 25
     }
 }

@@ -1,0 +1,10 @@
+{
+    "request": "POST /jobs/<job_id>/close",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "This job belongs to another company"
+        }
+    }
+}

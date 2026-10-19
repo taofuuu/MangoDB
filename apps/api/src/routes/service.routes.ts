@@ -36,16 +36,14 @@ serviceRoutes.get(
     requireRole('provider'),
     listMyServices,
 );
-serviceRoutes.get('/:serviceId', requireAuth, getService);
-serviceRoutes.patch(
+// Company accounts only, like the search: discovery is not an admin's.
+serviceRoutes.get(
     '/:serviceId',
     requireAuth,
-    requireRole('provider'),
-    updateService,
+    requireRole('provider', 'receiver'),
+    getService,
 );
-serviceRoutes.delete(
-    '/:serviceId',
-    requireAuth,
-    requireRole('provider'),
-    deleteService,
-);
+// Owner-only: signed in, and owning the service is checked in the handler.
+// The role is checked on create only; owning a service already means it.
+serviceRoutes.patch('/:serviceId', requireAuth, updateService);
+serviceRoutes.delete('/:serviceId', requireAuth, deleteService);

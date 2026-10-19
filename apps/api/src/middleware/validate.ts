@@ -1,5 +1,5 @@
 import type { ZodError, ZodType } from 'zod';
-import { ApiError, type ApiErrorDetail } from '../lib/ApiError';
+import { ApiError, type ApiErrorDetail } from '../lib/api-error';
 
 // Functions, not middleware: middleware would return the parsed value through
 // req.body, which Express types as `any`, losing the schema's type.

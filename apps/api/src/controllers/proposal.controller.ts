@@ -1,44 +1,55 @@
 import type { Request, Response } from 'express';
 import type {
-    ProposalListResponse,
+    ListingStatus,
+    ListingType,
+    Paginated,
+    ProposalStatus,
     ProposalStatusCounts,
+    SentProposal,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { isUniqueViolation } from '../lib/prismaErrors';
+import { pageArgs, toPagination } from '../lib/pagination';
+import { ApiError } from '../lib/api-error';
+import { isUniqueViolation } from '../lib/prisma-errors';
 import { parseParams, parseBody, parseQuery } from '../middleware/validate';
 import {
     createProposalSchema,
     proposalIdParamSchema,
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
-import { jobPostingIdParamSchema } from '../schemas/job-posting.schema';
-import { assertJobPostingOwned } from '../lib/jobPosting';
+import { jobIdParamSchema } from '../schemas/job.schema';
 import {
-    postingProposalSelect,
+    assertListingOwned,
+    LISTING_MESSAGES,
+    closeOpenListing,
+    rejectPendingProposals,
+} from '../lib/listing';
+import { createProjectFromProposal } from '../lib/project';
+import {
+    receivedProposalSelect,
     proposalSelect,
-    providerProposalSelect,
-    toPostingProposal,
+    sentProposalSelect,
+    toReceivedProposal,
     toProposal,
-    toProviderProposal,
+    toSentProposal,
     toProposalStatusCounts,
-    acceptProposalTx,
-    rejectPendingProposal,
+    findPendingProposalFor,
+    setProposalStatus,
 } from '../lib/proposal';
 
 export async function createProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
     const body = parseBody(createProposalSchema, req.body);
     const callerCompanyId = req.auth!.companyId;
 
     // A soft-deleted company's postings stay OPEN in the table, so the where
-    // hides them here, the same 404 that GET /job-postings/:id gives.
+    // hides them here, the same 404 that GET /jobs/:jobId gives.
     const posting = await prisma.listing.findUnique({
-        where: { listingId: jobPostingId, company: { deletedAt: null } },
+        where: { listingId: jobId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -47,29 +58,27 @@ export async function createProposal(
         },
     });
 
-    if (!posting || posting.listingType !== 'JOB') {
-        throw ApiError.notFound('Job posting not found');
+    if (!posting || posting.listingType !== ('JOB' satisfies ListingType)) {
+        throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
     }
 
     if (posting.companyId === callerCompanyId) {
-        throw ApiError.forbidden(
-            'Cannot submit a proposal to your own job posting',
-        );
+        throw ApiError.forbidden('You cannot send a proposal to your own job');
     }
 
-    if (posting.listingStatus !== 'OPEN') {
-        throw ApiError.conflict('Job posting is not open for proposals');
+    if (posting.listingStatus !== ('OPEN' satisfies ListingStatus)) {
+        throw ApiError.conflict('This job is not open for proposals');
     }
 
     try {
         const proposal = await prisma.proposal.create({
             data: {
-                listingId: jobPostingId,
+                listingId: jobId,
                 senderId: callerCompanyId,
                 proposalBudget: body.proposalBudget,
                 proposalTerms: body.proposalTerms,
                 duration: body.duration,
-                proposalStatus: 'PENDING',
+                proposalStatus: 'PENDING' satisfies ProposalStatus,
             },
             select: proposalSelect,
         });
@@ -78,7 +87,7 @@ export async function createProposal(
     } catch (err) {
         if (isUniqueViolation(err)) {
             throw ApiError.conflict(
-                'You have already submitted a proposal for this job posting',
+                'You have already sent a proposal to this job',
             );
         }
         throw err;
@@ -90,39 +99,67 @@ export async function createProposal(
 // history, not discovery (see Company.deletedAt).
 // Only the posting's owner may read them: the list carries every competing
 // Provider's price and terms.
-export async function listJobPostingProposals(
+export async function listJobProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const { jobPostingId } = parseParams(jobPostingIdParamSchema, req.params);
-    await assertJobPostingOwned(jobPostingId, req.auth!.companyId);
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
 
     const proposals = await prisma.proposal.findMany({
-        where: { listingId: jobPostingId },
+        where: { listingId: jobId },
         orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-        select: postingProposalSelect,
+        select: receivedProposalSelect,
     });
 
-    res.json(proposals.map(toPostingProposal));
+    res.json(proposals.map(toReceivedProposal));
 }
 
+// US2-11. Accepting a proposal on a job closes the job, rejects the other
+// proposals and opens a project, all or nothing. Each step is a lib helper,
+// so an accept that must leave its listing open (a hire request on a service)
+// leaves out closeOpenListing.
 export async function acceptProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    const project = await acceptProposalTx(proposalId, callerId);
+
+    const project = await prisma.$transaction(async (tx) => {
+        const proposal = await findPendingProposalFor(tx, proposalId, callerId);
+        if (
+            proposal.listing.listingStatus !== ('OPEN' satisfies ListingStatus)
+        ) {
+            throw ApiError.conflict('Listing has already been closed');
+        }
+
+        await closeOpenListing(
+            tx,
+            proposal.listingId,
+            'Listing has already been closed',
+        );
+        await setProposalStatus(tx, proposalId, 'ACCEPTED');
+        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        return createProjectFromProposal(tx, {
+            proposalId,
+            proposalBudget: proposal.proposalBudget,
+        });
+    });
+
     res.status(201).json(project);
 }
 
+// Rejecting one pending proposal touches no other row.
 export async function rejectProposal(
     req: Request,
     res: Response,
 ): Promise<void> {
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
-    await rejectPendingProposal(proposalId, callerId);
+
+    await findPendingProposalFor(prisma, proposalId, callerId);
+    await setProposalStatus(prisma, proposalId, 'REJECTED');
     res.status(204).end();
 }
 
@@ -147,21 +184,15 @@ export async function listMyProposals(
         prisma.proposal.count({ where }),
         prisma.proposal.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-            select: providerProposalSelect,
+            select: sentProposalSelect,
         }),
     ]);
 
-    const body: ProposalListResponse = {
-        items: rows.map(toProviderProposal),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+    const body: Paginated<SentProposal> = {
+        items: rows.map(toSentProposal),
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);

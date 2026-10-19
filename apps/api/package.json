@@ -5,7 +5,7 @@
     "main": "dist/index.js",
     "scripts": {
         "dev": "tsx watch src/index.ts",
-        "build": "tsc",
+        "build": "tsc -p tsconfig.build.json",
         "start": "node dist/index.js",
         "typecheck": "tsc --noEmit",
         "test": "node --import tsx --experimental-test-module-mocks --test \"src/**/*.test.ts\"",
@@ -42,7 +42,7 @@
         "@types/express": "^5.0.6",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/multer": "^2.2.0",
-        "@types/node": "^20.19.0",
+        "@types/node": "^22.20.5",
         "eslint": "^9.39.5",
         "prisma": "^7.10.0",
         "tsx": "^4.23.12",

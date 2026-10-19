@@ -1,0 +1,140 @@
+import type { IdentityAvailability } from '@mangodb/shared';
+import { Prisma } from '../generated/prisma/client';
+import { ApiError } from './api-error';
+import { prisma } from './prisma';
+import { uniqueViolationDetails, uniqueViolationFields } from './prisma-errors';
+import { COMPANY_UNIQUE_FIELDS } from '../schemas/company.schema';
+
+interface CompanyIdentityInput {
+    username: string;
+    email: string;
+}
+
+// An edit (US1-5) may change only one of the two, or neither.
+interface PartialCompanyIdentityInput {
+    username?: string | undefined;
+    email?: string | undefined;
+}
+
+// The wire shape of POST /auth/check-availability, named once in
+// packages/shared so the frontend codes against the same thing.
+type CompanyIdentityAvailability = IdentityAvailability;
+
+function normalizeUsername(username: string): string {
+    return username.trim().toLowerCase();
+}
+
+function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+}
+
+interface IdentityMatch {
+    username: string;
+    email: string;
+}
+
+// The comparison both callers make, written once. `wanted` is already
+// normalized; the rows coming back from the database are not, because the
+// query lowercased them for matching and returned the stored spelling.
+// An absent field is never taken — nothing was asked about it.
+function isTaken(
+    matches: IdentityMatch[],
+    field: keyof IdentityMatch,
+    wanted: string | undefined,
+): boolean {
+    if (!wanted) return false;
+    return matches.some((company) => company[field].toLowerCase() === wanted);
+}
+
+// One case-insensitive query for whichever fields were supplied. excludeCompanyId
+// is the caller's own row: keeping your own email is not a collision with
+// yourself. Nothing supplied matches nothing, rather than every company.
+//
+// The one $queryRaw in the codebase, and the one place below the camelCase
+// line: it addresses real columns, so `company_id` here is the column name and
+// not a field name Prisma renamed. See docs/conventions.md section 1.
+async function findIdentityMatches(
+    username: string | undefined,
+    email: string | undefined,
+    excludeCompanyId: number | undefined,
+): Promise<IdentityMatch[]> {
+    const wanted: Prisma.Sql[] = [];
+    if (username) wanted.push(Prisma.sql`lower(username) = ${username}`);
+    if (email) wanted.push(Prisma.sql`lower(email) = ${email}`);
+
+    if (wanted.length === 0) return [];
+
+    const excludeSelf =
+        excludeCompanyId === undefined
+            ? Prisma.empty
+            : Prisma.sql`AND company_id <> ${excludeCompanyId}`;
+
+    return prisma.$queryRaw<IdentityMatch[]>`
+    SELECT username, email FROM company
+    WHERE (${Prisma.join(wanted, ' OR ')}) ${excludeSelf}`;
+}
+
+// T009. Checks username and email together with one case-insensitive query.
+export async function checkCompanyIdentityAvailability(
+    input: CompanyIdentityInput,
+): Promise<CompanyIdentityAvailability> {
+    const username = normalizeUsername(input.username);
+    const email = normalizeEmail(input.email);
+
+    if (!username || !email) {
+        // Reachable from POST /auth/check-availability, where a TypeError
+        // left through the 500 branch of errorHandler.
+        throw ApiError.badRequest('Username and email must not be empty');
+    }
+
+    const matches = await findIdentityMatches(username, email, undefined);
+
+    return {
+        username,
+        email,
+        usernameAvailable: !isTaken(matches, 'username', username),
+        emailAvailable: !isTaken(matches, 'email', email),
+    };
+}
+
+// US1-1 and US1-5. Throwing form, for callers that stop rather than report.
+// Same details as register()'s P2002 backstop, so the caller cannot tell which
+// rejected it. Pass excludeCompanyId when editing, or a company re-submitting
+// its own username would collide with itself.
+export async function assertCompanyIdentityAvailable(
+    input: PartialCompanyIdentityInput,
+    excludeCompanyId?: number,
+): Promise<void> {
+    const username = input.username && normalizeUsername(input.username);
+    const email = input.email && normalizeEmail(input.email);
+
+    const matches = await findIdentityMatches(
+        username,
+        email,
+        excludeCompanyId,
+    );
+
+    const taken = (['username', 'email'] as const).filter((field) =>
+        isTaken(matches, field, field === 'username' ? username : email),
+    );
+
+    if (taken.length > 0) {
+        throw ApiError.conflict(
+            'Username or email already registered',
+            uniqueViolationDetails(taken),
+        );
+    }
+}
+
+// A username or email another company took between the availability check
+// and the write: the unique indexes are what actually enforce it. A 409 that
+// names each column, or null when err is something else.
+export function identityConflict(err: unknown): ApiError | null {
+    const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
+    return fields
+        ? ApiError.conflict(
+              'Username or email already registered',
+              uniqueViolationDetails(fields),
+          )
+        : null;
+}

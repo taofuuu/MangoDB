@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { httpUrl, int4Id } from './common.schema';
+import { blankToNull, httpUrl, optionalQueryId, int4Id } from './common.schema';
+import { fromDateOnly } from '../lib/dates';
 
 // Path params arrive as strings, so this coerces before the integer check —
 // the same reason parseQuery's schemas need z.coerce.
@@ -12,15 +13,17 @@ export const portfolioIdParamSchema = z.object({
 // serviceId are not here: portfolioId names the row, and moving a sample to
 // a different service is a different operation than editing it in place,
 // needing a fresh ownership check against the destination.
-export const portfolioFields = {
+const portfolioFields = {
     portfolioName: z.string().trim().min(1).max(255),
-    portfolioDescription: z.string().trim().max(2000),
+    // A cleared box is null: the one column allowed to be empty.
+    portfolioDescription: z.preprocess(
+        blankToNull,
+        z.string().trim().max(2000).nullable(),
+    ),
     // Date-only column (@db.Date): a YYYY-MM-DD string, then a Date at UTC
     // midnight. z.coerce.date() would also take a full timestamp, and a client
     // in UTC+7 sending one would store the day before.
-    developmentDate: z.iso
-        .date()
-        .transform((day) => new Date(`${day}T00:00:00Z`)),
+    developmentDate: z.iso.date().transform(fromDateOnly),
     portfolioImage: httpUrl,
     portfolioLink: httpUrl,
 } as const;
@@ -35,9 +38,7 @@ export const portfolioFields = {
 export const createPortfolioSchema = z.object({
     serviceId: int4Id,
     portfolioName: portfolioFields.portfolioName,
-    portfolioDescription: portfolioFields.portfolioDescription
-        .optional()
-        .nullable(),
+    portfolioDescription: portfolioFields.portfolioDescription.optional(),
     developmentDate: portfolioFields.developmentDate,
     portfolioLink: portfolioFields.portfolioLink,
 });
@@ -48,19 +49,27 @@ export const createPortfolioSchema = z.object({
 export const updatePortfolioSchema = z
     .strictObject({
         portfolioName: portfolioFields.portfolioName,
-        portfolioDescription: portfolioFields.portfolioDescription.nullable(),
+        portfolioDescription: portfolioFields.portfolioDescription,
         developmentDate: portfolioFields.developmentDate,
         portfolioLink: portfolioFields.portfolioLink,
     })
     .partial();
 
-// The columns a unique index can reject. prismaErrors uses this to decide which
+// The columns a unique index can reject. lib/prisma-errors.ts uses this to decide which
 // constraint names are worth reporting back to the caller.
 export const PORTFOLIO_UNIQUE_FIELDS = ['portfolioLink'] as const;
 
-export const portfolioQuerySchema = z.object({
-    serviceId: int4Id.optional(),
-    // No owner column on the row: the company is three hops away, so this
-    // filters through service -> listing, the chain assertPortfolioOwned walks.
-    companyId: int4Id.optional(),
-});
+// GET /portfolios. One filter at least: a bare request would list every
+// company's portfolios in one unpaged answer.
+export const portfolioQuerySchema = z
+    .object({
+        serviceId: optionalQueryId('serviceId'),
+        // No owner column on the row: the company is three hops away, so this
+        // filters through service -> listing, the chain assertPortfolioOwned
+        // walks.
+        companyId: optionalQueryId('companyId'),
+    })
+    .refine((q) => q.serviceId !== undefined || q.companyId !== undefined, {
+        message: 'Provide companyId or serviceId',
+        path: ['companyId'],
+    });

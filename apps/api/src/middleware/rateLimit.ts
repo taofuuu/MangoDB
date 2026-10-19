@@ -1,5 +1,5 @@
 import { rateLimit } from 'express-rate-limit';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 

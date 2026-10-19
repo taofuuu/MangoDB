@@ -1,0 +1,64 @@
+{
+    "request": "GET /services/mine",
+    "status": 200,
+    "body": [
+        {
+            "categoryIds": [
+                1
+            ],
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
+            "listingDesc": "created by scripts/snapshot-api.sh",
+            "listingStatus": "CLOSED",
+            "listingTitle": "Snapshot Probe service <run>",
+            "maxBudget": 50000,
+            "minBudget": 10000,
+            "serviceId": "<service_id>",
+            "techStack": [
+                "<run>-Node.js",
+                "<run>-React"
+            ],
+            "type": "SERVICE"
+        },
+        {
+            "categoryIds": [],
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
+            "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
+            "listingStatus": "OPEN",
+            "listingTitle": "Snapshot seed service listing",
+            "maxBudget": 200000,
+            "minBudget": 50000,
+            "serviceId": 25,
+            "techStack": [],
+            "type": "SERVICE"
+        },
+        {
+            "categoryIds": [
+                4
+            ],
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
+            "listingDesc": "We design, build and host web apps end to end.\n\n([demo] dummy data)",
+            "listingStatus": "OPEN",
+            "listingTitle": "[demo] Full-stack web development",
+            "maxBudget": 150000,
+            "minBudget": 30000,
+            "serviceId": 505,
+            "techStack": [
+                "Node.js",
+                "React"
+            ],
+            "type": "SERVICE"
+        }
+    ]
+}

@@ -1,20 +1,14 @@
 import { z } from 'zod';
-import { INT4_MAX, httpUrl, int4Id } from './common.schema';
+import { blankToNull, httpUrl, int4Id, queryId } from './common.schema';
 
 export const certificateIdParamSchema = z.object({
     certificateId: int4Id,
 });
 
-// GET /certificates?companyId=. Required: unlike GET /portfolios, a bare
-// request does not list every company's certificates. Digits only, the same
-// rule as ?companyId= on GET /services: Number() alone would read "0x10" as 16
-// and "1e3" as 1000.
+// GET /certificates?companyId=. Required: a bare request does not list every
+// company's certificates.
 export const certificateListQuerySchema = z.object({
-    companyId: z
-        .string()
-        .regex(/^\d+$/, 'companyId must be a whole number')
-        .transform(Number)
-        .pipe(z.number().int().positive().max(INT4_MAX)),
+    companyId: queryId('companyId'),
 });
 
 // A floor on typos, not a real rule: certificates predate the platform, but a
@@ -24,20 +18,20 @@ const EARLIEST_CERT_YEAR = 1990;
 // How far ahead an expiry may sit.
 const MAX_YEARS_AHEAD = 50;
 
-// A function, not a constant. Evaluated at module load, `new Date()` freezes
-// the year the process started, so a server left running over New Year starts
-// rejecting certificates issued in January.
+// Called per request, inside .refine(). Passed to .max() it ran once, when
+// this file loaded, so a server left running over New Year kept the old year
+// and rejected certificates issued in January.
 function currentYear(): number {
     return new Date().getFullYear();
 }
 
 // Both forms post multipart because they carry the image, so every field
-// arrives as a string and a cleared input arrives as ''. Without this,
-// z.coerce.number() reads '' as 0 and a cleared month is stored as month zero.
+// arrives as a string and a cleared input arrives as ''. blankToNull keeps
+// z.coerce.number() from reading it as 0, a month of zero.
 const emptyToNull = <T extends z.ZodTypeAny>(schema: T) =>
-    z.preprocess((value) => (value === '' ? null : value), schema);
+    z.preprocess(blankToNull, schema);
 
-export const certificateFields = {
+const certificateFields = {
     certTitle: z.string().trim().max(255),
     organization: z.string().trim().max(255),
 
@@ -52,7 +46,10 @@ export const certificateFields = {
                 EARLIEST_CERT_YEAR,
                 `Issue year must be ${EARLIEST_CERT_YEAR} or later`,
             )
-            .max(currentYear(), 'Issue year cannot be in the future')
+            .refine(
+                (year) => year <= currentYear(),
+                'Issue year cannot be in the future',
+            )
             .nullable()
             .optional(),
     ),
@@ -69,8 +66,8 @@ export const certificateFields = {
             )
             // An expiry may be in the future — that is what an expiry is — but
             // not by a century. Without a ceiling this accepted 999999.
-            .max(
-                currentYear() + MAX_YEARS_AHEAD,
+            .refine(
+                (year) => year <= currentYear() + MAX_YEARS_AHEAD,
                 `Expiration year cannot be more than ${MAX_YEARS_AHEAD} years away`,
             )
             .nullable()
@@ -90,7 +87,7 @@ export const certificateFields = {
 export const EXPIRY_BEFORE_ISSUE =
     'Expiration date cannot be before the issue date';
 
-export interface CertificateDates {
+interface CertificateDates {
     issueMonth?: number | null | undefined;
     issueYear?: number | null | undefined;
     expireMonth?: number | null | undefined;

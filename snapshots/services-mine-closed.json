@@ -6,8 +6,11 @@
             "categoryIds": [
                 1
             ],
-            "companyId": 142,
-            "companyName": "Snapshot Seed Provider",
+            "company": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            },
             "listingDesc": "created by scripts/snapshot-api.sh",
             "listingStatus": "CLOSED",
             "listingTitle": "Snapshot Probe service <run>",

@@ -4,15 +4,43 @@
     "body": {
         "items": [
             {
+                "accountType": "BOTH",
+                "categories": [
+                    "Mobile App Development",
+                    "UI/UX Design",
+                    "Web Development"
+                ],
+                "companyDescription": null,
+                "companyId": 392,
+                "companyName": "Snapshot Seed Both",
+                "companyPhoto": null,
+                "contactEmail": null,
+                "phone": "0810000004",
+                "techStack": [
+                    "Figma",
+                    "Firebase",
+                    "Next.js",
+                    "React Native",
+                    "Tailwind CSS",
+                    "TypeScript"
+                ],
+                "website": null
+            },
+            {
                 "accountType": "PROVIDER",
-                "categories": [],
+                "categories": [
+                    "IT Consulting & Security"
+                ],
                 "companyDescription": null,
                 "companyId": 142,
                 "companyName": "Snapshot Seed Provider",
                 "companyPhoto": null,
                 "contactEmail": null,
                 "phone": "0810000001",
-                "techStack": [],
+                "techStack": [
+                    "Node.js",
+                    "React"
+                ],
                 "website": null
             },
             {
@@ -31,7 +59,7 @@
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 2,
+            "totalItems": 3,
             "totalPages": 1
         }
     }

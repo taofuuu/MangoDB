@@ -20,7 +20,7 @@ certificateRoutes.get(
     listMyCertificates,
 );
 
-// One company's certificates, for its public profile (/profile/:companyId).
+// One company's certificates, for its public profile (/companies/:companyId).
 // Same callers as GET /companies/:companyId, which that page loads with it:
 // any company, not admins. companyId is a required query filter rather than
 // /companies/:companyId/certificates because certificates are top-level here
@@ -40,17 +40,13 @@ certificateRoutes.post(
     createCertificate,
 );
 
+// Owner-only: owning the certificate is checked in the handler, so the role
+// is checked on create only.
 certificateRoutes.patch(
     '/:certificateId',
     requireAuth,
-    requireRole('provider'),
     uploadImage('certImage'),
     updateCertificate,
 );
 
-certificateRoutes.delete(
-    '/:certificateId',
-    requireAuth,
-    requireRole('provider'),
-    deleteCertificate,
-);
+certificateRoutes.delete('/:certificateId', requireAuth, deleteCertificate);

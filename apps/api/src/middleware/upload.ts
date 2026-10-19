@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import multer, { MulterError } from 'multer';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
+import { IMAGE_EXTENSIONS } from '../lib/storage';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -8,10 +9,7 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_BYTES },
     fileFilter: (_req, file, cb) => {
-        // Allowlist, not image/*: image/svg+xml is a document the browser
-        // will execute scripts from when the public URL is opened directly.
-        const allowed = ['image/png', 'image/jpeg', 'image/webp'];
-        if (allowed.includes(file.mimetype)) {
+        if (Object.hasOwn(IMAGE_EXTENSIONS, file.mimetype)) {
             cb(null, true);
         } else {
             cb(
@@ -42,4 +40,29 @@ export function uploadImage(field: string) {
             next(err);
         });
     };
+}
+
+// A route whose image is required. Called after parseBody, so a bad field is
+// reported the same way, under the name the form gives the file input.
+export function requireFile(
+    file: Express.Multer.File | undefined,
+    field: string,
+): Express.Multer.File {
+    if (!file) {
+        throw ApiError.validationFailed([
+            { field, message: 'Choose an image first' },
+        ]);
+    }
+    return file;
+}
+
+// A multipart PATCH may carry only a new image, so an empty body is fine when
+// a file came. Neither is a request that changes nothing.
+export function assertSomethingToUpdate(
+    body: object,
+    file: Express.Multer.File | undefined,
+): void {
+    if (Object.keys(body).length === 0 && !file) {
+        throw ApiError.badRequest('Provide at least one field to update');
+    }
 }

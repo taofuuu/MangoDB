@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { AccountType } from '@mangodb/shared';
 import Button from '../ui/Button';
 import FieldError from '../ui/FieldError';
-import RoleTags from '../ui/RoleTags';
+import RoleTags from '../companies/RoleTags';
 
 // Same rules the API enforces. Checking here too is not security — the
 // server's check is — it is so the user finds out before waiting for an

@@ -7,15 +7,15 @@ export default function WarningIcon() {
         >
             <path
                 d="M35.3 6.1c2.1-3.6 7.3-3.6 9.4 0l34.1 58.2c2.1 3.6-.5 8.1-4.7 8.1H5.9c-4.2 0-6.8-4.5-4.7-8.1L35.3 6.1Z"
-                fill="#C5483E"
+                className="fill-danger"
             />
             <path
                 d="M40 27v19"
-                stroke="#FFFDF9"
+                className="stroke-surface"
                 strokeWidth="5"
                 strokeLinecap="round"
             />
-            <circle cx="40" cy="56" r="2.8" fill="#FFFDF9" />
+            <circle cx="40" cy="56" r="2.8" className="fill-surface" />
         </svg>
     );
 }

@@ -69,3 +69,8 @@ record at all.
 | [0012](0012-no-forgot-password.md)                         | No forgot-password feature                                               | Accepted |
 | [0013](0013-close-job-delete-service.md)                   | Jobs are closed, not deleted; services can still be deleted              | Accepted |
 | [0014](0014-login-goes-to-own-account-page.md)             | After login, go to your own account page; no new landing page            | Accepted |
+| [0020](0020-only-service-and-job-above-the-database.md)    | Only "service" and "job" above the database                              | Accepted |
+| [0021](0021-proposal-sender-and-recipient.md)              | A proposal has a sender and a recipient, and points at a listing         | Accepted |
+
+0015–0019 are held for Sprint 3's draft decisions, which are written in its
+first days. That is why the index jumps from 0014 to 0020.

@@ -1,28 +1,22 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 import {
     assertPortfolioOwned,
+    portfolioLinkConflict,
     portfolioSelect,
     toServicePortfolio,
 } from '../lib/portfolio';
 
-import {
-    uploadToStorage,
-    removeFromStorage,
-    removeFromStorageByUrl,
-    BUCKETS,
-} from '../lib/storage';
+import { assertListingOwned } from '../lib/listing';
+import { removeFromStorageByUrl, BUCKETS } from '../lib/storage';
+import { saveWithUpload } from '../lib/upload';
+import { assertSomethingToUpdate, requireFile } from '../middleware/upload';
 
 import { omitUndefined } from '../lib/objects';
-import {
-    isRecordNotFound,
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prismaErrors';
+import { isRecordNotFound, orNotFound } from '../lib/prisma-errors';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
-    PORTFOLIO_UNIQUE_FIELDS,
     createPortfolioSchema,
     portfolioIdParamSchema,
     updatePortfolioSchema,
@@ -34,65 +28,42 @@ export async function createPortfolio(
     req: Request,
     res: Response,
 ): Promise<void> {
-    // 1. Validate image file
-    if (!req.file) {
-        throw ApiError.badRequest('Portfolio image file is required');
-    }
-
-    // 2. Parse Text Fields จาก Form-Data
+    // 1. The text fields, then the image they come with.
     const data = parseBody(createPortfolioSchema, req.body);
+    const file = requireFile(req.file, 'portfolioImage');
     const companyId = req.auth!.companyId;
 
-    // 3. AUTHORIZATION & OWNERSHIP CHECK before Upload file
-    const service = await prisma.service.findUnique({
-        where: { listingId: data.serviceId },
-        select: { listing: { select: { companyId: true } } },
-    });
+    // 3. 404 for an unknown service, 403 for another company's, before any
+    // upload.
+    await assertListingOwned(data.serviceId, 'SERVICE', companyId);
 
-    if (!service) {
-        throw ApiError.notFound('Service listing not found');
-    }
-
-    if (service.listing.companyId !== companyId) {
-        throw ApiError.forbidden('This service belongs to another company');
-    }
-
-    // 4. after authorization, Upload file in Supabase Storage (bucket: portfolio)
-    const image = await uploadToStorage(
-        req.file,
-        BUCKETS.PORTFOLIO,
-        'portfolios',
-    );
-
-    // 5. store in Database
+    // 4. after authorization, upload the image and store the row. If the
+    // row cannot be written, saveWithUpload removes the image again.
     let created;
     try {
-        created = await prisma.servicePortfolio.create({
-            data: {
-                portfolioName: data.portfolioName,
-                portfolioDescription: data.portfolioDescription ?? null,
-                developmentDate: data.developmentDate,
-                portfolioImage: image.url,
-                portfolioLink: data.portfolioLink,
-                service: {
-                    connect: {
-                        listingId: data.serviceId,
+        created = await saveWithUpload(
+            file,
+            BUCKETS.PORTFOLIO,
+            'portfolios',
+            (portfolioImage) =>
+                prisma.servicePortfolio.create({
+                    data: {
+                        portfolioName: data.portfolioName,
+                        portfolioDescription: data.portfolioDescription ?? null,
+                        developmentDate: data.developmentDate,
+                        portfolioImage,
+                        portfolioLink: data.portfolioLink,
+                        service: {
+                            connect: {
+                                listingId: data.serviceId,
+                            },
+                        },
                     },
-                },
-            },
-            select: portfolioSelect,
-        });
+                    select: portfolioSelect,
+                }),
+        );
     } catch (err) {
-        await removeFromStorage(image.path, BUCKETS.PORTFOLIO);
-
-        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'This listing already has that portfolio link',
-                uniqueViolationDetails(fields),
-            );
-        }
-        throw err;
+        throw portfolioLinkConflict(err) ?? err;
     }
 
     res.status(201).json(toServicePortfolio(created));
@@ -109,24 +80,13 @@ export async function updatePortfolio(
     const companyId = req.auth!.companyId;
 
     // The text body may be empty when the only change is a replacement image.
-    if (Object.keys(data).length === 0 && !req.file) {
-        throw ApiError.badRequest('Provide at least one field to update');
-    }
+    assertSomethingToUpdate(data, req.file);
 
     // Checked before any write, and the two cases stay distinct: 404 for an
     // unknown id, 403 for another company's (README.md's 401/403/404 rule).
     const existing = await assertPortfolioOwned(portfolioId, companyId);
 
-    // Multer keeps the file in memory; storage is not touched until ownership
-    // is known. If the database write later fails, the new upload is removed.
-    const replacement = req.file
-        ? await uploadToStorage(req.file, BUCKETS.PORTFOLIO, 'portfolios')
-        : null;
-
     const updateData = omitUndefined(data);
-    if (updateData.portfolioDescription === '') {
-        updateData.portfolioDescription = null;
-    }
 
     // No same-value early return here: Postgres unique indexes only compare
     // against *other* rows, so writing portfolioLink back to its current
@@ -134,47 +94,41 @@ export async function updatePortfolio(
     // optimization, not a correctness need — and with five editable fields
     // now, a check keyed on one of them would silently drop the rest of the
     // PATCH whenever that one field happened to be unchanged.
-    let updated;
-    try {
-        updated = await prisma.servicePortfolio.update({
+    const save = (portfolioImage?: string) =>
+        prisma.servicePortfolio.update({
             where: {
                 portfolioId,
                 service: { listing: { companyId } },
             },
             data: {
                 ...updateData,
-                ...(replacement ? { portfolioImage: replacement.url } : {}),
+                ...(portfolioImage ? { portfolioImage } : {}),
             },
             select: portfolioSelect,
         });
-    } catch (err) {
-        if (replacement) {
-            await removeFromStorage(replacement.path, BUCKETS.PORTFOLIO);
-        }
 
-        // @@unique([listingId, portfolioLink]) — this listing already
-        // carries that link on some other row.
-        const fields = uniqueViolationFields(err, PORTFOLIO_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'This listing already has that portfolio link',
-                uniqueViolationDetails(fields),
-            );
-        }
+    // Multer keeps the file in memory; storage is not touched until ownership
+    // is known. A replacement image takes the old one's place, and
+    // saveWithUpload removes whichever file ends up unreferenced.
+    let updated;
+    try {
+        updated = req.file
+            ? await saveWithUpload(
+                  req.file,
+                  BUCKETS.PORTFOLIO,
+                  'portfolios',
+                  save,
+                  existing.portfolioImage,
+              )
+            : await save();
+    } catch (err) {
+        const conflict = portfolioLinkConflict(err);
+        if (conflict) throw conflict;
         // Deleted between assertPortfolioOwned and here.
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Portfolio not found');
         }
         throw err;
-    }
-
-    // The row points at the replacement now, so the old object is no longer
-    // needed. Cleanup is best-effort, matching portfolio deletion.
-    if (replacement) {
-        await removeFromStorageByUrl(
-            existing.portfolioImage,
-            BUCKETS.PORTFOLIO,
-        );
     }
 
     res.json(toServicePortfolio(updated));
@@ -192,21 +146,16 @@ export async function deletePortfolio(
 
     await assertPortfolioOwned(portfolioId, companyId);
 
-    let deleted;
-    try {
-        deleted = await prisma.servicePortfolio.delete({
+    const deleted = await orNotFound(
+        prisma.servicePortfolio.delete({
             where: {
                 portfolioId,
                 service: { listing: { companyId } },
             },
             select: { portfolioImage: true },
-        });
-    } catch (err) {
-        if (isRecordNotFound(err)) {
-            throw ApiError.notFound('Portfolio not found');
-        }
-        throw err;
-    }
+        }),
+        'Portfolio not found',
+    );
 
     // Best-effort cleanup of the image file: a failed remove logs but won't
     // block the 204, and the DB row is already gone either way.
@@ -230,8 +179,9 @@ export async function getPortfolio(req: Request, res: Response): Promise<void> {
     res.json(toServicePortfolio(portfolio));
 }
 
-// Public: fetching all portfolios, optionally narrowed to one service or one
-// company (GET /portfolios?serviceId=123, ?companyId=4, or both).
+// Public: the portfolios of one service or one company
+// (GET /portfolios?serviceId=123, ?companyId=4, or both). With neither, the
+// schema answers 400, so the whole table is never returned.
 export async function listPortfolios(
     req: Request,
     res: Response,
@@ -242,7 +192,7 @@ export async function listPortfolios(
     );
 
     // One where object rather than a conditional spread of the whole key, so
-    // the two filters can combine. An empty one matches everything.
+    // the two filters can combine. The schema guarantees at least one is set.
     const portfolios = await prisma.servicePortfolio.findMany({
         where: {
             ...(serviceId ? { listingId: serviceId } : {}),

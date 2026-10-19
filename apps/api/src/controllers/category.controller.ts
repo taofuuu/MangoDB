@@ -1,19 +1,16 @@
 import type { Request, Response } from 'express';
-import { prisma } from '../lib/prisma'; // Adjust this import to match your project
+import { prisma } from '../lib/prisma';
+import { categorySelect, toCategory } from '../lib/category';
 
+// GET /categories. The fixed catalog a listing picks from (ADR 0002), by name.
 export async function listCategories(
     _req: Request,
     res: Response,
 ): Promise<void> {
     const categories = await prisma.category.findMany({
-        orderBy: {
-            catName: 'asc',
-        },
-        select: {
-            catId: true,
-            catName: true,
-        },
+        orderBy: { categoryName: 'asc' },
+        select: categorySelect,
     });
 
-    res.json(categories);
+    res.json(categories.map(toCategory));
 }

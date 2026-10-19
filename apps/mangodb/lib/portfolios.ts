@@ -2,22 +2,17 @@ import type { ServicePortfolio } from '@mangodb/shared';
 import { apiFetch } from './api';
 import { cachedGet, invalidateAfter } from './apiCache';
 
-// The endpoint is public and answers with every company's rows when asked for
-// nothing, so the caller always says whose. A portfolio row has no owner
-// column — the API filters through service -> listing for us.
-export function listPortfolios(companyId: number): Promise<ServicePortfolio[]> {
-    const query = new URLSearchParams({ companyId: String(companyId) });
-
-    const path = `/portfolios?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));
-}
-
-// Service details need only work samples attached to the selected service,
-// not every portfolio owned by its company.
-export function listServicePortfolios(
-    serviceId: number,
+// One company's work samples, or one service's. The API needs one of the
+// two; a portfolio row has no owner column, so it filters through
+// service -> listing for us.
+export function listPortfolios(
+    filter: { companyId: number } | { serviceId: number },
 ): Promise<ServicePortfolio[]> {
-    const query = new URLSearchParams({ serviceId: String(serviceId) });
+    const query = new URLSearchParams(
+        'companyId' in filter
+            ? { companyId: String(filter.companyId) }
+            : { serviceId: String(filter.serviceId) },
+    );
 
     const path = `/portfolios?${query.toString()}`;
     return cachedGet(path, () => apiFetch<ServicePortfolio[]>(path));

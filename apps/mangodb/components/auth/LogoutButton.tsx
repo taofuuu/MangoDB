@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from 'react';
 import Image from 'next/image';
 import logoutIcon from '@/assets/icons/logout.png';
-import LogoutConfirmationModal from '@/components/ui/LogoutConfirmationModal';
+import LogoutConfirmationModal from '@/components/auth/LogoutConfirmationModal';
 import { logout, redirectToLogin } from '@/lib/session';
 
 // logout() ends the session on the server — the token is revoked and the
@@ -18,7 +18,7 @@ type LogoutButtonProps = {
 };
 
 export default function LogoutButton({
-    className = 'p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer',
+    className = 'p-2 rounded-lg hover:bg-fill-subtle transition-colors cursor-pointer',
     children,
 }: LogoutButtonProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);

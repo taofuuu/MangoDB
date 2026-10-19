@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import { ApiError } from '../lib/ApiError';
+import type { CompanyProfile } from '@mangodb/shared';
+import { ApiError } from '../lib/api-error';
 import { prisma } from '../lib/prisma';
+import { companyProfileSelect, toCompanyProfile } from '../lib/company-profile';
 
 // Cost factor. Raising this slows every login, so change it deliberately.
 const SALT_ROUNDS = 12;
@@ -68,4 +70,41 @@ let dummyHash: Promise<string> | undefined;
 export function dummyPasswordHash(): Promise<string> {
     dummyHash ??= bcrypt.hash(randomUUID(), SALT_ROUNDS);
     return dummyHash;
+}
+
+// Both login endpoints ask the same question, so they share the answer — and
+// share the defence. Both failures must look identical: same status, same body,
+// same time. bcrypt.compare is slow by design, so short-circuiting on a missing
+// row answered ~7x faster than a wrong password did, and that gap alone told an
+// attacker which emails were registered. Comparing against a throwaway hash on
+// the miss path makes every attempt pay the same cost.
+export async function verifyCredentials(
+    email: string,
+    password: string,
+): Promise<CompanyProfile> {
+    // companyProfileSelect leaves password out on purpose, but verifying needs
+    // the stored hash. Ask for it alongside and drop it before returning —
+    // one round trip instead of a second lookup. deletedAt rides along the
+    // same way, for the login-blocking check below.
+    const company = await prisma.company.findUnique({
+        where: { email },
+        select: { ...companyProfileSelect, password: true, deletedAt: true },
+    });
+
+    const storedHash = company?.password ?? (await dummyPasswordHash());
+    const passwordMatches = await verifyPassword(password, storedHash);
+
+    // US1-6 / US6-4. A deleted account fails the same way a wrong password
+    // does: same message, same status, and — because verifyPassword above
+    // always ran against this row's real stored hash — the same timing. A
+    // distinct "this account was deleted" response would hand a prober a way
+    // to enumerate deleted accounts that a wrong-password response does not.
+    if (!company || company.deletedAt || !passwordMatches) {
+        throw ApiError.unauthorized('Invalid email or password');
+    }
+
+    // The hash never leaves this function: split it off, return the rest.
+    const { password: _hash, deletedAt: _deletedAt, ...row } = company;
+
+    return toCompanyProfile(row);
 }

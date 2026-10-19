@@ -1,0 +1,175 @@
+'use client';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { ServicePortfolio } from '@mangodb/shared';
+import type { Certificate } from '@mangodb/shared';
+import { listPortfolios } from '@/lib/portfolios';
+import { listMyCertificates, listCertificates } from '@/lib/certificates';
+import { formatDateOnly, formatMonthYear } from '@/lib/dates';
+import ProfileItemDetailModal, {
+    type ProfileItem,
+} from './ProfileItemDetailModal';
+
+// Matches the card's fixed-height design: enough to preview at a glance,
+// the rest lives behind "See more" instead of an in-card scrollbar.
+const MAX_VISIBLE_ITEMS = 3;
+
+interface DisplayItem {
+    id: number;
+    title: string;
+    date: string;
+    entry: ProfileItem;
+}
+
+interface PortfolioCertificateListProps {
+    companyId: number;
+    // Another company's profile. Its certificates come from
+    // GET /certificates?companyId=, since /certificates/mine is always the
+    // viewer's own, and "See more" goes to its read-only pages under
+    // /companies/:id instead of your management pages.
+    readOnly?: boolean;
+}
+
+export default function PortfolioCertificateList({
+    companyId,
+    readOnly = false,
+}: PortfolioCertificateListProps) {
+    const [activeTab, setActiveTab] = useState<'portfolio' | 'certificates'>(
+        'portfolio',
+    );
+    const [portfolioItems, setPortfolioItems] = useState<ServicePortfolio[]>(
+        [],
+    );
+    const [certificateItems, setCertificateItems] = useState<Certificate[]>([]);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [selected, setSelected] = useState<ProfileItem | null>(null);
+
+    useEffect(() => {
+        listPortfolios({ companyId })
+            .then((items) => setPortfolioItems(items))
+            .catch(() => setLoadError('Could not load portfolio items.'));
+
+        (readOnly ? listCertificates({ companyId }) : listMyCertificates())
+            .then((items) => setCertificateItems(items))
+            .catch(() =>
+                setLoadError(
+                    (current) => current ?? 'Could not load certificates.',
+                ),
+            );
+    }, [companyId, readOnly]);
+
+    const displayItems: DisplayItem[] =
+        activeTab === 'portfolio'
+            ? portfolioItems.map((item) => ({
+                  id: item.portfolioId,
+                  title: item.portfolioName,
+                  date: formatDateOnly(item.developmentDate),
+                  entry: { kind: 'portfolio', item },
+              }))
+            : certificateItems.map((item) => ({
+                  id: item.certificateId,
+                  title: item.certTitle,
+                  date: formatMonthYear(item.issueMonth, item.issueYear) || '—',
+                  entry: { kind: 'certificate', item },
+              }));
+
+    const visibleItems = displayItems.slice(0, MAX_VISIBLE_ITEMS);
+    const seeMorePage =
+        activeTab === 'portfolio' ? 'portfolios' : 'certificates';
+    const seeMoreHref = readOnly
+        ? `/companies/${companyId}/${seeMorePage}`
+        : `/${seeMorePage}`;
+
+    return (
+        <div className="bg-surface-white rounded-popup p-8 border border-line shadow-sm flex flex-col relative w-full h-[420px] overflow-hidden">
+            {/* Tab Switcher. Full width, matching the other three cards. */}
+            <div className="bg-fill-subtle p-1 rounded-button flex w-full mb-4 type-xs">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('portfolio')}
+                    className={`flex-1 py-1.5 rounded-button font-medium transition ${
+                        activeTab === 'portfolio'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
+                    }`}
+                >
+                    Portfolio
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('certificates')}
+                    className={`flex-1 py-1.5 rounded-button font-medium transition ${
+                        activeTab === 'certificates'
+                            ? 'bg-surface-white shadow text-brand'
+                            : 'text-ink-soft hover:text-ink'
+                    }`}
+                >
+                    Certificate
+                </button>
+            </div>
+
+            {/* Title Header */}
+            <h3 className="type-sm !font-bold text-ink mb-3 capitalize">
+                {activeTab === 'portfolio' ? 'Portfolio' : 'Certificates'}
+            </h3>
+
+            {loadError && (
+                <p className="type-xs text-danger mb-2">{loadError}</p>
+            )}
+
+            {/* List Display */}
+            <div className="divide-y divide-line">
+                {visibleItems.length === 0 && !loadError && (
+                    <p className="py-2 type-xs text-ink-placeholder">
+                        {activeTab === 'portfolio'
+                            ? 'No portfolio items yet.'
+                            : 'No certificates yet.'}
+                    </p>
+                )}
+                {visibleItems.map((item) => (
+                    <div
+                        key={item.id}
+                        className="py-2 flex justify-between items-center type-xs"
+                    >
+                        <span className="font-medium text-ink">
+                            {item.title}
+                        </span>
+                        <div className="flex items-center gap-6">
+                            <span className="text-ink-placeholder type-xs">
+                                {item.date}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setSelected(item.entry)}
+                                aria-label={`Details for ${item.title}`}
+                                className="text-brand hover:underline"
+                            >
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Always shown, even with three items or fewer: on your own
+                profile it is the way to the pages where you add and edit
+                them, and another company's matches its other See more
+                links. */}
+            <div className="mt-3 text-right">
+                <Link
+                    href={seeMoreHref}
+                    className="type-xs text-brand hover:underline font-medium"
+                >
+                    See more
+                </Link>
+            </div>
+
+            {selected && (
+                <ProfileItemDetailModal
+                    entry={selected}
+                    onClose={() => setSelected(null)}
+                />
+            )}
+        </div>
+    );
+}

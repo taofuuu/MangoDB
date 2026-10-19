@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { ApiErrorResponse } from '@mangodb/shared';
-import { ApiError } from '../lib/ApiError';
+import { ApiError } from '../lib/api-error';
 
 // express.json() rejects a body before any route runs: broken JSON, or more
 // than its 100kb limit. Both are the caller's mistake, so 400, not 500.

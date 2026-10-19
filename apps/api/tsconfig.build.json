@@ -1,0 +1,7 @@
+{
+    // What `npm run build` compiles: tsconfig.json minus the tests, so dist/
+    // holds only what the server runs. `npm run typecheck` still uses
+    // tsconfig.json, so the tests stay type-checked.
+    "extends": "./tsconfig.json",
+    "exclude": ["src/**/*.test.ts"]
+}

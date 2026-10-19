@@ -1,41 +1,44 @@
 import type { Request, Response } from 'express';
-import type { CompanyListResponse } from '@mangodb/shared';
+import type { CompanySummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
-import { ApiError } from '../lib/ApiError';
-import { softDeleteCompany } from '../lib/companyDeletion';
+import { pageArgs, toPagination } from '../lib/pagination';
+import { ApiError } from '../lib/api-error';
+import { softDeleteCompany } from '../lib/company-deletion';
 import {
     companyProfileSelect,
     companyProfileUpdateData,
+    companyTypeRepeat,
     editsProviderFields,
     publicCompanyProfileSelect,
     toCompanyProfile,
     toPublicCompanyProfile,
-} from '../lib/companyProfile';
-import { assertCompanyIdentityAvailable } from '../lib/companyIdentity';
-import { companySummarySelect, toCompanySummary } from '../lib/companySearch';
+} from '../lib/company-profile';
+import {
+    assertCompanyIdentityAvailable,
+    identityConflict,
+} from '../lib/company-identity';
+import {
+    companyKeywordWhere,
+    companySummarySelect,
+    toCompanySummary,
+} from '../lib/company-search';
 import { omitUndefined } from '../lib/objects';
+import { isRecordNotFound } from '../lib/prisma-errors';
 import {
-    isRecordNotFound,
-    isUniqueViolation,
-    uniqueViolationDetails,
-    uniqueViolationFields,
-} from '../lib/prismaErrors';
-import { hasOngoingProject } from '../lib/projectEligibility';
-import { escapeLike } from '../lib/search';
+    hasOngoingProject,
+    ONGOING_PROJECT_BLOCKS_DELETE,
+} from '../lib/project-eligibility';
+import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
-import {
-    BUCKETS,
-    removeFromStorage,
-    removeFromStorageByUrl,
-    uploadToStorage,
-} from '../lib/storage';
+import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
+import { saveWithUpload } from '../lib/upload';
+import { requireFile } from '../middleware/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
-    COMPANY_UNIQUE_FIELDS,
     changeCredentialsSchema,
     companyIdParamSchema,
     companyListQuerySchema,
@@ -112,16 +115,8 @@ export async function updateMyProfile(
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Only one unique constraint is still reachable from here: companyType
-        // is keyed on (companyId, companyType), so a tag repeated inside one
-        // request collides with itself. Username and email moved to
-        // changeMyCredentials, and nothing else this writes is unique. So the
-        // code alone names the constraint — no need to match the index name.
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Company types must not repeat', [
-                { field: 'companyType', message: 'Remove the duplicate tag' },
-            ]);
-        }
+        const repeat = companyTypeRepeat(err);
+        if (repeat) throw repeat;
         // The company was deleted mid-session — its token is still valid. A
         // missing provider row cannot land here any more: the nested write
         // upserts it.
@@ -167,15 +162,9 @@ export async function changeMyCredentials(
             select: companyProfileSelect,
         });
     } catch (err) {
-        // Another company can take the name between the check and the write;
-        // the indexes are what actually enforce uniqueness.
-        const fields = uniqueViolationFields(err, COMPANY_UNIQUE_FIELDS);
-        if (fields) {
-            throw ApiError.conflict(
-                'Username or email already registered',
-                uniqueViolationDetails(fields),
-            );
-        }
+        // Another company can take the name between the check and the write.
+        const conflict = identityConflict(err);
+        if (conflict) throw conflict;
         if (isRecordNotFound(err)) {
             throw ApiError.notFound('Company not found');
         }
@@ -207,11 +196,7 @@ export async function updateMyPhoto(
 ): Promise<void> {
     const companyId = req.auth!.companyId;
 
-    if (!req.file) {
-        throw ApiError.badRequest('Provide an image to upload', [
-            { field: 'photo', message: 'Choose an image first' },
-        ]);
-    }
+    const file = requireFile(req.file, 'photo');
 
     // Read first, for the old URL to clean up afterwards and so a deleted
     // company is a plain 404 rather than a P2025 out of the update.
@@ -224,30 +209,20 @@ export async function updateMyPhoto(
         throw ApiError.notFound('Company not found');
     }
 
-    const uploaded = await uploadToStorage(
-        req.file,
+    // The new photo replaces the old one, and saveWithUpload removes
+    // whichever file ends up unreferenced.
+    const company = await saveWithUpload(
+        file,
         BUCKETS.PROFILE,
         'companies',
+        (companyPhoto) =>
+            prisma.company.update({
+                where: { companyId },
+                data: { companyPhoto },
+                select: companyProfileSelect,
+            }),
+        existing.companyPhoto,
     );
-
-    let company;
-    try {
-        company = await prisma.company.update({
-            where: { companyId },
-            data: { companyPhoto: uploaded.url },
-            select: companyProfileSelect,
-        });
-    } catch (err) {
-        // The row never pointed at it, so the object is an orphan.
-        await removeFromStorage(uploaded.path, BUCKETS.PROFILE);
-        throw err;
-    }
-
-    // The row points at the replacement now. Best-effort, matching the
-    // certificate and portfolio writes.
-    if (existing.companyPhoto) {
-        await removeFromStorageByUrl(existing.companyPhoto, BUCKETS.PROFILE);
-    }
 
     res.json(toCompanyProfile(company));
 }
@@ -294,57 +269,11 @@ export async function deleteMyAccount(
     const companyId = req.auth!.companyId;
 
     if (await hasOngoingProject(companyId)) {
-        throw ApiError.conflict(
-            'Account deletion is blocked while the company has an ongoing project',
-        );
+        throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);
     }
 
     await softDeleteCompany(companyId);
     res.status(204).end();
-}
-
-// US3-6. One word matches the company, or one of its services by title,
-// description, category or tech stack, ignoring case. Job postings are left
-// out: they say what the company wants to hire, not what it offers. So a
-// Receiver matches on its name or description only.
-function matchesKeyword(word: string): Prisma.CompanyWhereInput {
-    const contains = {
-        contains: escapeLike(word),
-        mode: 'insensitive',
-    } as const;
-    return {
-        OR: [
-            { companyName: contains },
-            { companyDescription: contains },
-            {
-                listing: {
-                    some: {
-                        listingType: 'SERVICE',
-                        OR: [
-                            { listingTitle: contains },
-                            { listingDesc: contains },
-                            {
-                                listingCategory: {
-                                    some: { category: { catName: contains } },
-                                },
-                            },
-                            {
-                                service: {
-                                    serviceTechStack: {
-                                        some: {
-                                            techStack: {
-                                                techStackName: contains,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        ],
-                    },
-                },
-            },
-        ],
-    };
 }
 
 // T3.6.7. One page of companies for the search screen, Providers and Receivers
@@ -358,22 +287,21 @@ export async function listCompanies(
         companyListQuerySchema,
         req.query,
     );
-    // Each word is matched on its own, so "flutter kotlin" finds a Provider
-    // whose stack has both, even though they are two separate rows.
-    const words = q?.split(/\s+/).filter(Boolean) ?? [];
+    // "flutter kotlin" finds a Provider whose stack has both, even though
+    // they are two separate rows.
+    const words = splitWords(q);
     // Every company but admins, same rule as GET /admin/companies. Search is
     // discovery, so soft-deleted companies stay hidden.
     const where: Prisma.CompanyWhereInput = {
         accountType: { not: 'ADMIN' },
         deletedAt: null,
-        ...(words.length > 0 && { AND: words.map(matchesKeyword) }),
+        ...(words.length > 0 && { AND: words.map(companyKeywordWhere) }),
     };
     const [totalItems, companies] = await prisma.$transaction([
         prisma.company.count({ where }),
         prisma.company.findMany({
             where,
-            skip: (page - 1) * pageSize,
-            take: pageSize,
+            ...pageArgs({ page, pageSize }),
             // companyId breaks ties, so two same-named companies never swap
             // places between pages.
             orderBy: [
@@ -384,14 +312,9 @@ export async function listCompanies(
         }),
     ]);
 
-    const body: CompanyListResponse = {
+    const body: Paginated<CompanySummary> = {
         items: companies.map(toCompanySummary),
-        pagination: {
-            page,
-            pageSize,
-            totalItems,
-            totalPages: Math.ceil(totalItems / pageSize),
-        },
+        pagination: toPagination(totalItems, { page, pageSize }),
     };
 
     res.json(body);

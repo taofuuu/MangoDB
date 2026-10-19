@@ -20,7 +20,7 @@ const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
 const NAV_LINKS = [
-    { href: '/job-postings', label: 'Search jobs', shortLabel: 'Jobs' },
+    { href: '/jobs', label: 'Search jobs', shortLabel: 'Jobs' },
     {
         href: '/services',
         label: 'Search services',
@@ -61,7 +61,7 @@ export default function Navbar() {
     return (
         // The page's cream with a grey line and a soft shadow in the brand's
         // deep teal. The accents inside stay teal, the app's action colour.
-        <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_rgb(30_67_83/0.18)]">
+        <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_color-mix(in_srgb,var(--color-brand-deep)_18%,transparent)]">
             <nav className="flex h-16 items-center justify-between gap-6 px-[2.19vw]">
                 <Link
                     href="/"
@@ -123,7 +123,7 @@ export default function Navbar() {
                     {state.status === 'signed-out' && (
                         <Link
                             href="/login"
-                            className="rounded-button bg-brand px-4 py-2 type-sm !font-[600] text-white transition-colors hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            className="rounded-button bg-brand px-4 py-2 type-sm !font-[600] text-surface-white transition-colors hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                         >
                             Log in
                         </Link>
