@@ -252,6 +252,7 @@ as not found.
 | An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
 | A page size                  | the constants in `lib/pagination`                        |
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
+| The category list for a form | `useCategories()` in `lib/useCategories`                 |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
