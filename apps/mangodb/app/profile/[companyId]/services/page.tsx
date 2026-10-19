@@ -9,7 +9,7 @@ import { getCompanyProfile } from '@/lib/companies';
 import { listCompanyServices } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
 import Pagination from '@/components/ui/Pagination';
-import { OtherCompanyServiceCard } from '@/components/service/OtherCompanyServiceCard';
+import OtherCompanyServiceCard from '@/components/service/OtherCompanyServiceCard';
 import { OtherCompanyServiceDetailPanel } from '@/components/service/OtherCompanyServiceDetailPanel';
 
 function EmptyState() {

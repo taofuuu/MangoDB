@@ -2,17 +2,26 @@ import React from 'react';
 import type { ServiceListing, ServiceSummary } from '@mangodb/shared';
 import { Tag } from 'lucide-react';
 import { formatBudgetRange } from '@/lib/money';
+import ServiceActionsMenu from './ServiceActionsMenu';
 
 interface OtherCompanyServiceCardProps {
     service: ServiceListing | ServiceSummary;
     isSelected?: boolean;
     onViewDetail: (service: ServiceListing | ServiceSummary) => void;
+    onEdit?: (service: ServiceListing | ServiceSummary) => void;
+    onDelete?: (service: ServiceListing | ServiceSummary) => void;
+    onToggleStatus?: (service: ServiceListing | ServiceSummary) => void;
+    isOpen?: boolean;
 }
 
-export function OtherCompanyServiceCard({
+export default function OtherCompanyServiceCard({
     service,
-    isSelected = false,
+    isSelected,
     onViewDetail,
+    onEdit,
+    onDelete,
+    onToggleStatus,
+    // isOpen = true,
 }: OtherCompanyServiceCardProps) {
     const budgetDisplay = formatBudgetRange(
         service.minBudget,
@@ -37,8 +46,7 @@ export function OtherCompanyServiceCard({
                     : 'border-line/70 shadow-sm hover:border-brand/40'
             }`}
         >
-            <div className="flex items-start gap-4 min-w-0 flex-1 pr-3">
-                {/* Briefcase Icon */}
+            <div className="flex min-w-0 flex-1 items-start gap-4 pr-3">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center text-brand">
                     <svg
                         className="h-12 w-12"
@@ -51,8 +59,7 @@ export function OtherCompanyServiceCard({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    {/* Service Title */}
-                    <h3 className="truncate type-md !font-[700]">
+                    <h3 className="type-md !font-[700] truncate">
                         {service.listingTitle}
                     </h3>
 
@@ -90,18 +97,29 @@ export function OtherCompanyServiceCard({
                 </div>
             </div>
 
-            {/* Right side controls */}
-            <div className="flex flex-col items-end justify-end self-stretch shrink-0">
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onViewDetail(service);
-                    }}
-                    className="flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:bg-brand/10 hover:border-brand"
-                >
-                    view detail →
-                </button>
+            <div className="relative flex shrink-0 flex-col items-end self-stretch">
+                {(onEdit || onDelete || onToggleStatus) && (
+                    <ServiceActionsMenu
+                        service={service}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                        // onToggleStatus={onToggleStatus}
+                        // isOpen={isOpen}
+                    />
+                )}
+
+                <div className="mt-auto pt-3">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetail(service);
+                        }}
+                        className="items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 text-sm text-brand transition hover:bg-brand/10 hover:border-brand"
+                    >
+                        view detail →
+                    </button>
+                </div>
             </div>
         </div>
     );
