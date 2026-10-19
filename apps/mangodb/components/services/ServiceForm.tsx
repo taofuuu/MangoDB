@@ -406,13 +406,14 @@ export default function ServiceForm(props: ServiceFormProps) {
         setIsSubmitting(false);
     };
 
+    // A new service lands on My Services, where it now shows.
     const handleSuccessConfirm = () => {
         setShowSuccessModal(false);
         if (isEditMode) {
             router.back();
             return;
         }
-        router.push('/');
+        router.push('/services/mine');
     };
 
     // US2-4. Thrown errors become the modal's message, so the 409 for a
