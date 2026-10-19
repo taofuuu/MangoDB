@@ -378,3 +378,6 @@ lib/<noun>.ts             the requests for that noun
   amount through them, never on its own.
 - An add form and an edit form for one thing are one component with a mode,
   mounted only while open.
+- A form's values, checks and save live in a `use<Thing>Form` hook beside it
+  (`components/jobs/useJobForm.ts`): one `values` object with `setField`, so
+  the component is mostly JSX.
