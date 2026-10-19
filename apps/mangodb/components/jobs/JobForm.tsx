@@ -50,12 +50,12 @@ type JobErrors = Partial<
     >
 >;
 
+// Pass the job to edit it; leave it out to post a new one.
 type JobFormProps = {
-    jobId?: number;
     initialJob?: Job;
 };
 
-export default function JobForm({ jobId, initialJob }: JobFormProps) {
+export default function JobForm({ initialJob }: JobFormProps) {
     const [listingTitle, setListingTitle] = useState(
         initialJob?.listingTitle ?? '',
     );
@@ -163,7 +163,7 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
         try {
             setIsLoading(true);
 
-            if (jobId !== undefined && initialJob) {
+            if (initialJob) {
                 // Edit mode: send only fields that changed.
                 const data: UpdateJobRequest = {};
 
@@ -210,7 +210,7 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                     return;
                 }
 
-                await updateJob(jobId, data);
+                await updateJob(initialJob.jobId, data);
                 router.push('/jobs/mine?success=updated');
             } else {
                 // Create mode: preserve the existing behavior.
@@ -373,12 +373,10 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                 <Button
                     type="submit"
                     isLoading={isLoading}
-                    loadingLabel={
-                        jobId !== undefined ? 'Saving...' : 'Posting...'
-                    }
+                    loadingLabel={initialJob ? 'Saving...' : 'Posting...'}
                     className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light disabled:opacity-50"
                 >
-                    {jobId !== undefined ? 'Save Changes' : 'Post'}
+                    {initialJob ? 'Save Changes' : 'Post'}
                 </Button>
             </div>
         </form>
