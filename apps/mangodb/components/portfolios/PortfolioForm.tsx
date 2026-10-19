@@ -28,9 +28,6 @@ type PortfolioFormProps = { onClose: () => void } & (
       }
 );
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
-
 // Which input on this form each API field belongs under.
 const PORTFOLIO_FIELDS = {
     portfolioName: 'name',
@@ -126,29 +123,6 @@ export default function PortfolioForm(props: PortfolioFormProps) {
         setYear(nextYear);
         clampDay(nextYear, month);
         clearError('developmentDate');
-    };
-
-    const handleImageChange = (file: File | null) => {
-        clearError('image');
-
-        if (file && !IMAGE_TYPES.has(file.type)) {
-            setImage(null);
-            setErrors((prev) => ({
-                ...prev,
-                image: 'Only PNG, JPEG or WebP images are allowed.',
-            }));
-            return;
-        }
-        if (file && file.size > MAX_IMAGE_BYTES) {
-            setImage(null);
-            setErrors((prev) => ({
-                ...prev,
-                image: 'Image must be 5MB or smaller.',
-            }));
-            return;
-        }
-
-        setImage(file);
     };
 
     // What can be checked without the API. A new portfolio needs its image;
@@ -380,7 +354,13 @@ export default function PortfolioForm(props: PortfolioFormProps) {
 
                     <FileUpload
                         value={image}
-                        onChange={handleImageChange}
+                        onChange={(file) => {
+                            setImage(file);
+                            clearError('image');
+                        }}
+                        onError={(message) =>
+                            setErrors((prev) => ({ ...prev, image: message }))
+                        }
                         accept="image/png,image/jpeg,image/webp"
                         label="Upload Image"
                         className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
