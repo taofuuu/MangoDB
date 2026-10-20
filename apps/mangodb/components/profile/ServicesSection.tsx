@@ -1,13 +1,16 @@
 'use client';
 import React, { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type {
     Job,
     PublicCompanyProfile,
     ServiceSummary,
 } from '@mangodb/shared';
 import JobDetailModal from '@/components/jobs/JobDetailModal';
+import ServiceActionsMenu from '@/components/services/ServiceActionsMenu';
 import ServiceDetailPanel from '@/components/services/ServiceDetailPanel';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import ModalShell from '@/components/ui/ModalShell';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
@@ -16,6 +19,7 @@ import { listJobs, listMyJobs } from '@/lib/jobs';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
+    deleteService,
     getService,
     listServices,
     listMyServices,
@@ -45,8 +49,9 @@ interface ServiceRow {
 // The company's services and job postings. Another company's profile
 // (readOnly) shows only OPEN ones, from the public lists filtered by
 // companyId. Your own shows every status, from the /mine lists, so you can
-// keep track of closed ones too (US2-2). Details opens the same views the
-// search pages use.
+// keep track of closed ones too (US2-2), and has Create, Edit and Delete as
+// on My Services (T2.2.14). Details opens the same views the search pages
+// use.
 export default function ServicesSection({
     profile,
     readOnly = false,
@@ -54,6 +59,7 @@ export default function ServicesSection({
     profile: PublicCompanyProfile;
     readOnly?: boolean;
 }) {
+    const router = useRouter();
     const { companyId, companyName, companyPhoto, accountType } = profile;
     // Only the tabs the company's role has listings in, on your own
     // profile and on another company's alike.
@@ -73,6 +79,9 @@ export default function ServicesSection({
     // Why another company's service could not be opened (T2.7.24).
     const [serviceError, setServiceError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<ServiceSummary | null>(
+        null,
+    );
     const serviceTitleId = useId();
 
     useEffect(() => {
@@ -174,14 +183,42 @@ export default function ServicesSection({
             });
     };
 
+    const findOwnService = (id: number) =>
+        services?.find(({ summary }) => summary.serviceId === id)?.summary;
+
+    const editService = (service: ServiceSummary) => {
+        router.push(`/services/${service.serviceId}/edit`);
+    };
+
+    // One dialog at a time: the detail closes before the confirm opens.
+    const askDelete = (service: ServiceSummary) => {
+        setSelectedService(null);
+        setPendingDelete(service);
+    };
+
+    // A thrown error becomes the modal's message.
+    const confirmDelete = async () => {
+        if (!pendingDelete) return;
+        const { serviceId } = pendingDelete;
+
+        try {
+            await deleteService(serviceId);
+        } catch (err) {
+            throw new Error(describeError(err));
+        }
+
+        setServices(
+            (current) =>
+                current?.filter((row) => row.summary.serviceId !== serviceId) ??
+                null,
+        );
+    };
+
     const openDetail = (id: number) => {
         if (activeTab === 'services' && readOnly) {
             openOtherService(id);
         } else if (activeTab === 'services') {
-            setSelectedService(
-                services?.find(({ summary }) => summary.serviceId === id)
-                    ?.summary ?? null,
-            );
+            setSelectedService(findOwnService(id) ?? null);
         } else {
             setSelectedJob(jobs?.find((job) => job.jobId === id) ?? null);
         }
@@ -209,6 +246,17 @@ export default function ServicesSection({
                     ))}
                 </div>
 
+                {activeTab === 'services' && !readOnly && (
+                    <div className="mb-2 flex justify-end">
+                        <Link
+                            href="/services/create"
+                            className="type-xs text-brand hover:underline font-medium"
+                        >
+                            + Create Service
+                        </Link>
+                    </div>
+                )}
+
                 {loadError && (
                     <p className="type-xs text-danger mb-2">{loadError}</p>
                 )}
@@ -234,36 +282,49 @@ export default function ServicesSection({
                                   : 'No job listings yet.'}
                         </p>
                     )}
-                    {displayItems?.map((item) => (
-                        <div
-                            key={item.id}
-                            className="p-3 border border-line rounded-button bg-fill-subtle/50 hover:bg-fill-subtle transition space-y-1"
-                        >
-                            <div className="flex justify-between items-center gap-3">
-                                <span className="type-sm !font-semibold text-ink truncate">
-                                    {item.title || 'Untitled Item'}
-                                </span>
-                                {item.closed && (
-                                    <Tag
-                                        size="sm"
-                                        label="Closed"
-                                        className="ml-auto shrink-0 bg-danger-tint text-danger"
-                                    />
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => openDetail(item.id)}
-                                    aria-label={`Details for ${item.title}`}
-                                    className="shrink-0 type-xs text-brand hover:underline !font-medium"
-                                >
-                                    Details
-                                </button>
+                    {displayItems?.map((item) => {
+                        const ownService =
+                            activeTab === 'services' && !readOnly
+                                ? findOwnService(item.id)
+                                : undefined;
+                        return (
+                            <div
+                                key={item.id}
+                                className="p-3 border border-line rounded-button bg-fill-subtle/50 hover:bg-fill-subtle transition space-y-1"
+                            >
+                                <div className="flex justify-between items-center gap-3">
+                                    <span className="type-sm !font-semibold text-ink truncate">
+                                        {item.title || 'Untitled Item'}
+                                    </span>
+                                    {item.closed && (
+                                        <Tag
+                                            size="sm"
+                                            label="Closed"
+                                            className="ml-auto shrink-0 bg-danger-tint text-danger"
+                                        />
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => openDetail(item.id)}
+                                        aria-label={`Details for ${item.title}`}
+                                        className="shrink-0 type-xs text-brand hover:underline !font-medium"
+                                    >
+                                        Details
+                                    </button>
+                                    {ownService && (
+                                        <ServiceActionsMenu
+                                            service={ownService}
+                                            onEdit={editService}
+                                            onDelete={askDelete}
+                                        />
+                                    )}
+                                </div>
+                                <p className="type-xs text-ink-soft leading-relaxed line-clamp-2">
+                                    {item.body || 'No description provided.'}
+                                </p>
                             </div>
-                            <p className="type-xs text-ink-soft leading-relaxed line-clamp-2">
-                                {item.body || 'No description provided.'}
-                            </p>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* The profile only previews the jobs. Your own full list,
@@ -316,9 +377,22 @@ export default function ServicesSection({
                         service={selectedService}
                         onClose={() => setSelectedService(null)}
                         titleId={serviceTitleId}
+                        {...(readOnly
+                            ? {}
+                            : { onEdit: editService, onDelete: askDelete })}
                     />
                 )}
             </ModalShell>
+
+            <ConfirmModal
+                isOpen={pendingDelete !== null}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={confirmDelete}
+                title="Delete this service listing?"
+                description={`${pendingDelete?.listingTitle || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
+                confirmLabel="Delete listing"
+                pendingLabel="Deleting..."
+            />
 
             {selectedJob && (
                 <JobDetailModal
