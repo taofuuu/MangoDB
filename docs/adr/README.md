@@ -52,25 +52,30 @@ record at all.
 
 ## Index
 
-| #                                                          | Title                                                                    | Status   |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------ | -------- |
-| [0000](0000-camelcase-wire-format.md)                      | _(example)_ camelCase above the database, snake_case stops at the column | Accepted |
-| [0001](0001-listing-first-search-results.md)               | Search results are listings, shown with the owner's company profile      | Accepted |
-| [0002](0002-fixed-categories-with-other.md)                | Categories are a fixed list, with an "Other" row for the rest            | Accepted |
-| [0003](0003-nullable-listing-budgets.md)                   | Both listing budgets are nullable                                        | Accepted |
-| [0004](0004-swap-epic-3-stories-into-sprint-2.md)          | Sprint 2 swaps some Epic 3 stories in, and other stories out             | Accepted |
-| [0005](0005-service-and-job-naming.md)                     | "Service" and "job" are the names for the two kinds of listing           | Accepted |
-| [0006](0006-proposal-text-only-no-upload.md)               | A proposal is text only, with no file upload                             | Accepted |
-| [0007](0007-proposal-duration-in-months.md)                | Proposal duration is a number of months, in steps of 0.5                 | Accepted |
-| [0008](0008-one-search-bar-per-page.md)                    | No search bar in the navbar; one search bar per page, one thing per bar  | Accepted |
-| [0009](0009-tech-stack-belongs-to-a-service.md)            | Tech stack belongs to a service, not to the Provider                     | Accepted |
-| [0010](0010-listing-status-open-and-closed-only.md)        | A listing is only OPEN or CLOSED; there is no DRAFT                      | Accepted |
-| [0011](0011-search-page-gray-scrollbar-brand-blue-next.md) | Search page: gray scrollbar, brand-blue Next button                      | Accepted |
-| [0012](0012-no-forgot-password.md)                         | No forgot-password feature                                               | Accepted |
-| [0013](0013-close-job-delete-service.md)                   | Jobs are closed, not deleted; services can still be deleted              | Accepted |
-| [0014](0014-login-goes-to-own-account-page.md)             | After login, go to your own account page; no new landing page            | Accepted |
-| [0020](0020-only-service-and-job-above-the-database.md)    | Only "service" and "job" above the database                              | Accepted |
-| [0021](0021-proposal-sender-and-recipient.md)              | A proposal has a sender and a recipient, and points at a listing         | Accepted |
+| #                                                          | Title                                                                              | Status          |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------- |
+| [0000](0000-camelcase-wire-format.md)                      | _(example)_ camelCase above the database, snake_case stops at the column           | Accepted        |
+| [0001](0001-listing-first-search-results.md)               | Search results are listings, shown with the owner's company profile                | Accepted        |
+| [0002](0002-fixed-categories-with-other.md)                | Categories are a fixed list, with an "Other" row for the rest                      | Accepted        |
+| [0003](0003-nullable-listing-budgets.md)                   | Both listing budgets are nullable                                                  | Accepted        |
+| [0004](0004-swap-epic-3-stories-into-sprint-2.md)          | Sprint 2 swaps some Epic 3 stories in, and other stories out                       | Accepted        |
+| [0005](0005-service-and-job-naming.md)                     | "Service" and "job" are the names for the two kinds of listing                     | Accepted        |
+| [0006](0006-proposal-text-only-no-upload.md)               | A proposal is text only, with no file upload                                       | Accepted        |
+| [0007](0007-proposal-duration-in-months.md)                | Proposal duration is a number of months, in steps of 0.5                           | Accepted        |
+| [0008](0008-one-search-bar-per-page.md)                    | No search bar in the navbar; one search bar per page, one thing per bar            | Accepted        |
+| [0009](0009-tech-stack-belongs-to-a-service.md)            | Tech stack belongs to a service, not to the Provider                               | Accepted        |
+| [0010](0010-listing-status-open-and-closed-only.md)        | A listing is only OPEN or CLOSED; there is no DRAFT                                | Accepted        |
+| [0011](0011-search-page-gray-scrollbar-brand-blue-next.md) | Search page: gray scrollbar, brand-blue Next button                                | Accepted        |
+| [0012](0012-no-forgot-password.md)                         | No forgot-password feature                                                         | Accepted        |
+| [0013](0013-close-job-delete-service.md)                   | Jobs are closed, not deleted; services can still be deleted                        | Accepted        |
+| [0014](0014-login-goes-to-own-account-page.md)             | After login, go to your own account page; no new landing page                      | Accepted        |
+| [0015](0015-project-statuses.md)                           | A project moves through six statuses, and only by the listed moves                 | Open to Discuss |
+| [0016](0016-hire-request-is-a-proposal-on-a-service.md)    | A hire request is a proposal on a service                                          | Open to Discuss |
+| [0017](0017-quotation-is-a-pdf-on-the-project.md)          | A quotation is a PDF on the project; notices are in-app only                       | Open to Discuss |
+| [0018](0018-one-review-per-project.md)                     | One review per project: four 1-5 scores and an optional comment                    | Open to Discuss |
+| [0019](0019-service-duration-and-receiver-industry.md)     | A service has an estimated duration; a job's industry is its owner's company types | Open to Discuss |
+| [0020](0020-only-service-and-job-above-the-database.md)    | Only "service" and "job" above the database                                        | Accepted        |
+| [0021](0021-proposal-sender-and-recipient.md)              | A proposal has a sender and a recipient, and points at a listing                   | Accepted        |
 
-0015–0019 are held for Sprint 3's draft decisions, which are written in its
-first days. That is why the index jumps from 0014 to 0020.
+0015–0019 were held for Sprint 3's decisions, written in its first days, which
+is why they come after 0020 and 0021 in time.
