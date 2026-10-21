@@ -5,10 +5,12 @@ import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import LogoutButton from '@/components/auth/LogoutButton';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import { isProviderAccount } from '@/lib/roles';
 
 // The avatar button and the small panel it opens, like GitHub's profile menu:
-// who is signed in at the top, then View profile, Edit profile, Settings and
-// Logout.
+// who is signed in at the top, then View profile, Edit profile, Your
+// proposals, Explore companies, Settings and Logout. Your proposals is the
+// proposals you sent, so only a Provider (or BOTH) company sees it.
 //
 // The panel stays mounted and is only hidden when closed. LogoutButton owns
 // its confirmation modal, so unmounting the panel would unmount the modal too.
@@ -105,6 +107,22 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                     className={ITEM_CLASS}
                 >
                     Edit profile
+                </Link>
+                {isProviderAccount(profile.accountType) && (
+                    <Link
+                        href="/proposals"
+                        onClick={() => setIsOpen(false)}
+                        className={ITEM_CLASS}
+                    >
+                        Your proposals
+                    </Link>
+                )}
+                <Link
+                    href="/companies"
+                    onClick={() => setIsOpen(false)}
+                    className={ITEM_CLASS}
+                >
+                    Explore companies
                 </Link>
                 <Link
                     href="/account-settings"

@@ -1,7 +1,6 @@
 'use client';
 
 import { type FormEvent, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { ServicePortfolio, UpdateServiceRequest } from '@mangodb/shared';
 import type { PendingPortfolio } from '@/components/portfolios/PortfolioForm';
 import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
@@ -142,7 +141,6 @@ export function useServiceForm(
     serviceId: number | null,
     companyId: number | null,
 ) {
-    const router = useRouter();
     const isEditing = serviceId !== null;
 
     // Add has nothing to load; Edit is loaded once the service arrives.
@@ -360,9 +358,10 @@ export function useServiceForm(
     // US2-4. Thrown errors become the modal's message, so the 409 for a
     // service with a project gets a sentence the Provider can act on.
     // isSubmitting is shared with Save, so Save and Cancel stay disabled while
-    // the delete runs. It stays true on success: the page is leaving.
+    // the delete runs. It stays true on success: the service is gone, and
+    // the form leaves once "Service deleted" is closed. Resolves true then.
     async function handleDelete() {
-        if (serviceId === null || isSubmitting) return;
+        if (serviceId === null || isSubmitting) return false;
         setIsSubmitting(true);
         try {
             await deleteService(serviceId);
@@ -374,7 +373,7 @@ export function useServiceForm(
                 }),
             );
         }
-        router.replace('/profile/view');
+        return true;
     }
 
     return {

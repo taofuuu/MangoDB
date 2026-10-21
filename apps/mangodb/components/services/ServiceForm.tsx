@@ -58,20 +58,26 @@ export default function ServiceForm(props: ServiceFormProps) {
     } = useCategories();
     // At most one modal is open at a time.
     const [openModal, setOpenModal] = useState<
-        'success' | 'leave' | 'delete' | null
+        'success' | 'leave' | 'delete' | 'deleted' | null
     >(null);
 
     const handleSave = async (e: FormEvent<HTMLFormElement>) => {
         if (await handleSubmit(e)) setOpenModal('success');
     };
 
+    // US2-4 AC2: "Service deleted" replaces the confirm dialog.
+    const handleConfirmDelete = async () => {
+        if (await handleDelete()) setOpenModal('deleted');
+    };
+
+    // A new service lands on My Services, where it now shows.
     const handleSuccessConfirm = () => {
         setOpenModal(null);
         if (isEditing) {
             router.back();
             return;
         }
-        router.push('/');
+        router.push('/services/mine');
     };
 
     const handleCancel = () => {
@@ -375,11 +381,23 @@ export default function ServiceForm(props: ServiceFormProps) {
 
             <ConfirmModal
                 isOpen={openModal === 'delete'}
-                onClose={() => setOpenModal(null)}
-                onConfirm={handleDelete}
+                // ConfirmModal closes itself after onConfirm resolves, so
+                // only close when the delete didn't just open 'deleted'.
+                onClose={() =>
+                    setOpenModal((current) =>
+                        current === 'delete' ? null : current,
+                    )
+                }
+                onConfirm={handleConfirmDelete}
                 title="Delete this service listing?"
                 description={`${savedTitle || 'This service'} will be removed and Receivers will no longer see it in search results. This can't be undone.`}
                 confirmLabel="Delete listing"
+            />
+
+            <SuccessModal
+                isOpen={openModal === 'deleted'}
+                onClose={() => router.replace('/profile/view')}
+                title="Service deleted"
             />
 
             <UnsavedChangesModal
