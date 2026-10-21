@@ -4,7 +4,7 @@
 
 ## Status
 
-Open to Discuss
+Accepted
 
 ## Context
 
@@ -43,8 +43,9 @@ the project to `AWAITING_DEPOSIT`.
 rejected quotations stay, because US4-3 shows them as the record of what was
 agreed or turned down. Deleting also removes the PDF from storage.
 
-**"Notify" means a "New quotation" badge in My Projects.** No email and no
-push notification.
+**"Notify" means a bell in the navbar that opens a popup list of notices.** A
+new quotation is one notice, for the Receiver. There is no notifications page,
+no email and no push notification.
 
 **Alternative considered: a quotation as form fields (amount, line items).**
 Rejected: companies already write quotations as documents, and a line-item
@@ -57,6 +58,12 @@ record of what the Receiver accepted.
 in the stack, and adding one (sending, templates, failures) does not fit in the
 last sprint.
 
+**Alternative considered: a notifications page.** Rejected: a short list in a
+popup is enough, and it needs no new page.
+
+**Alternative considered: a "New quotation" badge in My Projects.** Rejected:
+the Receiver sees it only on that page. The bell is on every page.
+
 ## Consequences
 
 **Easier:** one file type to accept and show. Every decided quotation is kept,
@@ -67,6 +74,8 @@ so both parties can see the history.
 - **The upload filter is image-only today.** Quotations need a PDF-only filter
   with the same 5 MB limit (T4.1.2).
 - **The Receiver only learns of a quotation by opening the app.**
+- **The navbar gets a bell.** Other events can add notices to it later; this
+  sprint's stories ask only for the new quotation.
 - **The system does not read the PDF.** The amount inside is not checked
   against the project's `totalBudget`, which stays the proposal's budget.
 - **Delete and decide can happen at the same moment.** Delete runs
