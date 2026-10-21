@@ -1,6 +1,7 @@
 'use client';
 
 import Input from '@/components/ui/Input';
+import PasswordInput from '@/components/ui/PasswordInput';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type AccountInfo = {
@@ -55,21 +56,19 @@ export default function AccountInfoStep({
                 placeholder="Type here..."
             />
 
-            <Input
+            <PasswordInput
                 label="Password"
                 value={value.password ?? ''}
                 onChange={handleUpdatePassword}
                 error={errors?.passwordError}
-                type="password"
                 placeholder="Type here..."
             />
 
-            <Input
+            <PasswordInput
                 label="Confirm Password"
                 value={value.confirmPassword ?? ''}
                 onChange={handleUpdateConfirmPassword}
                 error={errors?.confirmPasswordError}
-                type="password"
                 placeholder="Type here..."
             />
         </div>

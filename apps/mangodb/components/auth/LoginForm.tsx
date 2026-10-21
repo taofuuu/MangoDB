@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/components/ui/Input';
+import PasswordInput from '@/components/ui/PasswordInput';
 import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 import { login, sanitizeReturnUrl } from '@/lib/session';
@@ -88,10 +89,9 @@ export default function LoginForm() {
             />
 
             <div className="flex flex-col gap-1.5">
-                <Input
+                <PasswordInput
                     id="password"
                     label="Password"
-                    type="password"
                     autoComplete="current-password"
                     value={password}
                     onChange={(next) => {

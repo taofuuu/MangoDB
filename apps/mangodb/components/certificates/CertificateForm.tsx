@@ -1,36 +1,17 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import Image from 'next/image';
 import type { Certificate } from '@mangodb/shared';
 import MonthDropdown from './MonthDropdown';
 import YearDropdown from './YearDropdown';
-import { createCertificate, updateCertificate } from '@/lib/certificates';
+import { useCertificateForm } from './useCertificateForm';
 import { isStorageImage } from '@/lib/images';
-import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 import FileUpload from '@/components/ui/FileUpload';
 import FieldError from '@/components/ui/FieldError';
 import ModalShell from '@/components/ui/ModalShell';
 
-// Which input on this form each API field belongs under. Month and year share
-// one message because they sit on one row and are wrong together.
-const CERTIFICATE_FIELDS = {
-    certTitle: 'name',
-    organization: 'organization',
-    issueMonth: 'issueDate',
-    issueYear: 'issueDate',
-    expireMonth: 'expireDate',
-    expireYear: 'expireDate',
-    credentialId: 'credentialId',
-    credentialUrl: 'credentialUrl',
-    certImage: 'image',
-} as const;
-
-type CertificateErrors = FieldErrors<
-    (typeof CERTIFICATE_FIELDS)[keyof typeof CERTIFICATE_FIELDS]
->;
-
-type CertificateFormProps = {
+export type CertificateFormProps = {
     onClose: () => void;
     // The saved certificate, as the API returned it.
     onSave: (certificate: Certificate) => void;
@@ -38,103 +19,27 @@ type CertificateFormProps = {
     certificate?: Certificate | undefined;
 };
 
-const text = (value: number | string | null | undefined) =>
-    value == null ? '' : String(value);
-
 // Add a certificate, or edit a saved one. Mounted while open, so every
-// opening starts from a fresh form.
-export default function CertificateForm({
-    onClose,
-    onSave,
-    certificate,
-}: CertificateFormProps) {
-    const isEdit = certificate !== undefined;
+// opening starts from a fresh form. The values and save live in
+// useCertificateForm.
+export default function CertificateForm(props: CertificateFormProps) {
+    const { onClose, certificate } = props;
     const titleId = useId();
-
-    const [name, setName] = useState(certificate?.certTitle ?? '');
-    const [organization, setOrganization] = useState(
-        certificate?.organization ?? '',
-    );
-    const [issueMonth, setIssueMonth] = useState(text(certificate?.issueMonth));
-    const [issueYear, setIssueYear] = useState(text(certificate?.issueYear));
-    const [expireMonth, setExpireMonth] = useState(
-        text(certificate?.expireMonth),
-    );
-    const [expireYear, setExpireYear] = useState(text(certificate?.expireYear));
-    const [credentialId, setCredentialId] = useState(
-        certificate?.credentialId ?? '',
-    );
-    const [credentialUrl, setCredentialUrl] = useState(
-        certificate?.credentialUrl ?? '',
-    );
-    const [image, setImage] = useState<File | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errors, setErrors] = useState<CertificateErrors>({});
-    // Only what no input can hold: offline, or a 500.
-    const [formError, setFormError] = useState<string | null>(null);
-
-    // Touching a box clears what was wrong with it, so a field the user has
-    // already fixed stops looking broken.
-    const clearError = (field: keyof CertificateErrors) =>
-        setErrors((prev) => ({ ...prev, [field]: undefined }));
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setErrors({});
-        setFormError(null);
-
-        // The API checks this too; here it saves a round trip.
-        if (issueYear && issueMonth && expireYear && expireMonth) {
-            const issued = Number(issueYear) * 100 + Number(issueMonth);
-            const expires = Number(expireYear) * 100 + Number(expireMonth);
-            if (expires < issued) {
-                setErrors({
-                    expireDate:
-                        'Expiration date cannot be before the issue date.',
-                });
-                return;
-            }
-        }
-
-        const body = new FormData();
-        body.append('certTitle', name);
-        body.append('organization', organization);
-        const optional = {
-            issueMonth,
-            issueYear,
-            expireMonth,
-            expireYear,
-            credentialId,
-            credentialUrl,
-        };
-        for (const [field, value] of Object.entries(optional)) {
-            // An edit sends blanks too: the API reads '' as null, which is
-            // the only way to clear a field that already has a value.
-            if (isEdit || value) body.append(field, value);
-        }
-        // Without a new file, an edit keeps the saved image.
-        if (image) body.append('certImage', image);
-
-        setIsSubmitting(true);
-        try {
-            const saved = isEdit
-                ? await updateCertificate(certificate.certificateId, body)
-                : await createCertificate(body);
-            onSave(saved);
-            onClose();
-        } catch (cause: unknown) {
-            const { fields, message } = toFormErrors(cause, CERTIFICATE_FIELDS);
-            setErrors(fields);
-            setFormError(message);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const {
+        values,
+        setField,
+        setFieldError,
+        errors,
+        formError,
+        isSubmitting,
+        isEditing,
+        handleSubmit,
+    } = useCertificateForm(props);
 
     const inputClassName =
         'h-[4.07vh] w-full px-2.5 rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand';
     const savedImage =
-        isEdit && !image && isStorageImage(certificate.certImage)
+        certificate && !values.image && isStorageImage(certificate.certImage)
             ? certificate.certImage
             : null;
 
@@ -149,7 +54,7 @@ export default function CertificateForm({
         >
             <div className="flex items-center justify-between">
                 <h2 id={titleId} className="type-lg font-semibold">
-                    {isEdit
+                    {isEditing
                         ? 'Edit license or certification'
                         : 'Add license or certification'}
                 </h2>
@@ -180,11 +85,10 @@ export default function CertificateForm({
                         <input
                             id="certificate-name"
                             type="text"
-                            value={name}
-                            onChange={(event) => {
-                                setName(event.target.value);
-                                clearError('name');
-                            }}
+                            value={values.name}
+                            onChange={(event) =>
+                                setField('name', event.target.value)
+                            }
                             className={inputClassName}
                             placeholder="Ex: Microsoft certified network associate security"
                             required
@@ -202,11 +106,10 @@ export default function CertificateForm({
                         <input
                             id="certificate-organization"
                             type="text"
-                            value={organization}
-                            onChange={(event) => {
-                                setOrganization(event.target.value);
-                                clearError('organization');
-                            }}
+                            value={values.organization}
+                            onChange={(event) =>
+                                setField('organization', event.target.value)
+                            }
                             className={inputClassName}
                             placeholder="Ex: Microsoft"
                             required
@@ -224,11 +127,10 @@ export default function CertificateForm({
                                     Month
                                 </p>
                                 <MonthDropdown
-                                    value={issueMonth}
-                                    onChange={(value) => {
-                                        setIssueMonth(value);
-                                        clearError('issueDate');
-                                    }}
+                                    value={values.issueMonth}
+                                    onChange={(value) =>
+                                        setField('issueMonth', value)
+                                    }
                                 />
                             </div>
                             <div className="flex-1">
@@ -236,11 +138,10 @@ export default function CertificateForm({
                                     Year
                                 </p>
                                 <YearDropdown
-                                    value={issueYear}
-                                    onChange={(value) => {
-                                        setIssueYear(value);
-                                        clearError('issueDate');
-                                    }}
+                                    value={values.issueYear}
+                                    onChange={(value) =>
+                                        setField('issueYear', value)
+                                    }
                                     minYear={1990}
                                     maxYear={new Date().getFullYear()}
                                 />
@@ -259,11 +160,10 @@ export default function CertificateForm({
                                     Month
                                 </p>
                                 <MonthDropdown
-                                    value={expireMonth}
-                                    onChange={(value) => {
-                                        setExpireMonth(value);
-                                        clearError('expireDate');
-                                    }}
+                                    value={values.expireMonth}
+                                    onChange={(value) =>
+                                        setField('expireMonth', value)
+                                    }
                                 />
                             </div>
                             <div className="flex-1">
@@ -271,11 +171,10 @@ export default function CertificateForm({
                                     Year
                                 </p>
                                 <YearDropdown
-                                    value={expireYear}
-                                    onChange={(value) => {
-                                        setExpireYear(value);
-                                        clearError('expireDate');
-                                    }}
+                                    value={values.expireYear}
+                                    onChange={(value) =>
+                                        setField('expireYear', value)
+                                    }
                                     minYear={1990}
                                     maxYear={new Date().getFullYear() + 20}
                                 />
@@ -294,11 +193,10 @@ export default function CertificateForm({
                         <input
                             id="certificate-credential-id"
                             type="text"
-                            value={credentialId}
-                            onChange={(event) => {
-                                setCredentialId(event.target.value);
-                                clearError('credentialId');
-                            }}
+                            value={values.credentialId}
+                            onChange={(event) =>
+                                setField('credentialId', event.target.value)
+                            }
                             className={inputClassName}
                             placeholder="Ex: AZ-900-123456"
                         />
@@ -315,11 +213,10 @@ export default function CertificateForm({
                         <input
                             id="certificate-credential-url"
                             type="url"
-                            value={credentialUrl}
-                            onChange={(event) => {
-                                setCredentialUrl(event.target.value);
-                                clearError('credentialUrl');
-                            }}
+                            value={values.credentialUrl}
+                            onChange={(event) =>
+                                setField('credentialUrl', event.target.value)
+                            }
                             className={inputClassName}
                             placeholder="https://learn.microsoft.com/..."
                         />
@@ -346,16 +243,10 @@ export default function CertificateForm({
                     <div>
                         <FileUpload
                             onError={(message) =>
-                                setErrors((prev) => ({
-                                    ...prev,
-                                    image: message,
-                                }))
+                                setFieldError('image', message)
                             }
-                            value={image}
-                            onChange={(next) => {
-                                setImage(next);
-                                clearError('image');
-                            }}
+                            value={values.image}
+                            onChange={(next) => setField('image', next)}
                         />
                         <FieldError message={errors.image} />
                     </div>

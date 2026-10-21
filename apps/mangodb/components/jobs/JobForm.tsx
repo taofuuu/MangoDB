@@ -1,275 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import CategorySelector from './CategorySelector';
-import { createJob, updateJob } from '@/lib/jobs';
-import { toFormErrors } from '@/lib/validation/formErrors';
-import FieldError from '@/components/ui/FieldError';
 import { useRouter } from 'next/navigation';
-import type {
-    Category,
-    CreateJobRequest,
-    Job,
-    UpdateJobRequest,
-} from '@mangodb/shared';
-import { listCategories } from '@/lib/categories';
-import { describeError } from '@/lib/api';
-
+import type { Job } from '@mangodb/shared';
+import { useCategories } from '@/lib/useCategories';
+import CategorySelector from './CategorySelector';
+import { useJobForm } from './useJobForm';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
+import FieldError from '@/components/ui/FieldError';
 
-import {
-    validateJobDeadline,
-    validateJobDuration,
-    validateJobLocation,
-} from '@/lib/validation/job';
-import {
-    validateBudgets,
-    validateCategoryIds,
-    validateListingDesc,
-    validateListingTitle,
-} from '@/lib/validation/listing';
-
-const JOB_FIELDS = {
-    listingTitle: 'title',
-    listingDesc: 'description',
-    minBudget: 'minBudget',
-    maxBudget: 'maxBudget',
-    locationPref: 'location',
-    duration: 'duration',
-    deadline: 'deadline',
-    categoryIds: 'categoryIds',
-} as const;
-
-type JobErrors = Partial<
-    Record<
-        | 'title'
-        | 'description'
-        | 'minBudget'
-        | 'maxBudget'
-        | 'location'
-        | 'duration'
-        | 'deadline'
-        | 'categoryIds',
-        string
-    >
->;
-
+// Pass the job to edit it; leave it out to post a new one.
 type JobFormProps = {
-    jobId?: number;
     initialJob?: Job;
 };
 
-export default function JobForm({ jobId, initialJob }: JobFormProps) {
-    const [listingTitle, setListingTitle] = useState(
-        initialJob?.listingTitle ?? '',
-    );
-    const [listingDesc, setListingDesc] = useState(
-        initialJob?.listingDesc ?? '',
-    );
-    const [minBudget, setMinBudget] = useState(
-        initialJob?.minBudget != null ? String(initialJob.minBudget) : '',
-    );
-    const [maxBudget, setMaxBudget] = useState(
-        initialJob?.maxBudget != null ? String(initialJob.maxBudget) : '',
-    );
-    const [locationPref, setLocationPref] = useState(
-        initialJob?.locationPref ?? '',
-    );
-    const [duration, setDuration] = useState(initialJob?.duration ?? '');
-    const [deadline, setDeadline] = useState(
-        initialJob?.deadline?.slice(0, 10) ?? '',
-    );
-
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
-    const [categoriesError, setCategoriesError] = useState<string | null>(null);
-    const [categoryIds, setCategoryIds] = useState<number[]>(
-        initialJob?.categoryIds ?? [],
-    );
-
-    const [errors, setErrors] = useState<JobErrors>({});
-    const [formError, setFormError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-
+// Only draws the form. The values, checks and save live in useJobForm.
+export default function JobForm({ initialJob }: JobFormProps) {
     const router = useRouter();
-
-    useEffect(() => {
-        async function fetchCategories() {
-            try {
-                setIsCategoriesLoading(true);
-                setCategoriesError(null);
-
-                const data = await listCategories();
-                setCategories(data);
-            } catch (error: unknown) {
-                setCategoriesError(describeError(error));
-            } finally {
-                setIsCategoriesLoading(false);
-            }
-        }
-
-        void fetchCategories();
-    }, []);
-
-    const clearError = (field: keyof JobErrors) => {
-        setErrors((prev) => ({
-            ...prev,
-            [field]: undefined,
-        }));
-    };
-
-    const validateForm = (): boolean => {
-        const newErrors: JobErrors = {};
-
-        const titleError = validateListingTitle(listingTitle);
-        if (titleError) newErrors.title = titleError;
-
-        const descriptionError = validateListingDesc(listingDesc);
-        if (descriptionError) newErrors.description = descriptionError;
-
-        const categoryError = validateCategoryIds(categoryIds);
-        if (categoryError) newErrors.categoryIds = categoryError;
-
-        const budgetErrors = validateBudgets(minBudget, maxBudget, {
-            maxRequired: true,
-        });
-
-        if (budgetErrors.minBudget) {
-            newErrors.minBudget = budgetErrors.minBudget;
-        }
-
-        if (budgetErrors.maxBudget) {
-            newErrors.maxBudget = budgetErrors.maxBudget;
-        }
-
-        const durationError = validateJobDuration(duration);
-        if (durationError) newErrors.duration = durationError;
-
-        const locationError = validateJobLocation(locationPref);
-        if (locationError) newErrors.location = locationError;
-
-        const initialDeadline = initialJob?.deadline?.slice(0, 10);
-
-        if (!initialJob || deadline !== initialDeadline) {
-            const deadlineError = validateJobDeadline(deadline);
-
-            if (deadlineError) {
-                newErrors.deadline = deadlineError;
-            }
-        }
-
-        setErrors(newErrors);
-
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setFormError(null);
-
-        if (!validateForm()) return;
-
-        const parsedMinBudget =
-            minBudget.trim() === '' ? null : Number(minBudget);
-
-        const parsedMaxBudget = Number(maxBudget);
-
-        if (
-            !maxBudget.trim() ||
-            !Number.isFinite(parsedMaxBudget) ||
-            parsedMaxBudget <= 0
-        ) {
-            setErrors((prev) => ({
-                ...prev,
-                maxBudget: 'Maximum budget must be a positive number.',
-            }));
-            return;
-        }
-
-        const normalizedTitle = listingTitle.trim();
-        const normalizedDescription = listingDesc.trim();
-        const normalizedLocation = locationPref.trim() || null;
-        const normalizedDuration = duration.trim() || null;
-        const normalizedDeadline = deadline.trim() || null;
-
-        try {
-            setIsLoading(true);
-
-            if (jobId !== undefined && initialJob) {
-                // Edit mode: send only fields that changed.
-                const data: UpdateJobRequest = {};
-
-                if (normalizedTitle !== initialJob.listingTitle) {
-                    data.listingTitle = normalizedTitle;
-                }
-
-                if (normalizedDescription !== initialJob.listingDesc) {
-                    data.listingDesc = normalizedDescription;
-                }
-
-                if (parsedMinBudget !== initialJob.minBudget) {
-                    data.minBudget = parsedMinBudget;
-                }
-
-                if (parsedMaxBudget !== initialJob.maxBudget) {
-                    data.maxBudget = parsedMaxBudget;
-                }
-
-                if (normalizedLocation !== initialJob.locationPref) {
-                    data.locationPref = normalizedLocation;
-                }
-
-                if (normalizedDuration !== initialJob.duration) {
-                    data.duration = normalizedDuration;
-                }
-
-                if (normalizedDeadline !== initialJob.deadline) {
-                    data.deadline = normalizedDeadline;
-                }
-
-                const sameCategories =
-                    categoryIds.length === initialJob.categoryIds.length &&
-                    categoryIds.every((id) =>
-                        initialJob.categoryIds.includes(id),
-                    );
-
-                if (!sameCategories) {
-                    data.categoryIds = categoryIds;
-                }
-
-                if (Object.keys(data).length === 0) {
-                    setFormError('No changes to save.');
-                    return;
-                }
-
-                await updateJob(jobId, data);
-                router.push('/jobs/mine?success=updated');
-            } else {
-                // Create mode: preserve the existing behavior.
-                const data: CreateJobRequest = {
-                    listingTitle: normalizedTitle,
-                    listingDesc: normalizedDescription,
-                    minBudget: parsedMinBudget,
-                    maxBudget: parsedMaxBudget,
-                    locationPref: normalizedLocation,
-                    duration: normalizedDuration,
-                    deadline: normalizedDeadline,
-                    categoryIds,
-                };
-
-                await createJob(data);
-                router.push('/jobs/mine?success=posted');
-            }
-        } catch (cause: unknown) {
-            const { fields, message } = toFormErrors(cause, JOB_FIELDS);
-            setErrors(fields);
-            setFormError(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const {
+        values,
+        setField,
+        errors,
+        formError,
+        isSaving,
+        isEditing,
+        handleSubmit,
+    } = useJobForm(initialJob);
+    const {
+        categories,
+        loading: isCategoriesLoading,
+        error: categoriesError,
+    } = useCategories();
 
     return (
         <form
@@ -281,11 +43,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                 <Input
                     id="job-title"
                     label="Title*"
-                    value={listingTitle}
-                    onChange={(value) => {
-                        setListingTitle(value);
-                        clearError('title');
-                    }}
+                    value={values.title}
+                    onChange={(value) => setField('title', value)}
                     error={errors.title}
                     placeholder="Ex: Build a responsive website"
                     required
@@ -295,11 +54,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                 <Textarea
                     id="job-description"
                     label="Description*"
-                    value={listingDesc}
-                    onChange={(value) => {
-                        setListingDesc(value);
-                        clearError('description');
-                    }}
+                    value={values.description}
+                    onChange={(value) => setField('description', value)}
                     error={errors.description}
                     placeholder="Describe the job requirements and expected work..."
                     required
@@ -318,11 +74,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                     ) : (
                         <CategorySelector
                             categories={categories}
-                            selectedIds={categoryIds}
-                            onChange={(ids) => {
-                                setCategoryIds(ids);
-                                clearError('categoryIds');
-                            }}
+                            selectedIds={values.categoryIds}
+                            onChange={(ids) => setField('categoryIds', ids)}
                             error={errors.categoryIds}
                         />
                     )}
@@ -336,8 +89,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                         label="Min Budget"
                         type="text"
                         inputMode="numeric"
-                        value={minBudget}
-                        onChange={setMinBudget}
+                        value={values.minBudget}
+                        onChange={(value) => setField('minBudget', value)}
                         error={errors.minBudget}
                         placeholder="Ex: 20000"
                     />
@@ -348,8 +101,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                         label="Max Budget*"
                         type="text"
                         inputMode="numeric"
-                        value={maxBudget}
-                        onChange={setMaxBudget}
+                        value={values.maxBudget}
+                        onChange={(value) => setField('maxBudget', value)}
                         error={errors.maxBudget}
                         placeholder="Ex: 50000"
                     />
@@ -360,8 +113,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                     id="location"
                     label="Location"
                     type="text"
-                    value={locationPref}
-                    onChange={setLocationPref}
+                    value={values.location}
+                    onChange={(value) => setField('location', value)}
                     error={errors.location}
                     placeholder="Ex: Bangkok / Remote"
                 />
@@ -372,8 +125,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                         id="deadline"
                         label="Deadline"
                         type="date"
-                        value={deadline}
-                        onChange={setDeadline}
+                        value={values.deadline}
+                        onChange={(value) => setField('deadline', value)}
                         error={errors.deadline}
                     />
 
@@ -382,8 +135,8 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                         id="duration"
                         label="Duration"
                         type="text"
-                        value={duration}
-                        onChange={setDuration}
+                        value={values.duration}
+                        onChange={(value) => setField('duration', value)}
                         error={errors.duration}
                         placeholder="Ex: 3 months"
                     />
@@ -398,7 +151,7 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
                     type="button"
                     // variant="outline"
                     onClick={() => router.back()}
-                    disabled={isLoading}
+                    disabled={isSaving}
                     className="h-[4.07vh] w-[8.5vw] rounded-button bg-scrollbar type-sm !font-[500] text-surface transition-colors hover:bg-fill-muted disabled:opacity-50"
                 >
                     Cancel
@@ -406,13 +159,11 @@ export default function JobForm({ jobId, initialJob }: JobFormProps) {
 
                 <Button
                     type="submit"
-                    isLoading={isLoading}
-                    loadingLabel={
-                        jobId !== undefined ? 'Saving...' : 'Posting...'
-                    }
+                    isLoading={isSaving}
+                    loadingLabel={isEditing ? 'Saving...' : 'Posting...'}
                     className="h-[4.07vh] w-[8.5vw] rounded-button bg-brand type-sm !font-[500] text-surface transition-colors hover:bg-brand-light disabled:opacity-50"
                 >
-                    {jobId !== undefined ? 'Save Changes' : 'Post'}
+                    {isEditing ? 'Save Changes' : 'Post'}
                 </Button>
             </div>
         </form>

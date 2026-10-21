@@ -6,14 +6,13 @@ import Dropdown from '@/components/ui/Dropdown';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import SearchBar from '@/components/ui/SearchBar';
-import type { Job, Paginated } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import PageGate from '@/components/auth/PageGate';
-import { NOT_SIGNED_IN, describeError, isNotSignedIn } from '@/lib/api';
-import { listJobs } from '@/lib/jobs';
+import { NOT_SIGNED_IN } from '@/lib/api';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
-import { redirectToUnauthorized } from '@/lib/session';
+import { useJobList } from '@/lib/useJobList';
 import { useMyCompany } from '@/lib/useMyCompany';
 
 // The deadline and order boxes. Neither reaches GET /jobs yet (only the
@@ -50,9 +49,18 @@ export default function JobsPage() {
 }
 
 function OtherJobPage() {
-    const [page, setPage] = useState(1);
-    // The settled keyword, from SearchBar.
-    const [search, setSearch] = useState('');
+    // q is the settled keyword, from SearchBar.
+    const {
+        jobs,
+        pagination,
+        hasLoaded,
+        q,
+        isLoading,
+        error,
+        search,
+        goToPage,
+        reload,
+    } = useJobList({ view: 'search' });
     //filter part (not currently used)
     const [categories, setCategories] = useState<string[]>([]);
 
@@ -63,12 +71,8 @@ function OtherJobPage() {
     const [deadlineDate, setDeadlineDate] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    const [result, setResult] = useState<Paginated<Job> | null>(null);
     //
     const [orderType, setOrderType] = useState<OrderType>('DEFAULT');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [reloadKey, setReloadKey] = useState(0);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
@@ -100,47 +104,6 @@ function OtherJobPage() {
         };
     }, [isFilterOpen]);
 
-    useEffect(() => {
-        let cancelled = false;
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsLoading(true);
-        setError(null);
-
-        listJobs(page, JOB_PAGE_SIZE, {
-            status: 'OPEN',
-            q: search,
-        })
-            .then((data) => {
-                if (cancelled) return;
-
-                setResult(data);
-
-                listRef.current?.scrollTo({
-                    top: 0,
-                    behavior: 'smooth',
-                });
-            })
-            .catch((requestError: unknown) => {
-                if (cancelled) return;
-                if (isNotSignedIn(requestError)) {
-                    setError(NOT_SIGNED_IN);
-                    redirectToUnauthorized();
-                    return;
-                }
-                setError(describeError(requestError));
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsLoading(false);
-                }
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [page, reloadKey, search]);
-
     const openDetail = (job: Job) => {
         setSelectedJob(job);
         setIsDetailOpen(true);
@@ -151,27 +114,24 @@ function OtherJobPage() {
         setSelectedJob(null);
     }, []);
 
+    const scrollListToTop = () =>
+        listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+
     const changePage = (nextPage: number) => {
-        setPage(nextPage);
+        goToPage(nextPage);
+        scrollListToTop();
     };
 
-    const retryList = () => {
-        setReloadKey((key) => key + 1);
+    const handleSearch = (keyword: string) => {
+        search(keyword);
+        scrollListToTop();
     };
-
-    const handleSearch = (q: string) => {
-        setSearch(q);
-        setPage(1);
-    };
-
-    const pagination = result?.pagination;
-    const visibleJobs = result?.items ?? [];
 
     if (error === NOT_SIGNED_IN) {
         return <div className="min-h-screen bg-surface" />;
     }
 
-    if (!result && !error) {
+    if (!hasLoaded && !error) {
         return <div className="min-h-screen bg-surface" />;
     }
 
@@ -216,7 +176,7 @@ function OtherJobPage() {
                                         type="button"
                                         onClick={() => {
                                             setCategories([]);
-                                            setPage(1);
+                                            goToPage(1);
                                         }}
                                         className="hover:underline focus-visible:outline-none"
                                     >
@@ -236,7 +196,7 @@ function OtherJobPage() {
                                         onClick={() => {
                                             setMinBudget('');
                                             setMaxBudget('');
-                                            setPage(1);
+                                            goToPage(1);
                                         }}
                                         className="hover:underline focus-visible:outline-none"
                                     >
@@ -254,7 +214,7 @@ function OtherJobPage() {
                                             value={minBudget}
                                             onChange={(e) => {
                                                 setMinBudget(e.target.value);
-                                                setPage(1);
+                                                goToPage(1);
                                             }}
                                             className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
                                         />
@@ -269,7 +229,7 @@ function OtherJobPage() {
                                             value={maxBudget}
                                             onChange={(e) => {
                                                 setMaxBudget(e.target.value);
-                                                setPage(1);
+                                                goToPage(1);
                                             }}
                                             className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
                                         />
@@ -286,7 +246,7 @@ function OtherJobPage() {
                                         onClick={() => {
                                             setDeadlineType('ANY');
                                             setDeadlineDate('');
-                                            setPage(1);
+                                            goToPage(1);
                                         }}
                                         className="hover:underline focus-visible:outline-none"
                                     >
@@ -300,7 +260,7 @@ function OtherJobPage() {
                                         options={DEADLINE_OPTIONS}
                                         onChange={(next) => {
                                             setDeadlineType(next);
-                                            setPage(1);
+                                            goToPage(1);
                                         }}
                                         label="Deadline before or after"
                                         className="w-[6vw] min-w-[90px]"
@@ -311,7 +271,7 @@ function OtherJobPage() {
                                         value={deadlineDate}
                                         onChange={(e) => {
                                             setDeadlineDate(e.target.value);
-                                            setPage(1);
+                                            goToPage(1);
                                         }}
                                         aria-label="Deadline date"
                                         className="h-[3.70vh] min-w-0 flex-1 rounded-[6px] border border-brand bg-surface-white px-[0.63vw] type-sm focus:ring-1 focus:ring-brand/30"
@@ -373,7 +333,7 @@ function OtherJobPage() {
                                     options={ORDER_OPTIONS}
                                     onChange={(next) => {
                                         setOrderType(next);
-                                        setPage(1);
+                                        goToPage(1);
                                     }}
                                     label="Order jobs by"
                                     className="w-[8.125vw] min-w-[120px]"
@@ -405,7 +365,7 @@ function OtherJobPage() {
 
                                     <Button
                                         variant="outline"
-                                        onClick={retryList}
+                                        onClick={reload}
                                         className="mt-[1.11vh] h-[4.07vh] px-[1.04vw] type-sm"
                                     >
                                         Try again
@@ -432,9 +392,9 @@ function OtherJobPage() {
                                                 />
                                             ))}
                                         </div>
-                                    ) : result && visibleJobs.length > 0 ? (
+                                    ) : jobs.length > 0 ? (
                                         <div className="flex flex-col gap-[3.87vh]">
-                                            {visibleJobs.map((job) => (
+                                            {jobs.map((job) => (
                                                 <JobCard
                                                     key={job.jobId}
                                                     job={job}
@@ -447,7 +407,7 @@ function OtherJobPage() {
                                     ) : (
                                         <EmptyState
                                             title="No job postings found"
-                                            {...((search ||
+                                            {...((q ||
                                                 categories.length > 0 ||
                                                 minBudget !== '' ||
                                                 maxBudget !== '' ||
