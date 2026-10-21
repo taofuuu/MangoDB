@@ -25,7 +25,7 @@ import { redirectToUnauthorized } from '@/lib/session';
 const NOT_FOUND = 'This job could not be found.';
 
 // The list shows the proposals still in play, or only the rejected ones.
-type ViewMode = 'all' | 'rejected';
+type ViewMode = 'pending' | 'rejected' | null;
 
 // US2-10. The proposals sent to one of your jobs, opened from the job.
 export default function JobProposalsPage() {
@@ -34,7 +34,7 @@ export default function JobProposalsPage() {
     const [listingTitle, setListingTitle] = useState('Job Posting Proposals');
     const [proposals, setProposals] = useState<ReceivedProposal[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [viewMode, setViewMode] = useState<ViewMode>('all');
+    const [viewMode, setViewMode] = useState<ViewMode>('pending');
     const [isLoading, setIsLoading] = useState(jobId !== null);
     const [error, setError] = useState<string | null>(null);
 
@@ -73,10 +73,11 @@ export default function JobProposalsPage() {
     const activeError = jobId === null ? NOT_FOUND : error;
     const activeIsLoading = jobId !== null && isLoading;
 
+    const totalCount = proposals.length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
-    const remainCount = proposals.length - rejectedCount;
+    const pendingCount = totalCount - rejectedCount;
 
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
@@ -165,18 +166,24 @@ export default function JobProposalsPage() {
                 </div>
 
                 {/* Stats & View Switchers */}
-                <div className="mb-6">
+                <div className="mb-6 flex flex-col gap-2">
                     <StatusTabs<ViewMode>
                         tabs={[
                             {
-                                label: 'Remain',
-                                value: 'all',
-                                count: remainCount,
+                                label: 'Pending',
+                                value: 'pending',
+                                count: pendingCount,
                             },
                             {
                                 label: 'Rejected',
                                 value: 'rejected',
                                 count: rejectedCount,
+                            },
+                            {
+                                label: 'Total',
+                                // No view mode value for total; using null to indicate no filter
+                                value: null,
+                                count: totalCount,
                             },
                         ]}
                         value={viewMode}

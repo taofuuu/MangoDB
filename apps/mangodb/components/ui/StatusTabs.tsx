@@ -37,11 +37,15 @@ export default function StatusTabs<T>({
             >
                 {tabs.map((tab) => {
                     const isActive = tab.value === value;
+                    const isClickable =
+                        tab.value !== null && tab.value !== undefined;
                     return (
                         <button
                             key={tab.label}
                             type="button"
-                            onClick={() => onChange(tab.value)}
+                            onClick={() => {
+                                if (isClickable) onChange(tab.value);
+                            }}
                             aria-pressed={isActive}
                             className={`flex h-[4.17vh] w-[6.77vw] items-center justify-center rounded-full border type-md font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                                 isActive
@@ -65,7 +69,11 @@ export default function StatusTabs<T>({
                     <button
                         key={tab.label}
                         type="button"
-                        onClick={() => onChange(tab.value)}
+                        onClick={() => {
+                            const isClickable =
+                                tab.value !== null && tab.value !== undefined;
+                            if (isClickable) onChange(tab.value);
+                        }}
                         aria-pressed={isActive}
                         className={`flex overflow-hidden rounded-button border border-accent type-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                             isActive
