@@ -57,7 +57,10 @@ type Row = {
         deletedAt: Date | null;
     };
     job: null;
-    listingCategory: [];
+    listingCategory: {
+        categoryId: number;
+        category: { categoryName: string };
+    }[];
 };
 
 const OWNER = 1;
@@ -108,6 +111,16 @@ function job(
     };
 }
 
+function withCategories(r: Row, names: string[]): Row {
+    return {
+        ...r,
+        listingCategory: names.map((name, i) => ({
+            categoryId: i + 1,
+            category: { categoryName: name },
+        })),
+    };
+}
+
 // Prisma's `contains` becomes SQL LIKE: % is any run of characters, _ is any
 // one character, and a backslash makes the next character plain. Reading it
 // the same way here is what catches a search that forgets escapeLike.
@@ -145,6 +158,30 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
             const value = row[key];
             if (key === 'company') {
                 return matches(value as Record<string, unknown>, cond);
+            }
+            if (key === 'listingCategory') {
+                const condObj = cond as {
+                    some?: {
+                        category?: {
+                            categoryName?: { in?: string[]; mode?: string };
+                        };
+                    };
+                };
+                const inList = condObj.some?.category?.categoryName?.in;
+                if (inList !== undefined) {
+                    const insensitive =
+                        condObj.some?.category?.categoryName?.mode ===
+                        'insensitive';
+                    const fold = (s: string) =>
+                        insensitive ? s.toLowerCase() : s;
+                    const wanted = new Set(inList.map(fold));
+                    const list = value as {
+                        category: { categoryName: string };
+                    }[];
+                    return list.some((item) =>
+                        wanted.has(fold(item.category.categoryName)),
+                    );
+                }
             }
             if (
                 cond !== null &&
@@ -240,7 +277,10 @@ beforeEach(() => {
 async function call(
     handler: (req: Request, res: Response) => Promise<void>,
     callerCompanyId: number,
-    input: { params?: Record<string, string>; query?: Record<string, string> },
+    input: {
+        params?: Record<string, string>;
+        query?: Record<string, string | string[]>;
+    },
 ): Promise<unknown> {
     const req = {
         params: input.params ?? {},
@@ -319,7 +359,10 @@ describe('GET /jobs/:jobId', () => {
 });
 
 describe('GET /jobs', () => {
-    function list(callerCompanyId: number, query: Record<string, string> = {}) {
+    function list(
+        callerCompanyId: number,
+        query: Record<string, string | string[]> = {},
+    ) {
         return call(controller.listJobs, callerCompanyId, {
             query,
         }) as Promise<Paginated<Job>>;
@@ -394,6 +437,150 @@ describe('GET /jobs', () => {
             body.items.map((j) => j.jobId),
             [10],
         );
+    });
+
+    it('filters by a single category name', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OWNER, 'OPEN'), ['Design']),
+        ];
+
+        const body = await list(OTHER, { category: 'Web Development' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [10],
+        );
+        assert.equal(body.pagination.totalItems, 1);
+    });
+
+    it('matches category names case-insensitively', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OWNER, 'OPEN'), ['Design']),
+        ];
+
+        const body = await list(OTHER, { category: 'web development' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [10],
+        );
+    });
+
+    it('matches multiple categories with OR logic', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OWNER, 'OPEN'), ['Mobile App Development']),
+            withCategories(job(12, OWNER, 'OPEN'), ['Data Analytics']),
+        ];
+
+        const body = await list(OTHER, {
+            category: ['Web Development', 'Mobile App Development'],
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [11, 10],
+        );
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('combines category filter with keyword q (AND logic)', async () => {
+        rows = [
+            withCategories(
+                { ...job(10, OWNER, 'OPEN'), listingTitle: 'React developer' },
+                ['Web Development'],
+            ),
+            withCategories(
+                { ...job(11, OWNER, 'OPEN'), listingTitle: 'Vue developer' },
+                ['Web Development'],
+            ),
+            withCategories(
+                { ...job(12, OWNER, 'OPEN'), listingTitle: 'React Native' },
+                ['Mobile App Development'],
+            ),
+        ];
+
+        const body = await list(OTHER, {
+            q: 'react',
+            category: 'Web Development',
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [10],
+        );
+        assert.equal(body.pagination.totalItems, 1);
+    });
+
+    it('combines category filter with companyId and status', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OTHER, 'OPEN'), ['Web Development']),
+            withCategories(job(12, OWNER, 'CLOSED'), ['Web Development']),
+        ];
+
+        const body = await list(OWNER, {
+            category: 'Web Development',
+            companyId: String(OWNER),
+            status: 'CLOSED',
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [12],
+        );
+        assert.equal(body.pagination.totalItems, 1);
+    });
+
+    it('returns an empty page for a non-matching category', async () => {
+        rows = [withCategories(job(10, OWNER, 'OPEN'), ['Web Development'])];
+
+        const body = await list(OTHER, { category: 'Nonexistent Category' });
+
+        assert.deepEqual(body.items, []);
+        assert.equal(body.pagination.totalItems, 0);
+    });
+
+    it('ignores blank category values', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OWNER, 'OPEN'), ['Design']),
+        ];
+
+        const body = await list(OTHER, { category: '   ' });
+
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('calculates totalItems and totalPages correctly with category filter and pagination', async () => {
+        rows = [
+            withCategories(job(10, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(11, OWNER, 'OPEN'), ['Web Development']),
+            withCategories(job(12, OWNER, 'OPEN'), ['Design']),
+        ];
+
+        const page1 = await list(OTHER, {
+            category: 'Web Development',
+            page: '1',
+            pageSize: '1',
+        });
+
+        assert.equal(page1.items.length, 1);
+        assert.equal(page1.items[0]?.jobId, 11);
+        assert.equal(page1.pagination.totalItems, 2);
+        assert.equal(page1.pagination.totalPages, 2);
+
+        const page2 = await list(OTHER, {
+            category: 'Web Development',
+            page: '2',
+            pageSize: '1',
+        });
+
+        assert.equal(page2.items.length, 1);
+        assert.equal(page2.items[0]?.jobId, 10);
+        assert.equal(page2.pagination.totalItems, 2);
     });
 });
 

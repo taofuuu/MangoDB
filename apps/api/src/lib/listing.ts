@@ -119,6 +119,17 @@ export function categoryReplace(categoryIds: number[]) {
     return { deleteMany: {}, ...categoryCreate(categoryIds) };
 }
 
+// US3-2 / US3-4. Two names find listings with either (OR). Case is ignored.
+export function categoryNameWhere(names: string[]): Prisma.ListingWhereInput {
+    return {
+        listingCategory: {
+            some: {
+                category: { categoryName: { in: names, mode: 'insensitive' } },
+            },
+        },
+    };
+}
+
 // Closes a listing that is still OPEN, inside the caller's transaction. The
 // status in the where is the check: if it is closed already, or another
 // request closed it a moment ago, nothing matches and the answer is a 409.
