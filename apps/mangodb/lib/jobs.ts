@@ -13,6 +13,7 @@ export interface ListJobsOptions {
     companyId?: number;
     status?: ListingStatus;
     q?: string;
+    category?: string[];
 }
 
 // GET /jobs: the jobs the caller may see, one page at a time.
@@ -37,6 +38,8 @@ export function listJobs(
     if (options?.q) {
         query.set('q', options.q);
     }
+
+    options?.category?.forEach((name) => query.append('category', name));
 
     const path = `/jobs?${query.toString()}`;
     return cachedGet(path, () => apiFetch<Paginated<Job>>(path));
