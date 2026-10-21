@@ -7,14 +7,11 @@ import {
     int4Id,
     minBudgetDoesNotExceedMax,
     pageQueryFields,
+    nameField,
+    NAME_LIST_MAX,
+    nameList,
 } from './common.schema';
 import { BUDGET_RANGE_ERROR, listingFields } from './listing.schema';
-
-// One category or tech name. cat_name and tech_stack_name are both
-// VarChar(100), so one rule fits both (conventions §12).
-const nameField = z.string().trim().max(100);
-// How many names one listing or one filter may carry.
-const NAME_LIST_MAX = 20;
 
 const serviceFields = {
     ...listingFields,
@@ -53,17 +50,6 @@ export const updateServiceSchema = z
     });
 
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
-
-// US3-2. A repeated param (?category=Web&category=Mobile) arrives as an array,
-// a single one as a plain string. Both become an array here. Blank values are
-// dropped, like a blank q, and the caps bound how big one query can get.
-const nameList = z.preprocess(
-    (value) => (typeof value === 'string' ? [value] : value),
-    z
-        .array(nameField)
-        .max(NAME_LIST_MAX)
-        .transform((names) => names.filter(Boolean)),
-);
 
 // A price slider end: whole baht, same ceiling as the budget columns. A blank
 // value (?maxPrice=) means no limit.
