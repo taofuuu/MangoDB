@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { LISTING_STATUSES, SERVICE_SORT_ORDERS } from '@mangodb/shared';
 import {
-    INT4_MAX,
     blankToUndefined,
     optionalQueryId,
     int4Id,
@@ -10,6 +9,7 @@ import {
     nameField,
     NAME_LIST_MAX,
     nameList,
+    priceFilter,
 } from './common.schema';
 import { BUDGET_RANGE_ERROR, listingFields } from './listing.schema';
 
@@ -51,13 +51,6 @@ export const updateServiceSchema = z
 
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 
-// A price slider end: whole baht, same ceiling as the budget columns. A blank
-// value (?maxPrice=) means no limit.
-const price = z.preprocess(
-    blankToUndefined,
-    z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
-);
-
 // US3-1. Same paging bounds as GET /companies, so one request cannot pull
 // every service into memory. US3-2 adds the filters.
 export const serviceListQuerySchema = z
@@ -68,8 +61,8 @@ export const serviceListQuerySchema = z
         // Exact names, as the result card shows them.
         category: nameList.optional(),
         techStack: nameList.optional(),
-        minPrice: price,
-        maxPrice: price,
+        minPrice: priceFilter,
+        maxPrice: priceFilter,
         // One company's services only, e.g. its profile page.
         companyId: optionalQueryId('companyId'),
         orderBy: z.enum(SERVICE_SORT_ORDERS).default('newest'),

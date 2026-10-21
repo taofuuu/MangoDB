@@ -103,3 +103,10 @@ export const nameList = z.preprocess(
         .max(NAME_LIST_MAX)
         .transform((names) => names.filter(Boolean)),
 );
+
+// A price or budget filter parameter: whole baht, non-negative, max INT4_MAX.
+// A blank value (?maxBudget=) means no limit.
+export const priceFilter = z.preprocess(
+    blankToUndefined,
+    z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
+);
