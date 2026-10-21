@@ -1,9 +1,7 @@
 'use client';
 
 import type { PublicCompanyProfile } from '@mangodb/shared';
-import ReceiverCompanyCard, {
-    toReceiverCompanyCardData,
-} from './ReceiverCompanyCard';
+import CompanyProfileCard from './CompanyProfileCard';
 import JobListing from './JobListing';
 
 // The receiver-shaped profile: a narrow company card beside the job listings
@@ -22,8 +20,9 @@ export default function ReceiverProfileView({
             <main className="max-w-screen-2xl mx-auto flex flex-col lg:flex-row gap-5 items-stretch">
                 {/* Left Receiver Card */}
                 <aside className="w-full lg:w-[360px] flex-shrink-0 lg:h-[840px]">
-                    <ReceiverCompanyCard
-                        data={toReceiverCompanyCardData(profile)}
+                    <CompanyProfileCard
+                        profile={profile}
+                        layout="narrow"
                         readOnly={readOnly}
                     />
                 </aside>

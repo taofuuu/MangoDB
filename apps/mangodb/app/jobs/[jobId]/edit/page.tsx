@@ -106,11 +106,7 @@ export default function EditJobPage() {
                 <p className="type-md !font-[600]">*Indicates required</p>
 
                 <div className="mt-[1px] ml-[7vw] flex w-full justify-center">
-                    <JobForm
-                        key={current.job.jobId}
-                        jobId={current.job.jobId}
-                        initialJob={current.job}
-                    />
+                    <JobForm key={current.job.jobId} initialJob={current.job} />
                 </div>
             </div>
         </main>

@@ -252,6 +252,8 @@ as not found.
 | An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
 | A page size                  | the constants in `lib/pagination`                        |
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
+| The category list for a form | `useCategories()` in `lib/useCategories`                 |
+| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`               |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
@@ -327,10 +329,34 @@ tappable.
 | Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
+| A password box            | `PasswordInput` — `Input` with a show/hide eye                 |
 
 An add form and an edit form for the same thing are one component with a mode
 (`PortfolioForm`, `CertificateForm`, `ServiceForm`, `JobForm`), mounted only
 while open.
+
+A form keeps its values, checks and save in a hook beside it (`JobForm.tsx`
+next to `useJobForm.ts`), so the component is mostly JSX. Copy `useJobForm`
+for a new form:
+
+```tsx
+const { values, setField, errors, formError, isSaving, handleSubmit } =
+    useJobForm(initialJob);
+
+<Input
+    value={values.title}
+    onChange={(value) => setField('title', value)}
+    error={errors.title}
+/>;
+```
+
+- One `values` object, not one `useState` per field. `setField` also clears
+  that field's error.
+- The hook checks the `lib/validation` rules, sends the request, and puts an
+  API failure under its fields with `toFormErrors`. It also does what comes
+  after a save: `useJobForm` navigates, and a modal form's hook calls its
+  `onSave` and `onClose`.
+- The component keeps only what the screen shows, such as which modal is open.
 
 Seven hand-rolled modal shells existed before `ModalShell`, and four of them
 ignored the Escape key. That is the pattern to avoid.
@@ -377,6 +403,7 @@ Every row has really happened on this codebase.
 | `type-sm font-semibold`                                | `type-sm !font-[600]`               |
 | `text-gray-500`, `bg-white`                            | `text-ink-soft`, `bg-surface-white` |
 | `alert(describeError(err))` after a confirm            | throw it; `ConfirmModal` shows it   |
+| A `useState` per form field, submit in the component   | a `use<Thing>Form` hook beside it   |
 
 ---
 

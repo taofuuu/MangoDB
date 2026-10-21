@@ -1,20 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import type { Job } from '@mangodb/shared';
 import JobDetailModal from '@/components/jobs/JobDetailModal';
 import Tag from '@/components/ui/Tag';
-import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateOnly } from '@/lib/dates';
-import { listJobs, listMyJobs } from '@/lib/jobs';
 import { formatBudgetRange } from '@/lib/money';
-import { PROFILE_LIST_SIZE } from '@/lib/pagination';
-import { redirectToUnauthorized } from '@/lib/session';
+import { useCompanyJobs } from './useCompanyJobs';
 
-// A receiver's job postings. Another company's profile (readOnly) shows only
-// OPEN ones, from GET /jobs?companyId=. Your own shows every status,
-// from GET /jobs/mine, so closed ones stay in view (US2-2).
+// A receiver's job postings. useCompanyJobs says which ones a profile shows.
 export default function JobListing({
     companyId,
     readOnly = false,
@@ -22,39 +17,8 @@ export default function JobListing({
     companyId: number;
     readOnly?: boolean;
 }) {
-    // null until the list answers, so "Loading…" shows instead of a
-    // momentary "No job listings yet."
-    const [jobs, setJobs] = useState<Job[] | null>(null);
-    const [loadError, setLoadError] = useState<string | null>(null);
+    const { jobs, error: loadError } = useCompanyJobs({ companyId, readOnly });
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const request = readOnly
-            ? listJobs(1, PROFILE_LIST_SIZE, {
-                  companyId,
-                  status: 'OPEN',
-              })
-            : listMyJobs(1, PROFILE_LIST_SIZE);
-
-        request
-            .then((data) => {
-                if (!cancelled) setJobs(data.items);
-            })
-            .catch((err: unknown) => {
-                if (cancelled) return;
-                if (isNotSignedIn(err)) {
-                    redirectToUnauthorized();
-                    return;
-                }
-                setLoadError(describeError(err));
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [companyId, readOnly]);
 
     return (
         <div className="bg-surface-white rounded-popup p-8 w-full h-full border border-line shadow-sm flex flex-col overflow-hidden">

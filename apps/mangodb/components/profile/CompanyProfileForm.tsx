@@ -8,6 +8,7 @@ import Textarea from '../ui/Textarea';
 import StatusMessage, { type StatusMessageData } from '../ui/StatusMessage';
 import CompanyTypeField from './CompanyTypeField';
 import ProfilePhotoPanel from './ProfilePhotoPanel';
+import ProviderTermsFields from './ProviderTermsFields';
 import AdminDeleteAccountModal from './AdminDeleteAccountModal';
 import {
     normalizePhone,
@@ -193,15 +194,12 @@ export default function CompanyProfileForm({
                     />
 
                     {isProvider && (
-                        <div className="mt-[3.09vh]">
-                            <Textarea
-                                label="Service Terms"
-                                value={data.serviceTerm ?? ''}
-                                onChange={(v) => setField('serviceTerm', v)}
-                                error={displayErrors.serviceTerm}
-                                maxLength={2000}
-                            />
-                        </div>
+                        <ProviderTermsFields
+                            serviceTerm={data.serviceTerm}
+                            warrantyPolicy={data.warrantyPolicy}
+                            onChange={setField}
+                            errors={displayErrors}
+                        />
                     )}
 
                     <div className="mt-[3.09vh]">
@@ -267,18 +265,6 @@ export default function CompanyProfileForm({
                             error={displayErrors.companyType}
                         />
                     </div>
-
-                    {isProvider && (
-                        <div className="mt-[3.09vh]">
-                            <Textarea
-                                label="Company Warranty Policy"
-                                value={data.warrantyPolicy ?? ''}
-                                onChange={(v) => setField('warrantyPolicy', v)}
-                                error={displayErrors.warrantyPolicy}
-                                maxLength={2000}
-                            />
-                        </div>
-                    )}
 
                     <div className="mt-[3.09vh]">
                         <Input

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 
-import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
+import type { Job } from '@mangodb/shared';
 
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
@@ -11,27 +11,18 @@ import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import UnauthorizedPage from '@/components/auth/UnauthorizedPage';
 
-import {
-    describeError,
-    isForbidden,
-    isNotSignedIn,
-    NOT_SIGNED_IN,
-} from '@/lib/api';
-import { redirectToUnauthorized } from '@/lib/session';
+import { NOT_SIGNED_IN } from '@/lib/api';
+import { useJobList, type JobStatusFilter } from '@/lib/useJobList';
 
 import { FilePlus, CheckCircle2Icon } from 'lucide-react';
 
-import { listJobs, listMyJobs } from '@/lib/jobs';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalShell from '../ui/ModalShell';
 import StatusTabs, { type StatusTab } from '../ui/StatusTabs';
 
-// '' is the All tab: no status filter.
-type JobStatus = '' | ListingStatus;
-
 // Each pill fills with its own colour when chosen, as the design draws it.
-const STATUS_TABS: StatusTab<JobStatus>[] = [
+const STATUS_TABS: StatusTab<JobStatusFilter>[] = [
     { label: 'ALL', value: '', activeClass: 'bg-accent text-surface-white' },
     {
         label: 'OPEN',
@@ -58,25 +49,23 @@ type JobListPageProps = { backHref: string } & (
 );
 
 export default function JobListPage(props: JobListPageProps) {
-    const companyId = props.view === 'company' ? props.companyId : undefined;
     const isMyJobs = props.view === 'mine';
-
-    /*
-     * ============================================================
-     * Job list state
-     * ============================================================
-     */
-
-    const [page, setPage] = useState(1);
-
-    const [status, setStatus] = useState<JobStatus>('');
-
-    const [result, setResult] = useState<Paginated<Job> | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isRestricted, setIsRestricted] = useState(false);
-
-    const [reloadKey, setReloadKey] = useState(0);
+    const {
+        jobs,
+        pagination,
+        hasLoaded,
+        status,
+        isLoading,
+        error,
+        isRestricted,
+        changeStatus,
+        goToPage,
+        reload,
+    } = useJobList(
+        props.view === 'company'
+            ? { view: 'company', companyId: props.companyId }
+            : { view: 'mine' },
+    );
 
     /*
      * ============================================================
@@ -98,67 +87,6 @@ export default function JobListPage(props: JobListPageProps) {
      */
 
     const listRef = useRef<HTMLDivElement>(null);
-
-    /*
-     * ============================================================
-     * Load job postings
-     * ============================================================
-     */
-
-    useEffect(() => {
-        let cancelled = false;
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsLoading(true);
-        setError(null);
-
-        const request =
-            props.view === 'mine'
-                ? listMyJobs(
-                      page,
-                      JOB_PAGE_SIZE,
-                      status
-                          ? {
-                                status,
-                            }
-                          : undefined,
-                  )
-                : listJobs(page, JOB_PAGE_SIZE, {
-                      companyId: companyId!,
-                      status: 'OPEN',
-                  });
-
-        request
-            .then((data) => {
-                if (cancelled) return;
-                setResult(data);
-                setError(null);
-            })
-            .catch((requestError: unknown) => {
-                if (cancelled) return;
-
-                if (isNotSignedIn(requestError)) {
-                    setError(NOT_SIGNED_IN);
-                    redirectToUnauthorized();
-                    return;
-                }
-
-                if (isForbidden(requestError)) {
-                    setIsRestricted(true);
-                    return;
-                }
-
-                setError(describeError(requestError));
-            })
-            .finally(() => {
-                if (cancelled) return;
-                setIsLoading(false);
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [page, status, reloadKey, props.view, companyId]);
 
     /*
      * ============================================================
@@ -191,31 +119,13 @@ export default function JobListPage(props: JobListPageProps) {
      */
 
     const changePage = (nextPage: number) => {
-        setPage(nextPage);
+        goToPage(nextPage);
 
         listRef.current?.scrollTo({
             top: 0,
             behavior: 'smooth',
         });
     };
-
-    /*
-     * ============================================================
-     * Retry loading job list
-     * ============================================================
-     */
-
-    const retryList = () => {
-        setReloadKey((key) => key + 1);
-    };
-
-    /*
-     * ============================================================
-     * Pagination
-     * ============================================================
-     */
-
-    const pagination = result?.pagination;
 
     /*
      * ============================================================
@@ -240,7 +150,7 @@ export default function JobListPage(props: JobListPageProps) {
      * ============================================================
      */
 
-    if (!result && !error && !isRestricted) {
+    if (!hasLoaded && !error && !isRestricted) {
         return <div className="min-h-screen bg-surface" />;
     }
 
@@ -327,7 +237,7 @@ export default function JobListPage(props: JobListPageProps) {
                     MY JOBS FILTERS + ADD JOB
                     ===================================================== */}
 
-                {isMyJobs && result !== null && !error && (
+                {isMyJobs && hasLoaded && !error && (
                     <div
                         className="
                             flex
@@ -341,8 +251,7 @@ export default function JobListPage(props: JobListPageProps) {
                             tabs={STATUS_TABS}
                             value={status}
                             onChange={(next) => {
-                                setStatus(next);
-                                setPage(1);
+                                changeStatus(next);
                                 // A detail open from the old filter may not
                                 // be in the new one.
                                 closeDetailPanel();
@@ -414,7 +323,7 @@ export default function JobListPage(props: JobListPageProps) {
 
                                     <Button
                                         variant="outline"
-                                        onClick={retryList}
+                                        onClick={reload}
                                         className="
                                         mt-[1.11vh]
                                         h-[4.07vh]
@@ -471,39 +380,34 @@ export default function JobListPage(props: JobListPageProps) {
                             JOB LIST
                             ============================================= */}
 
-                            {!error &&
-                                !isLoading &&
-                                result &&
-                                result.items.length > 0 && (
-                                    <div
-                                        className="
+                            {!error && !isLoading && jobs.length > 0 && (
+                                <div
+                                    className="
                                             flex
                                             flex-col
                                             gap-[3.87vh]
                                             pt-[1vh]
                                             pl-[0.5vw]
                                         "
-                                    >
-                                        {result.items.map((job) => (
-                                            <JobCard
-                                                key={job.jobId}
-                                                job={job}
-                                                isMyJobs={isMyJobs}
-                                                callFromSearchPage={false}
-                                                onViewDetail={
-                                                    openCompanyJobDetail
-                                                }
-                                                onClosed={() => {
-                                                    retryList();
-                                                    router.replace(
-                                                        '/jobs/mine?success=closed',
-                                                        { scroll: false },
-                                                    );
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
+                                >
+                                    {jobs.map((job) => (
+                                        <JobCard
+                                            key={job.jobId}
+                                            job={job}
+                                            isMyJobs={isMyJobs}
+                                            callFromSearchPage={false}
+                                            onViewDetail={openCompanyJobDetail}
+                                            onClosed={() => {
+                                                reload();
+                                                router.replace(
+                                                    '/jobs/mine?success=closed',
+                                                    { scroll: false },
+                                                );
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
 
                             {/* =============================================
                             EMPTY STATE
@@ -511,8 +415,8 @@ export default function JobListPage(props: JobListPageProps) {
 
                             {!error &&
                                 !isLoading &&
-                                result &&
-                                result.items.length === 0 && (
+                                hasLoaded &&
+                                jobs.length === 0 && (
                                     <div
                                         className="
                                         flex

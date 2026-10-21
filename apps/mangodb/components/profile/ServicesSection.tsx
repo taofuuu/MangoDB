@@ -12,7 +12,6 @@ import ModalShell from '@/components/ui/ModalShell';
 import Tag from '@/components/ui/Tag';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { listCategories } from '@/lib/categories';
-import { listJobs, listMyJobs } from '@/lib/jobs';
 import { PROFILE_LIST_SIZE } from '@/lib/pagination';
 import { profileListingTabs, type ListingTab } from '@/lib/roles';
 import {
@@ -22,6 +21,7 @@ import {
     toServiceSummary,
 } from '@/lib/services';
 import { redirectToUnauthorized } from '@/lib/session';
+import { useCompanyJobs } from './useCompanyJobs';
 
 const TAB_LABELS: Record<ListingTab, string> = {
     services: 'Services',
@@ -64,10 +64,15 @@ export default function ServicesSection({
     // null until the list answers, so "Loading…" shows instead of a
     // momentary "No services yet."
     const [services, setServices] = useState<ServiceRow[] | null>(null);
-    const [jobs, setJobs] = useState<Job[] | null>(null);
-    // One per tab, so a failed services load does not hide the jobs.
+    // One error per tab, so a failed services load does not hide the jobs.
     const [servicesError, setServicesError] = useState<string | null>(null);
-    const [jobsError, setJobsError] = useState<string | null>(null);
+    // Only a profile with a Job Listing tab asks for its jobs; GET /jobs/mine
+    // is receiver-only anyway.
+    const { jobs, error: jobsError } = useCompanyJobs({
+        companyId,
+        readOnly,
+        enabled: tabs.includes('jobs'),
+    });
     const [selectedService, setSelectedService] =
         useState<ServiceSummary | null>(null);
     // Why another company's service could not be opened (T2.7.24).
@@ -90,19 +95,6 @@ export default function ServicesSection({
                       })),
               );
 
-        // Only a profile with a Job Listing tab asks for its jobs; GET
-        // /jobs/mine is receiver-only anyway.
-        const loadJobs: Promise<Job[]> = !profileListingTabs(
-            accountType,
-        ).includes('jobs')
-            ? Promise.resolve([])
-            : readOnly
-              ? listJobs(1, PROFILE_LIST_SIZE, {
-                    companyId,
-                    status: 'OPEN',
-                }).then((data) => data.items)
-              : listMyJobs(1, PROFILE_LIST_SIZE).then((data) => data.items);
-
         loadServices
             .then((rows) => {
                 if (!cancelled) setServices(rows);
@@ -114,19 +106,6 @@ export default function ServicesSection({
                     return;
                 }
                 setServicesError(describeError(err));
-            });
-
-        loadJobs
-            .then((items) => {
-                if (!cancelled) setJobs(items);
-            })
-            .catch((err: unknown) => {
-                if (cancelled) return;
-                if (isNotSignedIn(err)) {
-                    redirectToUnauthorized();
-                    return;
-                }
-                setJobsError(describeError(err));
             });
 
         return () => {
