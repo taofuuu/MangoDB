@@ -415,9 +415,9 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
-- Job search filters beyond the keyword. `GET /jobs` takes `q`, `companyId`,
-  `status` and paging. The category, budget, deadline and order controls on
-  `/jobs` send nothing yet.
+- Job search filters beyond keyword and category. `GET /jobs` takes `q`,
+  `category`, `companyId`, `status` and paging. The budget, deadline and order
+  controls on `/jobs` send nothing yet.
 - A delivery duration on a service. Its price is the listing's
   `minBudget`/`maxBudget` range, the same columns a job uses.
 - Projects, quotations and reviews beyond the project row that accepting a

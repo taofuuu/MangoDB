@@ -6,6 +6,7 @@ import {
     int4Id,
     minBudgetDoesNotExceedMax,
     pageQueryFields,
+    nameList,
 } from './common.schema';
 import { BUDGET_RANGE_ERROR, listingFields } from './listing.schema';
 import { toDateOnly } from '../lib/dates';
@@ -84,6 +85,8 @@ export const jobListQuerySchema = z.object({
     status: z.preprocess(blankToUndefined, z.enum(LISTING_STATUSES).optional()),
     companyId: optionalQueryId('companyId'),
     q: z.preprocess(blankToUndefined, z.string().trim().max(100).optional()),
+    // US3-4. Category names (ADR 0002), case ignored like the service filter.
+    category: nameList.optional(),
 });
 
 // GET /jobs/mine. The caller's own jobs, so no keyword or company filter.

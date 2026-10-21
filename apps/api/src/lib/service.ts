@@ -12,6 +12,7 @@ import type {
 import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord, splitWords } from './search';
+import { categoryNameWhere } from './listing';
 import type { Prisma } from '../generated/prisma/client';
 import type { ServiceListQuery } from '../schemas/service.schema';
 
@@ -175,15 +176,7 @@ export function serviceFilterWhere({
         where.push({ companyId });
     }
     if (category.length > 0) {
-        where.push({
-            listingCategory: {
-                some: {
-                    category: {
-                        categoryName: { in: category, mode: 'insensitive' },
-                    },
-                },
-            },
-        });
+        where.push(categoryNameWhere(category));
     }
     if (techStack.length > 0) {
         // ADR 0009: the service's own stack, not its company's.
