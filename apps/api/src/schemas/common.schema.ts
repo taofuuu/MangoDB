@@ -86,7 +86,7 @@ export function optionalQueryId(name: string) {
     return z.preprocess(blankToUndefined, queryId(name).optional());
 }
 
-// One category or tech name. category_name and tech_stack_name are both
+// One category or tech name. cat_name and tech_stack_name are both
 // VarChar(100), so one rule fits both (conventions §12).
 export const nameField = z.string().trim().max(100);
 // How many names one listing or one filter may carry.
