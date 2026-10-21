@@ -4,56 +4,42 @@
 
 ## Status
 
-Open to Discuss
+Rejected
 
 ## Context
 
-US3-3 lets a Receiver sort services by rating and by how long the work takes.
-A service has no duration today
-([`schema.prisma`](../../apps/api/prisma/schema.prisma), `model Service`), so
-there is nothing to sort by.
+US3-3 lets a Receiver sort services, and US3-5 lets a Provider filter jobs. The
+Sprint 3 draft added two things for them:
 
-US3-5 lets a Provider filter jobs by industry. Neither a job nor a company has
-an industry field. Every company does pick company types at registration,
-stored in the `company_type` table.
+- A sort by how long the work takes. A service has no duration
+  ([`schema.prisma`](../../apps/api/prisma/schema.prisma), `model Service`), so
+  there was nothing to sort by.
+- A job filter by industry. Neither a job nor a company has an industry field.
+  Every company does pick company types at registration, stored in the
+  `company_type` table.
 
 ## Decision
 
-**A service gets an optional estimated duration in months, in steps of 0.5.**
-It is the same rule as a proposal duration
-([ADR 0007](0007-proposal-duration-in-months.md)) and reuses that Zod rule. It
-is nullable, so existing services and Providers who leave it blank are fine.
+**Rejected at the team meeting on 2026-10-21: neither is needed.** US3-3 sorts
+services by rating. US3-5 filters jobs by budget and deadline, alongside the
+keyword and category search from US3-4.
 
-**Both new sorts work in both directions:**
+What was proposed, kept so it is not proposed again without a new reason:
 
-| Sort     | Values                        | Missing value          |
-| -------- | ----------------------------- | ---------------------- |
-| Rating   | highest first, lowest first   | Unrated Providers last |
-| Duration | shortest first, longest first | No duration last       |
-
-**A job's industry is its owner company's company types.** The industry filter
-matches against those tags. There is no new field on the job.
-
-**Alternative considered: free-text duration, like `job_requirement.duration`.**
-Rejected: text cannot be sorted.
-
-**Alternative considered: duration in days.** Rejected: proposals are already
-in months, and one unit lets a service and a proposal be compared.
-
-**Alternative considered: an industry field on each job.** Rejected: the
-Receiver would fill it on every job, and existing jobs have none. Company types
-are already set for every company.
+- A service gets an optional estimated duration in months, in steps of 0.5,
+  the same rule as a proposal duration
+  ([ADR 0007](0007-proposal-duration-in-months.md)). Services sort by it,
+  shortest or longest first, with no duration last.
+- A job's industry is its owner company's company types, and the industry
+  filter matches against those tags.
 
 ## Consequences
 
-**Easier:** no new unit, no new validation, and the industry filter needs no
-new column.
-
-**Harder, on purpose:**
-
-- **A nullable column on `service` (F.6).** Old services sort last on duration
-  until their owner edits them.
-- **Industry describes the company, not the job.** A job for something outside
-  the company's usual types still matches on the company's tags.
-- **[`docs/ai-brief.md`](../ai-brief.md) §6 lists a service duration as not
-  existing.** That line goes when the column ships.
+- **No new column on `service`.** The Sprint 3 migration (F.6) adds no
+  duration.
+- **The tasks for these go.** T3.3.6 and T3.3.7 (service duration and its
+  sort) are dropped, and T3.5.2 loses its industry filter.
+- **[`docs/ai-brief.md`](../ai-brief.md) §6 stays true.** A service still has
+  no delivery duration.
+- **This can change.** If a later story needs either one, write a new ADR. This
+  one records why they were left out.
