@@ -104,16 +104,10 @@ export const jobListQuerySchema = z
             z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
         ),
     })
-    .refine(
-        (q) =>
-            q.minBudget === undefined ||
-            q.maxBudget === undefined ||
-            q.minBudget <= q.maxBudget,
-        {
-            message: 'minBudget must be less than or equal to maxBudget',
-            path: ['minBudget'],
-        },
-    );
+    .refine(minBudgetDoesNotExceedMax, {
+        message: BUDGET_RANGE_ERROR,
+        path: ['minBudget'],
+    });
 
 // GET /jobs/mine. The caller's own jobs, so no keyword or company filter.
 export const jobMineQuerySchema = z.object({

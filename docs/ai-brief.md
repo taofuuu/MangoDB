@@ -417,7 +417,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - Job search filters beyond keyword, category, budget and deadline. `GET /jobs`
   takes `q`, `category`, `minBudget`, `maxBudget`, `deadline`, `companyId`,
-  `status` and paging. The order controls on `/jobs` send nothing yet.
+  `status` and paging. The category, budget, deadline and order controls on
+  `/jobs` send nothing yet: `useJobList` sends only the keyword.
 - A delivery duration on a service. Its price is the listing's
   `minBudget`/`maxBudget` range, the same columns a job uses.
 - Projects, quotations and reviews beyond the project row that accepting a

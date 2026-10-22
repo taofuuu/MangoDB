@@ -72,29 +72,11 @@ export async function createJob(req: Request, res: Response): Promise<void> {
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
 export async function listJobs(req: Request, res: Response): Promise<void> {
-    const {
-        page,
-        pageSize,
-        status,
-        companyId,
-        q,
-        category,
-        minBudget,
-        maxBudget,
-        deadline,
-    } = parseQuery(jobListQuerySchema, req.query);
-    const where = jobSearchWhere(
-        {
-            status,
-            companyId,
-            q,
-            category,
-            minBudget,
-            maxBudget,
-            deadline,
-        },
-        req.auth!.companyId,
+    const { page, pageSize, ...filters } = parseQuery(
+        jobListQuerySchema,
+        req.query,
     );
+    const where = jobSearchWhere(filters, req.auth!.companyId);
     const [totalItems, postings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({
