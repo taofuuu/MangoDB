@@ -11,6 +11,9 @@ export const projectSelect = {
     totalBudget: true,
     startDate: true,
     projectStatus: true,
+    depositReportedAt: true,
+    depositConfirmedAt: true,
+    completedAt: true,
 } as const satisfies Prisma.ProjectSelect;
 
 type ProjectRow = {
@@ -19,10 +22,14 @@ type ProjectRow = {
     totalBudget: Prisma.Decimal;
     startDate: Date;
     projectStatus: string;
+    depositReportedAt: Date | null;
+    depositConfirmedAt: Date | null;
+    completedAt: Date | null;
 };
 
 // Decimal and Date do not survive JSON as the frontend expects, so both are
-// converted here: budget to a number, the date-only column to YYYY-MM-DD.
+// converted here: budget to a number, the date-only column to YYYY-MM-DD,
+// timestamps to ISO strings.
 // The status cast is safe because only PROJECT_STATUSES values are written.
 export function toProject(row: ProjectRow): Project {
     return {
@@ -30,6 +37,9 @@ export function toProject(row: ProjectRow): Project {
         totalBudget: Number(row.totalBudget),
         startDate: toDateOnly(row.startDate),
         projectStatus: row.projectStatus as ProjectStatus,
+        depositReportedAt: row.depositReportedAt?.toISOString() ?? null,
+        depositConfirmedAt: row.depositConfirmedAt?.toISOString() ?? null,
+        completedAt: row.completedAt?.toISOString() ?? null,
     };
 }
 
