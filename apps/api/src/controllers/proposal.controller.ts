@@ -85,9 +85,11 @@ export async function createProposal(
 
         res.status(201).json(toProposal(proposal));
     } catch (err) {
+        // Only a second PENDING one hits the index; a decided one may repeat
+        // (ADR 0016).
         if (isUniqueViolation(err)) {
             throw ApiError.conflict(
-                'You have already sent a proposal to this job',
+                'You already have a pending proposal on this job',
             );
         }
         throw err;
