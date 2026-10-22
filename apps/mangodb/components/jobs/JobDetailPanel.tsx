@@ -43,6 +43,13 @@ export default function JobDetailPanel({
         job.listingStatus === 'OPEN' &&
         job.company.companyId !== viewer.companyId;
 
+    // US2-10. Only the job's owner may read its proposals, so the link shows
+    // on your own job and nowhere else (T2.10.8).
+    const isOwnJob =
+        job !== null &&
+        viewer !== null &&
+        job.company.companyId === viewer.companyId;
+
     return (
         <div
             className="
@@ -201,7 +208,31 @@ export default function JobDetailPanel({
                         </div>
                     )}
 
-                    {/* Bottom action */}
+                    {/* Bottom action. A job is never both yours and open
+                        to your proposal, so at most one shows. */}
+                    {isOwnJob && (
+                        <div className="mt-auto pt-[2vh]">
+                            <Link
+                                href={`/jobs/${job.jobId}/proposals`}
+                                className="
+                                flex
+                                h-[4.5vh]
+                                w-full
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-brand
+                                type-md
+                                text-surface-white
+                                transition
+                                hover:bg-brand-dark
+                            "
+                            >
+                                View Proposals
+                            </Link>
+                        </div>
+                    )}
+
                     {canSubmitProposal && (
                         <div className="mt-auto pt-[2vh]">
                             <button
