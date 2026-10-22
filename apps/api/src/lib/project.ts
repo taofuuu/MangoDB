@@ -34,7 +34,8 @@ export function toProject(row: ProjectRow): Project {
 }
 
 // Opens the project for an accepted proposal, inside the caller's
-// transaction: the proposal's budget, ACTIVE, starting today (UTC).
+// transaction: the proposal's budget, starting today (UTC). It waits for the
+// Provider's quotation first (ADR 0015).
 export async function createProjectFromProposal(
     tx: Prisma.TransactionClient,
     proposal: { proposalId: number; proposalBudget: Prisma.Decimal },
@@ -47,7 +48,7 @@ export async function createProjectFromProposal(
             proposalId: proposal.proposalId,
             totalBudget: proposal.proposalBudget,
             startDate: todayUtc,
-            projectStatus: 'ACTIVE' satisfies ProjectStatus,
+            projectStatus: 'AWAITING_QUOTATION' satisfies ProjectStatus,
         },
         select: projectSelect,
     });

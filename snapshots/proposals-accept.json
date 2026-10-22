@@ -3,7 +3,7 @@
     "status": 201,
     "body": {
         "projectId": "<project_id>",
-        "projectStatus": "ACTIVE",
+        "projectStatus": "AWAITING_QUOTATION",
         "proposalId": "<proposal_id>",
         "startDate": "<today>",
         "totalBudget": 95000

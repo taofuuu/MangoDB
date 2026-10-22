@@ -38,15 +38,24 @@ export interface AuthTokenClaims extends AuthTokenPayload {
     exp: number;
 }
 
-// The three free-text status columns, pinned to a closed set. All three are
-// VarChar(50) in the database with nothing enforcing them, so these types are
-// the enforcement — see docs/conventions.md section 6. The label a user reads
+// The free-text status columns, pinned to a closed set. All are VarChar(50) in
+// the database with nothing enforcing them, so these types are the
+// enforcement — see docs/conventions.md section 6. The label a user reads
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
-export const PROJECT_STATUSES = ['ACTIVE', 'COMPLETED', 'CANCELLED'] as const;
+// ADR 0015, in the order a project moves through them. Only the moves the ADR
+// lists are allowed; the last two are final.
+export const PROJECT_STATUSES = [
+    'AWAITING_QUOTATION',
+    'AWAITING_DEPOSIT',
+    'IN_PROGRESS',
+    'AWAITING_ACCEPTANCE',
+    'COMPLETED',
+    'CANCELLED',
+] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
