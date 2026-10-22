@@ -139,7 +139,12 @@ export function listingBudgetWhere(filter: {
 }): Prisma.ListingWhereInput[] {
     const where: Prisma.ListingWhereInput[] = [];
     if (filter.maxBudget !== undefined) {
-        where.push({ minBudget: { lte: filter.maxBudget } });
+        where.push({
+            OR: [
+                { minBudget: { lte: filter.maxBudget } },
+                { AND: [{ minBudget: null }, { maxBudget: { not: null } }] },
+            ],
+        });
     }
     if (filter.minBudget !== undefined) {
         where.push({

@@ -664,13 +664,14 @@ describe('GET /jobs', () => {
         rows = [
             withBudget(job(10, OWNER, 'OPEN'), 1000, 3000), // min 1000 <= 2000 -> matches
             withBudget(job(11, OWNER, 'OPEN'), 2500, 5000), // min 2500 > 2000 -> excluded
+            withBudget(job(12, OWNER, 'OPEN'), null, 3000), // "Up to 3000" -> matches
         ];
 
         const body = await list(OTHER, { maxBudget: '2000' });
 
         assert.deepEqual(
             body.items.map((j) => j.jobId),
-            [10],
+            [12, 10],
         );
     });
 

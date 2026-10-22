@@ -195,9 +195,7 @@ export function serviceFilterWhere({
             },
         });
     }
-    // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. A one-sided range is open-ended only on
-    // its missing side; a service with no price at all cannot match a filter.
+    // Price uses the shared overlap rule (listingBudgetWhere).
     where.push(
         ...listingBudgetWhere({ minBudget: minPrice, maxBudget: maxPrice }),
     );
