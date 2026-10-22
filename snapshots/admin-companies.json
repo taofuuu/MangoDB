@@ -65,13 +65,13 @@
             },
             {
                 "accountType": "PROVIDER",
-                "averageRating": 4.8,
+                "averageRating": null,
                 "companyDescription": "Edited by admin US6-3",
                 "companyId": 1,
                 "companyName": "CodeCrafters",
                 "deletedAt": null,
                 "phone": "021111111",
-                "ratingCount": 3
+                "ratingCount": 0
             },
             {
                 "accountType": "RECEIVER",
