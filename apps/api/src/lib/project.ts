@@ -1,4 +1,5 @@
 import type {
+    CompletedProject,
     ListingType,
     Project,
     ProjectRole,
@@ -6,6 +7,7 @@ import type {
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { toDateOnly } from './dates';
 import { prisma } from './prisma';
 
@@ -47,6 +49,66 @@ export function toProject(row: ProjectRow): Project {
         depositReportedAt: row.depositReportedAt?.toISOString() ?? null,
         depositConfirmedAt: row.depositConfirmedAt?.toISOString() ?? null,
         completedAt: row.completedAt?.toISOString() ?? null,
+    };
+}
+
+// US2-5. What GET /companies/:companyId/completed-projects fetches. The Provider
+// is the subject of the page, so the response names the Receiver (ADR 0016).
+export const completedProjectSelect = {
+    projectId: true,
+    completedAt: true,
+    proposal: {
+        select: {
+            sender: { select: companyBriefSelect },
+            listing: {
+                select: {
+                    listingTitle: true,
+                    listingType: true,
+                    company: { select: companyBriefSelect },
+                },
+            },
+        },
+    },
+} as const satisfies Prisma.ProjectSelect;
+
+export type CompletedProjectRow = {
+    projectId: number;
+    completedAt: Date | null;
+    proposal: {
+        sender: {
+            companyId: number;
+            companyName: string;
+            companyPhoto: string | null;
+        };
+        listing: {
+            listingTitle: string;
+            listingType: string;
+            company: {
+                companyId: number;
+                companyName: string;
+                companyPhoto: string | null;
+            } | null;
+        };
+    };
+};
+
+export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
+    if (!row.completedAt) {
+        throw new ApiError(
+            500,
+            'INTERNAL',
+            'Completed project has no completedAt',
+        );
+    }
+    const receiver =
+        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType)
+            ? toCompanyBrief(row.proposal.sender)
+            : toCompanyBrief(row.proposal.listing.company);
+    return {
+        projectId: row.projectId,
+        listingTitle: row.proposal.listing.listingTitle,
+        receiver,
+        completedAt: row.completedAt.toISOString(),
     };
 }
 

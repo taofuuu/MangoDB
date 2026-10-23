@@ -85,3 +85,103 @@ describe('assertProjectParty', () => {
         );
     });
 });
+
+describe('toCompletedProject', () => {
+    const sender = {
+        companyId: SENDER,
+        companyName: 'Sender Corp',
+        companyPhoto: null,
+    };
+    const owner = {
+        companyId: OWNER,
+        companyName: 'Owner Corp',
+        companyPhoto: '/photos/owner.jpg',
+    };
+    const completedAt = new Date('2026-10-20T12:00:00.000Z');
+
+    it('names the job owner as Receiver on a completed job', () => {
+        const result = lib.toCompletedProject({
+            projectId: 10,
+            completedAt,
+            proposal: {
+                sender,
+                listing: {
+                    listingTitle: 'Build a Website',
+                    listingType: 'JOB',
+                    company: owner,
+                },
+            },
+        });
+        assert.deepEqual(result, {
+            projectId: 10,
+            listingTitle: 'Build a Website',
+            receiver: owner,
+            completedAt: '2026-10-20T12:00:00.000Z',
+        });
+    });
+
+    it('names the hire request sender as Receiver on a completed service', () => {
+        const result = lib.toCompletedProject({
+            projectId: 20,
+            completedAt,
+            proposal: {
+                sender,
+                listing: {
+                    listingTitle: 'SEO Optimization',
+                    listingType: 'SERVICE',
+                    company: owner,
+                },
+            },
+        });
+        assert.deepEqual(result, {
+            projectId: 20,
+            listingTitle: 'SEO Optimization',
+            receiver: sender,
+            completedAt: '2026-10-20T12:00:00.000Z',
+        });
+    });
+
+    it('throws 500 when completedAt is null', () => {
+        assert.throws(
+            () =>
+                lib.toCompletedProject({
+                    projectId: 30,
+                    completedAt: null,
+                    proposal: {
+                        sender,
+                        listing: {
+                            listingTitle: 'Incomplete Work',
+                            listingType: 'JOB',
+                            company: owner,
+                        },
+                    },
+                }),
+            (err: unknown) =>
+                err instanceof ApiError &&
+                err.status === 500 &&
+                err.message === 'Completed project has no completedAt',
+        );
+    });
+
+    it('throws 500 when job listing has no owner', () => {
+        assert.throws(
+            () =>
+                lib.toCompletedProject({
+                    projectId: 40,
+                    completedAt,
+                    proposal: {
+                        sender,
+                        listing: {
+                            listingTitle: 'Orphan Listing',
+                            listingType: 'JOB',
+                            company: null,
+                        },
+                    },
+                }),
+            (err: unknown) =>
+                err instanceof ApiError &&
+                err.status === 500 &&
+                err.message === 'Listing has no owning company',
+        );
+    });
+});
