@@ -27,14 +27,5 @@ export type ReviewRow = {
 // Date does not survive JSON as the frontend expects, so createdAt is converted
 // to an ISO timestamp string per conventions section 10.
 export function toReview(row: ReviewRow): Review {
-    return {
-        reviewId: row.reviewId,
-        projectId: row.projectId,
-        workQualityScore: row.workQualityScore,
-        serviceScore: row.serviceScore,
-        valueForMoneyScore: row.valueForMoneyScore,
-        deliveryTimeScore: row.deliveryTimeScore,
-        comment: row.comment,
-        createdAt: row.createdAt.toISOString(),
-    };
+    return { ...row, createdAt: row.createdAt.toISOString() };
 }

@@ -21,7 +21,7 @@ export const createProjectUpdateSchema = z.strictObject({
 const scoreSchema = z.number().int().min(1).max(5);
 
 // ADR 0018, US5-1, US5-2. Four 1-5 scores and an optional comment up to 500 characters.
-export const reviewFields = {
+export const createReviewSchema = z.strictObject({
     workQualityScore: scoreSchema,
     serviceScore: scoreSchema,
     valueForMoneyScore: scoreSchema,
@@ -36,8 +36,4 @@ export const reviewFields = {
                 .nullable(),
         )
         .optional(),
-} as const;
-
-export const createReviewSchema = z.strictObject(reviewFields);
-
-export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+});
