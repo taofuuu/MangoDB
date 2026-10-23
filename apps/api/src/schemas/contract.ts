@@ -15,6 +15,7 @@ import type { z } from 'zod';
 import type {
     ChangeCredentialsRequest,
     CreateJobRequest,
+    CreateProjectUpdateRequest,
     CreateProposalRequest,
     CreateServiceRequest,
     DeleteCompanyAccountRequest,
@@ -31,6 +32,7 @@ import type {
 import type { deleteCompanyAccountBodySchema } from './admin-company.schema';
 import type { createJobSchema, updateJobSchema } from './job.schema';
 import type { createProposalSchema } from './proposal.schema';
+import type { createProjectUpdateSchema } from './project.schema';
 import type {
     createServiceSchema,
     updateServiceSchema,
@@ -110,4 +112,14 @@ type _CreateProposalMatchesContract = Assert<
 type _ContractMatchesCreateProposal = Assert<
     CreateProposalRequest,
     CreateProposalInput
+>;
+
+type CreateProjectUpdateInput = z.infer<typeof createProjectUpdateSchema>;
+type _CreateProjectUpdateMatchesContract = Assert<
+    CreateProjectUpdateInput,
+    CreateProjectUpdateRequest
+>;
+type _ContractMatchesCreateProjectUpdate = Assert<
+    CreateProjectUpdateRequest,
+    CreateProjectUpdateInput
 >;
