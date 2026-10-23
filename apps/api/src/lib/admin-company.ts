@@ -7,8 +7,6 @@ import { companyProfileSelect, toCompanyProfile } from './company-profile';
 import type { Prisma } from '../generated/prisma/client';
 import { getRating, ratingSelect, type RatingSource } from './rating';
 
-export { getRating, ratingSelect, type RatingSource };
-
 // A strict subset of companyProfileSelect, derived rather than restated: the
 // list card shows less than the detail panel, and picking the columns out by
 // name is what keeps the two from disagreeing about what a column is called.
