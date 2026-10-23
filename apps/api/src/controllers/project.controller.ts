@@ -1,16 +1,29 @@
 import type { Request, Response } from 'express';
-import type { ProjectStatus } from '@mangodb/shared';
+import type {
+    CompletedProject,
+    ListingType,
+    Paginated,
+    ProjectStatus,
+} from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
+import { pageArgs, toPagination } from '../lib/pagination';
 import { orConflict } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    completedProjectSelect,
     moveProjectStatus,
     projectSelect,
+    toCompletedProject,
     toProject,
 } from '../lib/project';
-import { parseParams } from '../middleware/validate';
-import { projectIdParamSchema } from '../schemas/project.schema';
+import { parseParams, parseQuery } from '../middleware/validate';
+import { companyIdParamSchema } from '../schemas/company.schema';
+import {
+    completedProjectListQuerySchema,
+    projectIdParamSchema,
+} from '../schemas/project.schema';
 
 // US4-6. The Receiver says the deposit is paid. Only the time is recorded:
 // the status stays AWAITING_DEPOSIT until the Provider confirms it (ADR 0015).
@@ -82,4 +95,62 @@ export async function confirmDeposit(
         );
     });
     res.json(toProject(row));
+}
+
+// US2-5. A Provider's completed work, newest first, for its public profile.
+// Unknown, soft-deleted, and admin accounts answer 404 (same as getCompanyProfile).
+export async function listProviderCompletedProjects(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+    const { page, pageSize } = parseQuery(
+        completedProjectListQuerySchema,
+        req.query,
+    );
+
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: { companyId: true },
+    });
+    if (!company) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const where: Prisma.ProjectWhereInput = {
+        projectStatus: 'COMPLETED' satisfies ProjectStatus,
+        OR: [
+            {
+                proposal: {
+                    senderId: companyId,
+                    listing: { listingType: 'JOB' satisfies ListingType },
+                },
+            },
+            {
+                proposal: {
+                    listing: {
+                        listingType: 'SERVICE' satisfies ListingType,
+                        companyId: companyId,
+                    },
+                },
+            },
+        ],
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.project.count({ where }),
+        prisma.project.findMany({
+            where,
+            ...pageArgs({ page, pageSize }),
+            orderBy: [{ completedAt: 'desc' }, { projectId: 'desc' }],
+            select: completedProjectSelect,
+        }),
+    ]);
+
+    const body: Paginated<CompletedProject> = {
+        items: rows.map(toCompletedProject),
+        pagination: toPagination(totalItems, { page, pageSize }),
+    };
+
+    res.json(body);
 }
