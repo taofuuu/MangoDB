@@ -428,7 +428,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - Project, quotation, update and review endpoints. The tables and the shared
   types exist (ADRs 0015-0018); the only endpoints are accepting a proposal,
   which creates the project row, the reads `GET /projects/mine`,
-  `GET /projects/:projectId` and `…/updates`, and the deposit pair
+  `GET /projects/:projectId` and `…/updates`, the Provider's
+  `POST /projects/:projectId/updates`, and the deposit pair
   `POST /projects/:projectId/report-deposit` and `…/confirm-deposit` — Sprint
   3 builds the rest.
 
