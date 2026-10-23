@@ -33,7 +33,7 @@ so its requests are same-origin and need no CORS.
 The snapshots need the accounts the seed creates:
 
 ```bash
-npm run db:seed        # the snapshot_ provider, receiver and admin, idempotent
+npm run db:seed        # snapshot_ and demo_ provider, receiver and admin, idempotent
 ```
 
 How the snapshots work and which diff each kind of change should produce:

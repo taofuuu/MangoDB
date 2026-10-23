@@ -21,7 +21,9 @@ or write data need the API running on port 4000 (the second command).
 
 Sign in at [`/login`](http://localhost:3000/login), or
 [`/admin/login`](http://localhost:3000/admin/login) for an administrator.
-`npm run db:seed -w api` creates the `snapshot_` accounts you can use. The 20
+`npm run db:seed -w api` creates the `snapshot_` accounts you can use, and the
+`demo_` ones, which have one project in every status to build project screens
+against. The 20
 original seeded companies cannot sign in: their `password` column holds a
 plain string, not a hash.
 
