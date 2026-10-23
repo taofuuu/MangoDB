@@ -237,3 +237,23 @@ export async function createReview(req: Request, res: Response): Promise<void> {
         throw err;
     }
 }
+
+// US5-2. The project's review, for both parties. 404 until the Receiver submits
+// one. Outsiders get 404 (conventions §4).
+export async function getProjectReview(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const row = await prisma.review.findUnique({
+        where: { projectId },
+        select: reviewSelect,
+    });
+    if (!row) {
+        throw ApiError.notFound('Review not found');
+    }
+
+    res.json(toReview(row));
+}

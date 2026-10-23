@@ -5,6 +5,7 @@ import {
     createProjectUpdate,
     createReview,
     getProject,
+    getProjectReview,
     listMyProjects,
     listProjectUpdates,
     reportDeposit,
@@ -40,3 +41,7 @@ projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
 // US5-1. The Receiver reviews a completed project once. Four 1-5 scores and an
 // optional comment (ADR 0018). Second review is 409.
 projectRoutes.post('/:projectId/review', requireAuth, createReview);
+
+// US5-2. The project's review, for both parties. 404 until the Receiver submits
+// one. Outsiders get 404.
+projectRoutes.get('/:projectId/review', requireAuth, getProjectReview);

@@ -58,6 +58,17 @@ const fakePrisma = {
         },
     },
     review: {
+        findUnique: ({ where }: { where: { projectId: number } }) => {
+            const found = createdReviews.find(
+                (r) => (r.projectId as number) === where.projectId,
+            );
+            if (!found) return Promise.resolve(null);
+            return Promise.resolve({
+                reviewId: 1,
+                ...found,
+                createdAt: new Date('2026-10-23T12:00:00.000Z'),
+            });
+        },
         create: ({ data }: { data: Record<string, unknown> }) => {
             if (reviewAlreadyExists) {
                 const err = new Error(
@@ -179,6 +190,32 @@ async function postReview(
 
     try {
         await controller.createReview(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as Review };
+}
+
+async function getProjectReview(callerId: number): Promise<unknown> {
+    const req = {
+        auth: { companyId: callerId },
+        params: { projectId: '1' },
+    } as unknown as Request;
+    let status = 200;
+    let json: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(value: unknown) {
+            json = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    try {
+        await controller.getProjectReview(req, res);
     } catch (err) {
         return err;
     }
@@ -325,5 +362,55 @@ describe('POST /projects/:projectId/review', () => {
         });
         assert.ok(isApiError(400)(result));
         assert.equal(createdReviews.length, 0);
+    });
+});
+
+describe('GET /projects/:projectId/review', () => {
+    it('returns the review for the Receiver (200)', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+
+        const result = (await getProjectReview(RECEIVER)) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.workQualityScore, 5);
+        assert.equal(result.body.comment, 'Delivered top-notch quality!');
+    });
+
+    it('returns the review for the Provider (200)', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+
+        const result = (await getProjectReview(PROVIDER)) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.workQualityScore, 5);
+    });
+
+    it('answers 404 when the project has not been reviewed yet', async () => {
+        project = projectIn('COMPLETED');
+        const result = await getProjectReview(RECEIVER);
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an outsider', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+        const result = await getProjectReview(OUTSIDER);
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an unknown project', async () => {
+        project = null;
+        const result = await getProjectReview(RECEIVER);
+        assert.ok(isApiError(404)(result));
     });
 });
