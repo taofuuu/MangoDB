@@ -165,7 +165,7 @@ export async function rejectProposal(
     res.status(204).end();
 }
 
-// US2-9. List authenticated provider's proposals with pagination and status filter.
+// US2-9. List authenticated company's proposals or hire requests with pagination and status filter.
 // Soft-deleted companies are kept: proposals are history, not discovery (conventions §8).
 export async function listMyProposals(
     req: Request,

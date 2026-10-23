@@ -406,10 +406,11 @@ export interface Proposal {
 }
 
 // US2-9. One row of GET /proposals/mine, as the sender sees it: the proposal,
-// with the listing's title and the company it was sent to, so the list needs
-// no extra request per row.
+// with the listing's title, its kind (JOB or SERVICE), and the company it was
+// sent to, so the list needs no extra request per row.
 export interface SentProposal extends Proposal {
     listingTitle: string;
+    listingType: ListingType;
     recipient: CompanyBrief;
 }
 

@@ -63,7 +63,7 @@ export interface GetMyProposalsOptions {
     status?: ProposalStatus | undefined;
 }
 
-// US2-9. Lists proposals submitted by the signed-in Provider.
+// US2-9. Lists proposals or hire requests submitted by the signed-in company.
 export function listMyProposals(
     page: number = 1,
     pageSize: number = PROPOSAL_PAGE_SIZE,

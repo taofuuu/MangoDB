@@ -2,6 +2,7 @@ import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import type {
     CompanyBrief,
+    ListingType,
     Proposal,
     ProposalStatus,
     ProposalStatusCounts,
@@ -69,13 +70,15 @@ export function toReceivedProposal(row: ReceivedProposalRow): ReceivedProposal {
 }
 
 // US2-9. A proposal as its sender sees it in their own list: the proposal
-// plus the listing's title and its owner, so the page needs no extra request
-// per row. A soft-deleted owner is still shown: a proposal is history.
+// plus the listing's title, its type (JOB or SERVICE), and its owner, so the
+// page needs no extra request per row. A soft-deleted owner is still shown: a
+// proposal is history.
 export const sentProposalSelect = {
     ...proposalSelect,
     listing: {
         select: {
             listingTitle: true,
+            listingType: true,
             company: { select: companyBriefSelect },
         },
     },
@@ -84,6 +87,7 @@ export const sentProposalSelect = {
 type SentProposalRow = ProposalRow & {
     listing: {
         listingTitle: string;
+        listingType: string;
         company: CompanyBrief | null;
     };
 };
@@ -92,6 +96,7 @@ export function toSentProposal(row: SentProposalRow): SentProposal {
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,
+        listingType: row.listing.listingType as ListingType,
         recipient: toCompanyBrief(row.listing.company),
     };
 }

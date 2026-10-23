@@ -103,6 +103,11 @@ D_LIVE=0
 # Probe E: the Provider whose own proposal list section 10b records.
 TOKEN_E=""
 E_LIVE=0
+# Probe F: the Receiver whose own hire request list section 10b records.
+TOKEN_F=""
+F_LIVE=0
+HIRE_SERVICE_ID=""
+F_PROPOSAL_ID=""
 DELETED_JOB_ID=""
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
@@ -157,7 +162,7 @@ cleanup() {
     listing_ids="$(echo $NEW_JOB_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
         $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_JOB_ID $DELETED_JOB_ID \
-        $ACCEPT_JOB_ID)"
+        $ACCEPT_JOB_ID $HIRE_SERVICE_ID)"
     # project.proposal_id is ON DELETE RESTRICT, so the accepted proposal's
     # project goes first, or deleting its posting fails.
     if [ -n "$ACCEPT_PROPOSAL_ID" ]; then
@@ -205,6 +210,10 @@ cleanup() {
     if [ "$E_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_E"
+    fi
+    if [ "$F_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_F"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -922,16 +931,13 @@ snap job-proposals-list GET "/jobs/$NEW_JOB_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
-# 10b. List Provider's proposals (US2-9)
+# 10b. List proposals and hire requests (US2-9)
 # ---------------------------------------------------------------------------
 
 echo
 echo "proposals mine"
 
 snap error-proposals-mine-unauthorized GET /proposals/mine
-
-snap error-proposals-mine-forbidden-receiver GET /proposals/mine \
-    -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap error-proposals-mine-forbidden-admin GET /proposals/mine \
     -H "$(bearer "$TOKEN_ADMIN")"
@@ -940,9 +946,6 @@ snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVAL
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
-
-snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
-    -H "$(bearer "$TOKEN_RECEIVER")"
 
 # The lists below come from probe E, a Provider only this run can sign in as,
 # so they hold just the one proposal it sends here. The seed provider is a
@@ -978,6 +981,49 @@ snap proposals-mine-counts GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_E")"
 
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_E")")" = 204 ] && E_LIVE=0
+
+# The lists below come from probe F, a Receiver only this run can sign in as,
+# to prove that Receivers see their sent hire requests on a Service (US2-9).
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe service for hire $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":60000}" >/dev/null
+HIRE_SERVICE_ID="$(jget serviceId)"
+if [ -z "$HIRE_SERVICE_ID" ]; then
+    echo "could not create the hire probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$HIRE_SERVICE_ID")
+
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe F\",\"username\":\"${RUN}f\",\"email\":\"${RUN}f@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0833333334\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
+TOKEN_F="$(jget accessToken)"
+if [ -z "$TOKEN_F" ]; then
+    echo "could not register probe F:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+F_LIVE=1
+F_COMPANY_ID="$(jget company.companyId)"
+SUBS+=(--id "sender_id=$F_COMPANY_ID")
+
+# There is no endpoint for creating hire requests yet (US2-15), so db_value
+# inserts one directly against the service listing.
+F_PROPOSAL_ID="$(db_value "prisma.proposal.create({ data: { listingId: $HIRE_SERVICE_ID, senderId: $F_COMPANY_ID, proposalBudget: 50000, proposalTerms: 'Full-stack development for our platform.', duration: 3, proposalStatus: 'PENDING' } }).then((p) => p.proposalId)")"
+if [ -n "$F_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$F_PROPOSAL_ID")
+fi
+
+snap proposals-mine-receiver GET /proposals/mine \
+    -H "$(bearer "$TOKEN_F")"
+
+snap proposals-mine-receiver-counts GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_F")"
+
+# Deleting the service deletes its hire request too (ON DELETE CASCADE).
+run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
+
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_F")")" = 204 ] && F_LIVE=0
 
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)

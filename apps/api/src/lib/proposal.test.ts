@@ -1,10 +1,12 @@
 /*
- * Tests for the US2-9 helpers in lib/proposal.ts (the Provider's "Your
- * Proposals" page).
+ * Tests for the US2-9 helpers in lib/proposal.ts (sent proposals and hire
+ * requests for Providers and Receivers).
  *
  * toSentProposal, one row of GET /proposals/mine:
  * - Each proposal carries the listing's owner as `recipient` (id, name,
  *   photo), so the page can show who it went to with no extra request per row.
+ * - On a Job proposal, recipient is the Receiver that posted the job.
+ * - On a Service hire request, recipient is the Provider offering the service.
  * - A listing with no owner is a broken row, so it is a 500 rather than a
  *   blank recipient.
  * - The proposal's own fields keep the shared wire shape: Decimal becomes a
@@ -44,7 +46,7 @@ before(async () => {
 
 type Row = Parameters<typeof lib.toSentProposal>[0];
 
-function makeRow(company: Row['listing']['company']): Row {
+function makeJobProposalRow(company: Row['listing']['company']): Row {
     return {
         proposalId: 7,
         listingId: 42,
@@ -54,14 +56,30 @@ function makeRow(company: Row['listing']['company']): Row {
         duration: new Prisma.Decimal(14),
         proposalStatus: 'PENDING',
         createdAt: new Date('2026-10-01T08:30:00.000Z'),
-        listing: { listingTitle: 'Build a landing page', company },
+        listing: {
+            listingTitle: 'Build a landing page',
+            listingType: 'JOB',
+            company,
+        },
+    };
+}
+
+function makeServiceHireRequestRow(company: Row['listing']['company']): Row {
+    const row = makeJobProposalRow(company);
+    return {
+        ...row,
+        listing: {
+            ...row.listing,
+            listingTitle: 'Full-stack web development',
+            listingType: 'SERVICE',
+        },
     };
 }
 
 describe('toSentProposal', () => {
-    it('adds the listing owner as recipient', () => {
+    it('maps a Provider proposal on a Job (recipient is the job owner)', () => {
         const result = lib.toSentProposal(
-            makeRow({
+            makeJobProposalRow({
                 companyId: 9,
                 companyName: 'Mango Co',
                 companyPhoto: 'https://example.com/m.png',
@@ -74,20 +92,39 @@ describe('toSentProposal', () => {
             companyPhoto: 'https://example.com/m.png',
         });
         assert.equal(result.listingTitle, 'Build a landing page');
+        assert.equal(result.listingType, 'JOB');
+    });
+
+    it('maps a Receiver hire request on a Service (recipient is the service provider)', () => {
+        const result = lib.toSentProposal(
+            makeServiceHireRequestRow({
+                companyId: 15,
+                companyName: 'Pro Devs Studio',
+                companyPhoto: 'https://example.com/p.png',
+            }),
+        );
+
+        assert.deepEqual(result.recipient, {
+            companyId: 15,
+            companyName: 'Pro Devs Studio',
+            companyPhoto: 'https://example.com/p.png',
+        });
+        assert.equal(result.listingTitle, 'Full-stack web development');
+        assert.equal(result.listingType, 'SERVICE');
     });
 
     // No listing lacks an owner, and nothing creates one without, so a
     // missing owner is a broken row: a 500, not a blank recipient.
     it('is a 500 when the listing has no owner', () => {
         assert.throws(
-            () => lib.toSentProposal(makeRow(null)),
+            () => lib.toSentProposal(makeJobProposalRow(null)),
             (err: unknown) => err instanceof ApiError && err.status === 500,
         );
     });
 
     it('keeps the proposal fields in the wire shape', () => {
         const result = lib.toSentProposal(
-            makeRow({
+            makeJobProposalRow({
                 companyId: 9,
                 companyName: 'Mango Co',
                 companyPhoto: null,
@@ -130,7 +167,7 @@ describe('toProposalStatusCounts', () => {
         });
     });
 
-    it('gives all zeros for a Provider with no proposals', () => {
+    it('gives all zeros for a company with no proposals or hire requests', () => {
         assert.deepEqual(lib.toProposalStatusCounts([]), {
             total: 0,
             pending: 0,
