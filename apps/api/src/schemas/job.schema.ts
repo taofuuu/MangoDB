@@ -7,6 +7,7 @@ import {
     minBudgetDoesNotExceedMax,
     pageQueryFields,
     nameList,
+    priceFilter,
 } from './common.schema';
 import { BUDGET_RANGE_ERROR, listingFields } from './listing.schema';
 import { toDateOnly } from '../lib/dates';
@@ -78,16 +79,35 @@ export const jobIdParamSchema = z.object({
 });
 
 // Query parameters for GET /jobs.
-// Supports status filtering (OPEN | CLOSED) and filtering by companyId.
+// Supports status filtering (OPEN | CLOSED) and filtering by companyId, keyword, category, budget, and deadline.
 // Preprocesses empty strings to undefined so blank query params (e.g. ?status=&companyId=) do not fail validation.
-export const jobListQuerySchema = z.object({
-    ...pageQueryFields,
-    status: z.preprocess(blankToUndefined, z.enum(LISTING_STATUSES).optional()),
-    companyId: optionalQueryId('companyId'),
-    q: z.preprocess(blankToUndefined, z.string().trim().max(100).optional()),
-    // US3-4. Category names (ADR 0002), case ignored like the service filter.
-    category: nameList.optional(),
-});
+export const jobListQuerySchema = z
+    .object({
+        ...pageQueryFields,
+        status: z.preprocess(
+            blankToUndefined,
+            z.enum(LISTING_STATUSES).optional(),
+        ),
+        companyId: optionalQueryId('companyId'),
+        q: z.preprocess(
+            blankToUndefined,
+            z.string().trim().max(100).optional(),
+        ),
+        // US3-4. Category names (ADR 0002), case ignored like the service filter.
+        category: nameList.optional(),
+        // US3-5. Budget range overlap filter.
+        minBudget: priceFilter,
+        maxBudget: priceFilter,
+        // US3-5. Deadline on or before date (YYYY-MM-DD).
+        deadline: z.preprocess(
+            blankToUndefined,
+            z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
+        ),
+    })
+    .refine(minBudgetDoesNotExceedMax, {
+        message: BUDGET_RANGE_ERROR,
+        path: ['minBudget'],
+    });
 
 // GET /jobs/mine. The caller's own jobs, so no keyword or company filter.
 export const jobMineQuerySchema = z.object({

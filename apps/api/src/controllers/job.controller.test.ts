@@ -38,6 +38,7 @@ import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type { Job, Paginated } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
+import { fromDateOnly } from '../lib/dates';
 
 // One listing row as the database would hold it, with its company joined in.
 type Row = {
@@ -56,7 +57,11 @@ type Row = {
         companyPhoto: string | null;
         deletedAt: Date | null;
     };
-    job: null;
+    job: {
+        locationPref: string | null;
+        duration: string | null;
+        deadline: Date | null;
+    } | null;
     listingCategory: {
         categoryId: number;
         category: { categoryName: string };
@@ -121,6 +126,25 @@ function withCategories(r: Row, names: string[]): Row {
     };
 }
 
+function withBudget(
+    r: Row,
+    minBudget: number | null,
+    maxBudget: number | null,
+): Row {
+    return { ...r, minBudget, maxBudget };
+}
+
+function withDeadline(r: Row, deadline: Date | null): Row {
+    return {
+        ...r,
+        job: {
+            locationPref: r.job?.locationPref ?? null,
+            duration: r.job?.duration ?? null,
+            deadline,
+        },
+    };
+}
+
 // Prisma's `contains` becomes SQL LIKE: % is any run of characters, _ is any
 // one character, and a backslash makes the next character plain. Reading it
 // the same way here is what catches a search that forgets escapeLike.
@@ -159,6 +183,10 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
             if (key === 'company') {
                 return matches(value as Record<string, unknown>, cond);
             }
+            if (key === 'job') {
+                if (value === null || value === undefined) return false;
+                return matches(value as Record<string, unknown>, cond);
+            }
             if (key === 'listingCategory') {
                 const condObj = cond as {
                     some?: {
@@ -188,11 +216,32 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
                 typeof cond === 'object' &&
                 !(cond instanceof Date)
             ) {
-                const c = cond as { contains?: string; equals?: unknown };
+                const c = cond as {
+                    contains?: string;
+                    equals?: unknown;
+                    lte?: unknown;
+                    gte?: unknown;
+                    not?: unknown;
+                };
                 if (c.contains !== undefined) {
                     return likeToRegExp(c.contains).test(String(value));
                 }
                 if ('equals' in c) return value === c.equals;
+                if ('lte' in c) {
+                    if (value === null || value === undefined) return false;
+                    if (value instanceof Date && c.lte instanceof Date) {
+                        return value.getTime() <= c.lte.getTime();
+                    }
+                    return (value as number) <= (c.lte as number);
+                }
+                if ('gte' in c) {
+                    if (value === null || value === undefined) return false;
+                    if (value instanceof Date && c.gte instanceof Date) {
+                        return value.getTime() >= c.gte.getTime();
+                    }
+                    return (value as number) >= (c.gte as number);
+                }
+                if ('not' in c) return value !== c.not;
                 throw new Error(`fake prisma: unsupported filter on ${key}`);
             }
             return value === cond;
@@ -318,6 +367,14 @@ function assertNotFound(result: unknown): void {
     );
     assert.equal(result.status, 404);
     assert.equal(result.code, 'NOT_FOUND');
+}
+
+function assertBadRequest(result: unknown): void {
+    assert.ok(
+        result instanceof ApiError,
+        `expected an ApiError, got ${JSON.stringify(result)}`,
+    );
+    assert.equal(result.status, 400);
 }
 
 describe('GET /jobs/:jobId', () => {
@@ -581,6 +638,261 @@ describe('GET /jobs', () => {
         assert.equal(page2.items.length, 1);
         assert.equal(page2.items[0]?.jobId, 10);
         assert.equal(page2.pagination.totalItems, 2);
+    });
+
+    it('filters jobs by budget range overlap (minBudget and maxBudget)', async () => {
+        rows = [
+            withBudget(job(10, OWNER, 'OPEN'), 1000, 3000), // overlaps [2500, 4500]
+            withBudget(job(11, OWNER, 'OPEN'), 4000, 6000), // overlaps [2500, 4500]
+            withBudget(job(12, OWNER, 'OPEN'), 5000, 8000), // does not overlap (min 5000 > max 4500)
+            withBudget(job(13, OWNER, 'OPEN'), 500, 2000), // does not overlap (max 2000 < min 2500)
+        ];
+
+        const body = await list(OTHER, {
+            minBudget: '2500',
+            maxBudget: '4500',
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [11, 10],
+        );
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('filters jobs by maxBudget only', async () => {
+        rows = [
+            withBudget(job(10, OWNER, 'OPEN'), 1000, 3000), // min 1000 <= 2000 -> matches
+            withBudget(job(11, OWNER, 'OPEN'), 2500, 5000), // min 2500 > 2000 -> excluded
+            withBudget(job(12, OWNER, 'OPEN'), null, 3000), // "Up to 3000" -> matches
+        ];
+
+        const body = await list(OTHER, { maxBudget: '2000' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [12, 10],
+        );
+    });
+
+    it('filters jobs by minBudget only, including open-ended listings', async () => {
+        rows = [
+            withBudget(job(10, OWNER, 'OPEN'), 1000, 3000), // max 3000 >= 2000 -> matches
+            withBudget(job(11, OWNER, 'OPEN'), 500, 1500), // max 1500 < 2000 -> excluded
+            withBudget(job(12, OWNER, 'OPEN'), 2500, null), // open-ended (min 2500, max null) -> matches
+        ];
+
+        const body = await list(OTHER, { minBudget: '2000' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [12, 10],
+        );
+    });
+
+    it('excludes unpriced jobs when filtering by budget', async () => {
+        rows = [
+            withBudget(job(10, OWNER, 'OPEN'), null, null), // unpriced
+            withBudget(job(11, OWNER, 'OPEN'), 1000, 3000),
+        ];
+
+        const bodyMax = await list(OTHER, { maxBudget: '5000' });
+        assert.deepEqual(
+            bodyMax.items.map((j) => j.jobId),
+            [11],
+        );
+
+        const bodyMin = await list(OTHER, { minBudget: '500' });
+        assert.deepEqual(
+            bodyMin.items.map((j) => j.jobId),
+            [11],
+        );
+    });
+
+    it('answers 400 when minBudget exceeds maxBudget', async () => {
+        rows = [job(10, OWNER, 'OPEN')];
+
+        const result = await list(OTHER, {
+            minBudget: '5000',
+            maxBudget: '2000',
+        });
+
+        assertBadRequest(result);
+    });
+
+    it('answers 400 when minBudget is negative', async () => {
+        rows = [job(10, OWNER, 'OPEN')];
+
+        const result = await list(OTHER, { minBudget: '-100' });
+
+        assertBadRequest(result);
+    });
+
+    it('ignores blank minBudget and maxBudget values', async () => {
+        rows = [job(10, OWNER, 'OPEN'), job(11, OWNER, 'OPEN')];
+
+        const body = await list(OTHER, { minBudget: '', maxBudget: '   ' });
+
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('filters jobs due on or before the given deadline', async () => {
+        rows = [
+            withDeadline(job(10, OWNER, 'OPEN'), fromDateOnly('2026-05-15')), // on deadline
+            withDeadline(job(11, OWNER, 'OPEN'), fromDateOnly('2026-05-10')), // before deadline
+            withDeadline(job(12, OWNER, 'OPEN'), fromDateOnly('2026-05-20')), // after deadline
+            withDeadline(job(13, OWNER, 'OPEN'), null), // no deadline
+            job(14, OWNER, 'OPEN'), // job relation is null
+        ];
+
+        const body = await list(OTHER, { deadline: '2026-05-15' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [11, 10],
+        );
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('answers 400 when deadline is not a valid YYYY-MM-DD date', async () => {
+        rows = [job(10, OWNER, 'OPEN')];
+
+        assertBadRequest(await list(OTHER, { deadline: 'not-a-date' }));
+        assertBadRequest(await list(OTHER, { deadline: '2026-02-31' }));
+    });
+
+    it('ignores blank deadline query values', async () => {
+        rows = [
+            withDeadline(job(10, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            job(11, OWNER, 'OPEN'),
+        ];
+
+        const body = await list(OTHER, { deadline: '   ' });
+
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('combines category, keyword, budget, and deadline filters (AND logic)', async () => {
+        rows = [
+            // Matches all: Web Development, "React", budget overlaps [2000, 5000], deadline <= 2026-06-01
+            withDeadline(
+                withBudget(
+                    withCategories(
+                        {
+                            ...job(10, OWNER, 'OPEN'),
+                            listingTitle: 'React web app',
+                        },
+                        ['Web Development'],
+                    ),
+                    2000,
+                    4000,
+                ),
+                fromDateOnly('2026-05-15'),
+            ),
+            // Fails category
+            withDeadline(
+                withBudget(
+                    withCategories(
+                        {
+                            ...job(11, OWNER, 'OPEN'),
+                            listingTitle: 'React design system',
+                        },
+                        ['Design'],
+                    ),
+                    2000,
+                    4000,
+                ),
+                fromDateOnly('2026-05-15'),
+            ),
+            // Fails keyword
+            withDeadline(
+                withBudget(
+                    withCategories(
+                        {
+                            ...job(12, OWNER, 'OPEN'),
+                            listingTitle: 'Vue web app',
+                        },
+                        ['Web Development'],
+                    ),
+                    2000,
+                    4000,
+                ),
+                fromDateOnly('2026-05-15'),
+            ),
+            // Fails budget (min 6000 > max 5000)
+            withDeadline(
+                withBudget(
+                    withCategories(
+                        {
+                            ...job(13, OWNER, 'OPEN'),
+                            listingTitle: 'React portal',
+                        },
+                        ['Web Development'],
+                    ),
+                    6000,
+                    8000,
+                ),
+                fromDateOnly('2026-05-15'),
+            ),
+            // Fails deadline (2026-07-01 > 2026-06-01)
+            withDeadline(
+                withBudget(
+                    withCategories(
+                        {
+                            ...job(14, OWNER, 'OPEN'),
+                            listingTitle: 'React dashboard',
+                        },
+                        ['Web Development'],
+                    ),
+                    2000,
+                    4000,
+                ),
+                fromDateOnly('2026-07-01'),
+            ),
+        ];
+
+        const body = await list(OTHER, {
+            category: 'Web Development',
+            q: 'react',
+            minBudget: '2000',
+            maxBudget: '5000',
+            deadline: '2026-06-01',
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [10],
+        );
+        assert.equal(body.pagination.totalItems, 1);
+    });
+
+    it('calculates totalItems and totalPages correctly with budget and deadline filters', async () => {
+        rows = [
+            withDeadline(
+                withBudget(job(10, OWNER, 'OPEN'), 1000, 3000),
+                fromDateOnly('2026-05-01'),
+            ),
+            withDeadline(
+                withBudget(job(11, OWNER, 'OPEN'), 1000, 3000),
+                fromDateOnly('2026-05-01'),
+            ),
+            withDeadline(
+                withBudget(job(12, OWNER, 'OPEN'), 5000, 8000),
+                fromDateOnly('2026-05-01'),
+            ),
+        ];
+
+        const page1 = await list(OTHER, {
+            maxBudget: '4000',
+            deadline: '2026-05-10',
+            page: '1',
+            pageSize: '1',
+        });
+
+        assert.equal(page1.items.length, 1);
+        assert.equal(page1.items[0]?.jobId, 11);
+        assert.equal(page1.pagination.totalItems, 2);
+        assert.equal(page1.pagination.totalPages, 2);
     });
 });
 

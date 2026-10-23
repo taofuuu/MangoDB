@@ -14,6 +14,9 @@ export interface ListJobsOptions {
     status?: ListingStatus;
     q?: string;
     category?: string[];
+    minBudget?: number;
+    maxBudget?: number;
+    deadline?: string;
 }
 
 // GET /jobs: the jobs the caller may see, one page at a time.
@@ -40,6 +43,18 @@ export function listJobs(
     }
 
     options?.category?.forEach((name) => query.append('category', name));
+
+    if (options?.minBudget !== undefined) {
+        query.set('minBudget', String(options.minBudget));
+    }
+
+    if (options?.maxBudget !== undefined) {
+        query.set('maxBudget', String(options.maxBudget));
+    }
+
+    if (options?.deadline) {
+        query.set('deadline', options.deadline);
+    }
 
     const path = `/jobs?${query.toString()}`;
     return cachedGet(path, () => apiFetch<Paginated<Job>>(path));

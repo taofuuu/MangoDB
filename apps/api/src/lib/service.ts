@@ -12,7 +12,7 @@ import type {
 import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord, splitWords } from './search';
-import { categoryNameWhere } from './listing';
+import { categoryNameWhere, listingBudgetWhere } from './listing';
 import type { Prisma } from '../generated/prisma/client';
 import type { ServiceListQuery } from '../schemas/service.schema';
 
@@ -195,26 +195,10 @@ export function serviceFilterWhere({
             },
         });
     }
-    // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. A one-sided range is open-ended only on
-    // its missing side; a service with no price at all cannot match a filter.
-    if (maxPrice !== undefined) {
-        // Its lowest price fits under the slider's max.
-        where.push({ minBudget: { lte: maxPrice } });
-    }
-    if (minPrice !== undefined) {
-        // Its highest price reaches the slider's min.
-        where.push({
-            OR: [
-                { maxBudget: { gte: minPrice } },
-                // A declared minimum with no upper limit can still reach the
-                // requested threshold. An entirely unpriced service cannot.
-                {
-                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
-                },
-            ],
-        });
-    }
+    // Price uses the shared overlap rule (listingBudgetWhere).
+    where.push(
+        ...listingBudgetWhere({ minBudget: minPrice, maxBudget: maxPrice }),
+    );
     return where;
 }
 
