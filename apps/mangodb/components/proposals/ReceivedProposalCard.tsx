@@ -27,8 +27,7 @@ export default function ReceivedProposalCard({
     const [showRejectModal, setShowRejectModal] = useState(false);
 
     const companyName =
-        proposal.sender?.companyName ??
-        `Provider #${proposal.sender?.companyId}`;
+        proposal.sender.companyName || `Provider #${proposal.sender.companyId}`;
 
     return (
         <>
