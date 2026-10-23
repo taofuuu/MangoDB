@@ -9,7 +9,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
-import { orConflict } from '../lib/prisma-errors';
+import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
 import {
     assertProjectParty,
     moveProjectStatus,
@@ -21,9 +21,11 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
+import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
     createProjectUpdateSchema,
+    createReviewSchema,
     projectIdParamSchema,
     projectListQuerySchema,
 } from '../schemas/project.schema';
@@ -197,4 +199,41 @@ export async function confirmDeposit(
         );
     });
     res.json(toProject(row));
+}
+
+// US5-1. The Receiver reviews a completed project once (ADR 0018). Four 1-5 scores
+// and an optional comment. A second review is 409. Outsiders get 404; Provider
+// gets 403; project not COMPLETED gets 409.
+export async function createReview(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const body = parseBody(createReviewSchema, req.body);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can review the project');
+    }
+    if (project.projectStatus !== ('COMPLETED' satisfies ProjectStatus)) {
+        throw ApiError.conflict('Project is not COMPLETED');
+    }
+
+    try {
+        const row = await prisma.review.create({
+            data: {
+                projectId,
+                workQualityScore: body.workQualityScore,
+                serviceScore: body.serviceScore,
+                valueForMoneyScore: body.valueForMoneyScore,
+                deliveryTimeScore: body.deliveryTimeScore,
+                comment: body.comment ?? null,
+            },
+            select: reviewSelect,
+        });
+
+        res.status(201).json(toReview(row));
+    } catch (err) {
+        if (isUniqueViolation(err)) {
+            throw ApiError.conflict('Project has already been reviewed');
+        }
+        throw err;
+    }
 }
