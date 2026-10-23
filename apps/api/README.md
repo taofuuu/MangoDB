@@ -34,6 +34,7 @@ The snapshots need the accounts the seed creates:
 
 ```bash
 npm run db:seed        # snapshot_ and demo_ provider, receiver and admin, idempotent
+npm run db:seed -- --reset-demo   # also puts the demo projects back as seeded
 ```
 
 How the snapshots work and which diff each kind of change should produce:

@@ -149,9 +149,9 @@ production build (CI runs that too).
 - **Accounts to sign in with:** `npm run db:seed -w api` creates the
   `snapshot_` provider, receiver and admin accounts, and the same three as
   `demo_`, whose provider and receiver share a project in every status and
-  its in-between states. It
-  touches only rows named `snapshot_` or `demo_`, and rebuilds the demo
-  projects on every run.
+  its in-between states. It touches only rows named `snapshot_` or `demo_`. A
+  rerun leaves the demo projects as the flow left them;
+  `npm run db:seed -w api -- --reset-demo` puts them all back.
 - **If you changed an API response,** run `bash scripts/snapshot-api.sh` with
   the API running, then `git diff snapshots/`, and commit what changed with a
   line on why. Do not commit while the script runs: the pre-commit hook moves
