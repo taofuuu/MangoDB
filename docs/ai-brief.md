@@ -144,6 +144,8 @@ message.
 | An id in a query string             | `queryId(name)`, `optionalQueryId(name)`                                       |
 | A cleared field / a param not sent  | `blankToNull` / `blankToUndefined`                                             |
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
+| A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
+| A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
