@@ -4,7 +4,9 @@ generator client {
   moduleFormat    = "cjs"
   // Lets @@unique take a `where`, for the one-PENDING rules on proposal and
   // quotation. Without it the index lives only in SQL and the next
-  // `migrate diff` would try to drop it.
+  // `migrate diff` would try to drop it. Write each `where` the way Postgres
+  // stores it (`pg_indexes.indexdef`); Prisma compares the text, so any other
+  // spelling shows as drift.
   previewFeatures = ["partialIndexes"]
 }
 
@@ -167,7 +169,7 @@ model Quotation {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   project         Project  @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([projectId], where: raw("quotation_status = 'PENDING'"))
+  @@unique([projectId], where: raw("((quotation_status)::text = 'PENDING'::text)"))
   @@index([projectId])
   @@map("quotation")
 }
@@ -228,7 +230,7 @@ model Proposal {
 
   // ADR 0016. One PENDING proposal per sender per listing. Once it is decided
   // the same company may send another.
-  @@unique([listingId, senderId], where: raw("proposal_status = 'PENDING'"))
+  @@unique([listingId, senderId], where: raw("((proposal_status)::text = 'PENDING'::text)"))
   @@map("proposal")
 }
 
