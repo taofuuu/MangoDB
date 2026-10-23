@@ -1,5 +1,10 @@
 import type { Request, Response } from 'express';
-import type { Paginated, ProjectStatus, ProjectSummary } from '@mangodb/shared';
+import type {
+    Paginated,
+    ProjectStatus,
+    ProjectSummary,
+    ProjectUpdateType,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
@@ -16,8 +21,9 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
-import { parseParams, parseQuery } from '../middleware/validate';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import {
+    createProjectUpdateSchema,
     projectIdParamSchema,
     projectListQuerySchema,
 } from '../schemas/project.schema';
@@ -89,6 +95,36 @@ export async function listProjectUpdates(
         select: projectUpdateSelect,
     });
     res.json(rows.map(toProjectUpdate));
+}
+
+// US4-10 (T4.10.1). The Provider adds a progress note while the work is
+// IN_PROGRESS. The server sets the time (createdAt). No edit or delete: a
+// correction is a new update.
+export async function createProjectUpdate(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const { updateText } = parseBody(createProjectUpdateSchema, req.body);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    // A party already knows the project exists, so the Receiver gets 403, not 404.
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can add a progress update');
+    }
+    if (project.projectStatus !== ('IN_PROGRESS' satisfies ProjectStatus)) {
+        throw ApiError.conflict('Project is not IN_PROGRESS');
+    }
+
+    const row = await prisma.projectUpdate.create({
+        data: {
+            projectId,
+            updateType: 'PROGRESS' satisfies ProjectUpdateType,
+            updateText,
+        },
+        select: projectUpdateSelect,
+    });
+    res.status(201).json(toProjectUpdate(row));
 }
 
 // US4-6. The Receiver says the deposit is paid. Only the time is recorded:

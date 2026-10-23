@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import {
     confirmDeposit,
+    createProjectUpdate,
     getProject,
     listMyProjects,
     listProjectUpdates,
@@ -20,6 +21,10 @@ projectRoutes.get('/:projectId', requireAuth, getProject);
 
 // US4-9. The progress timeline, oldest first. Parties only, as above.
 projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
+
+// US4-10. The Provider adds a progress note while IN_PROGRESS. Same guards,
+// but only the Provider may act; the controller checks that per project.
+projectRoutes.post('/:projectId/updates', requireAuth, createProjectUpdate);
 
 // US4-6. The Receiver reports the deposit as paid; the Provider confirms it
 // later (US4-7). Guards: authenticated only. No requireRole: a BOTH account can
