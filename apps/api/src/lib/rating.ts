@@ -4,7 +4,6 @@ import type {
     ReviewSummary,
 } from '@mangodb/shared';
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
-import { prisma } from './prisma';
 
 const COMPLETED = 'COMPLETED' satisfies ProjectStatus;
 
@@ -98,9 +97,10 @@ export function getRating(source: RatingSource): ReviewSummary {
 // The profile and the rating sort both call it (ADR 0018, T5.1.3).
 export async function getProviderRating(
     companyId: number,
-    db: PrismaClient | Prisma.TransactionClient = prisma,
+    db?: PrismaClient | Prisma.TransactionClient,
 ): Promise<ReviewSummary> {
-    const company = await db.company.findUnique({
+    const client = db ?? (await import('./prisma.js')).prisma;
+    const company = await client.company.findUnique({
         where: { companyId },
         select: ratingSelect,
     });
