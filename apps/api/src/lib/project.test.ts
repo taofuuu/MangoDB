@@ -10,6 +10,11 @@
  *
  * moveProjectStatus is covered by F.12.
  *
+ * toProjectSummary / toProjectDetail (US4-9):
+ * - Each party sees the other as otherParty; on a service the owner is the
+ *   Provider.
+ * - The nested proposal row does not reach the response.
+ *
  * How: lib/prisma is replaced with mock.module before lib/project loads, and
  * findUnique hands back whatever `row` holds.
  *
@@ -83,5 +88,64 @@ describe('assertProjectParty', () => {
             (await lib.assertProjectParty(1, OWNER)).myRole,
             'receiver',
         );
+    });
+});
+
+// A project row as projectViewSelect returns it. totalBudget is a plain
+// number here: toProject only runs Number() on it.
+function viewRow(listingType: string) {
+    const brief = (companyId: number) => ({
+        companyId,
+        companyName: `Company ${companyId}`,
+        companyPhoto: null,
+    });
+    const { senderId, listing } = proposalOn(listingType);
+    return {
+        projectId: 1,
+        proposalId: 2,
+        totalBudget: 5000,
+        startDate: new Date('2026-10-01'),
+        projectStatus: 'IN_PROGRESS',
+        depositReportedAt: null,
+        depositConfirmedAt: null,
+        completedAt: null,
+        proposal: {
+            senderId,
+            sender: brief(SENDER),
+            listing: {
+                ...listing,
+                listingId: 7,
+                listingTitle: 'Logo design',
+                company: brief(OWNER),
+            },
+        },
+    } as unknown as Parameters<typeof lib.toProjectSummary>[0];
+}
+
+describe('toProjectSummary', () => {
+    it('shows each party the other one', () => {
+        const asProvider = lib.toProjectSummary(viewRow('JOB'), SENDER);
+        assert.equal(asProvider.myRole, 'provider');
+        assert.equal(asProvider.otherParty.companyId, OWNER);
+
+        const asReceiver = lib.toProjectSummary(viewRow('JOB'), OWNER);
+        assert.equal(asReceiver.myRole, 'receiver');
+        assert.equal(asReceiver.otherParty.companyId, SENDER);
+    });
+
+    it('keeps the nested proposal out of the response', () => {
+        assert.ok(
+            !('proposal' in lib.toProjectSummary(viewRow('JOB'), SENDER)),
+        );
+    });
+});
+
+describe('toProjectDetail', () => {
+    it('names the owner as Provider on a service', () => {
+        const detail = lib.toProjectDetail(viewRow('SERVICE'), SENDER);
+        assert.equal(detail.provider.companyId, OWNER);
+        assert.equal(detail.receiver.companyId, SENDER);
+        assert.equal(detail.myRole, 'receiver');
+        assert.equal(detail.startDate, '2026-10-01');
     });
 });
