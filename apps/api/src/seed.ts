@@ -14,12 +14,12 @@
 //
 // It also adds a second set, the `demo_` accounts, with a project in every
 // status and its in-between states (F.11), so each project screen can be
-// built before the whole flow works. They are kept apart from `snapshot_` so the snapshot baseline never
-// sees them.
+// built before the whole flow works. They are kept apart from `snapshot_` so
+// the snapshot baseline never sees them.
 //
 // It does not replace the existing seed data. It deletes only two things: the
 // spent probe accounts the snapshot script leaves behind (pruneProbeAccounts),
-// and the demo projects, which every run rebuilds (seedDemoProjects).
+// and, with --reset-demo, the demo projects (seedDemoProjects).
 
 import type {
     ProjectStatus,
@@ -392,24 +392,37 @@ const DEMO_REVIEW = {
     createdAt: october(22),
 };
 
-// Deletes the demo jobs and builds them again, so a rerun also undoes any
-// status the flow has moved since. Project ids change on every run.
+// Creates only the demo projects whose job is missing. Everyone shares one
+// database, so a rerun must not undo a status someone is testing. With reset,
+// it deletes them all first and builds them again, with new project ids.
+// Returns how many it created.
 async function seedDemoProjects(
     providerId: number,
     receiverId: number,
-): Promise<void> {
+    reset: boolean,
+): Promise<number> {
     const demoJobs = {
         companyId: receiverId,
         listingTitle: { startsWith: DEMO_TITLE },
     };
-    // project.proposal_id is ON DELETE RESTRICT, so projects go first. Their
-    // quotations, updates and review cascade with them.
-    await prisma.project.deleteMany({
-        where: { proposal: { listing: demoJobs } },
-    });
-    await prisma.listing.deleteMany({ where: demoJobs });
+    if (reset) {
+        // project.proposal_id is ON DELETE RESTRICT, so projects go first.
+        // Their quotations, updates and review cascade with them.
+        await prisma.project.deleteMany({
+            where: { proposal: { listing: demoJobs } },
+        });
+        await prisma.listing.deleteMany({ where: demoJobs });
+    }
 
+    let created = 0;
     for (const demo of DEMO_PROJECTS) {
+        const listingTitle = `${DEMO_TITLE} ${demo.title}`;
+        const existing = await prisma.listing.findFirst({
+            where: { companyId: receiverId, listingTitle },
+            select: { listingId: true },
+        });
+        if (existing) continue;
+
         const paid = PAID_STATUSES.includes(demo.projectStatus);
         const reported = paid || demo.depositReported === true;
         const completed = demo.projectStatus === 'COMPLETED';
@@ -420,7 +433,7 @@ async function seedDemoProjects(
         await prisma.listing.create({
             data: {
                 companyId: receiverId,
-                listingTitle: `${DEMO_TITLE} ${demo.title}`,
+                listingTitle,
                 listingDesc: `Seeded by src/seed.ts: a project that is ${demo.projectStatus}.`,
                 minBudget: 100000,
                 maxBudget: 150000,
@@ -469,7 +482,9 @@ async function seedDemoProjects(
                 },
             },
         });
+        created += 1;
     }
+    return created;
 }
 
 async function upsertAccounts(
@@ -507,8 +522,23 @@ async function main(): Promise<void> {
     console.log(`ok  listing ${listingId}, with a portfolio and a certificate`);
 
     const demoIds = await upsertAccounts(DEMO_ACCOUNTS);
-    await seedDemoProjects(demoIds.get('PROVIDER')!, demoIds.get('RECEIVER')!);
-    console.log(`ok  ${DEMO_PROJECTS.length} demo projects, every status`);
+    const demoProviderId = demoIds.get('PROVIDER');
+    const demoReceiverId = demoIds.get('RECEIVER');
+    if (demoProviderId === undefined || demoReceiverId === undefined) {
+        throw new Error('Demo accounts were not created');
+    }
+
+    // npm run db:seed -w api -- --reset-demo
+    const reset = process.argv.includes('--reset-demo');
+    const created = await seedDemoProjects(
+        demoProviderId,
+        demoReceiverId,
+        reset,
+    );
+    console.log(
+        `ok  ${DEMO_PROJECTS.length} demo projects, ${created} created` +
+            (reset ? ' after a reset' : ''),
+    );
 
     console.log('\nPut these in scripts/.env.snapshot:\n');
     for (const account of ACCOUNTS) {
