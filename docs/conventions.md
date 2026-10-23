@@ -289,8 +289,8 @@ midnight (see `formatDateOnly` in `apps/mangodb/lib/dates.ts`).
 A foreign key the row means nothing without is `NOT NULL`. A nullable one forces
 a dead null check in every controller that touches it.
 
-Still nullable, to fix in the next migration that touches each table:
-`listing.company_id` and `rating.proj_id`.
+Still nullable, to fix in the next migration that touches the table:
+`listing.company_id`.
 
 ---
 

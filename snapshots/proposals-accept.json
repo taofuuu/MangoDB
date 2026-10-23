@@ -2,8 +2,11 @@
     "request": "POST /proposals/<proposal_id>/accept",
     "status": 201,
     "body": {
+        "completedAt": null,
+        "depositConfirmedAt": null,
+        "depositReportedAt": null,
         "projectId": "<project_id>",
-        "projectStatus": "ACTIVE",
+        "projectStatus": "AWAITING_QUOTATION",
         "proposalId": "<proposal_id>",
         "startDate": "<today>",
         "totalBudget": 95000

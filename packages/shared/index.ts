@@ -38,16 +38,33 @@ export interface AuthTokenClaims extends AuthTokenPayload {
     exp: number;
 }
 
-// The three free-text status columns, pinned to a closed set. All three are
-// VarChar(50) in the database with nothing enforcing them, so these types are
-// the enforcement — see docs/conventions.md section 6. The label a user reads
+// The free-text status columns, pinned to a closed set. All are VarChar(50) in
+// the database with nothing enforcing them, so these types are the
+// enforcement — see docs/conventions.md section 6. The label a user reads
 // ("Open for Proposals") is the frontend's; the column stores the value here.
 export const LISTING_STATUSES = ['OPEN', 'CLOSED'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 export const PROPOSAL_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
-export const PROJECT_STATUSES = ['ACTIVE', 'COMPLETED', 'CANCELLED'] as const;
+// ADR 0015, in the order a project moves through them. Only the moves the ADR
+// lists are allowed; the last two are final.
+export const PROJECT_STATUSES = [
+    'AWAITING_QUOTATION',
+    'AWAITING_DEPOSIT',
+    'IN_PROGRESS',
+    'AWAITING_ACCEPTANCE',
+    'COMPLETED',
+    'CANCELLED',
+] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+// ADR 0017. Only one quotation per project is PENDING at a time.
+export const QUOTATION_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
+export type QuotationStatus = (typeof QUOTATION_STATUSES)[number];
+
+// project_update.update_type: a Provider's progress note (US4-10), or the
+// Receiver's reason for rejecting the work (US4-12).
+export const PROJECT_UPDATE_TYPES = ['PROGRESS', 'WORK_REJECTED'] as const;
+export type ProjectUpdateType = (typeof PROJECT_UPDATE_TYPES)[number];
 
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
 export const LISTING_TYPES = ['SERVICE', 'JOB'] as const;
@@ -426,7 +443,8 @@ export interface CreateProposalRequest {
     duration: number;
 }
 
-// The Project created when a proposal is accepted (POST /proposals/:proposalId/accept).
+// A project as accepting a proposal creates it (POST /proposals/:proposalId/accept).
+// The other project responses below build on it.
 export interface Project {
     projectId: number;
     proposalId: number;
@@ -434,6 +452,120 @@ export interface Project {
     // YYYY-MM-DD date string per conventions section 10
     startDate: string;
     projectStatus: ProjectStatus;
+    // ISO timestamps, null until the step happens (US4-6, US4-7, US4-13)
+    depositReportedAt: string | null;
+    depositConfirmedAt: string | null;
+    completedAt: string | null;
+}
+
+// Which side of a project the signed-in company is on. A BOTH account can be
+// either, so it is worked out per project, never from accountType.
+export type ProjectRole = Extract<UserRole, 'provider' | 'receiver'>;
+
+// US4-9. One row of GET /projects/mine.
+export interface ProjectSummary extends Project {
+    listingTitle: string;
+    myRole: ProjectRole;
+    // The company on the other side. Kept when its account is deleted:
+    // a project is history (see Company.deletedAt).
+    otherParty: CompanyBrief;
+}
+
+// US4-9. GET /projects/:projectId, for its two parties only.
+export interface ProjectDetail extends Project {
+    listingId: number;
+    listingType: ListingType;
+    listingTitle: string;
+    provider: CompanyBrief;
+    receiver: CompanyBrief;
+    myRole: ProjectRole;
+}
+
+// US2-5. One row of GET /companies/:companyId/completed-projects.
+export interface CompletedProject {
+    projectId: number;
+    listingTitle: string;
+    receiver: CompanyBrief;
+    completedAt: string;
+}
+
+// ADR 0017. A quotation PDF on a project. Sent as multipart (a `file` field),
+// so it has no JSON request type.
+export interface Quotation {
+    quotationId: number;
+    projectId: number;
+    // Public URL of the PDF
+    quotationFile: string;
+    quotationStatus: QuotationStatus;
+    createdAt: string;
+}
+
+// ADR 0017. One notice in the navbar bell's popup: a PENDING quotation on a
+// project where you are the Receiver. Nothing is stored for it; it leaves the
+// list once you accept or reject the quotation.
+export interface QuotationNotice {
+    quotationId: number;
+    projectId: number;
+    listingTitle: string;
+    // The Provider that sent the quotation
+    provider: CompanyBrief;
+    createdAt: string;
+}
+
+// US4-9. One entry of GET /projects/:projectId/updates, oldest first.
+export interface ProjectUpdate {
+    projectUpdateId: number;
+    projectId: number;
+    updateType: ProjectUpdateType;
+    updateText: string;
+    createdAt: string;
+}
+
+// What POST /projects/:projectId/updates accepts (US4-10).
+export interface CreateProjectUpdateRequest {
+    updateText: string;
+}
+
+// What POST /projects/:projectId/reject-work accepts (US4-12). The reason is
+// saved as a WORK_REJECTED update.
+export interface RejectWorkRequest {
+    reason: string;
+}
+
+// ADR 0018. The Receiver's review of a completed project. Each score is 1-5.
+export interface Review {
+    reviewId: number;
+    projectId: number;
+    workQualityScore: number;
+    // How the Provider dealt with the Receiver, not a service listing
+    serviceScore: number;
+    valueForMoneyScore: number;
+    deliveryTimeScore: number;
+    comment: string | null;
+    createdAt: string;
+}
+
+// US5-3. One row of GET /companies/:companyId/reviews: the review and the
+// Receiver that wrote it.
+export interface CompanyReview extends Review {
+    receiver: CompanyBrief;
+}
+
+// US5-3. GET /companies/:companyId/reviews/summary. The same two fields the
+// admin company types carry, so one helper fills both (T5.1.3).
+export interface ReviewSummary {
+    averageRating: number | null;
+    ratingCount: number;
+}
+
+// What POST /projects/:projectId/review accepts (US5-1, US5-2). The comment
+// is optional, up to 500 characters.
+export interface CreateReviewRequest {
+    workQualityScore: number;
+    serviceScore: number;
+    valueForMoneyScore: number;
+    deliveryTimeScore: number;
+    comment?: string | null | undefined;
 }
 
 // GET /categories. The fixed catalog a listing picks from (ADR 0002).

@@ -419,10 +419,12 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   takes `q`, `category`, `minBudget`, `maxBudget`, `deadline`, `companyId`,
   `status` and paging. The category, budget, deadline and order controls on
   `/jobs` send nothing yet: `useJobList` sends only the keyword.
-- A delivery duration on a service. Its price is the listing's
-  `minBudget`/`maxBudget` range, the same columns a job uses.
-- Projects, quotations and reviews beyond the project row that accepting a
-  proposal creates — Sprint 3 builds them.
+- A delivery duration on a service, by decision (ADR 0019, rejected). Its
+  price is the listing's `minBudget`/`maxBudget` range, the same columns a
+  job uses.
+- Project, quotation, update and review endpoints. The tables and the shared
+  types exist (ADRs 0015-0018); the only endpoint is accepting a proposal,
+  which creates the project row — Sprint 3 builds the rest.
 
 ---
 
