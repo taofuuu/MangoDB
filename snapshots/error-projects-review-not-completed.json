@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/review",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Project is not COMPLETED"
+        }
+    }
+}
