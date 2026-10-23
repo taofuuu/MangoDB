@@ -84,6 +84,20 @@ before(async () => {
     mock.module(moduleUrl('../lib/prisma'), {
         namedExports: { prisma: fakePrisma },
     });
+    // lib/storage and lib/session load env.ts, which throws without a
+    // JWT_SECRET. The reviews controller endpoints never touch storage or
+    // session minting, so stubs keep the test suite free of app secrets (CI).
+    mock.module(moduleUrl('../lib/storage'), {
+        namedExports: {
+            BUCKETS: { PORTFOLIO: 'portfolio', AVATAR: 'avatar' },
+            removeFromStorageByUrl: async () => undefined,
+        },
+    });
+    mock.module(moduleUrl('../lib/session'), {
+        namedExports: {
+            sendSession: () => undefined,
+        },
+    });
     controller = await import('./company.controller.js');
 });
 
