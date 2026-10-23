@@ -148,7 +148,8 @@ production build (CI runs that too).
 
 - **Accounts to sign in with:** `npm run db:seed -w api` creates the
   `snapshot_` provider, receiver and admin accounts, and the same three as
-  `demo_`, whose provider and receiver share one project in every status. It
+  `demo_`, whose provider and receiver share a project in every status and
+  its in-between states. It
   touches only rows named `snapshot_` or `demo_`, and rebuilds the demo
   projects on every run.
 - **If you changed an API response,** run `bash scripts/snapshot-api.sh` with
