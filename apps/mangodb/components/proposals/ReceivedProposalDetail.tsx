@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import type { ReceivedProposal } from '@mangodb/shared';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -25,8 +26,7 @@ export default function ReceivedProposalDetail({
     const [showRejectModal, setShowRejectModal] = useState(false);
 
     const companyName =
-        proposal.sender?.companyName ??
-        `Provider #${proposal.sender?.companyId}`;
+        proposal.sender.companyName || `Provider #${proposal.sender.companyId}`;
 
     return (
         <>
@@ -47,10 +47,12 @@ export default function ReceivedProposalDetail({
 
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-ink">
-                                    {proposal.sender?.companyName ||
-                                        `Provider #${proposal.sender?.companyId}`}
-                                </span>
+                                <Link
+                                    href={`/companies/${proposal.sender.companyId}`}
+                                    className="font-bold text-ink hover:underline"
+                                >
+                                    {companyName}
+                                </Link>
                             </div>
 
                             <div className="flex items-center gap-1 type-xs text-brand mt-0.5">
