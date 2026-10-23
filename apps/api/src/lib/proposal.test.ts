@@ -44,7 +44,10 @@ before(async () => {
 
 type Row = Parameters<typeof lib.toSentProposal>[0];
 
-function makeRow(company: Row['listing']['company']): Row {
+function makeRow(
+    company: Row['listing']['company'],
+    listingType: string = 'JOB',
+): Row {
     return {
         proposalId: 7,
         listingId: 42,
@@ -54,12 +57,12 @@ function makeRow(company: Row['listing']['company']): Row {
         duration: new Prisma.Decimal(14),
         proposalStatus: 'PENDING',
         createdAt: new Date('2026-10-01T08:30:00.000Z'),
-        listing: { listingTitle: 'Build a landing page', company },
+        listing: { listingTitle: 'Build a landing page', listingType, company },
     };
 }
 
 describe('toSentProposal', () => {
-    it('adds the listing owner as recipient', () => {
+    it('adds the listing owner as recipient and includes listingType', () => {
         const result = lib.toSentProposal(
             makeRow({
                 companyId: 9,
@@ -74,6 +77,22 @@ describe('toSentProposal', () => {
             companyPhoto: 'https://example.com/m.png',
         });
         assert.equal(result.listingTitle, 'Build a landing page');
+        assert.equal(result.listingType, 'JOB');
+    });
+
+    it('sets listingType to SERVICE on a service hire request', () => {
+        const result = lib.toSentProposal(
+            makeRow(
+                {
+                    companyId: 9,
+                    companyName: 'Mango Co',
+                    companyPhoto: null,
+                },
+                'SERVICE',
+            ),
+        );
+
+        assert.equal(result.listingType, 'SERVICE');
     });
 
     // No listing lacks an owner, and nothing creates one without, so a
