@@ -1,0 +1,29 @@
+{
+    "request": "GET /companies/142/reviews",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "comment": "Snapshot Probe Review",
+                "createdAt": "<timestamp>",
+                "deliveryTimeScore": 4,
+                "projectId": "<project_id>",
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewId": "<review_id>",
+                "serviceScore": 4,
+                "valueForMoneyScore": 5,
+                "workQualityScore": 5
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 1,
+            "totalPages": 1
+        }
+    }
+}
