@@ -404,7 +404,7 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.equal(result.status, 201);
         assert.equal(result.body.proposalId, 1);
         assert.equal(result.body.totalBudget, 80000);
-        assert.equal(result.body.projectStatus, 'ACTIVE');
+        assert.equal(result.body.projectStatus, 'AWAITING_QUOTATION');
         assert.match(String(result.body.startDate), /^\d{4}-\d{2}-\d{2}$/);
         assert.equal(listings[0]!.listingStatus, 'CLOSED');
         assert.deepEqual(

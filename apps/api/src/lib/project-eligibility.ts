@@ -3,18 +3,17 @@ import type { ProjectStatus } from '@mangodb/shared';
 
 // US1-6. project.status is a free-text column (see schema.prisma) with no
 // enum or check constraint behind it; ProjectStatus in packages/shared is the
-// only enforcement (docs/conventions.md §6). "Ongoing" means ACTIVE —
-// COMPLETED and CANCELLED projects do not block deleting a company.
-const ONGOING_STATUS = 'ACTIVE' satisfies ProjectStatus;
+// only enforcement (docs/conventions.md §6). Only a finished project stops
+// blocking deletion; every other status is ongoing (ADR 0015).
+const FINISHED_STATUSES = ['COMPLETED', 'CANCELLED'] satisfies ProjectStatus[];
 
-// A company sits on a project either as the provider who sent the winning
-// proposal (proposal.senderId) or as the receiver who posted the listing
-// that proposal answers (proposal.listing.companyId) — an accountType of
-// BOTH can be either, so both paths are checked.
+// A company sits on a project either as the sender of the accepted proposal
+// or as the owner of the listing it answers. On a job the sender is the
+// Provider, on a service the Receiver (ADR 0016), so both paths are checked.
 export async function hasOngoingProject(companyId: number): Promise<boolean> {
     const ongoingProject = await prisma.project.findFirst({
         where: {
-            projectStatus: ONGOING_STATUS,
+            projectStatus: { notIn: FINISHED_STATUSES },
             proposal: {
                 OR: [{ senderId: companyId }, { listing: { companyId } }],
             },
