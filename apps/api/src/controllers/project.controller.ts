@@ -2,8 +2,13 @@ import type { Request, Response } from 'express';
 import type { ProjectStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
-import { isRecordNotFound } from '../lib/prisma-errors';
-import { assertProjectParty, projectSelect, toProject } from '../lib/project';
+import { orConflict } from '../lib/prisma-errors';
+import {
+    assertProjectParty,
+    moveProjectStatus,
+    projectSelect,
+    toProject,
+} from '../lib/project';
 import { parseParams } from '../middleware/validate';
 import { projectIdParamSchema } from '../schemas/project.schema';
 
@@ -28,9 +33,9 @@ export async function reportDeposit(
     }
 
     // The where repeats the checks, so a double click finds no row to update
-    // (P2025) and becomes a 409 instead of moving the time.
-    try {
-        const row = await prisma.project.update({
+    // and becomes a 409 instead of moving the time.
+    const row = await orConflict(
+        prisma.project.update({
             where: {
                 projectId,
                 projectStatus: 'AWAITING_DEPOSIT' satisfies ProjectStatus,
@@ -38,12 +43,43 @@ export async function reportDeposit(
             },
             data: { depositReportedAt: new Date() },
             select: projectSelect,
-        });
-        res.json(toProject(row));
-    } catch (err) {
-        if (isRecordNotFound(err)) {
-            throw ApiError.conflict('Deposit has already been reported');
-        }
-        throw err;
+        }),
+        'Deposit has already been reported',
+    );
+    res.json(toProject(row));
+}
+
+// US4-7. The Provider confirms the deposit arrived, and the work starts:
+// AWAITING_DEPOSIT to IN_PROGRESS, with the time. Only after the Receiver
+// reported it (ADR 0015).
+export async function confirmDeposit(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can confirm the deposit');
     }
+
+    // One transaction: if the deposit was never reported, the 409 also undoes
+    // the status move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'AWAITING_DEPOSIT',
+            'IN_PROGRESS',
+        );
+        return orConflict(
+            tx.project.update({
+                where: { projectId, depositReportedAt: { not: null } },
+                data: { depositConfirmedAt: new Date() },
+                select: projectSelect,
+            }),
+            'The Receiver has not reported the deposit yet',
+        );
+    });
+    res.json(toProject(row));
 }

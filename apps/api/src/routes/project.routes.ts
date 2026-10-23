@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { reportDeposit } from '../controllers/project.controller';
+import {
+    confirmDeposit,
+    reportDeposit,
+} from '../controllers/project.controller';
 
 export const projectRoutes = Router();
 
@@ -9,3 +12,7 @@ export const projectRoutes = Router();
 // be either side, so who is the Receiver is worked out per project in the
 // controller (assertProjectParty). Outsiders get 404.
 projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
+
+// US4-7. The Provider confirms the deposit arrived; the project goes
+// IN_PROGRESS. Same guards as report-deposit, but only the Provider may act.
+projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
