@@ -425,8 +425,9 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
 - Project, quotation, update and review endpoints. The tables and the shared
-  types exist (ADRs 0015-0018); the only endpoint is accepting a proposal,
-  which creates the project row — Sprint 3 builds the rest.
+  types exist (ADRs 0015-0018); the only endpoints are accepting a proposal,
+  which creates the project row, and `POST /projects/:projectId/report-deposit`
+  — Sprint 3 builds the rest.
 
 ---
 
