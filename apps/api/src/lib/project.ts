@@ -134,3 +134,36 @@ export async function assertProjectParty(
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
 }
+
+// ADR 0015: the only moves a project may make. COMPLETED and CANCELLED are
+// final. Who may make each move is checked by the endpoint, not here.
+const PROJECT_MOVES: Record<ProjectStatus, readonly ProjectStatus[]> = {
+    AWAITING_QUOTATION: ['AWAITING_DEPOSIT', 'CANCELLED'],
+    AWAITING_DEPOSIT: ['IN_PROGRESS', 'CANCELLED'],
+    IN_PROGRESS: ['AWAITING_ACCEPTANCE'],
+    AWAITING_ACCEPTANCE: ['IN_PROGRESS', 'COMPLETED'],
+    COMPLETED: [],
+    CANCELLED: [],
+};
+
+// Moves a project to its next status, inside the caller's transaction. A
+// move the table above does not list is a 409 that writes nothing. The from
+// in the where is the check: after a double click, or the other party moving
+// it a moment ago, nothing matches, so that is a 409 too.
+export async function moveProjectStatus(
+    tx: Prisma.TransactionClient,
+    projectId: number,
+    from: ProjectStatus,
+    to: ProjectStatus,
+): Promise<void> {
+    if (!PROJECT_MOVES[from].includes(to)) {
+        throw ApiError.conflict(`Project cannot move from ${from} to ${to}`);
+    }
+    const { count } = await tx.project.updateMany({
+        where: { projectId, projectStatus: from },
+        data: { projectStatus: to },
+    });
+    if (count === 0) {
+        throw ApiError.conflict(`Project is not ${from}`);
+    }
+}
