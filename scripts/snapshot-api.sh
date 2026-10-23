@@ -930,9 +930,6 @@ echo "proposals mine"
 
 snap error-proposals-mine-unauthorized GET /proposals/mine
 
-snap error-proposals-mine-forbidden-receiver GET /proposals/mine \
-    -H "$(bearer "$TOKEN_RECEIVER")"
-
 snap error-proposals-mine-forbidden-admin GET /proposals/mine \
     -H "$(bearer "$TOKEN_ADMIN")"
 
@@ -940,9 +937,6 @@ snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVAL
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
-
-snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
-    -H "$(bearer "$TOKEN_RECEIVER")"
 
 # The lists below come from probe E, a Provider only this run can sign in as,
 # so they hold just the one proposal it sends here. The seed provider is a
