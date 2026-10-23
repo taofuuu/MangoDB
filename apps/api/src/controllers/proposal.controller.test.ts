@@ -1,14 +1,20 @@
 /*
  * Tests for proposal.controller.ts:
+ * - GET /proposals/mine (listMyProposals): sent proposals and hire requests for
+ *   Providers and Receivers with pagination, status filter, and listingType (US2-9).
  * - GET /proposals/mine/counts (getMyProposalCounts): the numbers on the
  *   Total / Pending / Accepted / Rejected chips of the Your Proposals page
  *   (US2-9).
  * - POST /jobs/:jobId/proposals (createProposal, US2-8).
  *
  * What they cover:
- * - The answer counts only the caller's own proposals. Another Provider's
- *   proposals must not leak into the numbers.
- * - ?status= is not read here: the chips must not change when the list
+ * - Each item carries listingType (JOB or SERVICE) and listingTitle.
+ * - Both Providers and Receivers can list their own sent proposals/hire requests.
+ * - Another company's proposals must not leak into the results.
+ * - Status filtering (?status=) and pagination work correctly.
+ * - The count answer counts only the caller's own proposals. Another Provider's
+ *   or Receiver's proposals must not leak into the numbers.
+ * - ?status= is not read for counts: the chips must not change when the list
  *   below them is filtered. The list endpoint handles filtering.
  * - A soft-deleted company's job is 404 to a proposal, even while it is still
  *   OPEN, and nothing is written. An active company's open job takes one.
@@ -33,27 +39,42 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
-import type { Proposal, ProposalStatusCounts } from '@mangodb/shared';
+import type {
+    Paginated,
+    Proposal,
+    ProposalStatusCounts,
+    SentProposal,
+} from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
 
 type Row = { senderId: number; proposalStatus: string };
 
-// A job posting with its owner's deletedAt joined in.
+// A job posting or service with its owner's company and deletedAt joined in.
 type ListingRow = {
     listingId: number;
+    listingTitle?: string;
     listingType: 'JOB' | 'SERVICE';
     companyId: number;
     listingStatus: 'OPEN' | 'CLOSED';
-    company: { deletedAt: Date | null };
+    company: {
+        companyId?: number;
+        companyName?: string;
+        companyPhoto?: string | null;
+        deletedAt: Date | null;
+    };
 };
 
-// The accept tests need whole proposal rows; the counts tests above only need
+// The accept and mine tests need whole proposal rows; the counts tests above only need
 // sender and status, so they keep the smaller `rows`.
 type ProposalRow = {
     proposalId: number;
     listingId: number;
+    senderId?: number;
     proposalBudget: number;
     proposalStatus: string;
+    proposalTerms?: string;
+    duration?: number;
+    createdAt?: Date;
 };
 
 type ProjectRow = {
@@ -75,9 +96,11 @@ function snapshotTables(): string {
 }
 
 const fakePrisma = {
-    // No rollback here: every refusal in acceptProposalTx throws before its
-    // first write, which is what the "changes nothing" tests check.
-    $transaction: (work: (tx: unknown) => Promise<unknown>) => work(fakePrisma),
+    // Both forms Prisma has: a list of queries (the paged lists) or a
+    // callback given the client (accept). No rollback in either.
+    $transaction: (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => (typeof work === 'function' ? work(fakePrisma) : Promise.all(work)),
     project: {
         create: async (args: { data: Omit<ProjectRow, 'projectId'> }) => {
             const row = { ...args.data, projectId: projects.length + 1 };
@@ -194,6 +217,60 @@ const fakePrisma = {
                 _count: { _all: n },
             }));
         },
+        count: async (args: {
+            where: { senderId: number; proposalStatus?: string };
+        }) => {
+            return proposals.filter(
+                (p) =>
+                    p.senderId === args.where.senderId &&
+                    (args.where.proposalStatus === undefined ||
+                        p.proposalStatus === args.where.proposalStatus),
+            ).length;
+        },
+        findMany: async (args: {
+            where: { senderId: number; proposalStatus?: string };
+            skip?: number;
+            take?: number;
+            orderBy?: unknown;
+            select?: unknown;
+        }) => {
+            let hits = proposals.filter(
+                (p) =>
+                    p.senderId === args.where.senderId &&
+                    (args.where.proposalStatus === undefined ||
+                        p.proposalStatus === args.where.proposalStatus),
+            );
+            hits = [...hits].sort((a, b) => b.proposalId - a.proposalId);
+            if (args.skip !== undefined) hits = hits.slice(args.skip);
+            if (args.take !== undefined) hits = hits.slice(0, args.take);
+            return hits.map((p) => {
+                const l = listings.find((row) => row.listingId === p.listingId);
+                return {
+                    proposalId: p.proposalId,
+                    listingId: p.listingId,
+                    senderId: p.senderId,
+                    proposalBudget: p.proposalBudget,
+                    proposalTerms: p.proposalTerms ?? 'Terms',
+                    duration: p.duration ?? 1,
+                    proposalStatus: p.proposalStatus,
+                    createdAt:
+                        p.createdAt ?? new Date('2026-10-01T08:00:00.000Z'),
+                    listing: {
+                        listingTitle: l?.listingTitle ?? 'Listing Title',
+                        listingType: l?.listingType ?? 'JOB',
+                        company: l
+                            ? {
+                                  companyId: l.companyId,
+                                  companyName:
+                                      l.company.companyName ??
+                                      `Company ${l.companyId}`,
+                                  companyPhoto: l.company.companyPhoto ?? null,
+                              }
+                            : null,
+                    },
+                };
+            });
+        },
     },
 };
 
@@ -263,6 +340,282 @@ describe('GET /proposals/mine/counts', () => {
             accepted: 0,
             rejected: 1,
         });
+    });
+
+    it('counts sent proposals/hire requests for a Receiver', async () => {
+        const RECEIVER = 42;
+        rows = [
+            { senderId: RECEIVER, proposalStatus: 'PENDING' },
+            { senderId: RECEIVER, proposalStatus: 'ACCEPTED' },
+            { senderId: RECEIVER, proposalStatus: 'REJECTED' },
+            { senderId: 99, proposalStatus: 'PENDING' },
+        ];
+
+        assert.deepEqual(await getCounts(RECEIVER), {
+            total: 3,
+            pending: 1,
+            accepted: 1,
+            rejected: 1,
+        });
+    });
+});
+
+async function list(
+    callerId: number,
+    query: Record<string, string> = {},
+): Promise<Paginated<SentProposal>> {
+    let body: unknown;
+    const req = { auth: { companyId: callerId }, query } as unknown as Request;
+    const res = {
+        json(value: unknown) {
+            body = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    await controller.listMyProposals(req, res);
+    return body as Paginated<SentProposal>;
+}
+
+describe('GET /proposals/mine', () => {
+    const PROVIDER = 1;
+    const RECEIVER = 2;
+
+    it('lists sent proposals for a Provider with listingType JOB and recipient', async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingTitle: 'Build backend API',
+                listingType: 'JOB',
+                companyId: RECEIVER,
+                listingStatus: 'OPEN',
+                company: {
+                    companyId: RECEIVER,
+                    companyName: 'Client Corp',
+                    companyPhoto: 'https://example.com/client.png',
+                    deletedAt: null,
+                },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 101,
+                listingId: 10,
+                senderId: PROVIDER,
+                proposalBudget: 50000,
+                proposalTerms: 'Delivery in 2 months',
+                duration: 2,
+                proposalStatus: 'PENDING',
+                createdAt: new Date('2026-10-01T10:00:00.000Z'),
+            },
+        ];
+
+        const body = await list(PROVIDER);
+
+        assert.equal(body.pagination.totalItems, 1);
+        assert.equal(body.items.length, 1);
+        const item = body.items[0]!;
+        assert.equal(item.proposalId, 101);
+        assert.equal(item.listingTitle, 'Build backend API');
+        assert.equal(item.listingType, 'JOB');
+        assert.equal(item.proposalBudget, 50000);
+        assert.equal(item.duration, 2);
+        assert.equal(item.proposalStatus, 'PENDING');
+        assert.equal(item.recipient.companyId, RECEIVER);
+        assert.equal(item.recipient.companyName, 'Client Corp');
+    });
+
+    it('lists sent hire requests for a Receiver with listingType SERVICE and recipient', async () => {
+        listings = [
+            {
+                listingId: 20,
+                listingTitle: 'Logo Design Service',
+                listingType: 'SERVICE',
+                companyId: PROVIDER,
+                listingStatus: 'OPEN',
+                company: {
+                    companyId: PROVIDER,
+                    companyName: 'Design Studio',
+                    companyPhoto: null,
+                    deletedAt: null,
+                },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 201,
+                listingId: 20,
+                senderId: RECEIVER,
+                proposalBudget: 15000,
+                proposalTerms: 'Need 3 logo concepts',
+                duration: 1,
+                proposalStatus: 'ACCEPTED',
+                createdAt: new Date('2026-10-02T12:00:00.000Z'),
+            },
+        ];
+
+        const body = await list(RECEIVER);
+
+        assert.equal(body.pagination.totalItems, 1);
+        assert.equal(body.items.length, 1);
+        const item = body.items[0]!;
+        assert.equal(item.proposalId, 201);
+        assert.equal(item.listingTitle, 'Logo Design Service');
+        assert.equal(item.listingType, 'SERVICE');
+        assert.equal(item.proposalBudget, 15000);
+        assert.equal(item.proposalStatus, 'ACCEPTED');
+        assert.equal(item.recipient.companyId, PROVIDER);
+        assert.equal(item.recipient.companyName, 'Design Studio');
+    });
+
+    it('filters sent proposals by status', async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingTitle: 'Task 1',
+                listingType: 'JOB',
+                companyId: RECEIVER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+            {
+                listingId: 20,
+                listingTitle: 'Task 2',
+                listingType: 'SERVICE',
+                companyId: PROVIDER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 1,
+                listingId: 10,
+                senderId: RECEIVER,
+                proposalBudget: 10000,
+                proposalStatus: 'PENDING',
+            },
+            {
+                proposalId: 2,
+                listingId: 20,
+                senderId: RECEIVER,
+                proposalBudget: 20000,
+                proposalStatus: 'ACCEPTED',
+            },
+            {
+                proposalId: 3,
+                listingId: 10,
+                senderId: RECEIVER,
+                proposalBudget: 30000,
+                proposalStatus: 'PENDING',
+            },
+        ];
+
+        const body = await list(RECEIVER, { status: 'PENDING' });
+
+        assert.equal(body.pagination.totalItems, 2);
+        assert.deepEqual(
+            body.items.map((i) => i.proposalId),
+            [3, 1],
+        );
+        assert.ok(body.items.every((i) => i.proposalStatus === 'PENDING'));
+    });
+
+    it('paginates sent proposals and calculates totalItems and totalPages correctly', async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingTitle: 'Task 1',
+                listingType: 'JOB',
+                companyId: RECEIVER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 1,
+                listingId: 10,
+                senderId: PROVIDER,
+                proposalBudget: 10000,
+                proposalStatus: 'PENDING',
+            },
+            {
+                proposalId: 2,
+                listingId: 10,
+                senderId: PROVIDER,
+                proposalBudget: 20000,
+                proposalStatus: 'PENDING',
+            },
+            {
+                proposalId: 3,
+                listingId: 10,
+                senderId: PROVIDER,
+                proposalBudget: 30000,
+                proposalStatus: 'PENDING',
+            },
+        ];
+
+        const page1 = await list(PROVIDER, { page: '1', pageSize: '2' });
+        assert.equal(page1.pagination.page, 1);
+        assert.equal(page1.pagination.pageSize, 2);
+        assert.equal(page1.pagination.totalItems, 3);
+        assert.equal(page1.pagination.totalPages, 2);
+        assert.deepEqual(
+            page1.items.map((i) => i.proposalId),
+            [3, 2],
+        );
+
+        const page2 = await list(PROVIDER, { page: '2', pageSize: '2' });
+        assert.equal(page2.pagination.page, 2);
+        assert.equal(page2.pagination.pageSize, 2);
+        assert.equal(page2.pagination.totalItems, 3);
+        assert.equal(page2.pagination.totalPages, 2);
+        assert.deepEqual(
+            page2.items.map((i) => i.proposalId),
+            [1],
+        );
+    });
+
+    it("does not leak another company's sent proposals or hire requests", async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingTitle: 'Task 1',
+                listingType: 'JOB',
+                companyId: 99,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 1,
+                listingId: 10,
+                senderId: PROVIDER,
+                proposalBudget: 10000,
+                proposalStatus: 'PENDING',
+            },
+            {
+                proposalId: 2,
+                listingId: 10,
+                senderId: RECEIVER,
+                proposalBudget: 20000,
+                proposalStatus: 'PENDING',
+            },
+        ];
+
+        const providerBody = await list(PROVIDER);
+        assert.deepEqual(
+            providerBody.items.map((i) => i.proposalId),
+            [1],
+        );
+
+        const receiverBody = await list(RECEIVER);
+        assert.deepEqual(
+            receiverBody.items.map((i) => i.proposalId),
+            [2],
+        );
     });
 });
 
