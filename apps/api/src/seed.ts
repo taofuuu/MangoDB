@@ -12,9 +12,9 @@
 // rewrite that seed, this adds a small set of accounts that are ours: one
 // prefix on every name, so this script can only ever touch rows it created.
 //
-// It also adds a second set, the `demo_` accounts, with one project in every
-// status (F.11), so each project screen can be built before the whole flow
-// works. They are kept apart from `snapshot_` so the snapshot baseline never
+// It also adds a second set, the `demo_` accounts, with a project in every
+// status and its in-between states (F.11), so each project screen can be
+// built before the whole flow works. They are kept apart from `snapshot_` so the snapshot baseline never
 // sees them.
 //
 // It does not replace the existing seed data. It deletes only two things: the
@@ -286,10 +286,20 @@ interface DemoProject {
     // Oldest first. Only the last may be PENDING or ACCEPTED (ADR 0017).
     quotations: QuotationStatus[];
     updates: { updateType: ProjectUpdateType; updateText: string }[];
+    // In-between states the status alone does not tell apart (issue #176).
+    depositReported?: boolean;
+    withoutReview?: boolean;
 }
 
-// One project per ADR 0015 status, each with the rows that status implies.
+// One project per ADR 0015 status, each with the rows that status implies,
+// plus the in-between states a project screen also has to show.
 const DEMO_PROJECTS: DemoProject[] = [
+    {
+        projectStatus: 'AWAITING_QUOTATION',
+        title: 'Landing page',
+        quotations: [],
+        updates: [],
+    },
     {
         projectStatus: 'AWAITING_QUOTATION',
         title: 'Company website',
@@ -297,10 +307,23 @@ const DEMO_PROJECTS: DemoProject[] = [
         updates: [],
     },
     {
+        projectStatus: 'AWAITING_QUOTATION',
+        title: 'Recruitment portal',
+        quotations: ['REJECTED'],
+        updates: [],
+    },
+    {
         projectStatus: 'AWAITING_DEPOSIT',
         title: 'Inventory app',
         quotations: ['REJECTED', 'ACCEPTED'],
         updates: [],
+    },
+    {
+        projectStatus: 'AWAITING_DEPOSIT',
+        title: 'Payroll tool',
+        quotations: ['ACCEPTED'],
+        updates: [],
+        depositReported: true,
     },
     {
         projectStatus: 'IN_PROGRESS',
@@ -331,6 +354,13 @@ const DEMO_PROJECTS: DemoProject[] = [
             { updateType: 'PROGRESS', updateText: 'Checkout works.' },
             { updateType: 'PROGRESS', updateText: 'Published to the stores.' },
         ],
+    },
+    {
+        projectStatus: 'COMPLETED',
+        title: 'Blog platform',
+        quotations: ['ACCEPTED'],
+        updates: [{ updateType: 'PROGRESS', updateText: 'Blog is live.' }],
+        withoutReview: true,
     },
     {
         projectStatus: 'CANCELLED',
@@ -381,7 +411,9 @@ async function seedDemoProjects(
 
     for (const demo of DEMO_PROJECTS) {
         const paid = PAID_STATUSES.includes(demo.projectStatus);
+        const reported = paid || demo.depositReported === true;
         const completed = demo.projectStatus === 'COMPLETED';
+        const reviewed = completed && demo.withoutReview !== true;
 
         // A job the Receiver posted and the Provider's accepted proposal on it,
         // the same rows accepting a proposal leaves behind.
@@ -408,7 +440,7 @@ async function seedDemoProjects(
                                 totalBudget: DEMO_BUDGET,
                                 startDate: fromDateOnly('2026-10-01'),
                                 projectStatus: demo.projectStatus,
-                                depositReportedAt: paid ? october(5) : null,
+                                depositReportedAt: reported ? october(5) : null,
                                 depositConfirmedAt: paid ? october(6) : null,
                                 completedAt: completed ? october(22) : null,
                                 quotation: {
@@ -428,7 +460,7 @@ async function seedDemoProjects(
                                 },
                                 // Spread, not review: undefined, which
                                 // exactOptionalPropertyTypes refuses.
-                                ...(completed && {
+                                ...(reviewed && {
                                     review: { create: DEMO_REVIEW },
                                 }),
                             },
@@ -476,7 +508,7 @@ async function main(): Promise<void> {
 
     const demoIds = await upsertAccounts(DEMO_ACCOUNTS);
     await seedDemoProjects(demoIds.get('PROVIDER')!, demoIds.get('RECEIVER')!);
-    console.log(`ok  ${DEMO_PROJECTS.length} demo projects, one per status`);
+    console.log(`ok  ${DEMO_PROJECTS.length} demo projects, every status`);
 
     console.log('\nPut these in scripts/.env.snapshot:\n');
     for (const account of ACCOUNTS) {
