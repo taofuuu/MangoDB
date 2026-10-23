@@ -1,11 +1,17 @@
 import type {
+    CompanyBrief,
     ListingType,
     Project,
+    ProjectDetail,
     ProjectRole,
     ProjectStatus,
+    ProjectSummary,
+    ProjectUpdate,
+    ProjectUpdateType,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
+import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { toDateOnly } from './dates';
 import { prisma } from './prisma';
 
@@ -166,4 +172,111 @@ export async function moveProjectStatus(
     if (count === 0) {
         throw ApiError.conflict(`Project is not ${from}`);
     }
+}
+
+// US4-9. A project with what its pages show beside it: the listing it came
+// from and both parties. A soft-deleted party is still selected: a project
+// is history (see Company.deletedAt).
+export const projectViewSelect = {
+    ...projectSelect,
+    proposal: {
+        select: {
+            senderId: true,
+            sender: { select: companyBriefSelect },
+            listing: {
+                select: {
+                    listingId: true,
+                    listingType: true,
+                    listingTitle: true,
+                    companyId: true,
+                    company: { select: companyBriefSelect },
+                },
+            },
+        },
+    },
+} as const satisfies Prisma.ProjectSelect;
+
+type ProjectViewRow = ProjectRow & {
+    proposal: PartiesRow & {
+        sender: CompanyBrief;
+        listing: {
+            listingId: number;
+            listingTitle: string;
+            company: CompanyBrief | null;
+        };
+    };
+};
+
+// Both parties as briefs, and which one the caller is. projectParties says
+// who is who, so the job/service rule stays in one place.
+function viewParties(
+    proposal: ProjectViewRow['proposal'],
+    callerId: number,
+): { provider: CompanyBrief; receiver: CompanyBrief; myRole: ProjectRole } {
+    const { providerId } = projectParties(proposal);
+    const sender = toCompanyBrief(proposal.sender);
+    const owner = toCompanyBrief(proposal.listing.company);
+    const senderIsProvider = providerId === proposal.senderId;
+    return {
+        provider: senderIsProvider ? sender : owner,
+        receiver: senderIsProvider ? owner : sender,
+        myRole: callerId === providerId ? 'provider' : 'receiver',
+    };
+}
+
+// One row of GET /projects/mine. proposal is pulled out of the row so the
+// nested select does not leak into the response through toProject's spread.
+export function toProjectSummary(
+    row: ProjectViewRow,
+    callerId: number,
+): ProjectSummary {
+    const { proposal, ...project } = row;
+    const { provider, receiver, myRole } = viewParties(proposal, callerId);
+    return {
+        ...toProject(project),
+        listingTitle: proposal.listing.listingTitle,
+        myRole,
+        otherParty: myRole === 'provider' ? receiver : provider,
+    };
+}
+
+// GET /projects/:projectId. Same row, with both parties named.
+export function toProjectDetail(
+    row: ProjectViewRow,
+    callerId: number,
+): ProjectDetail {
+    const { proposal, ...project } = row;
+    return {
+        ...toProject(project),
+        listingId: proposal.listing.listingId,
+        listingType: proposal.listing.listingType as ListingType,
+        listingTitle: proposal.listing.listingTitle,
+        ...viewParties(proposal, callerId),
+    };
+}
+
+// One entry of a project's progress timeline (US4-9, US4-10, US4-12).
+export const projectUpdateSelect = {
+    projectUpdateId: true,
+    projectId: true,
+    updateType: true,
+    updateText: true,
+    createdAt: true,
+} as const satisfies Prisma.ProjectUpdateSelect;
+
+type ProjectUpdateRow = {
+    projectUpdateId: number;
+    projectId: number;
+    updateType: string;
+    updateText: string;
+    createdAt: Date;
+};
+
+// The type cast is safe because only PROJECT_UPDATE_TYPES values are written.
+export function toProjectUpdate(row: ProjectUpdateRow): ProjectUpdate {
+    return {
+        ...row,
+        updateType: row.updateType as ProjectUpdateType,
+        createdAt: row.createdAt.toISOString(),
+    };
 }

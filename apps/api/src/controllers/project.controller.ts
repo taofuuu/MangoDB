@@ -1,0 +1,200 @@
+import type { Request, Response } from 'express';
+import type {
+    Paginated,
+    ProjectStatus,
+    ProjectSummary,
+    ProjectUpdateType,
+} from '@mangodb/shared';
+import type { Prisma } from '../generated/prisma/client';
+import { prisma } from '../lib/prisma';
+import { ApiError } from '../lib/api-error';
+import { pageArgs, toPagination } from '../lib/pagination';
+import { orConflict } from '../lib/prisma-errors';
+import {
+    assertProjectParty,
+    moveProjectStatus,
+    projectSelect,
+    projectUpdateSelect,
+    projectViewSelect,
+    toProject,
+    toProjectDetail,
+    toProjectSummary,
+    toProjectUpdate,
+} from '../lib/project';
+import { parseBody, parseParams, parseQuery } from '../middleware/validate';
+import {
+    createProjectUpdateSchema,
+    projectIdParamSchema,
+    projectListQuerySchema,
+} from '../schemas/project.schema';
+
+// US4-9 (T4.9.2). The caller's projects, newest first. A BOTH account gets
+// the ones it provides and the ones it receives in one list.
+export async function listMyProjects(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const callerId = req.auth!.companyId;
+    const { page, pageSize } = parseQuery(projectListQuerySchema, req.query);
+
+    // The two parties are the proposal's sender and the listing's owner
+    // (projectParties). No deletedAt filter: a project is history.
+    const where: Prisma.ProjectWhereInput = {
+        proposal: {
+            OR: [{ senderId: callerId }, { listing: { companyId: callerId } }],
+        },
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.project.count({ where }),
+        prisma.project.findMany({
+            where,
+            ...pageArgs({ page, pageSize }),
+            // A project has no createdAt; its id grows with each one opened.
+            orderBy: { projectId: 'desc' },
+            select: projectViewSelect,
+        }),
+    ]);
+
+    const body: Paginated<ProjectSummary> = {
+        items: rows.map((row) => toProjectSummary(row, callerId)),
+        pagination: toPagination(totalItems, { page, pageSize }),
+    };
+    res.json(body);
+}
+
+// US4-9 (T4.9.3). One project, for its two parties. Anyone else gets 404
+// from assertProjectParty, as if it did not exist.
+export async function getProject(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const callerId = req.auth!.companyId;
+    await assertProjectParty(projectId, callerId);
+
+    const row = await prisma.project.findUnique({
+        where: { projectId },
+        select: projectViewSelect,
+    });
+    if (!row) throw ApiError.notFound('Project not found');
+    res.json(toProjectDetail(row, callerId));
+}
+
+// US4-9 (T4.9.4). The progress timeline, oldest first, for both parties: the
+// Provider's notes and the Receiver's rejected-work reasons (US4-12). A bare
+// array, not paged: one project's timeline stays short.
+export async function listProjectUpdates(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const rows = await prisma.projectUpdate.findMany({
+        where: { projectId },
+        // The id breaks a tie between two updates saved in the same instant.
+        orderBy: [{ createdAt: 'asc' }, { projectUpdateId: 'asc' }],
+        select: projectUpdateSelect,
+    });
+    res.json(rows.map(toProjectUpdate));
+}
+
+// US4-10 (T4.10.1). The Provider adds a progress note while the work is
+// IN_PROGRESS. The server sets the time (createdAt). No edit or delete: a
+// correction is a new update.
+export async function createProjectUpdate(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const { updateText } = parseBody(createProjectUpdateSchema, req.body);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    // A party already knows the project exists, so the Receiver gets 403, not 404.
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can add a progress update');
+    }
+    if (project.projectStatus !== ('IN_PROGRESS' satisfies ProjectStatus)) {
+        throw ApiError.conflict('Project is not IN_PROGRESS');
+    }
+
+    const row = await prisma.projectUpdate.create({
+        data: {
+            projectId,
+            updateType: 'PROGRESS' satisfies ProjectUpdateType,
+            updateText,
+        },
+        select: projectUpdateSelect,
+    });
+    res.status(201).json(toProjectUpdate(row));
+}
+
+// US4-6. The Receiver says the deposit is paid. Only the time is recorded:
+// the status stays AWAITING_DEPOSIT until the Provider confirms it (ADR 0015).
+// No money moves through the system.
+export async function reportDeposit(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    // A party already knows the project exists, so the Provider gets 403, not 404.
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can report the deposit');
+    }
+    if (
+        project.projectStatus !== ('AWAITING_DEPOSIT' satisfies ProjectStatus)
+    ) {
+        throw ApiError.conflict('Project is not AWAITING_DEPOSIT');
+    }
+
+    // The where repeats the checks, so a double click finds no row to update
+    // and becomes a 409 instead of moving the time.
+    const row = await orConflict(
+        prisma.project.update({
+            where: {
+                projectId,
+                projectStatus: 'AWAITING_DEPOSIT' satisfies ProjectStatus,
+                depositReportedAt: null,
+            },
+            data: { depositReportedAt: new Date() },
+            select: projectSelect,
+        }),
+        'Deposit has already been reported',
+    );
+    res.json(toProject(row));
+}
+
+// US4-7. The Provider confirms the deposit arrived, and the work starts:
+// AWAITING_DEPOSIT to IN_PROGRESS, with the time. Only after the Receiver
+// reported it (ADR 0015).
+export async function confirmDeposit(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can confirm the deposit');
+    }
+
+    // One transaction: if the deposit was never reported, the 409 also undoes
+    // the status move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'AWAITING_DEPOSIT',
+            'IN_PROGRESS',
+        );
+        return orConflict(
+            tx.project.update({
+                where: { projectId, depositReportedAt: { not: null } },
+                data: { depositConfirmedAt: new Date() },
+                select: projectSelect,
+            }),
+            'The Receiver has not reported the deposit yet',
+        );
+    });
+    res.json(toProject(row));
+}
