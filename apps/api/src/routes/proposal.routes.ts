@@ -9,22 +9,22 @@ import {
 
 export const proposalRoutes = Router();
 
-// US2-9. List authenticated provider's proposals with pagination and status filter.
-// Guards: authenticated and holding Provider role (BOTH accounts also qualify).
+// US2-9. List authenticated company's proposals or hire requests with pagination and status filter.
+// Guards: authenticated and holding Provider or Receiver role (BOTH accounts also qualify).
 proposalRoutes.get(
     '/mine',
     requireAuth,
-    requireRole('provider'),
+    requireRole('provider', 'receiver'),
     listMyProposals,
 );
 
-// US2-9. The provider's proposal counts by status, for the page's chips. Its
+// US2-9. The company's proposal counts by status, for the page's chips. Its
 // own endpoint so /mine stays { items, pagination } (conventions §3).
 // Same guards as /mine.
 proposalRoutes.get(
     '/mine/counts',
     requireAuth,
-    requireRole('provider'),
+    requireRole('provider', 'receiver'),
     getMyProposalCounts,
 );
 

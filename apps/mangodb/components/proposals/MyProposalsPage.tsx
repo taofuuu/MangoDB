@@ -45,7 +45,7 @@ export default function MyProposalsPage() {
     const [counts, setCounts] = useState<ProposalStatusCounts | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // A 403: the account is not a Provider, so it has no proposals to list.
+    // A 403: the account is an Admin, which does not send proposals or hire requests.
     const [isRestricted, setIsRestricted] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
     const [selected, setSelected] = useState<SentProposal | null>(null);
@@ -128,7 +128,7 @@ export default function MyProposalsPage() {
                 icon="shield"
                 title="Access Restricted"
                 badge="Insufficient permissions"
-                message="You need a Provider account to send and view proposals."
+                message="You need a company account to send and view proposals."
                 showLogin={false}
             />
         );

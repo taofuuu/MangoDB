@@ -36,9 +36,11 @@ The words, from the database up:
   (a Provider offers work) or a **job** (a Receiver asks for it). Above the
   database it is always "service" or "job", never "service listing" or "job
   posting".
-- A **proposal** is a Provider's offer on a job. Its **sender** is the company
-  that wrote it, its **recipient** the company that owns the job, and it
-  points at the job by `listingId`.
+- A **proposal** is a Provider's offer on a job, or a Receiver's hire request
+  on a service (ADR 0016). Its **sender** is the company that wrote it, its
+  **recipient** the company that owns the listing, and it points at the listing
+  by `listingId`.
+
 - Accepting a proposal creates a **project**. Projects, quotations and reviews
   are Sprint 3's.
 
