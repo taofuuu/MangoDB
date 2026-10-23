@@ -9,10 +9,12 @@ import {
     assertProjectParty,
     moveProjectStatus,
     projectSelect,
+    projectUpdateSelect,
     projectViewSelect,
     toProject,
     toProjectDetail,
     toProjectSummary,
+    toProjectUpdate,
 } from '../lib/project';
 import { parseParams, parseQuery } from '../middleware/validate';
 import {
@@ -68,6 +70,25 @@ export async function getProject(req: Request, res: Response): Promise<void> {
     });
     if (!row) throw ApiError.notFound('Project not found');
     res.json(toProjectDetail(row, callerId));
+}
+
+// US4-9 (T4.9.4). The progress timeline, oldest first, for both parties: the
+// Provider's notes and the Receiver's rejected-work reasons (US4-12). A bare
+// array, not paged: one project's timeline stays short.
+export async function listProjectUpdates(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const rows = await prisma.projectUpdate.findMany({
+        where: { projectId },
+        // The id breaks a tie between two updates saved in the same instant.
+        orderBy: [{ createdAt: 'asc' }, { projectUpdateId: 'asc' }],
+        select: projectUpdateSelect,
+    });
+    res.json(rows.map(toProjectUpdate));
 }
 
 // US4-6. The Receiver says the deposit is paid. Only the time is recorded:

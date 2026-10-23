@@ -4,6 +4,7 @@ import {
     confirmDeposit,
     getProject,
     listMyProjects,
+    listProjectUpdates,
     reportDeposit,
 } from '../controllers/project.controller';
 
@@ -16,6 +17,9 @@ projectRoutes.get('/mine', requireAuth, listMyProjects);
 
 // US4-9. One project, for its two parties. Others get 404.
 projectRoutes.get('/:projectId', requireAuth, getProject);
+
+// US4-9. The progress timeline, oldest first. Parties only, as above.
+projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
 
 // US4-6. The Receiver reports the deposit as paid; the Provider confirms it
 // later (US4-7). Guards: authenticated only. No requireRole: a BOTH account can

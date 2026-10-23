@@ -6,6 +6,8 @@ import type {
     ProjectRole,
     ProjectStatus,
     ProjectSummary,
+    ProjectUpdate,
+    ProjectUpdateType,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
@@ -250,5 +252,31 @@ export function toProjectDetail(
         listingType: proposal.listing.listingType as ListingType,
         listingTitle: proposal.listing.listingTitle,
         ...viewParties(proposal, callerId),
+    };
+}
+
+// One entry of a project's progress timeline (US4-9, US4-10, US4-12).
+export const projectUpdateSelect = {
+    projectUpdateId: true,
+    projectId: true,
+    updateType: true,
+    updateText: true,
+    createdAt: true,
+} as const satisfies Prisma.ProjectUpdateSelect;
+
+type ProjectUpdateRow = {
+    projectUpdateId: number;
+    projectId: number;
+    updateType: string;
+    updateText: string;
+    createdAt: Date;
+};
+
+// The type cast is safe because only PROJECT_UPDATE_TYPES values are written.
+export function toProjectUpdate(row: ProjectUpdateRow): ProjectUpdate {
+    return {
+        ...row,
+        updateType: row.updateType as ProjectUpdateType,
+        createdAt: row.createdAt.toISOString(),
     };
 }
