@@ -149,3 +149,28 @@ describe('toProjectDetail', () => {
         assert.equal(detail.startDate, '2026-10-01');
     });
 });
+
+describe('providerCompletedProjectsWhere', () => {
+    it('builds where clause matching job sender and service owner for completed projects', () => {
+        const where = lib.providerCompletedProjectsWhere(12);
+        assert.deepEqual(where, {
+            projectStatus: 'COMPLETED',
+            OR: [
+                {
+                    proposal: {
+                        senderId: 12,
+                        listing: { listingType: 'JOB' },
+                    },
+                },
+                {
+                    proposal: {
+                        listing: {
+                            companyId: 12,
+                            listingType: 'SERVICE',
+                        },
+                    },
+                },
+            ],
+        });
+    });
+});

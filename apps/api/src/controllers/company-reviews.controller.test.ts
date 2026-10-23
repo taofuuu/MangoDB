@@ -1,6 +1,6 @@
 /*
  * Tests for GET /companies/:companyId/reviews and
- * GET /companies/:companyId/reviews/summary (US5-2).
+ * GET /companies/:companyId/reviews/summary (US5-3).
  *
  * Run: npm test (in apps/api).
  */
@@ -10,33 +10,12 @@ import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type { CompanyReview, Paginated, ReviewSummary } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
+import type { RatingSource } from '../lib/rating';
 
-type CompanyRow = {
+type CompanyRow = RatingSource & {
     companyId: number;
     accountType: string;
     deletedAt: Date | null;
-    proposal: {
-        project: {
-            review: {
-                workQualityScore: number;
-                serviceScore: number;
-                valueForMoneyScore: number;
-                deliveryTimeScore: number;
-            } | null;
-        } | null;
-    }[];
-    listing: {
-        proposal: {
-            project: {
-                review: {
-                    workQualityScore: number;
-                    serviceScore: number;
-                    valueForMoneyScore: number;
-                    deliveryTimeScore: number;
-                } | null;
-            } | null;
-        }[];
-    }[];
 };
 
 let targetCompany: CompanyRow | null;

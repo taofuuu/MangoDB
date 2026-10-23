@@ -36,7 +36,7 @@ export function toReview(row: ReviewRow): Review {
     return { ...row, createdAt: row.createdAt.toISOString() };
 }
 
-// US5-2. Reviews on a Provider's completed projects, with the Receiver that
+// US5-3. Reviews on a Provider's completed projects, with the Receiver that
 // wrote each one.
 export const companyReviewSelect = {
     ...reviewSelect,
@@ -74,7 +74,8 @@ export type CompanyReviewRow = ReviewRow & {
 };
 
 // Maps a review and identifies the Receiver: on a Job the Receiver is the
-// listing owner; on a Service the Receiver is the proposal sender (ADR 0016).
+// listing owner; on a Service the Receiver is the proposal sender. Follows
+// projectParties' role determination rule (ADR 0016).
 export function toCompanyReview(row: CompanyReviewRow): CompanyReview {
     const { project, ...review } = row;
     const isJob =

@@ -1,11 +1,5 @@
 import type { Request, Response } from 'express';
-import type {
-    CompanyReview,
-    CompanySummary,
-    ListingType,
-    Paginated,
-    ProjectStatus,
-} from '@mangodb/shared';
+import type { CompanyReview, CompanySummary, Paginated } from '@mangodb/shared';
 import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
@@ -38,6 +32,7 @@ import {
     hasOngoingProject,
     ONGOING_PROJECT_BLOCKS_DELETE,
 } from '../lib/project-eligibility';
+import { providerCompletedProjectsWhere } from '../lib/project';
 import { getRating, ratingSelect } from '../lib/rating';
 import { companyReviewSelect, toCompanyReview } from '../lib/review';
 import { splitWords } from '../lib/search';
@@ -329,7 +324,7 @@ export async function listCompanies(
     res.json(body);
 }
 
-// US5-2. A Provider's reviews on completed projects, newest first. Paged.
+// US5-3. A Provider's reviews on completed projects, newest first. Paged.
 // Outsiders or unknown/deleted companies answer 404.
 export async function listProviderReviews(
     req: Request,
@@ -350,25 +345,7 @@ export async function listProviderReviews(
     }
 
     const where: Prisma.ReviewWhereInput = {
-        project: {
-            projectStatus: 'COMPLETED' satisfies ProjectStatus,
-            OR: [
-                {
-                    proposal: {
-                        senderId: companyId,
-                        listing: { listingType: 'JOB' satisfies ListingType },
-                    },
-                },
-                {
-                    proposal: {
-                        listing: {
-                            companyId,
-                            listingType: 'SERVICE' satisfies ListingType,
-                        },
-                    },
-                },
-            ],
-        },
+        project: providerCompletedProjectsWhere(companyId),
     };
 
     const [totalItems, rows] = await prisma.$transaction([
@@ -388,7 +365,7 @@ export async function listProviderReviews(
     res.json(body);
 }
 
-// US5-2. A Provider's rating summary (mean and review count). Standalone
+// US5-3. A Provider's rating summary (mean and review count). Standalone
 // endpoint so the review list stays { items, pagination } (ADR 0018, T5.1.3).
 export async function getProviderReviewSummary(
     req: Request,

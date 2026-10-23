@@ -54,7 +54,7 @@ companyRoutes.delete(
     deleteMyAccount,
 );
 
-// US5-2. A Provider's reviews on completed projects, newest first. Paged.
+// US5-3. A Provider's reviews on completed projects, newest first. Paged.
 companyRoutes.get(
     '/:companyId/reviews',
     requireAuth,
@@ -62,7 +62,7 @@ companyRoutes.get(
     listProviderReviews,
 );
 
-// US5-2. A Provider's rating summary (average and review count).
+// US5-3. A Provider's rating summary (average and review count).
 companyRoutes.get(
     '/:companyId/reviews/summary',
     requireAuth,

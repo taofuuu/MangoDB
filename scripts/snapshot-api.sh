@@ -1560,7 +1560,7 @@ snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review"
     -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
 
 # ---------------------------------------------------------------------------
-# 18. Project review read and company reviews (US5-2, ADR 0018)
+# 18. Project review read and company reviews (US5-3, ADR 0018)
 # ---------------------------------------------------------------------------
 
 echo

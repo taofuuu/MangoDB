@@ -134,7 +134,7 @@ export const companyListQuerySchema = z.object({
     ...pageQueryFields,
 });
 
-// US5-2. GET /companies/:companyId/reviews: standard paging for review lists.
+// US5-3. GET /companies/:companyId/reviews: standard paging for review lists.
 export const companyReviewListQuerySchema = z.object({
     ...pageQueryFields,
 });

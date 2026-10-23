@@ -42,6 +42,6 @@ projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
 // optional comment (ADR 0018). Second review is 409.
 projectRoutes.post('/:projectId/review', requireAuth, createReview);
 
-// US5-2. The project's review, for both parties. 404 until the Receiver submits
+// US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404.
 projectRoutes.get('/:projectId/review', requireAuth, getProjectReview);

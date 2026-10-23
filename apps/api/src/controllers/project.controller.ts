@@ -238,7 +238,7 @@ export async function createReview(req: Request, res: Response): Promise<void> {
     }
 }
 
-// US5-2. The project's review, for both parties. 404 until the Receiver submits
+// US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404 (conventions §4).
 export async function getProjectReview(
     req: Request,
