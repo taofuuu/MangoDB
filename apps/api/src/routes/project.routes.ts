@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import {
     confirmDeposit,
+    getProject,
     listMyProjects,
     reportDeposit,
 } from '../controllers/project.controller';
@@ -12,6 +13,9 @@ export const projectRoutes = Router();
 // requireRole, for the same reason as report-deposit below. Declared before
 // /:projectId, or Express would try "mine" as an id.
 projectRoutes.get('/mine', requireAuth, listMyProjects);
+
+// US4-9. One project, for its two parties. Others get 404.
+projectRoutes.get('/:projectId', requireAuth, getProject);
 
 // US4-6. The Receiver reports the deposit as paid; the Provider confirms it
 // later (US4-7). Guards: authenticated only. No requireRole: a BOTH account can

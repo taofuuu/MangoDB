@@ -11,6 +11,7 @@ import {
     projectSelect,
     projectViewSelect,
     toProject,
+    toProjectDetail,
     toProjectSummary,
 } from '../lib/project';
 import { parseParams, parseQuery } from '../middleware/validate';
@@ -52,6 +53,21 @@ export async function listMyProjects(
         pagination: toPagination(totalItems, { page, pageSize }),
     };
     res.json(body);
+}
+
+// US4-9 (T4.9.3). One project, for its two parties. Anyone else gets 404
+// from assertProjectParty, as if it did not exist.
+export async function getProject(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const callerId = req.auth!.companyId;
+    await assertProjectParty(projectId, callerId);
+
+    const row = await prisma.project.findUnique({
+        where: { projectId },
+        select: projectViewSelect,
+    });
+    if (!row) throw ApiError.notFound('Project not found');
+    res.json(toProjectDetail(row, callerId));
 }
 
 // US4-6. The Receiver says the deposit is paid. Only the time is recorded:
