@@ -441,6 +441,24 @@ snap error-companies-one-invalid-id GET /companies/not-a-number \
 snap error-companies-one-id-too-large GET /companies/2147483648 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# US2-5. A Provider's completed work, newest first, for its public profile.
+snap companies-completed-projects GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-completed-projects-receiver GET "/companies/$RECEIVER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+snap error-companies-completed-projects-unauthorized GET "/companies/$PROVIDER_ID/completed-projects"
+snap error-companies-completed-projects-forbidden-admin GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap error-companies-completed-projects-not-found GET /companies/2147483647/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-admin GET "/companies/$ADMIN_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-invalid-id GET /companies/not-a-number/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-id-too-large GET /companies/2147483648/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+
 if [ "$READ_ONLY" = 1 ]; then
     echo
     echo "--read-only: stopping before the write endpoints"
