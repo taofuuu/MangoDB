@@ -993,7 +993,7 @@ if [ -z "$HIRE_SERVICE_ID" ]; then
     cat "$BODY" >&2
     exit 1
 fi
-SUBS+=(--id "hire_service_id=$HIRE_SERVICE_ID" --id "listing_id=$HIRE_SERVICE_ID")
+SUBS+=(--id "listing_id=$HIRE_SERVICE_ID")
 
 api POST /auth/register -H 'Content-Type: application/json' \
     -d "{\"companyName\":\"Snapshot Probe F\",\"username\":\"${RUN}f\",\"email\":\"${RUN}f@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0833333334\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
@@ -1020,12 +1020,8 @@ snap proposals-mine-receiver GET /proposals/mine \
 snap proposals-mine-receiver-counts GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_F")"
 
-if [ -n "$F_PROPOSAL_ID" ]; then
-    run_db "prisma.proposal.deleteMany({ where: { proposalId: $F_PROPOSAL_ID } })"
-fi
-if [ -n "$HIRE_SERVICE_ID" ]; then
-    run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
-fi
+# Deleting the service deletes its hire request too (ON DELETE CASCADE).
+run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
 
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_F")")" = 204 ] && F_LIVE=0
 

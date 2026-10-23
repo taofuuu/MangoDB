@@ -65,19 +65,13 @@ function makeJobProposalRow(company: Row['listing']['company']): Row {
 }
 
 function makeServiceHireRequestRow(company: Row['listing']['company']): Row {
+    const row = makeJobProposalRow(company);
     return {
-        proposalId: 8,
-        listingId: 101,
-        senderId: 4,
-        proposalBudget: new Prisma.Decimal('50000.00'),
-        proposalTerms: 'Full-stack development for our platform',
-        duration: new Prisma.Decimal(3),
-        proposalStatus: 'PENDING',
-        createdAt: new Date('2026-10-02T10:00:00.000Z'),
+        ...row,
         listing: {
+            ...row.listing,
             listingTitle: 'Full-stack web development',
             listingType: 'SERVICE',
-            company,
         },
     };
 }

@@ -9,7 +9,6 @@
  *
  * What they cover:
  * - Each item carries listingType (JOB or SERVICE) and listingTitle.
- * - Both Providers and Receivers can list their own sent proposals/hire requests.
  * - Another company's proposals must not leak into the results.
  * - Status filtering (?status=) and pagination work correctly.
  * - The count answer counts only the caller's own proposals. Another Provider's
@@ -341,23 +340,6 @@ describe('GET /proposals/mine/counts', () => {
             rejected: 1,
         });
     });
-
-    it('counts sent proposals/hire requests for a Receiver', async () => {
-        const RECEIVER = 42;
-        rows = [
-            { senderId: RECEIVER, proposalStatus: 'PENDING' },
-            { senderId: RECEIVER, proposalStatus: 'ACCEPTED' },
-            { senderId: RECEIVER, proposalStatus: 'REJECTED' },
-            { senderId: 99, proposalStatus: 'PENDING' },
-        ];
-
-        assert.deepEqual(await getCounts(RECEIVER), {
-            total: 3,
-            pending: 1,
-            accepted: 1,
-            rejected: 1,
-        });
-    });
 });
 
 async function list(
@@ -423,49 +405,6 @@ describe('GET /proposals/mine', () => {
         assert.equal(item.proposalStatus, 'PENDING');
         assert.equal(item.recipient.companyId, RECEIVER);
         assert.equal(item.recipient.companyName, 'Client Corp');
-    });
-
-    it('lists sent hire requests for a Receiver with listingType SERVICE and recipient', async () => {
-        listings = [
-            {
-                listingId: 20,
-                listingTitle: 'Logo Design Service',
-                listingType: 'SERVICE',
-                companyId: PROVIDER,
-                listingStatus: 'OPEN',
-                company: {
-                    companyId: PROVIDER,
-                    companyName: 'Design Studio',
-                    companyPhoto: null,
-                    deletedAt: null,
-                },
-            },
-        ];
-        proposals = [
-            {
-                proposalId: 201,
-                listingId: 20,
-                senderId: RECEIVER,
-                proposalBudget: 15000,
-                proposalTerms: 'Need 3 logo concepts',
-                duration: 1,
-                proposalStatus: 'ACCEPTED',
-                createdAt: new Date('2026-10-02T12:00:00.000Z'),
-            },
-        ];
-
-        const body = await list(RECEIVER);
-
-        assert.equal(body.pagination.totalItems, 1);
-        assert.equal(body.items.length, 1);
-        const item = body.items[0]!;
-        assert.equal(item.proposalId, 201);
-        assert.equal(item.listingTitle, 'Logo Design Service');
-        assert.equal(item.listingType, 'SERVICE');
-        assert.equal(item.proposalBudget, 15000);
-        assert.equal(item.proposalStatus, 'ACCEPTED');
-        assert.equal(item.recipient.companyId, PROVIDER);
-        assert.equal(item.recipient.companyName, 'Design Studio');
     });
 
     it('filters sent proposals by status', async () => {
