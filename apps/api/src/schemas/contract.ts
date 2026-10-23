@@ -17,6 +17,7 @@ import type {
     CreateJobRequest,
     CreateProjectUpdateRequest,
     CreateProposalRequest,
+    CreateReviewRequest,
     CreateServiceRequest,
     DeleteCompanyAccountRequest,
     RegisterRequest,
@@ -32,7 +33,10 @@ import type {
 import type { deleteCompanyAccountBodySchema } from './admin-company.schema';
 import type { createJobSchema, updateJobSchema } from './job.schema';
 import type { createProposalSchema } from './proposal.schema';
-import type { createProjectUpdateSchema } from './project.schema';
+import type {
+    createProjectUpdateSchema,
+    createReviewSchema,
+} from './project.schema';
 import type {
     createServiceSchema,
     updateServiceSchema,
@@ -122,4 +126,14 @@ type _CreateProjectUpdateMatchesContract = Assert<
 type _ContractMatchesCreateProjectUpdate = Assert<
     CreateProjectUpdateRequest,
     CreateProjectUpdateInput
+>;
+
+type CreateReviewInput = z.infer<typeof createReviewSchema>;
+type _CreateReviewMatchesContract = Assert<
+    CreateReviewInput,
+    CreateReviewRequest
+>;
+type _ContractMatchesCreateReview = Assert<
+    CreateReviewRequest,
+    CreateReviewInput
 >;
