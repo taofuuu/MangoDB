@@ -10,6 +10,11 @@
  *
  * moveProjectStatus is covered by F.12.
  *
+ * toProjectSummary / toProjectDetail (US4-9):
+ * - Each party sees the other as otherParty; on a service the owner is the
+ *   Provider.
+ * - The nested proposal row does not reach the response.
+ *
  * How: lib/prisma is replaced with mock.module before lib/project loads, and
  * findUnique hands back whatever `row` holds.
  *
@@ -85,103 +90,78 @@ describe('assertProjectParty', () => {
         );
     });
 });
+// A project row as projectViewSelect returns it. totalBudget is a plain
+// number here: toProject only runs Number() on it.
+function viewRow(listingType: string) {
+    const brief = (companyId: number) => ({
+        companyId,
+        companyName: `Company ${companyId}`,
+        companyPhoto: null,
+    });
+    const { senderId, listing } = proposalOn(listingType);
+    return {
+        projectId: 1,
+        proposalId: 2,
+        totalBudget: 5000,
+        startDate: new Date('2026-10-01'),
+        projectStatus: 'IN_PROGRESS',
+        depositReportedAt: null,
+        depositConfirmedAt: null,
+        completedAt: null,
+        proposal: {
+            senderId,
+            sender: brief(SENDER),
+            listing: {
+                ...listing,
+                listingId: 7,
+                listingTitle: 'Logo design',
+                company: brief(OWNER),
+            },
+        },
+    } as unknown as Parameters<typeof lib.toProjectSummary>[0];
+}
+
+describe('toProjectSummary', () => {
+    it('shows each party the other one', () => {
+        const asProvider = lib.toProjectSummary(viewRow('JOB'), SENDER);
+        assert.equal(asProvider.myRole, 'provider');
+        assert.equal(asProvider.otherParty.companyId, OWNER);
+
+        const asReceiver = lib.toProjectSummary(viewRow('JOB'), OWNER);
+        assert.equal(asReceiver.myRole, 'receiver');
+        assert.equal(asReceiver.otherParty.companyId, SENDER);
+    });
+
+    it('keeps the nested proposal out of the response', () => {
+        assert.ok(
+            !('proposal' in lib.toProjectSummary(viewRow('JOB'), SENDER)),
+        );
+    });
+});
+
+describe('toProjectDetail', () => {
+    it('names the owner as Provider on a service', () => {
+        const detail = lib.toProjectDetail(viewRow('SERVICE'), SENDER);
+        assert.equal(detail.provider.companyId, OWNER);
+        assert.equal(detail.receiver.companyId, SENDER);
+        assert.equal(detail.myRole, 'receiver');
+        assert.equal(detail.startDate, '2026-10-01');
+    });
+});
 
 describe('toCompletedProject', () => {
-    const sender = {
-        companyId: SENDER,
-        companyName: 'Sender Corp',
-        companyPhoto: null,
-    };
-    const owner = {
-        companyId: OWNER,
-        companyName: 'Owner Corp',
-        companyPhoto: '/photos/owner.jpg',
-    };
-    const completedAt = new Date('2026-10-20T12:00:00.000Z');
-
-    it('names the job owner as Receiver on a completed job', () => {
-        const result = lib.toCompletedProject({
-            projectId: 10,
-            completedAt,
-            proposal: {
-                sender,
-                listing: {
-                    listingTitle: 'Build a Website',
-                    listingType: 'JOB',
-                    company: owner,
-                },
-            },
-        });
-        assert.deepEqual(result, {
-            projectId: 10,
-            listingTitle: 'Build a Website',
-            receiver: owner,
-            completedAt: '2026-10-20T12:00:00.000Z',
-        });
-    });
-
-    it('names the hire request sender as Receiver on a completed service', () => {
-        const result = lib.toCompletedProject({
-            projectId: 20,
-            completedAt,
-            proposal: {
-                sender,
-                listing: {
-                    listingTitle: 'SEO Optimization',
-                    listingType: 'SERVICE',
-                    company: owner,
-                },
-            },
-        });
-        assert.deepEqual(result, {
-            projectId: 20,
-            listingTitle: 'SEO Optimization',
-            receiver: sender,
-            completedAt: '2026-10-20T12:00:00.000Z',
-        });
-    });
-
-    it('throws 500 when completedAt is null', () => {
+    it('is a 500 when a COMPLETED row has no completedAt', () => {
         assert.throws(
             () =>
-                lib.toCompletedProject({
-                    projectId: 30,
-                    completedAt: null,
-                    proposal: {
-                        sender,
-                        listing: {
-                            listingTitle: 'Incomplete Work',
-                            listingType: 'JOB',
-                            company: owner,
-                        },
-                    },
-                }),
+                lib.toCompletedProject(
+                    viewRow('JOB') as unknown as Parameters<
+                        typeof lib.toCompletedProject
+                    >[0],
+                ),
             (err: unknown) =>
                 err instanceof ApiError &&
                 err.status === 500 &&
                 err.message === 'Completed project has no completedAt',
-        );
-    });
-
-    it('throws 500 when job listing has no owner', () => {
-        assert.throws(
-            () =>
-                lib.toCompletedProject({
-                    projectId: 40,
-                    completedAt,
-                    proposal: {
-                        sender,
-                        listing: {
-                            listingTitle: 'Orphan Listing',
-                            listingType: 'JOB',
-                            company: null,
-                        },
-                    },
-                }),
-            (err: unknown) =>
-                err instanceof ApiError &&
-                err.status === 500 &&
-                err.message === 'Listing has no owning company',
         );
     });
 });

@@ -1,20 +1,23 @@
 /*
- * Tests for GET /companies/:companyId/completed-projects
- * (listProviderCompletedProjects in project.controller.ts).
+ * Tests for project controller endpoints:
+ * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
+ * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
  * What they cover:
- * - 404 for an unknown, soft-deleted, or admin company.
- * - Only COMPLETED projects where the target company was the Provider are returned.
- * - Completed projects where the company was the Provider via a Job proposal (sender).
- * - Completed projects where the company was the Provider via a Service listing (owner).
- * - Projects where the company was the Receiver are excluded.
- * - Non-COMPLETED projects (IN_PROGRESS, AWAITING_DEPOSIT, etc.) are excluded.
- * - Newest first ordering by completedAt descending.
- * - Pagination (page, pageSize, totalItems, totalPages).
+ * - T4.10.3: a saved update has its date and time, set by the server. The
+ *   client cannot send one: an extra createdAt field is a 400.
+ * - T4.10.4: only the project's Provider can add one. The Receiver gets 403,
+ *   a company outside the project 404, and neither writes anything. A
+ *   project that is not IN_PROGRESS is a 409.
+ * - US2-5: a Provider's completed work, newest first, for its public profile.
+ *   Filters out non-COMPLETED projects and supports standard pagination.
+ *   Unknown, soft-deleted, and admin companies answer 404.
  *
  * How:
- * - Direct invocation of listProviderCompletedProjects with fake req and res.
- * - lib/prisma is mocked with in-memory companies and projects.
+ * - The test calls the controller function directly with a fake req and a
+ *   fake res that records the status and JSON body.
+ * - lib/prisma is replaced with mock.module before the controller loads, so no
+ *   test touches the shared Supabase database.
  *
  * Run: npm test (in apps/api).
  */
@@ -22,8 +25,22 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
-import type { CompletedProject, Paginated } from '@mangodb/shared';
+import type {
+    CompletedProject,
+    Paginated,
+    ProjectUpdate,
+} from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
+
+// On a job the sender is the Provider and the owner the Receiver (ADR 0016).
+const PROVIDER = 3;
+const RECEIVER = 9;
+const OUTSIDER = 42;
+
+const PROVIDER_ID = 10;
+const RECEIVER_ID = 20;
+const ADMIN_ID = 90;
+const DELETED_ID = 99;
 
 type Company = {
     companyId: number;
@@ -57,11 +74,6 @@ type ProjectRow = {
     };
 };
 
-const PROVIDER_ID = 10;
-const RECEIVER_ID = 20;
-const ADMIN_ID = 90;
-const DELETED_ID = 99;
-
 const companies: Company[] = [
     {
         companyId: PROVIDER_ID,
@@ -93,6 +105,8 @@ const companies: Company[] = [
     },
 ];
 
+let project: unknown = null;
+let created: Record<string, unknown>[] = [];
 let projects: ProjectRow[] = [];
 
 type ProjectWhereBranch = {
@@ -110,93 +124,111 @@ type ProjectWhereInput = {
     OR?: ProjectWhereBranch[];
 };
 
-type CompanyWhereInput = {
-    companyId?: number;
-    deletedAt?: null | Date;
-    accountType?: { not?: string };
-};
-
-function matchesWhere(p: ProjectRow, where: ProjectWhereInput): boolean {
-    if (where.projectStatus && p.projectStatus !== where.projectStatus) {
-        return false;
-    }
-    if (where.OR) {
-        return where.OR.some((branch) => {
-            const proposal = branch.proposal;
-            if (
-                proposal?.senderId !== undefined &&
-                proposal.listing?.listingType !== undefined
-            ) {
-                return (
-                    p.proposal.senderId === proposal.senderId &&
-                    p.proposal.listing.listingType ===
-                        proposal.listing.listingType
-                );
-            }
-            if (
-                proposal?.listing?.companyId !== undefined &&
-                proposal.listing.listingType !== undefined
-            ) {
-                return (
-                    p.proposal.listing.companyId ===
-                        proposal.listing.companyId &&
-                    p.proposal.listing.listingType ===
-                        proposal.listing.listingType
-                );
-            }
+function filterProjects(where?: ProjectWhereInput): ProjectRow[] {
+    if (!where) return projects;
+    return projects.filter((p) => {
+        if (where.projectStatus && p.projectStatus !== where.projectStatus) {
             return false;
-        });
-    }
-
-    return true;
+        }
+        if (where.OR && where.OR.length > 0) {
+            const matchesOr = where.OR.some((branch) => {
+                if (branch.proposal?.senderId !== undefined) {
+                    if (p.proposal.senderId !== branch.proposal.senderId)
+                        return false;
+                }
+                if (branch.proposal?.listing?.listingType !== undefined) {
+                    if (
+                        p.proposal.listing.listingType !==
+                        branch.proposal.listing.listingType
+                    )
+                        return false;
+                }
+                if (branch.proposal?.listing?.companyId !== undefined) {
+                    if (
+                        p.proposal.listing.companyId !==
+                        branch.proposal.listing.companyId
+                    )
+                        return false;
+                }
+                return true;
+            });
+            if (!matchesOr) return false;
+        }
+        return true;
+    });
 }
 
 const fakePrisma = {
     company: {
-        findFirst: async ({ where }: { where: CompanyWhereInput }) => {
-            return (
-                companies.find((c) => {
-                    if (c.companyId !== where.companyId) return false;
-                    if (where.deletedAt === null && c.deletedAt !== null) {
-                        return false;
-                    }
-                    if (
-                        where.accountType?.not &&
-                        c.accountType === where.accountType.not
-                    ) {
-                        return false;
-                    }
-                    return true;
-                }) ?? null
+        findFirst: ({
+            where,
+        }: {
+            where: {
+                companyId: number;
+                deletedAt: null;
+                accountType?: { not: string };
+            };
+        }) => {
+            const found = companies.find(
+                (c) => c.companyId === where.companyId,
             );
+            if (!found) return Promise.resolve(null);
+            if (found.deletedAt !== null) return Promise.resolve(null);
+            if (
+                where.accountType &&
+                found.accountType === where.accountType.not
+            ) {
+                return Promise.resolve(null);
+            }
+            return Promise.resolve(found);
         },
     },
     project: {
-        count: async ({ where }: { where: ProjectWhereInput }) => {
-            return projects.filter((p) => matchesWhere(p, where)).length;
+        findUnique: () => Promise.resolve(project),
+        count: ({ where }: { where?: ProjectWhereInput } = {}) => {
+            return Promise.resolve(filterProjects(where).length);
         },
-        findMany: async ({
+        findMany: ({
             where,
-            skip,
+            orderBy,
+            skip = 0,
             take,
         }: {
-            where: ProjectWhereInput;
+            where?: ProjectWhereInput;
+            orderBy?: {
+                completedAt?: 'asc' | 'desc';
+                projectId?: 'asc' | 'desc';
+            }[];
             skip?: number;
             take?: number;
-        }) => {
-            const filtered = projects.filter((p) => matchesWhere(p, where));
-            filtered.sort((a, b) => {
-                const timeA = a.completedAt ? a.completedAt.getTime() : 0;
-                const timeB = b.completedAt ? b.completedAt.getTime() : 0;
-                if (timeB !== timeA) return timeB - timeA;
-                return b.projectId - a.projectId;
-            });
-            const s = skip ?? 0;
-            const t = take ?? filtered.length;
-            return filtered.slice(s, s + t);
+        } = {}) => {
+            let matched = filterProjects(where);
+            if (orderBy) {
+                matched = [...matched].sort((a, b) => {
+                    const timeA = a.completedAt?.getTime() ?? 0;
+                    const timeB = b.completedAt?.getTime() ?? 0;
+                    if (timeB !== timeA) return timeB - timeA;
+                    return b.projectId - a.projectId;
+                });
+            }
+            const paged = matched.slice(
+                skip,
+                take !== undefined ? skip + take : undefined,
+            );
+            return Promise.resolve(paged);
         },
     },
-    $transaction: async (ops: Promise<unknown>[]) => Promise.all(ops),
+    projectUpdate: {
+        create: ({ data }: { data: Record<string, unknown> }) => {
+            created.push(data);
+            return Promise.resolve({
+                projectUpdateId: created.length,
+                ...data,
+                createdAt: new Date(),
+            });
+        },
+    },
+    $transaction: (promises: Promise<unknown>[]) => Promise.all(promises),
 };
 
 function moduleUrl(specifier: string): string {
@@ -213,348 +245,310 @@ before(async () => {
 });
 
 beforeEach(() => {
+    project = projectIn('IN_PROGRESS');
+    created = [];
     projects = [];
 });
 
-async function callCompletedProjects(
-    params: Record<string, string>,
-    query: Record<string, string> = {},
-): Promise<Paginated<CompletedProject>> {
-    const req = {
-        params,
-        query,
-        auth: { companyId: RECEIVER_ID, role: 'receiver', jti: 'jti-1' },
-    } as unknown as Request;
+function projectIn(projectStatus: string) {
+    return {
+        projectStatus,
+        proposal: {
+            senderId: PROVIDER,
+            listing: { listingType: 'JOB', companyId: RECEIVER },
+        },
+    };
+}
 
-    let body: Paginated<CompletedProject> | null = null;
+const brief = (companyId: number) => ({
+    companyId,
+    companyName: `Company ${companyId}`,
+    companyPhoto: null,
+});
+
+// A project between PROVIDER_ID and RECEIVER_ID. On a job the Provider sent
+// the proposal; on a service the Receiver did (ADR 0016).
+function row(
+    projectId: number,
+    listingType: 'JOB' | 'SERVICE' = 'JOB',
+    projectStatus = 'COMPLETED',
+    completedAt: Date | null = new Date('2026-10-01T00:00:00Z'),
+): ProjectRow {
+    const [senderId, ownerId] =
+        listingType === 'JOB'
+            ? [PROVIDER_ID, RECEIVER_ID]
+            : [RECEIVER_ID, PROVIDER_ID];
+    return {
+        projectId,
+        projectStatus,
+        completedAt,
+        proposal: {
+            senderId,
+            sender: brief(senderId),
+            listing: {
+                listingTitle: `Project ${projectId}`,
+                listingType,
+                companyId: ownerId,
+                company: brief(ownerId),
+            },
+        },
+    };
+}
+
+// Posts to project 1 as callerId. Returns the status and JSON it answered
+// with, or the ApiError it threw.
+async function postUpdate(
+    callerId: number,
+    body: unknown = { updateText: 'Wireframes done' },
+): Promise<unknown> {
+    const req = {
+        auth: { companyId: callerId },
+        params: { projectId: '1' },
+        body,
+    } as unknown as Request;
+    let status = 200;
+    let json: unknown;
     const res = {
-        status() {
+        status(code: number) {
+            status = code;
             return this;
         },
-        json(b: unknown) {
-            body = b as Paginated<CompletedProject>;
+        json(value: unknown) {
+            json = value;
             return this;
         },
     } as unknown as Response;
 
-    await controller.listProviderCompletedProjects(req, res);
-    return body!;
+    try {
+        await controller.createProjectUpdate(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as ProjectUpdate };
 }
 
+async function listProjects(
+    companyId: string,
+    query: Record<string, string> = {},
+): Promise<unknown> {
+    const req = {
+        params: { companyId },
+        query,
+        auth: { companyId: 999, role: 'receiver' },
+    } as unknown as Request;
+
+    let status = 200;
+    let json: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(value: unknown) {
+            json = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    try {
+        await controller.listProviderCompletedProjects(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as Paginated<CompletedProject> };
+}
+
+function isApiError(status: number) {
+    return (err: unknown) => err instanceof ApiError && err.status === status;
+}
+
+describe('POST /projects/:projectId/updates', () => {
+    it('saves a PROGRESS update with its date and time (T4.10.3)', async () => {
+        const startedAt = Date.now();
+        const result = (await postUpdate(PROVIDER)) as {
+            status: number;
+            body: ProjectUpdate;
+        };
+
+        assert.equal(result.status, 201);
+        assert.equal(result.body.updateType, 'PROGRESS');
+        assert.equal(result.body.updateText, 'Wireframes done');
+        const savedAt = Date.parse(result.body.createdAt);
+        assert.ok(savedAt >= startedAt && savedAt <= Date.now());
+        // The time comes from the database default, not from the request.
+        assert.equal(created.length, 1);
+        assert.ok(!('createdAt' in created[0]!));
+    });
+
+    it('refuses a createdAt sent by the client', async () => {
+        const result = await postUpdate(PROVIDER, {
+            updateText: 'Backdated',
+            createdAt: '2020-01-01T00:00:00.000Z',
+        });
+        assert.ok(isApiError(400)(result));
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 403 for the Receiver and writes nothing (T4.10.4)', async () => {
+        assert.ok(isApiError(403)(await postUpdate(RECEIVER)));
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 404 for a company outside the project (T4.10.4)', async () => {
+        assert.ok(isApiError(404)(await postUpdate(OUTSIDER)));
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 409 when the project is not IN_PROGRESS', async () => {
+        project = projectIn('AWAITING_ACCEPTANCE');
+        assert.ok(isApiError(409)(await postUpdate(PROVIDER)));
+        assert.equal(created.length, 0);
+    });
+});
+
 describe('GET /companies/:companyId/completed-projects', () => {
-    it('answers 404 when target company does not exist', async () => {
-        await assert.rejects(
-            callCompletedProjects({ companyId: '9999' }),
-            (err: unknown) =>
-                err instanceof ApiError &&
-                err.status === 404 &&
-                err.message === 'Company not found',
-        );
-    });
-
-    it('answers 404 when target company is soft-deleted', async () => {
-        await assert.rejects(
-            callCompletedProjects({ companyId: String(DELETED_ID) }),
-            (err: unknown) =>
-                err instanceof ApiError &&
-                err.status === 404 &&
-                err.message === 'Company not found',
-        );
-    });
-
-    it('answers 404 when target company is an admin account', async () => {
-        await assert.rejects(
-            callCompletedProjects({ companyId: String(ADMIN_ID) }),
-            (err: unknown) =>
-                err instanceof ApiError &&
-                err.status === 404 &&
-                err.message === 'Company not found',
-        );
-    });
-
-    it('answers 400 when companyId is not a valid int4 id', async () => {
-        await assert.rejects(
-            callCompletedProjects({ companyId: 'abc' }),
-            (err: unknown) => err instanceof ApiError && err.status === 400,
-        );
-    });
-
-    it('returns completed work on a job (Provider sent proposal, Receiver owned job)', async () => {
-        const receiverBrief = {
-            companyId: RECEIVER_ID,
-            companyName: 'Client Receiver Co',
-            companyPhoto: null,
+    it('returns an empty list when the provider has no completed projects', async () => {
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
         };
-        const providerBrief = {
-            companyId: PROVIDER_ID,
-            companyName: 'Top Provider Co',
-            companyPhoto: '/photos/provider.png',
-        };
-
-        projects.push({
-            projectId: 1,
-            projectStatus: 'COMPLETED',
-            completedAt: new Date('2026-09-15T10:00:00Z'),
-            proposal: {
-                senderId: PROVIDER_ID,
-                sender: providerBrief,
-                listing: {
-                    listingTitle: 'Custom CRM Build',
-                    listingType: 'JOB',
-                    companyId: RECEIVER_ID,
-                    company: receiverBrief,
-                },
-            },
-        });
-
-        const body = await callCompletedProjects({
-            companyId: String(PROVIDER_ID),
-        });
-        assert.equal(body.items.length, 1);
-        assert.deepEqual(body.items[0], {
-            projectId: 1,
-            listingTitle: 'Custom CRM Build',
-            receiver: receiverBrief,
-            completedAt: '2026-09-15T10:00:00.000Z',
-        });
-        assert.deepEqual(body.pagination, {
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.items, []);
+        assert.deepEqual(result.body.pagination, {
             page: 1,
             pageSize: 12,
-            totalItems: 1,
-            totalPages: 1,
+            totalItems: 0,
+            totalPages: 0,
         });
     });
 
-    it('returns completed work on a service (Provider owned service, Receiver sent hire request)', async () => {
-        const receiverBrief = {
-            companyId: RECEIVER_ID,
-            companyName: 'Client Receiver Co',
-            companyPhoto: null,
+    it('returns completed projects for a Provider on Job listings (newest first)', async () => {
+        projects.push(
+            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z')),
+            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z')),
+        );
+
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
         };
-        const providerBrief = {
-            companyId: PROVIDER_ID,
-            companyName: 'Top Provider Co',
-            companyPhoto: '/photos/provider.png',
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 2);
+        assert.equal(result.body.items[0]!.projectId, 2);
+        assert.equal(result.body.items[1]!.projectId, 1);
+        assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(
+            result.body.items[0]!.completedAt,
+            '2026-10-15T00:00:00.000Z',
+        );
+    });
+
+    it('returns completed projects for a Provider on Service listings (where Provider is service owner)', async () => {
+        projects.push(
+            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z')),
+        );
+
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
         };
-
-        projects.push({
-            projectId: 2,
-            projectStatus: 'COMPLETED',
-            completedAt: new Date('2026-10-01T14:30:00Z'),
-            proposal: {
-                senderId: RECEIVER_ID,
-                sender: receiverBrief,
-                listing: {
-                    listingTitle: 'Cloud Migration Service',
-                    listingType: 'SERVICE',
-                    companyId: PROVIDER_ID,
-                    company: providerBrief,
-                },
-            },
-        });
-
-        const body = await callCompletedProjects({
-            companyId: String(PROVIDER_ID),
-        });
-        assert.equal(body.items.length, 1);
-        assert.deepEqual(body.items[0], {
-            projectId: 2,
-            listingTitle: 'Cloud Migration Service',
-            receiver: receiverBrief,
-            completedAt: '2026-10-01T14:30:00.000Z',
-        });
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 1);
+        assert.equal(result.body.items[0]!.projectId, 3);
+        assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
     });
 
-    it('does not return projects where the company was the Receiver', async () => {
-        // Project where RECEIVER_ID owned the Job and PROVIDER_ID was the Provider.
-        // Asking for RECEIVER_ID's completed projects should NOT include this.
-        projects.push({
-            projectId: 3,
-            projectStatus: 'COMPLETED',
-            completedAt: new Date('2026-10-10T08:00:00Z'),
-            proposal: {
-                senderId: PROVIDER_ID,
-                sender: {
-                    companyId: PROVIDER_ID,
-                    companyName: 'Top Provider Co',
-                    companyPhoto: '/photos/provider.png',
-                },
-                listing: {
-                    listingTitle: 'Mobile App Revamp',
-                    listingType: 'JOB',
-                    companyId: RECEIVER_ID,
-                    company: {
-                        companyId: RECEIVER_ID,
-                        companyName: 'Client Receiver Co',
-                        companyPhoto: null,
-                    },
-                },
-            },
-        });
-
-        const body = await callCompletedProjects({
-            companyId: String(RECEIVER_ID),
-        });
-        assert.equal(body.items.length, 0);
-        assert.equal(body.pagination.totalItems, 0);
-    });
-
-    it('excludes non-COMPLETED projects', async () => {
-        const statuses = [
+    it('filters out non-COMPLETED projects', async () => {
+        const otherStatuses = [
             'AWAITING_QUOTATION',
             'AWAITING_DEPOSIT',
             'IN_PROGRESS',
             'AWAITING_ACCEPTANCE',
             'CANCELLED',
         ];
-        statuses.forEach((status, idx) => {
-            projects.push({
-                projectId: 10 + idx,
-                projectStatus: status,
-                completedAt: null,
-                proposal: {
-                    senderId: PROVIDER_ID,
-                    sender: {
-                        companyId: PROVIDER_ID,
-                        companyName: 'Top Provider Co',
-                        companyPhoto: null,
-                    },
-                    listing: {
-                        listingTitle: `Project in ${status}`,
-                        listingType: 'JOB',
-                        companyId: RECEIVER_ID,
-                        company: {
-                            companyId: RECEIVER_ID,
-                            companyName: 'Client Receiver Co',
-                            companyPhoto: null,
-                        },
-                    },
-                },
-            });
+        otherStatuses.forEach((status, i) => {
+            projects.push(row(10 + i, 'JOB', status, null));
         });
-
-        const body = await callCompletedProjects({
-            companyId: String(PROVIDER_ID),
-        });
-        assert.equal(body.items.length, 0);
-        assert.equal(body.pagination.totalItems, 0);
-    });
-
-    it('orders completed projects newest first by completedAt descending', async () => {
-        const receiverBrief = {
-            companyId: RECEIVER_ID,
-            companyName: 'Client Receiver Co',
-            companyPhoto: null,
-        };
-        const providerBrief = {
-            companyId: PROVIDER_ID,
-            companyName: 'Top Provider Co',
-            companyPhoto: null,
-        };
-
         projects.push(
-            {
-                projectId: 101,
-                projectStatus: 'COMPLETED',
-                completedAt: new Date('2026-08-01T00:00:00Z'),
-                proposal: {
-                    senderId: PROVIDER_ID,
-                    sender: providerBrief,
-                    listing: {
-                        listingTitle: 'Oldest Completed Project',
-                        listingType: 'JOB',
-                        companyId: RECEIVER_ID,
-                        company: receiverBrief,
-                    },
-                },
-            },
-            {
-                projectId: 102,
-                projectStatus: 'COMPLETED',
-                completedAt: new Date('2026-10-20T00:00:00Z'),
-                proposal: {
-                    senderId: PROVIDER_ID,
-                    sender: providerBrief,
-                    listing: {
-                        listingTitle: 'Newest Completed Project',
-                        listingType: 'JOB',
-                        companyId: RECEIVER_ID,
-                        company: receiverBrief,
-                    },
-                },
-            },
-            {
-                projectId: 103,
-                projectStatus: 'COMPLETED',
-                completedAt: new Date('2026-09-10T00:00:00Z'),
-                proposal: {
-                    senderId: PROVIDER_ID,
-                    sender: providerBrief,
-                    listing: {
-                        listingTitle: 'Middle Completed Project',
-                        listingType: 'JOB',
-                        companyId: RECEIVER_ID,
-                        company: receiverBrief,
-                    },
-                },
-            },
+            row(99, 'JOB', 'COMPLETED', new Date('2026-10-20T00:00:00Z')),
         );
 
-        const body = await callCompletedProjects({
-            companyId: String(PROVIDER_ID),
-        });
-        assert.equal(body.items.length, 3);
-        assert.equal(body.items[0]!.projectId, 102);
-        assert.equal(body.items[1]!.projectId, 103);
-        assert.equal(body.items[2]!.projectId, 101);
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 1);
+        assert.equal(result.body.items[0]!.projectId, 99);
     });
 
-    it('supports pagination with page and pageSize', async () => {
-        const receiverBrief = {
-            companyId: RECEIVER_ID,
-            companyName: 'Client Receiver Co',
-            companyPhoto: null,
-        };
-        const providerBrief = {
-            companyId: PROVIDER_ID,
-            companyName: 'Top Provider Co',
-            companyPhoto: null,
-        };
-
-        for (let i = 1; i <= 5; i++) {
-            projects.push({
-                projectId: 200 + i,
-                projectStatus: 'COMPLETED',
-                completedAt: new Date(`2026-0${i}-01T00:00:00Z`),
-                proposal: {
-                    senderId: PROVIDER_ID,
-                    sender: providerBrief,
-                    listing: {
-                        listingTitle: `Project ${i}`,
-                        listingType: 'JOB',
-                        companyId: RECEIVER_ID,
-                        company: receiverBrief,
-                    },
-                },
-            });
+    it('paginates completed projects according to query parameters', async () => {
+        for (let i = 1; i <= 25; i++) {
+            projects.push(
+                row(i, 'JOB', 'COMPLETED', new Date(Date.UTC(2026, 0, i))),
+            );
         }
 
-        const page1 = await callCompletedProjects(
-            { companyId: String(PROVIDER_ID) },
-            { page: '1', pageSize: '2' },
-        );
-        assert.equal(page1.items.length, 2);
-        assert.equal(page1.pagination.totalItems, 5);
-        assert.equal(page1.pagination.totalPages, 3);
-        assert.equal(page1.pagination.page, 1);
-        assert.equal(page1.pagination.pageSize, 2);
+        const result = (await listProjects(String(PROVIDER_ID), {
+            page: '2',
+            pageSize: '10',
+        })) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 10);
+        assert.equal(result.body.pagination.page, 2);
+        assert.equal(result.body.pagination.pageSize, 10);
+        assert.equal(result.body.pagination.totalItems, 25);
+        assert.equal(result.body.pagination.totalPages, 3);
+        // Newest first: page 1 was ids 25..16; page 2 is 15..6.
+        assert.equal(result.body.items[0]!.projectId, 15);
+        assert.equal(result.body.items[9]!.projectId, 6);
+    });
 
-        const page3 = await callCompletedProjects(
-            { companyId: String(PROVIDER_ID) },
-            { page: '3', pageSize: '2' },
+    it('answers 404 for an unknown company', async () => {
+        const result = await listProjects('9999');
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for a soft-deleted company', async () => {
+        const result = await listProjects(String(DELETED_ID));
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an ADMIN company', async () => {
+        const result = await listProjects(String(ADMIN_ID));
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 400 for an invalid companyId', async () => {
+        assert.ok(isApiError(400)(await listProjects('abc')));
+        assert.ok(isApiError(400)(await listProjects('0')));
+        assert.ok(isApiError(400)(await listProjects('-5')));
+        assert.ok(isApiError(400)(await listProjects('1.5')));
+    });
+
+    it('answers 400 for invalid pagination parameters', async () => {
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { page: '0' }),
+            ),
         );
-        assert.equal(page3.items.length, 1);
-        assert.equal(page3.pagination.page, 3);
-        assert.equal(page3.pagination.totalPages, 3);
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { page: '-1' }),
+            ),
+        );
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { pageSize: '0' }),
+            ),
+        );
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { pageSize: '100' }),
+            ),
+        );
     });
 });

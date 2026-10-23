@@ -36,9 +36,11 @@ The words, from the database up:
   (a Provider offers work) or a **job** (a Receiver asks for it). Above the
   database it is always "service" or "job", never "service listing" or "job
   posting".
-- A **proposal** is a Provider's offer on a job. Its **sender** is the company
-  that wrote it, its **recipient** the company that owns the job, and it
-  points at the job by `listingId`.
+- A **proposal** is a Provider's offer on a job, or a Receiver's hire request
+  on a service (ADR 0016). Its **sender** is the company that wrote it, its
+  **recipient** the company that owns the listing, and it points at the listing
+  by `listingId`.
+
 - Accepting a proposal creates a **project**. Projects, quotations and reviews
   are Sprint 3's.
 
@@ -427,7 +429,9 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   job uses.
 - Project, quotation, update and review endpoints. The tables and the shared
   types exist (ADRs 0015-0018); the only endpoints are accepting a proposal,
-  which creates the project row, and the deposit pair
+  which creates the project row, the reads `GET /projects/mine`,
+  `GET /projects/:projectId` and `…/updates`, the Provider's
+  `POST /projects/:projectId/updates`, and the deposit pair
   `POST /projects/:projectId/report-deposit` and `…/confirm-deposit` — Sprint
   3 builds the rest.
 
