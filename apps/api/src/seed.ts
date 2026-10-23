@@ -12,11 +12,23 @@
 // rewrite that seed, this adds a small set of accounts that are ours: one
 // prefix on every name, so this script can only ever touch rows it created.
 //
-// It does not replace the existing seed data. The one thing it deletes is the
-// spent probe accounts the snapshot script leaves behind (pruneProbeAccounts).
+// It also adds a second set, the `demo_` accounts, with one project in every
+// status (F.11), so each project screen can be built before the whole flow
+// works. They are kept apart from `snapshot_` so the snapshot baseline never
+// sees them.
+//
+// It does not replace the existing seed data. It deletes only two things: the
+// spent probe accounts the snapshot script leaves behind (pruneProbeAccounts),
+// and the demo projects, which every run rebuilds (seedDemoProjects).
 
+import type {
+    ProjectStatus,
+    ProjectUpdateType,
+    QuotationStatus,
+} from '@mangodb/shared';
 import { IS_PRODUCTION, SEED_PASSWORD } from './env';
 import { prisma } from './lib/prisma';
+import { fromDateOnly } from './lib/dates';
 import { hashPassword } from './auth/password';
 
 // Everything this script owns is named with it, so a `snapshot_` row is always
@@ -230,17 +242,222 @@ async function pruneProbeAccounts(): Promise<number> {
     return count;
 }
 
+// F.11. One login per role for the demo, apart from the snapshot accounts.
+const DEMO_PREFIX = 'demo';
+
+const DEMO_ACCOUNTS: SeedAccount[] = [
+    {
+        username: `${DEMO_PREFIX}_provider`,
+        email: `provider@${DEMO_PREFIX}.local`,
+        companyName: 'Demo Provider Co.',
+        accountType: 'PROVIDER',
+        phone: '0820000001',
+        companyType: ['Software House'],
+    },
+    {
+        username: `${DEMO_PREFIX}_receiver`,
+        email: `receiver@${DEMO_PREFIX}.local`,
+        companyName: 'Demo Receiver Co.',
+        accountType: 'RECEIVER',
+        phone: '0820000002',
+        companyType: ['SME'],
+    },
+    {
+        username: `${DEMO_PREFIX}_admin`,
+        email: `admin@${DEMO_PREFIX}.local`,
+        companyName: 'Demo Admin',
+        accountType: 'ADMIN',
+        phone: '0820000003',
+        companyType: ['Platform'],
+    },
+];
+
+// Every demo job starts with this, so a rerun finds its own and no one else's.
+const DEMO_TITLE = 'Demo project:';
+const DEMO_BUDGET = 120000;
+
+// shortcut: a dead placeholder link, not a real PDF; upload one once the
+// quotation upload (T4.1.3) has a storage bucket.
+const DEMO_QUOTATION_FILE = 'https://demo.local/quotation.pdf';
+
+interface DemoProject {
+    projectStatus: ProjectStatus;
+    title: string;
+    // Oldest first. Only the last may be PENDING or ACCEPTED (ADR 0017).
+    quotations: QuotationStatus[];
+    updates: { updateType: ProjectUpdateType; updateText: string }[];
+}
+
+// One project per ADR 0015 status, each with the rows that status implies.
+const DEMO_PROJECTS: DemoProject[] = [
+    {
+        projectStatus: 'AWAITING_QUOTATION',
+        title: 'Company website',
+        quotations: ['PENDING'],
+        updates: [],
+    },
+    {
+        projectStatus: 'AWAITING_DEPOSIT',
+        title: 'Inventory app',
+        quotations: ['REJECTED', 'ACCEPTED'],
+        updates: [],
+    },
+    {
+        projectStatus: 'IN_PROGRESS',
+        title: 'Booking system',
+        quotations: ['ACCEPTED'],
+        updates: [
+            { updateType: 'PROGRESS', updateText: 'Booking form is done.' },
+            {
+                updateType: 'WORK_REJECTED',
+                updateText: 'The confirmation email is never sent.',
+            },
+        ],
+    },
+    {
+        projectStatus: 'AWAITING_ACCEPTANCE',
+        title: 'Sales dashboard',
+        quotations: ['ACCEPTED'],
+        updates: [
+            { updateType: 'PROGRESS', updateText: 'Charts are connected.' },
+            { updateType: 'PROGRESS', updateText: 'Ready for your review.' },
+        ],
+    },
+    {
+        projectStatus: 'COMPLETED',
+        title: 'Mobile shop',
+        quotations: ['ACCEPTED'],
+        updates: [
+            { updateType: 'PROGRESS', updateText: 'Checkout works.' },
+            { updateType: 'PROGRESS', updateText: 'Published to the stores.' },
+        ],
+    },
+    {
+        projectStatus: 'CANCELLED',
+        title: 'Chatbot',
+        quotations: ['REJECTED'],
+        updates: [],
+    },
+];
+
+// The statuses the deposit has already been paid and confirmed in.
+const PAID_STATUSES: ProjectStatus[] = [
+    'IN_PROGRESS',
+    'AWAITING_ACCEPTANCE',
+    'COMPLETED',
+];
+
+// 9:00 UTC on a day of October 2026, so every timeline sorts the same way.
+function october(day: number): Date {
+    return new Date(Date.UTC(2026, 9, day, 9));
+}
+
+// ADR 0018: the completed project's one review, four 1-5 scores.
+const DEMO_REVIEW = {
+    workQualityScore: 5,
+    serviceScore: 4,
+    valueForMoneyScore: 4,
+    deliveryTimeScore: 3,
+    comment: 'Good work, a week later than planned.',
+    createdAt: october(22),
+};
+
+// Deletes the demo jobs and builds them again, so a rerun also undoes any
+// status the flow has moved since. Project ids change on every run.
+async function seedDemoProjects(
+    providerId: number,
+    receiverId: number,
+): Promise<void> {
+    const demoJobs = {
+        companyId: receiverId,
+        listingTitle: { startsWith: DEMO_TITLE },
+    };
+    // project.proposal_id is ON DELETE RESTRICT, so projects go first. Their
+    // quotations, updates and review cascade with them.
+    await prisma.project.deleteMany({
+        where: { proposal: { listing: demoJobs } },
+    });
+    await prisma.listing.deleteMany({ where: demoJobs });
+
+    for (const demo of DEMO_PROJECTS) {
+        const paid = PAID_STATUSES.includes(demo.projectStatus);
+        const completed = demo.projectStatus === 'COMPLETED';
+
+        // A job the Receiver posted and the Provider's accepted proposal on it,
+        // the same rows accepting a proposal leaves behind.
+        await prisma.listing.create({
+            data: {
+                companyId: receiverId,
+                listingTitle: `${DEMO_TITLE} ${demo.title}`,
+                listingDesc: `Seeded by src/seed.ts: a project that is ${demo.projectStatus}.`,
+                minBudget: 100000,
+                maxBudget: 150000,
+                // Accepting a proposal closes its job.
+                listingStatus: 'CLOSED',
+                listingType: 'JOB',
+                job: { create: {} },
+                proposal: {
+                    create: {
+                        senderId: providerId,
+                        proposalBudget: DEMO_BUDGET,
+                        proposalTerms: 'Half up front, half on handover.',
+                        duration: 30,
+                        proposalStatus: 'ACCEPTED',
+                        project: {
+                            create: {
+                                totalBudget: DEMO_BUDGET,
+                                startDate: fromDateOnly('2026-10-01'),
+                                projectStatus: demo.projectStatus,
+                                depositReportedAt: paid ? october(5) : null,
+                                depositConfirmedAt: paid ? october(6) : null,
+                                completedAt: completed ? october(22) : null,
+                                quotation: {
+                                    create: demo.quotations.map(
+                                        (quotationStatus, i) => ({
+                                            quotationFile: DEMO_QUOTATION_FILE,
+                                            quotationStatus,
+                                            createdAt: october(2 + i),
+                                        }),
+                                    ),
+                                },
+                                projectUpdate: {
+                                    create: demo.updates.map((update, i) => ({
+                                        ...update,
+                                        createdAt: october(10 + 5 * i),
+                                    })),
+                                },
+                                // Spread, not review: undefined, which
+                                // exactOptionalPropertyTypes refuses.
+                                ...(completed && {
+                                    review: { create: DEMO_REVIEW },
+                                }),
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+}
+
+async function upsertAccounts(
+    accounts: SeedAccount[],
+): Promise<Map<string, number>> {
+    const ids = new Map<string, number>();
+    for (const account of accounts) {
+        ids.set(account.accountType, await upsertAccount(account));
+        console.log(`ok  ${account.accountType.padEnd(8)} ${account.email}`);
+    }
+    return ids;
+}
+
 async function main(): Promise<void> {
     // These are known credentials. On a real deployment that is an open door.
     if (IS_PRODUCTION) {
         throw new Error('Refusing to seed with NODE_ENV=production');
     }
 
-    const ids = new Map<string, number>();
-    for (const account of ACCOUNTS) {
-        ids.set(account.accountType, await upsertAccount(account));
-        console.log(`ok  ${account.accountType.padEnd(8)} ${account.email}`);
-    }
+    const ids = await upsertAccounts(ACCOUNTS);
 
     const providerId = ids.get('PROVIDER');
     if (providerId === undefined) {
@@ -256,6 +473,10 @@ async function main(): Promise<void> {
     await upsertPortfolio(listingId);
     await upsertCertificate(providerId);
     console.log(`ok  listing ${listingId}, with a portfolio and a certificate`);
+
+    const demoIds = await upsertAccounts(DEMO_ACCOUNTS);
+    await seedDemoProjects(demoIds.get('PROVIDER')!, demoIds.get('RECEIVER')!);
+    console.log(`ok  ${DEMO_PROJECTS.length} demo projects, one per status`);
 
     console.log('\nPut these in scripts/.env.snapshot:\n');
     for (const account of ACCOUNTS) {
