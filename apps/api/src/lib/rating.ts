@@ -3,7 +3,7 @@ import type {
     ProjectStatus,
     ReviewSummary,
 } from '@mangodb/shared';
-import type { Prisma, PrismaClient } from '../generated/prisma/client';
+import type { Prisma } from '../generated/prisma/client';
 
 const COMPLETED = 'COMPLETED' satisfies ProjectStatus;
 
@@ -91,18 +91,4 @@ export function getRating(source: RatingSource): ReviewSummary {
         averageRating: Math.round(average * 10) / 10,
         ratingCount: reviews.length,
     };
-}
-
-// Fetches and computes a Provider's average rating directly from the database.
-// The profile and the rating sort both call it (ADR 0018, T5.1.3).
-export async function getProviderRating(
-    companyId: number,
-    db?: PrismaClient | Prisma.TransactionClient,
-): Promise<ReviewSummary> {
-    const client = db ?? (await import('./prisma.js')).prisma;
-    const company = await client.company.findUnique({
-        where: { companyId },
-        select: ratingSelect,
-    });
-    return getRating(company ?? { proposal: [], listing: [] });
 }

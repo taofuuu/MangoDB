@@ -5,15 +5,12 @@
  *   hire requests on its own services. Both count.
  * - The average is the mean of every score, rounded to 1 decimal place;
  *   ratingCount counts reviews.
- * - A project with no review yet adds nothing, and no reviews is null, not 0.
- * - getProviderRating queries the database and applies getRating.
  *
  * Run: npm test (in apps/api).
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { getProviderRating, getRating } from './rating';
-import type { PrismaClient } from '../generated/prisma/client';
+import { getRating } from './rating';
 
 function reviewed(scores: [number, number, number, number]) {
     const [
@@ -63,33 +60,5 @@ describe('getRating', () => {
         });
 
         assert.deepEqual(rating, { averageRating: 5.0, ratingCount: 1 });
-    });
-});
-
-describe('getProviderRating', () => {
-    it('queries provider by companyId and calculates rating', async () => {
-        const fakeDb = {
-            company: {
-                findUnique: async () => ({
-                    proposal: [reviewed([4, 4, 4, 4])],
-                    listing: [{ proposal: [reviewed([5, 5, 5, 5])] }],
-                }),
-            },
-        } as unknown as PrismaClient;
-
-        const rating = await getProviderRating(10, fakeDb);
-        // (16 + 20) / 8 = 4.5
-        assert.deepEqual(rating, { averageRating: 4.5, ratingCount: 2 });
-    });
-
-    it('returns null rating if company is not found', async () => {
-        const fakeDb = {
-            company: {
-                findUnique: async () => null,
-            },
-        } as unknown as PrismaClient;
-
-        const rating = await getProviderRating(999, fakeDb);
-        assert.deepEqual(rating, { averageRating: null, ratingCount: 0 });
     });
 });
