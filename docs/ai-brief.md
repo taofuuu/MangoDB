@@ -147,6 +147,7 @@ message.
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
+| A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
@@ -425,8 +426,10 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
 - Project, quotation, update and review endpoints. The tables and the shared
-  types exist (ADRs 0015-0018); the only endpoint is accepting a proposal,
-  which creates the project row — Sprint 3 builds the rest.
+  types exist (ADRs 0015-0018); the only endpoints are accepting a proposal,
+  which creates the project row, and the deposit pair
+  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit` — Sprint
+  3 builds the rest.
 
 ---
 
