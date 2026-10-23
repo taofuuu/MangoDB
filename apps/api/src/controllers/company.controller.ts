@@ -1,5 +1,11 @@
 import type { Request, Response } from 'express';
-import type { CompanySummary, Paginated } from '@mangodb/shared';
+import type {
+    CompanyReview,
+    CompanySummary,
+    ListingType,
+    Paginated,
+    ProjectStatus,
+} from '@mangodb/shared';
 import { assertCurrentPassword, hashPassword } from '../auth/password';
 import { roleGrants } from '../auth/roles';
 import { revokeToken } from '../auth/tokenDenylist';
@@ -32,6 +38,8 @@ import {
     hasOngoingProject,
     ONGOING_PROJECT_BLOCKS_DELETE,
 } from '../lib/project-eligibility';
+import { getRating, ratingSelect } from '../lib/rating';
+import { companyReviewSelect, toCompanyReview } from '../lib/review';
 import { splitWords } from '../lib/search';
 import { sendSession } from '../lib/session';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
@@ -42,6 +50,7 @@ import {
     changeCredentialsSchema,
     companyIdParamSchema,
     companyListQuerySchema,
+    companyReviewListQuerySchema,
     updateCompanyProfileSchema,
 } from '../schemas/company.schema';
 
@@ -318,4 +327,82 @@ export async function listCompanies(
     };
 
     res.json(body);
+}
+
+// US5-2. A Provider's reviews on completed projects, newest first. Paged.
+// Outsiders or unknown/deleted companies answer 404.
+export async function listProviderReviews(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+    const { page, pageSize } = parseQuery(
+        companyReviewListQuerySchema,
+        req.query,
+    );
+
+    const target = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: { companyId: true },
+    });
+    if (!target) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const where: Prisma.ReviewWhereInput = {
+        project: {
+            projectStatus: 'COMPLETED' satisfies ProjectStatus,
+            OR: [
+                {
+                    proposal: {
+                        senderId: companyId,
+                        listing: { listingType: 'JOB' satisfies ListingType },
+                    },
+                },
+                {
+                    proposal: {
+                        listing: {
+                            companyId,
+                            listingType: 'SERVICE' satisfies ListingType,
+                        },
+                    },
+                },
+            ],
+        },
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.review.count({ where }),
+        prisma.review.findMany({
+            where,
+            ...pageArgs({ page, pageSize }),
+            orderBy: [{ createdAt: 'desc' }, { reviewId: 'desc' }],
+            select: companyReviewSelect,
+        }),
+    ]);
+
+    const body: Paginated<CompanyReview> = {
+        items: rows.map(toCompanyReview),
+        pagination: toPagination(totalItems, { page, pageSize }),
+    };
+    res.json(body);
+}
+
+// US5-2. A Provider's rating summary (mean and review count). Standalone
+// endpoint so the review list stays { items, pagination } (ADR 0018, T5.1.3).
+export async function getProviderReviewSummary(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: ratingSelect,
+    });
+    if (!company) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    res.json(getRating(company));
 }
