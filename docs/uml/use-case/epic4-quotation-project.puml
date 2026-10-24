@@ -1,0 +1,42 @@
+@startuml epic4-quotation-project
+!include style.iuml
+title EPIC 4: Quotation and Project Management
+
+actor Provider
+
+rectangle "MangoDB" {
+  usecase "Upload and send quotation\n(US4-1)" as US4_1
+  usecase "Confirm deposit received\n(US4-6)" as US4_6
+  usecase "Record project progress\n(US4-8)" as US4_8
+  usecase "Report work complete\n(US4-9)" as US4_9
+
+  usecase "View project progress\n(US4-7)" as US4_7
+
+  usecase "View quotation\n(US4-2)" as US4_2
+  usecase "Accept quotation\n(US4-3)" as US4_3
+  usecase "Reject quotation\n(US4-4)" as US4_4
+  usecase "Report deposit paid\n(US4-5)" as US4_5
+  usecase "Reject delivered work\nwith reason\n(US4-10)" as US4_10
+  usecase "Accept delivered project\n(US4-11)" as US4_11
+}
+
+actor Receiver
+
+Provider --> US4_1
+Provider --> US4_6
+Provider --> US4_8
+Provider --> US4_9
+Provider --> US4_7
+
+US4_7 <-- Receiver
+US4_2 <-- Receiver
+US4_3 <-- Receiver
+US4_4 <-- Receiver
+US4_5 <-- Receiver
+US4_10 <-- Receiver
+US4_11 <-- Receiver
+
+' The decision is made while viewing the quotation.
+US4_3 .up.> US4_2 : <<extend>>
+US4_4 .up.> US4_2 : <<extend>>
+@enduml

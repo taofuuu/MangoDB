@@ -1,0 +1,105 @@
+@startuml accept-proposal-implementation
+' Sequence diagram for US2-11 Accept proposal (job listing).
+' Traced from: apps/mangodb/app/jobs/[jobId]/proposals/page.tsx,
+' apps/mangodb/lib/proposals.ts, apps/api/src/middleware/auth.ts,
+' apps/api/src/controllers/proposal.controller.ts, apps/api/src/lib/proposal.ts,
+' apps/api/src/lib/listing.ts, apps/api/src/lib/project.ts.
+title US2-11 Accept Proposal - Sequence Diagram
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+autonumber
+
+actor Receiver
+boundary "Job Proposals Page\n(page.tsx)" as Page
+control "API Client\n(lib/proposals.ts)" as Client
+control "requireAuth\n(middleware)" as Auth
+control "ProposalController\n(acceptProposal)" as Ctrl
+entity "Domain helpers\n(lib/proposal, listing, project)" as Lib
+database "PostgreSQL\n(Prisma)" as DB
+
+Receiver -> Page : Click "Accept" and confirm
+activate Page
+Page -> Client : acceptProposal(proposalId)
+activate Client
+Client -> Auth : POST /proposals/{proposalId}/accept\nAuthorization: Bearer <JWT>
+activate Auth
+
+Auth -> Auth : verifyAccessToken(token)
+Auth -> DB : isTokenRevoked(jti)
+DB --> Auth : false
+Auth -> DB : isCompanyDeleted(companyId)
+DB --> Auth : false
+
+alt token missing, invalid, revoked, or company deleted
+  Auth --> Client : 401 Unauthorized
+  Client --> Page : throw ApiError
+  Page --> Receiver : Show error in dialog
+else authenticated
+  Auth -> Ctrl : next() with req.auth.companyId
+  deactivate Auth
+  activate Ctrl
+  Ctrl -> Ctrl : parseParams(proposalId) with Zod
+
+  Ctrl -> DB : BEGIN $transaction
+  activate DB
+
+  Ctrl -> Lib : findPendingProposalFor(tx, proposalId, callerId)
+  activate Lib
+  Lib -> DB : proposal.findUnique(proposalId)\nselect listing type, status, owner
+  DB --> Lib : proposal + listing
+  Lib --> Ctrl : proposal\n(or throw 404 / 403 / 409)
+  deactivate Lib
+
+  alt not found (404), not the listing owner (403),\nproposal not PENDING (409), or listing not OPEN (409)
+    Ctrl -> DB : ROLLBACK
+    Ctrl --> Client : 4xx error JSON (errorHandler)
+    Client --> Page : throw ApiError
+    Page --> Receiver : Show error in confirmation dialog
+  else valid PENDING proposal on an OPEN job
+    Ctrl -> Lib : closeOpenListing(tx, listingId)
+    activate Lib
+    Lib -> DB : listing.updateMany\nwhere OPEN -> CLOSED
+    DB --> Lib : count
+    deactivate Lib
+
+    Ctrl -> Lib : setProposalStatus(tx, proposalId, ACCEPTED)
+    activate Lib
+    Lib -> DB : proposal.updateMany\nwhere PENDING -> ACCEPTED
+    DB --> Lib : count
+    deactivate Lib
+
+    Ctrl -> Lib : rejectPendingProposals(tx, listingId, except proposalId)
+    activate Lib
+    Lib -> DB : proposal.updateMany\nother PENDING -> REJECTED
+    DB --> Lib : count
+    deactivate Lib
+
+    Ctrl -> Lib : createProjectFromProposal(tx, proposal)
+    activate Lib
+    Lib -> DB : project.create\nstatus AWAITING_QUOTATION
+    DB --> Lib : project row
+    Lib --> Ctrl : Project
+    deactivate Lib
+
+    Ctrl -> DB : COMMIT
+    Ctrl --> Client : 201 Created + Project JSON
+    Client -> Client : invalidate cache for /jobs and /proposals
+    Client --> Page : Project
+    Page -> Page : Mark proposal ACCEPTED,\nother PENDING ones REJECTED
+    Page --> Receiver : Updated proposal list
+  end
+  deactivate DB
+  deactivate Ctrl
+end
+deactivate Client
+deactivate Page
+
+note over Lib, DB
+  Any error thrown inside the transaction rolls back every change.
+  A count of 0 from an updateMany means another request changed
+  the row first, so the helper throws 409 Conflict.
+end note
+@enduml
