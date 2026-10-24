@@ -1,6 +1,7 @@
 /*
  * Tests for project controller endpoints:
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
+ * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
  * - POST /projects/:projectId/review (createReview, US5-1, ADR 0018)
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
@@ -10,6 +11,10 @@
  * - T4.10.4: only the project's Provider can add one. The Receiver gets 403,
  *   a company outside the project 404, and neither writes anything. A
  *   project that is not IN_PROGRESS is a 409.
+ * - T4.7.3: the Provider confirming a reported deposit moves the project to
+ *   IN_PROGRESS and stamps depositConfirmedAt.
+ * - T4.7.4: confirming before the Receiver reported the deposit is a 409, and
+ *   the Receiver confirming is a 403. Neither changes the project.
  * - US5-1: the Receiver reviews a COMPLETED project once: 201 Created with Review DTO.
  * - Both Job (owner is Receiver) and Service (sender is Receiver) paths.
  * - An optional comment up to 500 characters, or null/omitted comment.
@@ -27,6 +32,9 @@
  *   fake res that records the status and JSON body.
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database.
+ * - project.updateMany and project.update change `project` in place, honouring
+ *   their where filters. $transaction puts `project` back if its work throws,
+ *   as the database's rollback would.
  *
  * Run: npm test (in apps/api).
  */
@@ -37,6 +45,7 @@ import type { Request, Response } from 'express';
 import type {
     CompletedProject,
     Paginated,
+    Project,
     ProjectUpdate,
     Review,
 } from '@mangodb/shared';
@@ -115,7 +124,7 @@ const companies: Company[] = [
     },
 ];
 
-let project: unknown = null;
+let project: ReturnType<typeof projectIn> | null = projectIn('IN_PROGRESS');
 let created: Record<string, unknown>[] = [];
 let createdReviews: Record<string, unknown>[] = [];
 let reviewAlreadyExists = false;
@@ -197,6 +206,41 @@ const fakePrisma = {
     },
     project: {
         findUnique: () => Promise.resolve(project),
+        // moveProjectStatus: moves only a project still in the `from` status.
+        updateMany: ({
+            where,
+            data,
+        }: {
+            where: { projectStatus: string };
+            data: { projectStatus: string };
+        }) => {
+            if (project!.projectStatus !== where.projectStatus) {
+                return Promise.resolve({ count: 0 });
+            }
+            project!.projectStatus = data.projectStatus;
+            return Promise.resolve({ count: 1 });
+        },
+        // A where that misses the row is P2025 in Prisma.
+        update: ({
+            where,
+            data,
+        }: {
+            where: { depositReportedAt?: unknown };
+            data: { depositConfirmedAt: Date };
+        }) => {
+            if (
+                where.depositReportedAt &&
+                project!.depositReportedAt === null
+            ) {
+                return Promise.reject(
+                    Object.assign(new Error('Record not found'), {
+                        code: 'P2025',
+                    }),
+                );
+            }
+            project!.depositConfirmedAt = data.depositConfirmedAt;
+            return Promise.resolve(project);
+        },
         count: ({ where }: { where?: ProjectWhereInput } = {}) => {
             return Promise.resolve(filterProjects(where).length);
         },
@@ -269,7 +313,21 @@ const fakePrisma = {
             });
         },
     },
-    $transaction: (promises: Promise<unknown>[]) => Promise.all(promises),
+    // Both forms Prisma has: a list of queries (completed-projects) or a
+    // callback given the client (confirm-deposit). The callback form puts
+    // `project` back if its work throws, as a rollback would.
+    $transaction: async (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => {
+        if (typeof work !== 'function') return Promise.all(work);
+        const saved = structuredClone(project);
+        try {
+            return await work(fakePrisma);
+        } catch (err) {
+            project = saved;
+            throw err;
+        }
+    },
 };
 
 function moduleUrl(specifier: string): string {
@@ -293,9 +351,19 @@ beforeEach(() => {
     projects = [];
 });
 
-function projectIn(projectStatus: string) {
+function projectIn(
+    projectStatus: string,
+    depositReportedAt: Date | null = null,
+) {
     return {
+        projectId: 1,
+        proposalId: 1,
+        totalBudget: 5000,
+        startDate: new Date('2026-10-20T00:00:00.000Z'),
         projectStatus,
+        depositReportedAt,
+        depositConfirmedAt: null as Date | null,
+        completedAt: null,
         proposal: {
             senderId: PROVIDER,
             listing: { listingType: 'JOB', companyId: RECEIVER },
@@ -305,7 +373,7 @@ function projectIn(projectStatus: string) {
 
 function projectOnService(projectStatus: string) {
     return {
-        projectStatus,
+        ...projectIn(projectStatus),
         proposal: {
             senderId: RECEIVER,
             listing: { listingType: 'SERVICE', companyId: PROVIDER },
@@ -347,11 +415,14 @@ function row(
         },
     };
 }
-// Posts to project 1 as callerId. Returns the status and JSON it answered
-// with, or the ApiError it threw.
-async function postUpdate(
+type Handler = (req: Request, res: Response) => Promise<void>;
+
+// Calls handler on project 1 as callerId. Returns the status and JSON it
+// answered with, or the ApiError it threw.
+async function call(
+    handler: Handler,
     callerId: number,
-    body: unknown = { updateText: 'Wireframes done' },
+    body?: unknown,
 ): Promise<unknown> {
     const req = {
         auth: { companyId: callerId },
@@ -372,11 +443,22 @@ async function postUpdate(
     } as unknown as Response;
 
     try {
-        await controller.createProjectUpdate(req, res);
+        await handler(req, res);
     } catch (err) {
         return err;
     }
-    return { status, body: json as ProjectUpdate };
+    return { status, body: json };
+}
+
+function postUpdate(
+    callerId: number,
+    body: unknown = { updateText: 'Wireframes done' },
+): Promise<unknown> {
+    return call(controller.createProjectUpdate, callerId, body);
+}
+
+function confirmDeposit(callerId: number): Promise<unknown> {
+    return call(controller.confirmDeposit, callerId);
 }
 
 async function postReview(
@@ -516,6 +598,43 @@ describe('POST /projects/:projectId/updates', () => {
         project = projectIn('AWAITING_ACCEPTANCE');
         assert.ok(isApiError(409)(await postUpdate(PROVIDER)));
         assert.equal(created.length, 0);
+    });
+});
+
+describe('POST /projects/:projectId/confirm-deposit', () => {
+    beforeEach(() => {
+        project = projectIn(
+            'AWAITING_DEPOSIT',
+            new Date('2026-10-22T09:00:00.000Z'),
+        );
+    });
+
+    it('moves the project to IN_PROGRESS (T4.7.3)', async () => {
+        const startedAt = Date.now();
+        const result = (await confirmDeposit(PROVIDER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'IN_PROGRESS');
+        const confirmedAt = Date.parse(result.body.depositConfirmedAt!);
+        assert.ok(confirmedAt >= startedAt && confirmedAt <= Date.now());
+        assert.equal(project!.projectStatus, 'IN_PROGRESS');
+    });
+
+    it('is a 409 before the Receiver reports it (T4.7.4)', async () => {
+        project = projectIn('AWAITING_DEPOSIT');
+        assert.ok(isApiError(409)(await confirmDeposit(PROVIDER)));
+        // The status move rolls back with the refused stamp.
+        assert.equal(project.projectStatus, 'AWAITING_DEPOSIT');
+        assert.equal(project.depositConfirmedAt, null);
+    });
+
+    it('is a 403 for the Receiver and changes nothing (T4.7.4)', async () => {
+        assert.ok(isApiError(403)(await confirmDeposit(RECEIVER)));
+        assert.equal(project!.projectStatus, 'AWAITING_DEPOSIT');
+        assert.equal(project!.depositConfirmedAt, null);
     });
 });
 
