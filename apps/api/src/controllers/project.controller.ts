@@ -272,6 +272,34 @@ export async function rejectWork(req: Request, res: Response): Promise<void> {
     res.json(toProject(row));
 }
 
+// US4-13. The Receiver accepts the work: AWAITING_ACCEPTANCE to COMPLETED,
+// with the time (ADR 0015). The Receiver can then review it (US5-1).
+export async function acceptWork(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can accept the work');
+    }
+
+    // One transaction: the status and the time are saved together. A project
+    // not AWAITING_ACCEPTANCE, or a double click, is a 409 from the move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'AWAITING_ACCEPTANCE',
+            'COMPLETED',
+        );
+        return tx.project.update({
+            where: { projectId },
+            data: { completedAt: new Date() },
+            select: projectSelect,
+        });
+    });
+    res.json(toProject(row));
+}
+
 // US5-1. The Receiver reviews a completed project once (ADR 0018). Four 1-5 scores
 // and an optional comment. A second review is 409. Outsiders get 404; Provider
 // gets 403; project not COMPLETED gets 409.
