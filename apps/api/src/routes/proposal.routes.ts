@@ -28,10 +28,12 @@ proposalRoutes.get(
     getMyProposalCounts,
 );
 
-// Accept a proposal: closes the listing, rejects the other pending proposals
-// and creates the Project in one transaction (docs/conventions.md 2.7).
+// US2-11, US2-17. Accept a proposal: on a job, closes the job and rejects the
+// other pending proposals; on a service, leaves the service open and other
+// pending requests pending (ADR 0016). Creates the Project in the same
+// transaction (docs/conventions.md 2.7).
 // Guards: authenticated only. No requireRole — the listing owner can be a
-// Receiver (job posting) or a Provider (service); ownership is checked in
+// Receiver (job) or a Provider (service); ownership is checked in
 // lib/proposal.ts.
 proposalRoutes.post('/:proposalId/accept', requireAuth, acceptProposal);
 

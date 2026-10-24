@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type {
+    CreateProposalRequest,
     ListingStatus,
     ListingType,
     Paginated,
@@ -19,6 +20,7 @@ import {
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobIdParamSchema } from '../schemas/job.schema';
+import { serviceIdParamSchema } from '../schemas/service.schema';
 import {
     assertListingOwned,
     LISTING_MESSAGES,
@@ -38,18 +40,32 @@ import {
     setProposalStatus,
 } from '../lib/proposal';
 
-export async function createProposal(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobIdParamSchema, req.params);
-    const body = parseBody(createProposalSchema, req.body);
-    const callerCompanyId = req.auth!.companyId;
+const PROPOSE_MESSAGES: Record<
+    ListingType,
+    { own: string; notOpen: string; repeat: string }
+> = {
+    JOB: {
+        own: 'You cannot send a proposal to your own job',
+        notOpen: 'This job is not open for proposals',
+        repeat: 'You already have a pending proposal on this job',
+    },
+    SERVICE: {
+        own: 'You cannot send a hire request to your own service',
+        notOpen: 'This service is not open for hire requests',
+        repeat: 'You already have a pending hire request on this service',
+    },
+};
 
-    // A soft-deleted company's postings stay OPEN in the table, so the where
-    // hides them here, the same 404 that GET /jobs/:jobId gives.
-    const posting = await prisma.listing.findUnique({
-        where: { listingId: jobId, company: { deletedAt: null } },
+async function sendProposalToListing(
+    listingId: number,
+    listingType: ListingType,
+    callerCompanyId: number,
+    body: CreateProposalRequest,
+) {
+    // A soft-deleted company's listings stay OPEN in the table, so the where
+    // hides them here, the same 404 that GET /jobs/:jobId and GET /services/:serviceId give.
+    const listing = await prisma.listing.findUnique({
+        where: { listingId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -58,22 +74,24 @@ export async function createProposal(
         },
     });
 
-    if (!posting || posting.listingType !== ('JOB' satisfies ListingType)) {
-        throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
+    if (!listing || listing.listingType !== listingType) {
+        throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
 
-    if (posting.companyId === callerCompanyId) {
-        throw ApiError.forbidden('You cannot send a proposal to your own job');
+    const msg = PROPOSE_MESSAGES[listingType];
+
+    if (listing.companyId === callerCompanyId) {
+        throw ApiError.forbidden(msg.own);
     }
 
-    if (posting.listingStatus !== ('OPEN' satisfies ListingStatus)) {
-        throw ApiError.conflict('This job is not open for proposals');
+    if (listing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
+        throw ApiError.conflict(msg.notOpen);
     }
 
     try {
         const proposal = await prisma.proposal.create({
             data: {
-                listingId: jobId,
+                listingId,
                 senderId: callerCompanyId,
                 proposalBudget: body.proposalBudget,
                 proposalTerms: body.proposalTerms,
@@ -83,44 +101,93 @@ export async function createProposal(
             select: proposalSelect,
         });
 
-        res.status(201).json(toProposal(proposal));
+        return toProposal(proposal);
     } catch (err) {
         // Only a second PENDING one hits the index; a decided one may repeat
         // (ADR 0016).
         if (isUniqueViolation(err)) {
-            throw ApiError.conflict(
-                'You already have a pending proposal on this job',
-            );
+            throw ApiError.conflict(msg.repeat);
         }
         throw err;
     }
 }
 
-// US2-10. Every proposal on one job posting, newest first, each with a short
-// profile of its Provider. Soft-deleted Providers are kept: a proposal is
+export async function createProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        jobId,
+        'JOB',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
+}
+
+// US2-15. Send a hire request (stored as a PENDING proposal) on an open service.
+export async function createServiceProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        serviceId,
+        'SERVICE',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
+}
+
+// US2-10, US2-16. Every proposal on one listing, newest first, each with a
+// short profile of its sender. Soft-deleted senders are kept: a proposal is
 // history, not discovery (see Company.deletedAt).
-// Only the posting's owner may read them: the list carries every competing
-// Provider's price and terms.
+// Only the listing's owner may read them: the list carries every sender's
+// price and terms.
+async function listListingProposals(
+    listingId: number,
+    listingType: ListingType,
+    callerId: number,
+) {
+    await assertListingOwned(listingId, listingType, callerId);
+
+    const proposals = await prisma.proposal.findMany({
+        where: { listingId },
+        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+        select: receivedProposalSelect,
+    });
+
+    return proposals.map(toReceivedProposal);
+}
+
 export async function listJobProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
-    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
-
-    const proposals = await prisma.proposal.findMany({
-        where: { listingId: jobId },
-        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-        select: receivedProposalSelect,
-    });
-
-    res.json(proposals.map(toReceivedProposal));
+    res.json(await listListingProposals(jobId, 'JOB', req.auth!.companyId));
 }
 
-// US2-11. Accepting a proposal on a job closes the job, rejects the other
-// proposals and opens a project, all or nothing. Each step is a lib helper,
-// so an accept that must leave its listing open (a hire request on a service)
-// leaves out closeOpenListing.
+export async function listServiceProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    res.json(
+        await listListingProposals(serviceId, 'SERVICE', req.auth!.companyId),
+    );
+}
+
+// US2-11, US2-17. Accepting a proposal on a job closes the job, rejects the
+// other proposals and opens a project, all or nothing. On a service (ADR 0016),
+// the service stays open and other pending hire requests are left pending so
+// the Provider can serve multiple Receivers.
 export async function acceptProposal(
     req: Request,
     res: Response,
@@ -136,13 +203,20 @@ export async function acceptProposal(
             throw ApiError.conflict('Listing has already been closed');
         }
 
-        await closeOpenListing(
-            tx,
-            proposal.listingId,
-            'Listing has already been closed',
-        );
+        const isJob =
+            proposal.listing.listingType === ('JOB' satisfies ListingType);
+
+        if (isJob) {
+            await closeOpenListing(
+                tx,
+                proposal.listingId,
+                'Listing has already been closed',
+            );
+        }
         await setProposalStatus(tx, proposalId, 'ACCEPTED');
-        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        if (isJob) {
+            await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        }
         return createProjectFromProposal(tx, {
             proposalId,
             proposalBudget: proposal.proposalBudget,
