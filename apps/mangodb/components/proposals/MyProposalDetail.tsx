@@ -24,12 +24,10 @@ export default function MyProposalDetail({
 }: MyProposalDetailProps) {
     const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
     const kind = sentProposalKind(proposal.listingType);
-    const projectId =
-        proposal.proposalStatus === 'ACCEPTED' ? proposal.projectId : null;
 
     return (
         <section
-            aria-label={`${kind} for ${proposal.listingTitle}`}
+            aria-label={`${kind.label} for ${proposal.listingTitle}`}
             className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[80vh] lg:max-h-none lg:flex-1"
         >
             <div className="flex items-start gap-4">
@@ -53,7 +51,7 @@ export default function MyProposalDetail({
                 <button
                     type="button"
                     onClick={onClose}
-                    aria-label={`Close ${kind.toLowerCase()} detail`}
+                    aria-label={`Close ${kind.label.toLowerCase()} detail`}
                     className="rounded-full p-1 text-ink-placeholder hover:bg-fill-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
                 >
                     <X aria-hidden="true" className="size-5" />
@@ -86,18 +84,16 @@ export default function MyProposalDetail({
             </div>
 
             <h3 className="mt-4 type-sm !font-[700] text-ink">
-                {proposal.listingType === 'SERVICE'
-                    ? 'Request term'
-                    : 'Proposal term'}
+                {kind.termHeading}
             </h3>
             <p className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-2 type-sm leading-relaxed text-ink">
                 {proposal.proposalTerms}
             </p>
 
-            {projectId !== null && (
+            {proposal.projectId !== null && (
                 <div className="mt-4 flex justify-end border-t border-brand/60 pt-4">
                     <Link
-                        href={`/projects/${projectId}`}
+                        href={`/projects/${proposal.projectId}`}
                         className="inline-flex items-center gap-2 rounded-button bg-brand px-6 py-2 type-xs text-surface-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                         Go to project

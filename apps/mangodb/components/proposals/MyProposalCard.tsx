@@ -62,7 +62,7 @@ export default function MyProposalCard({
                     <p className="flex min-w-0 items-center gap-2 type-xs text-brand">
                         <Tag
                             size="sm"
-                            label={sentProposalKind(proposal.listingType)}
+                            label={sentProposalKind(proposal.listingType).label}
                             className="shrink-0 bg-brand-tint text-brand-deep"
                         />
                         <span className="truncate">{receiverName}</span>
