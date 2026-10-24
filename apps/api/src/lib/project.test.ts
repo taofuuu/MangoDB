@@ -90,7 +90,6 @@ describe('assertProjectParty', () => {
         );
     });
 });
-
 // A project row as projectViewSelect returns it. totalBudget is a plain
 // number here: toProject only runs Number() on it.
 function viewRow(listingType: string) {
@@ -147,5 +146,22 @@ describe('toProjectDetail', () => {
         assert.equal(detail.receiver.companyId, SENDER);
         assert.equal(detail.myRole, 'receiver');
         assert.equal(detail.startDate, '2026-10-01');
+    });
+});
+
+describe('toCompletedProject', () => {
+    it('is a 500 when a COMPLETED row has no completedAt', () => {
+        assert.throws(
+            () =>
+                lib.toCompletedProject(
+                    viewRow('JOB') as unknown as Parameters<
+                        typeof lib.toCompletedProject
+                    >[0],
+                ),
+            (err: unknown) =>
+                err instanceof ApiError &&
+                err.status === 500 &&
+                err.message === 'Completed project has no completedAt',
+        );
     });
 });
