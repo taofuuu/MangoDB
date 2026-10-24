@@ -1,0 +1,66 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Proposals
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Proposals" as Proposals <<Resource>>
+class "MyProposals" as MyProposals <<Resource>> {
+  + GET
+}
+class "Counts" as Counts <<Resource>> {
+  + GET
+}
+class "Proposal" as ProposalR <<Resource>>
+class "Accept" as Accept <<Resource>> {
+  + POST
+}
+class "Reject" as Reject <<Resource>> {
+  + POST
+}
+class "SentProposal" as SentProposalRep <<Representation>> {
+  -Proposal fields
+  -listingTitle : string
+  -listingType : JOB, SERVICE
+  -recipient : CompanyBrief
+  -projectId : integer?
+}
+class "ProposalStatusCounts" as ProposalStatusCountsRep <<Representation>> {
+  -total : integer
+  -PENDING : integer
+  -ACCEPTED : integer
+  -REJECTED : integer
+}
+class "Project" as ProjectRep <<Representation>> {
+  -projectId : integer
+  -proposalId : integer
+  -totalBudget : number
+  -startDate : date
+  -projectStatus : ProjectStatus
+  -depositReportedAt : date?
+  -depositConfirmedAt : date?
+  -completedAt : date?
+}
+
+API --> Proposals : <<Path>> /proposals
+Proposals --> MyProposals : <<Path>> /mine
+MyProposals ..> SentProposalRep : <<use>>
+MyProposals --> Counts : <<Path>> /counts
+Counts ..> ProposalStatusCountsRep : <<use>>
+Proposals --> ProposalR : <<Path>> /{proposalId}
+ProposalR --> Accept : <<Path>> /accept
+Accept ..> ProjectRep : <<use>>
+ProposalR --> Reject : <<Path>> /reject
+@enduml

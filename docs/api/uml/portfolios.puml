@@ -1,0 +1,59 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Portfolios
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Portfolios" as Portfolios <<Resource>> {
+  + GET
+  + POST
+}
+class "Portfolio" as PortfolioR <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "ServicePortfolio" as ServicePortfolioRep <<Representation>> {
+  -portfolioId : integer
+  -serviceId : integer
+  -portfolioName : string
+  -portfolioDescription : string?
+  -developmentDate : date
+  -portfolioImage : url
+  -portfolioLink : url
+}
+class "CreatePortfolioRequest" as CreatePortfolioRequestRep <<Representation>> {
+  -serviceId : integer
+  -portfolioName : string
+  -portfolioDescription : string?
+  -developmentDate : date
+  -portfolioLink : url
+  -portfolioImage : image file, multipart
+}
+class "UpdatePortfolioRequest" as UpdatePortfolioRequestRep <<Representation>> {
+  -portfolioName : string?
+  -portfolioDescription : string?
+  -developmentDate : date?
+  -portfolioLink : url?
+  -portfolioImage : image file?
+}
+
+API --> Portfolios : <<Path>> /portfolios
+Portfolios ..> ServicePortfolioRep : <<use>>
+Portfolios ..> CreatePortfolioRequestRep : <<use>>
+Portfolios --> PortfolioR : <<Path>> /{portfolioId}
+PortfolioR ..> ServicePortfolioRep : <<use>>
+PortfolioR ..> UpdatePortfolioRequestRep : <<use>>
+@enduml

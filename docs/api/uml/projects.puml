@@ -1,0 +1,127 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Projects
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Projects" as Projects <<Resource>>
+class "MyProjects" as MyProjects <<Resource>> {
+  + GET
+}
+class "Project" as ProjectR <<Resource>> {
+  + GET
+}
+class "Updates" as Updates <<Resource>> {
+  + GET
+  + POST
+}
+class "ReportDeposit" as ReportDeposit <<Resource>> {
+  + POST
+}
+class "ConfirmDeposit" as ConfirmDeposit <<Resource>> {
+  + POST
+}
+class "SubmitWork" as SubmitWork <<Resource>> {
+  + POST
+}
+class "RejectWork" as RejectWork <<Resource>> {
+  + POST
+}
+class "AcceptWork" as AcceptWork <<Resource>> {
+  + POST
+}
+class "Review" as ReviewR <<Resource>> {
+  + GET
+  + POST
+}
+class "ProjectSummary" as ProjectSummaryRep <<Representation>> {
+  -Project fields
+  -listingTitle : string
+  -myRole : provider, receiver
+  -otherParty : CompanyBrief
+}
+class "ProjectDetail" as ProjectDetailRep <<Representation>> {
+  -Project fields
+  -listingId : integer
+  -listingType : JOB, SERVICE
+  -listingTitle : string
+  -provider : CompanyBrief
+  -receiver : CompanyBrief
+  -myRole : provider, receiver
+}
+class "ProjectUpdate" as ProjectUpdateRep <<Representation>> {
+  -projectUpdateId : integer
+  -projectId : integer
+  -updateType : PROGRESS, WORK_REJECTED
+  -updateText : string
+  -createdAt : date
+}
+class "CreateProjectUpdateRequest" as CreateProjectUpdateRequestRep <<Representation>> {
+  -updateText : string
+}
+class "Project" as ProjectRep <<Representation>> {
+  -projectId : integer
+  -proposalId : integer
+  -totalBudget : number
+  -startDate : date
+  -projectStatus : ProjectStatus
+  -depositReportedAt : date?
+  -depositConfirmedAt : date?
+  -completedAt : date?
+}
+class "RejectWorkRequest" as RejectWorkRequestRep <<Representation>> {
+  -reason : string
+}
+class "Review" as ReviewRep <<Representation>> {
+  -reviewId : integer
+  -projectId : integer
+  -workQualityScore : integer 1-5
+  -serviceScore : integer 1-5
+  -valueForMoneyScore : integer 1-5
+  -deliveryTimeScore : integer 1-5
+  -comment : string?
+  -createdAt : date
+}
+class "CreateReviewRequest" as CreateReviewRequestRep <<Representation>> {
+  -workQualityScore : integer 1-5
+  -serviceScore : integer 1-5
+  -valueForMoneyScore : integer 1-5
+  -deliveryTimeScore : integer 1-5
+  -comment : string?
+}
+
+API --> Projects : <<Path>> /projects
+Projects --> MyProjects : <<Path>> /mine
+MyProjects ..> ProjectSummaryRep : <<use>>
+Projects --> ProjectR : <<Path>> /{projectId}
+ProjectR ..> ProjectDetailRep : <<use>>
+ProjectR --> Updates : <<Path>> /updates
+Updates ..> ProjectUpdateRep : <<use>>
+Updates ..> CreateProjectUpdateRequestRep : <<use>>
+ProjectR --> ReportDeposit : <<Path>> /report-deposit
+ReportDeposit ..> ProjectRep : <<use>>
+ProjectR --> ConfirmDeposit : <<Path>> /confirm-deposit
+ConfirmDeposit ..> ProjectRep : <<use>>
+ProjectR --> SubmitWork : <<Path>> /submit-work
+SubmitWork ..> ProjectRep : <<use>>
+ProjectR --> RejectWork : <<Path>> /reject-work
+RejectWork ..> RejectWorkRequestRep : <<use>>
+RejectWork ..> ProjectRep : <<use>>
+ProjectR --> AcceptWork : <<Path>> /accept-work
+AcceptWork ..> ProjectRep : <<use>>
+ProjectR --> ReviewR : <<Path>> /review
+ReviewR ..> ReviewRep : <<use>>
+ReviewR ..> CreateReviewRequestRep : <<use>>
+@enduml

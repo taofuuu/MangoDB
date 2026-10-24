@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Categories
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Categories" as Categories <<Resource>> {
+  + GET
+}
+class "Category" as CategoryRep <<Representation>> {
+  -categoryId : integer
+  -categoryName : string
+}
+
+API --> Categories : <<Path>> /categories
+Categories ..> CategoryRep : <<use>>
+@enduml

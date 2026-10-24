@@ -16,66 +16,9 @@ A portfolio item belongs to one service. The two GETs are public: no token.
 
 ## UML API Diagram
 
-REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+![UML API Diagram: portfolios](uml/portfolios.svg)
 
-```mermaid
-classDiagram
-    direction LR
-    class API["MangoDB API"] {
-        <<Application>>
-        basePath = "/"
-    }
-    class Portfolios["Portfolios"] {
-        <<Resource>>
-        +GET(serviceId, companyId : QueryParam) 200 | 400
-        +POST(CreatePortfolioRequest) 201 | 400 | 401 | 403 | 404 | 409
-    }
-    class PortfolioR["Portfolio"] {
-        <<Resource>>
-        +GET() 200 | 400 | 404
-        +PATCH(UpdatePortfolioRequest) 200 | 400 | 401 | 403 | 404 | 409
-        +DELETE() 204 | 400 | 401 | 403 | 404
-    }
-    class ServicePortfolioRep["ServicePortfolio"] {
-        <<Representation>>
-        -portfolioId : number
-        -serviceId : number
-        -portfolioName : string
-        -portfolioDescription : string?
-        -developmentDate : date
-        -portfolioImage : url
-        -portfolioLink : url
-    }
-    class CreatePortfolioRequestRep["CreatePortfolioRequest"] {
-        <<Representation>>
-        -serviceId : number
-        -portfolioName : string
-        -portfolioDescription : string?
-        -developmentDate : date
-        -portfolioLink : url
-        -portfolioImage : image file, multipart
-    }
-    class UpdatePortfolioRequestRep["UpdatePortfolioRequest"] {
-        <<Representation>>
-        -portfolioName : string?
-        -portfolioDescription : string?
-        -developmentDate : date?
-        -portfolioLink : url?
-        -portfolioImage : image file?
-    }
-    API --> Portfolios : «Path» /portfolios
-    Portfolios ..> ServicePortfolioRep : «use»
-    Portfolios ..> CreatePortfolioRequestRep : «use»
-    Portfolios --> PortfolioR : «Path» /{portfolioId}
-    PortfolioR ..> ServicePortfolioRep : «use»
-    PortfolioR ..> UpdatePortfolioRequestRep : «use»
-    style API fill:#fde68a,stroke:#b45309
-    style Portfolios fill:#bfdbfe,stroke:#1d4ed8
-    style PortfolioR fill:#bfdbfe,stroke:#1d4ed8
-    style ServicePortfolioRep fill:#bbf7d0,stroke:#15803d
-    style CreatePortfolioRequestRep fill:#bbf7d0,stroke:#15803d
-    style UpdatePortfolioRequestRep fill:#bbf7d0,stroke:#15803d
-```
+Source: [uml/portfolios.puml](uml/portfolios.puml). REST profile notation, see the [index](README.md#uml-api-diagram). Status codes, parameters and bodies are in the OpenAPI docs at `/api-docs`.
 
 The sections below add one sequence diagram per endpoint: the steps inside the server.
 

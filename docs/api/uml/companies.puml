@@ -1,0 +1,135 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Companies
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Companies" as Companies <<Resource>> {
+  + GET
+}
+class "Me" as Me <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "Credentials" as Credentials <<Resource>> {
+  + PATCH
+}
+class "Photo" as Photo <<Resource>> {
+  + PATCH
+  + DELETE
+}
+class "Company" as Company <<Resource>> {
+  + GET
+}
+class "CompletedProjects" as CompletedProjects <<Resource>> {
+  + GET
+}
+class "Reviews" as Reviews <<Resource>> {
+  + GET
+}
+class "ReviewSummary" as ReviewSummaryR <<Resource>> {
+  + GET
+}
+class "CompanySummary" as CompanySummaryRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -companyPhoto : url?
+  -accountType : AccountType
+  -contactEmail : string?
+  -phone : string
+  -website : string?
+  -categories : string[]
+  -techStack : string[]
+}
+class "CompanyProfile" as CompanyProfileRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -username : string
+  -email : string
+  -contactEmail : string?
+  -phone : string
+  -address : string?
+  -website : string?
+  -companyPhoto : url?
+  -accountType : AccountType
+  -companyType : string[]
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "UpdateCompanyProfileRequest" as UpdateCompanyProfileRequestRep <<Representation>> {
+  -companyName : string?
+  -contactEmail : string?
+  -phone : string?
+  -companyType : string[]?
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "ChangeCredentialsRequest" as ChangeCredentialsRequestRep <<Representation>> {
+  -currentPassword : string
+  -username : string?
+  -email : string?
+  -newPassword : string?
+}
+class "SessionResponse" as SessionResponseRep <<Representation>> {
+  -company : CompanyProfile
+  -accessToken : string
+}
+class "PhotoUpload" as PhotoUploadRep <<Representation>> {
+  -photo : image file, multipart
+}
+class "PublicCompanyProfile" as PublicCompanyProfileRep <<Representation>> {
+  -CompanyProfile without username, email
+}
+class "CompletedProject" as CompletedProjectRep <<Representation>> {
+  -projectId : integer
+  -listingTitle : string
+  -receiver : CompanyBrief
+  -completedAt : date
+}
+class "CompanyReview" as CompanyReviewRep <<Representation>> {
+  -Review fields
+  -receiver : CompanyBrief
+}
+class "ReviewSummary" as ReviewSummaryRep <<Representation>> {
+  -averageRating : integer?
+  -ratingCount : integer
+}
+
+API --> Companies : <<Path>> /companies
+Companies ..> CompanySummaryRep : <<use>>
+Companies --> Me : <<Path>> /me
+Me ..> CompanyProfileRep : <<use>>
+Me ..> UpdateCompanyProfileRequestRep : <<use>>
+Me --> Credentials : <<Path>> /credentials
+Credentials ..> ChangeCredentialsRequestRep : <<use>>
+Credentials ..> SessionResponseRep : <<use>>
+Me --> Photo : <<Path>> /photo
+Photo ..> PhotoUploadRep : <<use>>
+Photo ..> CompanyProfileRep : <<use>>
+Companies --> Company : <<Path>> /{companyId}
+Company ..> PublicCompanyProfileRep : <<use>>
+Company --> CompletedProjects : <<Path>> /completed-projects
+CompletedProjects ..> CompletedProjectRep : <<use>>
+Company --> Reviews : <<Path>> /reviews
+Reviews ..> CompanyReviewRep : <<use>>
+Reviews --> ReviewSummaryR : <<Path>> /summary
+ReviewSummaryR ..> ReviewSummaryRep : <<use>>
+@enduml

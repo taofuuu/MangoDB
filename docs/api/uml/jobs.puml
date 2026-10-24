@@ -1,0 +1,98 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Jobs
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Jobs" as Jobs <<Resource>> {
+  + GET
+  + POST
+}
+class "MyJobs" as MyJobs <<Resource>> {
+  + GET
+}
+class "Job" as JobR <<Resource>> {
+  + GET
+  + PATCH
+}
+class "Close" as CloseJob <<Resource>> {
+  + POST
+}
+class "JobProposals" as JobProposals <<Resource>> {
+  + GET
+  + POST
+}
+class "Job" as JobRep <<Representation>> {
+  -jobId : integer
+  -company : CompanyBrief
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -listingStatus : OPEN, CLOSED
+  -locationPref : string?
+  -duration : string?
+  -deadline : date?
+  -categoryIds : integer[]
+  -categories : string[]
+}
+class "CreateJobRequest" as CreateJobRequestRep <<Representation>> {
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number
+  -locationPref : string?
+  -duration : string?
+  -deadline : date?
+  -categoryIds : integer[]?
+}
+class "UpdateJobRequest" as UpdateJobRequestRep <<Representation>> {
+  -any CreateJobRequest field, all optional
+}
+class "ReceivedProposal" as ReceivedProposalRep <<Representation>> {
+  -Proposal fields
+  -sender : CompanyBrief
+}
+class "CreateProposalRequest" as CreateProposalRequestRep <<Representation>> {
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+}
+class "Proposal" as ProposalRep <<Representation>> {
+  -proposalId : integer
+  -listingId : integer
+  -senderId : integer
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+  -proposalStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
+
+API --> Jobs : <<Path>> /jobs
+Jobs ..> JobRep : <<use>>
+Jobs ..> CreateJobRequestRep : <<use>>
+Jobs --> MyJobs : <<Path>> /mine
+MyJobs ..> JobRep : <<use>>
+Jobs --> JobR : <<Path>> /{jobId}
+JobR ..> JobRep : <<use>>
+JobR ..> UpdateJobRequestRep : <<use>>
+JobR --> CloseJob : <<Path>> /close
+CloseJob ..> JobRep : <<use>>
+JobR --> JobProposals : <<Path>> /proposals
+JobProposals ..> ReceivedProposalRep : <<use>>
+JobProposals ..> CreateProposalRequestRep : <<use>>
+JobProposals ..> ProposalRep : <<use>>
+@enduml

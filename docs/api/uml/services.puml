@@ -1,0 +1,83 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Services
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Services" as Services <<Resource>> {
+  + GET
+  + POST
+}
+class "FilterOptions" as FilterOptions <<Resource>> {
+  + GET
+}
+class "MyServices" as MyServices <<Resource>> {
+  + GET
+}
+class "Service" as ServiceR <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "ServiceSummary" as ServiceSummaryRep <<Representation>> {
+  -serviceId : integer
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -categories : string[]
+  -techStack : string[]
+  -company : CompanyBrief
+}
+class "CreateServiceRequest" as CreateServiceRequestRep <<Representation>> {
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -categoryIds : integer[]?
+  -techStack : string[]?
+}
+class "Service" as ServiceRep <<Representation>> {
+  -serviceId : integer
+  -company : CompanyBrief
+  -type : SERVICE
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -listingStatus : OPEN, CLOSED
+  -categoryIds : integer[]
+  -techStack : string[]
+}
+class "ServiceFilterOptions" as ServiceFilterOptionsRep <<Representation>> {
+  -categories : string[]
+  -techStack : string[]
+}
+class "UpdateServiceRequest" as UpdateServiceRequestRep <<Representation>> {
+  -any CreateServiceRequest field, all optional
+}
+
+API --> Services : <<Path>> /services
+Services ..> ServiceSummaryRep : <<use>>
+Services ..> CreateServiceRequestRep : <<use>>
+Services ..> ServiceRep : <<use>>
+Services --> FilterOptions : <<Path>> /filter-options
+FilterOptions ..> ServiceFilterOptionsRep : <<use>>
+Services --> MyServices : <<Path>> /mine
+MyServices ..> ServiceRep : <<use>>
+Services --> ServiceR : <<Path>> /{serviceId}
+ServiceR ..> ServiceRep : <<use>>
+ServiceR ..> UpdateServiceRequestRep : <<use>>
+@enduml

@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Certificates
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Certificates" as Certificates <<Resource>> {
+  + GET
+  + POST
+}
+class "MyCertificates" as MyCertificates <<Resource>> {
+  + GET
+}
+class "Certificate" as CertificateR <<Resource>> {
+  + PATCH
+  + DELETE
+}
+class "Certificate" as CertificateRep <<Representation>> {
+  -certificateId : integer
+  -certTitle : string
+  -organization : string
+  -certImage : url?
+  -credentialId : string?
+  -credentialUrl : url?
+  -issueMonth : number?
+  -issueYear : number?
+  -expireMonth : number?
+  -expireYear : number?
+}
+class "CertificateRequest" as CertificateRequestRep <<Representation>> {
+  -certTitle : string
+  -organization : string
+  -issueMonth, issueYear : number?
+  -expireMonth, expireYear : number?
+  -credentialId : string?
+  -credentialUrl : url?
+  -certImage : image file?, multipart
+}
+
+API --> Certificates : <<Path>> /certificates
+Certificates ..> CertificateRep : <<use>>
+Certificates ..> CertificateRequestRep : <<use>>
+Certificates --> MyCertificates : <<Path>> /mine
+MyCertificates ..> CertificateRep : <<use>>
+Certificates --> CertificateR : <<Path>> /{certificateId}
+CertificateR ..> CertificateRep : <<use>>
+CertificateR ..> CertificateRequestRep : <<use>>
+@enduml

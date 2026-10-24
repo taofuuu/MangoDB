@@ -1,0 +1,83 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Auth
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Auth" as Auth <<Resource>>
+class "Register" as Register <<Resource>> {
+  + POST
+}
+class "Login" as Login <<Resource>> {
+  + POST
+}
+class "Admin" as AdminAuth <<Resource>>
+class "AdminLogin" as AdminLogin <<Resource>> {
+  + POST
+}
+class "CheckAvailability" as CheckAvailability <<Resource>> {
+  + POST
+}
+class "Logout" as Logout <<Resource>> {
+  + POST
+}
+class "RegisterRequest" as RegisterRequestRep <<Representation>> {
+  -companyName : string
+  -username : string
+  -email : string
+  -password : string
+  -phone : string
+  -accountType : PROVIDER, RECEIVER, BOTH
+  -companyType : string[]
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -tosAccepted : true
+}
+class "SessionResponse" as SessionResponseRep <<Representation>> {
+  -company : CompanyProfile
+  -accessToken : string
+}
+class "LoginRequest" as LoginRequestRep <<Representation>> {
+  -email : string
+  -password : string
+}
+class "IdentityCheck" as IdentityCheckRep <<Representation>> {
+  -username : string
+  -email : string
+}
+class "IdentityAvailability" as IdentityAvailabilityRep <<Representation>> {
+  -username : string
+  -email : string
+  -usernameAvailable : boolean
+  -emailAvailable : boolean
+}
+
+API --> Auth : <<Path>> /auth
+Auth --> Register : <<Path>> /register
+Register ..> RegisterRequestRep : <<use>>
+Register ..> SessionResponseRep : <<use>>
+Auth --> Login : <<Path>> /login
+Login ..> LoginRequestRep : <<use>>
+Login ..> SessionResponseRep : <<use>>
+Auth --> AdminAuth : <<Path>> /admin
+AdminAuth --> AdminLogin : <<Path>> /login
+AdminLogin ..> LoginRequestRep : <<use>>
+AdminLogin ..> SessionResponseRep : <<use>>
+Auth --> CheckAvailability : <<Path>> /check-availability
+CheckAvailability ..> IdentityCheckRep : <<use>>
+CheckAvailability ..> IdentityAvailabilityRep : <<use>>
+Auth --> Logout : <<Path>> /logout
+@enduml

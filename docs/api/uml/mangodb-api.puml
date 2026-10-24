@@ -1,0 +1,226 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: all resources and paths
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Auth" as Auth <<Resource>>
+class "Register" as Register <<Resource>> {
+  + POST
+}
+class "Login" as Login <<Resource>> {
+  + POST
+}
+class "Admin" as AdminAuth <<Resource>>
+class "AdminLogin" as AdminLogin <<Resource>> {
+  + POST
+}
+class "CheckAvailability" as CheckAvailability <<Resource>> {
+  + POST
+}
+class "Logout" as Logout <<Resource>> {
+  + POST
+}
+class "Admin" as Admin <<Resource>>
+class "Companies" as AdminCompanies <<Resource>> {
+  + GET
+}
+class "Company" as AdminCompany <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "Companies" as Companies <<Resource>> {
+  + GET
+}
+class "Me" as Me <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "Credentials" as Credentials <<Resource>> {
+  + PATCH
+}
+class "Photo" as Photo <<Resource>> {
+  + PATCH
+  + DELETE
+}
+class "Company" as Company <<Resource>> {
+  + GET
+}
+class "CompletedProjects" as CompletedProjects <<Resource>> {
+  + GET
+}
+class "Reviews" as Reviews <<Resource>> {
+  + GET
+}
+class "ReviewSummary" as ReviewSummaryR <<Resource>> {
+  + GET
+}
+class "Services" as Services <<Resource>> {
+  + GET
+  + POST
+}
+class "FilterOptions" as FilterOptions <<Resource>> {
+  + GET
+}
+class "MyServices" as MyServices <<Resource>> {
+  + GET
+}
+class "Service" as ServiceR <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "Portfolios" as Portfolios <<Resource>> {
+  + GET
+  + POST
+}
+class "Portfolio" as PortfolioR <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "Certificates" as Certificates <<Resource>> {
+  + GET
+  + POST
+}
+class "MyCertificates" as MyCertificates <<Resource>> {
+  + GET
+}
+class "Certificate" as CertificateR <<Resource>> {
+  + PATCH
+  + DELETE
+}
+class "Jobs" as Jobs <<Resource>> {
+  + GET
+  + POST
+}
+class "MyJobs" as MyJobs <<Resource>> {
+  + GET
+}
+class "Job" as JobR <<Resource>> {
+  + GET
+  + PATCH
+}
+class "Close" as CloseJob <<Resource>> {
+  + POST
+}
+class "JobProposals" as JobProposals <<Resource>> {
+  + GET
+  + POST
+}
+class "Proposals" as Proposals <<Resource>>
+class "MyProposals" as MyProposals <<Resource>> {
+  + GET
+}
+class "Counts" as Counts <<Resource>> {
+  + GET
+}
+class "Proposal" as ProposalR <<Resource>>
+class "Accept" as Accept <<Resource>> {
+  + POST
+}
+class "Reject" as Reject <<Resource>> {
+  + POST
+}
+class "Projects" as Projects <<Resource>>
+class "MyProjects" as MyProjects <<Resource>> {
+  + GET
+}
+class "Project" as ProjectR <<Resource>> {
+  + GET
+}
+class "Updates" as Updates <<Resource>> {
+  + GET
+  + POST
+}
+class "ReportDeposit" as ReportDeposit <<Resource>> {
+  + POST
+}
+class "ConfirmDeposit" as ConfirmDeposit <<Resource>> {
+  + POST
+}
+class "SubmitWork" as SubmitWork <<Resource>> {
+  + POST
+}
+class "RejectWork" as RejectWork <<Resource>> {
+  + POST
+}
+class "AcceptWork" as AcceptWork <<Resource>> {
+  + POST
+}
+class "Review" as ReviewR <<Resource>> {
+  + GET
+  + POST
+}
+class "Categories" as Categories <<Resource>> {
+  + GET
+}
+class "Health" as HealthR <<Resource>> {
+  + GET
+}
+
+API --> Auth : <<Path>> /auth
+Auth --> Register : <<Path>> /register
+Auth --> Login : <<Path>> /login
+Auth --> AdminAuth : <<Path>> /admin
+AdminAuth --> AdminLogin : <<Path>> /login
+Auth --> CheckAvailability : <<Path>> /check-availability
+Auth --> Logout : <<Path>> /logout
+API --> Admin : <<Path>> /admin
+Admin --> AdminCompanies : <<Path>> /companies
+AdminCompanies --> AdminCompany : <<Path>> /{companyId}
+API --> Companies : <<Path>> /companies
+Companies --> Me : <<Path>> /me
+Me --> Credentials : <<Path>> /credentials
+Me --> Photo : <<Path>> /photo
+Companies --> Company : <<Path>> /{companyId}
+Company --> CompletedProjects : <<Path>> /completed-projects
+Company --> Reviews : <<Path>> /reviews
+Reviews --> ReviewSummaryR : <<Path>> /summary
+API --> Services : <<Path>> /services
+Services --> FilterOptions : <<Path>> /filter-options
+Services --> MyServices : <<Path>> /mine
+Services --> ServiceR : <<Path>> /{serviceId}
+API --> Portfolios : <<Path>> /portfolios
+Portfolios --> PortfolioR : <<Path>> /{portfolioId}
+API --> Certificates : <<Path>> /certificates
+Certificates --> MyCertificates : <<Path>> /mine
+Certificates --> CertificateR : <<Path>> /{certificateId}
+API --> Jobs : <<Path>> /jobs
+Jobs --> MyJobs : <<Path>> /mine
+Jobs --> JobR : <<Path>> /{jobId}
+JobR --> CloseJob : <<Path>> /close
+JobR --> JobProposals : <<Path>> /proposals
+API --> Proposals : <<Path>> /proposals
+Proposals --> MyProposals : <<Path>> /mine
+MyProposals --> Counts : <<Path>> /counts
+Proposals --> ProposalR : <<Path>> /{proposalId}
+ProposalR --> Accept : <<Path>> /accept
+ProposalR --> Reject : <<Path>> /reject
+API --> Projects : <<Path>> /projects
+Projects --> MyProjects : <<Path>> /mine
+Projects --> ProjectR : <<Path>> /{projectId}
+ProjectR --> Updates : <<Path>> /updates
+ProjectR --> ReportDeposit : <<Path>> /report-deposit
+ProjectR --> ConfirmDeposit : <<Path>> /confirm-deposit
+ProjectR --> SubmitWork : <<Path>> /submit-work
+ProjectR --> RejectWork : <<Path>> /reject-work
+ProjectR --> AcceptWork : <<Path>> /accept-work
+ProjectR --> ReviewR : <<Path>> /review
+API --> Categories : <<Path>> /categories
+API --> HealthR : <<Path>> /health
+@enduml

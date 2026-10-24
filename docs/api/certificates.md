@@ -16,67 +16,9 @@ A certificate belongs to a provider. The image is optional.
 
 ## UML API Diagram
 
-REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+![UML API Diagram: certificates](uml/certificates.svg)
 
-```mermaid
-classDiagram
-    direction LR
-    class API["MangoDB API"] {
-        <<Application>>
-        basePath = "/"
-    }
-    class Certificates["Certificates"] {
-        <<Resource>>
-        +GET(companyId : QueryParam) 200 | 400 | 401 | 403
-        +POST(CertificateRequest) 201 | 400 | 401 | 403
-    }
-    class MyCertificates["MyCertificates"] {
-        <<Resource>>
-        +GET() 200 | 401 | 403
-    }
-    class CertificateR["Certificate"] {
-        <<Resource>>
-        +PATCH(CertificateRequest) 200 | 400 | 401 | 404
-        +DELETE() 204 | 400 | 401 | 404
-    }
-    class CertificateRep["Certificate"] {
-        <<Representation>>
-        -certificateId : number
-        -certTitle : string
-        -organization : string
-        -certImage : url?
-        -credentialId : string?
-        -credentialUrl : url?
-        -issueMonth : number?
-        -issueYear : number?
-        -expireMonth : number?
-        -expireYear : number?
-    }
-    class CertificateRequestRep["CertificateRequest"] {
-        <<Representation>>
-        -certTitle : string
-        -organization : string
-        -issueMonth, issueYear : number?
-        -expireMonth, expireYear : number?
-        -credentialId : string?
-        -credentialUrl : url?
-        -certImage : image file?, multipart
-    }
-    API --> Certificates : «Path» /certificates
-    Certificates ..> CertificateRep : «use»
-    Certificates ..> CertificateRequestRep : «use»
-    Certificates --> MyCertificates : «Path» /mine
-    MyCertificates ..> CertificateRep : «use»
-    Certificates --> CertificateR : «Path» /{certificateId}
-    CertificateR ..> CertificateRep : «use»
-    CertificateR ..> CertificateRequestRep : «use»
-    style API fill:#fde68a,stroke:#b45309
-    style Certificates fill:#bfdbfe,stroke:#1d4ed8
-    style MyCertificates fill:#bfdbfe,stroke:#1d4ed8
-    style CertificateR fill:#bfdbfe,stroke:#1d4ed8
-    style CertificateRep fill:#bbf7d0,stroke:#15803d
-    style CertificateRequestRep fill:#bbf7d0,stroke:#15803d
-```
+Source: [uml/certificates.puml](uml/certificates.puml). REST profile notation, see the [index](README.md#uml-api-diagram). Status codes, parameters and bodies are in the OpenAPI docs at `/api-docs`.
 
 The sections below add one sequence diagram per endpoint: the steps inside the server.
 

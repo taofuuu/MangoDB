@@ -10,30 +10,9 @@ Back to the [index](README.md).
 
 ## UML API Diagram
 
-REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+![UML API Diagram: categories](uml/categories.svg)
 
-```mermaid
-classDiagram
-    direction LR
-    class API["MangoDB API"] {
-        <<Application>>
-        basePath = "/"
-    }
-    class Categories["Categories"] {
-        <<Resource>>
-        +GET() 200
-    }
-    class CategoryRep["Category"] {
-        <<Representation>>
-        -categoryId : number
-        -categoryName : string
-    }
-    API --> Categories : «Path» /categories
-    Categories ..> CategoryRep : «use»
-    style API fill:#fde68a,stroke:#b45309
-    style Categories fill:#bfdbfe,stroke:#1d4ed8
-    style CategoryRep fill:#bbf7d0,stroke:#15803d
-```
+Source: [uml/categories.puml](uml/categories.puml). REST profile notation, see the [index](README.md#uml-api-diagram). Status codes, parameters and bodies are in the OpenAPI docs at `/api-docs`.
 
 The sections below add one sequence diagram per endpoint: the steps inside the server.
 

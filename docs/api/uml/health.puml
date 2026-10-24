@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Health
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Health" as HealthR <<Resource>> {
+  + GET
+}
+class "Health" as HealthRep <<Representation>> {
+  -status : ok
+}
+
+API --> HealthR : <<Path>> /health
+HealthR ..> HealthRep : <<use>>
+@enduml

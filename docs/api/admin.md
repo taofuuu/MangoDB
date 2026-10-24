@@ -16,78 +16,9 @@ A company token gets 403 on every route here.
 
 ## UML API Diagram
 
-REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+![UML API Diagram: admin](uml/admin.svg)
 
-```mermaid
-classDiagram
-    direction LR
-    class API["MangoDB API"] {
-        <<Application>>
-        basePath = "/"
-    }
-    class Admin["Admin"] {
-        <<Resource>>
-    }
-    class AdminCompanies["Companies"] {
-        <<Resource>>
-        +GET(page, pageSize, q, filter, includeDeleted : QueryParam) 200 | 400 | 401 | 403
-    }
-    class AdminCompany["Company"] {
-        <<Resource>>
-        +GET() 200 | 400 | 401 | 403 | 404
-        +PATCH(UpdateCompanyProfileRequest) 200 | 400 | 401 | 403 | 404 | 409
-        +DELETE(DeleteCompanyAccountRequest) 204 | 400 | 401 | 403 | 404 | 409
-    }
-    class CompanyAccountSummaryRep["CompanyAccountSummary"] {
-        <<Representation>>
-        -companyId : number
-        -companyName : string
-        -companyDescription : string?
-        -phone : string
-        -accountType : AccountType
-        -averageRating : number?
-        -ratingCount : number
-        -deletedAt : date?
-    }
-    class CompanyAccountDetailRep["CompanyAccountDetail"] {
-        <<Representation>>
-        -CompanyProfile fields
-        -averageRating : number?
-        -ratingCount : number
-        -deletedAt : date?
-    }
-    class UpdateCompanyProfileRequestRep["UpdateCompanyProfileRequest"] {
-        <<Representation>>
-        -companyName : string?
-        -contactEmail : string?
-        -phone : string?
-        -companyType : string[]?
-        -companyDescription : string?
-        -address : string?
-        -website : string?
-        -serviceTerm : string?
-        -warrantyPolicy : string?
-    }
-    class DeleteCompanyAccountRequestRep["DeleteCompanyAccountRequest"] {
-        <<Representation>>
-        -currentPassword : string
-    }
-    API --> Admin : «Path» /admin
-    Admin --> AdminCompanies : «Path» /companies
-    AdminCompanies ..> CompanyAccountSummaryRep : «use»
-    AdminCompanies --> AdminCompany : «Path» /{companyId}
-    AdminCompany ..> CompanyAccountDetailRep : «use»
-    AdminCompany ..> UpdateCompanyProfileRequestRep : «use»
-    AdminCompany ..> DeleteCompanyAccountRequestRep : «use»
-    style API fill:#fde68a,stroke:#b45309
-    style Admin fill:#bfdbfe,stroke:#1d4ed8
-    style AdminCompanies fill:#bfdbfe,stroke:#1d4ed8
-    style AdminCompany fill:#bfdbfe,stroke:#1d4ed8
-    style CompanyAccountSummaryRep fill:#bbf7d0,stroke:#15803d
-    style CompanyAccountDetailRep fill:#bbf7d0,stroke:#15803d
-    style UpdateCompanyProfileRequestRep fill:#bbf7d0,stroke:#15803d
-    style DeleteCompanyAccountRequestRep fill:#bbf7d0,stroke:#15803d
-```
+Source: [uml/admin.puml](uml/admin.puml). REST profile notation, see the [index](README.md#uml-api-diagram). Status codes, parameters and bodies are in the OpenAPI docs at `/api-docs`.
 
 The sections below add one sequence diagram per endpoint: the steps inside the server.
 

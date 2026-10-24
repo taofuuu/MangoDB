@@ -1,0 +1,66 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam class {
+  BackgroundColor<<Application>> #FDE68A
+  BorderColor<<Application>> #B45309
+  BackgroundColor<<Resource>> #BFDBFE
+  BorderColor<<Resource>> #1D4ED8
+  BackgroundColor<<Representation>> #BBF7D0
+  BorderColor<<Representation>> #15803D
+}
+title MangoDB API: Admin
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Admin" as Admin <<Resource>>
+class "Companies" as AdminCompanies <<Resource>> {
+  + GET
+}
+class "Company" as AdminCompany <<Resource>> {
+  + GET
+  + PATCH
+  + DELETE
+}
+class "CompanyAccountSummary" as CompanyAccountSummaryRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -phone : string
+  -accountType : AccountType
+  -averageRating : integer?
+  -ratingCount : integer
+  -deletedAt : date?
+}
+class "CompanyAccountDetail" as CompanyAccountDetailRep <<Representation>> {
+  -CompanyProfile fields
+  -averageRating : integer?
+  -ratingCount : integer
+  -deletedAt : date?
+}
+class "UpdateCompanyProfileRequest" as UpdateCompanyProfileRequestRep <<Representation>> {
+  -companyName : string?
+  -contactEmail : string?
+  -phone : string?
+  -companyType : string[]?
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "DeleteCompanyAccountRequest" as DeleteCompanyAccountRequestRep <<Representation>> {
+  -currentPassword : string
+}
+
+API --> Admin : <<Path>> /admin
+Admin --> AdminCompanies : <<Path>> /companies
+AdminCompanies ..> CompanyAccountSummaryRep : <<use>>
+AdminCompanies --> AdminCompany : <<Path>> /{companyId}
+AdminCompany ..> CompanyAccountDetailRep : <<use>>
+AdminCompany ..> UpdateCompanyProfileRequestRep : <<use>>
+AdminCompany ..> DeleteCompanyAccountRequestRep : <<use>>
+@enduml
