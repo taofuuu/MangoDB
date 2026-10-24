@@ -21,7 +21,9 @@ import {
 } from '@/lib/api';
 import { getMyProposalCounts, listMyProposals } from '@/lib/proposals';
 import { PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
+import { isProviderAccount } from '@/lib/roles';
 import { redirectToUnauthorized } from '@/lib/session';
+import { useMyCompany } from '@/lib/useMyCompany';
 import MyProposalCard from './MyProposalCard';
 import MyProposalDetail from './MyProposalDetail';
 
@@ -50,6 +52,9 @@ export default function MyProposalsPage() {
     const [reloadKey, setReloadKey] = useState(0);
     const [selected, setSelected] = useState<SentProposal | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
+    // Only for the empty state's wording. The list's own request does the
+    // sign-in and Admin checks, so this never gates the page.
+    const me = useMyCompany();
 
     useEffect(() => {
         let cancelled = false;
@@ -148,6 +153,20 @@ export default function MyProposalsPage() {
 
     const proposals = result?.items ?? [];
     const hasNone = counts?.total === 0;
+    // A Receiver-only company sends hire requests, never job proposals, so its
+    // empty list points at services. Everyone else is pointed at jobs.
+    const emptyCopy =
+        me.status === 'ready' && !isProviderAccount(me.company.accountType)
+            ? {
+                  message:
+                      'Find a service and send a hire request. It will show up here.',
+                  action: { href: '/services', label: 'Search for Services' },
+              }
+            : {
+                  message:
+                      'Search for jobs to offer your proposal and it will show up here.',
+                  action: { href: '/jobs', label: 'Search for Jobs' },
+              };
     const activeChip = CHIPS.find((chip) => chip.status === status);
 
     return (
@@ -203,8 +222,7 @@ export default function MyProposalsPage() {
                     {!error && hasNone && (
                         <EmptyState
                             title="No Proposal Yet"
-                            message="Search for jobs to offer your proposal and it will show up here."
-                            action={{ href: '/jobs', label: 'Search for Jobs' }}
+                            {...emptyCopy}
                             icon={
                                 <FileX2
                                     strokeWidth={1.5}

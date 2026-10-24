@@ -1,28 +1,35 @@
 'use client';
 
+import Link from 'next/link';
 import type { SentProposal } from '@mangodb/shared';
-import { CalendarDays, Clock, Tag, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock, Tag, X } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 import ProposalStatusBadge from './ProposalStatusBadge';
+import { sentProposalKind } from './sentProposalKind';
 
 type MyProposalDetailProps = {
     proposal: SentProposal;
     onClose: () => void;
 };
 
-// The right-hand panel: everything the Provider sent, read back to them.
-// Everything here is already in the list row, so opening it needs no request.
+// The right-hand panel: everything the company sent, read back to them. A
+// Provider's job proposal and a Receiver's hire request share it. Everything
+// here is already in the list row, so opening it needs no request. An
+// accepted one started a project, so the panel ends with a link to it.
 export default function MyProposalDetail({
     proposal,
     onClose,
 }: MyProposalDetailProps) {
     const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
+    const kind = sentProposalKind(proposal.listingType);
+    const projectId =
+        proposal.proposalStatus === 'ACCEPTED' ? proposal.projectId : null;
 
     return (
         <section
-            aria-label={`Proposal for ${proposal.listingTitle}`}
+            aria-label={`${kind} for ${proposal.listingTitle}`}
             className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[80vh] lg:max-h-none lg:flex-1"
         >
             <div className="flex items-start gap-4">
@@ -46,7 +53,7 @@ export default function MyProposalDetail({
                 <button
                     type="button"
                     onClick={onClose}
-                    aria-label="Close proposal detail"
+                    aria-label={`Close ${kind.toLowerCase()} detail`}
                     className="rounded-full p-1 text-ink-placeholder hover:bg-fill-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
                 >
                     <X aria-hidden="true" className="size-5" />
@@ -78,10 +85,26 @@ export default function MyProposalDetail({
                 />
             </div>
 
-            <h3 className="mt-4 type-sm !font-[700] text-ink">Proposal term</h3>
+            <h3 className="mt-4 type-sm !font-[700] text-ink">
+                {proposal.listingType === 'SERVICE'
+                    ? 'Request term'
+                    : 'Proposal term'}
+            </h3>
             <p className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-2 type-sm leading-relaxed text-ink">
                 {proposal.proposalTerms}
             </p>
+
+            {projectId !== null && (
+                <div className="mt-4 flex justify-end border-t border-brand/60 pt-4">
+                    <Link
+                        href={`/projects/${projectId}`}
+                        className="inline-flex items-center gap-2 rounded-button bg-brand px-6 py-2 type-xs text-surface-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                        Go to project
+                        <ArrowRight aria-hidden="true" className="size-4" />
+                    </Link>
+                </div>
+            )}
         </section>
     );
 }

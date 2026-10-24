@@ -412,6 +412,8 @@ export interface SentProposal extends Proposal {
     listingTitle: string;
     listingType: ListingType;
     recipient: CompanyBrief;
+    // The project accepting it started; null until then.
+    projectId: number | null;
 }
 
 // US2-9. GET /proposals/mine/counts: how many proposals the caller has sent,
