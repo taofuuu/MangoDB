@@ -23,10 +23,13 @@ import {
 import {
     DEFAULT_LISTING_STATUS,
     ensureTechStack,
+    isRatingSortOrder,
     serviceOrderBy,
     serviceSearchWhere,
     serviceSelect,
     serviceSummarySelect,
+    serviceSummaryWithRatingSelect,
+    sortServicesByRating,
     toServiceFilterOptions,
     toService,
     toServiceSummary,
@@ -161,6 +164,22 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         req.query,
     );
     const where = serviceSearchWhere({ q, ...filters });
+    if (isRatingSortOrder(orderBy)) {
+        const listings = await prisma.listing.findMany({
+            where,
+            orderBy: serviceOrderBy(orderBy),
+            select: serviceSummaryWithRatingSelect,
+        });
+        const sorted = sortServicesByRating(listings, orderBy);
+        const { skip, take } = pageArgs({ page, pageSize });
+        const body: Paginated<ServiceSummary> = {
+            items: sorted.slice(skip, skip + take).map(toServiceSummary),
+            pagination: toPagination(sorted.length, { page, pageSize }),
+        };
+        res.json(body);
+        return;
+    }
+
     const [totalItems, listings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({

@@ -72,7 +72,13 @@ export type ListingType = (typeof LISTING_TYPES)[number];
 
 // Ordering choices of the service search. Never stored, so camelCase like
 // COMPANY_SORT_ORDERS (section 6).
-export const SERVICE_SORT_ORDERS = ['newest', 'priceAsc', 'priceDesc'] as const;
+export const SERVICE_SORT_ORDERS = [
+    'newest',
+    'priceAsc',
+    'priceDesc',
+    'ratingDesc',
+    'ratingAsc',
+] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.

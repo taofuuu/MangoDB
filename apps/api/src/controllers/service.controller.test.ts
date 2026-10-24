@@ -33,13 +33,14 @@ import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type { Paginated, ServiceSummary } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
+import type { RatingSource, ReviewScoresRow } from '../lib/rating';
 
 type Company = {
     companyId: number;
     companyName: string;
     companyPhoto: string | null;
     deletedAt: Date | null;
-};
+} & RatingSource;
 
 // One listing row as the database would hold it, with its relations joined in.
 type Row = {
@@ -58,13 +59,48 @@ type Row = {
 const ALPHA = 1;
 const BETA = 2;
 const GONE = 3; // a soft-deleted company
+const GAMMA = 4;
+const DELTA = 5;
 
-function company(companyId: number, deletedAt: Date | null = null): Company {
+function reviewRow(
+    scores:
+        | number
+        | [
+              workQuality: number,
+              service: number,
+              valueForMoney: number,
+              deliveryTime: number,
+          ],
+): ReviewScoresRow {
+    const [
+        workQualityScore,
+        serviceScore,
+        valueForMoneyScore,
+        deliveryTimeScore,
+    ] = typeof scores === 'number' ? [scores, scores, scores, scores] : scores;
+    return {
+        project: {
+            review: {
+                workQualityScore,
+                serviceScore,
+                valueForMoneyScore,
+                deliveryTimeScore,
+            },
+        },
+    };
+}
+
+function company(
+    companyId: number,
+    deletedAt: Date | null = null,
+    ratingSource: RatingSource = { proposal: [], listing: [] },
+): Company {
     return {
         companyId,
         companyName: `Company ${companyId}`,
         companyPhoto: null,
         deletedAt,
+        ...ratingSource,
     };
 }
 
@@ -72,6 +108,8 @@ const companies: Record<number, Company> = {
     [ALPHA]: company(ALPHA),
     [BETA]: company(BETA),
     [GONE]: company(GONE, new Date('2026-01-01')),
+    [GAMMA]: company(GAMMA),
+    [DELTA]: company(DELTA),
 };
 
 let rows: Row[] = [];
@@ -80,6 +118,7 @@ function service(
     listingId: number,
     companyId: number,
     listingStatus: Row['listingStatus'] = 'OPEN',
+    companyOverride?: Company,
 ): Row {
     return {
         listingId,
@@ -91,7 +130,7 @@ function service(
         maxBudget: null,
         listingCategory: [],
         service: null,
-        company: companies[companyId]!,
+        company: companyOverride ?? companies[companyId]!,
     };
 }
 
@@ -191,6 +230,15 @@ function ids(result: unknown): number[] {
     return body.items.map((s) => s.serviceId).sort((a, b) => a - b);
 }
 
+function orderedIds(result: unknown): number[] {
+    const body = result as Paginated<ServiceSummary>;
+    assert.ok(
+        Array.isArray(body.items),
+        `no items in ${JSON.stringify(result)}`,
+    );
+    return body.items.map((s) => s.serviceId);
+}
+
 function assertBadRequest(result: unknown): void {
     assert.ok(
         result instanceof ApiError,
@@ -247,4 +295,158 @@ describe('GET /services?companyId=', () => {
             assertBadRequest(await search({ companyId: bad }));
         });
     }
+});
+
+describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
+    it('orders services highest rating first for ratingDesc, with unrated Providers last', async () => {
+        const unrated = company(ALPHA);
+        const ratedLow = company(BETA, null, {
+            proposal: [reviewRow(2)],
+            listing: [],
+        });
+        const ratedHigh = company(GAMMA, null, {
+            proposal: [reviewRow(5)],
+            listing: [],
+        });
+        const ratedMid = company(DELTA, null, {
+            proposal: [],
+            listing: [{ proposal: [reviewRow([4, 3, 4, 3])] }], // average 3.5
+        });
+
+        rows = [
+            service(10, ALPHA, 'OPEN', unrated),
+            service(20, BETA, 'OPEN', ratedLow),
+            service(30, GAMMA, 'OPEN', ratedHigh),
+            service(40, DELTA, 'OPEN', ratedMid),
+        ];
+
+        const result = await search({ orderBy: 'ratingDesc' });
+        assert.deepEqual(orderedIds(result), [30, 40, 20, 10]);
+    });
+
+    it('orders services lowest rating first for ratingAsc, with unrated Providers last', async () => {
+        const unrated = company(ALPHA);
+        const ratedLow = company(BETA, null, {
+            proposal: [reviewRow(2)],
+            listing: [],
+        });
+        const ratedHigh = company(GAMMA, null, {
+            proposal: [reviewRow(5)],
+            listing: [],
+        });
+        const ratedMid = company(DELTA, null, {
+            proposal: [],
+            listing: [{ proposal: [reviewRow([4, 3, 4, 3])] }], // average 3.5
+        });
+
+        rows = [
+            service(10, ALPHA, 'OPEN', unrated),
+            service(30, GAMMA, 'OPEN', ratedHigh),
+            service(40, DELTA, 'OPEN', ratedMid),
+            service(20, BETA, 'OPEN', ratedLow),
+        ];
+
+        const result = await search({ orderBy: 'ratingAsc' });
+        assert.deepEqual(orderedIds(result), [20, 40, 30, 10]);
+    });
+
+    it('combines job proposal reviews and service hire request reviews via getRating', async () => {
+        // Combined average: (5 + 3) / 2 = 4.0
+        const combined = company(ALPHA, null, {
+            proposal: [reviewRow(5)],
+            listing: [{ proposal: [reviewRow(3)] }],
+        });
+        // Single review: 4.5
+        const higher = company(BETA, null, {
+            proposal: [reviewRow([5, 4, 5, 4])],
+            listing: [],
+        });
+
+        rows = [
+            service(10, ALPHA, 'OPEN', combined),
+            service(20, BETA, 'OPEN', higher),
+        ];
+
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingDesc' })),
+            [20, 10],
+        );
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingAsc' })),
+            [10, 20],
+        );
+    });
+
+    it('preserves tie-breaking order when ratings tie and when multiple Providers are unrated', async () => {
+        const tiedA = company(ALPHA, null, {
+            proposal: [reviewRow(4)],
+            listing: [],
+        });
+        const tiedB = company(BETA, null, {
+            proposal: [reviewRow(4)],
+            listing: [],
+        });
+        const unratedA = company(GAMMA);
+        const unratedB = company(DELTA);
+
+        rows = [
+            service(40, GAMMA, 'OPEN', unratedA),
+            service(30, ALPHA, 'OPEN', tiedA),
+            service(20, DELTA, 'OPEN', unratedB),
+            service(10, BETA, 'OPEN', tiedB),
+        ];
+
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingDesc' })),
+            [30, 10, 40, 20],
+        );
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingAsc' })),
+            [30, 10, 40, 20],
+        );
+    });
+
+    it('paginates after sorting by rating', async () => {
+        const rated5 = company(ALPHA, null, {
+            proposal: [reviewRow(5)],
+            listing: [],
+        });
+        const rated3 = company(BETA, null, {
+            proposal: [reviewRow(3)],
+            listing: [],
+        });
+        const unrated = company(GAMMA);
+
+        rows = [
+            service(10, GAMMA, 'OPEN', unrated),
+            service(20, BETA, 'OPEN', rated3),
+            service(30, ALPHA, 'OPEN', rated5),
+        ];
+
+        const page1 = (await search({
+            orderBy: 'ratingDesc',
+            page: '1',
+            pageSize: '2',
+        })) as Paginated<ServiceSummary>;
+        assert.deepEqual(orderedIds(page1), [30, 20]);
+        assert.deepEqual(page1.pagination, {
+            page: 1,
+            pageSize: 2,
+            totalItems: 3,
+            totalPages: 2,
+        });
+
+        const page2 = (await search({
+            orderBy: 'ratingDesc',
+            page: '2',
+            pageSize: '2',
+        })) as Paginated<ServiceSummary>;
+        assert.deepEqual(orderedIds(page2), [10]);
+        assert.deepEqual(page2.pagination, {
+            page: 2,
+            pageSize: 2,
+            totalItems: 3,
+            totalPages: 2,
+        });
+    });
 });

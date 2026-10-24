@@ -1326,6 +1326,15 @@ snap services-order-price-desc GET \
     "/services?techStack=$RUN&orderBy=priceDesc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# US3-3. Sorting by Provider rating, highest or lowest first.
+snap services-order-rating-desc GET \
+    "/services?techStack=$RUN&orderBy=ratingDesc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-order-rating-asc GET \
+    "/services?techStack=$RUN&orderBy=ratingAsc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # Slider ends that cross are a 400 the filter panel can show.
 snap error-services-filter-price-range GET \
     "/services?minPrice=200000&maxPrice=1000" \
