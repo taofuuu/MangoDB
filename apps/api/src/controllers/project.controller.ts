@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import type {
+    CompletedProject,
+    ListingType,
     Paginated,
     ProjectStatus,
     ProjectSummary,
@@ -12,10 +14,12 @@ import { pageArgs, toPagination } from '../lib/pagination';
 import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    completedProjectSelect,
     moveProjectStatus,
     projectSelect,
     projectUpdateSelect,
     projectViewSelect,
+    toCompletedProject,
     toProject,
     toProjectDetail,
     toProjectSummary,
@@ -23,7 +27,9 @@ import {
 } from '../lib/project';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
+import { companyIdParamSchema } from '../schemas/company.schema';
 import {
+    completedProjectListQuerySchema,
     createProjectUpdateSchema,
     createReviewSchema,
     projectIdParamSchema,
@@ -237,7 +243,6 @@ export async function createReview(req: Request, res: Response): Promise<void> {
         throw err;
     }
 }
-
 // US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404 (conventions §4).
 export async function getProjectReview(
@@ -256,4 +261,62 @@ export async function getProjectReview(
     }
 
     res.json(toReview(row));
+}
+
+// US2-5. A Provider's completed work, newest first, for its public profile.
+// Unknown, soft-deleted, and admin accounts answer 404 (same as getCompanyProfile).
+export async function listProviderCompletedProjects(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+    const { page, pageSize } = parseQuery(
+        completedProjectListQuerySchema,
+        req.query,
+    );
+
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: { companyId: true },
+    });
+    if (!company) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const where: Prisma.ProjectWhereInput = {
+        projectStatus: 'COMPLETED' satisfies ProjectStatus,
+        OR: [
+            {
+                proposal: {
+                    senderId: companyId,
+                    listing: { listingType: 'JOB' satisfies ListingType },
+                },
+            },
+            {
+                proposal: {
+                    listing: {
+                        listingType: 'SERVICE' satisfies ListingType,
+                        companyId: companyId,
+                    },
+                },
+            },
+        ],
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.project.count({ where }),
+        prisma.project.findMany({
+            where,
+            ...pageArgs({ page, pageSize }),
+            orderBy: [{ completedAt: 'desc' }, { projectId: 'desc' }],
+            select: completedProjectSelect,
+        }),
+    ]);
+
+    const body: Paginated<CompletedProject> = {
+        items: rows.map(toCompletedProject),
+        pagination: toPagination(totalItems, { page, pageSize }),
+    };
+
+    res.json(body);
 }

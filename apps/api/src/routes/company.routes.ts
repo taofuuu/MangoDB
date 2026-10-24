@@ -13,6 +13,7 @@ import {
     updateMyPhoto,
     updateMyProfile,
 } from '../controllers/company.controller';
+import { listProviderCompletedProjects } from '../controllers/project.controller';
 
 // Mounted at /companies. GET / searches other companies; everything under /me
 // operates on the caller's own account.
@@ -54,6 +55,14 @@ companyRoutes.delete(
     deleteMyAccount,
 );
 
+// US2-5. A Provider's completed work, newest first, for its public profile.
+companyRoutes.get(
+    '/:companyId/completed-projects',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    listProviderCompletedProjects,
+);
+
 // US5-3. A Provider's reviews on completed projects, newest first. Paged.
 companyRoutes.get(
     '/:companyId/reviews',
@@ -69,7 +78,6 @@ companyRoutes.get(
     requireRole('provider', 'receiver'),
     getProviderReviewSummary,
 );
-
 // Another company's public profile. Last, after every /me route, so "me" is
 // never read as an id. Same callers as the search above: any company, not
 // admins, who have GET /admin/companies/:companyId.
