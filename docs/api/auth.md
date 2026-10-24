@@ -12,6 +12,111 @@ Back to the [index](README.md).
 | POST   | `/auth/check-availability` | public         | 200 `{ username, email, usernameAvailable, emailAvailable }` |
 | POST   | `/auth/logout`             | `requireAuth`  | 204, cookie cleared                                          |
 
+## UML API Diagram
+
+REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+
+```mermaid
+classDiagram
+    direction LR
+    class API["MangoDB API"] {
+        <<Application>>
+        basePath = "/"
+    }
+    class Auth["Auth"] {
+        <<Resource>>
+    }
+    class Register["Register"] {
+        <<Resource>>
+        +POST(RegisterRequest) 201 | 400 | 409
+    }
+    class Login["Login"] {
+        <<Resource>>
+        +POST(LoginRequest) 200 | 400 | 401 | 403 | 429
+    }
+    class AdminAuth["Admin"] {
+        <<Resource>>
+    }
+    class AdminLogin["AdminLogin"] {
+        <<Resource>>
+        +POST(LoginRequest) 200 | 400 | 401 | 403 | 429
+    }
+    class CheckAvailability["CheckAvailability"] {
+        <<Resource>>
+        +POST(IdentityCheck) 200 | 400
+    }
+    class Logout["Logout"] {
+        <<Resource>>
+        +POST() 204 | 401
+    }
+    class RegisterRequestRep["RegisterRequest"] {
+        <<Representation>>
+        -companyName : string
+        -username : string
+        -email : string
+        -password : string
+        -phone : string
+        -accountType : PROVIDER, RECEIVER, BOTH
+        -companyType : string[]
+        -companyDescription : string?
+        -address : string?
+        -website : string?
+        -tosAccepted : true
+    }
+    class SessionResponseRep["SessionResponse"] {
+        <<Representation>>
+        -company : CompanyProfile
+        -accessToken : string
+    }
+    class LoginRequestRep["LoginRequest"] {
+        <<Representation>>
+        -email : string
+        -password : string
+    }
+    class IdentityCheckRep["IdentityCheck"] {
+        <<Representation>>
+        -username : string
+        -email : string
+    }
+    class IdentityAvailabilityRep["IdentityAvailability"] {
+        <<Representation>>
+        -username : string
+        -email : string
+        -usernameAvailable : boolean
+        -emailAvailable : boolean
+    }
+    API --> Auth : «Path» /auth
+    Auth --> Register : «Path» /register
+    Register ..> RegisterRequestRep : «use»
+    Register ..> SessionResponseRep : «use»
+    Auth --> Login : «Path» /login
+    Login ..> LoginRequestRep : «use»
+    Login ..> SessionResponseRep : «use»
+    Auth --> AdminAuth : «Path» /admin
+    AdminAuth --> AdminLogin : «Path» /login
+    AdminLogin ..> LoginRequestRep : «use»
+    AdminLogin ..> SessionResponseRep : «use»
+    Auth --> CheckAvailability : «Path» /check-availability
+    CheckAvailability ..> IdentityCheckRep : «use»
+    CheckAvailability ..> IdentityAvailabilityRep : «use»
+    Auth --> Logout : «Path» /logout
+    style API fill:#fde68a,stroke:#b45309
+    style Auth fill:#bfdbfe,stroke:#1d4ed8
+    style Register fill:#bfdbfe,stroke:#1d4ed8
+    style Login fill:#bfdbfe,stroke:#1d4ed8
+    style AdminAuth fill:#bfdbfe,stroke:#1d4ed8
+    style AdminLogin fill:#bfdbfe,stroke:#1d4ed8
+    style CheckAvailability fill:#bfdbfe,stroke:#1d4ed8
+    style Logout fill:#bfdbfe,stroke:#1d4ed8
+    style RegisterRequestRep fill:#bbf7d0,stroke:#15803d
+    style SessionResponseRep fill:#bbf7d0,stroke:#15803d
+    style LoginRequestRep fill:#bbf7d0,stroke:#15803d
+    style IdentityCheckRep fill:#bbf7d0,stroke:#15803d
+    style IdentityAvailabilityRep fill:#bbf7d0,stroke:#15803d
+```
+
+The sections below add one sequence diagram per endpoint: the steps inside the server.
+
 ## POST /auth/register
 
 US1-1. Creates the company, its industry tags, and its provider and/or receiver

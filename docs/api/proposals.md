@@ -14,6 +14,88 @@ Every route here needs `requireAuth`.
 | POST   | `/proposals/:proposalId/accept` | auth, listing owner | 201 Project                 |
 | POST   | `/proposals/:proposalId/reject` | auth, listing owner | 204                         |
 
+## UML API Diagram
+
+REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+
+```mermaid
+classDiagram
+    direction LR
+    class API["MangoDB API"] {
+        <<Application>>
+        basePath = "/"
+    }
+    class Proposals["Proposals"] {
+        <<Resource>>
+    }
+    class MyProposals["MyProposals"] {
+        <<Resource>>
+        +GET(status, page, pageSize : QueryParam) 200 | 400 | 401 | 403
+    }
+    class Counts["Counts"] {
+        <<Resource>>
+        +GET() 200 | 401 | 403
+    }
+    class ProposalR["Proposal"] {
+        <<Resource>>
+    }
+    class Accept["Accept"] {
+        <<Resource>>
+        +POST() 201 | 400 | 401 | 403 | 404 | 409
+    }
+    class Reject["Reject"] {
+        <<Resource>>
+        +POST() 204 | 400 | 401 | 403 | 404 | 409
+    }
+    class SentProposalRep["SentProposal"] {
+        <<Representation>>
+        -Proposal fields
+        -listingTitle : string
+        -listingType : JOB, SERVICE
+        -recipient : CompanyBrief
+        -projectId : number?
+    }
+    class ProposalStatusCountsRep["ProposalStatusCounts"] {
+        <<Representation>>
+        -total : number
+        -PENDING : number
+        -ACCEPTED : number
+        -REJECTED : number
+    }
+    class ProjectRep["Project"] {
+        <<Representation>>
+        -projectId : number
+        -proposalId : number
+        -totalBudget : number
+        -startDate : date
+        -projectStatus : ProjectStatus
+        -depositReportedAt : date?
+        -depositConfirmedAt : date?
+        -completedAt : date?
+    }
+    API --> Proposals : «Path» /proposals
+    Proposals --> MyProposals : «Path» /mine
+    MyProposals ..> SentProposalRep : «use»
+    MyProposals --> Counts : «Path» /counts
+    Counts ..> ProposalStatusCountsRep : «use»
+    Proposals --> ProposalR : «Path» /{proposalId}
+    ProposalR --> Accept : «Path» /accept
+    Accept ..> ProjectRep : «use»
+    ProposalR --> Reject : «Path» /reject
+    style API fill:#fde68a,stroke:#b45309
+    style Proposals fill:#bfdbfe,stroke:#1d4ed8
+    style MyProposals fill:#bfdbfe,stroke:#1d4ed8
+    style Counts fill:#bfdbfe,stroke:#1d4ed8
+    style ProposalR fill:#bfdbfe,stroke:#1d4ed8
+    style Accept fill:#bfdbfe,stroke:#1d4ed8
+    style Reject fill:#bfdbfe,stroke:#1d4ed8
+    style SentProposalRep fill:#bbf7d0,stroke:#15803d
+    style ProposalStatusCountsRep fill:#bbf7d0,stroke:#15803d
+    style ProjectRep fill:#bbf7d0,stroke:#15803d
+```
+
+The sections below add one sequence diagram per endpoint: the steps inside the server.
+
 ## GET /proposals/mine
 
 US2-9. Proposals and hire requests the caller sent, newest first. Paged.

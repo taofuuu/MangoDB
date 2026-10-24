@@ -19,6 +19,122 @@ A job posting is a `listing` row with `listingType = JOB` plus a
 | POST   | `/jobs/:jobId/close`     | auth, owner        | 200 Job                     |
 | POST   | `/jobs/:jobId/proposals` | provider           | 201 Proposal                |
 
+## UML API Diagram
+
+REST profile notation (see the [index](README.md#uml-api-diagram-notation)). Each operation lists its status codes. Follow an arrow from `«Application»` to a `«Resource»` to read one HTTP call.
+
+```mermaid
+classDiagram
+    direction LR
+    class API["MangoDB API"] {
+        <<Application>>
+        basePath = "/"
+    }
+    class Jobs["Jobs"] {
+        <<Resource>>
+        +GET(status, companyId, q, category, minBudget, maxBudget, deadline, page, pageSize : QueryParam) 200 | 400 | 401 | 403
+        +POST(CreateJobRequest) 201 | 400 | 401 | 403
+    }
+    class MyJobs["MyJobs"] {
+        <<Resource>>
+        +GET(status, page, pageSize : QueryParam) 200 | 400 | 401 | 403
+    }
+    class JobR["Job"] {
+        <<Resource>>
+        +GET() 200 | 400 | 401 | 403 | 404
+        +PATCH(UpdateJobRequest) 200 | 400 | 401 | 403 | 404 | 409
+    }
+    class CloseJob["Close"] {
+        <<Resource>>
+        +POST() 200 | 400 | 401 | 403 | 404 | 409
+    }
+    class JobProposals["JobProposals"] {
+        <<Resource>>
+        +GET() 200 | 400 | 401 | 403 | 404
+        +POST(CreateProposalRequest) 201 | 400 | 401 | 403 | 404 | 409
+    }
+    class JobRep["Job"] {
+        <<Representation>>
+        -jobId : number
+        -company : CompanyBrief
+        -listingTitle : string
+        -listingDesc : string
+        -minBudget : number?
+        -maxBudget : number?
+        -listingStatus : OPEN, CLOSED
+        -locationPref : string?
+        -duration : string?
+        -deadline : date?
+        -categoryIds : number[]
+        -categories : string[]
+    }
+    class CreateJobRequestRep["CreateJobRequest"] {
+        <<Representation>>
+        -listingTitle : string
+        -listingDesc : string
+        -minBudget : number?
+        -maxBudget : number
+        -locationPref : string?
+        -duration : string?
+        -deadline : date?
+        -categoryIds : number[]?
+    }
+    class UpdateJobRequestRep["UpdateJobRequest"] {
+        <<Representation>>
+        -any CreateJobRequest field, all optional
+    }
+    class ReceivedProposalRep["ReceivedProposal"] {
+        <<Representation>>
+        -Proposal fields
+        -sender : CompanyBrief
+    }
+    class CreateProposalRequestRep["CreateProposalRequest"] {
+        <<Representation>>
+        -proposalBudget : number
+        -proposalTerms : string
+        -duration : number
+    }
+    class ProposalRep["Proposal"] {
+        <<Representation>>
+        -proposalId : number
+        -listingId : number
+        -senderId : number
+        -proposalBudget : number
+        -proposalTerms : string
+        -duration : number
+        -proposalStatus : PENDING, ACCEPTED, REJECTED
+        -createdAt : date
+    }
+    API --> Jobs : «Path» /jobs
+    Jobs ..> JobRep : «use»
+    Jobs ..> CreateJobRequestRep : «use»
+    Jobs --> MyJobs : «Path» /mine
+    MyJobs ..> JobRep : «use»
+    Jobs --> JobR : «Path» /{jobId}
+    JobR ..> JobRep : «use»
+    JobR ..> UpdateJobRequestRep : «use»
+    JobR --> CloseJob : «Path» /close
+    CloseJob ..> JobRep : «use»
+    JobR --> JobProposals : «Path» /proposals
+    JobProposals ..> ReceivedProposalRep : «use»
+    JobProposals ..> CreateProposalRequestRep : «use»
+    JobProposals ..> ProposalRep : «use»
+    style API fill:#fde68a,stroke:#b45309
+    style Jobs fill:#bfdbfe,stroke:#1d4ed8
+    style MyJobs fill:#bfdbfe,stroke:#1d4ed8
+    style JobR fill:#bfdbfe,stroke:#1d4ed8
+    style CloseJob fill:#bfdbfe,stroke:#1d4ed8
+    style JobProposals fill:#bfdbfe,stroke:#1d4ed8
+    style JobRep fill:#bbf7d0,stroke:#15803d
+    style CreateJobRequestRep fill:#bbf7d0,stroke:#15803d
+    style UpdateJobRequestRep fill:#bbf7d0,stroke:#15803d
+    style ReceivedProposalRep fill:#bbf7d0,stroke:#15803d
+    style CreateProposalRequestRep fill:#bbf7d0,stroke:#15803d
+    style ProposalRep fill:#bbf7d0,stroke:#15803d
+```
+
+The sections below add one sequence diagram per endpoint: the steps inside the server.
+
 ## GET /jobs/mine
 
 US2-2. The caller's own job postings, every status, newest first. Paged.
