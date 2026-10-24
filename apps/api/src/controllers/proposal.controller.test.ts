@@ -42,6 +42,7 @@ import type {
     Paginated,
     Proposal,
     ProposalStatusCounts,
+    ReceivedProposal,
     SentProposal,
 } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
@@ -74,6 +75,11 @@ type ProposalRow = {
     proposalTerms?: string;
     duration?: number;
     createdAt?: Date;
+    sender?: {
+        companyId: number;
+        companyName: string;
+        companyPhoto: string | null;
+    };
 };
 
 type ProjectRow = {
@@ -238,7 +244,11 @@ const fakePrisma = {
             ).length;
         },
         findMany: async (args: {
-            where: { senderId: number; proposalStatus?: string };
+            where: {
+                senderId?: number;
+                listingId?: number;
+                proposalStatus?: string;
+            };
             skip?: number;
             take?: number;
             orderBy?: unknown;
@@ -246,7 +256,10 @@ const fakePrisma = {
         }) => {
             let hits = proposals.filter(
                 (p) =>
-                    p.senderId === args.where.senderId &&
+                    (args.where.senderId === undefined ||
+                        p.senderId === args.where.senderId) &&
+                    (args.where.listingId === undefined ||
+                        p.listingId === args.where.listingId) &&
                     (args.where.proposalStatus === undefined ||
                         p.proposalStatus === args.where.proposalStatus),
             );
@@ -258,13 +271,18 @@ const fakePrisma = {
                 return {
                     proposalId: p.proposalId,
                     listingId: p.listingId,
-                    senderId: p.senderId,
+                    senderId: p.senderId ?? 0,
                     proposalBudget: p.proposalBudget,
                     proposalTerms: p.proposalTerms ?? 'Terms',
                     duration: p.duration ?? 1,
                     proposalStatus: p.proposalStatus,
                     createdAt:
                         p.createdAt ?? new Date('2026-10-01T08:00:00.000Z'),
+                    sender: p.sender ?? {
+                        companyId: p.senderId ?? 0,
+                        companyName: `Company ${p.senderId ?? 0}`,
+                        companyPhoto: null,
+                    },
                     listing: {
                         listingTitle: l?.listingTitle ?? 'Listing Title',
                         listingType: l?.listingType ?? 'JOB',
@@ -792,6 +810,144 @@ describe('POST /services/:serviceId/proposals', () => {
         assert.equal(afterAccepted.status, 201);
         assert.equal(afterAccepted.body.proposalStatus, 'PENDING');
         assert.equal(proposals.length, 3);
+    });
+});
+
+describe('GET /services/:serviceId/proposals', () => {
+    const OWNER = 1;
+    const OTHER_PROVIDER = 2;
+    const RECEIVER_A = 3;
+    const RECEIVER_B = 4;
+
+    async function listForService(
+        serviceId: number,
+        callerId: number = OWNER,
+    ): Promise<unknown> {
+        const req = {
+            auth: { companyId: callerId },
+            params: { serviceId: String(serviceId) },
+        } as unknown as Request;
+        let body: unknown;
+        const res = {
+            json(value: unknown) {
+                body = value;
+                return this;
+            },
+        } as unknown as Response;
+
+        try {
+            await controller.listServiceProposals(req, res);
+        } catch (err) {
+            return err;
+        }
+        return body;
+    }
+
+    it("lists hire requests on the owner's service newest first with sender brief", async () => {
+        listings = [
+            {
+                listingId: 20,
+                listingType: 'SERVICE',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+            {
+                listingId: 21,
+                listingType: 'SERVICE',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 1,
+                listingId: 20,
+                senderId: RECEIVER_A,
+                proposalBudget: 15000,
+                proposalTerms: 'First request',
+                duration: 1,
+                proposalStatus: 'PENDING',
+                sender: {
+                    companyId: RECEIVER_A,
+                    companyName: 'Receiver Alpha',
+                    companyPhoto: 'https://example.com/alpha.png',
+                },
+            },
+            {
+                proposalId: 2,
+                listingId: 21,
+                senderId: RECEIVER_B,
+                proposalBudget: 99000,
+                proposalStatus: 'PENDING',
+            },
+            {
+                proposalId: 3,
+                listingId: 20,
+                senderId: RECEIVER_B,
+                proposalBudget: 25000,
+                proposalTerms: 'Second request',
+                duration: 2,
+                proposalStatus: 'ACCEPTED',
+                sender: {
+                    companyId: RECEIVER_B,
+                    companyName: 'Receiver Beta',
+                    companyPhoto: null,
+                },
+            },
+        ];
+
+        const result = (await listForService(20, OWNER)) as ReceivedProposal[];
+
+        assert.equal(result.length, 2);
+        assert.deepEqual(
+            result.map((r) => r.proposalId),
+            [3, 1],
+        );
+        assert.equal(result[0]!.sender.companyName, 'Receiver Beta');
+        assert.equal(result[1]!.sender.companyName, 'Receiver Alpha');
+        assert.equal(
+            result[1]!.sender.companyPhoto,
+            'https://example.com/alpha.png',
+        );
+    });
+
+    it('answers 404 for an unknown service or a job ID', async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingType: 'JOB',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+
+        for (const id of [99, 10]) {
+            const result = await listForService(id, OWNER);
+            assert.ok(result instanceof ApiError, 'expected an ApiError');
+            assert.equal(result.status, 404);
+            assert.equal(result.message, 'Service not found');
+        }
+    });
+
+    it('answers 403 when the service belongs to another company', async () => {
+        listings = [
+            {
+                listingId: 20,
+                listingType: 'SERVICE',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+
+        const result = await listForService(20, OTHER_PROVIDER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 403);
+        assert.equal(result.message, 'This service belongs to another company');
     });
 });
 
