@@ -17,3 +17,7 @@ CLAUDE.local.md
 
 # Real logins for scripts/snapshot-api.sh. The .example next to it is tracked.
 scripts/.env.snapshot
+
+# Playwright output (videos, screenshots, HTML report) from apps/mangodb/e2e
+apps/mangodb/playwright-report/
+apps/mangodb/test-results/
