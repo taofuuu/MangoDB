@@ -9,6 +9,8 @@
  * - On a Service hire request, recipient is the Provider offering the service.
  * - A listing with no owner is a broken row, so it is a 500 rather than a
  *   blank recipient.
+ * - projectId is the project an accepted proposal started, and null before
+ *   that, so the page can link an accepted one to its project (T2.9.8).
  * - The proposal's own fields keep the shared wire shape: Decimal becomes a
  *   number, Date becomes an ISO string, listingId and senderId keep their names
  *   (ADR 0021).
@@ -56,6 +58,7 @@ function makeJobProposalRow(company: Row['listing']['company']): Row {
         duration: new Prisma.Decimal(14),
         proposalStatus: 'PENDING',
         createdAt: new Date('2026-10-01T08:30:00.000Z'),
+        project: null,
         listing: {
             listingTitle: 'Build a landing page',
             listingType: 'JOB',
@@ -135,6 +138,23 @@ describe('toSentProposal', () => {
         assert.equal(result.proposalBudget, 15000.5);
         assert.equal(result.duration, 14);
         assert.equal(result.createdAt, '2026-10-01T08:30:00.000Z');
+    });
+
+    it('carries the project of an accepted proposal, and null before that', () => {
+        const owner = {
+            companyId: 9,
+            companyName: 'Mango Co',
+            companyPhoto: null,
+        };
+        const pending = lib.toSentProposal(makeJobProposalRow(owner));
+        const accepted = lib.toSentProposal({
+            ...makeServiceHireRequestRow(owner),
+            proposalStatus: 'ACCEPTED',
+            project: { projectId: 31 },
+        });
+
+        assert.equal(pending.projectId, null);
+        assert.equal(accepted.projectId, 31);
     });
 });
 

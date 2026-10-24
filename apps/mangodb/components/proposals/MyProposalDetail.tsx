@@ -6,23 +6,26 @@ import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 import ProposalStatusBadge from './ProposalStatusBadge';
+import { sentProposalKind } from './sentProposalKind';
 
 type MyProposalDetailProps = {
     proposal: SentProposal;
     onClose: () => void;
 };
 
-// The right-hand panel: everything the Provider sent, read back to them.
-// Everything here is already in the list row, so opening it needs no request.
+// The right-hand panel: everything the company sent, read back to them. A
+// Provider's job proposal and a Receiver's hire request share it. Everything
+// here is already in the list row, so opening it needs no request.
 export default function MyProposalDetail({
     proposal,
     onClose,
 }: MyProposalDetailProps) {
     const receiverName = proposal.recipient?.companyName ?? 'Unknown company';
+    const kind = sentProposalKind(proposal.listingType);
 
     return (
         <section
-            aria-label={`Proposal for ${proposal.listingTitle}`}
+            aria-label={`${kind.label} for ${proposal.listingTitle}`}
             className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[80vh] lg:max-h-none lg:flex-1"
         >
             <div className="flex items-start gap-4">
@@ -46,7 +49,7 @@ export default function MyProposalDetail({
                 <button
                     type="button"
                     onClick={onClose}
-                    aria-label="Close proposal detail"
+                    aria-label={`Close ${kind.label.toLowerCase()} detail`}
                     className="rounded-full p-1 text-ink-placeholder hover:bg-fill-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
                 >
                     <X aria-hidden="true" className="size-5" />
@@ -78,7 +81,9 @@ export default function MyProposalDetail({
                 />
             </div>
 
-            <h3 className="mt-4 type-sm !font-[700] text-ink">Proposal term</h3>
+            <h3 className="mt-4 type-sm !font-[700] text-ink">
+                {kind.termHeading}
+            </h3>
             <p className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-2 type-sm leading-relaxed text-ink">
                 {proposal.proposalTerms}
             </p>

@@ -3,8 +3,10 @@
 import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { CalendarDays } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import Tag from '@/components/ui/Tag';
 import { formatDateTime } from '@/lib/dates';
 import ProposalStatusBadge from './ProposalStatusBadge';
+import { sentProposalKind } from './sentProposalKind';
 
 // The card's outline follows its status, as in the design: blue when
 // accepted, red when rejected, none (just the shadow) while pending.
@@ -57,8 +59,13 @@ export default function MyProposalCard({
                     <h2 className="truncate type-md text-ink">
                         {proposal.listingTitle}
                     </h2>
-                    <p className="truncate type-xs text-brand">
-                        {receiverName}
+                    <p className="flex min-w-0 items-center gap-2 type-xs text-brand">
+                        <Tag
+                            size="sm"
+                            label={sentProposalKind(proposal.listingType).label}
+                            className="shrink-0 bg-brand-tint text-brand-deep"
+                        />
+                        <span className="truncate">{receiverName}</span>
                     </p>
                 </div>
 

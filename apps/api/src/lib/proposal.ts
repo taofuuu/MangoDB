@@ -70,11 +70,12 @@ export function toReceivedProposal(row: ReceivedProposalRow): ReceivedProposal {
 }
 
 // US2-9. A proposal as its sender sees it in their own list: the proposal
-// plus the listing's title, its type (JOB or SERVICE), and its owner, so the
-// page needs no extra request per row. A soft-deleted owner is still shown: a
-// proposal is history.
+// plus the listing's title, its type (JOB or SERVICE), its owner, and the
+// project it started once accepted, so the page needs no extra request per
+// row. A soft-deleted owner is still shown: a proposal is history.
 export const sentProposalSelect = {
     ...proposalSelect,
+    project: { select: { projectId: true } },
     listing: {
         select: {
             listingTitle: true,
@@ -85,6 +86,7 @@ export const sentProposalSelect = {
 } as const satisfies Prisma.ProposalSelect;
 
 type SentProposalRow = ProposalRow & {
+    project: { projectId: number } | null;
     listing: {
         listingTitle: string;
         listingType: string;
@@ -98,6 +100,7 @@ export function toSentProposal(row: SentProposalRow): SentProposal {
         listingTitle: row.listing.listingTitle,
         listingType: row.listing.listingType as ListingType,
         recipient: toCompanyBrief(row.listing.company),
+        projectId: row.project?.projectId ?? null,
     };
 }
 
