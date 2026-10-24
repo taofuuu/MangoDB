@@ -9,6 +9,7 @@ import {
     listMyProjects,
     listProjectUpdates,
     reportDeposit,
+    submitWork,
 } from '../controllers/project.controller';
 
 export const projectRoutes = Router();
@@ -37,6 +38,10 @@ projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
 // US4-7. The Provider confirms the deposit arrived; the project goes
 // IN_PROGRESS. Same guards as report-deposit, but only the Provider may act.
 projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
+
+// US4-11. The Provider reports the work complete; the project waits for the
+// Receiver's acceptance. Same guards, but only the Provider may act.
+projectRoutes.post('/:projectId/submit-work', requireAuth, submitWork);
 
 // US5-1. The Receiver reviews a completed project once. Four 1-5 scores and an
 // optional comment (ADR 0018). Second review is 409.
