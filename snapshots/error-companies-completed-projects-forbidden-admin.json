@@ -1,0 +1,10 @@
+{
+    "request": "GET /companies/142/completed-projects",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Insufficient permissions"
+        }
+    }
+}

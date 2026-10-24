@@ -1,6 +1,9 @@
 /*
- * Tests for POST /projects/:projectId/updates (createProjectUpdate, US4-10)
- * and POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7).
+ * Tests for project controller endpoints:
+ * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
+ * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
+ * - POST /projects/:projectId/review (createReview, US5-1, ADR 0018)
+ * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
  * What they cover:
  * - T4.10.3: a saved update has its date and time, set by the server. The
@@ -12,14 +15,23 @@
  *   IN_PROGRESS and stamps depositConfirmedAt.
  * - T4.7.4: confirming before the Receiver reported the deposit is a 409, and
  *   the Receiver confirming is a 403. Neither changes the project.
+ * - US5-1: the Receiver reviews a COMPLETED project once: 201 Created with Review DTO.
+ * - Both Job (owner is Receiver) and Service (sender is Receiver) paths.
+ * - An optional comment up to 500 characters, or null/omitted comment.
+ * - 404 for an unknown project or a caller outside the project.
+ * - 403 when the Provider attempts to review.
+ * - 409 when the project is not COMPLETED.
+ * - 409 when the project has already been reviewed (duplicate review / P2002).
+ * - 400 when scores are invalid (<1, >5, non-integer) or comment exceeds 500 chars.
+ * - US2-5: a Provider's completed work, newest first, for its public profile.
+ *   Filters out non-COMPLETED projects and supports standard pagination.
+ *   Unknown, soft-deleted, and admin companies answer 404.
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
  *   fake res that records the status and JSON body.
  * - lib/prisma is replaced with mock.module before the controller loads, so no
- *   test touches the shared Supabase database. project.findUnique hands back
- *   `project`; projectUpdate.create keeps what it was given in `created` and
- *   stamps createdAt the way the column's default now() does.
+ *   test touches the shared Supabase database.
  * - project.updateMany and project.update change `project` in place, honouring
  *   their where filters. $transaction puts `project` back if its work throws,
  *   as the database's rollback would.
@@ -30,7 +42,13 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
-import type { Project, ProjectUpdate } from '@mangodb/shared';
+import type {
+    CompletedProject,
+    Paginated,
+    Project,
+    ProjectUpdate,
+    Review,
+} from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
 
 // On a job the sender is the Provider and the owner the Receiver (ADR 0016).
@@ -38,18 +56,153 @@ const PROVIDER = 3;
 const RECEIVER = 9;
 const OUTSIDER = 42;
 
-let project = projectIn('IN_PROGRESS');
+const PROVIDER_ID = 10;
+const RECEIVER_ID = 20;
+const ADMIN_ID = 90;
+const DELETED_ID = 99;
+
+type Company = {
+    companyId: number;
+    companyName: string;
+    companyPhoto: string | null;
+    accountType: 'PROVIDER' | 'RECEIVER' | 'BOTH' | 'ADMIN';
+    deletedAt: Date | null;
+};
+
+type ProjectRow = {
+    projectId: number;
+    projectStatus: string;
+    completedAt: Date | null;
+    proposal: {
+        senderId: number;
+        sender: {
+            companyId: number;
+            companyName: string;
+            companyPhoto: string | null;
+        };
+        listing: {
+            listingTitle: string;
+            listingType: 'JOB' | 'SERVICE';
+            companyId: number;
+            company: {
+                companyId: number;
+                companyName: string;
+                companyPhoto: string | null;
+            } | null;
+        };
+    };
+};
+
+const companies: Company[] = [
+    {
+        companyId: PROVIDER_ID,
+        companyName: 'Top Provider Co',
+        companyPhoto: '/photos/provider.png',
+        accountType: 'PROVIDER',
+        deletedAt: null,
+    },
+    {
+        companyId: RECEIVER_ID,
+        companyName: 'Client Receiver Co',
+        companyPhoto: null,
+        accountType: 'RECEIVER',
+        deletedAt: null,
+    },
+    {
+        companyId: ADMIN_ID,
+        companyName: 'Platform Admin',
+        companyPhoto: null,
+        accountType: 'ADMIN',
+        deletedAt: null,
+    },
+    {
+        companyId: DELETED_ID,
+        companyName: 'Deleted Co',
+        companyPhoto: null,
+        accountType: 'PROVIDER',
+        deletedAt: new Date('2026-01-01T00:00:00Z'),
+    },
+];
+
+let project: ReturnType<typeof projectIn> | null = projectIn('IN_PROGRESS');
 let created: Record<string, unknown>[] = [];
+let createdReviews: Record<string, unknown>[] = [];
+let reviewAlreadyExists = false;
+let projects: ProjectRow[] = [];
+
+type ProjectWhereBranch = {
+    proposal?: {
+        senderId?: number;
+        listing?: {
+            listingType?: 'JOB' | 'SERVICE';
+            companyId?: number;
+        };
+    };
+};
+
+type ProjectWhereInput = {
+    projectStatus?: string;
+    OR?: ProjectWhereBranch[];
+};
+
+function filterProjects(where?: ProjectWhereInput): ProjectRow[] {
+    if (!where) return projects;
+    return projects.filter((p) => {
+        if (where.projectStatus && p.projectStatus !== where.projectStatus) {
+            return false;
+        }
+        if (where.OR && where.OR.length > 0) {
+            const matchesOr = where.OR.some((branch) => {
+                if (branch.proposal?.senderId !== undefined) {
+                    if (p.proposal.senderId !== branch.proposal.senderId)
+                        return false;
+                }
+                if (branch.proposal?.listing?.listingType !== undefined) {
+                    if (
+                        p.proposal.listing.listingType !==
+                        branch.proposal.listing.listingType
+                    )
+                        return false;
+                }
+                if (branch.proposal?.listing?.companyId !== undefined) {
+                    if (
+                        p.proposal.listing.companyId !==
+                        branch.proposal.listing.companyId
+                    )
+                        return false;
+                }
+                return true;
+            });
+            if (!matchesOr) return false;
+        }
+        return true;
+    });
+}
 
 const fakePrisma = {
-    $transaction: async (work: (tx: unknown) => Promise<unknown>) => {
-        const saved = structuredClone(project);
-        try {
-            return await work(fakePrisma);
-        } catch (err) {
-            project = saved;
-            throw err;
-        }
+    company: {
+        findFirst: ({
+            where,
+        }: {
+            where: {
+                companyId: number;
+                deletedAt: null;
+                accountType?: { not: string };
+            };
+        }) => {
+            const found = companies.find(
+                (c) => c.companyId === where.companyId,
+            );
+            if (!found) return Promise.resolve(null);
+            if (found.deletedAt !== null) return Promise.resolve(null);
+            if (
+                where.accountType &&
+                found.accountType === where.accountType.not
+            ) {
+                return Promise.resolve(null);
+            }
+            return Promise.resolve(found);
+        },
     },
     project: {
         findUnique: () => Promise.resolve(project),
@@ -61,10 +214,10 @@ const fakePrisma = {
             where: { projectStatus: string };
             data: { projectStatus: string };
         }) => {
-            if (project.projectStatus !== where.projectStatus) {
+            if (project!.projectStatus !== where.projectStatus) {
                 return Promise.resolve({ count: 0 });
             }
-            project.projectStatus = data.projectStatus;
+            project!.projectStatus = data.projectStatus;
             return Promise.resolve({ count: 1 });
         },
         // A where that misses the row is P2025 in Prisma.
@@ -75,15 +228,50 @@ const fakePrisma = {
             where: { depositReportedAt?: unknown };
             data: { depositConfirmedAt: Date };
         }) => {
-            if (where.depositReportedAt && project.depositReportedAt === null) {
+            if (
+                where.depositReportedAt &&
+                project!.depositReportedAt === null
+            ) {
                 return Promise.reject(
                     Object.assign(new Error('Record not found'), {
                         code: 'P2025',
                     }),
                 );
             }
-            project.depositConfirmedAt = data.depositConfirmedAt;
+            project!.depositConfirmedAt = data.depositConfirmedAt;
             return Promise.resolve(project);
+        },
+        count: ({ where }: { where?: ProjectWhereInput } = {}) => {
+            return Promise.resolve(filterProjects(where).length);
+        },
+        findMany: ({
+            where,
+            orderBy,
+            skip = 0,
+            take,
+        }: {
+            where?: ProjectWhereInput;
+            orderBy?: {
+                completedAt?: 'asc' | 'desc';
+                projectId?: 'asc' | 'desc';
+            }[];
+            skip?: number;
+            take?: number;
+        } = {}) => {
+            let matched = filterProjects(where);
+            if (orderBy) {
+                matched = [...matched].sort((a, b) => {
+                    const timeA = a.completedAt?.getTime() ?? 0;
+                    const timeB = b.completedAt?.getTime() ?? 0;
+                    if (timeB !== timeA) return timeB - timeA;
+                    return b.projectId - a.projectId;
+                });
+            }
+            const paged = matched.slice(
+                skip,
+                take !== undefined ? skip + take : undefined,
+            );
+            return Promise.resolve(paged);
         },
     },
     projectUpdate: {
@@ -95,6 +283,50 @@ const fakePrisma = {
                 createdAt: new Date(),
             });
         },
+    },
+    review: {
+        findUnique: ({ where }: { where: { projectId: number } }) => {
+            const found = createdReviews.find(
+                (r) => (r.projectId as number) === where.projectId,
+            );
+            if (!found) return Promise.resolve(null);
+            return Promise.resolve({
+                reviewId: 1,
+                ...found,
+                createdAt: new Date('2026-10-23T12:00:00.000Z'),
+            });
+        },
+        create: ({ data }: { data: Record<string, unknown> }) => {
+            if (reviewAlreadyExists) {
+                const err = new Error(
+                    'Unique constraint failed on the fields: (proj_id)',
+                );
+                (err as unknown as { code: string }).code = 'P2002';
+                throw err;
+            }
+            reviewAlreadyExists = true;
+            createdReviews.push(data);
+            return Promise.resolve({
+                reviewId: createdReviews.length,
+                ...data,
+                createdAt: new Date('2026-10-23T12:00:00.000Z'),
+            });
+        },
+    },
+    // Both forms Prisma has: a list of queries (completed-projects) or a
+    // callback given the client (confirm-deposit). The callback form puts
+    // `project` back if its work throws, as a rollback would.
+    $transaction: async (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => {
+        if (typeof work !== 'function') return Promise.all(work);
+        const saved = structuredClone(project);
+        try {
+            return await work(fakePrisma);
+        } catch (err) {
+            project = saved;
+            throw err;
+        }
     },
 };
 
@@ -114,6 +346,9 @@ before(async () => {
 beforeEach(() => {
     project = projectIn('IN_PROGRESS');
     created = [];
+    createdReviews = [];
+    reviewAlreadyExists = false;
+    projects = [];
 });
 
 function projectIn(
@@ -136,6 +371,50 @@ function projectIn(
     };
 }
 
+function projectOnService(projectStatus: string) {
+    return {
+        ...projectIn(projectStatus),
+        proposal: {
+            senderId: RECEIVER,
+            listing: { listingType: 'SERVICE', companyId: PROVIDER },
+        },
+    };
+}
+
+const brief = (companyId: number) => ({
+    companyId,
+    companyName: `Company ${companyId}`,
+    companyPhoto: null,
+});
+
+// A project between PROVIDER_ID and RECEIVER_ID. On a job the Provider sent
+// the proposal; on a service the Receiver did (ADR 0016).
+function row(
+    projectId: number,
+    listingType: 'JOB' | 'SERVICE' = 'JOB',
+    projectStatus = 'COMPLETED',
+    completedAt: Date | null = new Date('2026-10-01T00:00:00Z'),
+): ProjectRow {
+    const [senderId, ownerId] =
+        listingType === 'JOB'
+            ? [PROVIDER_ID, RECEIVER_ID]
+            : [RECEIVER_ID, PROVIDER_ID];
+    return {
+        projectId,
+        projectStatus,
+        completedAt,
+        proposal: {
+            senderId,
+            sender: brief(senderId),
+            listing: {
+                listingTitle: `Project ${projectId}`,
+                listingType,
+                companyId: ownerId,
+                company: brief(ownerId),
+            },
+        },
+    };
+}
 type Handler = (req: Request, res: Response) => Promise<void>;
 
 // Calls handler on project 1 as callerId. Returns the status and JSON it
@@ -182,6 +461,98 @@ function confirmDeposit(callerId: number): Promise<unknown> {
     return call(controller.confirmDeposit, callerId);
 }
 
+async function postReview(
+    callerId: number,
+    body: unknown = {
+        workQualityScore: 5,
+        serviceScore: 4,
+        valueForMoneyScore: 4,
+        deliveryTimeScore: 5,
+        comment: 'Delivered top-notch quality!',
+    },
+): Promise<unknown> {
+    const req = {
+        auth: { companyId: callerId },
+        params: { projectId: '1' },
+        body,
+    } as unknown as Request;
+    let status = 200;
+    let json: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(value: unknown) {
+            json = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    try {
+        await controller.createReview(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as Review };
+}
+
+async function getProjectReview(callerId: number): Promise<unknown> {
+    const req = {
+        auth: { companyId: callerId },
+        params: { projectId: '1' },
+    } as unknown as Request;
+    let status = 200;
+    let json: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(value: unknown) {
+            json = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    try {
+        await controller.getProjectReview(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as Review };
+}
+
+async function listProjects(
+    companyId: string,
+    query: Record<string, string> = {},
+): Promise<unknown> {
+    const req = {
+        params: { companyId },
+        query,
+        auth: { companyId: 999, role: 'receiver' },
+    } as unknown as Request;
+
+    let status = 200;
+    let json: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(value: unknown) {
+            json = value;
+            return this;
+        },
+    } as unknown as Response;
+
+    try {
+        await controller.listProviderCompletedProjects(req, res);
+    } catch (err) {
+        return err;
+    }
+    return { status, body: json as Paginated<CompletedProject> };
+}
 function isApiError(status: number) {
     return (err: unknown) => err instanceof ApiError && err.status === status;
 }
@@ -249,7 +620,7 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         assert.equal(result.body.projectStatus, 'IN_PROGRESS');
         const confirmedAt = Date.parse(result.body.depositConfirmedAt!);
         assert.ok(confirmedAt >= startedAt && confirmedAt <= Date.now());
-        assert.equal(project.projectStatus, 'IN_PROGRESS');
+        assert.equal(project!.projectStatus, 'IN_PROGRESS');
     });
 
     it('is a 409 before the Receiver reports it (T4.7.4)', async () => {
@@ -262,7 +633,299 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
 
     it('is a 403 for the Receiver and changes nothing (T4.7.4)', async () => {
         assert.ok(isApiError(403)(await confirmDeposit(RECEIVER)));
-        assert.equal(project.projectStatus, 'AWAITING_DEPOSIT');
-        assert.equal(project.depositConfirmedAt, null);
+        assert.equal(project!.projectStatus, 'AWAITING_DEPOSIT');
+        assert.equal(project!.depositConfirmedAt, null);
+    });
+});
+
+describe('POST /projects/:projectId/review', () => {
+    beforeEach(() => {
+        project = projectIn('COMPLETED');
+    });
+
+    it('creates a review on a completed job project by its receiver (201)', async () => {
+        const result = (await postReview(RECEIVER)) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 201);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.workQualityScore, 5);
+        assert.equal(result.body.serviceScore, 4);
+        assert.equal(result.body.valueForMoneyScore, 4);
+        assert.equal(result.body.deliveryTimeScore, 5);
+        assert.equal(result.body.comment, 'Delivered top-notch quality!');
+        assert.equal(result.body.createdAt, '2026-10-23T12:00:00.000Z');
+        assert.equal(createdReviews.length, 1);
+    });
+
+    it('creates a review on a completed service project where sender is receiver (201)', async () => {
+        project = projectOnService('COMPLETED');
+        const result = (await postReview(RECEIVER, {
+            workQualityScore: 4,
+            serviceScore: 5,
+            valueForMoneyScore: 3,
+            deliveryTimeScore: 4,
+        })) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 201);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.comment, null);
+    });
+
+    it('rejects an outsider with 404 Project not found', async () => {
+        const result = await postReview(OUTSIDER);
+        assert.ok(isApiError(404)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+
+    it('rejects an unknown project with 404 Project not found', async () => {
+        project = null;
+        const result = await postReview(RECEIVER);
+        assert.ok(isApiError(404)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+
+    it('rejects the provider with 403 Only the Receiver can review the project', async () => {
+        const result = await postReview(PROVIDER);
+        assert.ok(isApiError(403)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+
+    it('rejects a non-COMPLETED project with 409 Project is not COMPLETED', async () => {
+        project = projectIn('IN_PROGRESS');
+        const result = await postReview(RECEIVER);
+        assert.ok(isApiError(409)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+
+    it('rejects a second review on the same project with 409 Project has already been reviewed', async () => {
+        reviewAlreadyExists = true;
+        const result = await postReview(RECEIVER);
+        assert.ok(isApiError(409)(result));
+    });
+
+    it('rejects invalid scores outside 1-5 with 400', async () => {
+        const result = await postReview(RECEIVER, {
+            workQualityScore: 6,
+            serviceScore: 0,
+            valueForMoneyScore: 3.5,
+            deliveryTimeScore: 5,
+        });
+        assert.ok(isApiError(400)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+
+    it('rejects a comment longer than 500 characters with 400', async () => {
+        const result = await postReview(RECEIVER, {
+            workQualityScore: 5,
+            serviceScore: 5,
+            valueForMoneyScore: 5,
+            deliveryTimeScore: 5,
+            comment: 'a'.repeat(501),
+        });
+        assert.ok(isApiError(400)(result));
+        assert.equal(createdReviews.length, 0);
+    });
+});
+
+describe('GET /projects/:projectId/review', () => {
+    it('returns the review for the Receiver (200)', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+
+        const result = (await getProjectReview(RECEIVER)) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.workQualityScore, 5);
+        assert.equal(result.body.comment, 'Delivered top-notch quality!');
+    });
+
+    it('returns the review for the Provider (200)', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+
+        const result = (await getProjectReview(PROVIDER)) as {
+            status: number;
+            body: Review;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectId, 1);
+        assert.equal(result.body.workQualityScore, 5);
+    });
+
+    it('answers 404 when the project has not been reviewed yet', async () => {
+        project = projectIn('COMPLETED');
+        const result = await getProjectReview(RECEIVER);
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an outsider', async () => {
+        project = projectIn('COMPLETED');
+        await postReview(RECEIVER);
+        const result = await getProjectReview(OUTSIDER);
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an unknown project', async () => {
+        project = null;
+        const result = await getProjectReview(RECEIVER);
+        assert.ok(isApiError(404)(result));
+    });
+});
+
+describe('GET /companies/:companyId/completed-projects', () => {
+    it('returns an empty list when the provider has no completed projects', async () => {
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body.items, []);
+        assert.deepEqual(result.body.pagination, {
+            page: 1,
+            pageSize: 12,
+            totalItems: 0,
+            totalPages: 0,
+        });
+    });
+
+    it('returns completed projects for a Provider on Job listings (newest first)', async () => {
+        projects.push(
+            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z')),
+            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z')),
+        );
+
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 2);
+        assert.equal(result.body.items[0]!.projectId, 2);
+        assert.equal(result.body.items[1]!.projectId, 1);
+        assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(
+            result.body.items[0]!.completedAt,
+            '2026-10-15T00:00:00.000Z',
+        );
+    });
+
+    it('returns completed projects for a Provider on Service listings (where Provider is service owner)', async () => {
+        projects.push(
+            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z')),
+        );
+
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 1);
+        assert.equal(result.body.items[0]!.projectId, 3);
+        assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+    });
+
+    it('filters out non-COMPLETED projects', async () => {
+        const otherStatuses = [
+            'AWAITING_QUOTATION',
+            'AWAITING_DEPOSIT',
+            'IN_PROGRESS',
+            'AWAITING_ACCEPTANCE',
+            'CANCELLED',
+        ];
+        otherStatuses.forEach((status, i) => {
+            projects.push(row(10 + i, 'JOB', status, null));
+        });
+        projects.push(
+            row(99, 'JOB', 'COMPLETED', new Date('2026-10-20T00:00:00Z')),
+        );
+
+        const result = (await listProjects(String(PROVIDER_ID))) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 1);
+        assert.equal(result.body.items[0]!.projectId, 99);
+    });
+
+    it('paginates completed projects according to query parameters', async () => {
+        for (let i = 1; i <= 25; i++) {
+            projects.push(
+                row(i, 'JOB', 'COMPLETED', new Date(Date.UTC(2026, 0, i))),
+            );
+        }
+
+        const result = (await listProjects(String(PROVIDER_ID), {
+            page: '2',
+            pageSize: '10',
+        })) as {
+            status: number;
+            body: Paginated<CompletedProject>;
+        };
+        assert.equal(result.status, 200);
+        assert.equal(result.body.items.length, 10);
+        assert.equal(result.body.pagination.page, 2);
+        assert.equal(result.body.pagination.pageSize, 10);
+        assert.equal(result.body.pagination.totalItems, 25);
+        assert.equal(result.body.pagination.totalPages, 3);
+        // Newest first: page 1 was ids 25..16; page 2 is 15..6.
+        assert.equal(result.body.items[0]!.projectId, 15);
+        assert.equal(result.body.items[9]!.projectId, 6);
+    });
+
+    it('answers 404 for an unknown company', async () => {
+        const result = await listProjects('9999');
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for a soft-deleted company', async () => {
+        const result = await listProjects(String(DELETED_ID));
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 404 for an ADMIN company', async () => {
+        const result = await listProjects(String(ADMIN_ID));
+        assert.ok(isApiError(404)(result));
+    });
+
+    it('answers 400 for an invalid companyId', async () => {
+        assert.ok(isApiError(400)(await listProjects('abc')));
+        assert.ok(isApiError(400)(await listProjects('0')));
+        assert.ok(isApiError(400)(await listProjects('-5')));
+        assert.ok(isApiError(400)(await listProjects('1.5')));
+    });
+
+    it('answers 400 for invalid pagination parameters', async () => {
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { page: '0' }),
+            ),
+        );
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { page: '-1' }),
+            ),
+        );
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { pageSize: '0' }),
+            ),
+        );
+        assert.ok(
+            isApiError(400)(
+                await listProjects(String(PROVIDER_ID), { pageSize: '100' }),
+            ),
+        );
     });
 });

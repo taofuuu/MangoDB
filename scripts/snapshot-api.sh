@@ -450,6 +450,24 @@ snap error-companies-one-invalid-id GET /companies/not-a-number \
 snap error-companies-one-id-too-large GET /companies/2147483648 \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# US2-5. A Provider's completed work, newest first, for its public profile.
+snap companies-completed-projects GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-completed-projects-receiver GET "/companies/$RECEIVER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+snap error-companies-completed-projects-unauthorized GET "/companies/$PROVIDER_ID/completed-projects"
+snap error-companies-completed-projects-forbidden-admin GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap error-companies-completed-projects-not-found GET /companies/2147483647/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-admin GET "/companies/$ADMIN_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-invalid-id GET /companies/not-a-number/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-id-too-large GET /companies/2147483648/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+
 if [ "$READ_ONLY" = 1 ]; then
     echo
     echo "--read-only: stopping before the write endpoints"
@@ -1512,7 +1530,8 @@ snap error-proposals-accept-forbidden POST "/proposals/$ACCEPT_PROPOSAL_ID/accep
 # 201 with the new project.
 snap proposals-accept POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
-SUBS+=(--id "project_id=$(jget projectId)")
+ACCEPT_PROJECT_ID="$(jget projectId)"
+SUBS+=(--id "project_id=$ACCEPT_PROJECT_ID")
 # The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
 # purpose, so this one snapshot names today, and only here: a run-wide rule
 # would also catch any other date that happens to be today.
@@ -1525,6 +1544,86 @@ snap jobs-one-after-accept GET "/jobs/$ACCEPT_JOB_ID" \
 
 # A second accept is a state conflict, not a second project.
 snap error-proposals-accept-again POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 17. Review a project (US5-1, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project reviews"
+snap error-projects-review-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/review"
+
+snap error-projects-review-not-found POST /projects/2147483647/review \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Provider is on the project but cannot review it.
+snap error-projects-review-forbidden POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Receiver cannot review a project before it is COMPLETED.
+snap error-projects-review-not-completed POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# 400 when scores are outside 1-5 or missing.
+snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
+
+# ---------------------------------------------------------------------------
+# 18. Project review read and company reviews (US5-3, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project review read and company reviews"
+snap error-projects-review-get-unauthorized GET "/projects/$ACCEPT_PROJECT_ID/review"
+
+# 404 until the Receiver submits a review.
+snap error-projects-review-get-not-reviewed GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Complete the project via direct DB update to test review creation and read.
+run_db "prisma.project.update({ where: { projectId: $ACCEPT_PROJECT_ID }, data: { projectStatus: 'COMPLETED', completedAt: new Date() } })"
+
+api POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}' >/dev/null
+NEW_REVIEW_ID="$(jget reviewId)"
+if [ -n "$NEW_REVIEW_ID" ]; then
+    SUBS+=(--id "review_id=$NEW_REVIEW_ID")
+fi
+
+# The Receiver and Provider can both read the review (200).
+snap projects-review-get GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap projects-review-get-provider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-projects-review-get-outsider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+
+# Provider's reviews list and summary
+snap error-companies-reviews-unauthorized GET "/companies/$PROVIDER_ID/reviews"
+
+snap error-companies-reviews-not-found GET "/companies/2147483647/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-companies-reviews-summary-not-found GET "/companies/2147483647/reviews/summary" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-list GET "/companies/$PROVIDER_ID/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-summary GET "/companies/$PROVIDER_ID/reviews/summary" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 echo

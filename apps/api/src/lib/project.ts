@@ -1,5 +1,6 @@
 import type {
     CompanyBrief,
+    CompletedProject,
     ListingType,
     Project,
     ProjectDetail,
@@ -56,6 +57,66 @@ export function toProject(row: ProjectRow): Project {
     };
 }
 
+// US2-5. What GET /companies/:companyId/completed-projects fetches. The Provider
+// is the subject of the page, so the response names the Receiver (ADR 0016).
+export const completedProjectSelect = {
+    projectId: true,
+    completedAt: true,
+    proposal: {
+        select: {
+            sender: { select: companyBriefSelect },
+            listing: {
+                select: {
+                    listingTitle: true,
+                    listingType: true,
+                    company: { select: companyBriefSelect },
+                },
+            },
+        },
+    },
+} as const satisfies Prisma.ProjectSelect;
+
+export type CompletedProjectRow = {
+    projectId: number;
+    completedAt: Date | null;
+    proposal: {
+        sender: {
+            companyId: number;
+            companyName: string;
+            companyPhoto: string | null;
+        };
+        listing: {
+            listingTitle: string;
+            listingType: string;
+            company: {
+                companyId: number;
+                companyName: string;
+                companyPhoto: string | null;
+            } | null;
+        };
+    };
+};
+
+export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
+    if (!row.completedAt) {
+        throw new ApiError(
+            500,
+            'INTERNAL',
+            'Completed project has no completedAt',
+        );
+    }
+    const receiver =
+        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType)
+            ? toCompanyBrief(row.proposal.sender)
+            : toCompanyBrief(row.proposal.listing.company);
+    return {
+        projectId: row.projectId,
+        listingTitle: row.proposal.listing.listingTitle,
+        receiver,
+        completedAt: row.completedAt.toISOString(),
+    };
+}
+
 // Opens the project for an accepted proposal, inside the caller's
 // transaction: the proposal's budget, starting today (UTC). It waits for the
 // Provider's quotation first (ADR 0015).
@@ -98,6 +159,32 @@ export function projectParties(proposal: PartiesRow): {
     return proposal.listing.listingType === ('SERVICE' satisfies ListingType)
         ? { providerId: ownerId, receiverId: proposal.senderId }
         : { providerId: proposal.senderId, receiverId: ownerId };
+}
+
+// A Provider's COMPLETED projects: the sender on a job, the owner on a
+// service. The rule projectParties applies, written as a filter.
+export function providerCompletedProjectsWhere(
+    companyId: number,
+): Prisma.ProjectWhereInput {
+    return {
+        projectStatus: 'COMPLETED' satisfies ProjectStatus,
+        OR: [
+            {
+                proposal: {
+                    senderId: companyId,
+                    listing: { listingType: 'JOB' satisfies ListingType },
+                },
+            },
+            {
+                proposal: {
+                    listing: {
+                        companyId,
+                        listingType: 'SERVICE' satisfies ListingType,
+                    },
+                },
+            },
+        ],
+    };
 }
 
 export type ProjectParty = {

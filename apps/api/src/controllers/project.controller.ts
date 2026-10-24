@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import type {
+    CompletedProject,
+    ListingType,
     Paginated,
     ProjectStatus,
     ProjectSummary,
@@ -9,21 +11,27 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
-import { orConflict } from '../lib/prisma-errors';
+import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    completedProjectSelect,
     moveProjectStatus,
     projectSelect,
     projectUpdateSelect,
     projectViewSelect,
+    toCompletedProject,
     toProject,
     toProjectDetail,
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
+import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
+import { companyIdParamSchema } from '../schemas/company.schema';
 import {
+    completedProjectListQuerySchema,
     createProjectUpdateSchema,
+    createReviewSchema,
     projectIdParamSchema,
     projectListQuerySchema,
 } from '../schemas/project.schema';
@@ -197,4 +205,118 @@ export async function confirmDeposit(
         );
     });
     res.json(toProject(row));
+}
+
+// US5-1. The Receiver reviews a completed project once (ADR 0018). Four 1-5 scores
+// and an optional comment. A second review is 409. Outsiders get 404; Provider
+// gets 403; project not COMPLETED gets 409.
+export async function createReview(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const body = parseBody(createReviewSchema, req.body);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can review the project');
+    }
+    if (project.projectStatus !== ('COMPLETED' satisfies ProjectStatus)) {
+        throw ApiError.conflict('Project is not COMPLETED');
+    }
+
+    try {
+        const row = await prisma.review.create({
+            data: {
+                projectId,
+                workQualityScore: body.workQualityScore,
+                serviceScore: body.serviceScore,
+                valueForMoneyScore: body.valueForMoneyScore,
+                deliveryTimeScore: body.deliveryTimeScore,
+                comment: body.comment ?? null,
+            },
+            select: reviewSelect,
+        });
+
+        res.status(201).json(toReview(row));
+    } catch (err) {
+        if (isUniqueViolation(err)) {
+            throw ApiError.conflict('Project has already been reviewed');
+        }
+        throw err;
+    }
+}
+// US5-3. The project's review, for both parties. 404 until the Receiver submits
+// one. Outsiders get 404 (conventions §4).
+export async function getProjectReview(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const row = await prisma.review.findUnique({
+        where: { projectId },
+        select: reviewSelect,
+    });
+    if (!row) {
+        throw ApiError.notFound('Review not found');
+    }
+
+    res.json(toReview(row));
+}
+
+// US2-5. A Provider's completed work, newest first, for its public profile.
+// Unknown, soft-deleted, and admin accounts answer 404 (same as getCompanyProfile).
+export async function listProviderCompletedProjects(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { companyId } = parseParams(companyIdParamSchema, req.params);
+    const { page, pageSize } = parseQuery(
+        completedProjectListQuerySchema,
+        req.query,
+    );
+
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select: { companyId: true },
+    });
+    if (!company) {
+        throw ApiError.notFound('Company not found');
+    }
+
+    const where: Prisma.ProjectWhereInput = {
+        projectStatus: 'COMPLETED' satisfies ProjectStatus,
+        OR: [
+            {
+                proposal: {
+                    senderId: companyId,
+                    listing: { listingType: 'JOB' satisfies ListingType },
+                },
+            },
+            {
+                proposal: {
+                    listing: {
+                        listingType: 'SERVICE' satisfies ListingType,
+                        companyId: companyId,
+                    },
+                },
+            },
+        ],
+    };
+
+    const [totalItems, rows] = await prisma.$transaction([
+        prisma.project.count({ where }),
+        prisma.project.findMany({
+            where,
+            ...pageArgs({ page, pageSize }),
+            orderBy: [{ completedAt: 'desc' }, { projectId: 'desc' }],
+            select: completedProjectSelect,
+        }),
+    ]);
+
+    const body: Paginated<CompletedProject> = {
+        items: rows.map(toCompletedProject),
+        pagination: toPagination(totalItems, { page, pageSize }),
+    };
+
+    res.json(body);
 }

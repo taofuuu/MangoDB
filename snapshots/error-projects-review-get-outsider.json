@@ -1,0 +1,10 @@
+{
+    "request": "GET /projects/<project_id>/review",
+    "status": 404,
+    "body": {
+        "error": {
+            "code": "NOT_FOUND",
+            "message": "Project not found"
+        }
+    }
+}

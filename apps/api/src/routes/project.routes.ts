@@ -3,7 +3,9 @@ import { requireAuth } from '../middleware/auth';
 import {
     confirmDeposit,
     createProjectUpdate,
+    createReview,
     getProject,
+    getProjectReview,
     listMyProjects,
     listProjectUpdates,
     reportDeposit,
@@ -35,3 +37,11 @@ projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
 // US4-7. The Provider confirms the deposit arrived; the project goes
 // IN_PROGRESS. Same guards as report-deposit, but only the Provider may act.
 projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
+
+// US5-1. The Receiver reviews a completed project once. Four 1-5 scores and an
+// optional comment (ADR 0018). Second review is 409.
+projectRoutes.post('/:projectId/review', requireAuth, createReview);
+
+// US5-3. The project's review, for both parties. 404 until the Receiver submits
+// one. Outsiders get 404.
+projectRoutes.get('/:projectId/review', requireAuth, getProjectReview);

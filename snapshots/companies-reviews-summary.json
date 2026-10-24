@@ -1,0 +1,8 @@
+{
+    "request": "GET /companies/142/reviews/summary",
+    "status": 200,
+    "body": {
+        "averageRating": 4.5,
+        "ratingCount": 1
+    }
+}
