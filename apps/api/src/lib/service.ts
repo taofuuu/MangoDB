@@ -237,6 +237,7 @@ export function serviceOrderBy(
         case 'newest':
         case 'ratingDesc':
         case 'ratingAsc':
+            // Only the tie-break for rating; sortServicesByRating does the rest.
             return [{ createdAt: 'desc' }, { listingId: 'desc' }];
     }
 }

@@ -164,6 +164,8 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         req.query,
     );
     const where = serviceSearchWhere({ q, ...filters });
+    // shortcut: sorts every match in memory, fine for a few hundred services;
+    // move the rating sort into SQL if search gets slow.
     if (isRatingSortOrder(orderBy)) {
         const listings = await prisma.listing.findMany({
             where,
