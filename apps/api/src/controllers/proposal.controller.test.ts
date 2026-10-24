@@ -187,15 +187,26 @@ const fakePrisma = {
                 proposalStatus: string;
             };
         }) => {
+            const hasPending = proposals.some(
+                (p) =>
+                    p.listingId === args.data.listingId &&
+                    p.senderId === args.data.senderId &&
+                    p.proposalStatus === 'PENDING',
+            );
+            if (hasPending) {
+                throw { code: 'P2002' };
+            }
             rows.push({
                 senderId: args.data.senderId,
                 proposalStatus: args.data.proposalStatus,
             });
-            return {
+            const created = {
                 ...args.data,
-                proposalId: rows.length,
+                proposalId: proposals.length + 1,
                 createdAt: new Date(),
             };
+            proposals.push(created);
+            return created;
         },
         groupBy: async (args: { where?: { senderId?: number } }) => {
             const totals = new Map<string, number>();
@@ -623,6 +634,164 @@ describe('POST /jobs/:jobId/proposals', () => {
         assert.equal(result.body.listingId, 10);
         assert.equal(result.body.senderId, PROVIDER);
         assert.equal(rows.length, 1);
+    });
+});
+
+describe('POST /services/:serviceId/proposals', () => {
+    const OWNER = 1;
+    const RECEIVER = 2;
+
+    function service(
+        listingId: number,
+        listingStatus: 'OPEN' | 'CLOSED' = 'OPEN',
+        deletedAt: Date | null = null,
+    ): ListingRow {
+        return {
+            listingId,
+            listingType: 'SERVICE',
+            companyId: OWNER,
+            listingStatus,
+            company: { deletedAt },
+        };
+    }
+
+    async function hire(
+        serviceId: number,
+        callerId: number = RECEIVER,
+    ): Promise<unknown> {
+        const req = {
+            auth: { companyId: callerId },
+            params: { serviceId: String(serviceId) },
+            body: {
+                proposalBudget: 12000,
+                proposalTerms: 'Hire request terms',
+                duration: 1.5,
+            },
+        } as unknown as Request;
+        let status = 200;
+        let body: unknown;
+        const res = {
+            status(code: number) {
+                status = code;
+                return this;
+            },
+            json(value: unknown) {
+                body = value;
+                return this;
+            },
+        } as unknown as Response;
+
+        try {
+            await controller.createServiceProposal(req, res);
+        } catch (err) {
+            return err;
+        }
+        return { status, body };
+    }
+
+    it("stores a PENDING hire request on an active company's open service", async () => {
+        listings = [service(20)];
+
+        const result = (await hire(20)) as {
+            status: number;
+            body: Proposal;
+        };
+
+        assert.equal(result.status, 201);
+        assert.equal(result.body.listingId, 20);
+        assert.equal(result.body.senderId, RECEIVER);
+        assert.equal(result.body.proposalBudget, 12000);
+        assert.equal(result.body.proposalTerms, 'Hire request terms');
+        assert.equal(result.body.duration, 1.5);
+        assert.equal(result.body.proposalStatus, 'PENDING');
+        assert.equal(proposals.length, 1);
+    });
+
+    it('answers 404 for an unknown service, a job ID, or a deleted-owner service and writes nothing', async () => {
+        listings = [
+            {
+                listingId: 10,
+                listingType: 'JOB',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+            service(20, 'OPEN', new Date('2026-01-01')),
+        ];
+        const before = snapshotTables();
+
+        for (const id of [99, 10, 20]) {
+            const result = await hire(id);
+            assert.ok(result instanceof ApiError, 'expected an ApiError');
+            assert.equal(result.status, 404);
+            assert.equal(result.message, 'Service not found');
+            assert.equal(snapshotTables(), before);
+        }
+    });
+
+    it('answers 403 when sending a hire request to your own service and writes nothing', async () => {
+        listings = [service(20)];
+        const before = snapshotTables();
+
+        const result = await hire(20, OWNER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 403);
+        assert.equal(
+            result.message,
+            'You cannot send a hire request to your own service',
+        );
+        assert.equal(snapshotTables(), before);
+    });
+
+    it('answers 409 when the service is closed and writes nothing', async () => {
+        listings = [service(20, 'CLOSED')];
+        const before = snapshotTables();
+
+        const result = await hire(20);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 409);
+        assert.equal(
+            result.message,
+            'This service is not open for hire requests',
+        );
+        assert.equal(snapshotTables(), before);
+    });
+
+    it('answers 409 for a second pending hire request, then allows a new one once decided (ADR 0016)', async () => {
+        listings = [service(20)];
+
+        const first = (await hire(20)) as { status: number; body: Proposal };
+        assert.equal(first.status, 201);
+
+        const beforeRepeat = snapshotTables();
+        const secondPending = await hire(20);
+        assert.ok(secondPending instanceof ApiError, 'expected an ApiError');
+        assert.equal(secondPending.status, 409);
+        assert.equal(
+            secondPending.message,
+            'You already have a pending hire request on this service',
+        );
+        assert.equal(snapshotTables(), beforeRepeat);
+
+        proposals[0]!.proposalStatus = 'REJECTED';
+        const afterRejected = (await hire(20)) as {
+            status: number;
+            body: Proposal;
+        };
+        assert.equal(afterRejected.status, 201);
+        assert.equal(afterRejected.body.proposalStatus, 'PENDING');
+        assert.equal(proposals.length, 2);
+
+        proposals[1]!.proposalStatus = 'ACCEPTED';
+        const afterAccepted = (await hire(20)) as {
+            status: number;
+            body: Proposal;
+        };
+        assert.equal(afterAccepted.status, 201);
+        assert.equal(afterAccepted.body.proposalStatus, 'PENDING');
+        assert.equal(proposals.length, 3);
     });
 });
 
