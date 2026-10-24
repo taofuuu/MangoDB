@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import type {
     CompletedProject,
-    ListingType,
     Paginated,
     ProjectStatus,
     ProjectSummary,
@@ -19,6 +18,7 @@ import {
     projectSelect,
     projectUpdateSelect,
     projectViewSelect,
+    providerCompletedProjectsWhere,
     toCompletedProject,
     toProject,
     toProjectDetail,
@@ -283,25 +283,7 @@ export async function listProviderCompletedProjects(
         throw ApiError.notFound('Company not found');
     }
 
-    const where: Prisma.ProjectWhereInput = {
-        projectStatus: 'COMPLETED' satisfies ProjectStatus,
-        OR: [
-            {
-                proposal: {
-                    senderId: companyId,
-                    listing: { listingType: 'JOB' satisfies ListingType },
-                },
-            },
-            {
-                proposal: {
-                    listing: {
-                        listingType: 'SERVICE' satisfies ListingType,
-                        companyId: companyId,
-                    },
-                },
-            },
-        ],
-    };
+    const where = providerCompletedProjectsWhere(companyId);
 
     const [totalItems, rows] = await prisma.$transaction([
         prisma.project.count({ where }),
