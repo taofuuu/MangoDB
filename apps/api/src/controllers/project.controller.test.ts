@@ -75,11 +75,14 @@ function projectIn(projectStatus: string) {
     };
 }
 
-// Posts to project 1 as callerId. Returns the status and JSON it answered
-// with, or the ApiError it threw.
-async function postUpdate(
+type Handler = (req: Request, res: Response) => Promise<void>;
+
+// Calls handler on project 1 as callerId. Returns the status and JSON it
+// answered with, or the ApiError it threw.
+async function call(
+    handler: Handler,
     callerId: number,
-    body: unknown = { updateText: 'Wireframes done' },
+    body?: unknown,
 ): Promise<unknown> {
     const req = {
         auth: { companyId: callerId },
@@ -100,11 +103,18 @@ async function postUpdate(
     } as unknown as Response;
 
     try {
-        await controller.createProjectUpdate(req, res);
+        await handler(req, res);
     } catch (err) {
         return err;
     }
-    return { status, body: json as ProjectUpdate };
+    return { status, body: json };
+}
+
+function postUpdate(
+    callerId: number,
+    body: unknown = { updateText: 'Wireframes done' },
+): Promise<unknown> {
+    return call(controller.createProjectUpdate, callerId, body);
 }
 
 function isApiError(status: number) {
