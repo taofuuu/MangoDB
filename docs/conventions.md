@@ -101,7 +101,7 @@ POST /proposals/:proposalId/accept
 POST /proposals/:proposalId/reject
 ```
 
-Accepting also creates a project and rejects the other proposals —
+Accepting also creates a project and, on a job, rejects the other proposals —
 `PATCH { status }` would hide that.
 
 ### 2.8 One health endpoint
