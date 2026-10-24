@@ -145,25 +145,43 @@ export async function createServiceProposal(
     res.status(201).json(proposal);
 }
 
-// US2-10. Every proposal on one job posting, newest first, each with a short
-// profile of its Provider. Soft-deleted Providers are kept: a proposal is
+// US2-10, US2-16. Every proposal on one listing, newest first, each with a
+// short profile of its sender. Soft-deleted senders are kept: a proposal is
 // history, not discovery (see Company.deletedAt).
-// Only the posting's owner may read them: the list carries every competing
-// Provider's price and terms.
+// Only the listing's owner may read them: the list carries every sender's
+// price and terms.
+async function listListingProposals(
+    listingId: number,
+    listingType: ListingType,
+    callerId: number,
+) {
+    await assertListingOwned(listingId, listingType, callerId);
+
+    const proposals = await prisma.proposal.findMany({
+        where: { listingId },
+        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+        select: receivedProposalSelect,
+    });
+
+    return proposals.map(toReceivedProposal);
+}
+
 export async function listJobProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
-    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
+    res.json(await listListingProposals(jobId, 'JOB', req.auth!.companyId));
+}
 
-    const proposals = await prisma.proposal.findMany({
-        where: { listingId: jobId },
-        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-        select: receivedProposalSelect,
-    });
-
-    res.json(proposals.map(toReceivedProposal));
+export async function listServiceProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    res.json(
+        await listListingProposals(serviceId, 'SERVICE', req.auth!.companyId),
+    );
 }
 
 // US2-11. Accepting a proposal on a job closes the job, rejects the other
