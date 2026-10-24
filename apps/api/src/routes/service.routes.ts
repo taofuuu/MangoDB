@@ -9,6 +9,10 @@ import {
     listServices,
     updateService,
 } from '../controllers/service.controller';
+import {
+    createServiceProposal,
+    listServiceProposals,
+} from '../controllers/proposal.controller';
 
 // Mounted at /services.
 export const serviceRoutes = Router();
@@ -243,3 +247,23 @@ serviceRoutes.patch('/:serviceId', requireAuth, updateService);
  *         $ref: '#/components/responses/Conflict'
  */
 serviceRoutes.delete('/:serviceId', requireAuth, deleteService);
+
+// US2-16. List the hire requests on one service, so its Provider can pick one.
+// Guards: authenticated and holding Provider role (BOTH accounts also qualify),
+// so a Receiver is turned away before any lookup. Owning the service is checked
+// in the controller; another Provider gets 403.
+serviceRoutes.get(
+    '/:serviceId/proposals',
+    requireAuth,
+    requireRole('provider'),
+    listServiceProposals,
+);
+
+// US2-15. Send a hire request to an open service.
+// Guards: authenticated and holding Receiver role (BOTH accounts also qualify).
+serviceRoutes.post(
+    '/:serviceId/proposals',
+    requireAuth,
+    requireRole('receiver'),
+    createServiceProposal,
+);

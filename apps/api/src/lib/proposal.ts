@@ -50,9 +50,9 @@ export function toProposal(row: ProposalRow): Proposal {
     };
 }
 
-// US2-10. A proposal as the listing's owner sees it in the proposal list: the
-// proposal plus the sender's name and photo, so the list needs no second call
-// per row to show who sent each one.
+// US2-10, US2-16. A proposal as the listing's owner sees it in the proposal
+// list: the proposal plus the sender's name and photo, so the list needs no
+// second call per row to show who sent each one.
 export const receivedProposalSelect = {
     ...proposalSelect,
     sender: { select: companyBriefSelect },
@@ -143,7 +143,13 @@ export async function findPendingProposalFor(
             listingId: true,
             proposalStatus: true,
             proposalBudget: true,
-            listing: { select: { listingStatus: true, companyId: true } },
+            listing: {
+                select: {
+                    listingType: true,
+                    listingStatus: true,
+                    companyId: true,
+                },
+            },
         },
     });
     if (!proposal) throw ApiError.notFound('Proposal not found');
