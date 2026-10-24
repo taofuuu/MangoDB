@@ -6,6 +6,8 @@
  *   Total / Pending / Accepted / Rejected chips of the Your Proposals page
  *   (US2-9).
  * - POST /jobs/:jobId/proposals (createProposal, US2-8).
+ * - POST /services/:serviceId/proposals (createServiceProposal, US2-15).
+ * - GET /services/:serviceId/proposals (listServiceProposals, US2-16).
  *
  * What they cover:
  * - Each item carries listingType (JOB or SERVICE) and listingTitle.
@@ -15,11 +17,12 @@
  *   or Receiver's proposals must not leak into the numbers.
  * - ?status= is not read for counts: the chips must not change when the list
  *   below them is filtered. The list endpoint handles filtering.
- * - A soft-deleted company's job is 404 to a proposal, even while it is still
- *   OPEN, and nothing is written. An active company's open job takes one.
- * - POST /proposals/:proposalId/accept (acceptProposal, US2-11): a project is
- *   created, the job closes, and the other pending proposals are rejected.
- *   A refusal (404, 403, 409) changes nothing.
+ * - A soft-deleted company's job or service is 404 to a proposal, even while
+ *   it is still OPEN, and nothing is written.
+ * - POST /proposals/:proposalId/accept (acceptProposal, US2-11, US2-17): a
+ *   project is created; on a job, the job closes and other pending proposals
+ *   are rejected; on a service, the service stays OPEN and other pending hire
+ *   requests stay PENDING. A refusal (404, 403, 409) changes nothing.
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
@@ -966,10 +969,24 @@ describe('POST /proposals/:proposalId/accept', () => {
         };
     }
 
-    function proposal(proposalId: number, proposalStatus: string): ProposalRow {
+    function service(listingStatus: 'OPEN' | 'CLOSED'): ListingRow {
+        return {
+            listingId: 20,
+            listingType: 'SERVICE',
+            companyId: OWNER,
+            listingStatus,
+            company: { deletedAt: null },
+        };
+    }
+
+    function proposal(
+        proposalId: number,
+        proposalStatus: string,
+        listingId: number = 10,
+    ): ProposalRow {
         return {
             proposalId,
-            listingId: 10,
+            listingId,
             proposalBudget: 80000,
             proposalStatus,
         };
@@ -1030,6 +1047,47 @@ describe('POST /proposals/:proposalId/accept', () => {
             ['ACCEPTED', 'REJECTED', 'REJECTED'],
         );
         assert.equal(projects.length, 1);
+    });
+
+    it('on a service, creates the project, keeps the service OPEN and leaves other requests PENDING (US2-17)', async () => {
+        listings = [service('OPEN')];
+        proposals = [
+            proposal(1, 'PENDING', 20),
+            proposal(2, 'PENDING', 20),
+            proposal(3, 'REJECTED', 20),
+        ];
+
+        const first = (await accept(1, OWNER)) as {
+            status: number;
+            body: Record<string, unknown>;
+        };
+
+        assert.equal(first.status, 201);
+        assert.equal(first.body.proposalId, 1);
+        assert.equal(first.body.totalBudget, 80000);
+        assert.equal(first.body.projectStatus, 'AWAITING_QUOTATION');
+        assert.equal(listings[0]!.listingStatus, 'OPEN');
+        assert.deepEqual(
+            proposals.map((p) => p.proposalStatus),
+            ['ACCEPTED', 'PENDING', 'REJECTED'],
+        );
+        assert.equal(projects.length, 1);
+
+        // Because the service stays OPEN and proposal 2 stays PENDING, the
+        // Provider can accept the second hire request too.
+        const second = (await accept(2, OWNER)) as {
+            status: number;
+            body: Record<string, unknown>;
+        };
+
+        assert.equal(second.status, 201);
+        assert.equal(second.body.proposalId, 2);
+        assert.equal(listings[0]!.listingStatus, 'OPEN');
+        assert.deepEqual(
+            proposals.map((p) => p.proposalStatus),
+            ['ACCEPTED', 'ACCEPTED', 'REJECTED'],
+        );
+        assert.equal(projects.length, 2);
     });
 
     // [what, outcome, proposal status, job status, caller, expected code]
