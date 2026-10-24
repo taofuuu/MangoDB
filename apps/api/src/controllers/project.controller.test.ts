@@ -2,6 +2,7 @@
  * Tests for project controller endpoints:
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
+ * - POST /projects/:projectId/submit-work (submitWork, US4-11)
  * - POST /projects/:projectId/review (createReview, US5-1, ADR 0018)
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
@@ -15,6 +16,9 @@
  *   IN_PROGRESS and stamps depositConfirmedAt.
  * - T4.7.4: confirming before the Receiver reported the deposit is a 409, and
  *   the Receiver confirming is a 403. Neither changes the project.
+ * - T4.11.4: the Provider reporting the work complete moves the project to
+ *   AWAITING_ACCEPTANCE. The Receiver gets 403, an outsider 404, and a project
+ *   not IN_PROGRESS 409; none of them changes the project.
  * - US5-1: the Receiver reviews a COMPLETED project once: 201 Created with Review DTO.
  * - Both Job (owner is Receiver) and Service (sender is Receiver) paths.
  * - An optional comment up to 500 characters, or null/omitted comment.
@@ -206,6 +210,7 @@ const fakePrisma = {
     },
     project: {
         findUnique: () => Promise.resolve(project),
+        findUniqueOrThrow: () => Promise.resolve(project),
         // moveProjectStatus: moves only a project still in the `from` status.
         updateMany: ({
             where,
@@ -461,6 +466,10 @@ function confirmDeposit(callerId: number): Promise<unknown> {
     return call(controller.confirmDeposit, callerId);
 }
 
+function submitWork(callerId: number): Promise<unknown> {
+    return call(controller.submitWork, callerId);
+}
+
 async function postReview(
     callerId: number,
     body: unknown = {
@@ -635,6 +644,36 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         assert.ok(isApiError(403)(await confirmDeposit(RECEIVER)));
         assert.equal(project!.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project!.depositConfirmedAt, null);
+    });
+});
+
+describe('POST /projects/:projectId/submit-work', () => {
+    it('moves the project to AWAITING_ACCEPTANCE (T4.11.4)', async () => {
+        const result = (await submitWork(PROVIDER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+    });
+
+    it('is a 403 for the Receiver and changes nothing (T4.11.4)', async () => {
+        assert.ok(isApiError(403)(await submitWork(RECEIVER)));
+        assert.equal(project!.projectStatus, 'IN_PROGRESS');
+    });
+
+    it('is a 404 for a company outside the project (T4.11.4)', async () => {
+        assert.ok(isApiError(404)(await submitWork(OUTSIDER)));
+        assert.equal(project!.projectStatus, 'IN_PROGRESS');
+    });
+
+    // Also what a second click gets once the first one moved it.
+    it('is a 409 when the project is not IN_PROGRESS', async () => {
+        project = projectIn('AWAITING_ACCEPTANCE');
+        assert.ok(isApiError(409)(await submitWork(PROVIDER)));
+        assert.equal(project.projectStatus, 'AWAITING_ACCEPTANCE');
     });
 });
 
