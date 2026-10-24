@@ -72,7 +72,13 @@ export type ListingType = (typeof LISTING_TYPES)[number];
 
 // Ordering choices of the service search. Never stored, so camelCase like
 // COMPANY_SORT_ORDERS (section 6).
-export const SERVICE_SORT_ORDERS = ['newest', 'priceAsc', 'priceDesc'] as const;
+export const SERVICE_SORT_ORDERS = [
+    'newest',
+    'priceAsc',
+    'priceDesc',
+    'ratingDesc',
+    'ratingAsc',
+] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.
@@ -201,9 +207,10 @@ export interface CompanySummary {
 export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
 export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
-// US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is this service's own.
-export interface ServiceSummary {
+// US3-1, US3-3. One service search result card: the service, with a short
+// profile of the company that offers it (ADR 0001) and its Provider rating
+// summary (T3.3.2). techStack is this service's own.
+export interface ServiceSummary extends ReviewSummary {
     serviceId: number;
     listingTitle: string;
     listingDesc: string;
