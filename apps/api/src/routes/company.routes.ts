@@ -11,6 +11,7 @@ import {
     updateMyPhoto,
     updateMyProfile,
 } from '../controllers/company.controller';
+import { listProviderCompletedProjects } from '../controllers/project.controller';
 
 // Mounted at /companies. GET / searches other companies; everything under /me
 // operates on the caller's own account.
@@ -50,6 +51,14 @@ companyRoutes.delete(
     requireAuth,
     requireRole('provider', 'receiver'),
     deleteMyAccount,
+);
+
+// US2-5. A Provider's completed work, newest first, for its public profile.
+companyRoutes.get(
+    '/:companyId/completed-projects',
+    requireAuth,
+    requireRole('provider', 'receiver'),
+    listProviderCompletedProjects,
 );
 
 // Another company's public profile. Last, after every /me route, so "me" is

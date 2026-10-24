@@ -432,7 +432,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   which creates the project row, the reads `GET /projects/mine`,
   `GET /projects/:projectId` and `…/updates`, the Provider's
   `POST /projects/:projectId/updates`, the deposit pair
-  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, and the
+  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, a
+  Provider's completed work, `GET /companies/:companyId/completed-projects`, and the
   Receiver's `POST /projects/:projectId/review` — Sprint 3 builds the rest.
 
 ---
