@@ -207,6 +207,34 @@ export async function confirmDeposit(
     res.json(toProject(row));
 }
 
+// US4-11. The Provider reports the work complete: IN_PROGRESS to
+// AWAITING_ACCEPTANCE, so the Receiver can accept or reject it (ADR 0015).
+export async function submitWork(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden(
+            'Only the Provider can report the work complete',
+        );
+    }
+
+    // A project not IN_PROGRESS, or a double click, is a 409 from the move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'IN_PROGRESS',
+            'AWAITING_ACCEPTANCE',
+        );
+        return tx.project.findUniqueOrThrow({
+            where: { projectId },
+            select: projectSelect,
+        });
+    });
+    res.json(toProject(row));
+}
+
 // US5-1. The Receiver reviews a completed project once (ADR 0018). Four 1-5 scores
 // and an optional comment. A second review is 409. Outsiders get 404; Provider
 // gets 403; project not COMPLETED gets 409.
