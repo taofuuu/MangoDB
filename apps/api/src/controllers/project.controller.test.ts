@@ -4,6 +4,7 @@
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
  * - POST /projects/:projectId/submit-work (submitWork, US4-11)
  * - POST /projects/:projectId/reject-work (rejectWork, US4-12)
+ * - POST /projects/:projectId/accept-work (acceptWork, US4-13)
  * - POST /projects/:projectId/review (createReview, US5-1, ADR 0018)
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
@@ -24,6 +25,11 @@
  * - T4.12.4: rejecting with a reason moves the project back to IN_PROGRESS and
  *   saves the reason as a WORK_REJECTED update. The Provider gets 403, and a
  *   project not AWAITING_ACCEPTANCE 409.
+ * - T4.13.3: accepting the work moves the project to COMPLETED and stamps
+ *   completedAt.
+ * - T4.13.4: only the Receiver can accept, and only from AWAITING_ACCEPTANCE.
+ *   The Provider gets 403, an outsider 404, another status 409; none of them
+ *   changes the project.
  * - US5-1: the Receiver reviews a COMPLETED project once: 201 Created with Review DTO.
  * - Both Job (owner is Receiver) and Service (sender is Receiver) paths.
  * - An optional comment up to 500 characters, or null/omitted comment.
@@ -236,7 +242,7 @@ const fakePrisma = {
             data,
         }: {
             where: { depositReportedAt?: unknown };
-            data: { depositConfirmedAt: Date };
+            data: { depositConfirmedAt?: Date; completedAt?: Date };
         }) => {
             if (
                 where.depositReportedAt &&
@@ -248,7 +254,7 @@ const fakePrisma = {
                     }),
                 );
             }
-            project!.depositConfirmedAt = data.depositConfirmedAt;
+            Object.assign(project!, data);
             return Promise.resolve(project);
         },
         count: ({ where }: { where?: ProjectWhereInput } = {}) => {
@@ -373,7 +379,7 @@ function projectIn(
         projectStatus,
         depositReportedAt,
         depositConfirmedAt: null as Date | null,
-        completedAt: null,
+        completedAt: null as Date | null,
         proposal: {
             senderId: PROVIDER,
             listing: { listingType: 'JOB', companyId: RECEIVER },
@@ -480,6 +486,10 @@ function rejectWork(
     body: unknown = { reason: 'The logo is the wrong colour' },
 ): Promise<unknown> {
     return call(controller.rejectWork, callerId, body);
+}
+
+function acceptWork(callerId: number): Promise<unknown> {
+    return call(controller.acceptWork, callerId);
 }
 
 async function postReview(
@@ -732,6 +742,46 @@ describe('POST /projects/:projectId/reject-work', () => {
         assert.ok(isApiError(409)(await rejectWork(RECEIVER)));
         assert.equal(project.projectStatus, 'IN_PROGRESS');
         assert.equal(created.length, 0);
+    });
+});
+
+describe('POST /projects/:projectId/accept-work', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_ACCEPTANCE');
+    });
+
+    it('completes the project and records the time (T4.13.3)', async () => {
+        const startedAt = Date.now();
+        const result = (await acceptWork(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'COMPLETED');
+        const completedAt = Date.parse(result.body.completedAt!);
+        assert.ok(completedAt >= startedAt && completedAt <= Date.now());
+        assert.equal(project!.projectStatus, 'COMPLETED');
+    });
+
+    it('is a 403 for the Provider and changes nothing (T4.13.4)', async () => {
+        assert.ok(isApiError(403)(await acceptWork(PROVIDER)));
+        assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(project!.completedAt, null);
+    });
+
+    it('is a 404 for a company outside the project', async () => {
+        assert.ok(isApiError(404)(await acceptWork(OUTSIDER)));
+        assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(project!.completedAt, null);
+    });
+
+    // Also what a second click gets once the first one completed it.
+    it('is a 409 when the project is not AWAITING_ACCEPTANCE (T4.13.4)', async () => {
+        project = projectIn('IN_PROGRESS');
+        assert.ok(isApiError(409)(await acceptWork(RECEIVER)));
+        assert.equal(project.projectStatus, 'IN_PROGRESS');
+        assert.equal(project.completedAt, null);
     });
 });
 
