@@ -1530,7 +1530,8 @@ snap error-proposals-accept-forbidden POST "/proposals/$ACCEPT_PROPOSAL_ID/accep
 # 201 with the new project.
 snap proposals-accept POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
-SUBS+=(--id "project_id=$(jget projectId)")
+ACCEPT_PROJECT_ID="$(jget projectId)"
+SUBS+=(--id "project_id=$ACCEPT_PROJECT_ID")
 # The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
 # purpose, so this one snapshot names today, and only here: a run-wide rule
 # would also catch any other date that happens to be today.
@@ -1544,6 +1545,37 @@ snap jobs-one-after-accept GET "/jobs/$ACCEPT_JOB_ID" \
 # A second accept is a state conflict, not a second project.
 snap error-proposals-accept-again POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 17. Review a project (US5-1, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project reviews"
+snap error-projects-review-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/review"
+
+snap error-projects-review-not-found POST /projects/2147483647/review \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Provider is on the project but cannot review it.
+snap error-projects-review-forbidden POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Receiver cannot review a project before it is COMPLETED.
+snap error-projects-review-not-completed POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# 400 when scores are outside 1-5 or missing.
+snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"

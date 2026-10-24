@@ -1,0 +1,20 @@
+{
+    "request": "POST /projects/<project_id>/review",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "workQualityScore",
+                    "message": "Too big: expected number to be <=5"
+                },
+                {
+                    "field": "serviceScore",
+                    "message": "Too small: expected number to be >=1"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}
