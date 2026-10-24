@@ -1090,6 +1090,19 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.equal(projects.length, 2);
     });
 
+    // A service skips closeOpenListing; only the status check refuses it.
+    it('a closed service is 409 and changes nothing', async () => {
+        listings = [service('CLOSED')];
+        proposals = [proposal(1, 'PENDING', 20)];
+        const before = snapshotTables();
+
+        const result = await accept(1, OWNER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 409);
+        assert.equal(snapshotTables(), before);
+    });
+
     // [what, outcome, proposal status, job status, caller, expected code]
     const refusals: [
         string,
