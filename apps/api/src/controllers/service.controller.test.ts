@@ -348,9 +348,22 @@ describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
             service(20, BETA, 'OPEN', higher),
         ];
 
+        const descResult = (await search({
+            orderBy: 'ratingDesc',
+        })) as Paginated<ServiceSummary>;
+        assert.deepEqual(orderedIds(descResult), [20, 10]);
         assert.deepEqual(
-            orderedIds(await search({ orderBy: 'ratingDesc' })),
-            [20, 10],
+            descResult.items.map(
+                ({ serviceId, averageRating, ratingCount }) => ({
+                    serviceId,
+                    averageRating,
+                    ratingCount,
+                }),
+            ),
+            [
+                { serviceId: 20, averageRating: 4.5, ratingCount: 1 },
+                { serviceId: 10, averageRating: 4, ratingCount: 2 },
+            ],
         );
         assert.deepEqual(
             orderedIds(await search({ orderBy: 'ratingAsc' })),

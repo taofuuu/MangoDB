@@ -262,8 +262,9 @@ export function serviceSearchWhere({
     };
 }
 
-// US3-1. What one service search card needs. Only these company fields, never
-// the whole row: it holds the sign-in email and password hash (ADR 0001).
+// US3-1, US3-3. What one service search card needs. Only these company fields
+// and completed-project review scores, never the whole row: it holds the
+// sign-in email and password hash (ADR 0001).
 export const serviceSummarySelect = {
     listingId: true,
     listingTitle: true,
@@ -274,14 +275,6 @@ export const serviceSummarySelect = {
         select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
-    company: { select: companyBriefSelect },
-} as const satisfies Prisma.ListingSelect;
-
-// US3-3. Joins the Provider's completed-project reviews so rating sort can
-// score each service's owner with getRating (same average helper as the
-// profile).
-export const serviceSummaryWithRatingSelect = {
-    ...serviceSummarySelect,
     company: { select: { ...companyBriefSelect, ...ratingSelect } },
 } as const satisfies Prisma.ListingSelect;
 
@@ -293,7 +286,7 @@ interface ServiceSummaryRow {
     maxBudget: number | null;
     listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
-    company: CompanyBrief | null;
+    company: (CompanyBrief & RatingSource) | null;
 }
 
 // US3-3. Orders services by their Provider's averageRating using getRating.
@@ -333,6 +326,9 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             .sort(),
         techStack: toTechStackNames(row.service),
         company: toCompanyBrief(row.company),
+        ...(row.company
+            ? getRating(row.company)
+            : { averageRating: null, ratingCount: 0 }),
     };
 }
 

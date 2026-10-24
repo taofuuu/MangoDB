@@ -207,9 +207,10 @@ export interface CompanySummary {
 export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
 export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
-// US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is this service's own.
-export interface ServiceSummary {
+// US3-1, US3-3. One service search result card: the service, with a short
+// profile of the company that offers it (ADR 0001) and its Provider rating
+// summary (T3.3.2). techStack is this service's own.
+export interface ServiceSummary extends ReviewSummary {
     serviceId: number;
     listingTitle: string;
     listingDesc: string;

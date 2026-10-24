@@ -28,7 +28,6 @@ import {
     serviceSearchWhere,
     serviceSelect,
     serviceSummarySelect,
-    serviceSummaryWithRatingSelect,
     sortServicesByRating,
     toServiceFilterOptions,
     toService,
@@ -170,7 +169,7 @@ export async function listServices(req: Request, res: Response): Promise<void> {
         const listings = await prisma.listing.findMany({
             where,
             orderBy: serviceOrderBy(orderBy),
-            select: serviceSummaryWithRatingSelect,
+            select: serviceSummarySelect,
         });
         const sorted = sortServicesByRating(listings, orderBy);
         const { skip, take } = pageArgs({ page, pageSize });
