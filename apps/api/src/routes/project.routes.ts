@@ -8,6 +8,7 @@ import {
     getProjectReview,
     listMyProjects,
     listProjectUpdates,
+    rejectWork,
     reportDeposit,
     submitWork,
 } from '../controllers/project.controller';
@@ -42,6 +43,10 @@ projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
 // US4-11. The Provider reports the work complete; the project waits for the
 // Receiver's acceptance. Same guards, but only the Provider may act.
 projectRoutes.post('/:projectId/submit-work', requireAuth, submitWork);
+
+// US4-12. The Receiver rejects the work with a reason; the project goes back
+// to IN_PROGRESS. Same guards, but only the Receiver may act.
+projectRoutes.post('/:projectId/reject-work', requireAuth, rejectWork);
 
 // US5-1. The Receiver reviews a completed project once. Four 1-5 scores and an
 // optional comment (ADR 0018). Second review is 409.
