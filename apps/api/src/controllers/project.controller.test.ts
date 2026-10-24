@@ -3,6 +3,7 @@
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
  * - POST /projects/:projectId/submit-work (submitWork, US4-11)
+ * - POST /projects/:projectId/reject-work (rejectWork, US4-12)
  * - POST /projects/:projectId/review (createReview, US5-1, ADR 0018)
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
@@ -19,6 +20,10 @@
  * - T4.11.4: the Provider reporting the work complete moves the project to
  *   AWAITING_ACCEPTANCE. The Receiver gets 403, an outsider 404, and a project
  *   not IN_PROGRESS 409; none of them changes the project.
+ * - T4.12.3: rejecting the work without a reason is a 400 and changes nothing.
+ * - T4.12.4: rejecting with a reason moves the project back to IN_PROGRESS and
+ *   saves the reason as a WORK_REJECTED update. The Provider gets 403, and a
+ *   project not AWAITING_ACCEPTANCE 409.
  * - US5-1: the Receiver reviews a COMPLETED project once: 201 Created with Review DTO.
  * - Both Job (owner is Receiver) and Service (sender is Receiver) paths.
  * - An optional comment up to 500 characters, or null/omitted comment.
@@ -470,6 +475,13 @@ function submitWork(callerId: number): Promise<unknown> {
     return call(controller.submitWork, callerId);
 }
 
+function rejectWork(
+    callerId: number,
+    body: unknown = { reason: 'The logo is the wrong colour' },
+): Promise<unknown> {
+    return call(controller.rejectWork, callerId, body);
+}
+
 async function postReview(
     callerId: number,
     body: unknown = {
@@ -674,6 +686,52 @@ describe('POST /projects/:projectId/submit-work', () => {
         project = projectIn('AWAITING_ACCEPTANCE');
         assert.ok(isApiError(409)(await submitWork(PROVIDER)));
         assert.equal(project.projectStatus, 'AWAITING_ACCEPTANCE');
+    });
+});
+
+describe('POST /projects/:projectId/reject-work', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_ACCEPTANCE');
+    });
+
+    it('moves the project back to IN_PROGRESS and logs the reason (T4.12.4)', async () => {
+        const result = (await rejectWork(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'IN_PROGRESS');
+        assert.equal(project!.projectStatus, 'IN_PROGRESS');
+        assert.deepEqual(created, [
+            {
+                projectId: 1,
+                updateType: 'WORK_REJECTED',
+                updateText: 'The logo is the wrong colour',
+            },
+        ]);
+    });
+
+    it('is a 400 without a reason and changes nothing (T4.12.3)', async () => {
+        for (const body of [{}, { reason: '' }, { reason: '   ' }]) {
+            assert.ok(isApiError(400)(await rejectWork(RECEIVER, body)));
+        }
+        assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 403 for the Provider and changes nothing', async () => {
+        assert.ok(isApiError(403)(await rejectWork(PROVIDER)));
+        assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(created.length, 0);
+    });
+
+    // Also what a second click gets once the first one moved it.
+    it('is a 409 when the project is not AWAITING_ACCEPTANCE', async () => {
+        project = projectIn('IN_PROGRESS');
+        assert.ok(isApiError(409)(await rejectWork(RECEIVER)));
+        assert.equal(project.projectStatus, 'IN_PROGRESS');
+        assert.equal(created.length, 0);
     });
 });
 
