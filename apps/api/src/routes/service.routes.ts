@@ -9,6 +9,7 @@ import {
     listServices,
     updateService,
 } from '../controllers/service.controller';
+import { createServiceProposal } from '../controllers/proposal.controller';
 
 // Mounted at /services.
 export const serviceRoutes = Router();
@@ -47,3 +48,12 @@ serviceRoutes.get(
 // The role is checked on create only; owning a service already means it.
 serviceRoutes.patch('/:serviceId', requireAuth, updateService);
 serviceRoutes.delete('/:serviceId', requireAuth, deleteService);
+
+// US2-15. Send a hire request to an open service.
+// Guards: authenticated and holding Receiver role (BOTH accounts also qualify).
+serviceRoutes.post(
+    '/:serviceId/proposals',
+    requireAuth,
+    requireRole('receiver'),
+    createServiceProposal,
+);

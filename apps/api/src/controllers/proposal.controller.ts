@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type {
+    CreateProposalRequest,
     ListingStatus,
     ListingType,
     Paginated,
@@ -19,6 +20,7 @@ import {
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobIdParamSchema } from '../schemas/job.schema';
+import { serviceIdParamSchema } from '../schemas/service.schema';
 import {
     assertListingOwned,
     LISTING_MESSAGES,
@@ -38,18 +40,16 @@ import {
     setProposalStatus,
 } from '../lib/proposal';
 
-export async function createProposal(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobIdParamSchema, req.params);
-    const body = parseBody(createProposalSchema, req.body);
-    const callerCompanyId = req.auth!.companyId;
-
-    // A soft-deleted company's postings stay OPEN in the table, so the where
-    // hides them here, the same 404 that GET /jobs/:jobId gives.
-    const posting = await prisma.listing.findUnique({
-        where: { listingId: jobId, company: { deletedAt: null } },
+async function sendProposalToListing(
+    listingId: number,
+    listingType: ListingType,
+    callerCompanyId: number,
+    body: CreateProposalRequest,
+) {
+    // A soft-deleted company's listings stay OPEN in the table, so the where
+    // hides them here, the same 404 that GET /jobs/:jobId and GET /services/:serviceId give.
+    const listing = await prisma.listing.findUnique({
+        where: { listingId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -58,22 +58,22 @@ export async function createProposal(
         },
     });
 
-    if (!posting || posting.listingType !== ('JOB' satisfies ListingType)) {
-        throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
+    if (!listing || listing.listingType !== listingType) {
+        throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
 
-    if (posting.companyId === callerCompanyId) {
+    if (listing.companyId === callerCompanyId) {
         throw ApiError.forbidden('You cannot send a proposal to your own job');
     }
 
-    if (posting.listingStatus !== ('OPEN' satisfies ListingStatus)) {
+    if (listing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
         throw ApiError.conflict('This job is not open for proposals');
     }
 
     try {
         const proposal = await prisma.proposal.create({
             data: {
-                listingId: jobId,
+                listingId,
                 senderId: callerCompanyId,
                 proposalBudget: body.proposalBudget,
                 proposalTerms: body.proposalTerms,
@@ -83,7 +83,7 @@ export async function createProposal(
             select: proposalSelect,
         });
 
-        res.status(201).json(toProposal(proposal));
+        return toProposal(proposal);
     } catch (err) {
         // Only a second PENDING one hits the index; a decided one may repeat
         // (ADR 0016).
@@ -94,6 +94,39 @@ export async function createProposal(
         }
         throw err;
     }
+}
+
+export async function createProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        jobId,
+        'JOB',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
+}
+
+// US2-15. Send a hire request (stored as a PENDING proposal) on an open service.
+export async function createServiceProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        serviceId,
+        'SERVICE',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
 }
 
 // US2-10. Every proposal on one job posting, newest first, each with a short
