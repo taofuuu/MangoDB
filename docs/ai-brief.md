@@ -432,7 +432,9 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
   creates the project row, the reads `GET /projects/mine`,
   `GET /projects/:projectId` and `…/updates`, the Provider's
   `POST /projects/:projectId/updates`, the deposit pair
-  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, and a
+  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
+  Provider's `POST /projects/:projectId/submit-work`, the Receiver's
+  `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
   Provider's completed work, `GET /companies/:companyId/completed-projects` — Sprint
   3 builds the rest. All four review endpoints exist:
   `POST`/`GET /projects/:projectId/review`,

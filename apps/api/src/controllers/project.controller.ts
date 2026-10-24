@@ -34,6 +34,7 @@ import {
     createReviewSchema,
     projectIdParamSchema,
     projectListQuerySchema,
+    rejectWorkSchema,
 } from '../schemas/project.schema';
 
 // US4-9 (T4.9.2). The caller's projects, newest first. A BOTH account gets
@@ -203,6 +204,98 @@ export async function confirmDeposit(
             }),
             'The Receiver has not reported the deposit yet',
         );
+    });
+    res.json(toProject(row));
+}
+
+// US4-11. The Provider reports the work complete: IN_PROGRESS to
+// AWAITING_ACCEPTANCE, so the Receiver can accept or reject it (ADR 0015).
+export async function submitWork(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden(
+            'Only the Provider can report the work complete',
+        );
+    }
+
+    // A project not IN_PROGRESS, or a double click, is a 409 from the move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'IN_PROGRESS',
+            'AWAITING_ACCEPTANCE',
+        );
+        return tx.project.findUniqueOrThrow({
+            where: { projectId },
+            select: projectSelect,
+        });
+    });
+    res.json(toProject(row));
+}
+
+// US4-12. The Receiver rejects the work with a reason: AWAITING_ACCEPTANCE
+// back to IN_PROGRESS (ADR 0015). The reason is saved as a WORK_REJECTED
+// update, so the Provider sees it in the progress timeline.
+export async function rejectWork(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const { reason } = parseBody(rejectWorkSchema, req.body);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can reject the work');
+    }
+
+    // One transaction: the move and the reason are saved together or not at
+    // all. A project not AWAITING_ACCEPTANCE, or a double click, is a 409.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'AWAITING_ACCEPTANCE',
+            'IN_PROGRESS',
+        );
+        await tx.projectUpdate.create({
+            data: {
+                projectId,
+                updateType: 'WORK_REJECTED' satisfies ProjectUpdateType,
+                updateText: reason,
+            },
+        });
+        return tx.project.findUniqueOrThrow({
+            where: { projectId },
+            select: projectSelect,
+        });
+    });
+    res.json(toProject(row));
+}
+
+// US4-13. The Receiver accepts the work: AWAITING_ACCEPTANCE to COMPLETED,
+// with the time (ADR 0015). The Receiver can then review it (US5-1).
+export async function acceptWork(req: Request, res: Response): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    if (project.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can accept the work');
+    }
+
+    // One transaction: the status and the time are saved together. A project
+    // not AWAITING_ACCEPTANCE, or a double click, is a 409 from the move.
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            'AWAITING_ACCEPTANCE',
+            'COMPLETED',
+        );
+        return tx.project.update({
+            where: { projectId },
+            data: { completedAt: new Date() },
+            select: projectSelect,
+        });
     });
     res.json(toProject(row));
 }

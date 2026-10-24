@@ -398,9 +398,8 @@ export interface UpdateJobRequest {
     categoryIds?: number[] | undefined;
 }
 
-// US2-8. A proposal sent to a listing (ADR 0021). Today every listing it is
-// sent to is a job; the names say sender and listing so a hire request on a
-// service can use the same row.
+// US2-8, US2-15. A proposal sent to a listing (ADR 0016, ADR 0021): a
+// Provider's proposal on a job, or a Receiver's hire request on a service.
 export interface Proposal {
     proposalId: number;
     listingId: number;
@@ -439,14 +438,15 @@ export interface CompanyBrief {
     companyPhoto: string | null;
 }
 
-// US2-10. One row of GET /jobs/:jobId/proposals, as the listing's owner sees
-// it: the proposal, with a short profile of the company that sent it, so the
-// owner can choose.
+// US2-10, US2-16. One row of GET /jobs/:jobId/proposals or
+// GET /services/:serviceId/proposals, as the listing's owner sees it: the
+// proposal, with a short profile of the company that sent it, so the owner
+// can choose.
 export interface ReceivedProposal extends Proposal {
     sender: CompanyBrief;
 }
 
-// What POST /jobs/:jobId/proposals accepts.
+// What POST /jobs/:jobId/proposals and POST /services/:serviceId/proposals accept.
 export interface CreateProposalRequest {
     proposalBudget: number;
     proposalTerms: string;
