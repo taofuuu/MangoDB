@@ -40,6 +40,22 @@ import {
     setProposalStatus,
 } from '../lib/proposal';
 
+const PROPOSE_MESSAGES: Record<
+    ListingType,
+    { own: string; notOpen: string; repeat: string }
+> = {
+    JOB: {
+        own: 'You cannot send a proposal to your own job',
+        notOpen: 'This job is not open for proposals',
+        repeat: 'You already have a pending proposal on this job',
+    },
+    SERVICE: {
+        own: 'You cannot send a hire request to your own service',
+        notOpen: 'This service is not open for hire requests',
+        repeat: 'You already have a pending hire request on this service',
+    },
+};
+
 async function sendProposalToListing(
     listingId: number,
     listingType: ListingType,
@@ -62,12 +78,14 @@ async function sendProposalToListing(
         throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
 
+    const msg = PROPOSE_MESSAGES[listingType];
+
     if (listing.companyId === callerCompanyId) {
-        throw ApiError.forbidden('You cannot send a proposal to your own job');
+        throw ApiError.forbidden(msg.own);
     }
 
     if (listing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
-        throw ApiError.conflict('This job is not open for proposals');
+        throw ApiError.conflict(msg.notOpen);
     }
 
     try {
@@ -88,9 +106,7 @@ async function sendProposalToListing(
         // Only a second PENDING one hits the index; a decided one may repeat
         // (ADR 0016).
         if (isUniqueViolation(err)) {
-            throw ApiError.conflict(
-                'You already have a pending proposal on this job',
-            );
+            throw ApiError.conflict(msg.repeat);
         }
         throw err;
     }
