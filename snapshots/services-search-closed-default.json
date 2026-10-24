@@ -4,6 +4,7 @@
     "body": {
         "items": [
             {
+                "averageRating": null,
                 "categories": [
                     "UI/UX Design"
                 ],
@@ -16,12 +17,14 @@
                 "listingTitle": "[demo] UX review of your product",
                 "maxBudget": 60000,
                 "minBudget": 25000,
+                "ratingCount": 0,
                 "serviceId": 593,
                 "techStack": [
                     "Figma"
                 ]
             },
             {
+                "averageRating": null,
                 "categories": [
                     "Mobile App Development"
                 ],
@@ -34,6 +37,7 @@
                 "listingTitle": "[demo] Mobile app for iOS and Android",
                 "maxBudget": 400000,
                 "minBudget": 150000,
+                "ratingCount": 0,
                 "serviceId": 592,
                 "techStack": [
                     "Firebase",
@@ -41,6 +45,7 @@
                 ]
             },
             {
+                "averageRating": null,
                 "categories": [
                     "Web Development"
                 ],
@@ -53,6 +58,7 @@
                 "listingTitle": "[demo] Company website in Next.js",
                 "maxBudget": 120000,
                 "minBudget": 40000,
+                "ratingCount": 0,
                 "serviceId": 591,
                 "techStack": [
                     "Next.js",
