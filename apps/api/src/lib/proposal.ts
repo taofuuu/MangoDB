@@ -143,7 +143,13 @@ export async function findPendingProposalFor(
             listingId: true,
             proposalStatus: true,
             proposalBudget: true,
-            listing: { select: { listingStatus: true, companyId: true } },
+            listing: {
+                select: {
+                    listingType: true,
+                    listingStatus: true,
+                    companyId: true,
+                },
+            },
         },
     });
     if (!proposal) throw ApiError.notFound('Proposal not found');

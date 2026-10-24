@@ -154,6 +154,7 @@ const fakePrisma = {
                 listing: l
                     ? {
                           listingId: l.listingId,
+                          listingType: l.listingType,
                           listingStatus: l.listingStatus,
                           companyId: l.companyId,
                       }

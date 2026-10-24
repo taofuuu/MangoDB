@@ -184,10 +184,10 @@ export async function listServiceProposals(
     );
 }
 
-// US2-11. Accepting a proposal on a job closes the job, rejects the other
-// proposals and opens a project, all or nothing. Each step is a lib helper,
-// so an accept that must leave its listing open (a hire request on a service)
-// leaves out closeOpenListing.
+// US2-11, US2-17. Accepting a proposal on a job closes the job, rejects the
+// other proposals and opens a project, all or nothing. On a service (ADR 0016),
+// the service stays open and other pending hire requests are left pending so
+// the Provider can serve multiple Receivers.
 export async function acceptProposal(
     req: Request,
     res: Response,
@@ -203,13 +203,20 @@ export async function acceptProposal(
             throw ApiError.conflict('Listing has already been closed');
         }
 
-        await closeOpenListing(
-            tx,
-            proposal.listingId,
-            'Listing has already been closed',
-        );
+        const isJob =
+            proposal.listing.listingType === ('JOB' satisfies ListingType);
+
+        if (isJob) {
+            await closeOpenListing(
+                tx,
+                proposal.listingId,
+                'Listing has already been closed',
+            );
+        }
         await setProposalStatus(tx, proposalId, 'ACCEPTED');
-        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        if (isJob) {
+            await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        }
         return createProjectFromProposal(tx, {
             proposalId,
             proposalBudget: proposal.proposalBudget,
