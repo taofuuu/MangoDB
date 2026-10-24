@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import {
+    acceptWork,
     confirmDeposit,
     createProjectUpdate,
     createReview,
@@ -47,6 +48,10 @@ projectRoutes.post('/:projectId/submit-work', requireAuth, submitWork);
 // US4-12. The Receiver rejects the work with a reason; the project goes back
 // to IN_PROGRESS. Same guards, but only the Receiver may act.
 projectRoutes.post('/:projectId/reject-work', requireAuth, rejectWork);
+
+// US4-13. The Receiver accepts the work; the project is COMPLETED and can be
+// reviewed. Same guards, but only the Receiver may act.
+projectRoutes.post('/:projectId/accept-work', requireAuth, acceptWork);
 
 // US5-1. The Receiver reviews a completed project once. Four 1-5 scores and an
 // optional comment (ADR 0018). Second review is 409.
