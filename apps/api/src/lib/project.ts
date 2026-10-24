@@ -161,6 +161,32 @@ export function projectParties(proposal: PartiesRow): {
         : { providerId: proposal.senderId, receiverId: ownerId };
 }
 
+// A Provider's COMPLETED projects: the sender on a job, the owner on a
+// service. The rule projectParties applies, written as a filter.
+export function providerCompletedProjectsWhere(
+    companyId: number,
+): Prisma.ProjectWhereInput {
+    return {
+        projectStatus: 'COMPLETED' satisfies ProjectStatus,
+        OR: [
+            {
+                proposal: {
+                    senderId: companyId,
+                    listing: { listingType: 'JOB' satisfies ListingType },
+                },
+            },
+            {
+                proposal: {
+                    listing: {
+                        companyId,
+                        listingType: 'SERVICE' satisfies ListingType,
+                    },
+                },
+            },
+        ],
+    };
+}
+
 export type ProjectParty = {
     projectStatus: ProjectStatus;
     providerId: number;

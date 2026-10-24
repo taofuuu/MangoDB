@@ -133,3 +133,8 @@ export const companyListQuerySchema = z.object({
     orderBy: z.enum(COMPANY_SORT_ORDERS).default('nameAsc'),
     ...pageQueryFields,
 });
+
+// US5-3. GET /companies/:companyId/reviews: standard paging for review lists.
+export const companyReviewListQuerySchema = z.object({
+    ...pageQueryFields,
+});

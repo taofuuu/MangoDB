@@ -1577,6 +1577,55 @@ snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review"
     -H 'Content-Type: application/json' \
     -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
 
+# ---------------------------------------------------------------------------
+# 18. Project review read and company reviews (US5-3, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project review read and company reviews"
+snap error-projects-review-get-unauthorized GET "/projects/$ACCEPT_PROJECT_ID/review"
+
+# 404 until the Receiver submits a review.
+snap error-projects-review-get-not-reviewed GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Complete the project via direct DB update to test review creation and read.
+run_db "prisma.project.update({ where: { projectId: $ACCEPT_PROJECT_ID }, data: { projectStatus: 'COMPLETED', completedAt: new Date() } })"
+
+api POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}' >/dev/null
+NEW_REVIEW_ID="$(jget reviewId)"
+if [ -n "$NEW_REVIEW_ID" ]; then
+    SUBS+=(--id "review_id=$NEW_REVIEW_ID")
+fi
+
+# The Receiver and Provider can both read the review (200).
+snap projects-review-get GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap projects-review-get-provider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-projects-review-get-outsider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+
+# Provider's reviews list and summary
+snap error-companies-reviews-unauthorized GET "/companies/$PROVIDER_ID/reviews"
+
+snap error-companies-reviews-not-found GET "/companies/2147483647/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-companies-reviews-summary-not-found GET "/companies/2147483647/reviews/summary" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-list GET "/companies/$PROVIDER_ID/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-summary GET "/companies/$PROVIDER_ID/reviews/summary" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"
 echo "now run: git diff snapshots/"
