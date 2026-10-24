@@ -6,6 +6,7 @@ const BUCKETS = {
     CERTIFICATE: 'certificate',
     PORTFOLIO: 'portfolio',
     PROFILE: 'profile',
+    QUOTATION: 'quotation',
 } as const;
 
 export type Bucket = (typeof BUCKETS)[keyof typeof BUCKETS];
@@ -22,7 +23,7 @@ function getSupabase(): SupabaseClient {
     return client;
 }
 
-type UploadedImage = {
+type UploadedFile = {
     path: string;
     url: string;
 };
@@ -36,12 +37,19 @@ export const IMAGE_EXTENSIONS: Record<string, string> = {
     'image/webp': 'webp',
 };
 
+export const PDF_MIME_TYPE = 'application/pdf';
+
+const FILE_EXTENSIONS: Record<string, string> = {
+    ...IMAGE_EXTENSIONS,
+    [PDF_MIME_TYPE]: 'pdf',
+};
+
 export async function uploadToStorage(
     file: Express.Multer.File,
     bucket: Bucket,
     folder: string,
-): Promise<UploadedImage> {
-    const extension = IMAGE_EXTENSIONS[file.mimetype] ?? 'bin';
+): Promise<UploadedFile> {
+    const extension = FILE_EXTENSIONS[file.mimetype] ?? 'bin';
     const random = Math.random().toString(36).substring(2);
 
     const path = `${folder}/${Date.now()}-${random}.${extension}`;
