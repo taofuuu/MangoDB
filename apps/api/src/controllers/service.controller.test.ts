@@ -1,6 +1,6 @@
 /*
- * Tests for the ?companyId= filter on GET /services (listServices in
- * service.controller.ts).
+ * Tests for the ?companyId= filter and ?orderBy=ratingDesc|ratingAsc sort on
+ * GET /services (listServices in service.controller.ts).
  *
  * What they cover:
  * - ?companyId= narrows the search to one company's services.
@@ -12,6 +12,9 @@
  *   filter, same as a blank ?maxPrice=.
  * - Anything else that is not plain digits for a positive int4 is a 400. That
  *   includes "0x10" and "1e3", which Number() alone would read as 16 and 1000.
+ * - ?orderBy=ratingDesc|ratingAsc sorts by the Provider's averageRating via
+ *   getRating, with unrated Providers last in both directions, and paginates
+ *   after sorting.
  *
  * How:
  * - The test calls the controller directly with a fake req and a fake res that
@@ -108,8 +111,6 @@ const companies: Record<number, Company> = {
     [ALPHA]: company(ALPHA),
     [BETA]: company(BETA),
     [GONE]: company(GONE, new Date('2026-01-01')),
-    [GAMMA]: company(GAMMA),
-    [DELTA]: company(DELTA),
 };
 
 let rows: Row[] = [];
@@ -298,7 +299,7 @@ describe('GET /services?companyId=', () => {
 });
 
 describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
-    it('orders services highest rating first for ratingDesc, with unrated Providers last', async () => {
+    it('orders services by rating both ways, with unrated Providers last either way', async () => {
         const unrated = company(ALPHA);
         const ratedLow = company(BETA, null, {
             proposal: [reviewRow(2)],
@@ -320,34 +321,14 @@ describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
             service(40, DELTA, 'OPEN', ratedMid),
         ];
 
-        const result = await search({ orderBy: 'ratingDesc' });
-        assert.deepEqual(orderedIds(result), [30, 40, 20, 10]);
-    });
-
-    it('orders services lowest rating first for ratingAsc, with unrated Providers last', async () => {
-        const unrated = company(ALPHA);
-        const ratedLow = company(BETA, null, {
-            proposal: [reviewRow(2)],
-            listing: [],
-        });
-        const ratedHigh = company(GAMMA, null, {
-            proposal: [reviewRow(5)],
-            listing: [],
-        });
-        const ratedMid = company(DELTA, null, {
-            proposal: [],
-            listing: [{ proposal: [reviewRow([4, 3, 4, 3])] }], // average 3.5
-        });
-
-        rows = [
-            service(10, ALPHA, 'OPEN', unrated),
-            service(30, GAMMA, 'OPEN', ratedHigh),
-            service(40, DELTA, 'OPEN', ratedMid),
-            service(20, BETA, 'OPEN', ratedLow),
-        ];
-
-        const result = await search({ orderBy: 'ratingAsc' });
-        assert.deepEqual(orderedIds(result), [20, 40, 30, 10]);
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingDesc' })),
+            [30, 40, 20, 10],
+        );
+        assert.deepEqual(
+            orderedIds(await search({ orderBy: 'ratingAsc' })),
+            [20, 40, 30, 10],
+        );
     });
 
     it('combines job proposal reviews and service hire request reviews via getRating', async () => {
@@ -377,7 +358,7 @@ describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
         );
     });
 
-    it('preserves tie-breaking order when ratings tie and when multiple Providers are unrated', async () => {
+    it("keeps the database's order when ratings tie, and among unrated Providers", async () => {
         const tiedA = company(ALPHA, null, {
             proposal: [reviewRow(4)],
             listing: [],
