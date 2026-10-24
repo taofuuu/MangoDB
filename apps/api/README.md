@@ -6,8 +6,9 @@ Express 5 + TypeScript. Prisma 7 against Postgres (Supabase), through the
 This page is how to run and check the API. **The rules for writing it are in
 one place, [docs/conventions.md](../../docs/conventions.md)**, and the order to
 apply them in is [docs/adding-a-resource.md](../../docs/adding-a-resource.md).
-There is no endpoint catalogue: `src/routes/` is the list, with the _why_ in a
-comment beside each route.
+`src/routes/` is the list of endpoints, with the _why_ in a comment beside
+each route. A UML sequence diagram for every endpoint is in
+[docs/api/](../../docs/api/README.md).
 
 ## Run it
 
