@@ -84,6 +84,10 @@ class "Service" as ServiceR <<Resource>> {
   + PATCH
   + DELETE
 }
+class "ServiceProposals" as ServiceProposals <<Resource>> {
+  + GET
+  + POST
+}
 class "Portfolios" as Portfolios <<Resource>> {
   + GET
   + POST
@@ -195,6 +199,7 @@ API --> Services : <<Path>> /services
 Services --> FilterOptions : <<Path>> /filter-options
 Services --> MyServices : <<Path>> /mine
 Services --> ServiceR : <<Path>> /{serviceId}
+ServiceR --> ServiceProposals : <<Path>> /proposals
 API --> Portfolios : <<Path>> /portfolios
 Portfolios --> PortfolioR : <<Path>> /{portfolioId}
 API --> Certificates : <<Path>> /certificates

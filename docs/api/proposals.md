@@ -68,8 +68,10 @@ sequenceDiagram
 
 ## POST /proposals/:proposalId/accept
 
-US2-11. All or nothing: close the listing, accept this proposal, reject the
-others, and open a project.
+US2-11, US2-17. All or nothing: accept this proposal and open a project. On a
+job it also closes the job and rejects the other pending proposals. On a
+service (a hire request, ADR 0016) the service stays open and the other
+requests stay pending.
 
 ```mermaid
 sequenceDiagram
@@ -99,15 +101,19 @@ sequenceDiagram
         alt listing not OPEN
             Ctl-->>C: 409 Listing has already been closed
         end
-        Ctl->>L: closeOpenListing(tx, listingId)
-        L->>DB: listing.updateMany OPEN to CLOSED
+        opt listing is a JOB
+            Ctl->>L: closeOpenListing(tx, listingId)
+            L->>DB: listing.updateMany OPEN to CLOSED
+        end
         Ctl->>P: setProposalStatus(tx, proposalId, ACCEPTED)
         P->>DB: proposal.updateMany PENDING to ACCEPTED
         alt count is 0 (race)
             P-->>C: 409 Proposal has already been accepted or rejected
         end
-        Ctl->>L: rejectPendingProposals(tx, listingId, except this one)
-        L->>DB: proposal.updateMany PENDING to REJECTED
+        opt listing is a JOB
+            Ctl->>L: rejectPendingProposals(tx, listingId, except this one)
+            L->>DB: proposal.updateMany PENDING to REJECTED
+        end
         Ctl->>Pr: createProjectFromProposal(tx, proposalId, budget)
         Pr->>DB: project.create (AWAITING_QUOTATION, start today UTC)
     end

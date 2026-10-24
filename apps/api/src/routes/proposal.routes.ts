@@ -85,7 +85,7 @@ proposalRoutes.get(
  *   post:
  *     tags: [Proposals]
  *     summary: Accept a proposal on my listing
- *     description: US2-11. Closes the listing, rejects the other pending proposals, and opens a project. All or nothing.
+ *     description: US2-11, US2-17. Opens a project. On a job it also closes the job and rejects the other pending proposals. On a service the service stays open and other requests stay pending. All or nothing.
  *     parameters:
  *       - $ref: '#/components/parameters/proposalId'
  *     responses:

@@ -31,6 +31,10 @@ class "Service" as ServiceR <<Resource>> {
   + PATCH
   + DELETE
 }
+class "ServiceProposals" as ServiceProposals <<Resource>> {
+  + GET
+  + POST
+}
 class "ServiceSummary" as ServiceSummaryRep <<Representation>> {
   -serviceId : integer
   -listingTitle : string
@@ -68,6 +72,25 @@ class "ServiceFilterOptions" as ServiceFilterOptionsRep <<Representation>> {
 class "UpdateServiceRequest" as UpdateServiceRequestRep <<Representation>> {
   -any CreateServiceRequest field, all optional
 }
+class "ReceivedProposal" as ReceivedProposalRep <<Representation>> {
+  -Proposal fields
+  -sender : CompanyBrief
+}
+class "CreateProposalRequest" as CreateProposalRequestRep <<Representation>> {
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+}
+class "Proposal" as ProposalRep <<Representation>> {
+  -proposalId : integer
+  -listingId : integer
+  -senderId : integer
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+  -proposalStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
 
 API --> Services : <<Path>> /services
 Services ..> ServiceSummaryRep : <<use>>
@@ -80,4 +103,8 @@ MyServices ..> ServiceRep : <<use>>
 Services --> ServiceR : <<Path>> /{serviceId}
 ServiceR ..> ServiceRep : <<use>>
 ServiceR ..> UpdateServiceRequestRep : <<use>>
+ServiceR --> ServiceProposals : <<Path>> /proposals
+ServiceProposals ..> ReceivedProposalRep : <<use>>
+ServiceProposals ..> CreateProposalRequestRep : <<use>>
+ServiceProposals ..> ProposalRep : <<use>>
 @enduml

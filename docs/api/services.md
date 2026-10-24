@@ -1,21 +1,25 @@
 # Service endpoints (`/services`)
 
 Source: `apps/api/src/routes/service.routes.ts`,
-`apps/api/src/controllers/service.controller.ts`.
+`apps/api/src/controllers/service.controller.ts`
+(the two `/proposals` routes live in `proposal.controller.ts`).
 Back to the [index](README.md).
 
 A service is a `listing` row with `listingType = SERVICE` plus a `service` row.
-Every route needs `requireAuth`.
+Every route needs `requireAuth`. A hire request is a proposal sent to a
+service (ADR 0016), so it uses the same row and shapes as a proposal on a job.
 
-| Method | Path                       | Guards             | Success                         |
-| ------ | -------------------------- | ------------------ | ------------------------------- |
-| GET    | `/services`                | provider, receiver | 200 `{ items, pagination }`     |
-| GET    | `/services/filter-options` | provider, receiver | 200 `{ categories, techStack }` |
-| POST   | `/services`                | provider           | 201 Service                     |
-| GET    | `/services/mine`           | provider           | 200 Service[]                   |
-| GET    | `/services/:serviceId`     | provider, receiver | 200 Service                     |
-| PATCH  | `/services/:serviceId`     | auth, owner        | 200 Service                     |
-| DELETE | `/services/:serviceId`     | auth, owner        | 204                             |
+| Method | Path                             | Guards             | Success                         |
+| ------ | -------------------------------- | ------------------ | ------------------------------- |
+| GET    | `/services`                      | provider, receiver | 200 `{ items, pagination }`     |
+| GET    | `/services/filter-options`       | provider, receiver | 200 `{ categories, techStack }` |
+| POST   | `/services`                      | provider           | 201 Service                     |
+| GET    | `/services/mine`                 | provider           | 200 Service[]                   |
+| GET    | `/services/:serviceId`           | provider, receiver | 200 Service                     |
+| PATCH  | `/services/:serviceId`           | auth, owner        | 200 Service                     |
+| DELETE | `/services/:serviceId`           | auth, owner        | 204                             |
+| GET    | `/services/:serviceId/proposals` | provider, owner    | 200 ReceivedProposal[]          |
+| POST   | `/services/:serviceId/proposals` | receiver           | 201 Proposal                    |
 
 ## UML API Diagram
 
@@ -235,4 +239,76 @@ sequenceDiagram
     end
     Ctl->>St: removeFromStorageByUrl per image (best effort, in parallel)
     Ctl-->>C: 204
+```
+
+## GET /services/:serviceId/proposals
+
+US2-16. Every hire request on one service, newest first, each with its
+sender. Only the service owner may read them.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant G as requireAuth + requireRole(provider)
+    participant Ctl as proposal.controller<br/>listServiceProposals
+    participant L as lib/listing
+    participant DB as PostgreSQL
+
+    C->>G: GET /services/:serviceId/proposals
+    alt not signed in
+        G-->>C: 401
+    else not a provider
+        G-->>C: 403
+    end
+    G->>Ctl: next
+    Ctl->>Ctl: parseParams(serviceIdParamSchema)
+    Ctl->>L: assertListingOwned(serviceId, SERVICE, caller)
+    alt unknown service
+        L-->>C: 404 Service not found
+    else another provider owns it
+        L-->>C: 403 This service belongs to another company
+    end
+    Ctl->>DB: proposal.findMany (listingId) with sender profile
+    Ctl-->>C: 200 ReceivedProposal[]
+```
+
+## POST /services/:serviceId/proposals
+
+US2-15. A Receiver sends a hire request to an open service. It is stored as a
+PENDING proposal. Same steps as `POST /jobs/:jobId/proposals`
+(`sendProposalToListing`), with the service wording.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant G as requireAuth + requireRole(receiver)
+    participant Ctl as proposal.controller<br/>createServiceProposal
+    participant DB as PostgreSQL
+
+    C->>G: POST /services/:serviceId/proposals { proposalBudget, proposalTerms, duration }
+    alt not signed in
+        G-->>C: 401
+    else not a receiver
+        G-->>C: 403
+    end
+    G->>Ctl: next
+    Ctl->>Ctl: parseParams, parseBody(createProposalSchema)
+    alt invalid body
+        Ctl-->>C: 400 VALIDATION_FAILED
+    end
+    Ctl->>DB: listing.findUnique (id, company not deleted)
+    alt no row or not a SERVICE
+        Ctl-->>C: 404 Service not found
+    else caller owns the service
+        Ctl-->>C: 403 You cannot send a hire request to your own service
+    else service not OPEN
+        Ctl-->>C: 409 This service is not open for hire requests
+    end
+    Ctl->>DB: proposal.create (PENDING)
+    alt already a PENDING request from this sender (P2002)
+        Ctl-->>C: 409 You already have a pending hire request on this service
+    end
+    Ctl-->>C: 201 Proposal
 ```

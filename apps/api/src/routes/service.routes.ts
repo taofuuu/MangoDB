@@ -252,6 +252,33 @@ serviceRoutes.delete('/:serviceId', requireAuth, deleteService);
 // Guards: authenticated and holding Provider role (BOTH accounts also qualify),
 // so a Receiver is turned away before any lookup. Owning the service is checked
 // in the controller; another Provider gets 403.
+/**
+ * @openapi
+ * /services/{serviceId}/proposals:
+ *   get:
+ *     tags: [Services]
+ *     summary: List the hire requests on my service (provider)
+ *     description: US2-16. Owner only. Newest first.
+ *     parameters:
+ *       - $ref: '#/components/parameters/serviceId'
+ *     responses:
+ *       '200':
+ *         description: Every hire request, with its sender
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ReceivedProposal'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '401':
+ *         $ref: '#/components/responses/Unauthorized'
+ *       '403':
+ *         $ref: '#/components/responses/Forbidden'
+ *       '404':
+ *         $ref: '#/components/responses/NotFound'
+ */
 serviceRoutes.get(
     '/:serviceId/proposals',
     requireAuth,
@@ -261,6 +288,39 @@ serviceRoutes.get(
 
 // US2-15. Send a hire request to an open service.
 // Guards: authenticated and holding Receiver role (BOTH accounts also qualify).
+/**
+ * @openapi
+ * /services/{serviceId}/proposals:
+ *   post:
+ *     tags: [Services]
+ *     summary: Send a hire request to a service (receiver)
+ *     description: US2-15. 403 on your own service. 409 when the service is closed or you already have a pending request on it.
+ *     parameters:
+ *       - $ref: '#/components/parameters/serviceId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProposalRequest'
+ *     responses:
+ *       '201':
+ *         description: Sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Proposal'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '401':
+ *         $ref: '#/components/responses/Unauthorized'
+ *       '403':
+ *         $ref: '#/components/responses/Forbidden'
+ *       '404':
+ *         $ref: '#/components/responses/NotFound'
+ *       '409':
+ *         $ref: '#/components/responses/Conflict'
+ */
 serviceRoutes.post(
     '/:serviceId/proposals',
     requireAuth,

@@ -27,7 +27,7 @@ together:
 | Auth         | `/auth`         | 5         | [auth.md](auth.md)                 | [auth.puml](uml/auth.puml)                 |
 | Admin        | `/admin`        | 4         | [admin.md](admin.md)               | [admin.puml](uml/admin.puml)               |
 | Companies    | `/companies`    | 11        | [companies.md](companies.md)       | [companies.puml](uml/companies.puml)       |
-| Services     | `/services`     | 7         | [services.md](services.md)         | [services.puml](uml/services.puml)         |
+| Services     | `/services`     | 9         | [services.md](services.md)         | [services.puml](uml/services.puml)         |
 | Portfolios   | `/portfolios`   | 5         | [portfolios.md](portfolios.md)     | [portfolios.puml](uml/portfolios.puml)     |
 | Certificates | `/certificates` | 5         | [certificates.md](certificates.md) | [certificates.puml](uml/certificates.puml) |
 | Jobs         | `/jobs`         | 8         | [jobs.md](jobs.md)                 | [jobs.puml](uml/jobs.puml)                 |
