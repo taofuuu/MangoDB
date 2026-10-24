@@ -75,6 +75,8 @@ account is **`register`** — never `signup`.
 ```
 GET  /jobs/:jobId/proposals              the proposals on one job
 POST /jobs/:jobId/proposals              send one to that job
+GET  /services/:serviceId/proposals      the hire requests on one service
+POST /services/:serviceId/proposals      send one to that service
 POST /proposals/:proposalId/accept       one proposal, by its own id
 ```
 
