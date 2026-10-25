@@ -3,7 +3,7 @@ import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
-import { assertProjectParty } from '../lib/project';
+import { assertProjectParty, moveProjectStatus } from '../lib/project';
 import {
     assertQuotationParty,
     quotationSelect,
@@ -95,6 +95,49 @@ export async function listQuotations(
         select: quotationSelect,
     });
     res.json(rows.map(toQuotation));
+}
+
+// US4-4 (T4.4.1). The Receiver accepts a pending quotation (ADR 0017).
+// Transitions the quotation to ACCEPTED and the project from AWAITING_QUOTATION
+// to AWAITING_DEPOSIT in one transaction (ADR 0015).
+export async function acceptQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can accept a quotation');
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.update({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                data: {
+                    quotationStatus: 'ACCEPTED' satisfies QuotationStatus,
+                },
+                select: quotationSelect,
+            }),
+            'Quotation is not PENDING',
+        );
+        await moveProjectStatus(
+            tx,
+            quotation.projectId,
+            'AWAITING_QUOTATION',
+            'AWAITING_DEPOSIT',
+        );
+        return row;
+    });
+
+    res.json(toQuotation(updated));
 }
 
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
