@@ -7,7 +7,7 @@ import { assertProjectParty } from '../lib/project';
 import { quotationSelect, toQuotation } from '../lib/quotation';
 import { BUCKETS } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
-import { requirePdf } from '../middleware/upload';
+import { requireFile } from '../middleware/upload';
 import { parseParams } from '../middleware/validate';
 import { projectIdParamSchema } from '../schemas/project.schema';
 
@@ -19,7 +19,7 @@ export async function createQuotation(
     res: Response,
 ): Promise<void> {
     const { projectId } = parseParams(projectIdParamSchema, req.params);
-    const file = requirePdf(req.file, 'file');
+    const file = requireFile(req.file, 'file', 'Choose a PDF first');
     const project = await assertProjectParty(projectId, req.auth!.companyId);
 
     // A party already knows the project exists, so the Receiver gets 403, not 404.
