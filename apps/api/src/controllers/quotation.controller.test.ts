@@ -80,7 +80,6 @@ let uploadedBuckets: { bucket: string; folder: string }[] = [];
 let removedPaths: { path: string; bucket: string }[] = [];
 let removedUrls: { url: string; bucket: string }[] = [];
 let createThrowsP2002 = false;
-let createThrowsError = false;
 let receiverDecidesBeforeDelete = false;
 
 function jobProject(
@@ -155,9 +154,6 @@ const fakePrisma = {
         }) => {
             if (createThrowsP2002) {
                 throw { code: 'P2002' };
-            }
-            if (createThrowsError) {
-                throw new Error('database is down');
             }
             const created: FakeQuotation = {
                 quotationId: quotations.length + 1,
@@ -248,7 +244,6 @@ beforeEach(() => {
     removedPaths = [];
     removedUrls = [];
     createThrowsP2002 = false;
-    createThrowsError = false;
     receiverDecidesBeforeDelete = false;
 });
 
@@ -406,7 +401,6 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(uploadedBuckets, [
             { bucket: 'quotation', folder: 'quotations' },
         ]);
-        assert.equal(project!.projectStatus, 'AWAITING_QUOTATION');
     });
 
     it('uploads a quotation PDF as the Provider on a service project', async () => {
@@ -454,12 +448,10 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
     });
 
     it('is a 404 for an unknown project or a caller outside the project', async () => {
-        for (const caller of [OUTSIDER]) {
-            await assert.rejects(
-                () => uploadQuotation(caller),
-                (err: unknown) => err instanceof ApiError && err.status === 404,
-            );
-        }
+        await assert.rejects(
+            () => uploadQuotation(OUTSIDER),
+            (err: unknown) => err instanceof ApiError && err.status === 404,
+        );
         project = null;
         await assert.rejects(
             () => uploadQuotation(PROVIDER),

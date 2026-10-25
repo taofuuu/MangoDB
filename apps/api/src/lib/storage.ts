@@ -64,11 +64,11 @@ export async function uploadToStorage(
     if (error) {
         // Our side failed, not the request, so 500 (conventions §4). The
         // cause goes to the log; the caller only needs to know to retry.
-        console.error('Image upload failed:', error.message);
+        console.error('Upload failed:', error.message);
         throw new ApiError(
             500,
             'INTERNAL',
-            'The image could not be stored. Try again.',
+            'The file could not be stored. Try again.',
         );
     }
 

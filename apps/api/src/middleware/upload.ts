@@ -68,29 +68,15 @@ export function uploadPdf(field: string) {
     return singleUpload(pdfUpload, field, 'PDF must be 5MB or smaller');
 }
 
-// A route whose image is required. Called after parseBody, so a bad field is
-// reported the same way, under the name the form gives the file input.
+// A route whose file upload is required. Called after parseBody, so a bad field
+// is reported the same way, under the name the form gives the file input.
 export function requireFile(
     file: Express.Multer.File | undefined,
     field: string,
+    message = 'Choose an image first',
 ): Express.Multer.File {
     if (!file) {
-        throw ApiError.validationFailed([
-            { field, message: 'Choose an image first' },
-        ]);
-    }
-    return file;
-}
-
-// Same check for a required PDF upload (POST /projects/:projectId/quotations).
-export function requirePdf(
-    file: Express.Multer.File | undefined,
-    field: string,
-): Express.Multer.File {
-    if (!file) {
-        throw ApiError.validationFailed([
-            { field, message: 'Choose a PDF first' },
-        ]);
+        throw ApiError.validationFailed([{ field, message }]);
     }
     return file;
 }
