@@ -685,52 +685,23 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
         project = projectIn('AWAITING_QUOTATION');
     });
 
-    it('the Provider cancels a project while AWAITING_QUOTATION on a job', async () => {
-        const result = (await cancelProject(PROVIDER)) as {
-            status: number;
-            body: Project;
-        };
+    it('either party cancels before work starts, on a job or a service', async () => {
+        for (const [start, callerId] of [
+            [projectIn('AWAITING_QUOTATION'), PROVIDER],
+            [projectIn('AWAITING_QUOTATION'), RECEIVER],
+            [projectOnService('AWAITING_DEPOSIT'), PROVIDER],
+            [projectOnService('AWAITING_DEPOSIT'), RECEIVER],
+        ] as const) {
+            project = start;
+            const result = (await cancelProject(callerId)) as {
+                status: number;
+                body: Project;
+            };
 
-        assert.equal(result.status, 200);
-        assert.equal(result.body.projectStatus, 'CANCELLED');
-        assert.equal(project!.projectStatus, 'CANCELLED');
-    });
-
-    it('the Receiver cancels a project while AWAITING_QUOTATION on a job', async () => {
-        const result = (await cancelProject(RECEIVER)) as {
-            status: number;
-            body: Project;
-        };
-
-        assert.equal(result.status, 200);
-        assert.equal(result.body.projectStatus, 'CANCELLED');
-        assert.equal(project!.projectStatus, 'CANCELLED');
-    });
-
-    it('the Provider cancels a project while AWAITING_DEPOSIT on a service', async () => {
-        project = projectOnService('AWAITING_DEPOSIT');
-
-        const result = (await cancelProject(PROVIDER)) as {
-            status: number;
-            body: Project;
-        };
-
-        assert.equal(result.status, 200);
-        assert.equal(result.body.projectStatus, 'CANCELLED');
-        assert.equal(project!.projectStatus, 'CANCELLED');
-    });
-
-    it('the Receiver cancels a project while AWAITING_DEPOSIT on a service', async () => {
-        project = projectOnService('AWAITING_DEPOSIT');
-
-        const result = (await cancelProject(RECEIVER)) as {
-            status: number;
-            body: Project;
-        };
-
-        assert.equal(result.status, 200);
-        assert.equal(result.body.projectStatus, 'CANCELLED');
-        assert.equal(project!.projectStatus, 'CANCELLED');
+            assert.equal(result.status, 200);
+            assert.equal(result.body.projectStatus, 'CANCELLED');
+            assert.equal(project.projectStatus, 'CANCELLED');
+        }
     });
 
     it('is a 404 for an outsider and changes nothing', async () => {
