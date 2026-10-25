@@ -4,6 +4,8 @@ import { useState } from 'react';
 import type { CreateReviewRequest, Review } from '@mangodb/shared';
 import Button from '@/components/ui/Button';
 import FieldError from '@/components/ui/FieldError';
+import { createReview } from '@/lib/reviews';
+import { toFormErrors } from '@/lib/validation/formErrors';
 import {
     type ReviewFormErrors,
     type ReviewScoreField,
@@ -20,12 +22,16 @@ export type ReviewContent = Pick<
     | 'comment'
 >;
 
-type ReviewSectionProps = {
+type SharedReviewSectionProps = {
     initialReview?: ReviewContent | null | undefined;
-    onSubmit?:
-        ((review: CreateReviewRequest) => Promise<void> | void) | undefined;
     onCancel?: (() => void) | undefined;
 };
+
+type ReviewSectionProps = SharedReviewSectionProps &
+    (
+        | { projectId: number; preview?: false | undefined }
+        | { projectId?: never; preview: true }
+    );
 
 const CRITERIA: Array<{ field: ReviewScoreField; label: string }> = [
     { field: 'workQualityScore', label: 'Work quality' },
@@ -41,10 +47,18 @@ const EMPTY_SCORES: Record<ReviewScoreField, number> = {
     deliveryTimeScore: 0,
 };
 
+const REVIEW_FIELDS: Record<string, keyof ReviewFormErrors> = {
+    workQualityScore: 'workQualityScore',
+    serviceScore: 'serviceScore',
+    valueForMoneyScore: 'valueForMoneyScore',
+    deliveryTimeScore: 'deliveryTimeScore',
+    comment: 'comment',
+};
+
 export default function ReviewSection({
     initialReview = null,
-    onSubmit,
     onCancel,
+    ...submission
 }: ReviewSectionProps) {
     const [scores, setScores] = useState(EMPTY_SCORES);
     const [comment, setComment] = useState('');
@@ -90,15 +104,14 @@ export default function ReviewSection({
 
         setIsSubmitting(true);
         try {
-            await onSubmit?.(draft);
-            setSubmittedReview({
-                ...scores,
-                comment: draft.comment ?? null,
-            });
-        } catch {
-            setFormError(
-                'The review could not be submitted. Please try again.',
-            );
+            const saved = submission.preview
+                ? { ...scores, comment: draft.comment ?? null }
+                : await createReview(submission.projectId, draft);
+            setSubmittedReview(saved);
+        } catch (cause) {
+            const next = toFormErrors(cause, REVIEW_FIELDS);
+            setErrors(next.fields);
+            setFormError(next.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -108,7 +121,7 @@ export default function ReviewSection({
         return (
             <section
                 aria-labelledby="submitted-review-heading"
-                className="rounded-popup border border-line bg-surface-white p-5 shadow-card sm:p-7"
+                className="w-full"
             >
                 <h2 id="submitted-review-heading" className="type-lg text-ink">
                     Submitted review
@@ -139,19 +152,13 @@ export default function ReviewSection({
     }
 
     return (
-        <section
-            aria-labelledby="review-heading"
-            className="rounded-popup border border-line bg-surface-white p-5 shadow-card sm:p-7"
-        >
-            <h2 id="review-heading" className="type-lg text-ink">
-                Review project
+        <section aria-labelledby="review-heading" className="w-full">
+            <h2 id="review-heading" className="type-sm text-ink">
+                Rating Scores
             </h2>
-            <p className="mt-1 type-sm text-ink-soft">
-                Rate every criterion from 1 to 5 stars before submitting.
-            </p>
 
             <form onSubmit={handleSubmit} noValidate>
-                <div className="mt-6 grid gap-x-12 gap-y-5 sm:grid-cols-2">
+                <div className="mt-5 grid gap-x-16 gap-y-4 sm:grid-cols-2">
                     {CRITERIA.map(({ field, label }) => (
                         <div key={field}>
                             <StarRating
@@ -203,7 +210,7 @@ export default function ReviewSection({
                             clearError('comment');
                         }}
                         rows={5}
-                        placeholder="Share details about your experience"
+                        placeholder="Up to 500 characters"
                         aria-invalid={errors.comment ? true : undefined}
                         aria-describedby={
                             errors.comment ? 'review-comment-error' : undefined
