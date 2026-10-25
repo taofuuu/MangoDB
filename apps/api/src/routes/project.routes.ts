@@ -14,7 +14,10 @@ import {
     reportDeposit,
     submitWork,
 } from '../controllers/project.controller';
-import { createQuotation } from '../controllers/quotation.controller';
+import {
+    createQuotation,
+    listQuotations,
+} from '../controllers/quotation.controller';
 
 export const projectRoutes = Router();
 
@@ -32,6 +35,9 @@ projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
 // US4-10. The Provider adds a progress note while IN_PROGRESS. Same guards,
 // but only the Provider may act; the controller checks that per project.
 projectRoutes.post('/:projectId/updates', requireAuth, createProjectUpdate);
+
+// US4-3. The project's quotations, newest first, for both parties.
+projectRoutes.get('/:projectId/quotations', requireAuth, listQuotations);
 
 // US4-1. The Provider uploads a quotation PDF (a `file` field, up to 5 MB)
 // while AWAITING_QUOTATION and no quotation is pending (ADR 0017).

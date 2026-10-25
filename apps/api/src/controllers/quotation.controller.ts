@@ -78,6 +78,25 @@ export async function createQuotation(
     res.status(201).json(toQuotation(row));
 }
 
+// US4-3 (T4.3.1). The project's quotations, newest first, for both parties:
+// each with its file link and decision status (ADR 0017). A bare array, not
+// paged: one project's quotation history stays short.
+export async function listQuotations(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const rows = await prisma.quotation.findMany({
+        where: { projectId },
+        // The id breaks a tie between two quotations saved in the same instant.
+        orderBy: [{ createdAt: 'desc' }, { quotationId: 'desc' }],
+        select: quotationSelect,
+    });
+    res.json(rows.map(toQuotation));
+}
+
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
 // PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
 // where status = PENDING, so if the Receiver decides at the same moment, the
