@@ -142,7 +142,8 @@ export async function acceptQuotation(
 
 // US4-5 (T4.5.1). The Receiver rejects a pending quotation (ADR 0017).
 // Transitions the quotation to REJECTED so the Provider can send a new one;
-// the project stays AWAITING_QUOTATION (ADR 0015).
+// the project stays AWAITING_QUOTATION (ADR 0015). Refuses with 409 if the
+// project has moved on or was cancelled.
 export async function rejectQuotation(
     req: Request,
     res: Response,
@@ -155,6 +156,12 @@ export async function rejectQuotation(
 
     if (quotation.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can reject a quotation');
+    }
+    if (
+        quotation.projectStatus !==
+        ('AWAITING_QUOTATION' satisfies ProjectStatus)
+    ) {
+        throw ApiError.conflict('Project is not AWAITING_QUOTATION');
     }
 
     const updated = await orConflict(

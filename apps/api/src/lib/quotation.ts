@@ -1,4 +1,9 @@
-import type { ProjectRole, Quotation, QuotationStatus } from '@mangodb/shared';
+import type {
+    ProjectRole,
+    ProjectStatus,
+    Quotation,
+    QuotationStatus,
+} from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
@@ -34,6 +39,7 @@ export function toQuotation(row: QuotationRow): Quotation {
 
 export type QuotationParty = {
     projectId: number;
+    projectStatus: ProjectStatus;
     myRole: ProjectRole;
 };
 
@@ -52,6 +58,7 @@ export async function assertQuotationParty(
             projectId: true,
             project: {
                 select: {
+                    projectStatus: true,
                     proposal: {
                         select: {
                             senderId: true,
@@ -75,6 +82,7 @@ export async function assertQuotationParty(
     }
     return {
         projectId: quotation.projectId,
+        projectStatus: quotation.project.projectStatus as ProjectStatus,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
 }

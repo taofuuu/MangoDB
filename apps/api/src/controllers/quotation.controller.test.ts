@@ -122,10 +122,7 @@ function serviceProject(
 }
 
 const fakePrisma = {
-    $transaction: async (
-        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
-    ) => {
-        if (typeof work !== 'function') return Promise.all(work);
+    $transaction: async (work: (tx: unknown) => Promise<unknown>) => {
         const savedProject = structuredClone(project);
         const savedQuotations = structuredClone(quotations);
         try {
@@ -853,31 +850,16 @@ describe('GET /projects/:projectId/quotations (US4-3)', () => {
         assert.equal(list[0]!.quotationId, 1);
     });
 
-    it('breaks ties on identical createdAt using quotationId desc', async () => {
-        const sameTime = new Date('2026-10-25T08:00:00.000Z');
-        quotations.push(
-            {
-                quotationId: 1,
-                projectId: PROJECT_ID,
-                quotationFile: 'https://storage.test/quote1.pdf',
-                quotationStatus: 'REJECTED',
-                createdAt: sameTime,
-            },
-            {
-                quotationId: 2,
-                projectId: PROJECT_ID,
-                quotationFile: 'https://storage.test/quote2.pdf',
-                quotationStatus: 'PENDING',
-                createdAt: sameTime,
-            },
-        );
+    it('asks for newest first, with the id breaking a tie', async () => {
+        const findMany = mock.method(fakePrisma.quotation, 'findMany');
 
-        const { status, body } = await listQuotations(PROVIDER);
+        await listQuotations(PROVIDER);
 
-        assert.equal(status, 200);
-        const list = body as Quotation[];
-        assert.equal(list[0]!.quotationId, 2);
-        assert.equal(list[1]!.quotationId, 1);
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { createdAt: 'desc' },
+            { quotationId: 'desc' },
+        ]);
+        findMany.mock.restore();
     });
 
     it('answers 404 Project not found for an outsider', async () => {
@@ -1137,5 +1119,20 @@ describe('POST /quotations/:quotationId/reject (US4-5)', () => {
                 },
             );
         }
+    });
+
+    it('answers 409 Project is not AWAITING_QUOTATION when the project was cancelled', async () => {
+        project!.projectStatus = 'CANCELLED';
+
+        await assert.rejects(
+            () => rejectQuotationById(RECEIVER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 409);
+                assert.equal(err.message, 'Project is not AWAITING_QUOTATION');
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
     });
 });
