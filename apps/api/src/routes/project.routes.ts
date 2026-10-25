@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { uploadPdf } from '../middleware/upload';
 import {
     acceptWork,
+    cancelProject,
     confirmDeposit,
     createProjectUpdate,
     createReview,
@@ -51,6 +52,9 @@ projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
 // US4-7. The Provider confirms the deposit arrived; the project goes
 // IN_PROGRESS. Same guards as report-deposit, but only the Provider may act.
 projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
+
+// US4-8. Either party cancels the project before work starts (ADR 0015).
+projectRoutes.post('/:projectId/cancel', requireAuth, cancelProject);
 
 // US4-11. The Provider reports the work complete; the project waits for the
 // Receiver's acceptance. Same guards, but only the Provider may act.
