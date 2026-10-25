@@ -2,6 +2,7 @@
  * Tests for project controller endpoints:
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
+ * - POST /projects/:projectId/cancel (cancelProject, US4-8)
  * - POST /projects/:projectId/submit-work (submitWork, US4-11)
  * - POST /projects/:projectId/reject-work (rejectWork, US4-12)
  * - POST /projects/:projectId/accept-work (acceptWork, US4-13)
@@ -18,6 +19,11 @@
  *   IN_PROGRESS and stamps depositConfirmedAt.
  * - T4.7.4: confirming before the Receiver reported the deposit is a 409, and
  *   the Receiver confirming is a 403. Neither changes the project.
+ * - US4-8: either party (Provider or Receiver) can cancel a project before work starts
+ *   (from AWAITING_QUOTATION or AWAITING_DEPOSIT) on both Job and Service projects,
+ *   moving the status to CANCELLED. An outsider gets 404, invalid projectId 400,
+ *   and any status after work starts (IN_PROGRESS, AWAITING_ACCEPTANCE, COMPLETED, CANCELLED)
+ *   gets 409.
  * - T4.11.4: the Provider reporting the work complete moves the project to
  *   AWAITING_ACCEPTANCE. The Receiver gets 403, an outsider 404, and a project
  *   not IN_PROGRESS 409; none of them changes the project.
@@ -439,10 +445,11 @@ async function call(
     handler: Handler,
     callerId: number,
     body?: unknown,
+    projectId = '1',
 ): Promise<unknown> {
     const req = {
         auth: { companyId: callerId },
-        params: { projectId: '1' },
+        params: { projectId },
         body,
     } as unknown as Request;
     let status = 200;
@@ -475,6 +482,10 @@ function postUpdate(
 
 function confirmDeposit(callerId: number): Promise<unknown> {
     return call(controller.confirmDeposit, callerId);
+}
+
+function cancelProject(callerId: number, projectId = '1'): Promise<unknown> {
+    return call(controller.cancelProject, callerId, undefined, projectId);
 }
 
 function submitWork(callerId: number): Promise<unknown> {
@@ -666,6 +677,95 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         assert.ok(isApiError(403)(await confirmDeposit(RECEIVER)));
         assert.equal(project!.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project!.depositConfirmedAt, null);
+    });
+});
+
+describe('POST /projects/:projectId/cancel (US4-8)', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_QUOTATION');
+    });
+
+    it('the Provider cancels a project while AWAITING_QUOTATION on a job', async () => {
+        const result = (await cancelProject(PROVIDER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'CANCELLED');
+        assert.equal(project!.projectStatus, 'CANCELLED');
+    });
+
+    it('the Receiver cancels a project while AWAITING_QUOTATION on a job', async () => {
+        const result = (await cancelProject(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'CANCELLED');
+        assert.equal(project!.projectStatus, 'CANCELLED');
+    });
+
+    it('the Provider cancels a project while AWAITING_DEPOSIT on a service', async () => {
+        project = projectOnService('AWAITING_DEPOSIT');
+
+        const result = (await cancelProject(PROVIDER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'CANCELLED');
+        assert.equal(project!.projectStatus, 'CANCELLED');
+    });
+
+    it('the Receiver cancels a project while AWAITING_DEPOSIT on a service', async () => {
+        project = projectOnService('AWAITING_DEPOSIT');
+
+        const result = (await cancelProject(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'CANCELLED');
+        assert.equal(project!.projectStatus, 'CANCELLED');
+    });
+
+    it('is a 404 for an outsider and changes nothing', async () => {
+        assert.ok(isApiError(404)(await cancelProject(OUTSIDER)));
+        assert.equal(project!.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('is a 404 when the project does not exist', async () => {
+        project = null;
+        assert.ok(isApiError(404)(await cancelProject(PROVIDER)));
+    });
+
+    it('is a 400 when projectId parameter is invalid', async () => {
+        assert.ok(
+            isApiError(400)(await cancelProject(PROVIDER, 'not-a-number')),
+        );
+        assert.equal(project!.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('is a 409 when the project is already IN_PROGRESS', async () => {
+        project = projectIn('IN_PROGRESS');
+        assert.ok(isApiError(409)(await cancelProject(PROVIDER)));
+        assert.equal(project.projectStatus, 'IN_PROGRESS');
+    });
+
+    it('is a 409 when the project is in another post-work status or already CANCELLED', async () => {
+        for (const status of [
+            'AWAITING_ACCEPTANCE',
+            'COMPLETED',
+            'CANCELLED',
+        ] as const) {
+            project = projectIn(status);
+            assert.ok(isApiError(409)(await cancelProject(RECEIVER)));
+            assert.equal(project.projectStatus, status);
+        }
     });
 });
 
