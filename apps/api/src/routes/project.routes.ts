@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import { uploadPdf } from '../middleware/upload';
 import {
     acceptWork,
     confirmDeposit,
@@ -13,6 +14,7 @@ import {
     reportDeposit,
     submitWork,
 } from '../controllers/project.controller';
+import { createQuotation } from '../controllers/quotation.controller';
 
 export const projectRoutes = Router();
 
@@ -30,6 +32,15 @@ projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
 // US4-10. The Provider adds a progress note while IN_PROGRESS. Same guards,
 // but only the Provider may act; the controller checks that per project.
 projectRoutes.post('/:projectId/updates', requireAuth, createProjectUpdate);
+
+// US4-1. The Provider uploads a quotation PDF (a `file` field, up to 5 MB)
+// while AWAITING_QUOTATION and no quotation is pending (ADR 0017).
+projectRoutes.post(
+    '/:projectId/quotations',
+    requireAuth,
+    uploadPdf('file'),
+    createQuotation,
+);
 
 // US4-6. The Receiver reports the deposit as paid; the Provider confirms it
 // later (US4-7). Guards: authenticated only. No requireRole: a BOTH account can
