@@ -430,10 +430,11 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - Project, quotation and update endpoints. The tables and the shared types
   exist (ADRs 0015-0018); the only endpoints are accepting a proposal, which
   creates the project row, the reads `GET /projects/mine`,
-  `GET /projects/:projectId` and `…/updates`, the Provider's
+  `GET /projects/:projectId`, `…/updates` and `…/quotations`, the Provider's
   `POST /projects/:projectId/quotations`,
   `DELETE /quotations/:quotationId` and
-  `POST /projects/:projectId/updates`, the deposit pair
+  `POST /projects/:projectId/updates`, the Receiver's
+  `POST /quotations/:quotationId/accept` and `…/reject`, the deposit pair
   `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
   Provider's `POST /projects/:projectId/submit-work`, the Receiver's
   `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
