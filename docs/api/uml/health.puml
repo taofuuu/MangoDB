@@ -3,13 +3,21 @@ left to right direction
 skinparam classAttributeIconSize 0
 hide circle
 hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
 skinparam class {
-  BackgroundColor<<Application>> #FDE68A
-  BorderColor<<Application>> #B45309
-  BackgroundColor<<Resource>> #BFDBFE
-  BorderColor<<Resource>> #1D4ED8
-  BackgroundColor<<Representation>> #BBF7D0
-  BorderColor<<Representation>> #15803D
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
 }
 title MangoDB API: Health
 
@@ -17,12 +25,12 @@ class "MangoDB API" as API <<Application>> {
   basePath = "/"
 }
 class "Health" as HealthR <<Resource>> {
-  + GET
+  + GET()
 }
 class "Health" as HealthRep <<Representation>> {
   -status : ok
 }
 
-API --> HealthR : <<Path>> /health
-HealthR ..> HealthRep : <<use>>
+API -[#B45309,dashed]-> HealthR : <i><color:#B45309>«Path» /health</color></i>
+HealthR -[#BE185D,dashed]-> HealthRep : <i><color:#BE185D>«use»</color></i>
 @enduml

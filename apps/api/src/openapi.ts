@@ -7,6 +7,7 @@ import {
     PROJECT_STATUSES,
     PROJECT_UPDATE_TYPES,
     PROPOSAL_STATUSES,
+    QUOTATION_STATUSES,
     SERVICE_SORT_ORDERS,
 } from '@mangodb/shared';
 
@@ -591,6 +592,33 @@ const schemas: Record<string, Schema> = {
         properties: { reason: { type: 'string', maxLength: 10000 } },
     },
 
+    // Quotations (ADR 0017).
+    Quotation: {
+        type: 'object',
+        properties: {
+            quotationId: { type: 'integer' },
+            projectId: { type: 'integer' },
+            quotationFile: {
+                type: 'string',
+                format: 'uri',
+                description: 'Public URL of the PDF',
+            },
+            quotationStatus: { type: 'string', enum: [...QUOTATION_STATUSES] },
+            createdAt: { type: 'string', format: 'date-time' },
+        },
+    },
+    QuotationRequest: {
+        type: 'object',
+        required: ['file'],
+        properties: {
+            file: {
+                type: 'string',
+                format: 'binary',
+                description: 'PDF, 5MB or smaller',
+            },
+        },
+    },
+
     Category: {
         type: 'object',
         properties: {
@@ -641,6 +669,7 @@ const definition = {
         'Jobs',
         'Proposals',
         'Projects',
+        'Quotations',
         'Categories',
     ].map((name) => ({ name })),
     servers: [
@@ -680,6 +709,7 @@ const definition = {
             jobId: idParam('jobId'),
             proposalId: idParam('proposalId'),
             projectId: idParam('projectId'),
+            quotationId: idParam('quotationId'),
             page: queryParam('page', {
                 type: 'integer',
                 minimum: 1,

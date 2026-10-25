@@ -1,0 +1,51 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Quotations
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Quotations" as Quotations <<Resource>>
+class "Quotation" as QuotationR <<Resource>> {
+  + DELETE()
+}
+class "Accept" as Accept <<Resource>> {
+  + POST()
+}
+class "Reject" as Reject <<Resource>> {
+  + POST()
+}
+class "Quotation" as QuotationRep <<Representation>> {
+  -quotationId : integer
+  -projectId : integer
+  -quotationFile : uri
+  -quotationStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
+
+API -[#B45309,dashed]-> Quotations : <i><color:#B45309>«Path» /quotations</color></i>
+Quotations -[#B45309,dashed]-> QuotationR : <i><color:#B45309>«Path» /{quotationId}</color></i>
+QuotationR -[#B45309,dashed]-> Accept : <i><color:#B45309>«Path» /accept</color></i>
+Accept -[#BE185D,dashed]-> QuotationRep : <i><color:#BE185D>«use»</color></i>
+QuotationR -[#B45309,dashed]-> Reject : <i><color:#B45309>«Path» /reject</color></i>
+Reject -[#BE185D,dashed]-> QuotationRep : <i><color:#BE185D>«use»</color></i>
+@enduml

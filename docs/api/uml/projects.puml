@@ -3,13 +3,21 @@ left to right direction
 skinparam classAttributeIconSize 0
 hide circle
 hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
 skinparam class {
-  BackgroundColor<<Application>> #FDE68A
-  BorderColor<<Application>> #B45309
-  BackgroundColor<<Resource>> #BFDBFE
-  BorderColor<<Resource>> #1D4ED8
-  BackgroundColor<<Representation>> #BBF7D0
-  BorderColor<<Representation>> #15803D
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
 }
 title MangoDB API: Projects
 
@@ -18,33 +26,40 @@ class "MangoDB API" as API <<Application>> {
 }
 class "Projects" as Projects <<Resource>>
 class "MyProjects" as MyProjects <<Resource>> {
-  + GET
+  + GET()
 }
 class "Project" as ProjectR <<Resource>> {
-  + GET
+  + GET()
 }
 class "Updates" as Updates <<Resource>> {
-  + GET
-  + POST
+  + GET()
+  + POST()
+}
+class "Quotations" as ProjectQuotations <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Cancel" as Cancel <<Resource>> {
+  + POST()
 }
 class "ReportDeposit" as ReportDeposit <<Resource>> {
-  + POST
+  + POST()
 }
 class "ConfirmDeposit" as ConfirmDeposit <<Resource>> {
-  + POST
+  + POST()
 }
 class "SubmitWork" as SubmitWork <<Resource>> {
-  + POST
+  + POST()
 }
 class "RejectWork" as RejectWork <<Resource>> {
-  + POST
+  + POST()
 }
 class "AcceptWork" as AcceptWork <<Resource>> {
-  + POST
+  + POST()
 }
 class "Review" as ReviewR <<Resource>> {
-  + GET
-  + POST
+  + GET()
+  + POST()
 }
 class "ProjectSummary" as ProjectSummaryRep <<Representation>> {
   -Project fields
@@ -81,6 +96,16 @@ class "Project" as ProjectRep <<Representation>> {
   -depositConfirmedAt : date?
   -completedAt : date?
 }
+class "Quotation" as QuotationRep <<Representation>> {
+  -quotationId : integer
+  -projectId : integer
+  -quotationFile : uri
+  -quotationStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
+class "QuotationRequest" as QuotationRequestRep <<Representation>> {
+  -file : binary (PDF, max 5 MB)
+}
 class "RejectWorkRequest" as RejectWorkRequestRep <<Representation>> {
   -reason : string
 }
@@ -102,26 +127,31 @@ class "CreateReviewRequest" as CreateReviewRequestRep <<Representation>> {
   -comment : string?
 }
 
-API --> Projects : <<Path>> /projects
-Projects --> MyProjects : <<Path>> /mine
-MyProjects ..> ProjectSummaryRep : <<use>>
-Projects --> ProjectR : <<Path>> /{projectId}
-ProjectR ..> ProjectDetailRep : <<use>>
-ProjectR --> Updates : <<Path>> /updates
-Updates ..> ProjectUpdateRep : <<use>>
-Updates ..> CreateProjectUpdateRequestRep : <<use>>
-ProjectR --> ReportDeposit : <<Path>> /report-deposit
-ReportDeposit ..> ProjectRep : <<use>>
-ProjectR --> ConfirmDeposit : <<Path>> /confirm-deposit
-ConfirmDeposit ..> ProjectRep : <<use>>
-ProjectR --> SubmitWork : <<Path>> /submit-work
-SubmitWork ..> ProjectRep : <<use>>
-ProjectR --> RejectWork : <<Path>> /reject-work
-RejectWork ..> RejectWorkRequestRep : <<use>>
-RejectWork ..> ProjectRep : <<use>>
-ProjectR --> AcceptWork : <<Path>> /accept-work
-AcceptWork ..> ProjectRep : <<use>>
-ProjectR --> ReviewR : <<Path>> /review
-ReviewR ..> ReviewRep : <<use>>
-ReviewR ..> CreateReviewRequestRep : <<use>>
+API -[#B45309,dashed]-> Projects : <i><color:#B45309>«Path» /projects</color></i>
+Projects -[#B45309,dashed]-> MyProjects : <i><color:#B45309>«Path» /mine</color></i>
+MyProjects -[#BE185D,dashed]-> ProjectSummaryRep : <i><color:#BE185D>«use»</color></i>
+Projects -[#B45309,dashed]-> ProjectR : <i><color:#B45309>«Path» /{projectId}</color></i>
+ProjectR -[#BE185D,dashed]-> ProjectDetailRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> Updates : <i><color:#B45309>«Path» /updates</color></i>
+Updates -[#BE185D,dashed]-> ProjectUpdateRep : <i><color:#BE185D>«use»</color></i>
+Updates -[#BE185D,dashed]-> CreateProjectUpdateRequestRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> ProjectQuotations : <i><color:#B45309>«Path» /quotations</color></i>
+ProjectQuotations -[#BE185D,dashed]-> QuotationRep : <i><color:#BE185D>«use»</color></i>
+ProjectQuotations -[#BE185D,dashed]-> QuotationRequestRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> Cancel : <i><color:#B45309>«Path» /cancel</color></i>
+Cancel -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> ReportDeposit : <i><color:#B45309>«Path» /report-deposit</color></i>
+ReportDeposit -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> ConfirmDeposit : <i><color:#B45309>«Path» /confirm-deposit</color></i>
+ConfirmDeposit -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> SubmitWork : <i><color:#B45309>«Path» /submit-work</color></i>
+SubmitWork -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> RejectWork : <i><color:#B45309>«Path» /reject-work</color></i>
+RejectWork -[#BE185D,dashed]-> RejectWorkRequestRep : <i><color:#BE185D>«use»</color></i>
+RejectWork -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> AcceptWork : <i><color:#B45309>«Path» /accept-work</color></i>
+AcceptWork -[#BE185D,dashed]-> ProjectRep : <i><color:#BE185D>«use»</color></i>
+ProjectR -[#B45309,dashed]-> ReviewR : <i><color:#B45309>«Path» /review</color></i>
+ReviewR -[#BE185D,dashed]-> ReviewRep : <i><color:#BE185D>«use»</color></i>
+ReviewR -[#BE185D,dashed]-> CreateReviewRequestRep : <i><color:#BE185D>«use»</color></i>
 @enduml

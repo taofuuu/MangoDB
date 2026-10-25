@@ -4,6 +4,9 @@ Source: `apps/api/src/routes/project.routes.ts`,
 `apps/api/src/controllers/project.controller.ts`.
 Back to the [index](README.md).
 
+Quotations are decided on their own paths under `/quotations`, see
+[quotations.md](quotations.md).
+
 A project is opened by `POST /proposals/:proposalId/accept` (see
 [proposals.md](proposals.md)). Every route here needs only `requireAuth`.
 There is no `requireRole`: a BOTH company can be either side, so the controller
@@ -19,6 +22,9 @@ works out the caller's side per project with `assertProjectParty`.
 | GET    | `/projects/:projectId`                 | both parties | 200 ProjectDetail           |
 | GET    | `/projects/:projectId/updates`         | both parties | 200 ProjectUpdate[]         |
 | POST   | `/projects/:projectId/updates`         | Provider     | 201 ProjectUpdate           |
+| GET    | `/projects/:projectId/quotations`      | both parties | 200 Quotation[]             |
+| POST   | `/projects/:projectId/quotations`      | Provider     | 201 Quotation               |
+| POST   | `/projects/:projectId/cancel`          | both parties | 200 Project                 |
 | POST   | `/projects/:projectId/report-deposit`  | Receiver     | 200 Project                 |
 | POST   | `/projects/:projectId/confirm-deposit` | Provider     | 200 Project                 |
 | POST   | `/projects/:projectId/submit-work`     | Provider     | 200 Project                 |
@@ -42,10 +48,10 @@ ADR 0015. `moveProjectStatus` in `lib/project.ts` allows only these moves.
 ```mermaid
 stateDiagram-v2
     [*] --> AWAITING_QUOTATION : accept proposal
-    AWAITING_QUOTATION --> AWAITING_DEPOSIT : quotation (no endpoint yet)
-    AWAITING_QUOTATION --> CANCELLED : cancel (no endpoint yet)
+    AWAITING_QUOTATION --> AWAITING_DEPOSIT : accept quotation (Receiver)
+    AWAITING_QUOTATION --> CANCELLED : cancel (either party)
     AWAITING_DEPOSIT --> IN_PROGRESS : confirm-deposit (Provider, after report-deposit)
-    AWAITING_DEPOSIT --> CANCELLED : cancel (no endpoint yet)
+    AWAITING_DEPOSIT --> CANCELLED : cancel (either party)
     IN_PROGRESS --> AWAITING_ACCEPTANCE : submit-work (Provider)
     AWAITING_ACCEPTANCE --> IN_PROGRESS : reject-work (Receiver)
     AWAITING_ACCEPTANCE --> COMPLETED : accept-work (Receiver)
@@ -172,6 +178,110 @@ sequenceDiagram
     end
     Ctl->>DB: projectUpdate.create (PROGRESS, createdAt by server)
     Ctl-->>C: 201 ProjectUpdate
+```
+
+## GET /projects/:projectId/quotations
+
+US4-3. The project's quotations, newest first, for both parties. A plain
+array, not paged.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant G as requireAuth
+    participant Ctl as quotation.controller<br/>listQuotations
+    participant L as lib/project
+    participant DB as PostgreSQL
+
+    C->>G: GET /projects/:projectId/quotations
+    G->>Ctl: req.auth (401 if not signed in)
+    Ctl->>Ctl: parseParams(projectIdParamSchema)
+    Ctl->>L: assertProjectParty
+    alt not found or not a party
+        L-->>C: 404 Project not found
+    end
+    Ctl->>DB: quotation.findMany where projectId, by createdAt desc then quotationId desc
+    Ctl->>Ctl: toQuotation(row) makes createdAt an ISO string
+    Ctl-->>C: 200 Quotation[]
+```
+
+## POST /projects/:projectId/quotations
+
+US4-1. The Provider uploads a quotation PDF (multipart, field `file`, up to
+5 MB). The project stays AWAITING_QUOTATION until the Receiver accepts one.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Provider client
+    participant G as requireAuth
+    participant U as uploadPdf('file')
+    participant Ctl as quotation.controller<br/>createQuotation
+    participant L as lib/project
+    participant S as Storage
+    participant DB as PostgreSQL
+
+    C->>G: POST /projects/:projectId/quotations (multipart)
+    G->>U: req.auth (401 if not signed in)
+    alt not a PDF or over 5 MB
+        U-->>C: 400
+    end
+    U->>Ctl: req.file
+    alt no file
+        Ctl-->>C: 400 Choose a PDF first
+    end
+    Ctl->>L: assertProjectParty
+    alt not found or not a party
+        L-->>C: 404
+    end
+    alt caller is the Receiver
+        Ctl-->>C: 403 Only the Provider can upload a quotation
+    else status is not AWAITING_QUOTATION
+        Ctl-->>C: 409 Project is not AWAITING_QUOTATION
+    end
+    Ctl->>DB: quotation.findFirst where PENDING
+    alt one is pending
+        Ctl-->>C: 409 A quotation is already pending
+    end
+    Ctl->>S: upload PDF (quotations bucket)
+    Ctl->>DB: quotation.create (PENDING, file URL)
+    alt unique index hit (two uploads at once)
+        Ctl->>S: delete the orphan PDF
+        Ctl-->>C: 409 A quotation is already pending
+    end
+    Ctl-->>C: 201 Quotation
+```
+
+## POST /projects/:projectId/cancel
+
+US4-8. Either party cancels before work starts: AWAITING_QUOTATION or
+AWAITING_DEPOSIT to CANCELLED.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Client
+    participant G as requireAuth
+    participant Ctl as project.controller<br/>cancelProject
+    participant L as lib/project
+    participant DB as PostgreSQL
+
+    C->>G: POST /projects/:projectId/cancel
+    G->>Ctl: req.auth (401 if not signed in)
+    Ctl->>L: assertProjectParty
+    alt not found or not a party
+        L-->>C: 404
+    end
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction
+        Ctl->>L: moveProjectStatus(tx, current status, CANCELLED)
+        alt move not allowed (already past deposit, or changed meanwhile)
+            L-->>C: 409
+        end
+        Ctl->>DB: project.findUniqueOrThrow
+    end
+    Ctl-->>C: 200 Project
 ```
 
 ## POST /projects/:projectId/report-deposit

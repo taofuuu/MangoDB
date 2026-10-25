@@ -141,10 +141,70 @@ projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
 projectRoutes.post('/:projectId/updates', requireAuth, createProjectUpdate);
 
 // US4-3. The project's quotations, newest first, for both parties.
+/**
+ * @openapi
+ * /projects/{projectId}/quotations:
+ *   get:
+ *     tags: [Projects]
+ *     summary: List a project's quotations
+ *     description: US4-3. Newest first, a plain array (not paged). Parties only; others get 404.
+ *     parameters:
+ *       - $ref: '#/components/parameters/projectId'
+ *     responses:
+ *       '200':
+ *         description: The quotations, each with its PDF link and decision status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Quotation'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '401':
+ *         $ref: '#/components/responses/Unauthorized'
+ *       '404':
+ *         $ref: '#/components/responses/NotFound'
+ */
 projectRoutes.get('/:projectId/quotations', requireAuth, listQuotations);
 
 // US4-1. The Provider uploads a quotation PDF (a `file` field, up to 5 MB)
 // while AWAITING_QUOTATION and no quotation is pending (ADR 0017).
+/**
+ * @openapi
+ * /projects/{projectId}/quotations:
+ *   post:
+ *     tags: [Projects]
+ *     summary: Upload a quotation PDF (Provider)
+ *     description: >-
+ *       US4-1. Only while AWAITING_QUOTATION and no quotation is PENDING (409).
+ *       The Receiver gets 403. The project status does not change yet.
+ *     parameters:
+ *       - $ref: '#/components/parameters/projectId'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/QuotationRequest'
+ *     responses:
+ *       '201':
+ *         description: Uploaded. The new quotation is PENDING.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Quotation'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '401':
+ *         $ref: '#/components/responses/Unauthorized'
+ *       '403':
+ *         $ref: '#/components/responses/Forbidden'
+ *       '404':
+ *         $ref: '#/components/responses/NotFound'
+ *       '409':
+ *         $ref: '#/components/responses/Conflict'
+ */
 projectRoutes.post(
     '/:projectId/quotations',
     requireAuth,
@@ -217,6 +277,33 @@ projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
 projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
 
 // US4-8. Either party cancels the project before work starts (ADR 0015).
+/**
+ * @openapi
+ * /projects/{projectId}/cancel:
+ *   post:
+ *     tags: [Projects]
+ *     summary: Cancel the project (either party)
+ *     description: >-
+ *       US4-8. Only from AWAITING_QUOTATION or AWAITING_DEPOSIT (409 after that).
+ *       Either party may cancel; others get 404.
+ *     parameters:
+ *       - $ref: '#/components/parameters/projectId'
+ *     responses:
+ *       '200':
+ *         description: The project, now CANCELLED
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Project'
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
+ *       '401':
+ *         $ref: '#/components/responses/Unauthorized'
+ *       '404':
+ *         $ref: '#/components/responses/NotFound'
+ *       '409':
+ *         $ref: '#/components/responses/Conflict'
+ */
 projectRoutes.post('/:projectId/cancel', requireAuth, cancelProject);
 
 // US4-11. The Provider reports the work complete; the project waits for the

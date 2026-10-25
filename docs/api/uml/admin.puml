@@ -3,13 +3,21 @@ left to right direction
 skinparam classAttributeIconSize 0
 hide circle
 hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
 skinparam class {
-  BackgroundColor<<Application>> #FDE68A
-  BorderColor<<Application>> #B45309
-  BackgroundColor<<Resource>> #BFDBFE
-  BorderColor<<Resource>> #1D4ED8
-  BackgroundColor<<Representation>> #BBF7D0
-  BorderColor<<Representation>> #15803D
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
 }
 title MangoDB API: Admin
 
@@ -18,12 +26,12 @@ class "MangoDB API" as API <<Application>> {
 }
 class "Admin" as Admin <<Resource>>
 class "Companies" as AdminCompanies <<Resource>> {
-  + GET
+  + GET()
 }
 class "Company" as AdminCompany <<Resource>> {
-  + GET
-  + PATCH
-  + DELETE
+  + GET()
+  + PATCH()
+  + DELETE()
 }
 class "CompanyAccountSummary" as CompanyAccountSummaryRep <<Representation>> {
   -companyId : integer
@@ -56,11 +64,11 @@ class "DeleteCompanyAccountRequest" as DeleteCompanyAccountRequestRep <<Represen
   -currentPassword : string
 }
 
-API --> Admin : <<Path>> /admin
-Admin --> AdminCompanies : <<Path>> /companies
-AdminCompanies ..> CompanyAccountSummaryRep : <<use>>
-AdminCompanies --> AdminCompany : <<Path>> /{companyId}
-AdminCompany ..> CompanyAccountDetailRep : <<use>>
-AdminCompany ..> UpdateCompanyProfileRequestRep : <<use>>
-AdminCompany ..> DeleteCompanyAccountRequestRep : <<use>>
+API -[#B45309,dashed]-> Admin : <i><color:#B45309>«Path» /admin</color></i>
+Admin -[#B45309,dashed]-> AdminCompanies : <i><color:#B45309>«Path» /companies</color></i>
+AdminCompanies -[#BE185D,dashed]-> CompanyAccountSummaryRep : <i><color:#BE185D>«use»</color></i>
+AdminCompanies -[#B45309,dashed]-> AdminCompany : <i><color:#B45309>«Path» /{companyId}</color></i>
+AdminCompany -[#BE185D,dashed]-> CompanyAccountDetailRep : <i><color:#BE185D>«use»</color></i>
+AdminCompany -[#BE185D,dashed]-> UpdateCompanyProfileRequestRep : <i><color:#BE185D>«use»</color></i>
+AdminCompany -[#BE185D,dashed]-> DeleteCompanyAccountRequestRep : <i><color:#BE185D>«use»</color></i>
 @enduml
