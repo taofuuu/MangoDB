@@ -208,6 +208,31 @@ export async function confirmDeposit(
     res.json(toProject(row));
 }
 
+// US4-8. Either party cancels before work starts: AWAITING_QUOTATION or
+// AWAITING_DEPOSIT to CANCELLED (ADR 0015). A project that already moved
+// past deposit confirmation cannot be cancelled.
+export async function cancelProject(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            project.projectStatus,
+            'CANCELLED',
+        );
+        return tx.project.findUniqueOrThrow({
+            where: { projectId },
+            select: projectSelect,
+        });
+    });
+    res.json(toProject(row));
+}
+
 // US4-11. The Provider reports the work complete: IN_PROGRESS to
 // AWAITING_ACCEPTANCE, so the Receiver can accept or reject it (ADR 0015).
 export async function submitWork(req: Request, res: Response): Promise<void> {

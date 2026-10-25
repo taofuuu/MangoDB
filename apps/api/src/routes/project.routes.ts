@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import { uploadPdf } from '../middleware/upload';
 import {
     acceptWork,
+    cancelProject,
     confirmDeposit,
     createProjectUpdate,
     createReview,
@@ -13,6 +15,10 @@ import {
     reportDeposit,
     submitWork,
 } from '../controllers/project.controller';
+import {
+    createQuotation,
+    listQuotations,
+} from '../controllers/quotation.controller';
 
 export const projectRoutes = Router();
 
@@ -134,6 +140,18 @@ projectRoutes.get('/:projectId/updates', requireAuth, listProjectUpdates);
  */
 projectRoutes.post('/:projectId/updates', requireAuth, createProjectUpdate);
 
+// US4-3. The project's quotations, newest first, for both parties.
+projectRoutes.get('/:projectId/quotations', requireAuth, listQuotations);
+
+// US4-1. The Provider uploads a quotation PDF (a `file` field, up to 5 MB)
+// while AWAITING_QUOTATION and no quotation is pending (ADR 0017).
+projectRoutes.post(
+    '/:projectId/quotations',
+    requireAuth,
+    uploadPdf('file'),
+    createQuotation,
+);
+
 // US4-6. The Receiver reports the deposit as paid; the Provider confirms it
 // later (US4-7). Guards: authenticated only. No requireRole: a BOTH account can
 // be either side, so who is the Receiver is worked out per project in the
@@ -197,6 +215,9 @@ projectRoutes.post('/:projectId/report-deposit', requireAuth, reportDeposit);
  *         $ref: '#/components/responses/Conflict'
  */
 projectRoutes.post('/:projectId/confirm-deposit', requireAuth, confirmDeposit);
+
+// US4-8. Either party cancels the project before work starts (ADR 0015).
+projectRoutes.post('/:projectId/cancel', requireAuth, cancelProject);
 
 // US4-11. The Provider reports the work complete; the project waits for the
 // Receiver's acceptance. Same guards, but only the Provider may act.
