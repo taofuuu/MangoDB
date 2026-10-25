@@ -1,0 +1,10 @@
+{
+    "request": "GET /proposals/mine/counts",
+    "status": 200,
+    "body": {
+        "accepted": 0,
+        "pending": 1,
+        "rejected": 0,
+        "total": 1
+    }
+}

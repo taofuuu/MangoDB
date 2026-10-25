@@ -66,6 +66,10 @@ export function toServiceSummary(
             .sort(),
         techStack: listing.techStack,
         company: listing.company,
+        // CompanyServiceCard and ServiceDetailPanel do not display the card's
+        // rating summary, which is only returned by GET /services.
+        averageRating: null,
+        ratingCount: 0,
     };
 }
 

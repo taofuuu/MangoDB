@@ -1,0 +1,16 @@
+{
+    "request": "POST /services/not-a-number/proposals",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "serviceId",
+                    "message": "Invalid input: expected number, received NaN"
+                }
+            ],
+            "message": "Path parameters are invalid"
+        }
+    }
+}

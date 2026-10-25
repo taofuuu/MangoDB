@@ -9,29 +9,31 @@ import {
 
 export const proposalRoutes = Router();
 
-// US2-9. List authenticated provider's proposals with pagination and status filter.
-// Guards: authenticated and holding Provider role (BOTH accounts also qualify).
+// US2-9. List authenticated company's proposals or hire requests with pagination and status filter.
+// Guards: authenticated and holding Provider or Receiver role (BOTH accounts also qualify).
 proposalRoutes.get(
     '/mine',
     requireAuth,
-    requireRole('provider'),
+    requireRole('provider', 'receiver'),
     listMyProposals,
 );
 
-// US2-9. The provider's proposal counts by status, for the page's chips. Its
+// US2-9. The company's proposal counts by status, for the page's chips. Its
 // own endpoint so /mine stays { items, pagination } (conventions §3).
 // Same guards as /mine.
 proposalRoutes.get(
     '/mine/counts',
     requireAuth,
-    requireRole('provider'),
+    requireRole('provider', 'receiver'),
     getMyProposalCounts,
 );
 
-// Accept a proposal: closes the listing, rejects the other pending proposals
-// and creates the Project in one transaction (docs/conventions.md 2.7).
+// US2-11, US2-17. Accept a proposal: on a job, closes the job and rejects the
+// other pending proposals; on a service, leaves the service open and other
+// pending requests pending (ADR 0016). Creates the Project in the same
+// transaction (docs/conventions.md 2.7).
 // Guards: authenticated only. No requireRole — the listing owner can be a
-// Receiver (job posting) or a Provider (service); ownership is checked in
+// Receiver (job) or a Provider (service); ownership is checked in
 // lib/proposal.ts.
 proposalRoutes.post('/:proposalId/accept', requireAuth, acceptProposal);
 

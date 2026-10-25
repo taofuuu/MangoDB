@@ -2,7 +2,9 @@
 
 import { useId, useState } from 'react';
 import FieldError from '@/components/ui/FieldError';
+import Input from '@/components/ui/Input';
 import ModalShell from '@/components/ui/ModalShell';
+import PasswordInput from '@/components/ui/PasswordInput';
 import { isNotSignedIn } from '@/lib/api';
 import { toFormErrors, type FieldErrors } from '@/lib/validation/formErrors';
 
@@ -32,25 +34,6 @@ const FAILURES: Record<EditAccountMode, string> = {
     password: 'Failed to change password.',
 };
 
-function EyeIcon({ className = 'w-4 h-4' }: { className?: string }) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            aria-hidden="true"
-        >
-            <path d="M4 14.5a8 8 0 0 1 16 0" />
-            <circle cx="12" cy="14.5" r="3.5" />
-        </svg>
-    );
-}
-
 type EditAccountModalProps = {
     isOpen: boolean;
     mode: EditAccountMode;
@@ -74,10 +57,6 @@ export default function EditAccountModal({
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
-
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [errors, setErrors] = useState<AccountErrors>({});
     // Only what no input can hold: offline, or a 500.
@@ -109,9 +88,6 @@ export default function EditAccountModal({
             setNewPassword('');
             setConfirmPassword('');
             setCurrentPassword('');
-            setShowCurrentPassword(false);
-            setShowNewPassword(false);
-            setShowConfirmPassword(false);
             setErrors({});
             setFormError(null);
             setIsSaving(false);
@@ -261,199 +237,112 @@ export default function EditAccountModal({
                 confirm and apply changes.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Keyed by mode, so each password box starts hidden again. */}
+            <form key={mode} onSubmit={handleSubmit} className="space-y-4">
                 {/* Username Mode */}
                 {mode === 'username' && (
-                    <div>
-                        <label
-                            htmlFor="modal-username-input"
-                            className="block type-xs font-medium text-ink mb-1"
-                        >
-                            Username <span className="text-danger">*</span>
-                        </label>
-                        <input
-                            id="modal-username-input"
-                            type="text"
-                            value={inputValue}
-                            onChange={(e) => {
-                                setInputValue(e.target.value);
-                                clearError('value');
-                            }}
-                            placeholder="Enter username"
-                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                            autoFocus
-                        />
-                        <FieldError message={errors.value} />
-                    </div>
+                    <Input
+                        id="modal-username-input"
+                        label={
+                            <>
+                                Username <span className="text-danger">*</span>
+                            </>
+                        }
+                        value={inputValue}
+                        onChange={(next) => {
+                            setInputValue(next);
+                            clearError('value');
+                        }}
+                        error={errors.value}
+                        placeholder="Enter username"
+                        variant="compact"
+                        autoFocus
+                    />
                 )}
 
                 {/* Email Mode */}
                 {mode === 'email' && (
-                    <div>
-                        <label
-                            htmlFor="modal-email-input"
-                            className="block type-xs font-medium text-ink mb-1"
-                        >
-                            Email <span className="text-danger">*</span>
-                        </label>
-                        <input
-                            id="modal-email-input"
-                            type="email"
-                            value={inputValue}
-                            onChange={(e) => {
-                                setInputValue(e.target.value);
-                                clearError('value');
-                            }}
-                            placeholder="Enter email address"
-                            className="h-[38px] w-full px-3 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                            autoFocus
-                        />
-                        <FieldError message={errors.value} />
-                    </div>
+                    <Input
+                        id="modal-email-input"
+                        label={
+                            <>
+                                Email <span className="text-danger">*</span>
+                            </>
+                        }
+                        type="email"
+                        value={inputValue}
+                        onChange={(next) => {
+                            setInputValue(next);
+                            clearError('value');
+                        }}
+                        error={errors.value}
+                        placeholder="Enter email address"
+                        variant="compact"
+                        autoFocus
+                    />
                 )}
 
                 {/* Password Mode */}
                 {mode === 'password' && (
                     <>
-                        <div>
-                            <label
-                                htmlFor="modal-new-password-input"
-                                className="block type-xs font-medium text-ink mb-1"
-                            >
-                                New Password{' '}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="modal-new-password-input"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={newPassword}
-                                    onChange={(e) => {
-                                        setNewPassword(e.target.value);
-                                        clearError('newPassword');
-                                    }}
-                                    placeholder="Enter new password"
-                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                    autoFocus
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowNewPassword(!showNewPassword)
-                                    }
-                                    aria-label={
-                                        showNewPassword
-                                            ? 'Hide password'
-                                            : 'Show password'
-                                    }
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                                >
-                                    <EyeIcon
-                                        className={`w-4 h-4 ${
-                                            showNewPassword
-                                                ? 'text-ink'
-                                                : 'text-ink-placeholder'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-                            <FieldError message={errors.newPassword} />
-                        </div>
+                        <PasswordInput
+                            id="modal-new-password-input"
+                            label={
+                                <>
+                                    New Password{' '}
+                                    <span className="text-danger">*</span>
+                                </>
+                            }
+                            value={newPassword}
+                            onChange={(next) => {
+                                setNewPassword(next);
+                                clearError('newPassword');
+                            }}
+                            error={errors.newPassword}
+                            placeholder="Enter new password"
+                            variant="compact"
+                            autoFocus
+                        />
 
-                        <div>
-                            <label
-                                htmlFor="modal-confirm-password-input"
-                                className="block type-xs font-medium text-ink mb-1"
-                            >
-                                Confirm New Password{' '}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="modal-confirm-password-input"
-                                    type={
-                                        showConfirmPassword
-                                            ? 'text'
-                                            : 'password'
-                                    }
-                                    value={confirmPassword}
-                                    onChange={(e) => {
-                                        setConfirmPassword(e.target.value);
-                                        clearError('confirmPassword');
-                                    }}
-                                    placeholder="Re-enter new password"
-                                    className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setShowConfirmPassword(
-                                            !showConfirmPassword,
-                                        )
-                                    }
-                                    aria-label={
-                                        showConfirmPassword
-                                            ? 'Hide password'
-                                            : 'Show password'
-                                    }
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                                >
-                                    <EyeIcon
-                                        className={`w-4 h-4 ${
-                                            showConfirmPassword
-                                                ? 'text-ink'
-                                                : 'text-ink-placeholder'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-                            <FieldError message={errors.confirmPassword} />
-                        </div>
+                        <PasswordInput
+                            id="modal-confirm-password-input"
+                            label={
+                                <>
+                                    Confirm New Password{' '}
+                                    <span className="text-danger">*</span>
+                                </>
+                            }
+                            value={confirmPassword}
+                            onChange={(next) => {
+                                setConfirmPassword(next);
+                                clearError('confirmPassword');
+                            }}
+                            error={errors.confirmPassword}
+                            placeholder="Re-enter new password"
+                            variant="compact"
+                        />
                     </>
                 )}
 
                 {/* Security Check: Current Password */}
                 <div className="pt-2 border-t border-line">
-                    <label
-                        htmlFor="modal-current-password-input"
-                        className="block type-xs font-medium text-ink mb-1"
-                    >
-                        Current Password <span className="text-danger">*</span>
-                    </label>
-                    <div className="relative">
-                        <input
-                            id="modal-current-password-input"
-                            type={showCurrentPassword ? 'text' : 'password'}
-                            value={currentPassword}
-                            onChange={(e) => {
-                                setCurrentPassword(e.target.value);
-                                clearError('currentPassword');
-                            }}
-                            placeholder="Enter current password"
-                            className="h-[38px] w-full px-3 pr-10 rounded-input border border-brand bg-surface-white type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-brand"
-                        />
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowCurrentPassword(!showCurrentPassword)
-                            }
-                            aria-label={
-                                showCurrentPassword
-                                    ? 'Hide password'
-                                    : 'Show password'
-                            }
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-soft hover:text-ink transition-colors cursor-pointer rounded"
-                        >
-                            <EyeIcon
-                                className={`w-4 h-4 ${
-                                    showCurrentPassword
-                                        ? 'text-ink'
-                                        : 'text-ink-placeholder'
-                                }`}
-                            />
-                        </button>
-                    </div>
-                    <FieldError message={errors.currentPassword} />
+                    <PasswordInput
+                        id="modal-current-password-input"
+                        label={
+                            <>
+                                Current Password{' '}
+                                <span className="text-danger">*</span>
+                            </>
+                        }
+                        value={currentPassword}
+                        onChange={(next) => {
+                            setCurrentPassword(next);
+                            clearError('currentPassword');
+                        }}
+                        error={errors.currentPassword}
+                        placeholder="Enter current password"
+                        variant="compact"
+                    />
                 </div>
 
                 <FieldError message={formError} />

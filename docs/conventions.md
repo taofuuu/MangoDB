@@ -75,6 +75,8 @@ account is **`register`** — never `signup`.
 ```
 GET  /jobs/:jobId/proposals              the proposals on one job
 POST /jobs/:jobId/proposals              send one to that job
+GET  /services/:serviceId/proposals      the hire requests on one service
+POST /services/:serviceId/proposals      send one to that service
 POST /proposals/:proposalId/accept       one proposal, by its own id
 ```
 
@@ -99,7 +101,7 @@ POST /proposals/:proposalId/accept
 POST /proposals/:proposalId/reject
 ```
 
-Accepting also creates a project and rejects the other proposals —
+Accepting also creates a project and, on a job, rejects the other proposals —
 `PATCH { status }` would hide that.
 
 ### 2.8 One health endpoint
@@ -289,8 +291,8 @@ midnight (see `formatDateOnly` in `apps/mangodb/lib/dates.ts`).
 A foreign key the row means nothing without is `NOT NULL`. A nullable one forces
 a dead null check in every controller that touches it.
 
-Still nullable, to fix in the next migration that touches each table:
-`listing.company_id` and `rating.proj_id`.
+Still nullable, to fix in the next migration that touches the table:
+`listing.company_id`.
 
 ---
 
@@ -373,8 +375,11 @@ lib/<noun>.ts             the requests for that noun
   `ui/`.
 - One component per file, a default export, and the file named after it.
 - `lib/` also holds the shared helpers: `dates`, `money`, `pagination`, the
-  form rules in `validation/<schema>.ts`, and the hooks `useMyCompany` and
-  `useSearchServices`. A component formats a date or an amount through them,
-  never on its own.
+  form rules in `validation/<schema>.ts`, and the hooks `useMyCompany`,
+  `useSearchServices`, `useJobList` and `useCategories`. A component formats
+  a date or an amount through them, never on its own.
 - An add form and an edit form for one thing are one component with a mode,
   mounted only while open.
+- A form's values, checks and save live in a `use<Thing>Form` hook beside it
+  (`components/jobs/useJobForm.ts`): one `values` object with `setField`, so
+  the component is mostly JSX.

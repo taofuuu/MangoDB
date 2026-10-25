@@ -1,17 +1,24 @@
 'use client';
 
+import { useId } from 'react';
 import FieldError from './FieldError';
 
 type InputProps = {
-    label: string;
+    // Usually text. A label with markup, like a red required star, needs an
+    // id, since one cannot be made from it.
+    label: React.ReactNode;
     value: string;
     onChange: (value: string) => void;
     // Filled in by the "Validate required profile fields and formats" task.
     // The slot lives here so adding a rule never has to touch this file.
     error?: string | undefined;
     // login: the login card's own sizes, a small label over larger typed
-    // text. Every other form uses form.
+    // text. compact: the small boxes of a modal like Edit Account. Every
+    // other form uses form.
     variant?: keyof typeof VARIANTS;
+    // A small button drawn inside the box at its right edge, like
+    // PasswordInput's eye. Position it with absolute right-*.
+    trailing?: React.ReactNode;
 } & Omit<
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'className'
@@ -21,15 +28,21 @@ const VARIANTS = {
     form: {
         field: 'gap-[0.46vh]',
         label: 'mb-[0.93vh] block type-md leading-[1.15]',
-        input: 'h-[4.79vh] px-[0.83vw] type-sm',
+        input: 'h-[4.79vh] px-[0.83vw] type-sm placeholder:text-line',
         border: 'border-brand focus:border-brand focus:ring-brand',
     },
     // No type-* on the input: it inherits the page's 16px.
     login: {
         field: 'gap-1.5',
         label: 'block type-sm',
-        input: 'h-[4.89vh] px-1.5',
+        input: 'h-[4.89vh] px-1.5 placeholder:text-line',
         border: 'border-brand-dark focus:border-brand-dark focus:ring-brand-dark',
+    },
+    compact: {
+        field: '',
+        label: 'mb-1 block type-xs text-ink',
+        input: 'h-[38px] px-3 type-xs placeholder:text-ink-placeholder',
+        border: 'border-brand focus:border-brand focus:ring-brand',
     },
 };
 
@@ -46,9 +59,15 @@ export default function Input({
     // rather than an input with no type.
     type = 'text',
     variant = 'form',
+    trailing,
     ...props
 }: InputProps) {
-    const inputId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const fallbackId = useId();
+    const inputId =
+        id ??
+        (typeof label === 'string'
+            ? label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+            : fallbackId);
     const look = VARIANTS[variant];
 
     return (
@@ -57,20 +76,23 @@ export default function Input({
                 {label}
             </label>
 
-            <input
-                id={inputId}
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? `${inputId}-error` : undefined}
-                className={`${look.input} w-full rounded-input border bg-surface-white text-ink placeholder:text-line focus:ring-1 focus:outline-none ${
-                    error
-                        ? 'border-danger focus:border-danger focus:ring-danger'
-                        : look.border
-                }`}
-                {...props}
-            />
+            <div className="relative">
+                <input
+                    id={inputId}
+                    type={type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `${inputId}-error` : undefined}
+                    className={`${look.input} ${trailing ? 'pr-10' : ''} w-full rounded-input border bg-surface-white text-ink focus:ring-1 focus:outline-none ${
+                        error
+                            ? 'border-danger focus:border-danger focus:ring-danger'
+                            : look.border
+                    }`}
+                    {...props}
+                />
+                {trailing}
+            </div>
 
             <FieldError message={error} id={`${inputId}-error`} />
         </div>

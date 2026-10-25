@@ -13,6 +13,10 @@ export interface ListJobsOptions {
     companyId?: number;
     status?: ListingStatus;
     q?: string;
+    category?: string[];
+    minBudget?: number;
+    maxBudget?: number;
+    deadline?: string;
 }
 
 // GET /jobs: the jobs the caller may see, one page at a time.
@@ -36,6 +40,20 @@ export function listJobs(
 
     if (options?.q) {
         query.set('q', options.q);
+    }
+
+    options?.category?.forEach((name) => query.append('category', name));
+
+    if (options?.minBudget !== undefined) {
+        query.set('minBudget', String(options.minBudget));
+    }
+
+    if (options?.maxBudget !== undefined) {
+        query.set('maxBudget', String(options.maxBudget));
+    }
+
+    if (options?.deadline) {
+        query.set('deadline', options.deadline);
     }
 
     const path = `/jobs?${query.toString()}`;

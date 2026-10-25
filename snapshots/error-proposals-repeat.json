@@ -4,7 +4,7 @@
     "body": {
         "error": {
             "code": "CONFLICT",
-            "message": "You have already sent a proposal to this job"
+            "message": "You already have a pending proposal on this job"
         }
     }
 }

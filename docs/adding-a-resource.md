@@ -180,16 +180,18 @@ Pick the ownership shape on purpose, and say why in a comment:
 
 Use what exists before writing a helper:
 
-| Need                                        | Helper                                                                          |
-| ------------------------------------------- | ------------------------------------------------------------------------------- |
-| a service or job the caller owns            | `assertListingOwned(id, 'SERVICE' \| 'JOB', companyId)`                         |
-| a listing anyone may read, else 404         | `assertListingVisible(listing, callerId, type)`                                 |
-| the company that owns a row                 | `companyBriefSelect` + `toCompanyBrief` (`lib/company-profile.ts`)              |
-| a date-only column                          | `fromDateOnly` / `toDateOnly` (`lib/dates.ts`)                                  |
-| a keyword search                            | `splitWords` + `containsWord` (`lib/search.ts`)                                 |
-| an upload stored with the row               | `saveWithUpload` (`lib/upload.ts`)                                              |
-| a write whose row may be gone (P2025 → 404) | `orNotFound(write, message)` (`lib/prisma-errors.ts`)                           |
-| a 409 from a unique index                   | a small function like `portfolioLinkConflict`, built on `uniqueViolationFields` |
+| Need                                         | Helper                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------- |
+| a service or job the caller owns             | `assertListingOwned(id, 'SERVICE' \| 'JOB', companyId)`                         |
+| a project the caller is a party to, else 404 | `assertProjectParty(projectId, companyId)` (`lib/project.ts`)                   |
+| a project status move (ADR 0015)             | `moveProjectStatus(tx, projectId, from, to)` (`lib/project.ts`)                 |
+| a listing anyone may read, else 404          | `assertListingVisible(listing, callerId, type)`                                 |
+| the company that owns a row                  | `companyBriefSelect` + `toCompanyBrief` (`lib/company-profile.ts`)              |
+| a date-only column                           | `fromDateOnly` / `toDateOnly` (`lib/dates.ts`)                                  |
+| a keyword search                             | `splitWords` + `containsWord` (`lib/search.ts`)                                 |
+| an upload stored with the row                | `saveWithUpload` (`lib/upload.ts`)                                              |
+| a write whose row may be gone (P2025 → 404)  | `orNotFound(write, message)` (`lib/prisma-errors.ts`)                           |
+| a 409 from a unique index                    | a small function like `portfolioLinkConflict`, built on `uniqueViolationFields` |
 
 If a helper would be the same for a service and a job with `'SERVICE'`
 swapped for `'JOB'`, it belongs in `lib/listing.ts`, once.

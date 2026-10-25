@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/review",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Receiver can review the project"
+        }
+    }
+}

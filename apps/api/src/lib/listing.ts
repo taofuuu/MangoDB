@@ -119,6 +119,46 @@ export function categoryReplace(categoryIds: number[]) {
     return { deleteMany: {}, ...categoryCreate(categoryIds) };
 }
 
+// US3-2 / US3-4. Two names find listings with either (OR). Case is ignored.
+export function categoryNameWhere(names: string[]): Prisma.ListingWhereInput {
+    return {
+        listingCategory: {
+            some: {
+                category: { categoryName: { in: names, mode: 'insensitive' } },
+            },
+        },
+    };
+}
+
+// US3-2 / US3-5. Keeps a listing whose budget range overlaps the filter range,
+// so a deal is possible somewhere inside both. A one-sided range is open-ended
+// only on its missing side; an unpriced listing cannot match a filter.
+export function listingBudgetWhere(filter: {
+    minBudget?: number | undefined;
+    maxBudget?: number | undefined;
+}): Prisma.ListingWhereInput[] {
+    const where: Prisma.ListingWhereInput[] = [];
+    if (filter.maxBudget !== undefined) {
+        where.push({
+            OR: [
+                { minBudget: { lte: filter.maxBudget } },
+                { AND: [{ minBudget: null }, { maxBudget: { not: null } }] },
+            ],
+        });
+    }
+    if (filter.minBudget !== undefined) {
+        where.push({
+            OR: [
+                { maxBudget: { gte: filter.minBudget } },
+                {
+                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
+                },
+            ],
+        });
+    }
+    return where;
+}
+
 // Closes a listing that is still OPEN, inside the caller's transaction. The
 // status in the where is the check: if it is closed already, or another
 // request closed it a moment ago, nothing matches and the answer is a 409.

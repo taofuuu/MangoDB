@@ -6,7 +6,8 @@ import type {
 } from '@mangodb/shared';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord, splitWords } from './search';
-import { toDateOnly } from './dates';
+import { fromDateOnly, toDateOnly } from './dates';
+import { categoryNameWhere, listingBudgetWhere } from './listing';
 import type { Prisma } from '../generated/prisma/client';
 
 // The columns a job posting query selects. Naming them explicitly keeps the
@@ -83,19 +84,36 @@ export function jobKeywordWhere(word: string): Prisma.ListingWhereInput {
     return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
 }
 
-// US2-7 / US3-4. Which jobs a list may return to the caller:
+// US3-5. Keeps a job whose deadline is on or before the given day in UTC.
+// Jobs without a deadline cannot match a deadline filter.
+export function jobDeadlineWhere(deadline: string): Prisma.ListingWhereInput {
+    return {
+        job: {
+            deadline: {
+                lte: fromDateOnly(deadline),
+            },
+        },
+    };
+}
+
+// US2-7 / US3-4 / US3-5. Which jobs a list may return to the caller:
 // - Only jobs, and only of companies not soft-deleted (search is discovery).
-// - status, companyId and each keyword word narrow it.
+// - status, companyId, category, minBudget, maxBudget, deadline and each keyword word narrow it.
 // - An OPEN job is visible to every company; a closed one only to its owner.
 export function jobSearchWhere(
     filters: {
         status?: ListingStatus | undefined;
         companyId?: number | undefined;
         q?: string | undefined;
+        category?: string[] | undefined;
+        minBudget?: number | undefined;
+        maxBudget?: number | undefined;
+        deadline?: string | undefined;
     },
     callerId: number,
 ): Prisma.ListingWhereInput {
-    const { status, companyId, q } = filters;
+    const { status, companyId, q, category, minBudget, maxBudget, deadline } =
+        filters;
     return {
         AND: [
             { listingType: 'JOB' satisfies ListingType },
@@ -103,6 +121,9 @@ export function jobSearchWhere(
             ...(companyId ? [{ companyId }] : []),
             { company: { deletedAt: null } },
             ...splitWords(q).map(jobKeywordWhere),
+            ...(category?.length ? [categoryNameWhere(category)] : []),
+            ...listingBudgetWhere({ minBudget, maxBudget }),
+            ...(deadline ? [jobDeadlineWhere(deadline)] : []),
             {
                 OR: [
                     { listingStatus: 'OPEN' satisfies ListingStatus },

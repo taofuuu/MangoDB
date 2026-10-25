@@ -1,0 +1,14 @@
+{
+    "request": "GET /projects/<project_id>/review",
+    "status": 200,
+    "body": {
+        "comment": "Snapshot Probe Review",
+        "createdAt": "<timestamp>",
+        "deliveryTimeScore": 4,
+        "projectId": "<project_id>",
+        "reviewId": "<review_id>",
+        "serviceScore": 4,
+        "valueForMoneyScore": 5,
+        "workQualityScore": 5
+    }
+}

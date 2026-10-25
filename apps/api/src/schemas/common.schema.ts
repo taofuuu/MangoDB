@@ -85,3 +85,28 @@ export function queryId(name: string) {
 export function optionalQueryId(name: string) {
     return z.preprocess(blankToUndefined, queryId(name).optional());
 }
+
+// One category or tech name. cat_name and tech_stack_name are both
+// VarChar(100), so one rule fits both (conventions §12).
+export const nameField = z.string().trim().max(100);
+// How many names one listing or one filter may carry.
+export const NAME_LIST_MAX = 20;
+
+// US3-2 / US3-4. A repeated param (?category=Web&category=Mobile) arrives as
+// an array, a single one as a plain string. Both become an array here. Blank
+// values are dropped, like a blank q, and the caps bound how big one query can
+// get.
+export const nameList = z.preprocess(
+    (value) => (typeof value === 'string' ? [value] : value),
+    z
+        .array(nameField)
+        .max(NAME_LIST_MAX)
+        .transform((names) => names.filter(Boolean)),
+);
+
+// A price or budget filter parameter: whole baht, non-negative, max INT4_MAX.
+// A blank value (?maxBudget=) means no limit.
+export const priceFilter = z.preprocess(
+    blankToUndefined,
+    z.coerce.number().int().nonnegative().max(INT4_MAX).optional(),
+);

@@ -12,6 +12,8 @@ import type {
 import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord, splitWords } from './search';
+import { categoryNameWhere, listingBudgetWhere } from './listing';
+import { getRating, ratingSelect, type RatingSource } from './rating';
 import type { Prisma } from '../generated/prisma/client';
 import type { ServiceListQuery } from '../schemas/service.schema';
 
@@ -175,15 +177,7 @@ export function serviceFilterWhere({
         where.push({ companyId });
     }
     if (category.length > 0) {
-        where.push({
-            listingCategory: {
-                some: {
-                    category: {
-                        categoryName: { in: category, mode: 'insensitive' },
-                    },
-                },
-            },
-        });
+        where.push(categoryNameWhere(category));
     }
     if (techStack.length > 0) {
         // ADR 0009: the service's own stack, not its company's.
@@ -202,27 +196,22 @@ export function serviceFilterWhere({
             },
         });
     }
-    // Price keeps a service whose range overlaps the slider's, so a deal is
-    // possible somewhere inside both. A one-sided range is open-ended only on
-    // its missing side; a service with no price at all cannot match a filter.
-    if (maxPrice !== undefined) {
-        // Its lowest price fits under the slider's max.
-        where.push({ minBudget: { lte: maxPrice } });
-    }
-    if (minPrice !== undefined) {
-        // Its highest price reaches the slider's min.
-        where.push({
-            OR: [
-                { maxBudget: { gte: minPrice } },
-                // A declared minimum with no upper limit can still reach the
-                // requested threshold. An entirely unpriced service cannot.
-                {
-                    AND: [{ minBudget: { not: null } }, { maxBudget: null }],
-                },
-            ],
-        });
-    }
+    // Price uses the shared overlap rule (listingBudgetWhere).
+    where.push(
+        ...listingBudgetWhere({ minBudget: minPrice, maxBudget: maxPrice }),
+    );
     return where;
+}
+
+export type RatingSortOrder = Extract<
+    ServiceListQuery['orderBy'],
+    'ratingDesc' | 'ratingAsc'
+>;
+
+export function isRatingSortOrder(
+    orderBy: ServiceListQuery['orderBy'],
+): orderBy is RatingSortOrder {
+    return orderBy === 'ratingDesc' || orderBy === 'ratingAsc';
 }
 
 // Ordering is applied in the database, before pagination. Price ordering uses
@@ -246,6 +235,9 @@ export function serviceOrderBy(
                 { listingId: 'desc' },
             ];
         case 'newest':
+        case 'ratingDesc':
+        case 'ratingAsc':
+            // Only the tie-break for rating; sortServicesByRating does the rest.
             return [{ createdAt: 'desc' }, { listingId: 'desc' }];
     }
 }
@@ -270,8 +262,9 @@ export function serviceSearchWhere({
     };
 }
 
-// US3-1. What one service search card needs. Only these company fields, never
-// the whole row: it holds the sign-in email and password hash (ADR 0001).
+// US3-1, US3-3. What one service search card needs. Only these company fields
+// and completed-project review scores, never the whole row: it holds the
+// sign-in email and password hash (ADR 0001).
 export const serviceSummarySelect = {
     listingId: true,
     listingTitle: true,
@@ -282,7 +275,7 @@ export const serviceSummarySelect = {
         select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
-    company: { select: companyBriefSelect },
+    company: { select: { ...companyBriefSelect, ...ratingSelect } },
 } as const satisfies Prisma.ListingSelect;
 
 interface ServiceSummaryRow {
@@ -293,7 +286,31 @@ interface ServiceSummaryRow {
     maxBudget: number | null;
     listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
-    company: CompanyBrief | null;
+    company: (CompanyBrief & RatingSource) | null;
+}
+
+// US3-3. Orders services by their Provider's averageRating using getRating.
+// Unrated Providers (averageRating === null) sort last in both directions.
+// Array.prototype.sort is stable in ES2019+, so rows already ordered by
+// serviceOrderBy('newest') keep their newest-first tie-breaker.
+export function sortServicesByRating<
+    T extends { company: RatingSource | null },
+>(rows: readonly T[], orderBy: RatingSortOrder): T[] {
+    const scored = rows.map((row) => ({
+        row,
+        rating: row.company ? getRating(row.company).averageRating : null,
+    }));
+
+    scored.sort((a, b) => {
+        if (a.rating === null && b.rating === null) return 0;
+        if (a.rating === null) return 1;
+        if (b.rating === null) return -1;
+        return orderBy === 'ratingDesc'
+            ? b.rating - a.rating
+            : a.rating - b.rating;
+    });
+
+    return scored.map(({ row }) => row);
 }
 
 export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
@@ -309,6 +326,9 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             .sort(),
         techStack: toTechStackNames(row.service),
         company: toCompanyBrief(row.company),
+        ...(row.company
+            ? getRating(row.company)
+            : { averageRating: null, ratingCount: 0 }),
     };
 }
 

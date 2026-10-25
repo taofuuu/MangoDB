@@ -68,15 +68,15 @@ export async function createJob(req: Request, res: Response): Promise<void> {
     res.status(201).json(toJob(created));
 }
 
-// US2-7. List job postings filtered by status with visibility rules:
+// US2-7 / US3-4 / US3-5. List job postings filtered by status, keywords, category, budget, deadline:
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
 export async function listJobs(req: Request, res: Response): Promise<void> {
-    const { page, pageSize, status, companyId, q } = parseQuery(
+    const { page, pageSize, ...filters } = parseQuery(
         jobListQuerySchema,
         req.query,
     );
-    const where = jobSearchWhere({ status, companyId, q }, req.auth!.companyId);
+    const where = jobSearchWhere(filters, req.auth!.companyId);
     const [totalItems, postings] = await prisma.$transaction([
         prisma.listing.count({ where }),
         prisma.listing.findMany({

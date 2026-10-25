@@ -70,3 +70,17 @@ export async function orNotFound<T>(
         throw err;
     }
 }
+
+// Same, for a write whose where also checks the row's state: no match means
+// the state was wrong (or a double click got there first), so a 409.
+export async function orConflict<T>(
+    write: Promise<T>,
+    message: string,
+): Promise<T> {
+    try {
+        return await write;
+    } catch (err) {
+        if (isRecordNotFound(err)) throw ApiError.conflict(message);
+        throw err;
+    }
+}

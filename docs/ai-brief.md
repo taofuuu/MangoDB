@@ -36,9 +36,11 @@ The words, from the database up:
   (a Provider offers work) or a **job** (a Receiver asks for it). Above the
   database it is always "service" or "job", never "service listing" or "job
   posting".
-- A **proposal** is a Provider's offer on a job. Its **sender** is the company
-  that wrote it, its **recipient** the company that owns the job, and it
-  points at the job by `listingId`.
+- A **proposal** is a Provider's offer on a job, or a Receiver's hire request
+  on a service (ADR 0016). Its **sender** is the company that wrote it, its
+  **recipient** the company that owns the listing, and it points at the listing
+  by `listingId`.
+
 - Accepting a proposal creates a **project**. Projects, quotations and reviews
   are Sprint 3's.
 
@@ -144,7 +146,10 @@ message.
 | An id in a query string             | `queryId(name)`, `optionalQueryId(name)`                                       |
 | A cleared field / a param not sent  | `blankToNull` / `blankToUndefined`                                             |
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
+| A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
+| A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
+| A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
@@ -252,6 +257,8 @@ as not found.
 | An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
 | A page size                  | the constants in `lib/pagination`                        |
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
+| The category list for a form | `useCategories()` in `lib/useCategories`                 |
+| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`               |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
@@ -327,10 +334,34 @@ tappable.
 | Paginated list controls   | `Pagination` — count, page state and Previous/Next buttons     |
 | A file picker             | `FileUpload` — PNG/JPEG/WebP, 5MB                              |
 | Labelled input / textarea | `Input`, `Textarea` — both take an `error` prop                |
+| A password box            | `PasswordInput` — `Input` with a show/hide eye                 |
 
 An add form and an edit form for the same thing are one component with a mode
 (`PortfolioForm`, `CertificateForm`, `ServiceForm`, `JobForm`), mounted only
 while open.
+
+A form keeps its values, checks and save in a hook beside it (`JobForm.tsx`
+next to `useJobForm.ts`), so the component is mostly JSX. Copy `useJobForm`
+for a new form:
+
+```tsx
+const { values, setField, errors, formError, isSaving, handleSubmit } =
+    useJobForm(initialJob);
+
+<Input
+    value={values.title}
+    onChange={(value) => setField('title', value)}
+    error={errors.title}
+/>;
+```
+
+- One `values` object, not one `useState` per field. `setField` also clears
+  that field's error.
+- The hook checks the `lib/validation` rules, sends the request, and puts an
+  API failure under its fields with `toFormErrors`. It also does what comes
+  after a save: `useJobForm` navigates, and a modal form's hook calls its
+  `onSave` and `onClose`.
+- The component keeps only what the screen shows, such as which modal is open.
 
 Seven hand-rolled modal shells existed before `ModalShell`, and four of them
 ignored the Escape key. That is the pattern to avoid.
@@ -377,6 +408,7 @@ Every row has really happened on this codebase.
 | `type-sm font-semibold`                                | `type-sm !font-[600]`               |
 | `text-gray-500`, `bg-white`                            | `text-ink-soft`, `bg-surface-white` |
 | `alert(describeError(err))` after a confirm            | throw it; `ConfirmModal` shows it   |
+| A `useState` per form field, submit in the component   | a `use<Thing>Form` hook beside it   |
 
 ---
 
@@ -388,13 +420,29 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
-- Job search filters beyond the keyword. `GET /jobs` takes `q`, `companyId`,
+- Job search filters beyond keyword, category, budget and deadline. `GET /jobs`
+  takes `q`, `category`, `minBudget`, `maxBudget`, `deadline`, `companyId`,
   `status` and paging. The category, budget, deadline and order controls on
-  `/jobs` send nothing yet.
-- A delivery duration on a service. Its price is the listing's
-  `minBudget`/`maxBudget` range, the same columns a job uses.
-- Projects, quotations and reviews beyond the project row that accepting a
-  proposal creates — Sprint 3 builds them.
+  `/jobs` send nothing yet: `useJobList` sends only the keyword.
+- A delivery duration on a service, by decision (ADR 0019, rejected). Its
+  price is the listing's `minBudget`/`maxBudget` range, the same columns a
+  job uses.
+- Project, quotation and update endpoints. The tables and the shared types
+  exist (ADRs 0015-0018); the only endpoints are accepting a proposal, which
+  creates the project row, the reads `GET /projects/mine`,
+  `GET /projects/:projectId`, `…/updates` and `…/quotations`, the Provider's
+  `POST /projects/:projectId/quotations`,
+  `DELETE /quotations/:quotationId` and
+  `POST /projects/:projectId/updates`, the Receiver's
+  `POST /quotations/:quotationId/accept` and `…/reject`, the deposit pair
+  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
+  cancellation `POST /projects/:projectId/cancel`, the Provider's
+  `POST /projects/:projectId/submit-work`, the Receiver's
+  `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
+  Provider's completed work, `GET /companies/:companyId/completed-projects` — Sprint
+  3 builds the rest. All four review endpoints exist:
+  `POST`/`GET /projects/:projectId/review`,
+  `GET /companies/:companyId/reviews` and `…/reviews/summary`.
 
 ---
 

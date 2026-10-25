@@ -5,18 +5,7 @@ import type {
 } from '@mangodb/shared';
 import { companyProfileSelect, toCompanyProfile } from './company-profile';
 import type { Prisma } from '../generated/prisma/client';
-
-const ratingSelect = {
-    proposal: {
-        select: {
-            project: {
-                select: {
-                    rating: { select: { ratingScore: true } },
-                },
-            },
-        },
-    },
-} as const satisfies Prisma.CompanySelect;
+import { getRating, ratingSelect, type RatingSource } from './rating';
 
 // A strict subset of companyProfileSelect, derived rather than restated: the
 // list card shows less than the detail panel, and picking the columns out by
@@ -39,36 +28,6 @@ export const adminCompanyDetailSelect = {
     ...ratingSelect,
     deletedAt: true,
 } as const satisfies Prisma.CompanySelect;
-
-interface RatingSource {
-    proposal: {
-        project: {
-            rating: { ratingScore: unknown }[];
-        } | null;
-    }[];
-}
-
-function getRating(source: RatingSource): {
-    averageRating: number | null;
-    ratingCount: number;
-} {
-    const scores = source.proposal.flatMap(
-        ({ project }) =>
-            project?.rating.map(({ ratingScore }) => Number(ratingScore)) ?? [],
-    );
-
-    if (scores.length === 0) {
-        return { averageRating: null, ratingCount: 0 };
-    }
-
-    const average =
-        scores.reduce((sum, score) => sum + score, 0) / scores.length;
-
-    return {
-        averageRating: Math.round(average * 10) / 10,
-        ratingCount: scores.length,
-    };
-}
 
 interface CompanyAccountSummaryRow extends RatingSource {
     companyId: number;
@@ -99,11 +58,11 @@ type CompanyAccountDetailRow = Parameters<typeof toCompanyProfile>[0] &
 export function toCompanyAccountDetail(
     company: CompanyAccountDetailRow,
 ): CompanyAccountDetail {
-    const { proposal, deletedAt, ...profile } = company;
+    const { proposal, listing, deletedAt, ...profile } = company;
 
     return {
         ...toCompanyProfile(profile),
-        ...getRating({ proposal }),
+        ...getRating({ proposal, listing }),
         deletedAt: !deletedAt ? null : deletedAt.toISOString(),
     };
 }

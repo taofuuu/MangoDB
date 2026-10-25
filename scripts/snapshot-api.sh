@@ -103,6 +103,13 @@ D_LIVE=0
 # Probe E: the Provider whose own proposal list section 10b records.
 TOKEN_E=""
 E_LIVE=0
+# Probe F: the Receiver whose own hire request list section 10b records.
+TOKEN_F=""
+F_LIVE=0
+HIRE_SERVICE_ID=""
+F_PROPOSAL_ID=""
+HIRE_PROPOSAL_SERVICE_ID=""
+HIRE_ACCEPT_PROPOSAL_ID=""
 DELETED_JOB_ID=""
 # ADR 0009: a second probe whose tech name differs only in case, and 1 once
 # tech names starting with the run id may exist in tech_stack.
@@ -157,11 +164,14 @@ cleanup() {
     listing_ids="$(echo $NEW_JOB_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
         $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_JOB_ID $DELETED_JOB_ID \
-        $ACCEPT_JOB_ID)"
+        $ACCEPT_JOB_ID $HIRE_SERVICE_ID $HIRE_PROPOSAL_SERVICE_ID)"
     # project.proposal_id is ON DELETE RESTRICT, so the accepted proposal's
     # project goes first, or deleting its posting fails.
     if [ -n "$ACCEPT_PROPOSAL_ID" ]; then
         run_db "prisma.project.deleteMany({ where: { proposalId: $ACCEPT_PROPOSAL_ID } })"
+    fi
+    if [ -n "$HIRE_ACCEPT_PROPOSAL_ID" ]; then
+        run_db "prisma.project.deleteMany({ where: { proposalId: $HIRE_ACCEPT_PROPOSAL_ID } })"
     fi
     if [ -n "$listing_ids" ]; then
         run_db "prisma.listing.deleteMany({ where: { listingId: { in: [${listing_ids// /,}] } } })"
@@ -205,6 +215,10 @@ cleanup() {
     if [ "$E_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
             -H "Authorization: Bearer $TOKEN_E"
+    fi
+    if [ "$F_LIVE" = 1 ]; then
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+            -H "Authorization: Bearer $TOKEN_F"
     fi
     if [ "$A_LIVE" = 1 ]; then
         curl -sS -o /dev/null -X DELETE "$API_URL/admin/companies/$COMPANY_A_ID" \
@@ -440,6 +454,24 @@ snap error-companies-one-invalid-id GET /companies/not-a-number \
 # One past the int4 column's range: a 400, not a database error.
 snap error-companies-one-id-too-large GET /companies/2147483648 \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# US2-5. A Provider's completed work, newest first, for its public profile.
+snap companies-completed-projects GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap companies-completed-projects-receiver GET "/companies/$RECEIVER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+snap error-companies-completed-projects-unauthorized GET "/companies/$PROVIDER_ID/completed-projects"
+snap error-companies-completed-projects-forbidden-admin GET "/companies/$PROVIDER_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+snap error-companies-completed-projects-not-found GET /companies/2147483647/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-admin GET "/companies/$ADMIN_ID/completed-projects" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-invalid-id GET /companies/not-a-number/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+snap error-companies-completed-projects-id-too-large GET /companies/2147483648/completed-projects \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 
 if [ "$READ_ONLY" = 1 ]; then
     echo
@@ -922,16 +954,13 @@ snap job-proposals-list GET "/jobs/$NEW_JOB_ID/proposals" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 # ---------------------------------------------------------------------------
-# 10b. List Provider's proposals (US2-9)
+# 10b. List proposals and hire requests (US2-9)
 # ---------------------------------------------------------------------------
 
 echo
 echo "proposals mine"
 
 snap error-proposals-mine-unauthorized GET /proposals/mine
-
-snap error-proposals-mine-forbidden-receiver GET /proposals/mine \
-    -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap error-proposals-mine-forbidden-admin GET /proposals/mine \
     -H "$(bearer "$TOKEN_ADMIN")"
@@ -940,9 +969,6 @@ snap error-proposals-mine-invalid-query GET "/proposals/mine?page=0&status=INVAL
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-proposals-mine-counts-unauthorized GET /proposals/mine/counts
-
-snap error-proposals-mine-counts-forbidden-receiver GET /proposals/mine/counts \
-    -H "$(bearer "$TOKEN_RECEIVER")"
 
 # The lists below come from probe E, a Provider only this run can sign in as,
 # so they hold just the one proposal it sends here. The seed provider is a
@@ -978,6 +1004,50 @@ snap proposals-mine-counts GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_E")"
 
 [ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_E")")" = 204 ] && E_LIVE=0
+
+# The lists below come from probe F, a Receiver only this run can sign in as,
+# to prove that Receivers see their sent hire requests on a Service (US2-9).
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d "{\"listingTitle\":\"Snapshot Probe service for hire $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":60000}" >/dev/null
+HIRE_SERVICE_ID="$(jget serviceId)"
+if [ -z "$HIRE_SERVICE_ID" ]; then
+    echo "could not create the hire probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "listing_id=$HIRE_SERVICE_ID")
+
+api POST /auth/register -H 'Content-Type: application/json' \
+    -d "{\"companyName\":\"Snapshot Probe F\",\"username\":\"${RUN}f\",\"email\":\"${RUN}f@example.test\",\"password\":\"snapshot-probe-pw\",\"phone\":\"0833333334\",\"accountType\":\"RECEIVER\",\"companyType\":[\"SME\"],\"tosAccepted\":true}" >/dev/null
+TOKEN_F="$(jget accessToken)"
+if [ -z "$TOKEN_F" ]; then
+    echo "could not register probe F:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+F_LIVE=1
+F_COMPANY_ID="$(jget company.companyId)"
+SUBS+=(--id "sender_id=$F_COMPANY_ID")
+
+api POST "/services/$HIRE_SERVICE_ID/proposals" -H "$(bearer "$TOKEN_F")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Full-stack development for our platform.","duration":3}' >/dev/null
+F_PROPOSAL_ID="$(jget proposalId)"
+if [ -n "$F_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$F_PROPOSAL_ID")
+fi
+
+snap proposals-mine-receiver GET /proposals/mine \
+    -H "$(bearer "$TOKEN_F")"
+
+snap proposals-mine-receiver-counts GET /proposals/mine/counts \
+    -H "$(bearer "$TOKEN_F")"
+
+# Deleting the service deletes its hire request too (ON DELETE CASCADE).
+run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
+
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_F")")" = 204 ] && F_LIVE=0
 
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
@@ -1262,6 +1332,15 @@ snap services-order-price-desc GET \
     "/services?techStack=$RUN&orderBy=priceDesc" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# US3-3. Sorting by Provider rating, highest or lowest first.
+snap services-order-rating-desc GET \
+    "/services?techStack=$RUN&orderBy=ratingDesc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap services-order-rating-asc GET \
+    "/services?techStack=$RUN&orderBy=ratingAsc" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
 # Slider ends that cross are a 400 the filter panel can show.
 snap error-services-filter-price-range GET \
     "/services?minPrice=200000&maxPrice=1000" \
@@ -1466,7 +1545,8 @@ snap error-proposals-accept-forbidden POST "/proposals/$ACCEPT_PROPOSAL_ID/accep
 # 201 with the new project.
 snap proposals-accept POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
-SUBS+=(--id "project_id=$(jget projectId)")
+ACCEPT_PROJECT_ID="$(jget projectId)"
+SUBS+=(--id "project_id=$ACCEPT_PROJECT_ID")
 # The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
 # purpose, so this one snapshot names today, and only here: a run-wide rule
 # would also catch any other date that happens to be today.
@@ -1480,6 +1560,194 @@ snap jobs-one-after-accept GET "/jobs/$ACCEPT_JOB_ID" \
 # A second accept is a state conflict, not a second project.
 snap error-proposals-accept-again POST "/proposals/$ACCEPT_PROPOSAL_ID/accept" \
     -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 17. Review a project (US5-1, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project reviews"
+snap error-projects-review-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/review"
+
+snap error-projects-review-not-found POST /projects/2147483647/review \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Provider is on the project but cannot review it.
+snap error-projects-review-forbidden POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# The Receiver cannot review a project before it is COMPLETED.
+snap error-projects-review-not-completed POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+
+# 400 when scores are outside 1-5 or missing.
+snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
+
+# ---------------------------------------------------------------------------
+# 18. Project review read and company reviews (US5-3, ADR 0018)
+# ---------------------------------------------------------------------------
+
+echo
+echo "project review read and company reviews"
+snap error-projects-review-get-unauthorized GET "/projects/$ACCEPT_PROJECT_ID/review"
+
+# 404 until the Receiver submits a review.
+snap error-projects-review-get-not-reviewed GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# Complete the project via direct DB update to test review creation and read.
+run_db "prisma.project.update({ where: { projectId: $ACCEPT_PROJECT_ID }, data: { projectStatus: 'COMPLETED', completedAt: new Date() } })"
+
+api POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}' >/dev/null
+NEW_REVIEW_ID="$(jget reviewId)"
+if [ -n "$NEW_REVIEW_ID" ]; then
+    SUBS+=(--id "review_id=$NEW_REVIEW_ID")
+fi
+
+# The Receiver and Provider can both read the review (200).
+snap projects-review-get GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap projects-review-get-provider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-projects-review-get-outsider GET "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_ADMIN")"
+
+# Provider's reviews list and summary
+snap error-companies-reviews-unauthorized GET "/companies/$PROVIDER_ID/reviews"
+
+snap error-companies-reviews-not-found GET "/companies/2147483647/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap error-companies-reviews-summary-not-found GET "/companies/2147483647/reviews/summary" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-list GET "/companies/$PROVIDER_ID/reviews" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+snap companies-reviews-summary GET "/companies/$PROVIDER_ID/reviews/summary" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+# ---------------------------------------------------------------------------
+# 19. Service hire requests: send, list, and accept (US2-15, US2-16, US2-17)
+# ---------------------------------------------------------------------------
+
+echo
+echo "service hire requests"
+api POST /services -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Snapshot Probe service for hire requests","listingDesc":"created by scripts/snapshot-api.sh","minBudget":20000,"maxBudget":100000}' >/dev/null
+HIRE_PROPOSAL_SERVICE_ID="$(jget serviceId)"
+if [ -z "$HIRE_PROPOSAL_SERVICE_ID" ]; then
+    echo "could not create the hire proposal probe service:" >&2
+    cat "$BODY" >&2
+    exit 1
+fi
+SUBS+=(--id "service_id=$HIRE_PROPOSAL_SERVICE_ID" --id "listing_id=$HIRE_PROPOSAL_SERVICE_ID")
+
+snap error-service-proposals-unauthorized POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-service-proposals-forbidden-provider POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-service-proposals-invalid-id POST /services/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-service-proposals-not-found POST /services/2147483647/proposals \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+snap error-service-proposals-validation POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":-100,"proposalTerms":"","duration":1.3}'
+
+run_db "prisma.listing.update({ where: { listingId: $HIRE_PROPOSAL_SERVICE_ID }, data: { companyId: $RECEIVER_ID } })"
+
+snap error-service-proposals-own-service POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+run_db "prisma.listing.update({ where: { listingId: $HIRE_PROPOSAL_SERVICE_ID }, data: { companyId: $PROVIDER_ID, listingStatus: 'CLOSED' } })"
+
+snap error-service-proposals-closed POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":50000,"proposalTerms":"Terms","duration":2}'
+
+run_db "prisma.listing.update({ where: { listingId: $HIRE_PROPOSAL_SERVICE_ID }, data: { companyId: $PROVIDER_ID, listingStatus: 'OPEN' } })"
+
+snap service-proposals-create POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":60000,"proposalTerms":"Hire request for platform backend delivery.","duration":2}'
+HIRE_ACCEPT_PROPOSAL_ID="$(jget proposalId)"
+if [ -n "$HIRE_ACCEPT_PROPOSAL_ID" ]; then
+    SUBS+=(--id "proposal_id=$HIRE_ACCEPT_PROPOSAL_ID")
+    resnap service-proposals-create
+fi
+
+snap error-service-proposals-repeat POST "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"proposalBudget":60000,"proposalTerms":"Hire request for platform backend delivery.","duration":2}'
+
+# US2-16. List the hire requests on the service for its owner.
+snap error-service-proposals-list-unauthorized GET "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals"
+
+snap error-service-proposals-list-invalid-id GET /services/not-a-number/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-service-proposals-list-not-found GET /services/2147483647/proposals \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap error-service-proposals-list-forbidden-receiver GET "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_RECEIVER")"
+
+run_db "prisma.listing.update({ where: { listingId: $HIRE_PROPOSAL_SERVICE_ID }, data: { companyId: $RECEIVER_ID } })"
+
+snap error-service-proposals-list-forbidden-provider GET "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+run_db "prisma.listing.update({ where: { listingId: $HIRE_PROPOSAL_SERVICE_ID }, data: { companyId: $PROVIDER_ID } })"
+
+snap service-proposals-list GET "/services/$HIRE_PROPOSAL_SERVICE_ID/proposals" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# US2-17. Accepting a hire request on a service creates the project and keeps
+# the service OPEN.
+snap service-proposals-accept POST "/proposals/$HIRE_ACCEPT_PROPOSAL_ID/accept" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+HIRE_PROJECT_ID="$(jget projectId)"
+if [ -n "$HIRE_PROJECT_ID" ]; then
+    SUBS+=(--id "project_id=$HIRE_PROJECT_ID")
+fi
+node "$HELPER" normalize --request "$LAST_REQUEST" --status "$LAST_STATUS" \
+    "${SUBS[@]}" --text "today=$(date -u +%F)" <"$BODY" >"$OUT_DIR/service-proposals-accept.json"
+
+snap services-one-after-accept GET "/services/$HIRE_PROPOSAL_SERVICE_ID" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
 
 echo
 echo "wrote $(find "$OUT_DIR" -name '*.json' | wc -l | tr -d ' ') snapshots to snapshots/"

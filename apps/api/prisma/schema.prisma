@@ -1,7 +1,13 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
+  // Lets @@unique take a `where`, for the one-PENDING rules on proposal and
+  // quotation. Without it the index lives only in SQL and the next
+  // `migrate diff` would try to drop it. Write each `where` the way Postgres
+  // stores it (`pg_indexes.indexdef`); Prisma compares the text, so any other
+  // spelling shows as drift.
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -129,18 +135,75 @@ model ListingCategory {
 }
 
 model Project {
-  projectId       Int               @id @default(autoincrement()) @map("proj_id")
-  proposalId      Int               @unique @map("proposal_id")
-  totalBudget     Decimal           @map("total_budget") @db.Decimal(12, 2)
-  startDate       DateTime          @map("start_date") @db.Date
-  endDate         DateTime?         @map("end_date") @db.Date
-  comment         String?
-  projectStatus   String            @map("status") @db.VarChar(50)
-  proposal        Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
-  projectContract ProjectContract[]
-  rating          Rating[]
+  projectId          Int               @id @default(autoincrement()) @map("proj_id")
+  proposalId         Int               @unique @map("proposal_id")
+  totalBudget        Decimal           @map("total_budget") @db.Decimal(12, 2)
+  startDate          DateTime          @map("start_date") @db.Date
+  endDate            DateTime?         @map("end_date") @db.Date
+  comment            String?
+  // ADR 0015: one of PROJECT_STATUSES in packages/shared.
+  projectStatus      String            @map("status") @db.VarChar(50)
+  // US4-6 and US4-7. Null until the Receiver reports the deposit, then until
+  // the Provider confirms it.
+  depositReportedAt  DateTime?         @map("deposit_reported_at") @db.Timestamptz(6)
+  depositConfirmedAt DateTime?         @map("deposit_confirmed_at") @db.Timestamptz(6)
+  // US4-13. Set when the Receiver accepts the work.
+  completedAt        DateTime?         @map("completed_at") @db.Timestamptz(6)
+  proposal           Proposal          @relation(fields: [proposalId], references: [proposalId], onDelete: Restrict, onUpdate: NoAction)
+  projectContract    ProjectContract[]
+  projectUpdate      ProjectUpdate[]
+  quotation          Quotation[]
+  review             Review?
 
   @@map("project")
+}
+
+// ADR 0017. A PDF the Provider sends on a project. Only one may be PENDING
+// at a time; decided ones stay as the record of what was agreed.
+model Quotation {
+  quotationId     Int      @id @default(autoincrement()) @map("quotation_id")
+  projectId       Int      @map("proj_id")
+  // Public URL of the PDF in storage, like certImage and portfolioImage.
+  quotationFile   String   @map("quotation_file") @db.VarChar(255)
+  quotationStatus String   @map("quotation_status") @db.VarChar(50)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  project         Project  @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([projectId], where: raw("((quotation_status)::text = 'PENDING'::text)"))
+  @@index([projectId])
+  @@map("quotation")
+}
+
+// US4-10 and US4-12. A project's timeline: the Provider's progress notes and
+// the Receiver's reasons for rejecting the work. Append-only: a correction is
+// a new row.
+model ProjectUpdate {
+  projectUpdateId Int      @id @default(autoincrement()) @map("project_update_id")
+  projectId       Int      @map("proj_id")
+  updateType      String   @map("update_type") @db.VarChar(50)
+  updateText      String   @map("update_text")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  project         Project  @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([projectId])
+  @@map("project_update")
+}
+
+// ADR 0018. One per project, by its Receiver, once COMPLETED. Final: no edit
+// or delete. Each score is 1 to 5; Zod enforces it, like the status columns.
+model Review {
+  reviewId           Int      @id @default(autoincrement()) @map("review_id")
+  projectId          Int      @unique @map("proj_id")
+  workQualityScore   Int      @map("work_quality_score")
+  // How the Provider dealt with the Receiver, not a service listing.
+  serviceScore       Int      @map("service_score")
+  valueForMoneyScore Int      @map("value_for_money_score")
+  deliveryTimeScore  Int      @map("delivery_time_score")
+  comment            String?  @db.VarChar(500)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  project            Project  @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("review")
 }
 
 model ProjectContract {
@@ -165,7 +228,9 @@ model Proposal {
   listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
   sender         Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([listingId, senderId])
+  // ADR 0016. One PENDING proposal per sender per listing. Once it is decided
+  // the same company may send another.
+  @@unique([listingId, senderId], where: raw("((proposal_status)::text = 'PENDING'::text)"))
   @@map("proposal")
 }
 
@@ -177,16 +242,6 @@ model Provider {
   company        Company       @relation(fields: [companyId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("provider")
-}
-
-model Rating {
-  ratingId    Int      @id @default(autoincrement()) @map("rating_id")
-  ratingTitle String   @map("rating_title") @db.VarChar(100)
-  ratingScore Decimal  @map("rating_score") @db.Decimal(2, 1)
-  projectId   Int?     @map("proj_id")
-  project     Project? @relation(fields: [projectId], references: [projectId], onDelete: Cascade, onUpdate: NoAction)
-
-  @@map("rating")
 }
 
 model Receiver {
