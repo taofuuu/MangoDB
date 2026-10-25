@@ -1,8 +1,11 @@
 /*
- * Tests for quotation upload, delete and storage helpers:
+ * Tests for quotation upload, read, decision and storage helpers:
  * - uploadPdf middleware (middleware/upload.ts, T4.1.2)
  * - POST /projects/:projectId/quotations (createQuotation, US4-1 / T4.1.3)
  * - DELETE /quotations/:quotationId (deleteQuotation, US4-2 / T4.2.2)
+ * - GET /projects/:projectId/quotations (listQuotations, US4-3 / T4.3.1)
+ * - POST /quotations/:quotationId/accept (acceptQuotation, US4-4 / T4.4.1)
+ * - POST /quotations/:quotationId/reject (rejectQuotation, US4-5 / T4.5.1)
  *
  * What they cover:
  * - T4.1.2: uploadPdf accepts application/pdf up to 5 MB, rejects non-PDF
@@ -24,6 +27,14 @@
  *   REJECTED quotation (or one the Receiver decided at the same moment so
  *   `where: { quotationStatus: 'PENDING' }` misses with P2025) is 409; none of
  *   them removes the PDF from storage.
+ * - T4.3.1: the project's quotations, newest first, for both parties. Bare
+ *   array, not paged. 404 for outsider / unknown project.
+ * - T4.4.1: the project's Receiver accepts a PENDING quotation, transitioning
+ *   it to ACCEPTED and moving the project to AWAITING_DEPOSIT in one transaction.
+ *   403 for Provider, 404 for outsider, 409 if not PENDING or project not AWAITING_QUOTATION.
+ * - T4.5.1: the project's Receiver rejects a PENDING quotation, transitioning
+ *   it to REJECTED while the project stays AWAITING_QUOTATION.
+ *   403 for Provider, 404 for outsider, 409 if not PENDING.
  *
  * How:
  * - lib/prisma and lib/storage are replaced with mock.module before the
@@ -111,10 +122,44 @@ function serviceProject(
 }
 
 const fakePrisma = {
+    $transaction: async (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => {
+        if (typeof work !== 'function') return Promise.all(work);
+        const savedProject = structuredClone(project);
+        const savedQuotations = structuredClone(quotations);
+        try {
+            return await work(fakePrisma);
+        } catch (err) {
+            project = savedProject;
+            quotations = savedQuotations;
+            throw err;
+        }
+    },
     project: {
         findUnique: async ({ where }: { where: { projectId: number } }) => {
             if (!project || project.projectId !== where.projectId) return null;
             return project;
+        },
+        updateMany: async ({
+            where,
+            data,
+        }: {
+            where: { projectId: number; projectStatus?: ProjectStatus };
+            data: { projectStatus?: ProjectStatus };
+        }) => {
+            if (
+                !project ||
+                project.projectId !== where.projectId ||
+                (where.projectStatus &&
+                    project.projectStatus !== where.projectStatus)
+            ) {
+                return { count: 0 };
+            }
+            if (data.projectStatus) {
+                project.projectStatus = data.projectStatus;
+            }
+            return { count: 1 };
         },
     },
     quotation: {
@@ -143,6 +188,21 @@ const fakePrisma = {
                 ) ?? null
             );
         },
+        findMany: async ({
+            where,
+        }: {
+            where: { projectId: number };
+            orderBy?: Array<Record<string, 'asc' | 'desc'>>;
+        }) => {
+            const matched = quotations.filter(
+                (q) => q.projectId === where.projectId,
+            );
+            return [...matched].sort((a, b) => {
+                const timeDiff = b.createdAt.getTime() - a.createdAt.getTime();
+                if (timeDiff !== 0) return timeDiff;
+                return b.quotationId - a.quotationId;
+            });
+        },
         create: async ({
             data,
         }: {
@@ -164,6 +224,27 @@ const fakePrisma = {
             };
             quotations.push(created);
             return created;
+        },
+        update: async ({
+            where,
+            data,
+        }: {
+            where: { quotationId: number; quotationStatus?: QuotationStatus };
+            data: { quotationStatus?: QuotationStatus };
+        }) => {
+            const target = quotations.find(
+                (q) =>
+                    q.quotationId === where.quotationId &&
+                    (!where.quotationStatus ||
+                        q.quotationStatus === where.quotationStatus),
+            );
+            if (!target) {
+                throw { code: 'P2025' };
+            }
+            if (data.quotationStatus) {
+                target.quotationStatus = data.quotationStatus;
+            }
+            return { ...target };
         },
         delete: async ({
             where,
@@ -308,6 +389,84 @@ async function deleteQuotationById(
 
     await controller.deleteQuotation(req, res);
     return { status, ended };
+}
+
+async function listQuotations(
+    callerId: number,
+    projectId = String(PROJECT_ID),
+): Promise<{ status: number; body: unknown }> {
+    const req = {
+        auth: { companyId: callerId, role: 'provider' },
+        params: { projectId },
+    } as unknown as Request;
+
+    let status = 200;
+    let body: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(payload: unknown) {
+            body = payload;
+            return this;
+        },
+    } as unknown as Response;
+
+    await controller.listQuotations(req, res);
+    return { status, body };
+}
+
+async function acceptQuotationById(
+    callerId: number,
+    quotationId = '1',
+): Promise<{ status: number; body: unknown }> {
+    const req = {
+        auth: { companyId: callerId, role: 'receiver' },
+        params: { quotationId },
+    } as unknown as Request;
+
+    let status = 200;
+    let body: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(payload: unknown) {
+            body = payload;
+            return this;
+        },
+    } as unknown as Response;
+
+    await controller.acceptQuotation(req, res);
+    return { status, body };
+}
+
+async function rejectQuotationById(
+    callerId: number,
+    quotationId = '1',
+): Promise<{ status: number; body: unknown }> {
+    const req = {
+        auth: { companyId: callerId, role: 'receiver' },
+        params: { quotationId },
+    } as unknown as Request;
+
+    let status = 200;
+    let body: unknown;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        json(payload: unknown) {
+            body = payload;
+            return this;
+        },
+    } as unknown as Response;
+
+    await controller.rejectQuotation(req, res);
+    return { status, body };
 }
 
 // Builds a minimal multipart/form-data request stream so Multer's real
@@ -634,5 +793,349 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.equal(quotations.length, 1);
         assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
         assert.equal(removedUrls.length, 0);
+    });
+});
+
+describe('GET /projects/:projectId/quotations (US4-3)', () => {
+    it('returns an empty array when the project has no quotations', async () => {
+        const { status, body } = await listQuotations(PROVIDER);
+
+        assert.equal(status, 200);
+        assert.deepEqual(body, []);
+    });
+
+    it('returns the project quotations newest first for the Provider', async () => {
+        quotations.push(
+            {
+                quotationId: 1,
+                projectId: PROJECT_ID,
+                quotationFile: 'https://storage.test/quote1.pdf',
+                quotationStatus: 'REJECTED',
+                createdAt: new Date('2026-10-25T08:00:00.000Z'),
+            },
+            {
+                quotationId: 2,
+                projectId: PROJECT_ID,
+                quotationFile: 'https://storage.test/quote2.pdf',
+                quotationStatus: 'PENDING',
+                createdAt: new Date('2026-10-25T09:00:00.000Z'),
+            },
+        );
+
+        const { status, body } = await listQuotations(PROVIDER);
+
+        assert.equal(status, 200);
+        const list = body as Quotation[];
+        assert.equal(list.length, 2);
+        assert.equal(list[0]!.quotationId, 2);
+        assert.equal(list[0]!.quotationStatus, 'PENDING');
+        assert.equal(list[0]!.createdAt, '2026-10-25T09:00:00.000Z');
+        assert.equal(list[1]!.quotationId, 1);
+        assert.equal(list[1]!.quotationStatus, 'REJECTED');
+        assert.equal(list[1]!.createdAt, '2026-10-25T08:00:00.000Z');
+    });
+
+    it('returns the project quotations newest first for the Receiver on a service project', async () => {
+        project = serviceProject('AWAITING_QUOTATION');
+        quotations.push({
+            quotationId: 1,
+            projectId: PROJECT_ID,
+            quotationFile: 'https://storage.test/quote1.pdf',
+            quotationStatus: 'PENDING',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+
+        const { status, body } = await listQuotations(RECEIVER);
+
+        assert.equal(status, 200);
+        const list = body as Quotation[];
+        assert.equal(list.length, 1);
+        assert.equal(list[0]!.quotationId, 1);
+    });
+
+    it('breaks ties on identical createdAt using quotationId desc', async () => {
+        const sameTime = new Date('2026-10-25T08:00:00.000Z');
+        quotations.push(
+            {
+                quotationId: 1,
+                projectId: PROJECT_ID,
+                quotationFile: 'https://storage.test/quote1.pdf',
+                quotationStatus: 'REJECTED',
+                createdAt: sameTime,
+            },
+            {
+                quotationId: 2,
+                projectId: PROJECT_ID,
+                quotationFile: 'https://storage.test/quote2.pdf',
+                quotationStatus: 'PENDING',
+                createdAt: sameTime,
+            },
+        );
+
+        const { status, body } = await listQuotations(PROVIDER);
+
+        assert.equal(status, 200);
+        const list = body as Quotation[];
+        assert.equal(list[0]!.quotationId, 2);
+        assert.equal(list[1]!.quotationId, 1);
+    });
+
+    it('answers 404 Project not found for an outsider', async () => {
+        await assert.rejects(
+            () => listQuotations(OUTSIDER),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Project not found');
+                return true;
+            },
+        );
+    });
+
+    it('answers 404 Project not found when the project does not exist', async () => {
+        project = null;
+
+        await assert.rejects(
+            () => listQuotations(PROVIDER),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Project not found');
+                return true;
+            },
+        );
+    });
+
+    it('rejects an invalid projectId parameter with 400', async () => {
+        await assert.rejects(
+            () => listQuotations(PROVIDER, 'not-a-number'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 400);
+                return true;
+            },
+        );
+    });
+});
+
+describe('POST /quotations/:quotationId/accept (US4-4)', () => {
+    beforeEach(() => {
+        quotations.push({
+            quotationId: 1,
+            projectId: PROJECT_ID,
+            quotationFile: UPLOADED.url,
+            quotationStatus: 'PENDING',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+    });
+
+    it('the Receiver accepts a pending quotation on a job project, moving project to AWAITING_DEPOSIT', async () => {
+        const { status, body } = await acceptQuotationById(RECEIVER, '1');
+
+        assert.equal(status, 200);
+        const dto = body as Quotation;
+        assert.equal(dto.quotationId, 1);
+        assert.equal(dto.quotationStatus, 'ACCEPTED');
+        assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
+        assert.equal(project?.projectStatus, 'AWAITING_DEPOSIT');
+    });
+
+    it('the Receiver accepts a pending quotation on a service project, moving project to AWAITING_DEPOSIT', async () => {
+        project = serviceProject('AWAITING_QUOTATION');
+
+        const { status, body } = await acceptQuotationById(RECEIVER, '1');
+
+        assert.equal(status, 200);
+        const dto = body as Quotation;
+        assert.equal(dto.quotationId, 1);
+        assert.equal(dto.quotationStatus, 'ACCEPTED');
+        assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
+        assert.equal(project?.projectStatus, 'AWAITING_DEPOSIT');
+    });
+
+    it('is a 403 when the Provider attempts to accept a quotation', async () => {
+        await assert.rejects(
+            () => acceptQuotationById(PROVIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 403);
+                assert.equal(
+                    err.message,
+                    'Only the Receiver can accept a quotation',
+                );
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+        assert.equal(project?.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('answers 404 Quotation not found for an outsider', async () => {
+        await assert.rejects(
+            () => acceptQuotationById(OUTSIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Quotation not found');
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+    });
+
+    it('answers 404 Quotation not found when quotation does not exist', async () => {
+        await assert.rejects(
+            () => acceptQuotationById(RECEIVER, '999'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Quotation not found');
+                return true;
+            },
+        );
+    });
+
+    it('rejects an invalid quotationId parameter with 400', async () => {
+        await assert.rejects(
+            () => acceptQuotationById(RECEIVER, 'abc'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 400);
+                return true;
+            },
+        );
+    });
+
+    it('answers 409 Quotation is not PENDING when accepting an already ACCEPTED or REJECTED quotation', async () => {
+        for (const quotationStatus of ['ACCEPTED', 'REJECTED'] as const) {
+            quotations[0]!.quotationStatus = quotationStatus;
+            await assert.rejects(
+                () => acceptQuotationById(RECEIVER, '1'),
+                (err: unknown) => {
+                    assert.ok(err instanceof ApiError);
+                    assert.equal(err.status, 409);
+                    assert.equal(err.message, 'Quotation is not PENDING');
+                    return true;
+                },
+            );
+        }
+    });
+
+    it('answers 409 Project is not AWAITING_QUOTATION and rolls back quotation status if project is not AWAITING_QUOTATION', async () => {
+        project!.projectStatus = 'CANCELLED';
+
+        await assert.rejects(
+            () => acceptQuotationById(RECEIVER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 409);
+                assert.equal(err.message, 'Project is not AWAITING_QUOTATION');
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+    });
+});
+
+describe('POST /quotations/:quotationId/reject (US4-5)', () => {
+    beforeEach(() => {
+        quotations.push({
+            quotationId: 1,
+            projectId: PROJECT_ID,
+            quotationFile: UPLOADED.url,
+            quotationStatus: 'PENDING',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+    });
+
+    it('the Receiver rejects a pending quotation on a job project, keeping project in AWAITING_QUOTATION', async () => {
+        const { status, body } = await rejectQuotationById(RECEIVER, '1');
+
+        assert.equal(status, 200);
+        const dto = body as Quotation;
+        assert.equal(dto.quotationId, 1);
+        assert.equal(dto.quotationStatus, 'REJECTED');
+        assert.equal(quotations[0]!.quotationStatus, 'REJECTED');
+        assert.equal(project?.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('the Receiver rejects a pending quotation on a service project, keeping project in AWAITING_QUOTATION', async () => {
+        project = serviceProject('AWAITING_QUOTATION');
+
+        const { status, body } = await rejectQuotationById(RECEIVER, '1');
+
+        assert.equal(status, 200);
+        const dto = body as Quotation;
+        assert.equal(dto.quotationId, 1);
+        assert.equal(dto.quotationStatus, 'REJECTED');
+        assert.equal(quotations[0]!.quotationStatus, 'REJECTED');
+        assert.equal(project?.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('is a 403 when the Provider attempts to reject a quotation', async () => {
+        await assert.rejects(
+            () => rejectQuotationById(PROVIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 403);
+                assert.equal(
+                    err.message,
+                    'Only the Receiver can reject a quotation',
+                );
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+    });
+
+    it('answers 404 Quotation not found for an outsider', async () => {
+        await assert.rejects(
+            () => rejectQuotationById(OUTSIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Quotation not found');
+                return true;
+            },
+        );
+        assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+    });
+
+    it('answers 404 Quotation not found when quotation does not exist', async () => {
+        await assert.rejects(
+            () => rejectQuotationById(RECEIVER, '999'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 404);
+                assert.equal(err.message, 'Quotation not found');
+                return true;
+            },
+        );
+    });
+
+    it('rejects an invalid quotationId parameter with 400', async () => {
+        await assert.rejects(
+            () => rejectQuotationById(RECEIVER, 'xyz'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 400);
+                return true;
+            },
+        );
+    });
+
+    it('answers 409 Quotation is not PENDING when rejecting an already REJECTED or ACCEPTED quotation', async () => {
+        for (const quotationStatus of ['ACCEPTED', 'REJECTED'] as const) {
+            quotations[0]!.quotationStatus = quotationStatus;
+            await assert.rejects(
+                () => rejectQuotationById(RECEIVER, '1'),
+                (err: unknown) => {
+                    assert.ok(err instanceof ApiError);
+                    assert.equal(err.status, 409);
+                    assert.equal(err.message, 'Quotation is not PENDING');
+                    return true;
+                },
+            );
+        }
     });
 });
