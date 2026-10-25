@@ -33,9 +33,7 @@ export function toQuotation(row: QuotationRow): Quotation {
 }
 
 export type QuotationParty = {
-    quotationId: number;
     projectId: number;
-    quotationStatus: QuotationStatus;
     myRole: ProjectRole;
 };
 
@@ -51,9 +49,7 @@ export async function assertQuotationParty(
     const quotation = await prisma.quotation.findUnique({
         where: { quotationId },
         select: {
-            quotationId: true,
             projectId: true,
-            quotationStatus: true,
             project: {
                 select: {
                     proposal: {
@@ -78,9 +74,7 @@ export async function assertQuotationParty(
         throw ApiError.notFound(QUOTATION_NOT_FOUND);
     }
     return {
-        quotationId: quotation.quotationId,
         projectId: quotation.projectId,
-        quotationStatus: quotation.quotationStatus as QuotationStatus,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
 }

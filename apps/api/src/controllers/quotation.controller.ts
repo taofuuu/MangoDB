@@ -78,7 +78,7 @@ export async function createQuotation(
     res.status(201).json(toQuotation(row));
 }
 
-// US4-2 (T4.2.1, T4.2.2). The Provider deletes a pending quotation so a wrong
+// US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
 // PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
 // where status = PENDING, so if the Receiver decides at the same moment, the
 // delete answers 409 and keeps the decided PDF in storage.

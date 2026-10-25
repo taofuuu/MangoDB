@@ -2,7 +2,7 @@
  * Tests for quotation upload, delete and storage helpers:
  * - uploadPdf middleware (middleware/upload.ts, T4.1.2)
  * - POST /projects/:projectId/quotations (createQuotation, US4-1 / T4.1.3)
- * - DELETE /quotations/:quotationId (deleteQuotation, US4-2 / T4.2.1 / T4.2.2)
+ * - DELETE /quotations/:quotationId (deleteQuotation, US4-2 / T4.2.2)
  *
  * What they cover:
  * - T4.1.2: uploadPdf accepts application/pdf up to 5 MB, rejects non-PDF
@@ -17,7 +17,7 @@
  * - A repeat upload while a quotation is PENDING is 409. If two uploads race
  *   into the partial unique index (P2002), saveWithUpload removes the orphan
  *   PDF from storage and the endpoint still answers 409.
- * - T4.2.1 / T4.2.2: the project's Provider (on both Job and Service projects)
+ * - T4.2.2: the project's Provider (on both Job and Service projects)
  *   can delete a PENDING quotation, removing the row and the PDF from storage
  *   and answering 204.
  * - Unknown quotation or outsider is 404, Receiver is 403, and an ACCEPTED or
