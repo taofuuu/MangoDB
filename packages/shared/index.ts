@@ -72,7 +72,13 @@ export type ListingType = (typeof LISTING_TYPES)[number];
 
 // Ordering choices of the service search. Never stored, so camelCase like
 // COMPANY_SORT_ORDERS (section 6).
-export const SERVICE_SORT_ORDERS = ['newest', 'priceAsc', 'priceDesc'] as const;
+export const SERVICE_SORT_ORDERS = [
+    'newest',
+    'priceAsc',
+    'priceDesc',
+    'ratingDesc',
+    'ratingAsc',
+] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.
@@ -201,9 +207,10 @@ export interface CompanySummary {
 export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
 export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
-// US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is this service's own.
-export interface ServiceSummary {
+// US3-1, US3-3. One service search result card: the service, with a short
+// profile of the company that offers it (ADR 0001) and its Provider rating
+// summary (T3.3.2). techStack is this service's own.
+export interface ServiceSummary extends ReviewSummary {
     serviceId: number;
     listingTitle: string;
     listingDesc: string;
@@ -391,9 +398,8 @@ export interface UpdateJobRequest {
     categoryIds?: number[] | undefined;
 }
 
-// US2-8. A proposal sent to a listing (ADR 0021). Today every listing it is
-// sent to is a job; the names say sender and listing so a hire request on a
-// service can use the same row.
+// US2-8, US2-15. A proposal sent to a listing (ADR 0016, ADR 0021): a
+// Provider's proposal on a job, or a Receiver's hire request on a service.
 export interface Proposal {
     proposalId: number;
     listingId: number;
@@ -406,11 +412,14 @@ export interface Proposal {
 }
 
 // US2-9. One row of GET /proposals/mine, as the sender sees it: the proposal,
-// with the listing's title and the company it was sent to, so the list needs
-// no extra request per row.
+// with the listing's title, its kind (JOB or SERVICE), and the company it was
+// sent to, so the list needs no extra request per row.
 export interface SentProposal extends Proposal {
     listingTitle: string;
+    listingType: ListingType;
     recipient: CompanyBrief;
+    // The project accepting it started; null until then.
+    projectId: number | null;
 }
 
 // US2-9. GET /proposals/mine/counts: how many proposals the caller has sent,
@@ -429,14 +438,15 @@ export interface CompanyBrief {
     companyPhoto: string | null;
 }
 
-// US2-10. One row of GET /jobs/:jobId/proposals, as the listing's owner sees
-// it: the proposal, with a short profile of the company that sent it, so the
-// owner can choose.
+// US2-10, US2-16. One row of GET /jobs/:jobId/proposals or
+// GET /services/:serviceId/proposals, as the listing's owner sees it: the
+// proposal, with a short profile of the company that sent it, so the owner
+// can choose.
 export interface ReceivedProposal extends Proposal {
     sender: CompanyBrief;
 }
 
-// What POST /jobs/:jobId/proposals accepts.
+// What POST /jobs/:jobId/proposals and POST /services/:serviceId/proposals accept.
 export interface CreateProposalRequest {
     proposalBudget: number;
     proposalTerms: string;

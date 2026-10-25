@@ -1,0 +1,20 @@
+{
+    "request": "GET /services/<service_id>",
+    "status": 200,
+    "body": {
+        "categoryIds": [],
+        "company": {
+            "companyId": 142,
+            "companyName": "Snapshot Seed Provider",
+            "companyPhoto": null
+        },
+        "listingDesc": "created by scripts/snapshot-api.sh",
+        "listingStatus": "OPEN",
+        "listingTitle": "Snapshot Probe service for hire requests",
+        "maxBudget": 100000,
+        "minBudget": 20000,
+        "serviceId": "<service_id>",
+        "techStack": [],
+        "type": "SERVICE"
+    }
+}

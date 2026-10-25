@@ -36,9 +36,11 @@ The words, from the database up:
   (a Provider offers work) or a **job** (a Receiver asks for it). Above the
   database it is always "service" or "job", never "service listing" or "job
   posting".
-- A **proposal** is a Provider's offer on a job. Its **sender** is the company
-  that wrote it, its **recipient** the company that owns the job, and it
-  points at the job by `listingId`.
+- A **proposal** is a Provider's offer on a job, or a Receiver's hire request
+  on a service (ADR 0016). Its **sender** is the company that wrote it, its
+  **recipient** the company that owns the listing, and it points at the listing
+  by `listingId`.
+
 - Accepting a proposal creates a **project**. Projects, quotations and reviews
   are Sprint 3's.
 
@@ -147,6 +149,7 @@ message.
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
+| A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
@@ -424,9 +427,20 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
-- Project, quotation, update and review endpoints. The tables and the shared
-  types exist (ADRs 0015-0018); the only endpoint is accepting a proposal,
-  which creates the project row — Sprint 3 builds the rest.
+- Project, quotation and update endpoints. The tables and the shared types
+  exist (ADRs 0015-0018); the only endpoints are accepting a proposal, which
+  creates the project row, the reads `GET /projects/mine`,
+  `GET /projects/:projectId` and `…/updates`, the Provider's
+  `POST /projects/:projectId/quotations`,
+  `DELETE /quotations/:quotationId` and
+  `POST /projects/:projectId/updates`, the deposit pair
+  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
+  Provider's `POST /projects/:projectId/submit-work`, the Receiver's
+  `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
+  Provider's completed work, `GET /companies/:companyId/completed-projects` — Sprint
+  3 builds the rest. All four review endpoints exist:
+  `POST`/`GET /projects/:projectId/review`,
+  `GET /companies/:companyId/reviews` and `…/reviews/summary`.
 
 ---
 

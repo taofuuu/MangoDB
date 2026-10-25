@@ -7,6 +7,8 @@ import { portfolioRoutes } from './portfolio.routes';
 import { certificateRoutes } from './certificate.routes';
 import { jobRoutes } from './job.routes';
 import { proposalRoutes } from './proposal.routes';
+import { projectRoutes } from './project.routes';
+import { quotationRoutes } from './quotation.routes';
 import { categoryRoutes } from './category.routes';
 
 export const routes = Router();
@@ -19,4 +21,6 @@ routes.use('/portfolios', portfolioRoutes);
 routes.use('/certificates', certificateRoutes);
 routes.use('/jobs', jobRoutes);
 routes.use('/proposals', proposalRoutes);
+routes.use('/projects', projectRoutes);
+routes.use('/quotations', quotationRoutes);
 routes.use('/categories', categoryRoutes);

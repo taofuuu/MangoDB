@@ -33,7 +33,8 @@ so its requests are same-origin and need no CORS.
 The snapshots need the accounts the seed creates:
 
 ```bash
-npm run db:seed        # the snapshot_ provider, receiver and admin, idempotent
+npm run db:seed        # snapshot_ and demo_ provider, receiver and admin, idempotent
+npm run db:seed -- --reset-demo   # also puts the demo projects back as seeded
 ```
 
 How the snapshots work and which diff each kind of change should produce:
@@ -57,29 +58,31 @@ database the moment it runs.
 `0_init` is a baseline: the database as it was before migrations existed,
 marked applied rather than run.
 
-## Image storage
+## File storage
 
-Certificates, portfolios and profile photos keep their bytes in Supabase
-Storage and only the public URL in Postgres. One bucket per kind, named in
-`src/lib/storage.ts`:
+Certificates, portfolios, profile photos and quotation PDFs keep their bytes in
+Supabase Storage and only the public URL in Postgres. One bucket per kind, named
+in `src/lib/storage.ts`:
 
 | Bucket        | Folder          | Column                              |
 | ------------- | --------------- | ----------------------------------- |
 | `certificate` | `certificates/` | `certificate.cert_image`            |
 | `portfolio`   | `portfolios/`   | `service_portfolio.portfolio_image` |
 | `profile`     | `companies/`    | `company.company_photo`             |
+| `quotation`   | `quotations/`   | `quotation.quotation_file`          |
 
-All three are **public** buckets: the URL in the column is served straight to
-an image, with no signing step. Create a missing one in the Supabase dashboard
-under Storage → New bucket, with "Public bucket" on. Nothing in the app creates
-buckets, so an upload into a missing one answers 500 and logs
+All four are **public** buckets: the URL in the column is served straight to
+the browser, with no signing step. Create a missing one in the Supabase
+dashboard under Storage → New bucket, with "Public bucket" on. Nothing in the
+app creates buckets, so an upload into a missing one answers 500 and logs
 `Bucket not found`.
 
-Uploads are capped at 5 MB and limited to PNG, JPEG and WebP
+Uploads are capped at 5 MB. Images are limited to PNG, JPEG and WebP
 (`IMAGE_EXTENSIONS` in `src/lib/storage.ts`), not `image/*`: an SVG is a
 document the browser runs scripts from when its public URL is opened directly.
-Every upload goes through `saveWithUpload` (`src/lib/upload.ts`), which removes
-the new file if the row cannot be written and the replaced one once it is.
+Quotations are limited to `application/pdf` (`PDF_MIME_TYPE`). Every upload goes
+through `saveWithUpload` (`src/lib/upload.ts`), which removes the new file if
+the row cannot be written and the replaced one once it is.
 
 ## How a request is authenticated
 

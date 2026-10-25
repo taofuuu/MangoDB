@@ -10,6 +10,8 @@ import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateOnly } from '@/lib/dates';
 import { formatBudgetRange } from '@/lib/money';
 import { listPortfolios } from '@/lib/portfolios';
+import { companyProfileHref } from '@/lib/profileLinks';
+import { useMyCompany } from '@/lib/useMyCompany';
 import type { ServiceSummary } from '@mangodb/shared';
 import ServiceActionsMenu from './ServiceActionsMenu';
 
@@ -33,6 +35,10 @@ export default function ServiceDetailPanel({
         null,
     );
     const [portfolioError, setPortfolioError] = useState(false);
+    // T3.7.1. Your own service's name opens your own profile. getMyProfile
+    // is cached, so opening many panels asks the API once.
+    const me = useMyCompany();
+    const viewerCompanyId = me.status === 'ready' ? me.company.companyId : null;
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
@@ -119,7 +125,10 @@ export default function ServiceDetailPanel({
                             size={44}
                         />
                         <Link
-                            href={`/companies/${service.company.companyId}`}
+                            href={companyProfileHref(
+                                service.company.companyId,
+                                viewerCompanyId,
+                            )}
                             className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
                         >
                             {service.company.companyName || '-'}

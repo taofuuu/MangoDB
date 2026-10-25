@@ -1,5 +1,5 @@
 {
-    "request": "GET /proposals/mine",
+    "request": "GET /companies/142/completed-projects",
     "status": 403,
     "body": {
         "error": {

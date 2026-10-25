@@ -1,5 +1,5 @@
 {
-    "request": "GET /proposals/mine/counts",
+    "request": "POST /services/<service_id>/proposals",
     "status": 403,
     "body": {
         "error": {

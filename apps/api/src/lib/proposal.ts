@@ -2,6 +2,7 @@ import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import type {
     CompanyBrief,
+    ListingType,
     Proposal,
     ProposalStatus,
     ProposalStatusCounts,
@@ -49,9 +50,9 @@ export function toProposal(row: ProposalRow): Proposal {
     };
 }
 
-// US2-10. A proposal as the listing's owner sees it in the proposal list: the
-// proposal plus the sender's name and photo, so the list needs no second call
-// per row to show who sent each one.
+// US2-10, US2-16. A proposal as the listing's owner sees it in the proposal
+// list: the proposal plus the sender's name and photo, so the list needs no
+// second call per row to show who sent each one.
 export const receivedProposalSelect = {
     ...proposalSelect,
     sender: { select: companyBriefSelect },
@@ -69,21 +70,26 @@ export function toReceivedProposal(row: ReceivedProposalRow): ReceivedProposal {
 }
 
 // US2-9. A proposal as its sender sees it in their own list: the proposal
-// plus the listing's title and its owner, so the page needs no extra request
-// per row. A soft-deleted owner is still shown: a proposal is history.
+// plus the listing's title, its type (JOB or SERVICE), its owner, and the
+// project it started once accepted, so the page needs no extra request per
+// row. A soft-deleted owner is still shown: a proposal is history.
 export const sentProposalSelect = {
     ...proposalSelect,
+    project: { select: { projectId: true } },
     listing: {
         select: {
             listingTitle: true,
+            listingType: true,
             company: { select: companyBriefSelect },
         },
     },
 } as const satisfies Prisma.ProposalSelect;
 
 type SentProposalRow = ProposalRow & {
+    project: { projectId: number } | null;
     listing: {
         listingTitle: string;
+        listingType: string;
         company: CompanyBrief | null;
     };
 };
@@ -92,7 +98,9 @@ export function toSentProposal(row: SentProposalRow): SentProposal {
     return {
         ...toProposal(row),
         listingTitle: row.listing.listingTitle,
+        listingType: row.listing.listingType as ListingType,
         recipient: toCompanyBrief(row.listing.company),
+        projectId: row.project?.projectId ?? null,
     };
 }
 
@@ -135,7 +143,13 @@ export async function findPendingProposalFor(
             listingId: true,
             proposalStatus: true,
             proposalBudget: true,
-            listing: { select: { listingStatus: true, companyId: true } },
+            listing: {
+                select: {
+                    listingType: true,
+                    listingStatus: true,
+                    companyId: true,
+                },
+            },
         },
     });
     if (!proposal) throw ApiError.notFound('Proposal not found');

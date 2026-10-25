@@ -15,10 +15,13 @@ import type { z } from 'zod';
 import type {
     ChangeCredentialsRequest,
     CreateJobRequest,
+    CreateProjectUpdateRequest,
     CreateProposalRequest,
+    CreateReviewRequest,
     CreateServiceRequest,
     DeleteCompanyAccountRequest,
     RegisterRequest,
+    RejectWorkRequest,
     UpdateCompanyProfileRequest,
     UpdateJobRequest,
     UpdateServiceRequest,
@@ -31,6 +34,11 @@ import type {
 import type { deleteCompanyAccountBodySchema } from './admin-company.schema';
 import type { createJobSchema, updateJobSchema } from './job.schema';
 import type { createProposalSchema } from './proposal.schema';
+import type {
+    createProjectUpdateSchema,
+    createReviewSchema,
+    rejectWorkSchema,
+} from './project.schema';
 import type {
     createServiceSchema,
     updateServiceSchema,
@@ -110,4 +118,28 @@ type _CreateProposalMatchesContract = Assert<
 type _ContractMatchesCreateProposal = Assert<
     CreateProposalRequest,
     CreateProposalInput
+>;
+
+type CreateProjectUpdateInput = z.infer<typeof createProjectUpdateSchema>;
+type _CreateProjectUpdateMatchesContract = Assert<
+    CreateProjectUpdateInput,
+    CreateProjectUpdateRequest
+>;
+type _ContractMatchesCreateProjectUpdate = Assert<
+    CreateProjectUpdateRequest,
+    CreateProjectUpdateInput
+>;
+
+type RejectWorkInput = z.infer<typeof rejectWorkSchema>;
+type _RejectWorkMatchesContract = Assert<RejectWorkInput, RejectWorkRequest>;
+type _ContractMatchesRejectWork = Assert<RejectWorkRequest, RejectWorkInput>;
+
+type CreateReviewInput = z.infer<typeof createReviewSchema>;
+type _CreateReviewMatchesContract = Assert<
+    CreateReviewInput,
+    CreateReviewRequest
+>;
+type _ContractMatchesCreateReview = Assert<
+    CreateReviewRequest,
+    CreateReviewInput
 >;
