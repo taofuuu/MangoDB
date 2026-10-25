@@ -140,6 +140,40 @@ export async function acceptQuotation(
     res.json(toQuotation(updated));
 }
 
+// US4-5 (T4.5.1). The Receiver rejects a pending quotation (ADR 0017).
+// Transitions the quotation to REJECTED so the Provider can send a new one;
+// the project stays AWAITING_QUOTATION (ADR 0015).
+export async function rejectQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can reject a quotation');
+    }
+
+    const updated = await orConflict(
+        prisma.quotation.update({
+            where: {
+                quotationId,
+                quotationStatus: 'PENDING' satisfies QuotationStatus,
+            },
+            data: {
+                quotationStatus: 'REJECTED' satisfies QuotationStatus,
+            },
+            select: quotationSelect,
+        }),
+        'Quotation is not PENDING',
+    );
+
+    res.json(toQuotation(updated));
+}
+
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
 // PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
 // where status = PENDING, so if the Receiver decides at the same moment, the
