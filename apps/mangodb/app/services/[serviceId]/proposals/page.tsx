@@ -25,9 +25,9 @@ import { redirectToUnauthorized } from '@/lib/session';
 const NOT_FOUND = 'This job could not be found.';
 
 // The list shows the proposals still in play, or only the rejected ones.
-type ViewMode = 'pending' | 'acceoted' | 'rejected';
+type ViewMode = 'pending' | 'accepted' | 'rejected';
 
-// US2-10. The proposals sent to one of your jobs, opened from the job.
+// US2-15. The proposals sent to one of your services, opened from the service.
 export default function JobProposalsPage() {
     const jobId = parseId(useParams().jobId);
 
