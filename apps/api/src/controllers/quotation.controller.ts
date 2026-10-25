@@ -2,14 +2,19 @@ import type { Request, Response } from 'express';
 import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
-import { isUniqueViolation } from '../lib/prisma-errors';
+import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
 import { assertProjectParty } from '../lib/project';
-import { quotationSelect, toQuotation } from '../lib/quotation';
-import { BUCKETS } from '../lib/storage';
+import {
+    assertQuotationParty,
+    quotationSelect,
+    toQuotation,
+} from '../lib/quotation';
+import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 import { requireFile } from '../middleware/upload';
 import { parseParams } from '../middleware/validate';
 import { projectIdParamSchema } from '../schemas/project.schema';
+import { quotationIdParamSchema } from '../schemas/quotation.schema';
 
 // US4-1 (T4.1.3). The Provider uploads a quotation PDF on a project while it
 // is AWAITING_QUOTATION and no quotation is pending (ADR 0017). The project
@@ -71,4 +76,39 @@ export async function createQuotation(
     }
 
     res.status(201).json(toQuotation(row));
+}
+
+// US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
+// PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
+// where status = PENDING, so if the Receiver decides at the same moment, the
+// delete answers 409 and keeps the decided PDF in storage.
+export async function deleteQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can delete a quotation');
+    }
+
+    const deleted = await orConflict(
+        prisma.quotation.delete({
+            where: {
+                quotationId,
+                quotationStatus: 'PENDING' satisfies QuotationStatus,
+            },
+            select: { quotationFile: true },
+        }),
+        'Quotation is not PENDING',
+    );
+
+    // Best-effort cleanup of the PDF in storage once the row is gone.
+    await removeFromStorageByUrl(deleted.quotationFile, BUCKETS.QUOTATION);
+
+    res.status(204).end();
 }

@@ -1,7 +1,8 @@
 /*
- * Tests for quotation upload and storage helpers:
+ * Tests for quotation upload, delete and storage helpers:
  * - uploadPdf middleware (middleware/upload.ts, T4.1.2)
  * - POST /projects/:projectId/quotations (createQuotation, US4-1 / T4.1.3)
+ * - DELETE /quotations/:quotationId (deleteQuotation, US4-2 / T4.2.2)
  *
  * What they cover:
  * - T4.1.2: uploadPdf accepts application/pdf up to 5 MB, rejects non-PDF
@@ -16,6 +17,13 @@
  * - A repeat upload while a quotation is PENDING is 409. If two uploads race
  *   into the partial unique index (P2002), saveWithUpload removes the orphan
  *   PDF from storage and the endpoint still answers 409.
+ * - T4.2.2: the project's Provider (on both Job and Service projects)
+ *   can delete a PENDING quotation, removing the row and the PDF from storage
+ *   and answering 204.
+ * - Unknown quotation or outsider is 404, Receiver is 403, and an ACCEPTED or
+ *   REJECTED quotation (or one the Receiver decided at the same moment so
+ *   `where: { quotationStatus: 'PENDING' }` misses with P2025) is 409; none of
+ *   them removes the PDF from storage.
  *
  * How:
  * - lib/prisma and lib/storage are replaced with mock.module before the
@@ -70,7 +78,9 @@ let project: FakeProject | null = null;
 let quotations: FakeQuotation[] = [];
 let uploadedBuckets: { bucket: string; folder: string }[] = [];
 let removedPaths: { path: string; bucket: string }[] = [];
+let removedUrls: { url: string; bucket: string }[] = [];
 let createThrowsP2002 = false;
+let receiverDecidesBeforeDelete = false;
 
 function jobProject(
     projectStatus: ProjectStatus = 'AWAITING_QUOTATION',
@@ -108,6 +118,18 @@ const fakePrisma = {
         },
     },
     quotation: {
+        findUnique: async ({ where }: { where: { quotationId: number } }) => {
+            const found = quotations.find(
+                (q) => q.quotationId === where.quotationId,
+            );
+            if (!found || !project || found.projectId !== project.projectId) {
+                return null;
+            }
+            return {
+                ...found,
+                project,
+            };
+        },
         findFirst: async ({
             where,
         }: {
@@ -143,6 +165,28 @@ const fakePrisma = {
             quotations.push(created);
             return created;
         },
+        delete: async ({
+            where,
+        }: {
+            where: { quotationId: number; quotationStatus: QuotationStatus };
+        }) => {
+            if (receiverDecidesBeforeDelete) {
+                const target = quotations.find(
+                    (q) => q.quotationId === where.quotationId,
+                );
+                if (target) target.quotationStatus = 'ACCEPTED';
+            }
+            const idx = quotations.findIndex(
+                (q) =>
+                    q.quotationId === where.quotationId &&
+                    q.quotationStatus === where.quotationStatus,
+            );
+            if (idx === -1) {
+                throw { code: 'P2025' };
+            }
+            const [deleted] = quotations.splice(idx, 1);
+            return { quotationFile: deleted!.quotationFile };
+        },
     },
 };
 
@@ -170,7 +214,9 @@ const fakeStorage = {
     removeFromStorage: async (path: string, bucket: string) => {
         removedPaths.push({ path, bucket });
     },
-    removeFromStorageByUrl: async () => {},
+    removeFromStorageByUrl: async (url: string, bucket: string) => {
+        removedUrls.push({ url, bucket });
+    },
 };
 
 function moduleUrl(specifier: string): string {
@@ -196,7 +242,9 @@ beforeEach(() => {
     quotations = [];
     uploadedBuckets = [];
     removedPaths = [];
+    removedUrls = [];
     createThrowsP2002 = false;
+    receiverDecidesBeforeDelete = false;
 });
 
 const PDF_FILE = {
@@ -234,6 +282,32 @@ async function uploadQuotation(
 
     await controller.createQuotation(req, res);
     return { status, body };
+}
+
+async function deleteQuotationById(
+    callerId: number,
+    quotationId = '1',
+): Promise<{ status: number; ended: boolean }> {
+    const req = {
+        auth: { companyId: callerId, role: 'provider' },
+        params: { quotationId },
+    } as unknown as Request;
+
+    let status = 200;
+    let ended = false;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        end() {
+            ended = true;
+            return this;
+        },
+    } as unknown as Response;
+
+    await controller.deleteQuotation(req, res);
+    return { status, ended };
 }
 
 // Builds a minimal multipart/form-data request stream so Multer's real
@@ -459,5 +533,106 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(removedPaths, [
             { path: UPLOADED.path, bucket: 'quotation' },
         ]);
+    });
+});
+
+describe('DELETE /quotations/:quotationId (US4-2)', () => {
+    beforeEach(() => {
+        quotations.push({
+            quotationId: 1,
+            projectId: PROJECT_ID,
+            quotationFile: UPLOADED.url,
+            quotationStatus: 'PENDING',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+    });
+
+    it('deletes a PENDING quotation as the Provider on a job project, removes the PDF from storage, and answers 204', async () => {
+        const { status, ended } = await deleteQuotationById(PROVIDER, '1');
+
+        assert.equal(status, 204);
+        assert.equal(ended, true);
+        assert.equal(quotations.length, 0);
+        assert.deepEqual(removedUrls, [
+            { url: UPLOADED.url, bucket: 'quotation' },
+        ]);
+    });
+
+    it('deletes a PENDING quotation as the Provider on a service project', async () => {
+        project = serviceProject('AWAITING_QUOTATION');
+
+        const { status, ended } = await deleteQuotationById(PROVIDER, '1');
+
+        assert.equal(status, 204);
+        assert.equal(ended, true);
+        assert.equal(quotations.length, 0);
+        assert.deepEqual(removedUrls, [
+            { url: UPLOADED.url, bucket: 'quotation' },
+        ]);
+    });
+
+    it('is a 404 for an unknown quotation or a caller outside the project', async () => {
+        await assert.rejects(
+            () => deleteQuotationById(PROVIDER, '999'),
+            (err: unknown) => err instanceof ApiError && err.status === 404,
+        );
+        await assert.rejects(
+            () => deleteQuotationById(OUTSIDER, '1'),
+            (err: unknown) => err instanceof ApiError && err.status === 404,
+        );
+        assert.equal(quotations.length, 1);
+        assert.equal(removedUrls.length, 0);
+    });
+
+    it('is a 403 when the Receiver tries to delete a quotation', async () => {
+        await assert.rejects(
+            () => deleteQuotationById(RECEIVER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 403);
+                assert.equal(
+                    err.message,
+                    'Only the Provider can delete a quotation',
+                );
+                return true;
+            },
+        );
+        assert.equal(quotations.length, 1);
+        assert.equal(removedUrls.length, 0);
+    });
+
+    it('is a 409 and keeps the PDF in storage when the quotation is ACCEPTED or REJECTED', async () => {
+        for (const quotationStatus of ['ACCEPTED', 'REJECTED'] as const) {
+            quotations[0]!.quotationStatus = quotationStatus;
+
+            await assert.rejects(
+                () => deleteQuotationById(PROVIDER, '1'),
+                (err: unknown) => {
+                    assert.ok(err instanceof ApiError);
+                    assert.equal(err.status, 409);
+                    assert.equal(err.message, 'Quotation is not PENDING');
+                    return true;
+                },
+            );
+        }
+        assert.equal(quotations.length, 1);
+        assert.equal(removedUrls.length, 0);
+    });
+
+    it('is a 409 and keeps the PDF when the Receiver decides at the same moment', async () => {
+        receiverDecidesBeforeDelete = true;
+
+        await assert.rejects(
+            () => deleteQuotationById(PROVIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 409);
+                assert.equal(err.message, 'Quotation is not PENDING');
+                return true;
+            },
+        );
+        assert.equal(quotations.length, 1);
+        assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
+        assert.equal(removedUrls.length, 0);
     });
 });
