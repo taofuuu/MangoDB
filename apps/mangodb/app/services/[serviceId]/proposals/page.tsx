@@ -148,8 +148,8 @@ export default function ServiceProposalsPage() {
         }
     };
 
-    // Accepting rejects every other pending proposal, so the list shows that
-    // without a refetch.
+    // A service stays open and can have multiple hires (ADR 0016), so accepting
+    // a proposal marks only this proposal as ACCEPTED while other proposals remain untouched.
     const handleAccept = async (proposalId: number) => {
         try {
             await acceptProposal(proposalId);
@@ -158,15 +158,11 @@ export default function ServiceProposalsPage() {
         }
 
         setProposals((prev) =>
-            prev.map((p) => {
-                if (p.proposalId === proposalId) {
-                    return { ...p, proposalStatus: 'ACCEPTED' };
-                }
-                if (p.proposalStatus === 'PENDING') {
-                    return { ...p, proposalStatus: 'REJECTED' };
-                }
-                return p;
-            }),
+            prev.map((p) =>
+                p.proposalId === proposalId
+                    ? { ...p, proposalStatus: 'ACCEPTED' }
+                    : p,
+            ),
         );
 
         setSelectedId(null);

@@ -74,15 +74,17 @@ export default function JobProposalsPage() {
     const activeIsLoading = jobId !== null && isLoading;
 
     const totalCount = proposals.length;
+    const pendingCount = proposals.filter(
+        (p) => p.proposalStatus === 'PENDING',
+    ).length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
-    const pendingCount = totalCount - rejectedCount;
 
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
-        const isRejected = p.proposalStatus === 'REJECTED';
-        return viewMode === 'rejected' ? isRejected : !isRejected;
+        if (viewMode === 'rejected') return p.proposalStatus === 'REJECTED';
+        return p.proposalStatus === 'PENDING';
     });
 
     const selectedProposal = proposals.find((p) => p.proposalId === selectedId);
@@ -213,7 +215,7 @@ export default function JobProposalsPage() {
                         title={
                             viewMode === 'rejected'
                                 ? 'No rejected proposals'
-                                : 'No proposals for this job yet'
+                                : 'No pending proposals'
                         }
                     />
                 ) : (
