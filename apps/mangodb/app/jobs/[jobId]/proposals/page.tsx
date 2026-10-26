@@ -181,18 +181,21 @@ export default function JobProposalsPage() {
                             },
                             {
                                 label: 'Total',
-                                // No view mode value for total; using null to indicate no filter
+                                // Total is non-clickable and moved to the right side
                                 value: null,
                                 count: totalCount,
+                                className: 'ml-auto',
                             },
                         ]}
                         value={viewMode}
                         onChange={(mode) => {
-                            setViewMode(mode);
-                            setSelectedId(null);
-                            setCurrentPage(1);
+                            if (mode !== null) {
+                                setViewMode(mode);
+                                setSelectedId(null);
+                                setCurrentPage(1);
+                            }
                         }}
-                        label="Show remaining or rejected proposals"
+                        label="Filter proposals by status"
                     />
                 </div>
 

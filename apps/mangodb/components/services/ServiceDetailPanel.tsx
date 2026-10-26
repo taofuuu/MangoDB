@@ -291,6 +291,29 @@ export default function ServiceDetailPanel({
                     )}
                 </div>
             </div>
+
+            {onEdit && onDelete && (
+                <div className="mt-auto pt-[2vh]">
+                    <Link
+                        href={`/services/${service.serviceId}/proposals`}
+                        className="
+                            flex
+                            h-[4.5vh]
+                            w-full
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-brand
+                            type-md
+                            text-surface-white
+                            transition
+                            hover:bg-brand-dark
+                        "
+                    >
+                        Proposals
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }

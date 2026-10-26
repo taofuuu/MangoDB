@@ -5,6 +5,7 @@ export type StatusTab<T> = {
     count?: number | string | undefined;
     // pills only: the chosen pill's colours, e.g. 'bg-brand text-surface-white'.
     activeClass?: string | undefined;
+    className?: string | undefined;
 };
 
 type StatusTabsProps<T> = {
@@ -17,6 +18,7 @@ type StatusTabsProps<T> = {
     // Proposals, received proposals). pills: a white pill per status that
     // fills with its own activeClass when chosen (My Jobs).
     variant?: 'chips' | 'pills';
+    className?: string | undefined;
 };
 
 // The status filter above a list. Built from the Your Proposals chips and the
@@ -27,13 +29,14 @@ export default function StatusTabs<T>({
     onChange,
     label,
     variant = 'chips',
+    className,
 }: StatusTabsProps<T>) {
     if (variant === 'pills') {
         return (
             <div
                 role="group"
                 aria-label={label}
-                className="flex items-center gap-[0.63vw]"
+                className={`flex items-center gap-[0.63vw] ${className ?? ''}`}
             >
                 {tabs.map((tab) => {
                     const isActive = tab.value === value;
@@ -51,7 +54,7 @@ export default function StatusTabs<T>({
                                 isActive
                                     ? `${tab.activeClass ?? 'bg-accent text-surface-white'} border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.18),0_3px_6px_rgba(0,0,0,0.18)]`
                                     : 'border-line bg-surface-white text-ink shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_2px_5px_rgba(0,0,0,0.12)] hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_3px_7px_rgba(0,0,0,0.16)]'
-                            }`}
+                            } ${tab.className ?? ''}`}
                         >
                             {tab.label}
                         </button>
@@ -62,24 +65,30 @@ export default function StatusTabs<T>({
     }
 
     return (
-        <div role="group" aria-label={label} className="flex flex-wrap gap-3">
+        <div
+            role="group"
+            aria-label={label}
+            className={`flex w-full flex-wrap items-center gap-3 ${className ?? ''}`}
+        >
             {tabs.map((tab) => {
                 const isActive = tab.value === value;
+                const isClickable =
+                    tab.value !== null && tab.value !== undefined;
                 return (
                     <button
                         key={tab.label}
                         type="button"
                         onClick={() => {
-                            const isClickable =
-                                tab.value !== null && tab.value !== undefined;
                             if (isClickable) onChange(tab.value);
                         }}
                         aria-pressed={isActive}
                         className={`flex overflow-hidden rounded-button border border-accent type-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                             isActive
                                 ? 'ring-2 ring-brand ring-offset-1'
-                                : 'hover:brightness-95'
-                        }`}
+                                : isClickable
+                                  ? 'hover:brightness-95 cursor-pointer'
+                                  : 'cursor-default pointer-events-none'
+                        } ${tab.className ?? ''}`}
                     >
                         <span className="bg-accent px-3 py-1.5 text-ink">
                             {tab.label}

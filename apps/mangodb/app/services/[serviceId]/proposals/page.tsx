@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { ReceivedProposal } from '@mangodb/shared';
 import {
-    listJobProposals,
+    listServiceProposals,
     acceptProposal,
     rejectProposal,
 } from '@/lib/proposals';
-import { getJob } from '@/lib/jobs';
+import { getService } from '@/lib/services';
+import { getCompanyProfile } from '@/lib/companies';
+import { isReceiverAccount } from '@/lib/roles';
 import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import StatusTabs from '@/components/ui/StatusTabs';
@@ -22,34 +24,65 @@ import {
 } from '@/lib/api';
 import { redirectToUnauthorized } from '@/lib/session';
 
-const NOT_FOUND = 'This job could not be found.';
+const NOT_FOUND = 'This service could not be found.';
 
-// The list shows the proposals still in play, or only the rejected ones.
-type ViewMode = 'pending' | 'accepted' | 'rejected';
+// The list shows the proposals filtered by status.
+type ViewMode = 'pending' | 'accepted' | 'rejected' | null;
 
-// US2-15. The proposals sent to one of your services, opened from the service.
-export default function JobProposalsPage() {
-    const jobId = parseId(useParams().jobId);
+// US2-16. The proposals sent to one of your services, opened from the service.
+export default function ServiceProposalsPage() {
+    const serviceId = parseId(useParams().serviceId);
 
-    const [listingTitle, setListingTitle] = useState('Job Posting Proposals');
+    const [listingTitle, setListingTitle] = useState('Service Proposals');
     const [proposals, setProposals] = useState<ReceivedProposal[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('pending');
-    const [isLoading, setIsLoading] = useState(jobId !== null);
+    const [isLoading, setIsLoading] = useState(serviceId !== null);
     const [error, setError] = useState<string | null>(null);
 
-    // The job gives the heading, and the list is its proposals. Only the
-    // job's owner may read them; anyone else gets the API's 403 message.
+    // The service gives the heading, and the list is its proposals. Only the
+    // service's owner may read them; anyone else gets the API's 403 message.
     useEffect(() => {
-        if (jobId === null) return;
+        if (serviceId === null) return;
 
         let isMounted = true;
 
-        Promise.all([getJob(jobId), listJobProposals(jobId)])
-            .then(([job, data]) => {
+        Promise.all([getService(serviceId), listServiceProposals(serviceId)])
+            .then(async ([service, data]) => {
                 if (!isMounted) return;
-                setListingTitle(job.listingTitle);
-                setProposals(data);
+                setListingTitle(service.listingTitle);
+                // A proposal for a service must be sent by a company with RECEIVER or BOTH role
+                const senderProfiles = await Promise.all(
+                    data.map(async (p) => {
+                        const sender = p.sender as {
+                            companyId: number;
+                            accountType?: string;
+                        };
+                        if (sender.accountType) {
+                            return isReceiverAccount(sender.accountType)
+                                ? p
+                                : null;
+                        }
+                        try {
+                            const profile = await getCompanyProfile(
+                                p.sender.companyId,
+                            );
+                            if (profile?.accountType) {
+                                return isReceiverAccount(profile.accountType)
+                                    ? p
+                                    : null;
+                            }
+                            return p;
+                        } catch {
+                            return p;
+                        }
+                    }),
+                );
+                if (!isMounted) return;
+                const validProposals = senderProfiles.filter(
+                    (p): p is ReceivedProposal => p !== null,
+                );
+                setProposals(validProposals);
                 setError(null);
             })
             .catch((err: unknown) => {
@@ -68,20 +101,28 @@ export default function JobProposalsPage() {
         return () => {
             isMounted = false;
         };
-    }, [jobId]);
+    }, [serviceId]);
 
-    const activeError = jobId === null ? NOT_FOUND : error;
-    const activeIsLoading = jobId !== null && isLoading;
+    const activeError = serviceId === null ? NOT_FOUND : error;
+    const activeIsLoading = serviceId !== null && isLoading;
 
+    const totalCount = proposals.length;
+    const pendingCount = proposals.filter(
+        (p) => p.proposalStatus === 'PENDING',
+    ).length;
+    const acceptedCount = proposals.filter(
+        (p) => p.proposalStatus === 'ACCEPTED',
+    ).length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
-    const remainCount = proposals.length - rejectedCount;
 
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
-        const isRejected = p.proposalStatus === 'REJECTED';
-        return viewMode === 'rejected' ? isRejected : !isRejected;
+        if (viewMode === 'pending') return p.proposalStatus === 'PENDING';
+        if (viewMode === 'accepted') return p.proposalStatus === 'ACCEPTED';
+        if (viewMode === 'rejected') return p.proposalStatus === 'REJECTED';
+        return true;
     });
 
     const selectedProposal = proposals.find((p) => p.proposalId === selectedId);
@@ -156,7 +197,9 @@ export default function JobProposalsPage() {
                     <h1 className="type-lg !font-[700] text-ink">
                         {viewMode === 'rejected'
                             ? 'Rejected Proposals'
-                            : 'Submitted Proposals'}
+                            : viewMode === 'accepted'
+                              ? 'Accepted Proposals'
+                              : 'Pending Proposals'}
                     </h1>
                     <h2 className="type-md !font-[600] text-ink mt-0.5">
                         {listingTitle}
@@ -165,27 +208,41 @@ export default function JobProposalsPage() {
                 </div>
 
                 {/* Stats & View Switchers */}
-                <div className="mb-6">
+                <div className="mb-6 flex flex-col gap-2">
                     <StatusTabs<ViewMode>
                         tabs={[
                             {
-                                label: 'Remain',
+                                label: 'Pending',
                                 value: 'pending',
-                                count: remainCount,
+                                count: pendingCount,
+                            },
+                            {
+                                label: 'Accepted',
+                                value: 'accepted',
+                                count: acceptedCount,
                             },
                             {
                                 label: 'Rejected',
                                 value: 'rejected',
                                 count: rejectedCount,
                             },
+                            {
+                                label: 'Total',
+                                // Total is non-clickable and moved to the right side
+                                value: null,
+                                count: totalCount,
+                                className: 'ml-auto',
+                            },
                         ]}
                         value={viewMode}
                         onChange={(mode) => {
-                            setViewMode(mode);
-                            setSelectedId(null);
-                            setCurrentPage(1);
+                            if (mode !== null) {
+                                setViewMode(mode);
+                                setSelectedId(null);
+                                setCurrentPage(1);
+                            }
                         }}
-                        label="Show remaining or rejected proposals"
+                        label="Filter proposals by status"
                     />
                 </div>
 
@@ -203,7 +260,9 @@ export default function JobProposalsPage() {
                         title={
                             viewMode === 'rejected'
                                 ? 'No rejected proposals'
-                                : 'No proposals for this job yet'
+                                : viewMode === 'accepted'
+                                  ? 'No accepted proposals'
+                                  : 'No pending proposals'
                         }
                     />
                 ) : (
@@ -295,6 +354,7 @@ export default function JobProposalsPage() {
                                             selectedProposal.proposalId,
                                         )
                                     }
+                                    isService
                                 />
                             </div>
                         )}

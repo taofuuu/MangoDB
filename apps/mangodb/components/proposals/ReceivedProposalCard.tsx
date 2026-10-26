@@ -37,10 +37,14 @@ export default function ReceivedProposalCard({
                     isSelected
                         ? proposal.proposalStatus === 'REJECTED'
                             ? 'border-danger ring-2 ring-danger/20'
-                            : 'border-brand ring-2 ring-brand/20'
+                            : proposal.proposalStatus === 'PENDING'
+                              ? 'border-accent ring-2 ring-accent/20'
+                              : 'border-brand ring-2 ring-brand/20'
                         : proposal.proposalStatus === 'REJECTED'
                           ? 'border-danger/20 hover:border-danger/50'
-                          : 'border-brand/20 hover:border-brand/50'
+                          : proposal.proposalStatus === 'PENDING'
+                            ? 'border-accent/60 hover:border-accent'
+                            : 'border-brand/20 hover:border-brand/50'
                 }`}
             >
                 <div className="flex items-start justify-between">
