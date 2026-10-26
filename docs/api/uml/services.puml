@@ -1,0 +1,118 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Services
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Services" as Services <<Resource>> {
+  + GET()
+  + POST()
+}
+class "FilterOptions" as FilterOptions <<Resource>> {
+  + GET()
+}
+class "MyServices" as MyServices <<Resource>> {
+  + GET()
+}
+class "Service" as ServiceR <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "ServiceProposals" as ServiceProposals <<Resource>> {
+  + GET()
+  + POST()
+}
+class "ServiceSummary" as ServiceSummaryRep <<Representation>> {
+  -serviceId : integer
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -categories : string[]
+  -techStack : string[]
+  -company : CompanyBrief
+}
+class "CreateServiceRequest" as CreateServiceRequestRep <<Representation>> {
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -categoryIds : integer[]?
+  -techStack : string[]?
+}
+class "Service" as ServiceRep <<Representation>> {
+  -serviceId : integer
+  -company : CompanyBrief
+  -type : SERVICE
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -listingStatus : OPEN, CLOSED
+  -categoryIds : integer[]
+  -techStack : string[]
+}
+class "ServiceFilterOptions" as ServiceFilterOptionsRep <<Representation>> {
+  -categories : string[]
+  -techStack : string[]
+}
+class "UpdateServiceRequest" as UpdateServiceRequestRep <<Representation>> {
+  -any CreateServiceRequest field, all optional
+}
+class "ReceivedProposal" as ReceivedProposalRep <<Representation>> {
+  -Proposal fields
+  -sender : CompanyBrief
+}
+class "CreateProposalRequest" as CreateProposalRequestRep <<Representation>> {
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+}
+class "Proposal" as ProposalRep <<Representation>> {
+  -proposalId : integer
+  -listingId : integer
+  -senderId : integer
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+  -proposalStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
+
+API -[#B45309,dashed]-> Services : <i><color:#B45309>«Path» /services</color></i>
+Services -[#BE185D,dashed]-> ServiceSummaryRep : <i><color:#BE185D>«use»</color></i>
+Services -[#BE185D,dashed]-> CreateServiceRequestRep : <i><color:#BE185D>«use»</color></i>
+Services -[#BE185D,dashed]-> ServiceRep : <i><color:#BE185D>«use»</color></i>
+Services -[#B45309,dashed]-> FilterOptions : <i><color:#B45309>«Path» /filter-options</color></i>
+FilterOptions -[#BE185D,dashed]-> ServiceFilterOptionsRep : <i><color:#BE185D>«use»</color></i>
+Services -[#B45309,dashed]-> MyServices : <i><color:#B45309>«Path» /mine</color></i>
+MyServices -[#BE185D,dashed]-> ServiceRep : <i><color:#BE185D>«use»</color></i>
+Services -[#B45309,dashed]-> ServiceR : <i><color:#B45309>«Path» /{serviceId}</color></i>
+ServiceR -[#BE185D,dashed]-> ServiceRep : <i><color:#BE185D>«use»</color></i>
+ServiceR -[#BE185D,dashed]-> UpdateServiceRequestRep : <i><color:#BE185D>«use»</color></i>
+ServiceR -[#B45309,dashed]-> ServiceProposals : <i><color:#B45309>«Path» /proposals</color></i>
+ServiceProposals -[#BE185D,dashed]-> ReceivedProposalRep : <i><color:#BE185D>«use»</color></i>
+ServiceProposals -[#BE185D,dashed]-> CreateProposalRequestRep : <i><color:#BE185D>«use»</color></i>
+ServiceProposals -[#BE185D,dashed]-> ProposalRep : <i><color:#BE185D>«use»</color></i>
+@enduml

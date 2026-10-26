@@ -1,0 +1,68 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Certificates
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Certificates" as Certificates <<Resource>> {
+  + GET()
+  + POST()
+}
+class "MyCertificates" as MyCertificates <<Resource>> {
+  + GET()
+}
+class "Certificate" as CertificateR <<Resource>> {
+  + PATCH()
+  + DELETE()
+}
+class "Certificate" as CertificateRep <<Representation>> {
+  -certificateId : integer
+  -certTitle : string
+  -organization : string
+  -certImage : url?
+  -credentialId : string?
+  -credentialUrl : url?
+  -issueMonth : number?
+  -issueYear : number?
+  -expireMonth : number?
+  -expireYear : number?
+}
+class "CertificateRequest" as CertificateRequestRep <<Representation>> {
+  -certTitle : string
+  -organization : string
+  -issueMonth, issueYear : number?
+  -expireMonth, expireYear : number?
+  -credentialId : string?
+  -credentialUrl : url?
+  -certImage : image file?, multipart
+}
+
+API -[#B45309,dashed]-> Certificates : <i><color:#B45309>«Path» /certificates</color></i>
+Certificates -[#BE185D,dashed]-> CertificateRep : <i><color:#BE185D>«use»</color></i>
+Certificates -[#BE185D,dashed]-> CertificateRequestRep : <i><color:#BE185D>«use»</color></i>
+Certificates -[#B45309,dashed]-> MyCertificates : <i><color:#B45309>«Path» /mine</color></i>
+MyCertificates -[#BE185D,dashed]-> CertificateRep : <i><color:#BE185D>«use»</color></i>
+Certificates -[#B45309,dashed]-> CertificateR : <i><color:#B45309>«Path» /{certificateId}</color></i>
+CertificateR -[#BE185D,dashed]-> CertificateRep : <i><color:#BE185D>«use»</color></i>
+CertificateR -[#BE185D,dashed]-> CertificateRequestRep : <i><color:#BE185D>«use»</color></i>
+@enduml

@@ -1,7 +1,9 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 import { FRONTEND_URL } from './env';
+import { openapiSpec } from './openapi';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -26,9 +28,35 @@ export function createApp() {
     app.use(express.json());
     app.use(cookieParser());
 
+    /**
+     * @openapi
+     * /health:
+     *   get:
+     *     tags: [Health]
+     *     summary: Check the API is up
+     *     security: []
+     *     responses:
+     *       '200':
+     *         description: The API is up
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   example: ok
+     */
     app.get('/health', (_req: Request, res: Response) => {
         res.json({ status: 'ok' });
     });
+
+    // The API docs (OpenAPI 3.1, from the @openapi comments above each route).
+    // Before the routes, so notFoundHandler never sees them.
+    app.get('/openapi.json', (_req: Request, res: Response) => {
+        res.json(openapiSpec);
+    });
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
     app.use(routes);
 
