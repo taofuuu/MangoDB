@@ -8,6 +8,9 @@ The hosted alpha is three pieces. Both hosts redeploy `main` on every push.
 | API                       | Render, free web plan | `apps/api`     |
 | Database and file storage | Supabase, own project | —              |
 
+Live at https://mango-db-beta.vercel.app, with the API at
+https://mangodb-api.onrender.com and its docs at `/api-docs`.
+
 The Supabase project is **not** the one the team develops against, so testers
 and teammates never write into each other's data.
 
@@ -15,6 +18,7 @@ and teammates never write into each other's data.
 
 | Setting           | Value                                                                        |
 | ----------------- | ---------------------------------------------------------------------------- |
+| Branch            | `main`                                                                       |
 | Root directory    | blank: the repo root, where npm installs the workspaces                      |
 | Build command     | `npm ci --include=dev && npm run db:generate -w api && npm run build -w api` |
 | Start command     | `npm start -w api`                                                           |
@@ -35,8 +39,15 @@ takes about a minute.
 
 ## Web on Vercel
 
-Root directory `apps/mangodb`, and one variable: `API_URL`, the Render address
-with no trailing slash.
+| Setting         | Value                                          |
+| --------------- | ---------------------------------------------- |
+| Root directory  | `apps/mangodb`                                 |
+| Install command | `npm ci --include=dev` (override switched on)  |
+| Variable        | `API_URL`, the Render address, no slash at end |
+
+The install override went in when Vercel's first builds could not find husky.
+Whether the default install works since `prepare` became `husky || true` is
+untested.
 
 ## Database
 
