@@ -21,7 +21,7 @@
         "node": ">=22"
     },
     "scripts": {
-        "prepare": "husky",
+        "prepare": "husky || true",
         "lint": "npm run lint --workspaces --if-present",
         "typecheck": "npm run typecheck --workspaces --if-present",
         "test": "npm run test --workspaces --if-present",
