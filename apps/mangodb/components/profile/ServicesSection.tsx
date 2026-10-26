@@ -283,13 +283,6 @@ export default function ServicesSection({
                                                 className="bg-danger-tint text-danger"
                                             />
                                         )}
-                                        {ownService && (
-                                            <ServiceActionsMenu
-                                                service={ownService}
-                                                onEdit={editService}
-                                                onDelete={askDelete}
-                                            />
-                                        )}
                                         <button
                                             type="button"
                                             onClick={() => openDetail(item.id)}
@@ -298,6 +291,13 @@ export default function ServicesSection({
                                         >
                                             Details
                                         </button>
+                                        {ownService && (
+                                            <ServiceActionsMenu
+                                                service={ownService}
+                                                onEdit={editService}
+                                                onDelete={askDelete}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                                 <p className="type-xs text-ink-soft leading-relaxed line-clamp-2">
