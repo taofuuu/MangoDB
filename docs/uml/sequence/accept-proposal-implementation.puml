@@ -24,7 +24,7 @@ Receiver -> Page : Click "Accept" and confirm
 activate Page
 Page -> Client : acceptProposal(proposalId)
 activate Client
-Client -> Auth : POST /proposals/{proposalId}/accept\nAuthorization: Bearer <JWT>
+Client -> Auth : POST /api/proposals/{proposalId}/accept\nCookie: access_token (via the Next proxy)
 activate Auth
 
 Auth -> Auth : verifyAccessToken(token)

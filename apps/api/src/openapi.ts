@@ -358,6 +358,8 @@ const schemas: Record<string, Schema> = {
             categories: stringList,
             techStack: stringList,
             company: ref('CompanyBrief'),
+            averageRating: nullable('number'),
+            ratingCount: { type: 'integer' },
         },
     },
     ServiceSummaryPage: page('ServiceSummary'),
@@ -366,6 +368,7 @@ const schemas: Record<string, Schema> = {
         required: ['listingTitle', 'listingDesc'],
         properties: {
             ...listingFields,
+            maxBudget: { type: 'number' },
             categoryIds: idList,
             techStack: stringList,
         },
@@ -497,6 +500,7 @@ const schemas: Record<string, Schema> = {
             'Send only the fields to change. categoryIds replaces the whole set.',
         properties: {
             ...listingFields,
+            maxBudget: { type: 'number' },
             locationPref: nullable('string'),
             duration: nullable('string'),
             deadline: nullable('string', { format: 'date' }),
@@ -541,7 +545,7 @@ const schemas: Record<string, Schema> = {
         type: 'object',
         properties: Object.fromEntries(
             ['total', ...PROPOSAL_STATUSES].map((key) => [
-                key,
+                key.toLowerCase(),
                 { type: 'integer' },
             ]),
         ),
@@ -765,4 +769,6 @@ export const openapiSpec = swaggerJsdoc({
         path.join(__dirname, 'app.{ts,js}'),
         path.join(__dirname, 'routes', '*.routes.{ts,js}'),
     ],
+    // Throw on a broken @openapi block instead of leaving its route out
+    failOnErrors: true,
 });
