@@ -1,9 +1,8 @@
 import Link from 'next/link';
 
-// Temporary index so the pages built so far are reachable by clicking. It is
-// not the real home page — replace it when there is one, and keep the
-// descriptions true in the meantime: a link list nobody trusts is worse than
-// no link list.
+// Developer index of the pages built so far. Nothing links here: reach it by
+// typing /dev. Keep the descriptions true: a link list nobody trusts is worse
+// than no link list.
 //
 // Every one of these needs you signed in except /login, /admin/login and
 // /register. `npm run db:seed -w api` makes accounts you can use.
@@ -99,7 +98,7 @@ const ROUTES = [
     },
 ];
 
-export default function Home() {
+export default function DevIndexPage() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
             <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
