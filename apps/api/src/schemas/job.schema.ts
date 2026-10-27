@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LISTING_STATUSES } from '@mangodb/shared';
+import { JOB_SORT_ORDERS, LISTING_STATUSES } from '@mangodb/shared';
 import {
     blankToUndefined,
     optionalQueryId,
@@ -102,6 +102,11 @@ export const jobListQuerySchema = z
         deadline: z.preprocess(
             blankToUndefined,
             z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
+        ),
+        // US3-8 (T3.8.2, T3.8.3). Ordering by budget or deadline. Defaults to newest.
+        orderBy: z.preprocess(
+            blankToUndefined,
+            z.enum(JOB_SORT_ORDERS).default('newest'),
         ),
     })
     .refine(minBudgetDoesNotExceedMax, {
