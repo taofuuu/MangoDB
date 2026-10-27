@@ -40,8 +40,7 @@ export default function StatusTabs<T>({
             >
                 {tabs.map((tab) => {
                     const isActive = tab.value === value;
-                    const isClickable =
-                        tab.value !== null && tab.value !== undefined;
+                    const isClickable = tab.value !== null;
                     return (
                         <button
                             key={tab.label}
@@ -72,8 +71,7 @@ export default function StatusTabs<T>({
         >
             {tabs.map((tab) => {
                 const isActive = tab.value === value;
-                const isClickable =
-                    tab.value !== null && tab.value !== undefined;
+                const isClickable = tab.value !== null;
                 return (
                     <button
                         key={tab.label}

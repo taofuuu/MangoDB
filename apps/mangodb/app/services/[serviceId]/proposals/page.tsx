@@ -9,8 +9,6 @@ import {
     rejectProposal,
 } from '@/lib/proposals';
 import { getService } from '@/lib/services';
-import { getCompanyProfile } from '@/lib/companies';
-import { isReceiverAccount } from '@/lib/roles';
 import { RECEIVED_PROPOSAL_PAGE_SIZE } from '@/lib/pagination';
 import EmptyState from '@/components/ui/EmptyState';
 import StatusTabs from '@/components/ui/StatusTabs';
@@ -48,41 +46,10 @@ export default function ServiceProposalsPage() {
         let isMounted = true;
 
         Promise.all([getService(serviceId), listServiceProposals(serviceId)])
-            .then(async ([service, data]) => {
+            .then(([service, data]) => {
                 if (!isMounted) return;
                 setListingTitle(service.listingTitle);
-                // A proposal for a service must be sent by a company with RECEIVER or BOTH role
-                const senderProfiles = await Promise.all(
-                    data.map(async (p) => {
-                        const sender = p.sender as {
-                            companyId: number;
-                            accountType?: string;
-                        };
-                        if (sender.accountType) {
-                            return isReceiverAccount(sender.accountType)
-                                ? p
-                                : null;
-                        }
-                        try {
-                            const profile = await getCompanyProfile(
-                                p.sender.companyId,
-                            );
-                            if (profile?.accountType) {
-                                return isReceiverAccount(profile.accountType)
-                                    ? p
-                                    : null;
-                            }
-                            return p;
-                        } catch {
-                            return p;
-                        }
-                    }),
-                );
-                if (!isMounted) return;
-                const validProposals = senderProfiles.filter(
-                    (p): p is ReceivedProposal => p !== null,
-                );
-                setProposals(validProposals);
+                setProposals(data);
                 setError(null);
             })
             .catch((err: unknown) => {

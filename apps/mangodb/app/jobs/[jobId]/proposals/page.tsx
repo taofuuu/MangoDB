@@ -24,8 +24,8 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 const NOT_FOUND = 'This job could not be found.';
 
-// The list shows the proposals still in play, or only the rejected ones.
-type ViewMode = 'pending' | 'rejected' | null;
+// The list shows the proposals filtered by status.
+type ViewMode = 'pending' | 'accepted' | 'rejected' | null;
 
 // US2-10. The proposals sent to one of your jobs, opened from the job.
 export default function JobProposalsPage() {
@@ -77,6 +77,9 @@ export default function JobProposalsPage() {
     const pendingCount = proposals.filter(
         (p) => p.proposalStatus === 'PENDING',
     ).length;
+    const acceptedCount = proposals.filter(
+        (p) => p.proposalStatus === 'ACCEPTED',
+    ).length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
@@ -84,6 +87,7 @@ export default function JobProposalsPage() {
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
         if (viewMode === 'rejected') return p.proposalStatus === 'REJECTED';
+        if (viewMode === 'accepted') return p.proposalStatus === 'ACCEPTED';
         return p.proposalStatus === 'PENDING';
     });
 
@@ -159,7 +163,9 @@ export default function JobProposalsPage() {
                     <h1 className="type-lg !font-[700] text-ink">
                         {viewMode === 'rejected'
                             ? 'Rejected Proposals'
-                            : 'Submitted Proposals'}
+                            : viewMode === 'accepted'
+                              ? 'Accepted Proposals'
+                              : 'Pending Proposals'}
                     </h1>
                     <h2 className="type-md !font-[600] text-ink mt-0.5">
                         {listingTitle}
@@ -175,6 +181,11 @@ export default function JobProposalsPage() {
                                 label: 'Pending',
                                 value: 'pending',
                                 count: pendingCount,
+                            },
+                            {
+                                label: 'Accepted',
+                                value: 'accepted',
+                                count: acceptedCount,
                             },
                             {
                                 label: 'Rejected',
@@ -215,7 +226,9 @@ export default function JobProposalsPage() {
                         title={
                             viewMode === 'rejected'
                                 ? 'No rejected proposals'
-                                : 'No pending proposals'
+                                : viewMode === 'accepted'
+                                  ? 'No accepted proposals'
+                                  : 'No pending proposals'
                         }
                     />
                 ) : (
