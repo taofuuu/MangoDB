@@ -1,6 +1,7 @@
 import type {
     CompanyBrief,
     Job,
+    JobSortOrder,
     ListingStatus,
     ListingType,
 } from '@mangodb/shared';
@@ -132,4 +133,36 @@ export function jobSearchWhere(
             },
         ],
     };
+}
+
+// US3-8 (T3.8.2, T3.8.3). Ordering is applied in the database, before pagination.
+// Missing budgets or deadlines sort last so concrete criteria always show first.
+// listingId breaks ties so pages remain stable.
+export function jobOrderBy(
+    orderBy: JobSortOrder,
+): Prisma.ListingOrderByWithRelationInput[] {
+    switch (orderBy) {
+        case 'maxBudgetDesc':
+            return [
+                { maxBudget: { sort: 'desc', nulls: 'last' } },
+                { listingId: 'desc' },
+            ];
+        case 'maxBudgetAsc':
+            return [
+                { maxBudget: { sort: 'asc', nulls: 'last' } },
+                { listingId: 'desc' },
+            ];
+        case 'deadlineAsc':
+            return [
+                { job: { deadline: { sort: 'asc', nulls: 'last' } } },
+                { listingId: 'desc' },
+            ];
+        case 'deadlineDesc':
+            return [
+                { job: { deadline: { sort: 'desc', nulls: 'last' } } },
+                { listingId: 'desc' },
+            ];
+        case 'newest':
+            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
+    }
 }

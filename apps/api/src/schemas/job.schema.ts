@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LISTING_STATUSES } from '@mangodb/shared';
+import { JOB_SORT_ORDERS, LISTING_STATUSES } from '@mangodb/shared';
 import {
     blankToUndefined,
     optionalQueryId,
@@ -103,11 +103,15 @@ export const jobListQuerySchema = z
             blankToUndefined,
             z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
         ),
+        // US3-8 (T3.8.2, T3.8.3). Ordering by budget or deadline. Defaults to newest.
+        orderBy: z.enum(JOB_SORT_ORDERS).default('newest'),
     })
     .refine(minBudgetDoesNotExceedMax, {
         message: BUDGET_RANGE_ERROR,
         path: ['minBudget'],
     });
+
+export type JobListQuery = z.infer<typeof jobListQuerySchema>;
 
 // GET /jobs/mine. The caller's own jobs, so no keyword or company filter.
 export const jobMineQuerySchema = z.object({
