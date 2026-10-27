@@ -114,8 +114,6 @@ export const jobListQuerySchema = z
         path: ['minBudget'],
     });
 
-export type JobListQuery = z.infer<typeof jobListQuerySchema>;
-
 // GET /jobs/mine. The caller's own jobs, so no keyword or company filter.
 export const jobMineQuerySchema = z.object({
     ...pageQueryFields,

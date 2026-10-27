@@ -141,28 +141,17 @@ export function jobSearchWhere(
 export function jobOrderBy(
     orderBy: JobSortOrder,
 ): Prisma.ListingOrderByWithRelationInput[] {
-    switch (orderBy) {
-        case 'maxBudgetDesc':
-            return [
-                { maxBudget: { sort: 'desc', nulls: 'last' } },
-                { listingId: 'desc' },
-            ];
-        case 'maxBudgetAsc':
-            return [
-                { maxBudget: { sort: 'asc', nulls: 'last' } },
-                { listingId: 'desc' },
-            ];
-        case 'deadlineAsc':
-            return [
-                { job: { deadline: { sort: 'asc', nulls: 'last' } } },
-                { listingId: 'desc' },
-            ];
-        case 'deadlineDesc':
-            return [
-                { job: { deadline: { sort: 'desc', nulls: 'last' } } },
-                { listingId: 'desc' },
-            ];
-        case 'newest':
-            return [{ createdAt: 'desc' }, { listingId: 'desc' }];
-    }
+    const primary: Record<
+        JobSortOrder,
+        Prisma.ListingOrderByWithRelationInput
+    > = {
+        maxBudgetDesc: { maxBudget: { sort: 'desc', nulls: 'last' } },
+        maxBudgetAsc: { maxBudget: { sort: 'asc', nulls: 'last' } },
+        deadlineAsc: { job: { deadline: { sort: 'asc', nulls: 'last' } } },
+        deadlineDesc: {
+            job: { deadline: { sort: 'desc', nulls: 'last' } },
+        },
+        newest: { createdAt: 'desc' },
+    };
+    return [primary[orderBy], { listingId: 'desc' }];
 }
