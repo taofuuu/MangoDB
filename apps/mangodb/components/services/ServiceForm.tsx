@@ -310,6 +310,42 @@ export default function ServiceForm(props: ServiceFormProps) {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Estimated Duration */}
+                                <div>
+                                    <label
+                                        htmlFor="service-estimated-duration"
+                                        className="block type-sm font-semibold mb-1 text-ink"
+                                    >
+                                        Estimated Duration (months)
+                                    </label>
+                                    <input
+                                        id="service-estimated-duration"
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={values.estimatedDuration}
+                                        onChange={(e) =>
+                                            setField(
+                                                'estimatedDuration',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="Ex. 3 or 1.5"
+                                        aria-invalid={
+                                            errors.estimatedDuration
+                                                ? true
+                                                : undefined
+                                        }
+                                        className={`w-full rounded-input border px-3 py-2 type-sm placeholder:text-ink-placeholder focus:outline-none ${
+                                            errors.estimatedDuration
+                                                ? 'border-danger focus:border-danger focus:ring-1 focus:ring-danger'
+                                                : 'border-line focus:border-brand focus:ring-1 focus:ring-brand'
+                                        }`}
+                                    />
+                                    <FieldError
+                                        message={errors.estimatedDuration}
+                                    />
+                                </div>
                             </div>
                         </div>
 

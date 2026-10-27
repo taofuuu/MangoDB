@@ -21,11 +21,12 @@ import {
 import {
     SERVICE_FIELDS,
     validateServiceCategory,
+    validateServiceDuration,
     validateServiceTechStack,
 } from '@/lib/validation/service';
 
-// What the inputs hold. Budgets stay text so a half-typed number is not
-// rewritten while the user types.
+// What the inputs hold. Budgets and the duration stay text so a half-typed
+// number is not rewritten while the user types.
 type ServiceValues = {
     title: string;
     description: string;
@@ -33,6 +34,8 @@ type ServiceValues = {
     techStack: string[];
     minBudget: string;
     maxBudget: string;
+    // Months. Not sent or loaded yet: the API has no field for it (T3.3.9).
+    estimatedDuration: string;
 };
 
 type ServiceErrors = FieldErrors<keyof ServiceValues>;
@@ -44,6 +47,7 @@ const EMPTY_VALUES: ServiceValues = {
     techStack: [],
     minBudget: '',
     maxBudget: '',
+    estimatedDuration: '',
 };
 
 function normalizeService(values: ServiceValues): ServiceValues {
@@ -55,6 +59,7 @@ function normalizeService(values: ServiceValues): ServiceValues {
         techStack: values.techStack.map((item) => item.trim()),
         minBudget: values.minBudget.trim(),
         maxBudget: values.maxBudget.trim(),
+        estimatedDuration: values.estimatedDuration.trim(),
     };
 }
 
@@ -109,6 +114,9 @@ function validate(values: ServiceValues): ServiceErrors {
 
     const categoryIds = validateServiceCategory(values.categoryIds);
     if (categoryIds) errors.categoryIds = categoryIds;
+
+    const estimatedDuration = validateServiceDuration(values.estimatedDuration);
+    if (estimatedDuration) errors.estimatedDuration = estimatedDuration;
 
     if (values.techStack.length === 0) {
         errors.techStack = 'At least one tech stack item is required.';
@@ -203,6 +211,7 @@ export function useServiceForm(
                         service.maxBudget === null
                             ? ''
                             : String(service.maxBudget),
+                    estimatedDuration: '',
                 };
 
                 setValues(loaded);

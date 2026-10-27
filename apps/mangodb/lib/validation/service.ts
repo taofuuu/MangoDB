@@ -18,6 +18,28 @@ export function validateServiceCategory(categoryIds: number[]): string | null {
     return validateCategoryIds(categoryIds);
 }
 
+// Optional. The same rule as a proposal duration (ADR 0007): months in steps
+// of 0.5, at most 120.
+export function validateServiceDuration(value: string): string | null {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const duration = Number(trimmed);
+    if (!Number.isFinite(duration)) {
+        return 'Duration must be a valid number.';
+    }
+    if (duration <= 0) {
+        return 'Duration must be greater than zero.';
+    }
+    if (duration > 120) {
+        return 'Duration cannot exceed 120 months.';
+    }
+    if (!Number.isInteger(duration * 2)) {
+        return 'Duration must be in half-month steps (e.g. 0.5, 1, 1.5).';
+    }
+    return null;
+}
+
 export const PREDEFINED_TECH_STACKS = [
     'React',
     'Next.js',
