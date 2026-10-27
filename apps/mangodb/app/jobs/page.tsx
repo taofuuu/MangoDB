@@ -10,6 +10,7 @@ import type { Job } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import JobFilterSidebar from '@/components/jobs/JobFilterSidebar';
+import SearchJobsActiveFilter from '@/components/jobs/SearchJobsActiveFilter';
 import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError } from '@/lib/api';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
@@ -216,6 +217,8 @@ function OtherJobPage() {
                                 />
                             </div>
                         </div>
+
+                        <SearchJobsActiveFilter filters={filters} />
                     </div>
 
                     {/* ================================================= */}
