@@ -249,14 +249,110 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
     );
 }
 
-type Args = { where?: unknown; skip?: number; take?: number };
+type Args = {
+    where?: unknown;
+    skip?: number;
+    take?: number;
+    orderBy?: unknown;
+};
+
+function compareWithNulls(
+    a: unknown,
+    b: unknown,
+    sort: 'asc' | 'desc',
+    nulls: 'first' | 'last' = 'last',
+): number {
+    if (a === null || a === undefined) {
+        if (b === null || b === undefined) return 0;
+        return nulls === 'last' ? 1 : -1;
+    }
+    if (b === null || b === undefined) {
+        return nulls === 'last' ? -1 : 1;
+    }
+    const valA = a instanceof Date ? a.getTime() : a;
+    const valB = b instanceof Date ? b.getTime() : b;
+    if (valA === valB) return 0;
+    return sort === 'asc'
+        ? (valA as number) < (valB as number)
+            ? -1
+            : 1
+        : (valA as number) > (valB as number)
+          ? -1
+          : 1;
+}
+
+function sortRows(rowList: Row[], orderBy: unknown): Row[] {
+    if (!Array.isArray(orderBy) || orderBy.length === 0) {
+        return [...rowList].sort(
+            (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        );
+    }
+    return [...rowList].sort((a, b) => {
+        for (const item of orderBy as Record<string, unknown>[]) {
+            for (const [key, sortConfig] of Object.entries(item)) {
+                if (
+                    key === 'job' &&
+                    typeof sortConfig === 'object' &&
+                    sortConfig !== null
+                ) {
+                    const jobConfig = sortConfig as Record<
+                        string,
+                        { sort: 'asc' | 'desc'; nulls?: 'first' | 'last' }
+                    >;
+                    for (const [jobField, cfg] of Object.entries(jobConfig)) {
+                        const valA = a.job
+                            ? (a.job as Record<string, unknown>)[jobField]
+                            : null;
+                        const valB = b.job
+                            ? (b.job as Record<string, unknown>)[jobField]
+                            : null;
+                        const diff = compareWithNulls(
+                            valA,
+                            valB,
+                            cfg.sort,
+                            cfg.nulls ?? 'last',
+                        );
+                        if (diff !== 0) return diff;
+                    }
+                } else if (
+                    typeof sortConfig === 'object' &&
+                    sortConfig !== null
+                ) {
+                    const cfg = sortConfig as {
+                        sort: 'asc' | 'desc';
+                        nulls?: 'first' | 'last';
+                    };
+                    const valA = (a as Record<string, unknown>)[key];
+                    const valB = (b as Record<string, unknown>)[key];
+                    const diff = compareWithNulls(
+                        valA,
+                        valB,
+                        cfg.sort,
+                        cfg.nulls ?? 'last',
+                    );
+                    if (diff !== 0) return diff;
+                } else if (typeof sortConfig === 'string') {
+                    const valA = (a as Record<string, unknown>)[key];
+                    const valB = (b as Record<string, unknown>)[key];
+                    const diff = compareWithNulls(
+                        valA,
+                        valB,
+                        sortConfig as 'asc' | 'desc',
+                        'last',
+                    );
+                    if (diff !== 0) return diff;
+                }
+            }
+        }
+        return 0;
+    });
+}
 
 function find(args: Args): Row[] {
-    const found = rows
-        .filter((r) => matches(r, args.where))
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const matched = rows.filter((r) => matches(r, args.where));
+    const sorted = sortRows(matched, args.orderBy);
     const skip = args.skip ?? 0;
-    return found.slice(
+    return sorted.slice(
         skip,
         args.take === undefined ? undefined : skip + args.take,
     );
@@ -892,6 +988,179 @@ describe('GET /jobs', () => {
         assert.equal(page1.items.length, 1);
         assert.equal(page1.items[0]?.jobId, 11);
         assert.equal(page1.pagination.totalItems, 2);
+        assert.equal(page1.pagination.totalPages, 2);
+    });
+});
+
+describe('GET /jobs?orderBy= (US3-8)', () => {
+    function list(
+        callerCompanyId: number,
+        query: Record<string, string | string[]> = {},
+    ) {
+        return call(controller.listJobs, callerCompanyId, {
+            query,
+        }) as Promise<Paginated<Job>>;
+    }
+
+    it('orders jobs by maxBudgetDesc with highest budget first, nulls last, and listingId tie-breaker (T3.8.2)', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 5000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(4, OWNER, 'OPEN'), null, null),
+            withBudget(job(5, OWNER, 'OPEN'), null, null),
+        ];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        const body = await list(OTHER, { orderBy: 'maxBudgetDesc' });
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { maxBudget: { sort: 'desc', nulls: 'last' } },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by maxBudgetAsc with lowest budget first, nulls last, and listingId tie-breaker (T3.8.2)', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 1000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(4, OWNER, 'OPEN'), null, null),
+            withBudget(job(5, OWNER, 'OPEN'), null, null),
+        ];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        const body = await list(OTHER, { orderBy: 'maxBudgetAsc' });
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { maxBudget: { sort: 'asc', nulls: 'last' } },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by deadlineAsc with earliest deadline first, nulls last, and listingId tie-breaker (T3.8.3)', async () => {
+        rows = [
+            withDeadline(job(1, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(2, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(3, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(4, OWNER, 'OPEN'), null),
+            withDeadline(job(5, OWNER, 'OPEN'), null),
+        ];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        const body = await list(OTHER, { orderBy: 'deadlineAsc' });
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { job: { deadline: { sort: 'asc', nulls: 'last' } } },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by deadlineDesc with latest deadline first, nulls last, and listingId tie-breaker (T3.8.3)', async () => {
+        rows = [
+            withDeadline(job(1, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(2, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(3, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(4, OWNER, 'OPEN'), null),
+            withDeadline(job(5, OWNER, 'OPEN'), null),
+        ];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        const body = await list(OTHER, { orderBy: 'deadlineDesc' });
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { job: { deadline: { sort: 'desc', nulls: 'last' } } },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('defaults to newest when orderBy is omitted', async () => {
+        rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        await list(OTHER);
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { createdAt: 'desc' },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+    });
+
+    it('orders by newest when orderBy=newest is explicitly requested', async () => {
+        rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
+
+        const findMany = mock.method(fakePrisma.listing, 'findMany');
+        await list(OTHER, { orderBy: 'newest' });
+
+        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
+            { createdAt: 'desc' },
+            { listingId: 'desc' },
+        ]);
+        findMany.mock.restore();
+    });
+
+    it('answers 400 when orderBy is not a recognized sort order', async () => {
+        rows = [job(1, OWNER, 'OPEN')];
+
+        const result = await call(controller.listJobs, OTHER, {
+            query: { orderBy: 'unknownSort' },
+        });
+
+        assertBadRequest(result);
+    });
+
+    it('paginates after ordering jobs by budget', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 1000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 2000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+        ];
+
+        const page1 = await list(OTHER, {
+            orderBy: 'maxBudgetDesc',
+            page: '1',
+            pageSize: '2',
+        });
+        const page2 = await list(OTHER, {
+            orderBy: 'maxBudgetDesc',
+            page: '2',
+            pageSize: '2',
+        });
+
+        assert.deepEqual(
+            page1.items.map((j) => j.jobId),
+            [3, 2],
+        );
+        assert.deepEqual(
+            page2.items.map((j) => j.jobId),
+            [1],
+        );
+        assert.equal(page1.pagination.totalItems, 3);
         assert.equal(page1.pagination.totalPages, 2);
     });
 });
