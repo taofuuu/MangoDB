@@ -103,7 +103,7 @@ export default function JobFilterSidebar({
 
     return (
         <aside
-            className={`relative h-[57.41vh] w-[23.17vw] rounded-popup d self-start bg-fill-subtle p-5 ${className ?? ''}`}
+            className={`relative h-[57.41vh] w-[23.17vw] rounded-popup self-start bg-fill-subtle p-5 ${className ?? ''}`}
         >
             <div className="mb-1 flex items-center justify-between border-b border-brand-light pb-3">
                 <h2 className="type-md text-ink">Filters</h2>
