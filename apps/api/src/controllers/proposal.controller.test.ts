@@ -22,7 +22,8 @@
  * - POST /proposals/:proposalId/accept (acceptProposal, US2-11, US2-17): a
  *   project is created; on a job, the job closes and other pending proposals
  *   are rejected; on a service, the service stays OPEN and other pending hire
- *   requests stay PENDING. A refusal (404, 403, 409) changes nothing.
+ *   requests stay PENDING. The project's timeline starts with a
+ *   PROPOSAL_ACCEPTED event (#212). A refusal (404, 403, 409) changes nothing.
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
@@ -97,10 +98,11 @@ let rows: Row[] = [];
 let listings: ListingRow[] = [];
 let proposals: ProposalRow[] = [];
 let projects: ProjectRow[] = [];
+let projectUpdates: Record<string, unknown>[] = [];
 
 // Copies of every table, so a test can check that a refusal wrote nothing.
 function snapshotTables(): string {
-    return JSON.stringify({ listings, proposals, projects });
+    return JSON.stringify({ listings, proposals, projects, projectUpdates });
 }
 
 const fakePrisma = {
@@ -114,6 +116,11 @@ const fakePrisma = {
             const row = { ...args.data, projectId: projects.length + 1 };
             projects.push(row);
             return row;
+        },
+    },
+    projectUpdate: {
+        create: async (args: { data: Record<string, unknown> }) => {
+            projectUpdates.push(args.data);
         },
     },
     listing: {
@@ -324,6 +331,7 @@ beforeEach(() => {
     listings = [];
     proposals = [];
     projects = [];
+    projectUpdates = [];
 });
 
 async function getCounts(
@@ -1047,6 +1055,9 @@ describe('POST /proposals/:proposalId/accept', () => {
             ['ACCEPTED', 'REJECTED', 'REJECTED'],
         );
         assert.equal(projects.length, 1);
+        assert.deepEqual(projectUpdates, [
+            { projectId: 1, updateType: 'PROPOSAL_ACCEPTED' },
+        ]);
     });
 
     it('on a service, creates the project, keeps the service OPEN and leaves other requests PENDING (US2-17)', async () => {
@@ -1088,6 +1099,10 @@ describe('POST /proposals/:proposalId/accept', () => {
             ['ACCEPTED', 'ACCEPTED', 'REJECTED'],
         );
         assert.equal(projects.length, 2);
+        assert.deepEqual(projectUpdates, [
+            { projectId: 1, updateType: 'PROPOSAL_ACCEPTED' },
+            { projectId: 2, updateType: 'PROPOSAL_ACCEPTED' },
+        ]);
     });
 
     // A service skips closeOpenListing; only the status check refuses it.

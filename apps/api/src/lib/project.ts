@@ -119,7 +119,7 @@ export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
 
 // Opens the project for an accepted proposal, inside the caller's
 // transaction: the proposal's budget, starting today (UTC). It waits for the
-// Provider's quotation first (ADR 0015).
+// Provider's quotation first (ADR 0015). Its timeline starts with the accept.
 export async function createProjectFromProposal(
     tx: Prisma.TransactionClient,
     proposal: { proposalId: number; proposalBudget: Prisma.Decimal },
@@ -136,6 +136,7 @@ export async function createProjectFromProposal(
         },
         select: projectSelect,
     });
+    await saveProjectEvent(tx, row.projectId, 'PROPOSAL_ACCEPTED');
     return toProject(row);
 }
 
@@ -342,7 +343,18 @@ export function toProjectDetail(
     };
 }
 
-// One entry of a project's progress timeline (US4-9, US4-10, US4-12).
+// #212. Saves one event on the project's timeline, inside the caller's
+// transaction, so an action that is refused saves no event either. For the
+// events with no text; PROGRESS and WORK_REJECTED write their own row.
+export async function saveProjectEvent(
+    tx: Prisma.TransactionClient,
+    projectId: number,
+    updateType: Exclude<ProjectUpdateType, 'PROGRESS' | 'WORK_REJECTED'>,
+): Promise<void> {
+    await tx.projectUpdate.create({ data: { projectId, updateType } });
+}
+
+// One entry of a project's timeline (US4-9, US4-10, US4-12, #212).
 export const projectUpdateSelect = {
     projectUpdateId: true,
     projectId: true,
