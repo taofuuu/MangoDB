@@ -148,6 +148,7 @@ message.
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
+| A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |

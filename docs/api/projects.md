@@ -130,7 +130,29 @@ sequenceDiagram
 
 ## GET /projects/:projectId/updates
 
-US4-9. The progress timeline, oldest first. Not paged.
+US4-9. The project's whole timeline, oldest first. Not paged.
+
+Each action saves one event inside the action's own transaction, so a
+refused action (403, 409) saves none (#212). Only `PROGRESS` and `WORK_REJECTED` have
+`updateText`; on the rest it is `null`.
+
+| `updateType`         | Saved by                                    |
+| -------------------- | ------------------------------------------- |
+| `PROPOSAL_ACCEPTED`  | `POST /proposals/:proposalId/accept`        |
+| `QUOTATION_SENT`     | `POST /projects/:projectId/quotations`      |
+| `QUOTATION_DELETED`  | `DELETE /quotations/:quotationId`           |
+| `QUOTATION_REJECTED` | `POST /quotations/:quotationId/reject`      |
+| `QUOTATION_ACCEPTED` | `POST /quotations/:quotationId/accept`      |
+| `DEPOSIT_REPORTED`   | `POST /projects/:projectId/report-deposit`  |
+| `DEPOSIT_CONFIRMED`  | `POST /projects/:projectId/confirm-deposit` |
+| `PROGRESS`           | `POST /projects/:projectId/updates`         |
+| `WORK_SUBMITTED`     | `POST /projects/:projectId/submit-work`     |
+| `WORK_REJECTED`      | `POST /projects/:projectId/reject-work`     |
+| `WORK_ACCEPTED`      | `POST /projects/:projectId/accept-work`     |
+| `PROJECT_CANCELLED`  | `POST /projects/:projectId/cancel`          |
+
+A deleted quotation keeps its `QUOTATION_SENT` event: the timeline is
+append-only.
 
 ```mermaid
 sequenceDiagram
@@ -148,7 +170,7 @@ sequenceDiagram
         L-->>C: 404 Project not found
     end
     Ctl->>DB: projectUpdate.findMany by createdAt asc, id asc
-    Ctl-->>C: 200 ProjectUpdate[] (PROGRESS and WORK_REJECTED)
+    Ctl-->>C: 200 ProjectUpdate[] (every event)
 ```
 
 ## POST /projects/:projectId/updates

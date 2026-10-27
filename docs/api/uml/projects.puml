@@ -79,8 +79,8 @@ class "ProjectDetail" as ProjectDetailRep <<Representation>> {
 class "ProjectUpdate" as ProjectUpdateRep <<Representation>> {
   -projectUpdateId : integer
   -projectId : integer
-  -updateType : PROGRESS, WORK_REJECTED
-  -updateText : string
+  -updateType : ProjectUpdateType
+  -updateText : string?
   -createdAt : date
 }
 class "CreateProjectUpdateRequest" as CreateProjectUpdateRequestRep <<Representation>> {
