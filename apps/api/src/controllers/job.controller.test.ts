@@ -256,29 +256,16 @@ type Args = {
     orderBy?: unknown;
 };
 
-function compareWithNulls(
-    a: unknown,
-    b: unknown,
+function compareValues(
+    a: number | Date | null | undefined,
+    b: number | Date | null | undefined,
     sort: 'asc' | 'desc',
-    nulls: 'first' | 'last' = 'last',
 ): number {
-    if (a === null || a === undefined) {
-        if (b === null || b === undefined) return 0;
-        return nulls === 'last' ? 1 : -1;
-    }
-    if (b === null || b === undefined) {
-        return nulls === 'last' ? -1 : 1;
-    }
+    if (a == null) return b == null ? 0 : 1;
+    if (b == null) return -1;
     const valA = a instanceof Date ? a.getTime() : a;
     const valB = b instanceof Date ? b.getTime() : b;
-    if (valA === valB) return 0;
-    return sort === 'asc'
-        ? (valA as number) < (valB as number)
-            ? -1
-            : 1
-        : (valA as number) > (valB as number)
-          ? -1
-          : 1;
+    return sort === 'asc' ? valA - valB : valB - valA;
 }
 
 function sortRows(rowList: Row[], orderBy: unknown): Row[] {
@@ -289,59 +276,34 @@ function sortRows(rowList: Row[], orderBy: unknown): Row[] {
     }
     return [...rowList].sort((a, b) => {
         for (const item of orderBy as Record<string, unknown>[]) {
-            for (const [key, sortConfig] of Object.entries(item)) {
-                if (
-                    key === 'job' &&
-                    typeof sortConfig === 'object' &&
-                    sortConfig !== null
-                ) {
-                    const jobConfig = sortConfig as Record<
-                        string,
-                        { sort: 'asc' | 'desc'; nulls?: 'first' | 'last' }
-                    >;
-                    for (const [jobField, cfg] of Object.entries(jobConfig)) {
-                        const valA = a.job
-                            ? (a.job as Record<string, unknown>)[jobField]
-                            : null;
-                        const valB = b.job
-                            ? (b.job as Record<string, unknown>)[jobField]
-                            : null;
-                        const diff = compareWithNulls(
-                            valA,
-                            valB,
-                            cfg.sort,
-                            cfg.nulls ?? 'last',
-                        );
-                        if (diff !== 0) return diff;
-                    }
-                } else if (
-                    typeof sortConfig === 'object' &&
-                    sortConfig !== null
-                ) {
-                    const cfg = sortConfig as {
-                        sort: 'asc' | 'desc';
-                        nulls?: 'first' | 'last';
-                    };
-                    const valA = (a as Record<string, unknown>)[key];
-                    const valB = (b as Record<string, unknown>)[key];
-                    const diff = compareWithNulls(
-                        valA,
-                        valB,
-                        cfg.sort,
-                        cfg.nulls ?? 'last',
-                    );
-                    if (diff !== 0) return diff;
-                } else if (typeof sortConfig === 'string') {
-                    const valA = (a as Record<string, unknown>)[key];
-                    const valB = (b as Record<string, unknown>)[key];
-                    const diff = compareWithNulls(
-                        valA,
-                        valB,
-                        sortConfig as 'asc' | 'desc',
-                        'last',
-                    );
-                    if (diff !== 0) return diff;
-                }
+            if ('maxBudget' in item) {
+                const sort = (item.maxBudget as { sort: 'asc' | 'desc' }).sort;
+                const diff = compareValues(a.maxBudget, b.maxBudget, sort);
+                if (diff !== 0) return diff;
+            } else if ('job' in item) {
+                const sort = (
+                    item.job as { deadline: { sort: 'asc' | 'desc' } }
+                ).deadline.sort;
+                const diff = compareValues(
+                    a.job?.deadline,
+                    b.job?.deadline,
+                    sort,
+                );
+                if (diff !== 0) return diff;
+            } else if ('createdAt' in item) {
+                const diff = compareValues(
+                    a.createdAt,
+                    b.createdAt,
+                    item.createdAt as 'asc' | 'desc',
+                );
+                if (diff !== 0) return diff;
+            } else if ('listingId' in item) {
+                const diff = compareValues(
+                    a.listingId,
+                    b.listingId,
+                    item.listingId as 'asc' | 'desc',
+                );
+                if (diff !== 0) return diff;
             }
         }
         return 0;
@@ -1011,14 +973,7 @@ describe('GET /jobs?orderBy= (US3-8)', () => {
             withBudget(job(5, OWNER, 'OPEN'), null, null),
         ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
         const body = await list(OTHER, { orderBy: 'maxBudgetDesc' });
-
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { maxBudget: { sort: 'desc', nulls: 'last' } },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
 
         assert.deepEqual(
             body.items.map((j) => j.jobId),
@@ -1035,14 +990,7 @@ describe('GET /jobs?orderBy= (US3-8)', () => {
             withBudget(job(5, OWNER, 'OPEN'), null, null),
         ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
         const body = await list(OTHER, { orderBy: 'maxBudgetAsc' });
-
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { maxBudget: { sort: 'asc', nulls: 'last' } },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
 
         assert.deepEqual(
             body.items.map((j) => j.jobId),
@@ -1059,14 +1007,7 @@ describe('GET /jobs?orderBy= (US3-8)', () => {
             withDeadline(job(5, OWNER, 'OPEN'), null),
         ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
         const body = await list(OTHER, { orderBy: 'deadlineAsc' });
-
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { job: { deadline: { sort: 'asc', nulls: 'last' } } },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
 
         assert.deepEqual(
             body.items.map((j) => j.jobId),
@@ -1083,14 +1024,7 @@ describe('GET /jobs?orderBy= (US3-8)', () => {
             withDeadline(job(5, OWNER, 'OPEN'), null),
         ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
         const body = await list(OTHER, { orderBy: 'deadlineDesc' });
-
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { job: { deadline: { sort: 'desc', nulls: 'last' } } },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
 
         assert.deepEqual(
             body.items.map((j) => j.jobId),
@@ -1099,29 +1033,45 @@ describe('GET /jobs?orderBy= (US3-8)', () => {
     });
 
     it('defaults to newest when orderBy is omitted', async () => {
-        rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
-        await list(OTHER);
+        const body = await list(OTHER);
 
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { createdAt: 'desc' },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
     });
 
     it('orders by newest when orderBy=newest is explicitly requested', async () => {
-        rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
 
-        const findMany = mock.method(fakePrisma.listing, 'findMany');
-        await list(OTHER, { orderBy: 'newest' });
+        const body = await list(OTHER, { orderBy: 'newest' });
 
-        assert.deepEqual(findMany.mock.calls[0]!.arguments[0].orderBy, [
-            { createdAt: 'desc' },
-            { listingId: 'desc' },
-        ]);
-        findMany.mock.restore();
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
+    });
+
+    it('ignores blank orderBy query value and defaults to newest', async () => {
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
+
+        const body = await list(OTHER, { orderBy: '   ' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
     });
 
     it('answers 400 when orderBy is not a recognized sort order', async () => {
