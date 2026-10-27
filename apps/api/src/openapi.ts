@@ -581,7 +581,8 @@ const schemas: Record<string, Schema> = {
             projectUpdateId: { type: 'integer' },
             projectId: { type: 'integer' },
             updateType: { type: 'string', enum: [...PROJECT_UPDATE_TYPES] },
-            updateText: { type: 'string' },
+            // Only PROGRESS and WORK_REJECTED have text (#212).
+            updateText: nullable('string'),
             createdAt: { type: 'string', format: 'date-time' },
         },
     },

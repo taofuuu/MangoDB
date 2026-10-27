@@ -355,7 +355,7 @@ type ProjectUpdateRow = {
     projectUpdateId: number;
     projectId: number;
     updateType: string;
-    updateText: string;
+    updateText: string | null;
     createdAt: Date;
 };
 

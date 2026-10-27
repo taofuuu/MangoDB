@@ -522,12 +522,14 @@ export interface QuotationNotice {
     createdAt: string;
 }
 
-// US4-9. One entry of GET /projects/:projectId/updates, oldest first.
+// US4-9. One entry of GET /projects/:projectId/updates, oldest first: the
+// whole timeline. updateText is null on every type but PROGRESS and
+// WORK_REJECTED.
 export interface ProjectUpdate {
     projectUpdateId: number;
     projectId: number;
     updateType: ProjectUpdateType;
-    updateText: string;
+    updateText: string | null;
     createdAt: string;
 }
 
