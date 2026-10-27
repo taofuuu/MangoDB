@@ -15,6 +15,7 @@ import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { toDateOnly } from './dates';
 import { prisma } from './prisma';
+import { averageScore } from './rating';
 import {
     serviceTechStackSelect,
     toTechStackNames,
@@ -133,18 +134,6 @@ export type CompletedProjectRow = {
     };
 };
 
-// ADR 0018. A project's overall rating is the average of its 4 review scores.
-function projectRating(review: CompletedProjectRow['review']): number | null {
-    if (!review) return null;
-    const avg =
-        (review.workQualityScore +
-            review.serviceScore +
-            review.valueForMoneyScore +
-            review.deliveryTimeScore) /
-        4;
-    return Math.round(avg * 10) / 10;
-}
-
 export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
     if (!row.completedAt) {
         throw new ApiError(
@@ -174,7 +163,7 @@ export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
         completedAt: row.completedAt.toISOString(),
         provider,
         receiver,
-        rating: projectRating(row.review),
+        rating: averageScore(row.review ? [row.review] : []),
         reviewComment: row.review?.comment ?? null,
     };
 }
