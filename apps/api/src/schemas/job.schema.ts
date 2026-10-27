@@ -104,7 +104,10 @@ export const jobListQuerySchema = z
             z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
         ),
         // US3-8 (T3.8.2, T3.8.3). Ordering by budget or deadline. Defaults to newest.
-        orderBy: z.enum(JOB_SORT_ORDERS).default('newest'),
+        orderBy: z.preprocess(
+            blankToUndefined,
+            z.enum(JOB_SORT_ORDERS).default('newest'),
+        ),
     })
     .refine(minBudgetDoesNotExceedMax, {
         message: BUDGET_RANGE_ERROR,
