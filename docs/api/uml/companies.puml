@@ -1,0 +1,143 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Companies
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Companies" as Companies <<Resource>> {
+  + GET()
+}
+class "Me" as Me <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "Credentials" as Credentials <<Resource>> {
+  + PATCH()
+}
+class "Photo" as Photo <<Resource>> {
+  + PATCH()
+  + DELETE()
+}
+class "Company" as Company <<Resource>> {
+  + GET()
+}
+class "CompletedProjects" as CompletedProjects <<Resource>> {
+  + GET()
+}
+class "Reviews" as Reviews <<Resource>> {
+  + GET()
+}
+class "ReviewSummary" as ReviewSummaryR <<Resource>> {
+  + GET()
+}
+class "CompanySummary" as CompanySummaryRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -companyPhoto : url?
+  -accountType : AccountType
+  -contactEmail : string?
+  -phone : string
+  -website : string?
+  -categories : string[]
+  -techStack : string[]
+}
+class "CompanyProfile" as CompanyProfileRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -username : string
+  -email : string
+  -contactEmail : string?
+  -phone : string
+  -address : string?
+  -website : string?
+  -companyPhoto : url?
+  -accountType : AccountType
+  -companyType : string[]
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "UpdateCompanyProfileRequest" as UpdateCompanyProfileRequestRep <<Representation>> {
+  -companyName : string?
+  -contactEmail : string?
+  -phone : string?
+  -companyType : string[]?
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "ChangeCredentialsRequest" as ChangeCredentialsRequestRep <<Representation>> {
+  -currentPassword : string
+  -username : string?
+  -email : string?
+  -newPassword : string?
+}
+class "SessionResponse" as SessionResponseRep <<Representation>> {
+  -company : CompanyProfile
+  -accessToken : string
+}
+class "PhotoUpload" as PhotoUploadRep <<Representation>> {
+  -photo : image file, multipart
+}
+class "PublicCompanyProfile" as PublicCompanyProfileRep <<Representation>> {
+  -CompanyProfile without username, email
+}
+class "CompletedProject" as CompletedProjectRep <<Representation>> {
+  -projectId : integer
+  -listingTitle : string
+  -receiver : CompanyBrief
+  -completedAt : date
+}
+class "CompanyReview" as CompanyReviewRep <<Representation>> {
+  -Review fields
+  -receiver : CompanyBrief
+}
+class "ReviewSummary" as ReviewSummaryRep <<Representation>> {
+  -averageRating : integer?
+  -ratingCount : integer
+}
+
+API -[#B45309,dashed]-> Companies : <i><color:#B45309>«Path» /companies</color></i>
+Companies -[#BE185D,dashed]-> CompanySummaryRep : <i><color:#BE185D>«use»</color></i>
+Companies -[#B45309,dashed]-> Me : <i><color:#B45309>«Path» /me</color></i>
+Me -[#BE185D,dashed]-> CompanyProfileRep : <i><color:#BE185D>«use»</color></i>
+Me -[#BE185D,dashed]-> UpdateCompanyProfileRequestRep : <i><color:#BE185D>«use»</color></i>
+Me -[#B45309,dashed]-> Credentials : <i><color:#B45309>«Path» /credentials</color></i>
+Credentials -[#BE185D,dashed]-> ChangeCredentialsRequestRep : <i><color:#BE185D>«use»</color></i>
+Credentials -[#BE185D,dashed]-> SessionResponseRep : <i><color:#BE185D>«use»</color></i>
+Me -[#B45309,dashed]-> Photo : <i><color:#B45309>«Path» /photo</color></i>
+Photo -[#BE185D,dashed]-> PhotoUploadRep : <i><color:#BE185D>«use»</color></i>
+Photo -[#BE185D,dashed]-> CompanyProfileRep : <i><color:#BE185D>«use»</color></i>
+Companies -[#B45309,dashed]-> Company : <i><color:#B45309>«Path» /{companyId}</color></i>
+Company -[#BE185D,dashed]-> PublicCompanyProfileRep : <i><color:#BE185D>«use»</color></i>
+Company -[#B45309,dashed]-> CompletedProjects : <i><color:#B45309>«Path» /completed-projects</color></i>
+CompletedProjects -[#BE185D,dashed]-> CompletedProjectRep : <i><color:#BE185D>«use»</color></i>
+Company -[#B45309,dashed]-> Reviews : <i><color:#B45309>«Path» /reviews</color></i>
+Reviews -[#BE185D,dashed]-> CompanyReviewRep : <i><color:#BE185D>«use»</color></i>
+Reviews -[#B45309,dashed]-> ReviewSummaryR : <i><color:#B45309>«Path» /summary</color></i>
+ReviewSummaryR -[#BE185D,dashed]-> ReviewSummaryRep : <i><color:#BE185D>«use»</color></i>
+@enduml

@@ -1,5 +1,7 @@
 node_modules
 .env
+.env.*
+!*.example
 .DS_Store
 Claude.md
 # Personal agent instructions at the root only, like /CLAUDE.md below.

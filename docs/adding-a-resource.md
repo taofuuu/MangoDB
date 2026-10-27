@@ -418,8 +418,9 @@ More: [refactor/phase-0-safety-net.md](refactor/phase-0-safety-net.md) and
 
 ## 8. Say it exists
 
-`src/routes/` is the endpoint list — there is no separate catalogue. Put the
-_why_ in a comment beside the route, then tell the team in the group chat.
+`src/routes/` is the endpoint list, with an `@openapi` block above each route
+(Swagger UI at `/api-docs`). Put the _why_ in a comment beside the route, then
+tell the team in the group chat.
 
 ---
 
@@ -568,7 +569,7 @@ on `/unauthorized`. The console stays clean.
 [ ] schemas/: fields shared, strictObject bodies, pageQueryFields, optionalQueryId, blankToNull/blankToUndefined
 [ ] lib/: select satisfies Prisma.XSelect, one DTO, ownership check, existing helpers reused
 [ ] controller: Promise<void>, parse* first, req.auth!.companyId, owner in the write, ApiError, one wording
-[ ] route: role on create, ownership on the rest, mounted once in routes/index.ts
+[ ] route: role on create, ownership on the rest, mounted once in routes/index.ts, @openapi block above it
 [ ] shared type in packages/shared, Paginated<T> for lists, asserted in schemas/contract.ts
 [ ] unit test for what a snapshot cannot see
 [ ] snapshot calls added, with cleanup and id rules, the diff read
