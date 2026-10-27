@@ -53,7 +53,7 @@ sequenceDiagram
 
 ## GET /jobs
 
-US2-7 / US3-4 / US3-5. Search job postings. OPEN postings are visible to all
+US2-7 / US3-4 / US3-5 / US3-8. Search job postings. OPEN postings are visible to all
 companies. CLOSED postings are visible only to their owner.
 
 ```mermaid
@@ -65,14 +65,15 @@ sequenceDiagram
     participant L as lib/job
     participant DB as PostgreSQL
 
-    C->>G: GET /jobs?status&companyId&q&category&minBudget&maxBudget&deadline&page&pageSize
+    C->>G: GET /jobs?status&companyId&q&category&minBudget&maxBudget&deadline&orderBy&page&pageSize
     G->>Ctl: next (401 / 403 as above)
     Ctl->>Ctl: parseQuery(jobListQuerySchema)
-    alt bad filter or minBudget > maxBudget
+    alt bad filter, minBudget > maxBudget, or invalid orderBy
         Ctl-->>C: 400 VALIDATION_FAILED
     end
     Ctl->>L: jobSearchWhere(filters, caller)
-    Ctl->>DB: $transaction [listing.count, listing.findMany(createdAt desc, id desc)]
+    Ctl->>L: jobOrderBy(orderBy)
+    Ctl->>DB: $transaction [listing.count, listing.findMany(orderBy)]
     Ctl-->>C: 200 { items: Job[], pagination }
 ```
 
