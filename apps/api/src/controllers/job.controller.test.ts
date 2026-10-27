@@ -24,10 +24,10 @@
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database. The fake keeps job rows in an
  *   array and answers findUnique / findFirst / findMany / count by reading the
- *   `where` the controller sends. It understands only the parts of `where` the
- *   controller uses (AND, OR, plain equals, a `company` relation filter,
- *   `contains` read as SQL LIKE). So the test checks what comes back, not
- *   which query was run.
+ *   `where` and `orderBy` the controller sends. It understands only the parts
+ *   of `where` the controller uses (AND, OR, plain equals, a `company` relation
+ *   filter, `contains` read as SQL LIKE), and applies `orderBy` with Postgres-style
+ *   null placement. So the test checks what comes back, not which query was run.
  *
  * Run: npm test (in apps/api). Needs --experimental-test-module-mocks, which the
  * test script passes.
@@ -256,16 +256,21 @@ type Args = {
     orderBy?: unknown;
 };
 
+type SortOrder = { sort: 'asc' | 'desc'; nulls?: 'first' | 'last' };
+
+// Like Postgres: without `nulls`, nulls go last when ascending and first when
+// descending. So a missing `nulls: 'last'` in jobOrderBy fails a test here.
 function compareValues(
     a: number | Date | null | undefined,
     b: number | Date | null | undefined,
-    sort: 'asc' | 'desc',
+    order: SortOrder,
 ): number {
-    if (a == null) return b == null ? 0 : 1;
-    if (b == null) return -1;
+    const nulls = order.nulls ?? (order.sort === 'asc' ? 'last' : 'first');
+    if (a == null) return b == null ? 0 : nulls === 'last' ? 1 : -1;
+    if (b == null) return nulls === 'last' ? -1 : 1;
     const valA = a instanceof Date ? a.getTime() : a;
     const valB = b instanceof Date ? b.getTime() : b;
-    return sort === 'asc' ? valA - valB : valB - valA;
+    return order.sort === 'asc' ? valA - valB : valB - valA;
 }
 
 function sortRows(rowList: Row[], orderBy: unknown): Row[] {
@@ -277,32 +282,28 @@ function sortRows(rowList: Row[], orderBy: unknown): Row[] {
     return [...rowList].sort((a, b) => {
         for (const item of orderBy as Record<string, unknown>[]) {
             if ('maxBudget' in item) {
-                const sort = (item.maxBudget as { sort: 'asc' | 'desc' }).sort;
-                const diff = compareValues(a.maxBudget, b.maxBudget, sort);
+                const diff = compareValues(
+                    a.maxBudget,
+                    b.maxBudget,
+                    item.maxBudget as SortOrder,
+                );
                 if (diff !== 0) return diff;
             } else if ('job' in item) {
-                const sort = (
-                    item.job as { deadline: { sort: 'asc' | 'desc' } }
-                ).deadline.sort;
                 const diff = compareValues(
                     a.job?.deadline,
                     b.job?.deadline,
-                    sort,
+                    (item.job as { deadline: SortOrder }).deadline,
                 );
                 if (diff !== 0) return diff;
             } else if ('createdAt' in item) {
-                const diff = compareValues(
-                    a.createdAt,
-                    b.createdAt,
-                    item.createdAt as 'asc' | 'desc',
-                );
+                const diff = compareValues(a.createdAt, b.createdAt, {
+                    sort: item.createdAt as 'asc' | 'desc',
+                });
                 if (diff !== 0) return diff;
             } else if ('listingId' in item) {
-                const diff = compareValues(
-                    a.listingId,
-                    b.listingId,
-                    item.listingId as 'asc' | 'desc',
-                );
+                const diff = compareValues(a.listingId, b.listingId, {
+                    sort: item.listingId as 'asc' | 'desc',
+                });
                 if (diff !== 0) return diff;
             }
         }
