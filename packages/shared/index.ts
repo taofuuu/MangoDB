@@ -494,9 +494,17 @@ export interface ProjectDetail extends Project {
 // US2-5. One row of GET /companies/:companyId/completed-projects.
 export interface CompletedProject {
     projectId: number;
+    listingType: ListingType;
     listingTitle: string;
-    receiver: CompanyBrief;
+    listingDesc: string;
+    categories: string[];
+    techStack: string[];
+    startDate: string;
     completedAt: string;
+    provider: CompanyBrief;
+    receiver: CompanyBrief;
+    rating: number | null;
+    reviewComment: string | null;
 }
 
 // ADR 0017. A quotation PDF on a project. Sent as multipart (a `file` field),

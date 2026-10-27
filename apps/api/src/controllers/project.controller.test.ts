@@ -93,7 +93,15 @@ type Company = {
 type ProjectRow = {
     projectId: number;
     projectStatus: string;
+    startDate: Date;
     completedAt: Date | null;
+    review: {
+        workQualityScore: number;
+        serviceScore: number;
+        valueForMoneyScore: number;
+        deliveryTimeScore: number;
+        comment: string | null;
+    } | null;
     proposal: {
         senderId: number;
         sender: {
@@ -103,12 +111,21 @@ type ProjectRow = {
         };
         listing: {
             listingTitle: string;
+            listingDesc: string;
             listingType: 'JOB' | 'SERVICE';
             companyId: number;
             company: {
                 companyId: number;
                 companyName: string;
                 companyPhoto: string | null;
+            } | null;
+            listingCategory: {
+                category: { categoryName: string };
+            }[];
+            service: {
+                serviceTechStack: {
+                    techStack: { techStackName: string };
+                }[];
             } | null;
         };
     };
@@ -416,23 +433,65 @@ function row(
     listingType: 'JOB' | 'SERVICE' = 'JOB',
     projectStatus = 'COMPLETED',
     completedAt: Date | null = new Date('2026-10-01T00:00:00Z'),
+    options?: {
+        startDate?: Date;
+        review?: {
+            workQualityScore: number;
+            serviceScore: number;
+            valueForMoneyScore: number;
+            deliveryTimeScore: number;
+            comment: string | null;
+        } | null;
+        listingDesc?: string;
+        categories?: string[];
+        techStack?: string[];
+    },
 ): ProjectRow {
     const [senderId, ownerId] =
         listingType === 'JOB'
             ? [PROVIDER_ID, RECEIVER_ID]
             : [RECEIVER_ID, PROVIDER_ID];
+    const techStack =
+        options?.techStack ??
+        (listingType === 'SERVICE' ? ['TypeScript', 'React'] : []);
+    const categories = options?.categories ?? ['Engineering'];
     return {
         projectId,
         projectStatus,
+        startDate: options?.startDate ?? new Date('2026-09-01T00:00:00Z'),
         completedAt,
+        review:
+            options?.review !== undefined
+                ? options.review
+                : {
+                      workQualityScore: 5,
+                      serviceScore: 5,
+                      valueForMoneyScore: 5,
+                      deliveryTimeScore: 5,
+                      comment: 'Great result',
+                  },
         proposal: {
             senderId,
             sender: brief(senderId),
             listing: {
                 listingTitle: `Project ${projectId}`,
+                listingDesc:
+                    options?.listingDesc ??
+                    `Description for project ${projectId}`,
                 listingType,
                 companyId: ownerId,
                 company: brief(ownerId),
+                listingCategory: categories.map((cat) => ({
+                    category: { categoryName: cat },
+                })),
+                service:
+                    listingType === 'SERVICE'
+                        ? {
+                              serviceTechStack: techStack.map((tech) => ({
+                                  techStack: { techStackName: tech },
+                              })),
+                          }
+                        : null,
             },
         },
     };
@@ -1019,8 +1078,30 @@ describe('GET /companies/:companyId/completed-projects', () => {
 
     it('returns completed projects for a Provider on Job listings (newest first)', async () => {
         projects.push(
-            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z')),
-            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z')),
+            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z'), {
+                startDate: new Date('2026-08-01T00:00:00Z'),
+                listingDesc: 'Desc 1',
+                categories: ['Dev'],
+                review: {
+                    workQualityScore: 4,
+                    serviceScore: 4,
+                    valueForMoneyScore: 4,
+                    deliveryTimeScore: 4,
+                    comment: 'Nice',
+                },
+            }),
+            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z'), {
+                startDate: new Date('2026-09-01T00:00:00Z'),
+                listingDesc: 'Desc 2',
+                categories: ['Design'],
+                review: {
+                    workQualityScore: 5,
+                    serviceScore: 5,
+                    valueForMoneyScore: 5,
+                    deliveryTimeScore: 5,
+                    comment: 'Awesome',
+                },
+            }),
         );
 
         const result = (await listProjects(String(PROVIDER_ID))) as {
@@ -1031,7 +1112,16 @@ describe('GET /companies/:companyId/completed-projects', () => {
         assert.equal(result.body.items.length, 2);
         assert.equal(result.body.items[0]!.projectId, 2);
         assert.equal(result.body.items[1]!.projectId, 1);
+        assert.equal(result.body.items[0]!.listingType, 'JOB');
+        assert.equal(result.body.items[0]!.listingTitle, 'Project 2');
+        assert.equal(result.body.items[0]!.listingDesc, 'Desc 2');
+        assert.deepEqual(result.body.items[0]!.categories, ['Design']);
+        assert.deepEqual(result.body.items[0]!.techStack, []);
+        assert.equal(result.body.items[0]!.startDate, '2026-09-01');
+        assert.deepEqual(result.body.items[0]!.provider, brief(PROVIDER_ID));
         assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(result.body.items[0]!.rating, 5);
+        assert.equal(result.body.items[0]!.reviewComment, 'Awesome');
         assert.equal(
             result.body.items[0]!.completedAt,
             '2026-10-15T00:00:00.000Z',
@@ -1040,7 +1130,13 @@ describe('GET /companies/:companyId/completed-projects', () => {
 
     it('returns completed projects for a Provider on Service listings (where Provider is service owner)', async () => {
         projects.push(
-            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z')),
+            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z'), {
+                startDate: new Date('2026-07-15T00:00:00Z'),
+                listingDesc: 'Service Desc',
+                categories: ['DevOps'],
+                techStack: ['Docker', 'Kubernetes'],
+                review: null,
+            }),
         );
 
         const result = (await listProjects(String(PROVIDER_ID))) as {
@@ -1050,7 +1146,19 @@ describe('GET /companies/:companyId/completed-projects', () => {
         assert.equal(result.status, 200);
         assert.equal(result.body.items.length, 1);
         assert.equal(result.body.items[0]!.projectId, 3);
+        assert.equal(result.body.items[0]!.listingType, 'SERVICE');
+        assert.equal(result.body.items[0]!.listingTitle, 'Project 3');
+        assert.equal(result.body.items[0]!.listingDesc, 'Service Desc');
+        assert.deepEqual(result.body.items[0]!.categories, ['DevOps']);
+        assert.deepEqual(result.body.items[0]!.techStack, [
+            'Docker',
+            'Kubernetes',
+        ]);
+        assert.equal(result.body.items[0]!.startDate, '2026-07-15');
+        assert.deepEqual(result.body.items[0]!.provider, brief(PROVIDER_ID));
         assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(result.body.items[0]!.rating, null);
+        assert.equal(result.body.items[0]!.reviewComment, null);
     });
 
     it('filters out non-COMPLETED projects', async () => {
