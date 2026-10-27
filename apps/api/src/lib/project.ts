@@ -15,6 +15,11 @@ import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { toDateOnly } from './dates';
 import { prisma } from './prisma';
+import {
+    serviceTechStackSelect,
+    toTechStackNames,
+    type ServiceTechStackRow,
+} from './service';
 
 // The columns a project response carries. Exported with toProject for the
 // project endpoints to come; accept reaches both through
@@ -58,18 +63,36 @@ export function toProject(row: ProjectRow): Project {
 }
 
 // US2-5. What GET /companies/:companyId/completed-projects fetches. The Provider
-// is the subject of the page, so the response names the Receiver (ADR 0016).
+// is the subject of the page, so both parties are named, with listing details,
+// start/completed dates, categories, tech stack, and review summary.
 export const completedProjectSelect = {
     projectId: true,
+    startDate: true,
     completedAt: true,
+    review: {
+        select: {
+            workQualityScore: true,
+            serviceScore: true,
+            valueForMoneyScore: true,
+            deliveryTimeScore: true,
+            comment: true,
+        },
+    },
     proposal: {
         select: {
             sender: { select: companyBriefSelect },
             listing: {
                 select: {
                     listingTitle: true,
+                    listingDesc: true,
                     listingType: true,
                     company: { select: companyBriefSelect },
+                    listingCategory: {
+                        select: {
+                            category: { select: { categoryName: true } },
+                        },
+                    },
+                    service: serviceTechStackSelect,
                 },
             },
         },
@@ -78,7 +101,15 @@ export const completedProjectSelect = {
 
 export type CompletedProjectRow = {
     projectId: number;
+    startDate: Date;
     completedAt: Date | null;
+    review: {
+        workQualityScore: number;
+        serviceScore: number;
+        valueForMoneyScore: number;
+        deliveryTimeScore: number;
+        comment: string | null;
+    } | null;
     proposal: {
         sender: {
             companyId: number;
@@ -87,15 +118,32 @@ export type CompletedProjectRow = {
         };
         listing: {
             listingTitle: string;
+            listingDesc: string;
             listingType: string;
             company: {
                 companyId: number;
                 companyName: string;
                 companyPhoto: string | null;
             } | null;
+            listingCategory: {
+                category: { categoryName: string };
+            }[];
+            service: ServiceTechStackRow;
         };
     };
 };
+
+// ADR 0018. A project's overall rating is the average of its 4 review scores.
+function projectRating(review: CompletedProjectRow['review']): number | null {
+    if (!review) return null;
+    const avg =
+        (review.workQualityScore +
+            review.serviceScore +
+            review.valueForMoneyScore +
+            review.deliveryTimeScore) /
+        4;
+    return Math.round(avg * 10) / 10;
+}
 
 export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
     if (!row.completedAt) {
@@ -105,15 +153,29 @@ export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
             'Completed project has no completedAt',
         );
     }
-    const receiver =
-        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType)
-            ? toCompanyBrief(row.proposal.sender)
-            : toCompanyBrief(row.proposal.listing.company);
+    const isService =
+        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType);
+    const sender = toCompanyBrief(row.proposal.sender);
+    const owner = toCompanyBrief(row.proposal.listing.company);
+    const provider = isService ? owner : sender;
+    const receiver = isService ? sender : owner;
     return {
         projectId: row.projectId,
+        listingType: row.proposal.listing.listingType as ListingType,
         listingTitle: row.proposal.listing.listingTitle,
-        receiver,
+        listingDesc: row.proposal.listing.listingDesc,
+        categories: row.proposal.listing.listingCategory.map(
+            (lc) => lc.category.categoryName,
+        ),
+        techStack: isService
+            ? toTechStackNames(row.proposal.listing.service)
+            : [],
+        startDate: toDateOnly(row.startDate),
         completedAt: row.completedAt.toISOString(),
+        provider,
+        receiver,
+        rating: projectRating(row.review),
+        reviewComment: row.review?.comment ?? null,
     };
 }
 
