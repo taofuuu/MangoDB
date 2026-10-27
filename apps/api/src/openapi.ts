@@ -3,6 +3,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import {
     ACCOUNT_TYPES,
     COMPANY_SORT_ORDERS,
+    JOB_SORT_ORDERS,
     LISTING_STATUSES,
     PROJECT_STATUSES,
     PROJECT_UPDATE_TYPES,
@@ -746,6 +747,11 @@ const definition = {
             serviceOrderBy: queryParam('orderBy', {
                 type: 'string',
                 enum: [...SERVICE_SORT_ORDERS],
+                default: 'newest',
+            }),
+            jobOrderBy: queryParam('orderBy', {
+                type: 'string',
+                enum: [...JOB_SORT_ORDERS],
                 default: 'newest',
             }),
             companyIdQuery: queryParam('companyId', {
