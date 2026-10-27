@@ -103,6 +103,11 @@ export const jobListQuerySchema = z
             blankToUndefined,
             z.iso.date('Deadline must be in YYYY-MM-DD format').optional(),
         ),
+        // US3-5. Deadline direction: ANY (no filter), BEFORE (<= date), AFTER (>= date).
+        deadlineType: z.preprocess(
+            (val) => (typeof val === 'string' ? val.trim().toUpperCase() : val),
+            z.enum(['ANY', 'BEFORE', 'AFTER']).optional(),
+        ),
     })
     .refine(minBudgetDoesNotExceedMax, {
         message: BUDGET_RANGE_ERROR,

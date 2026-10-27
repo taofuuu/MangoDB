@@ -84,13 +84,17 @@ export function jobKeywordWhere(word: string): Prisma.ListingWhereInput {
     return { OR: [{ listingTitle: contains }, { listingDesc: contains }] };
 }
 
-// US3-5. Keeps a job whose deadline is on or before the given day in UTC.
+// US3-5. Keeps a job whose deadline is on or before (or after) the given day in UTC.
 // Jobs without a deadline cannot match a deadline filter.
-export function jobDeadlineWhere(deadline: string): Prisma.ListingWhereInput {
+export function jobDeadlineWhere(
+    deadline: string,
+    deadlineType: 'BEFORE' | 'AFTER' = 'BEFORE',
+): Prisma.ListingWhereInput {
     return {
         job: {
             deadline: {
-                lte: fromDateOnly(deadline),
+                [deadlineType === 'AFTER' ? 'gte' : 'lte']:
+                    fromDateOnly(deadline),
             },
         },
     };
@@ -109,11 +113,21 @@ export function jobSearchWhere(
         minBudget?: number | undefined;
         maxBudget?: number | undefined;
         deadline?: string | undefined;
+        deadlineType?: 'ANY' | 'BEFORE' | 'AFTER' | undefined;
     },
     callerId: number,
 ): Prisma.ListingWhereInput {
-    const { status, companyId, q, category, minBudget, maxBudget, deadline } =
-        filters;
+    const {
+        status,
+        companyId,
+        q,
+        category,
+        minBudget,
+        maxBudget,
+        deadline,
+        deadlineType,
+    } = filters;
+    const effectiveDeadlineType = deadlineType === 'AFTER' ? 'AFTER' : 'BEFORE';
     return {
         AND: [
             { listingType: 'JOB' satisfies ListingType },
@@ -123,7 +137,9 @@ export function jobSearchWhere(
             ...splitWords(q).map(jobKeywordWhere),
             ...(category?.length ? [categoryNameWhere(category)] : []),
             ...listingBudgetWhere({ minBudget, maxBudget }),
-            ...(deadline ? [jobDeadlineWhere(deadline)] : []),
+            ...(deadline && deadlineType !== 'ANY'
+                ? [jobDeadlineWhere(deadline, effectiveDeadlineType)]
+                : []),
             {
                 OR: [
                     { listingStatus: 'OPEN' satisfies ListingStatus },

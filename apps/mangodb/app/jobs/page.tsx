@@ -9,20 +9,13 @@ import SearchBar from '@/components/ui/SearchBar';
 import type { Job } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
+import JobFilterSidebar from '@/components/jobs/JobFilterSidebar';
 import PageGate from '@/components/auth/PageGate';
-import { NOT_SIGNED_IN } from '@/lib/api';
+import { NOT_SIGNED_IN, describeError } from '@/lib/api';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useJobList } from '@/lib/useJobList';
 import { useMyCompany } from '@/lib/useMyCompany';
-
-// The deadline and order boxes. Neither reaches GET /jobs yet (only the
-// keyword and page do); the round-2 Phase 7 page records it for Sprint 3.
-type DeadlineType = 'ANY' | 'BEFORE' | 'AFTER';
-const DEADLINE_OPTIONS: { label: string; value: DeadlineType }[] = [
-    { label: 'Any', value: 'ANY' },
-    { label: 'Before', value: 'BEFORE' },
-    { label: 'After', value: 'AFTER' },
-];
+import { getJobFilterOptions, type JobFilterOptions } from '@/lib/jobs';
 
 type OrderType = 'DEFAULT' | 'BUDGET' | 'DEADLINE';
 const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
@@ -57,21 +50,19 @@ function OtherJobPage() {
         q,
         isLoading,
         error,
+        filters,
+        setFilters,
+        clearFilters,
         search,
         goToPage,
         reload,
     } = useJobList({ view: 'search' });
-    //filter part (not currently used)
-    const [categories, setCategories] = useState<string[]>([]);
 
-    const [minBudget, setMinBudget] = useState('');
-    const [maxBudget, setMaxBudget] = useState('');
+    const [options, setOptions] = useState<JobFilterOptions>({
+        categories: [],
+    });
+    const [optionsError, setOptionsError] = useState<string | null>(null);
 
-    const [deadlineType, setDeadlineType] = useState<DeadlineType>('ANY');
-    const [deadlineDate, setDeadlineDate] = useState('');
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-    //
     const [orderType, setOrderType] = useState<OrderType>('DEFAULT');
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -79,30 +70,18 @@ function OtherJobPage() {
     const filterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!isFilterOpen) return;
-
-        function handleClickOutside(event: MouseEvent) {
-            if (
-                filterRef.current &&
-                !filterRef.current.contains(event.target as Node)
-            ) {
-                setIsFilterOpen(false);
-            }
-        }
-
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') {
-                setIsFilterOpen(false);
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
+        let active = true;
+        getJobFilterOptions()
+            .then((data) => {
+                if (active) setOptions(data);
+            })
+            .catch((err: unknown) => {
+                if (active) setOptionsError(describeError(err));
+            });
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
+            active = false;
         };
-    }, [isFilterOpen]);
+    }, []);
 
     const openDetail = (job: Job) => {
         setSelectedJob(job);
@@ -135,6 +114,13 @@ function OtherJobPage() {
         return <div className="min-h-screen bg-surface" />;
     }
 
+    const hasActiveFilters =
+        Boolean(q) ||
+        filters.categories.length > 0 ||
+        filters.minBudget !== null ||
+        filters.maxBudget !== null ||
+        (filters.deadlineType !== 'ANY' && Boolean(filters.deadlineDate));
+
     return (
         // overflow-x-clip: the detail panel slides in from 2rem to the right,
         // which would otherwise make the page wider than the window for a
@@ -159,128 +145,18 @@ function OtherJobPage() {
                 {/* ================================================= */}
 
                 {!isDetailOpen && (
-                    <div
-                        ref={filterRef}
-                        className="relative h-[57.41vh] w-[23.17vw] rounded-popup bg-fill-subtle"
-                    >
-                        <div className="flex flex-col gap-[2.59vh] px-[1.09vw] py-[1.57vh]">
-                            <h2 className="type-md text-ink">Filters</h2>
-
-                            <hr className="w-[20.98vw] border-0 border-t border-brand/50" />
-
-                            {/* Category */}
-                            <div className="flex flex-col gap-[0.83vh]">
-                                <div className="type-sm flex w-full items-start justify-between">
-                                    Category
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setCategories([]);
-                                            goToPage(1);
-                                        }}
-                                        className="hover:underline focus-visible:outline-none"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-
-                                <div className="h-[16vh] w-[20.94vw] rounded-[6px] border border-brand bg-surface-white" />
-                            </div>
-
-                            {/* Budget */}
-                            <div className="flex flex-col gap-[0.83vh] type-sm">
-                                <div className="flex w-full items-start justify-between">
-                                    Budget
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setMinBudget('');
-                                            setMaxBudget('');
-                                            goToPage(1);
-                                        }}
-                                        className="hover:underline focus-visible:outline-none"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-
-                                <div className="flex w-full gap-[0.7vw]">
-                                    <div className="flex gap-[0.4vw]">
-                                        Min
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            min="0"
-                                            value={minBudget}
-                                            onChange={(e) => {
-                                                setMinBudget(e.target.value);
-                                                goToPage(1);
-                                            }}
-                                            className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
-                                        />
-                                    </div>
-                                    -
-                                    <div className="flex gap-[0.4vw]">
-                                        Max
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            min="0"
-                                            value={maxBudget}
-                                            onChange={(e) => {
-                                                setMaxBudget(e.target.value);
-                                                goToPage(1);
-                                            }}
-                                            className="h-[3vh] w-[7.2vw] rounded-[6px] border border-brand bg-surface-white px-[0.5vw] text-center outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Deadline */}
-                            <div className="flex flex-col gap-[0.83vh] type-sm">
-                                <div className="flex w-full items-start justify-between">
-                                    Deadline
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setDeadlineType('ANY');
-                                            setDeadlineDate('');
-                                            goToPage(1);
-                                        }}
-                                        className="hover:underline focus-visible:outline-none"
-                                    >
-                                        Clear
-                                    </button>
-                                </div>
-
-                                <div className="flex gap-[0.42vw]">
-                                    <Dropdown
-                                        value={deadlineType}
-                                        options={DEADLINE_OPTIONS}
-                                        onChange={(next) => {
-                                            setDeadlineType(next);
-                                            goToPage(1);
-                                        }}
-                                        label="Deadline before or after"
-                                        className="w-[6vw] min-w-[90px]"
-                                    />
-
-                                    <input
-                                        type="date"
-                                        value={deadlineDate}
-                                        onChange={(e) => {
-                                            setDeadlineDate(e.target.value);
-                                            goToPage(1);
-                                        }}
-                                        aria-label="Deadline date"
-                                        className="h-[3.70vh] min-w-0 flex-1 rounded-[6px] border border-brand bg-surface-white px-[0.63vw] type-sm focus:ring-1 focus:ring-brand/30"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                    <div ref={filterRef} className="shrink-0">
+                        <JobFilterSidebar
+                            filters={filters}
+                            options={options}
+                            optionsError={optionsError}
+                            onChange={setFilters}
+                            onClearAll={clearFilters}
+                            className="w-[23.17vw] min-w-[240px] max-w-none"
+                        />
                     </div>
                 )}
+
                 {/* ================= CONTENT ================= */}
                 <div className="flex flex-col max-w-[93.75vw] gap-[2vh]">
                     {/* ================= HEADER ================= */}
@@ -407,11 +283,7 @@ function OtherJobPage() {
                                     ) : (
                                         <EmptyState
                                             title="No job postings found"
-                                            {...((q ||
-                                                categories.length > 0 ||
-                                                minBudget !== '' ||
-                                                maxBudget !== '' ||
-                                                deadlineDate) && {
+                                            {...(hasActiveFilters && {
                                                 message:
                                                     'Try a broader keyword or fewer filters.',
                                             })}
