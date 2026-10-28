@@ -6,7 +6,7 @@ import Dropdown from '@/components/ui/Dropdown';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import SearchBar from '@/components/ui/SearchBar';
-import type { Job } from '@mangodb/shared';
+import type { Job, JobSortOrder } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import JobFilterSidebar from '@/components/jobs/JobFilterSidebar';
@@ -18,13 +18,12 @@ import { useJobList } from '@/lib/useJobList';
 import { useMyCompany } from '@/lib/useMyCompany';
 import { getJobFilterOptions, type JobFilterOptions } from '@/lib/jobs';
 
-type OrderType = 'DEFAULT' | 'BUDGET' | 'DEADLINE';
-const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
-    { label: 'Default', value: 'DEFAULT' },
-    { label: 'Budget low to high', value: 'BUDGET' },
-    { label: 'Budget high to low', value: 'BUDGET' },
-    { label: 'Deadline (Earliest first)', value: 'DEADLINE' },
-    { label: 'Deadline (Lastest first)', value: 'DEADLINE' },
+const ORDER_OPTIONS: { label: string; value: JobSortOrder }[] = [
+    { label: 'Newest', value: 'newest' },
+    { label: 'Budget: low to high', value: 'maxBudgetAsc' },
+    { label: 'Budget: high to low', value: 'maxBudgetDesc' },
+    { label: 'Deadline: Earliest first', value: 'deadlineAsc' },
+    { label: 'Deadline: Latest first', value: 'deadlineDesc' },
 ];
 
 // Job search is a Provider's (US3-4). GET /jobs stays open to receivers too,
@@ -59,6 +58,8 @@ function OtherJobPage() {
         search,
         goToPage,
         reload,
+        orderBy,
+        setOrderBy,
     } = useJobList({ view: 'search' });
 
     const [options, setOptions] = useState<JobFilterOptions>({
@@ -66,7 +67,6 @@ function OtherJobPage() {
     });
     const [optionsError, setOptionsError] = useState<string | null>(null);
 
-    const [orderType, setOrderType] = useState<OrderType>('DEFAULT');
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
@@ -207,14 +207,11 @@ function OtherJobPage() {
                                 </span>
 
                                 <Dropdown
-                                    value={orderType}
+                                    value={orderBy}
                                     options={ORDER_OPTIONS}
-                                    onChange={(next) => {
-                                        setOrderType(next);
-                                        goToPage(1);
-                                    }}
+                                    onChange={setOrderBy}
                                     label="Order jobs by"
-                                    className="w-[8.125vw] min-w-[120px]"
+                                    className="w-auto min-w-[180px] shrink-0"
                                 />
                             </div>
                         </div>

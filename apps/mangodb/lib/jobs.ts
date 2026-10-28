@@ -99,14 +99,6 @@ export const EMPTY_SEARCH_JOBS_FILTERS: SearchJobsFilters = {
     deadlineDate: '',
 };
 
-export type SearchJobsParams = {
-    q?: string | undefined;
-    orderBy: JobSortOrder;
-    page: number;
-    pageSize: number;
-    filters: SearchJobsFilters;
-};
-
 export type JobFilterOptions = {
     categories: string[];
 };
@@ -131,6 +123,7 @@ export interface ListJobsOptions {
     maxBudget?: number | undefined;
     deadline?: string | undefined;
     deadlineType?: DeadlineType | undefined;
+    orderBy?: JobSortOrder | undefined;
 }
 
 // GET /jobs: one company's open jobs or general listing.
@@ -183,6 +176,10 @@ export function listJobs(
         if (options.deadlineType && options.deadlineType !== 'ANY') {
             query.set('deadlineType', options.deadlineType);
         }
+    }
+
+    if (options?.orderBy) {
+        query.set('orderBy', options.orderBy);
     }
 
     const path = `/jobs?${query.toString()}`;

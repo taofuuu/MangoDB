@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
+import type {
+    Job,
+    JobSortOrder,
+    ListingStatus,
+    Paginated,
+} from '@mangodb/shared';
 import {
     NOT_SIGNED_IN,
     describeError,
@@ -42,6 +47,7 @@ export function useJobList(options: JobListOptions) {
     const [filters, setFiltersState] = useState<SearchJobsFilters>(
         EMPTY_SEARCH_JOBS_FILTERS,
     );
+    const [orderBy, setOrderByState] = useState<JobSortOrder>('newest');
     const [result, setResult] = useState<Paginated<Job> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     // A sentence to show, or NOT_SIGNED_IN while the page leaves for login.
@@ -80,6 +86,7 @@ export function useJobList(options: JobListOptions) {
                         ? filters.deadlineDate
                         : undefined,
                 deadlineType: filters.deadlineType,
+                orderBy,
             };
             if (companyId !== null) listFilters.companyId = companyId;
             request = listJobs(page, JOB_PAGE_SIZE, listFilters);
@@ -109,11 +116,16 @@ export function useJobList(options: JobListOptions) {
         return () => {
             cancelled = true;
         };
-    }, [view, companyId, page, q, status, filters, reloadKey]);
+    }, [view, companyId, page, q, status, filters, orderBy, reloadKey]);
 
     // A new keyword or status starts again from page 1.
     function search(keyword: string) {
         setQ(keyword);
+        setPage(1);
+    }
+
+    function setOrderBy(next: JobSortOrder) {
+        setOrderByState(next);
         setPage(1);
     }
 
@@ -145,6 +157,8 @@ export function useJobList(options: JobListOptions) {
         q,
         status,
         filters,
+        orderBy,
+        setOrderBy,
         setFilters,
         clearFilters,
         isLoading,
