@@ -51,7 +51,7 @@ jobRoutes.get('/mine', requireAuth, requireRole('receiver'), listMyJobs);
  *   get:
  *     tags: [Jobs]
  *     summary: Search job postings
- *     description: US2-7, US3-4, US3-5. Open postings are visible to every company. Closed ones only to their owner.
+ *     description: US2-7, US3-4, US3-5, US3-8. Open postings are visible to every company. Closed ones only to their owner.
  *     parameters:
  *       - $ref: '#/components/parameters/listingStatus'
  *       - $ref: '#/components/parameters/companyIdQuery'
@@ -73,6 +73,7 @@ jobRoutes.get('/mine', requireAuth, requireRole('receiver'), listMyJobs);
  *         schema:
  *           type: string
  *           format: date
+ *       - $ref: '#/components/parameters/jobOrderBy'
  *       - $ref: '#/components/parameters/page'
  *       - $ref: '#/components/parameters/pageSize'
  *     responses:

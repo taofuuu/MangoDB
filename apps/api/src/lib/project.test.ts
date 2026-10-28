@@ -174,6 +174,125 @@ describe('providerCompletedProjectsWhere', () => {
 });
 
 describe('toCompletedProject', () => {
+    it('maps a completed project on a JOB listing', () => {
+        const row = {
+            projectId: 1,
+            startDate: new Date('2026-09-01T00:00:00Z'),
+            completedAt: new Date('2026-10-01T12:00:00Z'),
+            review: {
+                workQualityScore: 5,
+                serviceScore: 5,
+                valueForMoneyScore: 5,
+                deliveryTimeScore: 5,
+                comment: 'Excellent work!',
+            },
+            proposal: {
+                senderId: SENDER,
+                sender: {
+                    companyId: SENDER,
+                    companyName: 'Sender Co',
+                    companyPhoto: null,
+                },
+                listing: {
+                    listingTitle: 'Job Title',
+                    listingDesc: 'Job Description',
+                    listingType: 'JOB',
+                    companyId: OWNER,
+                    company: {
+                        companyId: OWNER,
+                        companyName: 'Owner Co',
+                        companyPhoto: null,
+                    },
+                    listingCategory: [
+                        { category: { categoryName: 'Development' } },
+                    ],
+                    service: null,
+                },
+            },
+        };
+        const result = lib.toCompletedProject(row);
+        assert.deepEqual(result, {
+            projectId: 1,
+            listingType: 'JOB',
+            listingTitle: 'Job Title',
+            listingDesc: 'Job Description',
+            categories: ['Development'],
+            techStack: [],
+            startDate: '2026-09-01',
+            completedAt: '2026-10-01T12:00:00.000Z',
+            provider: {
+                companyId: SENDER,
+                companyName: 'Sender Co',
+                companyPhoto: null,
+            },
+            receiver: {
+                companyId: OWNER,
+                companyName: 'Owner Co',
+                companyPhoto: null,
+            },
+            rating: 5,
+            reviewComment: 'Excellent work!',
+        });
+    });
+
+    it('maps a completed project on a SERVICE listing with sorted tech stack and null review', () => {
+        const row = {
+            projectId: 2,
+            startDate: new Date('2026-08-15T00:00:00Z'),
+            completedAt: new Date('2026-10-10T08:00:00Z'),
+            review: null,
+            proposal: {
+                senderId: SENDER,
+                sender: {
+                    companyId: SENDER,
+                    companyName: 'Client Co',
+                    companyPhoto: null,
+                },
+                listing: {
+                    listingTitle: 'Web Service',
+                    listingDesc: 'Service Description',
+                    listingType: 'SERVICE',
+                    companyId: OWNER,
+                    company: {
+                        companyId: OWNER,
+                        companyName: 'Dev Agency',
+                        companyPhoto: null,
+                    },
+                    listingCategory: [{ category: { categoryName: 'Design' } }],
+                    service: {
+                        serviceTechStack: [
+                            { techStack: { techStackName: 'TypeScript' } },
+                            { techStack: { techStackName: 'React' } },
+                        ],
+                    },
+                },
+            },
+        };
+        const result = lib.toCompletedProject(row);
+        assert.deepEqual(result, {
+            projectId: 2,
+            listingType: 'SERVICE',
+            listingTitle: 'Web Service',
+            listingDesc: 'Service Description',
+            categories: ['Design'],
+            techStack: ['React', 'TypeScript'],
+            startDate: '2026-08-15',
+            completedAt: '2026-10-10T08:00:00.000Z',
+            provider: {
+                companyId: OWNER,
+                companyName: 'Dev Agency',
+                companyPhoto: null,
+            },
+            receiver: {
+                companyId: SENDER,
+                companyName: 'Client Co',
+                companyPhoto: null,
+            },
+            rating: null,
+            reviewComment: null,
+        });
+    });
+
     it('is a 500 when a COMPLETED row has no completedAt', () => {
         assert.throws(
             () =>

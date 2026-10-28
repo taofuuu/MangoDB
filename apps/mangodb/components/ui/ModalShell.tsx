@@ -57,6 +57,35 @@ const FOCUSABLE = [
     '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+let activeModalCount = 0;
+let previousOverflow = '';
+let previousPaddingRight = '';
+
+function lockScroll() {
+    if (activeModalCount === 0) {
+        previousOverflow = document.body.style.overflow;
+        previousPaddingRight = document.body.style.paddingRight;
+
+        // Compensate for the disappearing vertical scrollbar so the page underneath
+        // does not shift/jump to the right when the modal opens.
+        const scrollBarWidth =
+            window.innerWidth - document.documentElement.clientWidth;
+        if (scrollBarWidth > 0) {
+            document.body.style.paddingRight = `${scrollBarWidth}px`;
+        }
+        document.body.style.overflow = 'hidden';
+    }
+    activeModalCount++;
+}
+
+function unlockScroll() {
+    activeModalCount = Math.max(0, activeModalCount - 1);
+    if (activeModalCount === 0) {
+        document.body.style.overflow = previousOverflow;
+        document.body.style.paddingRight = previousPaddingRight;
+    }
+}
+
 export default function ModalShell({ isOpen, ...props }: ModalShellProps) {
     // Unmounting on close is what makes a reopened dialog start clean, rather
     // than showing the previous attempt's half-filled form or stale error.
@@ -89,13 +118,12 @@ function ModalShellDialog({
     // focus out of the dialog it is confirming.
     useEffect(() => {
         const previousFocus = document.activeElement;
-        const previousOverflow = document.body.style.overflow;
 
-        document.body.style.overflow = 'hidden';
+        lockScroll();
         panelRef.current?.focus();
 
         return () => {
-            document.body.style.overflow = previousOverflow;
+            unlockScroll();
             // isConnected: the opener may have been removed while the dialog
             // was up, and focusing a detached node throws the focus away.
             if (

@@ -24,10 +24,10 @@
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database. The fake keeps job rows in an
  *   array and answers findUnique / findFirst / findMany / count by reading the
- *   `where` the controller sends. It understands only the parts of `where` the
- *   controller uses (AND, OR, plain equals, a `company` relation filter,
- *   `contains` read as SQL LIKE). So the test checks what comes back, not
- *   which query was run.
+ *   `where` and `orderBy` the controller sends. It understands only the parts
+ *   of `where` the controller uses (AND, OR, plain equals, a `company` relation
+ *   filter, `contains` read as SQL LIKE), and applies `orderBy` with Postgres-style
+ *   null placement. So the test checks what comes back, not which query was run.
  *
  * Run: npm test (in apps/api). Needs --experimental-test-module-mocks, which the
  * test script passes.
@@ -249,14 +249,73 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
     );
 }
 
-type Args = { where?: unknown; skip?: number; take?: number };
+type Args = {
+    where?: unknown;
+    skip?: number;
+    take?: number;
+    orderBy?: unknown;
+};
+
+type SortOrder = { sort: 'asc' | 'desc'; nulls?: 'first' | 'last' };
+
+// Like Postgres: without `nulls`, nulls go last when ascending and first when
+// descending. So a missing `nulls: 'last'` in jobOrderBy fails a test here.
+function compareValues(
+    a: number | Date | null | undefined,
+    b: number | Date | null | undefined,
+    order: SortOrder,
+): number {
+    const nulls = order.nulls ?? (order.sort === 'asc' ? 'last' : 'first');
+    if (a == null) return b == null ? 0 : nulls === 'last' ? 1 : -1;
+    if (b == null) return nulls === 'last' ? -1 : 1;
+    const valA = a instanceof Date ? a.getTime() : a;
+    const valB = b instanceof Date ? b.getTime() : b;
+    return order.sort === 'asc' ? valA - valB : valB - valA;
+}
+
+function sortRows(rowList: Row[], orderBy: unknown): Row[] {
+    if (!Array.isArray(orderBy) || orderBy.length === 0) {
+        return [...rowList].sort(
+            (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        );
+    }
+    return [...rowList].sort((a, b) => {
+        for (const item of orderBy as Record<string, unknown>[]) {
+            if ('maxBudget' in item) {
+                const diff = compareValues(
+                    a.maxBudget,
+                    b.maxBudget,
+                    item.maxBudget as SortOrder,
+                );
+                if (diff !== 0) return diff;
+            } else if ('job' in item) {
+                const diff = compareValues(
+                    a.job?.deadline,
+                    b.job?.deadline,
+                    (item.job as { deadline: SortOrder }).deadline,
+                );
+                if (diff !== 0) return diff;
+            } else if ('createdAt' in item) {
+                const diff = compareValues(a.createdAt, b.createdAt, {
+                    sort: item.createdAt as 'asc' | 'desc',
+                });
+                if (diff !== 0) return diff;
+            } else if ('listingId' in item) {
+                const diff = compareValues(a.listingId, b.listingId, {
+                    sort: item.listingId as 'asc' | 'desc',
+                });
+                if (diff !== 0) return diff;
+            }
+        }
+        return 0;
+    });
+}
 
 function find(args: Args): Row[] {
-    const found = rows
-        .filter((r) => matches(r, args.where))
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const matched = rows.filter((r) => matches(r, args.where));
+    const sorted = sortRows(matched, args.orderBy);
     const skip = args.skip ?? 0;
-    return found.slice(
+    return sorted.slice(
         skip,
         args.take === undefined ? undefined : skip + args.take,
     );
@@ -892,6 +951,167 @@ describe('GET /jobs', () => {
         assert.equal(page1.items.length, 1);
         assert.equal(page1.items[0]?.jobId, 11);
         assert.equal(page1.pagination.totalItems, 2);
+        assert.equal(page1.pagination.totalPages, 2);
+    });
+});
+
+describe('GET /jobs?orderBy= (US3-8)', () => {
+    function list(
+        callerCompanyId: number,
+        query: Record<string, string | string[]> = {},
+    ) {
+        return call(controller.listJobs, callerCompanyId, {
+            query,
+        }) as Promise<Paginated<Job>>;
+    }
+
+    it('orders jobs by maxBudgetDesc with highest budget first, nulls last, and listingId tie-breaker (T3.8.2)', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 5000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(4, OWNER, 'OPEN'), null, null),
+            withBudget(job(5, OWNER, 'OPEN'), null, null),
+        ];
+
+        const body = await list(OTHER, { orderBy: 'maxBudgetDesc' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by maxBudgetAsc with lowest budget first, nulls last, and listingId tie-breaker (T3.8.2)', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 1000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+            withBudget(job(4, OWNER, 'OPEN'), null, null),
+            withBudget(job(5, OWNER, 'OPEN'), null, null),
+        ];
+
+        const body = await list(OTHER, { orderBy: 'maxBudgetAsc' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by deadlineAsc with earliest deadline first, nulls last, and listingId tie-breaker (T3.8.3)', async () => {
+        rows = [
+            withDeadline(job(1, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(2, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(3, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(4, OWNER, 'OPEN'), null),
+            withDeadline(job(5, OWNER, 'OPEN'), null),
+        ];
+
+        const body = await list(OTHER, { orderBy: 'deadlineAsc' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('orders jobs by deadlineDesc with latest deadline first, nulls last, and listingId tie-breaker (T3.8.3)', async () => {
+        rows = [
+            withDeadline(job(1, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(2, OWNER, 'OPEN'), fromDateOnly('2026-06-01')),
+            withDeadline(job(3, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(4, OWNER, 'OPEN'), null),
+            withDeadline(job(5, OWNER, 'OPEN'), null),
+        ];
+
+        const body = await list(OTHER, { orderBy: 'deadlineDesc' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 3, 1, 5, 4],
+        );
+    });
+
+    it('defaults to newest when orderBy is omitted', async () => {
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
+
+        const body = await list(OTHER);
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
+    });
+
+    it('orders by newest when orderBy=newest is explicitly requested', async () => {
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
+
+        const body = await list(OTHER, { orderBy: 'newest' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
+    });
+
+    it('ignores blank orderBy query value and defaults to newest', async () => {
+        rows = [
+            { ...job(1, OWNER, 'OPEN'), createdAt: new Date('2026-01-01') },
+            { ...job(2, OWNER, 'OPEN'), createdAt: new Date('2026-01-05') },
+        ];
+
+        const body = await list(OTHER, { orderBy: '   ' });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [2, 1],
+        );
+    });
+
+    it('answers 400 when orderBy is not a recognized sort order', async () => {
+        rows = [job(1, OWNER, 'OPEN')];
+
+        const result = await call(controller.listJobs, OTHER, {
+            query: { orderBy: 'unknownSort' },
+        });
+
+        assertBadRequest(result);
+    });
+
+    it('paginates after ordering jobs by budget', async () => {
+        rows = [
+            withBudget(job(1, OWNER, 'OPEN'), null, 1000),
+            withBudget(job(2, OWNER, 'OPEN'), null, 2000),
+            withBudget(job(3, OWNER, 'OPEN'), null, 3000),
+        ];
+
+        const page1 = await list(OTHER, {
+            orderBy: 'maxBudgetDesc',
+            page: '1',
+            pageSize: '2',
+        });
+        const page2 = await list(OTHER, {
+            orderBy: 'maxBudgetDesc',
+            page: '2',
+            pageSize: '2',
+        });
+
+        assert.deepEqual(
+            page1.items.map((j) => j.jobId),
+            [3, 2],
+        );
+        assert.deepEqual(
+            page2.items.map((j) => j.jobId),
+            [1],
+        );
+        assert.equal(page1.pagination.totalItems, 3);
         assert.equal(page1.pagination.totalPages, 2);
     });
 });
