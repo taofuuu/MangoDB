@@ -81,6 +81,17 @@ export const SERVICE_SORT_ORDERS = [
 ] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
 
+// US3-8 (T3.8.2, T3.8.3). Ordering choices of the job search. Never stored,
+// so camelCase like COMPANY_SORT_ORDERS and SERVICE_SORT_ORDERS (section 6).
+export const JOB_SORT_ORDERS = [
+    'newest',
+    'maxBudgetDesc',
+    'maxBudgetAsc',
+    'deadlineAsc',
+    'deadlineDesc',
+] as const;
+export type JobSortOrder = (typeof JOB_SORT_ORDERS)[number];
+
 // The frontend switches on these; a rename is a breaking change for both sides.
 export const API_ERROR_CODES = [
     'BAD_REQUEST',
@@ -494,9 +505,17 @@ export interface ProjectDetail extends Project {
 // US2-5. One row of GET /companies/:companyId/completed-projects.
 export interface CompletedProject {
     projectId: number;
+    listingType: ListingType;
     listingTitle: string;
-    receiver: CompanyBrief;
+    listingDesc: string;
+    categories: string[];
+    techStack: string[];
+    startDate: string;
     completedAt: string;
+    provider: CompanyBrief;
+    receiver: CompanyBrief;
+    rating: number | null;
+    reviewComment: string | null;
 }
 
 // ADR 0017. A quotation PDF on a project. Sent as multipart (a `file` field),
