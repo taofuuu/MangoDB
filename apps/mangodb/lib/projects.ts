@@ -57,6 +57,51 @@ export function listQuotations(projectId: number): Promise<Quotation[]> {
     return cachedGet(path, () => apiFetch<Quotation[]>(path));
 }
 
+// US4-1. Provider uploads quotation PDF.
+export function uploadQuotation(
+    projectId: number,
+    file: File,
+): Promise<Quotation> {
+    const body = new FormData();
+    body.append('file', file);
+    return invalidateAfter(
+        apiFetch<Quotation>(`/projects/${projectId}/quotations`, {
+            method: 'POST',
+            body,
+        }),
+        `/projects/${projectId}`,
+        '/projects/mine',
+    );
+}
+
+// US4-4. Receiver accepts quotation (moves project to AWAITING_DEPOSIT).
+export function acceptQuotation(
+    quotationId: number,
+    projectId: number,
+): Promise<Quotation> {
+    return invalidateAfter(
+        apiFetch<Quotation>(`/quotations/${quotationId}/accept`, {
+            method: 'POST',
+        }),
+        `/projects/${projectId}`,
+        '/projects/mine',
+    );
+}
+
+// US4-5. Receiver rejects quotation.
+export function rejectQuotation(
+    quotationId: number,
+    projectId: number,
+): Promise<Quotation> {
+    return invalidateAfter(
+        apiFetch<Quotation>(`/quotations/${quotationId}/reject`, {
+            method: 'POST',
+        }),
+        `/projects/${projectId}`,
+        '/projects/mine',
+    );
+}
+
 // US4-6. Receiver reports deposit.
 export function reportDeposit(projectId: number): Promise<void> {
     return invalidateAfter(
