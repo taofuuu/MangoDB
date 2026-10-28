@@ -63,8 +63,9 @@ type DepositNoticeDialogProps = {
 };
 
 // Not a ConfirmModal: it has a close X in place of a cancel button, and a
-// warning line under the description. Sized and typeset to match it, since
-// the two open one after the other.
+// warning line under the description. Padding, type and buttons match
+// ConfirmModal, since the two open one after the other. It is wider (30vw
+// to ConfirmModal's 24vw) on purpose: the Figma frames are 730px and 576px.
 function DepositNoticeDialog({
     isOpen,
     onClose,
