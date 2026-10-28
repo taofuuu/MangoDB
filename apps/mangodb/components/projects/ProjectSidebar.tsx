@@ -53,7 +53,7 @@ export default function ProjectSidebar({
     onUploadQuotation,
     onAcceptQuotation,
     onRejectQuotation,
-    onReportDeposit: _onReportDeposit,
+    onReportDeposit,
     onConfirmDeposit,
     onSubmitWork,
     onAcceptWork,
@@ -69,6 +69,9 @@ export default function ProjectSidebar({
     // Latest quotation
     const latestQuotation =
         quotations.length > 0 ? quotations[quotations.length - 1] : null;
+    const qStatus = latestQuotation?.quotationStatus;
+    const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
+    const isQuotationAccepted = isPastQuotation || qStatus === 'ACCEPTED';
 
     // Deposit status
     const isDepositConfirmed = !!project.depositConfirmedAt;
@@ -146,33 +149,86 @@ export default function ProjectSidebar({
 
                 if (isPastQuotation || qStatus === 'ACCEPTED') {
                     // Accepted -> Blue
+                    if (isProvider) {
+                        return (
+                            <div className="rounded-[20px] border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
+                                        <span className="type-sm !font-[600] text-ink">
+                                            Quotation
+                                        </span>
+                                    </div>
+                                    <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
+                                </div>
+
+                                <div className="border-b border-brand-light/40 w-full" />
+
+                                <p className="type-sm text-ink leading-relaxed">
+                                    The receiver has accepted your quotation.
+                                </p>
+
+                                <a
+                                    href={latestQuotation?.quotationFile ?? '#'}
+                                    target={
+                                        latestQuotation?.quotationFile
+                                            ? '_blank'
+                                            : undefined
+                                    }
+                                    rel="noreferrer"
+                                    onClick={(e) => {
+                                        if (!latestQuotation?.quotationFile) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs font-semibold text-brand transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-brand opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                            </div>
+                        );
+                    }
+
+                    // Receiver view when quotation is accepted
                     return (
-                        <div className="rounded-[20px] border border-brand bg-surface-white p-4 shadow-card flex flex-col gap-3 transition-colors">
+                        <div className="rounded-[20px] border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <ClipboardList className="h-5 w-5 shrink-0 stroke-[2.2] text-brand" />
+                                    <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
                                     <span className="type-sm !font-[600] text-ink">
                                         Quotation
                                     </span>
                                 </div>
                                 <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
                             </div>
+
+                            <div className="border-b border-brand-light/40 w-full" />
+
+                            <p className="type-sm text-ink leading-relaxed">
+                                You&apos;ve accepted the quotation! You&apos;re
+                                all set to move forward. Please pay the deposit
+                                and report the payment once it&apos;s done.
+                            </p>
+
                             {latestQuotation?.quotationFile && (
-                                <div className="pt-2 border-t border-brand-light/30">
-                                    <a
-                                        href={latestQuotation.quotationFile}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs font-semibold text-brand transition-colors shadow-2xs group"
-                                    >
-                                        <div className="flex items-center gap-2 truncate">
-                                            <span className="truncate">
-                                                View Quotation PDF
-                                            </span>
-                                        </div>
-                                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-brand opacity-70 group-hover:opacity-100 transition-opacity" />
-                                    </a>
-                                </div>
+                                <a
+                                    href={latestQuotation.quotationFile}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs font-semibold text-brand transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-brand opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
                             )}
                         </div>
                     );
@@ -180,71 +236,140 @@ export default function ProjectSidebar({
 
                 if (qStatus === 'PENDING') {
                     // Added, awaiting receiver acceptance -> Yellow
+                    if (isProvider) {
+                        return (
+                            <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
+                                        <span className="type-sm !font-[600] text-ink">
+                                            Quotation
+                                        </span>
+                                    </div>
+                                    <ClipboardClock className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
+                                </div>
+
+                                <div className="border-b border-accent/40 w-full" />
+
+                                <p className="type-sm text-ink leading-relaxed">
+                                    The receiver is reviewing your quotation.
+                                    We’ll keep you update.
+                                </p>
+
+                                <a
+                                    href={latestQuotation?.quotationFile ?? '#'}
+                                    target={
+                                        latestQuotation?.quotationFile
+                                            ? '_blank'
+                                            : undefined
+                                    }
+                                    rel="noreferrer"
+                                    onClick={(e) => {
+                                        if (!latestQuotation?.quotationFile) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs font-semibold text-ink transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-soft opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
+
+                                <div className="flex gap-2 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={onUploadQuotation}
+                                        disabled={isBusy}
+                                        className="flex-1 rounded-[14px] border border-brand bg-surface-white py-2 px-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                    >
+                                        Replace File
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={isBusy}
+                                        className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                    >
+                                        Remove Quotation
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // Receiver view while awaiting receiver acceptance
                     return (
-                        <div className="rounded-[20px] border border-accent bg-surface-white p-4 shadow-card flex flex-col gap-3 transition-colors">
+                        <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <ClipboardList className="h-5 w-5 shrink-0 stroke-[2.2] text-accent" />
+                                    <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
                                     <span className="type-sm !font-[600] text-ink">
                                         Quotation
                                     </span>
                                 </div>
-                                <ClipboardClock className="h-6 w-6 text-accent shrink-0 stroke-[2.2]" />
+                                <ClipboardClock className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
                             </div>
 
-                            {latestQuotation && (
-                                <div className="flex flex-col gap-2 pt-2 border-t border-accent/40">
-                                    {latestQuotation.quotationFile && (
-                                        <a
-                                            href={latestQuotation.quotationFile}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs font-semibold text-ink transition-colors shadow-2xs group"
-                                        >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <span className="truncate">
-                                                    View Quotation PDF
-                                                </span>
-                                            </div>
-                                            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-soft opacity-70 group-hover:opacity-100 transition-opacity" />
-                                        </a>
-                                    )}
+                            <div className="border-b border-accent/40 w-full" />
 
-                                    {/* Receiver Accept / Reject buttons */}
-                                    {isReceiver &&
-                                        project.projectStatus ===
-                                            'AWAITING_QUOTATION' &&
-                                        onAcceptQuotation &&
-                                        onRejectQuotation && (
-                                            <div className="flex gap-2 pt-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onAcceptQuotation(
-                                                            latestQuotation.quotationId,
-                                                        )
-                                                    }
-                                                    disabled={isBusy}
-                                                    className="flex-1 rounded-button border border-brand bg-surface-white text-brand py-1.5 type-xs font-semibold hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
-                                                >
-                                                    Accept
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        onRejectQuotation(
-                                                            latestQuotation.quotationId,
-                                                        )
-                                                    }
-                                                    disabled={isBusy}
-                                                    className="flex-1 rounded-button border border-danger text-danger bg-surface-white py-1.5 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50"
-                                                >
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        )}
-                                </div>
+                            {latestQuotation?.quotationFile && (
+                                <a
+                                    href={latestQuotation.quotationFile}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs font-semibold text-ink transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-soft opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
                             )}
+
+                            <p className="type-sm text-ink leading-relaxed">
+                                Take your time to review the quotation. You can
+                                accept it or reject it when you&apos;re ready.
+                            </p>
+
+                            {/* Receiver Accept / Reject buttons */}
+                            {isReceiver &&
+                                project.projectStatus ===
+                                    'AWAITING_QUOTATION' &&
+                                onAcceptQuotation &&
+                                onRejectQuotation &&
+                                latestQuotation && (
+                                    <div className="flex gap-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onAcceptQuotation(
+                                                    latestQuotation.quotationId,
+                                                )
+                                            }
+                                            disabled={isBusy}
+                                            className="flex-1 rounded-[14px] border border-brand bg-surface-white text-brand py-2 px-2 type-xs font-semibold hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                        >
+                                            Accept
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                onRejectQuotation(
+                                                    latestQuotation.quotationId,
+                                                )
+                                            }
+                                            disabled={isBusy}
+                                            className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                )}
                         </div>
                     );
                 }
@@ -275,27 +400,42 @@ export default function ProjectSidebar({
                                 </svg>
                             </div>
 
+                            <div className="border-b border-danger/30 w-full" />
+
+                            <p className="type-sm text-ink leading-relaxed">
+                                {isReceiver
+                                    ? "You've declined this quotation. The provider can revise it and submit an updated version for your review."
+                                    : 'The receiver hasn’t accepted your quotation. Please review their feedback, make any necessary changes, and submit a revised quotation.'}
+                            </p>
+
+                            {latestQuotation?.quotationFile && (
+                                <a
+                                    href={latestQuotation.quotationFile}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-danger/20 bg-danger-wash hover:bg-danger-tint/50 px-3 py-2 type-xs font-semibold text-danger transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-danger opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                            )}
+
                             {isProvider &&
                                 project.projectStatus ===
                                     'AWAITING_QUOTATION' &&
                                 onUploadQuotation && (
-                                    <>
-                                        <div className="border-b border-danger/30 w-full" />
-
-                                        <p className="type-sm text-ink leading-relaxed">
-                                            Upload your quotation for the
-                                            receiver to review.
-                                        </p>
-
-                                        <button
-                                            type="button"
-                                            onClick={onUploadQuotation}
-                                            disabled={isBusy}
-                                            className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
-                                        >
-                                            Upload
-                                        </button>
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={onUploadQuotation}
+                                        disabled={isBusy}
+                                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                                    >
+                                        Revise & Resubmit Quotation
+                                    </button>
                                 )}
                         </div>
                     );
@@ -343,16 +483,26 @@ export default function ProjectSidebar({
 
                 // Receiver view before quotation is uploaded
                 return (
-                    <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-                        <div className="flex items-center gap-3">
-                            <ClipboardList className="h-5 w-5 shrink-0 stroke-[2.2] text-ink-soft" />
-                            <span className="type-sm !font-[600] text-ink-soft">
-                                Quotation
+                    <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                                <span className="type-sm !font-[600] text-ink">
+                                    Quotation
+                                </span>
+                            </div>
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                                —
                             </span>
                         </div>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
-                            —
-                        </span>
+
+                        <div className="border-b border-line w-full" />
+
+                        <p className="type-sm text-ink leading-relaxed">
+                            We&apos;re waiting for the provider to submit a
+                            quotation. Once submitted, it will be available for
+                            your review.
+                        </p>
                     </div>
                 );
             })()}
@@ -360,6 +510,30 @@ export default function ProjectSidebar({
             {/* 4. Deposit Section */}
             {(() => {
                 if (isDepositConfirmed) {
+                    if (isReceiver) {
+                        return (
+                            <div className="rounded-[20px] border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
+                                        <span className="type-sm !font-[600] text-ink">
+                                            Deposit
+                                        </span>
+                                    </div>
+                                    <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
+                                </div>
+
+                                <div className="border-b border-brand-light/40 w-full" />
+
+                                <p className="type-sm text-ink leading-relaxed">
+                                    The provider has confirmed receipt of your
+                                    deposit. You&apos;re all set to move forward
+                                    with the project!
+                                </p>
+                            </div>
+                        );
+                    }
+
                     // Confirmed by provider -> Blue (matches Frame in Figma)
                     return (
                         <div className="rounded-[20px] border border-brand bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
@@ -415,19 +589,67 @@ export default function ProjectSidebar({
 
                     // Receiver view while awaiting provider confirmation
                     return (
-                        <div className="rounded-[20px] border border-accent bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-                            <div className="flex items-center gap-3">
-                                <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-accent" />
-                                <span className="type-sm !font-[600] text-ink">
-                                    Deposit
-                                </span>
+                        <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
+                                    <span className="type-sm !font-[600] text-ink">
+                                        Deposit
+                                    </span>
+                                </div>
+                                <CircleCheck className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
                             </div>
-                            <CircleCheck className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
+
+                            <div className="border-b border-accent/40 w-full" />
+
+                            <p className="type-sm text-ink leading-relaxed">
+                                Your deposit payment has been reported.
+                                We&apos;re waiting for the provider to confirm
+                                receipt.
+                            </p>
                         </div>
                     );
                 }
 
-                // Initial / Not reported yet -> Grey
+                // Receiver view when quotation is accepted but deposit is not reported yet
+                if (isReceiver && isQuotationAccepted) {
+                    return (
+                        <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                                    <span className="type-sm !font-[600] text-ink">
+                                        Deposit
+                                    </span>
+                                </div>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                                    —
+                                </span>
+                            </div>
+
+                            <div className="border-b border-line w-full" />
+
+                            <p className="type-sm text-ink leading-relaxed">
+                                Your quotation has been accepted! Please pay the
+                                deposit and report the payment once it&apos;s
+                                done.
+                            </p>
+
+                            {onReportDeposit && (
+                                <button
+                                    type="button"
+                                    onClick={onReportDeposit}
+                                    disabled={isBusy}
+                                    className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                                >
+                                    Report Deposit Payment
+                                </button>
+                            )}
+                        </div>
+                    );
+                }
+
+                // Initial / Not reported yet (or before quotation is accepted) -> Grey
                 return (
                     <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
                         <div className="flex items-center gap-3">
