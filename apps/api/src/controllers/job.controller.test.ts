@@ -813,6 +813,44 @@ describe('GET /jobs', () => {
         assert.equal(body.pagination.totalItems, 2);
     });
 
+    it('filters jobs due on or after the given deadline when deadlineType is AFTER', async () => {
+        rows = [
+            withDeadline(job(10, OWNER, 'OPEN'), fromDateOnly('2026-05-15')), // on deadline
+            withDeadline(job(11, OWNER, 'OPEN'), fromDateOnly('2026-05-10')), // before deadline
+            withDeadline(job(12, OWNER, 'OPEN'), fromDateOnly('2026-05-20')), // after deadline
+            withDeadline(job(13, OWNER, 'OPEN'), null), // no deadline
+            job(14, OWNER, 'OPEN'), // job relation is null
+        ];
+
+        const body = await list(OTHER, {
+            deadline: '2026-05-15',
+            deadlineType: 'AFTER',
+        });
+
+        assert.deepEqual(
+            body.items.map((j) => j.jobId),
+            [12, 10],
+        );
+        assert.equal(body.pagination.totalItems, 2);
+    });
+
+    it('does not filter by deadline when deadlineType is ANY', async () => {
+        rows = [
+            withDeadline(job(10, OWNER, 'OPEN'), fromDateOnly('2026-05-15')),
+            withDeadline(job(11, OWNER, 'OPEN'), fromDateOnly('2026-05-10')),
+            withDeadline(job(12, OWNER, 'OPEN'), fromDateOnly('2026-05-20')),
+            withDeadline(job(13, OWNER, 'OPEN'), null),
+            job(14, OWNER, 'OPEN'),
+        ];
+
+        const body = await list(OTHER, {
+            deadline: '2026-05-15',
+            deadlineType: 'ANY',
+        });
+
+        assert.equal(body.pagination.totalItems, 5);
+    });
+
     it('answers 400 when deadline is not a valid YYYY-MM-DD date', async () => {
         rows = [job(10, OWNER, 'OPEN')];
 

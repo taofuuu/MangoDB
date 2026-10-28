@@ -73,6 +73,12 @@ jobRoutes.get('/mine', requireAuth, requireRole('receiver'), listMyJobs);
  *         schema:
  *           type: string
  *           format: date
+ *       - in: query
+ *         name: deadlineType
+ *         description: Any, Before or After the deadline date
+ *         schema:
+ *           type: string
+ *           enum: [ANY, BEFORE, AFTER]
  *       - $ref: '#/components/parameters/jobOrderBy'
  *       - $ref: '#/components/parameters/page'
  *       - $ref: '#/components/parameters/pageSize'
