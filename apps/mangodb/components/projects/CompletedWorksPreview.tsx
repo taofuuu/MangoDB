@@ -12,11 +12,11 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 type PreviewState =
     | { status: 'loading' }
-    | { status: 'ready'; items: CompletedProject[]; hasMore: boolean }
+    | { status: 'ready'; items: CompletedProject[] }
     | { status: 'error'; message: string };
 
-// The profile stays compact: it previews two real completed projects and
-// leaves the paginated collection to its own page.
+// The profile stays compact by scrolling inside a fixed-height box while
+// showing the complete available completed-work collection.
 export default function CompletedWorksPreview({
     companyId,
 }: {
@@ -27,12 +27,11 @@ export default function CompletedWorksPreview({
     useEffect(() => {
         let active = true;
         listCompletedProjects(companyId, 1, PROFILE_COMPLETED_PROJECT_SIZE)
-            .then(({ items, pagination }) => {
+            .then(({ items }) => {
                 if (!active) return;
                 setState({
                     status: 'ready',
                     items,
-                    hasMore: pagination.totalItems > items.length,
                 });
             })
             .catch((err: unknown) => {
@@ -55,7 +54,7 @@ export default function CompletedWorksPreview({
                 <h2 className="type-md !font-[700] text-ink">
                     Completed Works
                 </h2>
-                {state.status === 'ready' && state.hasMore && (
+                {state.status === 'ready' && (
                     <Link
                         href={`/companies/${companyId}/completed-projects`}
                         className="type-xs text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"

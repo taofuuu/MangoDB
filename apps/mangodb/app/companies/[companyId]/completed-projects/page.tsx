@@ -75,7 +75,9 @@ export default function CompletedProjectsPage() {
     return (
         <main className="min-h-screen bg-surface px-[6.04vw] py-[5.56vh]">
             <div className="flex max-w-[93.75vw] flex-col gap-[2vh]">
-                <div className={detailOpen ? 'w-[91vw]' : 'w-[56.56vw]'}>
+                <div
+                    className={detailOpen ? 'w-[91vw]' : 'mx-auto w-[56.56vw]'}
+                >
                     <div className="flex items-baseline gap-[1vw]">
                         <h1 className="type-lg !font-[700] text-ink">
                             Completed works
@@ -89,7 +91,11 @@ export default function CompletedProjectsPage() {
                     <hr className="mt-[1.5vh] border-0 border-t border-brand/50" />
                 </div>
 
-                <div className="flex gap-[1.5vw]">
+                <div
+                    className={`flex gap-[1.5vw] ${
+                        detailOpen ? '' : 'justify-center'
+                    }`}
+                >
                     <div className="flex h-[72.63vh] w-[56.56vw] flex-col">
                         <div className="min-h-0 flex-1 overflow-y-auto pr-[0.63vw]">
                             {companyId === null ? (
