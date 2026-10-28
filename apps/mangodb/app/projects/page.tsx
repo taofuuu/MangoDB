@@ -240,7 +240,12 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                             title={
                                 statusFilter !== 'ALL'
                                     ? `No ${PROJECT_STATUS_CONFIGS[statusFilter]?.label ?? ''} projects found`
-                                    : 'No projects yet'
+                                    : 'No Project Yet'
+                            }
+                            message={
+                                statusFilter !== 'ALL'
+                                    ? undefined
+                                    : 'No project for this company yet'
                             }
                         />
                     </div>

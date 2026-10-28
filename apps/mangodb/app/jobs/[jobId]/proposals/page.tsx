@@ -115,10 +115,11 @@ export default function JobProposalsPage() {
     };
 
     // Accepting rejects every other pending proposal, so the list shows that
-    // without a refetch.
+    // without a refetch. Returns created project for the accept modal.
     const handleAccept = async (proposalId: number) => {
+        let createdProject;
         try {
-            await acceptProposal(proposalId);
+            createdProject = await acceptProposal(proposalId);
         } catch (err) {
             throw new Error(describeError(err));
         }
@@ -135,7 +136,7 @@ export default function JobProposalsPage() {
             }),
         );
 
-        setSelectedId(null);
+        return createdProject;
     };
 
     const [currentPage, setCurrentPage] = useState(1);

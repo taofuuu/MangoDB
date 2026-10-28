@@ -21,6 +21,7 @@ import ProjectTimelineFeed, {
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import EmptyState from '@/components/ui/EmptyState';
 import { describeError, parseId } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { formatDate, formatDateOnly } from '@/lib/dates';
@@ -562,17 +563,18 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     if (error || !project) {
         return (
-            <div className="min-h-screen bg-surface px-4 py-24 text-center">
-                <p className="type-md font-semibold text-danger">
-                    {error || 'Project not found'}
-                </p>
-                <Link
-                    href="/projects"
-                    className="mt-4 inline-block text-brand underline type-sm"
-                >
-                    Back to projects
-                </Link>
-            </div>
+            <main className="min-h-screen bg-surface px-4 py-24 text-ink">
+                <div className="mx-auto max-w-4xl">
+                    <EmptyState
+                        title="Project Not Found"
+                        message="No project for this company yet"
+                        action={{
+                            href: '/projects',
+                            label: 'Back to Projects',
+                        }}
+                    />
+                </div>
+            </main>
         );
     }
 

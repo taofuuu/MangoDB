@@ -54,6 +54,7 @@ export function acceptProposal(proposalId: number): Promise<Project> {
         '/jobs',
         '/proposals',
         '/services',
+        '/projects',
     );
 }
 
