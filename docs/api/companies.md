@@ -280,6 +280,14 @@ sequenceDiagram
     Ctl-->>C: 200 { items: CompletedProject[], pagination }
 ```
 
+Each `CompletedProject` carries:
+
+- `projectId`, `listingType` (`JOB` or `SERVICE`), `listingTitle`, and `listingDesc`
+- `categories` (string array) and `techStack` (names from service, or empty for job)
+- `startDate` (YYYY-MM-DD) and `completedAt` (ISO timestamp)
+- `provider` and `receiver` (`CompanyBrief`)
+- `rating` (average score rounded to 1 decimal place, or null) and `reviewComment` (or null)
+
 ## GET /companies/:companyId/reviews
 
 US5-3. Reviews on a Provider's completed projects, newest first. Paged.

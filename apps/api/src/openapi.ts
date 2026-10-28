@@ -3,7 +3,9 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import {
     ACCOUNT_TYPES,
     COMPANY_SORT_ORDERS,
+    JOB_SORT_ORDERS,
     LISTING_STATUSES,
+    LISTING_TYPES,
     PROJECT_STATUSES,
     PROJECT_UPDATE_TYPES,
     PROPOSAL_STATUSES,
@@ -271,9 +273,17 @@ const schemas: Record<string, Schema> = {
         type: 'object',
         properties: {
             projectId: { type: 'integer' },
+            listingType: { type: 'string', enum: [...LISTING_TYPES] },
             listingTitle: { type: 'string' },
-            receiver: ref('CompanyBrief'),
+            listingDesc: { type: 'string' },
+            categories: stringList,
+            techStack: stringList,
+            startDate: { type: 'string', format: 'date' },
             completedAt: { type: 'string', format: 'date-time' },
+            provider: ref('CompanyBrief'),
+            receiver: ref('CompanyBrief'),
+            rating: nullable('number'),
+            reviewComment: nullable('string'),
         },
     },
     CompletedProjectPage: page('CompletedProject'),
@@ -746,6 +756,11 @@ const definition = {
             serviceOrderBy: queryParam('orderBy', {
                 type: 'string',
                 enum: [...SERVICE_SORT_ORDERS],
+                default: 'newest',
+            }),
+            jobOrderBy: queryParam('orderBy', {
+                type: 'string',
+                enum: [...JOB_SORT_ORDERS],
                 default: 'newest',
             }),
             companyIdQuery: queryParam('companyId', {

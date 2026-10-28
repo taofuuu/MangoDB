@@ -14,6 +14,7 @@ interface ReceivedProposalDetailProps {
     // Both throw on failure, so the dialog can show why.
     onAccept: () => Promise<void>;
     onReject: () => Promise<void>;
+    isService?: boolean;
 }
 
 export default function ReceivedProposalDetail({
@@ -21,6 +22,7 @@ export default function ReceivedProposalDetail({
     onClose,
     onAccept,
     onReject,
+    isService = false,
 }: ReceivedProposalDetailProps) {
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -34,7 +36,9 @@ export default function ReceivedProposalDetail({
                 className={`bg-surface-white rounded-2xl p-6 border shadow-sm relative text-brand max-h-[80vh] overflow-y-auto ${
                     proposal.proposalStatus === 'REJECTED'
                         ? 'border-danger'
-                        : 'border-brand ring-2 ring-brand/10'
+                        : proposal.proposalStatus === 'PENDING'
+                          ? 'border-accent ring-2 ring-accent/20'
+                          : 'border-brand ring-2 ring-brand/10'
                 }`}
             >
                 <div className="flex items-start justify-between pb-4 border-b border-brand">
@@ -137,12 +141,20 @@ export default function ReceivedProposalDetail({
                 onConfirm={onAccept}
                 title="Accept this proposal?"
                 description={
-                    <>
-                        Please review the proposal details before accepting.
-                        Once you accept, a project with{' '}
-                        <strong>{companyName}</strong> will be created and your
-                        job posting will close.
-                    </>
+                    isService ? (
+                        <>
+                            Please review the proposal details before accepting.
+                            Once you accept, a project with{' '}
+                            <strong>{companyName}</strong> will be created.
+                        </>
+                    ) : (
+                        <>
+                            Please review the proposal details before accepting.
+                            Once you accept, a project with{' '}
+                            <strong>{companyName}</strong> will be created and
+                            your job posting will close.
+                        </>
+                    )
                 }
                 icon={
                     <CircleCheck

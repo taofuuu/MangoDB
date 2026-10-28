@@ -421,7 +421,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - Job search filters beyond keyword, category, budget and deadline. `GET /jobs`
-  takes `q`, `category`, `minBudget`, `maxBudget`, `deadline`, `companyId`,
+  supports `q`, `category`, `minBudget`, `maxBudget`, `deadline`,
+  `orderBy=newest|maxBudgetDesc|maxBudgetAsc|deadlineAsc|deadlineDesc`, `companyId`,
   `status` and paging. The category, budget, deadline and order controls on
   `/jobs` send nothing yet: `useJobList` sends only the keyword.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its

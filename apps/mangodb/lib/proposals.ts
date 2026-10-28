@@ -51,6 +51,14 @@ export function listJobProposals(jobId: number): Promise<ReceivedProposal[]> {
     return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
 }
 
+// US2-16. The proposals sent to one of the caller's services (hire requests).
+export function listServiceProposals(
+    serviceId: number,
+): Promise<ReceivedProposal[]> {
+    const path = `/services/${serviceId}/proposals`;
+    return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
+}
+
 // POST /proposals/:proposalId/accept. Accepting closes the job and rejects the
 // other proposals, so the job lists and every proposal list are stale after it.
 export function acceptProposal(proposalId: number): Promise<Project> {
@@ -60,6 +68,7 @@ export function acceptProposal(proposalId: number): Promise<Project> {
         }),
         '/jobs',
         '/proposals',
+        '/services',
     );
 }
 
@@ -72,6 +81,7 @@ export function rejectProposal(proposalId: number): Promise<void> {
         }),
         '/jobs',
         '/proposals',
+        '/services',
     );
 }
 export interface GetMyProposalsOptions {
