@@ -3,15 +3,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type {
+    PaginationMeta,
     ProjectRole,
     ProjectStatus,
     ProjectSummary,
 } from '@mangodb/shared';
+import { ChevronDown } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
 import ProjectCard from '@/components/projects/ProjectCard';
 import EmptyState from '@/components/ui/EmptyState';
+import Pagination from '@/components/ui/Pagination';
 import { PROJECT_STATUS_CONFIGS } from '@/components/projects/ProjectStatusBadge';
 import { describeError } from '@/lib/api';
+import { PROJECT_PAGE_SIZE } from '@/lib/pagination';
 import { listMyProjects } from '@/lib/projects';
 import { useMyCompany } from '@/lib/useMyCompany';
 
@@ -43,23 +47,38 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
         let isMounted = true;
 
-        listMyProjects(1, 50)
-            .then((data) => {
-                if (!isMounted) return;
-                setProjects(data.items);
+        const loadAllProjects = async () => {
+            try {
+                let currentPage = 1;
+                let all: ProjectSummary[] = [];
+                while (true) {
+                    const data = await listMyProjects(currentPage, 50);
+                    if (!isMounted) return;
+                    all = all.concat(data.items);
+                    if (
+                        currentPage >= data.pagination.totalPages ||
+                        data.items.length === 0
+                    ) {
+                        break;
+                    }
+                    currentPage++;
+                }
+                setProjects(all);
                 setError(null);
-            })
-            .catch((err: unknown) => {
+            } catch (err: unknown) {
                 if (!isMounted) return;
                 setError(describeError(err));
-            })
-            .finally(() => {
+            } finally {
                 if (isMounted) setIsLoading(false);
-            });
+            }
+        };
+
+        loadAllProjects();
 
         return () => {
             isMounted = false;
@@ -69,9 +88,15 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
     // Switch role tabs for BOTH accounts
     const handleRoleChange = (role: ProjectRole) => {
         setActiveRole(role);
+        setPage(1);
         const params = new URLSearchParams(searchParams.toString());
         params.set('role', role);
         router.replace(`/projects?${params.toString()}`);
+    };
+
+    const handleStatusChange = (newStatus: StatusFilter) => {
+        setStatusFilter(newStatus);
+        setPage(1);
     };
 
     // Filter by role (provider vs receiver)
@@ -88,6 +113,30 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
         }
         return roleFiltered.filter((p) => p.projectStatus === statusFilter);
     }, [roleFiltered, statusFilter]);
+
+    const totalItems = displayProjects.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PROJECT_PAGE_SIZE));
+    const effectivePage = Math.min(page, totalPages);
+
+    const pagedProjects = useMemo(() => {
+        const start = (effectivePage - 1) * PROJECT_PAGE_SIZE;
+        return displayProjects.slice(start, start + PROJECT_PAGE_SIZE);
+    }, [displayProjects, effectivePage]);
+
+    const paginationMeta: PaginationMeta = useMemo(
+        () => ({
+            page: effectivePage,
+            pageSize: PROJECT_PAGE_SIZE,
+            totalItems,
+            totalPages,
+        }),
+        [effectivePage, totalItems, totalPages],
+    );
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const isBoth = companyAccountType === 'BOTH';
     const title =
@@ -148,23 +197,31 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                         >
                             Status:
                         </label>
-                        <select
-                            id="status-filter"
-                            value={statusFilter}
-                            onChange={(e) =>
-                                setStatusFilter(e.target.value as StatusFilter)
-                            }
-                            className="rounded-input border border-line bg-surface-white px-3 py-1.5 type-sm text-ink transition focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
-                        >
-                            <option value="ALL">All Statuses</option>
-                            {Object.entries(PROJECT_STATUS_CONFIGS).map(
-                                ([statusKey, config]) => (
-                                    <option key={statusKey} value={statusKey}>
-                                        {config.label}
-                                    </option>
-                                ),
-                            )}
-                        </select>
+                        <div className="relative inline-flex items-center">
+                            <select
+                                id="status-filter"
+                                value={statusFilter}
+                                onChange={(e) =>
+                                    handleStatusChange(
+                                        e.target.value as StatusFilter,
+                                    )
+                                }
+                                className="appearance-none cursor-pointer rounded-full border border-line bg-surface-white pl-4 pr-11 py-2 type-sm text-ink transition hover:border-brand focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand shadow-2xs"
+                            >
+                                <option value="ALL">All Statuses</option>
+                                {Object.entries(PROJECT_STATUS_CONFIGS).map(
+                                    ([statusKey, config]) => (
+                                        <option
+                                            key={statusKey}
+                                            value={statusKey}
+                                        >
+                                            {config.label}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-4 h-4 w-4 text-ink-soft" />
+                        </div>
                     </div>
                 </div>
 
@@ -188,18 +245,27 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                         />
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4">
-                        {displayProjects.map((project) => (
-                            <ProjectCard
-                                key={project.projectId}
-                                project={project}
-                                onClick={() =>
-                                    router.push(
-                                        `/projects/${project.projectId}`,
-                                    )
-                                }
-                            />
-                        ))}
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-4">
+                            {pagedProjects.map((project) => (
+                                <ProjectCard
+                                    key={project.projectId}
+                                    project={project}
+                                    onClick={() =>
+                                        router.push(
+                                            `/projects/${project.projectId}`,
+                                        )
+                                    }
+                                />
+                            ))}
+                        </div>
+
+                        <Pagination
+                            pagination={paginationMeta}
+                            onPageChange={handlePageChange}
+                            ariaLabel="Projects pagination"
+                            isLoading={isLoading}
+                        />
                     </div>
                 )}
             </div>
