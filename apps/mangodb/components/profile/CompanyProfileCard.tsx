@@ -59,12 +59,14 @@ export default function CompanyProfileCard({
         >
             {/* Who the company is. Fixed rather than scrolled: it is short
                 enough to always fit, and scrolling it along with the details
-                is what pushed the phone number off the card. */}
+                is what pushed the phone number off the card. wrap-anywhere
+                breaks a long name, email or website that has no spaces
+                instead of letting it spill out of the card. */}
             <div
                 className={
                     isWide
-                        ? 'flex shrink-0 flex-col items-center justify-center border-line py-4 text-center md:w-1/3 md:border-r md:pr-8'
-                        : 'mb-5 flex shrink-0 flex-col items-center text-center'
+                        ? 'flex shrink-0 flex-col items-center justify-center border-line py-4 text-center wrap-anywhere md:w-1/3 md:border-r md:pr-8'
+                        : 'mb-5 flex shrink-0 flex-col items-center text-center wrap-anywhere'
                 }
             >
                 <CompanyAvatar
