@@ -10,7 +10,7 @@ import type { Job } from '@mangodb/shared';
 import JobCard from '@/components/jobs/JobCard';
 import JobDetailPanel from '@/components/jobs/JobDetailPanel';
 import JobFilterSidebar from '@/components/jobs/JobFilterSidebar';
-import SearchJobsActiveFilter from '@/components/jobs/SearchJobsActiveFilter';
+import SearchJobsActiveFilters from '@/components/jobs/SearchJobsActiveFilters';
 import PageGate from '@/components/auth/PageGate';
 import { NOT_SIGNED_IN, describeError } from '@/lib/api';
 import { JOB_PAGE_SIZE } from '@/lib/pagination';
@@ -21,8 +21,10 @@ import { getJobFilterOptions, type JobFilterOptions } from '@/lib/jobs';
 type OrderType = 'DEFAULT' | 'BUDGET' | 'DEADLINE';
 const ORDER_OPTIONS: { label: string; value: OrderType }[] = [
     { label: 'Default', value: 'DEFAULT' },
-    { label: 'Budget', value: 'BUDGET' },
-    { label: 'Deadline', value: 'DEADLINE' },
+    { label: 'Budget low to high', value: 'BUDGET' },
+    { label: 'Budget high to low', value: 'BUDGET' },
+    { label: 'Deadline (Earliest first)', value: 'DEADLINE' },
+    { label: 'Deadline (Lastest first)', value: 'DEADLINE' },
 ];
 
 // Job search is a Provider's (US3-4). GET /jobs stays open to receivers too,
@@ -68,7 +70,6 @@ function OtherJobPage() {
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
-    const filterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         let active = true;
@@ -120,7 +121,7 @@ function OtherJobPage() {
         filters.categories.length > 0 ||
         filters.minBudget !== null ||
         filters.maxBudget !== null ||
-        Boolean(filters.deadlineDate);
+        (filters.deadlineType !== 'ANY' && Boolean(filters.deadlineDate));
 
     return (
         // overflow-x-clip: the detail panel slides in from 2rem to the right,
@@ -146,7 +147,7 @@ function OtherJobPage() {
                 {/* ================================================= */}
 
                 {!isDetailOpen && (
-                    <div ref={filterRef} className="shrink-0">
+                    <div className="shrink-0">
                         <JobFilterSidebar
                             filters={filters}
                             options={options}
@@ -218,7 +219,7 @@ function OtherJobPage() {
                             </div>
                         </div>
 
-                        <SearchJobsActiveFilter filters={filters} />
+                        <SearchJobsActiveFilters filters={filters} />
                     </div>
 
                     {/* ================================================= */}

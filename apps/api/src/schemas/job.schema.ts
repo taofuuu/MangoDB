@@ -107,6 +107,7 @@ export const jobListQuerySchema = z
         deadlineType: z.preprocess(
             (val) => (typeof val === 'string' ? val.trim().toUpperCase() : val),
             z.enum(['ANY', 'BEFORE', 'AFTER']).optional(),
+        ),
         // US3-8 (T3.8.2, T3.8.3). Ordering by budget or deadline. Defaults to newest.
         orderBy: z.preprocess(
             blankToUndefined,

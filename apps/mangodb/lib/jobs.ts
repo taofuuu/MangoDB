@@ -5,6 +5,7 @@
 import type {
     CreateJobRequest,
     Job,
+    JobSortOrder,
     ListingStatus,
     Paginated,
     UpdateJobRequest,
@@ -100,6 +101,7 @@ export const EMPTY_SEARCH_JOBS_FILTERS: SearchJobsFilters = {
 
 export type SearchJobsParams = {
     q?: string | undefined;
+    orderBy: JobSortOrder;
     page: number;
     pageSize: number;
     filters: SearchJobsFilters;
@@ -184,42 +186,5 @@ export function listJobs(
     }
 
     const path = `/jobs?${query.toString()}`;
-    return cachedGet(path, () => apiFetch<Paginated<Job>>(path));
-}
-
-// The search screen: keyword, sidebar filters, and paging.
-// Modeled after searchServices in lib/services.ts.
-export async function searchJobs(
-    params: SearchJobsParams,
-): Promise<Paginated<Job>> {
-    const { q = '', page, pageSize, filters } = params;
-    const { minBudget, maxBudget, deadlineType, deadlineDate } = filters;
-
-    if (minBudget != null && maxBudget != null && minBudget > maxBudget) {
-        return {
-            items: [],
-            pagination: { page: 1, pageSize, totalItems: 0, totalPages: 0 },
-        };
-    }
-
-    const qs = new URLSearchParams();
-
-    const keyword = q.trim().slice(0, 100);
-    if (keyword) qs.set('q', keyword);
-
-    filters.categories.forEach((category) => qs.append('category', category));
-
-    if (minBudget != null) qs.set('minBudget', String(minBudget));
-    if (maxBudget != null) qs.set('maxBudget', String(maxBudget));
-
-    if (deadlineType !== 'ANY' && deadlineDate.trim()) {
-        qs.set('deadline', deadlineDate.trim());
-        qs.set('deadlineType', deadlineType);
-    }
-
-    qs.set('page', String(page));
-    qs.set('pageSize', String(pageSize));
-
-    const path = `/jobs?${qs.toString()}`;
     return cachedGet(path, () => apiFetch<Paginated<Job>>(path));
 }
