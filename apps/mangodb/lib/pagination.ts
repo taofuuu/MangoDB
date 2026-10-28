@@ -10,3 +10,6 @@ export const PROPOSAL_PAGE_SIZE = 6;
 // another company's services, and the proposals sent to one of your jobs.
 export const COMPANY_SERVICES_PAGE_SIZE = 5;
 export const RECEIVED_PROPOSAL_PAGE_SIZE = 5;
+// US2-5. Five cards fit beside the completed-work detail panel.
+export const COMPLETED_PROJECT_PAGE_SIZE = 5;
+export const PROFILE_COMPLETED_PROJECT_SIZE = 2;
