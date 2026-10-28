@@ -275,28 +275,30 @@ export default function ServicesSection({
                                     <span className="type-sm !font-semibold text-ink truncate">
                                         {item.title || 'Untitled Item'}
                                     </span>
-                                    {item.closed && (
-                                        <Tag
-                                            size="sm"
-                                            label="Closed"
-                                            className="ml-auto shrink-0 bg-danger-tint text-danger"
-                                        />
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={() => openDetail(item.id)}
-                                        aria-label={`Details for ${item.title}`}
-                                        className="shrink-0 type-xs text-brand hover:underline !font-medium"
-                                    >
-                                        Details
-                                    </button>
-                                    {ownService && (
-                                        <ServiceActionsMenu
-                                            service={ownService}
-                                            onEdit={editService}
-                                            onDelete={askDelete}
-                                        />
-                                    )}
+                                    <div className="ml-auto flex items-center gap-2 shrink-0">
+                                        {item.closed && (
+                                            <Tag
+                                                size="sm"
+                                                label="Closed"
+                                                className="bg-danger-tint text-danger"
+                                            />
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => openDetail(item.id)}
+                                            aria-label={`Details for ${item.title}`}
+                                            className="type-xs text-brand hover:underline !font-medium"
+                                        >
+                                            Details
+                                        </button>
+                                        {ownService && (
+                                            <ServiceActionsMenu
+                                                service={ownService}
+                                                onEdit={editService}
+                                                onDelete={askDelete}
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="type-xs text-ink-soft leading-relaxed line-clamp-2">
                                     {item.body || 'No description provided.'}

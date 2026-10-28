@@ -1,0 +1,262 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: all resources and paths
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Auth" as Auth <<Resource>>
+class "Register" as Register <<Resource>> {
+  + POST()
+}
+class "Login" as Login <<Resource>> {
+  + POST()
+}
+class "Admin" as AdminAuth <<Resource>>
+class "AdminLogin" as AdminLogin <<Resource>> {
+  + POST()
+}
+class "CheckAvailability" as CheckAvailability <<Resource>> {
+  + POST()
+}
+class "Logout" as Logout <<Resource>> {
+  + POST()
+}
+class "Admin" as Admin <<Resource>>
+class "Companies" as AdminCompanies <<Resource>> {
+  + GET()
+}
+class "Company" as AdminCompany <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "Companies" as Companies <<Resource>> {
+  + GET()
+}
+class "Me" as Me <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "Credentials" as Credentials <<Resource>> {
+  + PATCH()
+}
+class "Photo" as Photo <<Resource>> {
+  + PATCH()
+  + DELETE()
+}
+class "Company" as Company <<Resource>> {
+  + GET()
+}
+class "CompletedProjects" as CompletedProjects <<Resource>> {
+  + GET()
+}
+class "Reviews" as Reviews <<Resource>> {
+  + GET()
+}
+class "ReviewSummary" as ReviewSummaryR <<Resource>> {
+  + GET()
+}
+class "Services" as Services <<Resource>> {
+  + GET()
+  + POST()
+}
+class "FilterOptions" as FilterOptions <<Resource>> {
+  + GET()
+}
+class "MyServices" as MyServices <<Resource>> {
+  + GET()
+}
+class "Service" as ServiceR <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "ServiceProposals" as ServiceProposals <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Portfolios" as Portfolios <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Portfolio" as PortfolioR <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "Certificates" as Certificates <<Resource>> {
+  + GET()
+  + POST()
+}
+class "MyCertificates" as MyCertificates <<Resource>> {
+  + GET()
+}
+class "Certificate" as CertificateR <<Resource>> {
+  + PATCH()
+  + DELETE()
+}
+class "Jobs" as Jobs <<Resource>> {
+  + GET()
+  + POST()
+}
+class "MyJobs" as MyJobs <<Resource>> {
+  + GET()
+}
+class "Job" as JobR <<Resource>> {
+  + GET()
+  + PATCH()
+}
+class "Close" as CloseJob <<Resource>> {
+  + POST()
+}
+class "JobProposals" as JobProposals <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Proposals" as Proposals <<Resource>>
+class "MyProposals" as MyProposals <<Resource>> {
+  + GET()
+}
+class "Counts" as Counts <<Resource>> {
+  + GET()
+}
+class "Proposal" as ProposalR <<Resource>>
+class "Accept" as Accept <<Resource>> {
+  + POST()
+}
+class "Reject" as Reject <<Resource>> {
+  + POST()
+}
+class "Projects" as Projects <<Resource>>
+class "MyProjects" as MyProjects <<Resource>> {
+  + GET()
+}
+class "Project" as ProjectR <<Resource>> {
+  + GET()
+}
+class "Updates" as Updates <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Quotations" as ProjectQuotations <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Cancel" as Cancel <<Resource>> {
+  + POST()
+}
+class "ReportDeposit" as ReportDeposit <<Resource>> {
+  + POST()
+}
+class "ConfirmDeposit" as ConfirmDeposit <<Resource>> {
+  + POST()
+}
+class "SubmitWork" as SubmitWork <<Resource>> {
+  + POST()
+}
+class "RejectWork" as RejectWork <<Resource>> {
+  + POST()
+}
+class "AcceptWork" as AcceptWork <<Resource>> {
+  + POST()
+}
+class "Review" as ReviewR <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Quotations" as QuotationsRoot <<Resource>>
+class "Quotation" as QuotationR <<Resource>> {
+  + DELETE()
+}
+class "Accept" as AcceptQuotation <<Resource>> {
+  + POST()
+}
+class "Reject" as RejectQuotation <<Resource>> {
+  + POST()
+}
+class "Categories" as Categories <<Resource>> {
+  + GET()
+}
+class "Health" as HealthR <<Resource>> {
+  + GET()
+}
+
+API -[#B45309,dashed]-> Auth : <i><color:#B45309>«Path» /auth</color></i>
+Auth -[#B45309,dashed]-> Register : <i><color:#B45309>«Path» /register</color></i>
+Auth -[#B45309,dashed]-> Login : <i><color:#B45309>«Path» /login</color></i>
+Auth -[#B45309,dashed]-> AdminAuth : <i><color:#B45309>«Path» /admin</color></i>
+AdminAuth -[#B45309,dashed]-> AdminLogin : <i><color:#B45309>«Path» /login</color></i>
+Auth -[#B45309,dashed]-> CheckAvailability : <i><color:#B45309>«Path» /check-availability</color></i>
+Auth -[#B45309,dashed]-> Logout : <i><color:#B45309>«Path» /logout</color></i>
+API -[#B45309,dashed]-> Admin : <i><color:#B45309>«Path» /admin</color></i>
+Admin -[#B45309,dashed]-> AdminCompanies : <i><color:#B45309>«Path» /companies</color></i>
+AdminCompanies -[#B45309,dashed]-> AdminCompany : <i><color:#B45309>«Path» /{companyId}</color></i>
+API -[#B45309,dashed]-> Companies : <i><color:#B45309>«Path» /companies</color></i>
+Companies -[#B45309,dashed]-> Me : <i><color:#B45309>«Path» /me</color></i>
+Me -[#B45309,dashed]-> Credentials : <i><color:#B45309>«Path» /credentials</color></i>
+Me -[#B45309,dashed]-> Photo : <i><color:#B45309>«Path» /photo</color></i>
+Companies -[#B45309,dashed]-> Company : <i><color:#B45309>«Path» /{companyId}</color></i>
+Company -[#B45309,dashed]-> CompletedProjects : <i><color:#B45309>«Path» /completed-projects</color></i>
+Company -[#B45309,dashed]-> Reviews : <i><color:#B45309>«Path» /reviews</color></i>
+Reviews -[#B45309,dashed]-> ReviewSummaryR : <i><color:#B45309>«Path» /summary</color></i>
+API -[#B45309,dashed]-> Services : <i><color:#B45309>«Path» /services</color></i>
+Services -[#B45309,dashed]-> FilterOptions : <i><color:#B45309>«Path» /filter-options</color></i>
+Services -[#B45309,dashed]-> MyServices : <i><color:#B45309>«Path» /mine</color></i>
+Services -[#B45309,dashed]-> ServiceR : <i><color:#B45309>«Path» /{serviceId}</color></i>
+ServiceR -[#B45309,dashed]-> ServiceProposals : <i><color:#B45309>«Path» /proposals</color></i>
+API -[#B45309,dashed]-> Portfolios : <i><color:#B45309>«Path» /portfolios</color></i>
+Portfolios -[#B45309,dashed]-> PortfolioR : <i><color:#B45309>«Path» /{portfolioId}</color></i>
+API -[#B45309,dashed]-> Certificates : <i><color:#B45309>«Path» /certificates</color></i>
+Certificates -[#B45309,dashed]-> MyCertificates : <i><color:#B45309>«Path» /mine</color></i>
+Certificates -[#B45309,dashed]-> CertificateR : <i><color:#B45309>«Path» /{certificateId}</color></i>
+API -[#B45309,dashed]-> Jobs : <i><color:#B45309>«Path» /jobs</color></i>
+Jobs -[#B45309,dashed]-> MyJobs : <i><color:#B45309>«Path» /mine</color></i>
+Jobs -[#B45309,dashed]-> JobR : <i><color:#B45309>«Path» /{jobId}</color></i>
+JobR -[#B45309,dashed]-> CloseJob : <i><color:#B45309>«Path» /close</color></i>
+JobR -[#B45309,dashed]-> JobProposals : <i><color:#B45309>«Path» /proposals</color></i>
+API -[#B45309,dashed]-> Proposals : <i><color:#B45309>«Path» /proposals</color></i>
+Proposals -[#B45309,dashed]-> MyProposals : <i><color:#B45309>«Path» /mine</color></i>
+MyProposals -[#B45309,dashed]-> Counts : <i><color:#B45309>«Path» /counts</color></i>
+Proposals -[#B45309,dashed]-> ProposalR : <i><color:#B45309>«Path» /{proposalId}</color></i>
+ProposalR -[#B45309,dashed]-> Accept : <i><color:#B45309>«Path» /accept</color></i>
+ProposalR -[#B45309,dashed]-> Reject : <i><color:#B45309>«Path» /reject</color></i>
+API -[#B45309,dashed]-> Projects : <i><color:#B45309>«Path» /projects</color></i>
+Projects -[#B45309,dashed]-> MyProjects : <i><color:#B45309>«Path» /mine</color></i>
+Projects -[#B45309,dashed]-> ProjectR : <i><color:#B45309>«Path» /{projectId}</color></i>
+ProjectR -[#B45309,dashed]-> Updates : <i><color:#B45309>«Path» /updates</color></i>
+ProjectR -[#B45309,dashed]-> ProjectQuotations : <i><color:#B45309>«Path» /quotations</color></i>
+ProjectR -[#B45309,dashed]-> Cancel : <i><color:#B45309>«Path» /cancel</color></i>
+ProjectR -[#B45309,dashed]-> ReportDeposit : <i><color:#B45309>«Path» /report-deposit</color></i>
+ProjectR -[#B45309,dashed]-> ConfirmDeposit : <i><color:#B45309>«Path» /confirm-deposit</color></i>
+ProjectR -[#B45309,dashed]-> SubmitWork : <i><color:#B45309>«Path» /submit-work</color></i>
+ProjectR -[#B45309,dashed]-> RejectWork : <i><color:#B45309>«Path» /reject-work</color></i>
+ProjectR -[#B45309,dashed]-> AcceptWork : <i><color:#B45309>«Path» /accept-work</color></i>
+ProjectR -[#B45309,dashed]-> ReviewR : <i><color:#B45309>«Path» /review</color></i>
+API -[#B45309,dashed]-> QuotationsRoot : <i><color:#B45309>«Path» /quotations</color></i>
+QuotationsRoot -[#B45309,dashed]-> QuotationR : <i><color:#B45309>«Path» /{quotationId}</color></i>
+QuotationR -[#B45309,dashed]-> AcceptQuotation : <i><color:#B45309>«Path» /accept</color></i>
+QuotationR -[#B45309,dashed]-> RejectQuotation : <i><color:#B45309>«Path» /reject</color></i>
+API -[#B45309,dashed]-> Categories : <i><color:#B45309>«Path» /categories</color></i>
+API -[#B45309,dashed]-> HealthR : <i><color:#B45309>«Path» /health</color></i>
+@enduml

@@ -1,0 +1,91 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Auth
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Auth" as Auth <<Resource>>
+class "Register" as Register <<Resource>> {
+  + POST()
+}
+class "Login" as Login <<Resource>> {
+  + POST()
+}
+class "Admin" as AdminAuth <<Resource>>
+class "AdminLogin" as AdminLogin <<Resource>> {
+  + POST()
+}
+class "CheckAvailability" as CheckAvailability <<Resource>> {
+  + POST()
+}
+class "Logout" as Logout <<Resource>> {
+  + POST()
+}
+class "RegisterRequest" as RegisterRequestRep <<Representation>> {
+  -companyName : string
+  -username : string
+  -email : string
+  -password : string
+  -phone : string
+  -accountType : PROVIDER, RECEIVER, BOTH
+  -companyType : string[]
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -tosAccepted : true
+}
+class "SessionResponse" as SessionResponseRep <<Representation>> {
+  -company : CompanyProfile
+  -accessToken : string
+}
+class "LoginRequest" as LoginRequestRep <<Representation>> {
+  -email : string
+  -password : string
+}
+class "IdentityCheck" as IdentityCheckRep <<Representation>> {
+  -username : string
+  -email : string
+}
+class "IdentityAvailability" as IdentityAvailabilityRep <<Representation>> {
+  -username : string
+  -email : string
+  -usernameAvailable : boolean
+  -emailAvailable : boolean
+}
+
+API -[#B45309,dashed]-> Auth : <i><color:#B45309>«Path» /auth</color></i>
+Auth -[#B45309,dashed]-> Register : <i><color:#B45309>«Path» /register</color></i>
+Register -[#BE185D,dashed]-> RegisterRequestRep : <i><color:#BE185D>«use»</color></i>
+Register -[#BE185D,dashed]-> SessionResponseRep : <i><color:#BE185D>«use»</color></i>
+Auth -[#B45309,dashed]-> Login : <i><color:#B45309>«Path» /login</color></i>
+Login -[#BE185D,dashed]-> LoginRequestRep : <i><color:#BE185D>«use»</color></i>
+Login -[#BE185D,dashed]-> SessionResponseRep : <i><color:#BE185D>«use»</color></i>
+Auth -[#B45309,dashed]-> AdminAuth : <i><color:#B45309>«Path» /admin</color></i>
+AdminAuth -[#B45309,dashed]-> AdminLogin : <i><color:#B45309>«Path» /login</color></i>
+AdminLogin -[#BE185D,dashed]-> LoginRequestRep : <i><color:#BE185D>«use»</color></i>
+AdminLogin -[#BE185D,dashed]-> SessionResponseRep : <i><color:#BE185D>«use»</color></i>
+Auth -[#B45309,dashed]-> CheckAvailability : <i><color:#B45309>«Path» /check-availability</color></i>
+CheckAvailability -[#BE185D,dashed]-> IdentityCheckRep : <i><color:#BE185D>«use»</color></i>
+CheckAvailability -[#BE185D,dashed]-> IdentityAvailabilityRep : <i><color:#BE185D>«use»</color></i>
+Auth -[#B45309,dashed]-> Logout : <i><color:#B45309>«Path» /logout</color></i>
+@enduml
