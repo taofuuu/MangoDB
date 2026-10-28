@@ -98,8 +98,7 @@ export default function JobFilterSidebar({
 
     const hasBudgetFilter =
         filters.minBudget != null || filters.maxBudget != null;
-    const hasDeadlineFilter =
-        filters.deadlineType !== 'ANY' || filters.deadlineDate !== '';
+    const hasDeadlineFilter = filters.deadlineDate !== '';
 
     return (
         <aside
@@ -203,12 +202,19 @@ export default function JobFilterSidebar({
                     <input
                         type="date"
                         value={filters.deadlineDate}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                            const nextDate = e.target.value;
+                            const currentType =
+                                latestFilters.current.deadlineType;
                             onChange({
                                 ...latestFilters.current,
-                                deadlineDate: e.target.value,
-                            })
-                        }
+                                deadlineDate: nextDate,
+                                deadlineType:
+                                    nextDate && currentType === 'ANY'
+                                        ? 'BEFORE'
+                                        : currentType,
+                            });
+                        }}
                         aria-label="Deadline date"
                         className="rounded-input type-sm h-7 min-w-0 flex-1 border border-brand bg-surface-white px-2 text-ink focus:ring-1 focus:ring-brand focus:outline-none"
                     />

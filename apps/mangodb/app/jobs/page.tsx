@@ -120,7 +120,7 @@ function OtherJobPage() {
         filters.categories.length > 0 ||
         filters.minBudget !== null ||
         filters.maxBudget !== null ||
-        (filters.deadlineType !== 'ANY' && Boolean(filters.deadlineDate));
+        Boolean(filters.deadlineDate);
 
     return (
         // overflow-x-clip: the detail panel slides in from 2rem to the right,
