@@ -285,7 +285,15 @@ interface DemoProject {
     title: string;
     // Oldest first. Only the last may be PENDING or ACCEPTED (ADR 0017).
     quotations: QuotationStatus[];
-    updates: { updateType: ProjectUpdateType; updateText: string }[];
+    // The work after the deposit, oldest first. The other timeline events
+    // come from the fields around it (demoTimeline, #212).
+    updates: {
+        updateType: Extract<
+            ProjectUpdateType,
+            'PROGRESS' | 'WORK_SUBMITTED' | 'WORK_REJECTED'
+        >;
+        updateText?: string;
+    }[];
     // In-between states the status alone does not tell apart (issue #176).
     depositReported?: boolean;
     withoutReview?: boolean;
@@ -331,6 +339,7 @@ const DEMO_PROJECTS: DemoProject[] = [
         quotations: ['ACCEPTED'],
         updates: [
             { updateType: 'PROGRESS', updateText: 'Booking form is done.' },
+            { updateType: 'WORK_SUBMITTED' },
             {
                 updateType: 'WORK_REJECTED',
                 updateText: 'The confirmation email is never sent.',
@@ -344,6 +353,7 @@ const DEMO_PROJECTS: DemoProject[] = [
         updates: [
             { updateType: 'PROGRESS', updateText: 'Charts are connected.' },
             { updateType: 'PROGRESS', updateText: 'Ready for your review.' },
+            { updateType: 'WORK_SUBMITTED' },
         ],
     },
     {
@@ -353,13 +363,17 @@ const DEMO_PROJECTS: DemoProject[] = [
         updates: [
             { updateType: 'PROGRESS', updateText: 'Checkout works.' },
             { updateType: 'PROGRESS', updateText: 'Published to the stores.' },
+            { updateType: 'WORK_SUBMITTED' },
         ],
     },
     {
         projectStatus: 'COMPLETED',
         title: 'Blog platform',
         quotations: ['ACCEPTED'],
-        updates: [{ updateType: 'PROGRESS', updateText: 'Blog is live.' }],
+        updates: [
+            { updateType: 'PROGRESS', updateText: 'Blog is live.' },
+            { updateType: 'WORK_SUBMITTED' },
+        ],
         withoutReview: true,
     },
     {
@@ -377,9 +391,60 @@ const PAID_STATUSES: ProjectStatus[] = [
     'COMPLETED',
 ];
 
-// 9:00 UTC on a day of October 2026, so every timeline sorts the same way.
-function october(day: number): Date {
-    return new Date(Date.UTC(2026, 9, day, 9));
+// A fixed hour (9:00 UTC unless given) on a day of October 2026, so every
+// timeline sorts the same way.
+function october(day: number, hour = 9): Date {
+    return new Date(Date.UTC(2026, 9, day, hour));
+}
+
+type DemoEvent = {
+    updateType: ProjectUpdateType;
+    updateText?: string;
+    createdAt: Date;
+};
+
+// #212. A demo project's whole timeline: the events the endpoints would have
+// saved, dated to match its columns. Accepted on the 1st, one quotation a day
+// from the 2nd (decided at 15:00), deposit on the 5th and 6th, cancelled on
+// the 8th, the work from the 10th, five days apart, completed on the 22nd.
+function demoTimeline(
+    demo: DemoProject,
+    reported: boolean,
+    paid: boolean,
+): DemoEvent[] {
+    const events: DemoEvent[] = [
+        { updateType: 'PROPOSAL_ACCEPTED', createdAt: october(1) },
+    ];
+    demo.quotations.forEach((quotationStatus, i) => {
+        events.push({
+            updateType: 'QUOTATION_SENT',
+            createdAt: october(2 + i),
+        });
+        if (quotationStatus === 'PENDING') return;
+        events.push({
+            updateType:
+                quotationStatus === 'ACCEPTED'
+                    ? 'QUOTATION_ACCEPTED'
+                    : 'QUOTATION_REJECTED',
+            createdAt: october(2 + i, 15),
+        });
+    });
+    if (reported) {
+        events.push({ updateType: 'DEPOSIT_REPORTED', createdAt: october(5) });
+    }
+    if (paid) {
+        events.push({ updateType: 'DEPOSIT_CONFIRMED', createdAt: october(6) });
+    }
+    if (demo.projectStatus === 'CANCELLED') {
+        events.push({ updateType: 'PROJECT_CANCELLED', createdAt: october(8) });
+    }
+    demo.updates.forEach((update, i) => {
+        events.push({ ...update, createdAt: october(10 + 5 * i) });
+    });
+    if (demo.projectStatus === 'COMPLETED') {
+        events.push({ updateType: 'WORK_ACCEPTED', createdAt: october(22) });
+    }
+    return events;
 }
 
 // ADR 0018: the completed project's one review, four 1-5 scores.
@@ -466,10 +531,7 @@ async function seedDemoProjects(
                                     ),
                                 },
                                 projectUpdate: {
-                                    create: demo.updates.map((update, i) => ({
-                                        ...update,
-                                        createdAt: october(10 + 5 * i),
-                                    })),
+                                    create: demoTimeline(demo, reported, paid),
                                 },
                                 // Spread, not review: undefined, which
                                 // exactOptionalPropertyTypes refuses.

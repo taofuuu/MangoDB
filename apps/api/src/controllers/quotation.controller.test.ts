@@ -35,6 +35,8 @@
  * - T4.5.1: the project's Receiver rejects a PENDING quotation, transitioning
  *   it to REJECTED while the project stays AWAITING_QUOTATION.
  *   403 for Provider, 404 for outsider, 409 if not PENDING.
+ * - #212: upload, delete, accept and reject each save one timeline event on
+ *   the project, and a refused one (409) saves none.
  *
  * How:
  * - lib/prisma and lib/storage are replaced with mock.module before the
@@ -87,6 +89,8 @@ type FakeProject = {
 
 let project: FakeProject | null = null;
 let quotations: FakeQuotation[] = [];
+// The timeline events saved on the project (#212).
+let events: Record<string, unknown>[] = [];
 let uploadedBuckets: { bucket: string; folder: string }[] = [];
 let removedPaths: { path: string; bucket: string }[] = [];
 let removedUrls: { url: string; bucket: string }[] = [];
@@ -125,13 +129,20 @@ const fakePrisma = {
     $transaction: async (work: (tx: unknown) => Promise<unknown>) => {
         const savedProject = structuredClone(project);
         const savedQuotations = structuredClone(quotations);
+        const savedEvents = [...events];
         try {
             return await work(fakePrisma);
         } catch (err) {
             project = savedProject;
             quotations = savedQuotations;
+            events = savedEvents;
             throw err;
         }
+    },
+    projectUpdate: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+            events.push(data);
+        },
     },
     project: {
         findUnique: async ({ where }: { where: { projectId: number } }) => {
@@ -167,10 +178,11 @@ const fakePrisma = {
             if (!found || !project || found.projectId !== project.projectId) {
                 return null;
             }
-            return {
-                ...found,
-                project,
-            };
+            const read = { ...found, project };
+            // The Receiver decides right after this read, in a transaction of
+            // its own, so the delete's rollback does not undo it.
+            if (receiverDecidesBeforeDelete) found.quotationStatus = 'ACCEPTED';
+            return read;
         },
         findFirst: async ({
             where,
@@ -248,12 +260,6 @@ const fakePrisma = {
         }: {
             where: { quotationId: number; quotationStatus: QuotationStatus };
         }) => {
-            if (receiverDecidesBeforeDelete) {
-                const target = quotations.find(
-                    (q) => q.quotationId === where.quotationId,
-                );
-                if (target) target.quotationStatus = 'ACCEPTED';
-            }
             const idx = quotations.findIndex(
                 (q) =>
                     q.quotationId === where.quotationId &&
@@ -318,6 +324,7 @@ before(async () => {
 beforeEach(() => {
     project = jobProject('AWAITING_QUOTATION');
     quotations = [];
+    events = [];
     uploadedBuckets = [];
     removedPaths = [];
     removedUrls = [];
@@ -557,6 +564,9 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(uploadedBuckets, [
             { bucket: 'quotation', folder: 'quotations' },
         ]);
+        assert.deepEqual(events, [
+            { projectId: PROJECT_ID, updateType: 'QUOTATION_SENT' },
+        ]);
     });
 
     it('uploads a quotation PDF as the Provider on a service project', async () => {
@@ -651,6 +661,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
             );
         }
         assert.equal(uploadedBuckets.length, 0);
+        assert.equal(events.length, 0);
     });
 
     it('is a 409 without uploading when a quotation is already PENDING', async () => {
@@ -672,6 +683,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
             },
         );
         assert.equal(uploadedBuckets.length, 0);
+        assert.equal(events.length, 0);
     });
 
     it('removes the uploaded PDF and answers 409 when a concurrent upload hits the partial unique index', async () => {
@@ -689,6 +701,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(removedPaths, [
             { path: UPLOADED.path, bucket: 'quotation' },
         ]);
+        assert.equal(events.length, 0);
     });
 });
 
@@ -711,6 +724,9 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.equal(quotations.length, 0);
         assert.deepEqual(removedUrls, [
             { url: UPLOADED.url, bucket: 'quotation' },
+        ]);
+        assert.deepEqual(events, [
+            { projectId: PROJECT_ID, updateType: 'QUOTATION_DELETED' },
         ]);
     });
 
@@ -773,6 +789,7 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         }
         assert.equal(quotations.length, 1);
         assert.equal(removedUrls.length, 0);
+        assert.equal(events.length, 0);
     });
 
     it('is a 409 and keeps the PDF when the Receiver decides at the same moment', async () => {
@@ -790,6 +807,7 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.equal(quotations.length, 1);
         assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
         assert.equal(removedUrls.length, 0);
+        assert.equal(events.length, 0);
     });
 });
 
@@ -920,6 +938,9 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
         assert.equal(dto.quotationStatus, 'ACCEPTED');
         assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
         assert.equal(project?.projectStatus, 'AWAITING_DEPOSIT');
+        assert.deepEqual(events, [
+            { projectId: PROJECT_ID, updateType: 'QUOTATION_ACCEPTED' },
+        ]);
     });
 
     it('the Receiver accepts a pending quotation on a service project, moving project to AWAITING_DEPOSIT', async () => {
@@ -1001,6 +1022,7 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
                 },
             );
         }
+        assert.equal(events.length, 0);
     });
 
     it('answers 409 Project is not AWAITING_QUOTATION and rolls back quotation status if project is not AWAITING_QUOTATION', async () => {
@@ -1016,6 +1038,7 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
             },
         );
         assert.equal(quotations[0]!.quotationStatus, 'PENDING');
+        assert.equal(events.length, 0);
     });
 });
 
@@ -1039,6 +1062,9 @@ describe('POST /quotations/:quotationId/reject (US4-5)', () => {
         assert.equal(dto.quotationStatus, 'REJECTED');
         assert.equal(quotations[0]!.quotationStatus, 'REJECTED');
         assert.equal(project?.projectStatus, 'AWAITING_QUOTATION');
+        assert.deepEqual(events, [
+            { projectId: PROJECT_ID, updateType: 'QUOTATION_REJECTED' },
+        ]);
     });
 
     it('the Receiver rejects a pending quotation on a service project, keeping project in AWAITING_QUOTATION', async () => {
@@ -1119,6 +1145,7 @@ describe('POST /quotations/:quotationId/reject (US4-5)', () => {
                 },
             );
         }
+        assert.equal(events.length, 0);
     });
 
     it('answers 409 Project is not AWAITING_QUOTATION when the project was cancelled', async () => {

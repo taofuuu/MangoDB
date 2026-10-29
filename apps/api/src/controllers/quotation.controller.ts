@@ -3,7 +3,11 @@ import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
-import { assertProjectParty, moveProjectStatus } from '../lib/project';
+import {
+    assertProjectParty,
+    moveProjectStatus,
+    saveProjectEvent,
+} from '../lib/project';
 import {
     assertQuotationParty,
     quotationSelect,
@@ -52,6 +56,7 @@ export async function createQuotation(
         throw ApiError.conflict('A quotation is already pending');
     }
 
+    // The row and its timeline event (#212) save together, or neither does.
     let row;
     try {
         row = await saveWithUpload(
@@ -59,13 +64,18 @@ export async function createQuotation(
             BUCKETS.QUOTATION,
             'quotations',
             (quotationFile) =>
-                prisma.quotation.create({
-                    data: {
-                        projectId,
-                        quotationFile,
-                        quotationStatus: 'PENDING' satisfies QuotationStatus,
-                    },
-                    select: quotationSelect,
+                prisma.$transaction(async (tx) => {
+                    const created = await tx.quotation.create({
+                        data: {
+                            projectId,
+                            quotationFile,
+                            quotationStatus:
+                                'PENDING' satisfies QuotationStatus,
+                        },
+                        select: quotationSelect,
+                    });
+                    await saveProjectEvent(tx, projectId, 'QUOTATION_SENT');
+                    return created;
                 }),
         );
     } catch (err) {
@@ -134,6 +144,7 @@ export async function acceptQuotation(
             'AWAITING_QUOTATION',
             'AWAITING_DEPOSIT',
         );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_ACCEPTED');
         return row;
     });
 
@@ -164,19 +175,25 @@ export async function rejectQuotation(
         throw ApiError.conflict('Project is not AWAITING_QUOTATION');
     }
 
-    const updated = await orConflict(
-        prisma.quotation.update({
-            where: {
-                quotationId,
-                quotationStatus: 'PENDING' satisfies QuotationStatus,
-            },
-            data: {
-                quotationStatus: 'REJECTED' satisfies QuotationStatus,
-            },
-            select: quotationSelect,
-        }),
-        'Quotation is not PENDING',
-    );
+    // One transaction: the decision and its timeline event (#212) save
+    // together, or neither does.
+    const updated = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.update({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                data: {
+                    quotationStatus: 'REJECTED' satisfies QuotationStatus,
+                },
+                select: quotationSelect,
+            }),
+            'Quotation is not PENDING',
+        );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_REJECTED');
+        return row;
+    });
 
     res.json(toQuotation(updated));
 }
@@ -199,16 +216,22 @@ export async function deleteQuotation(
         throw ApiError.forbidden('Only the Provider can delete a quotation');
     }
 
-    const deleted = await orConflict(
-        prisma.quotation.delete({
-            where: {
-                quotationId,
-                quotationStatus: 'PENDING' satisfies QuotationStatus,
-            },
-            select: { quotationFile: true },
-        }),
-        'Quotation is not PENDING',
-    );
+    // The timeline keeps the QUOTATION_SENT event and adds this one: it is
+    // append-only (#212). A 409 saves neither the delete nor the event.
+    const deleted = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.delete({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                select: { quotationFile: true },
+            }),
+            'Quotation is not PENDING',
+        );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_DELETED');
+        return row;
+    });
 
     // Best-effort cleanup of the PDF in storage once the row is gone.
     await removeFromStorageByUrl(deleted.quotationFile, BUCKETS.QUOTATION);

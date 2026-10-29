@@ -1,6 +1,8 @@
 /*
  * Tests for project controller endpoints:
+ * - GET /projects/:projectId/updates (listProjectUpdates, US4-9)
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
+ * - POST /projects/:projectId/report-deposit (reportDeposit, US4-6)
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
  * - POST /projects/:projectId/cancel (cancelProject, US4-8)
  * - POST /projects/:projectId/submit-work (submitWork, US4-11)
@@ -10,6 +12,9 @@
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
  * What they cover:
+ * - #212: every action saves exactly one timeline event (project_update),
+ *   and a refused one saves none. GET /updates asks for all of them,
+ *   oldest first.
  * - T4.10.3: a saved update has its date and time, set by the server. The
  *   client cannot send one: an extra createdAt field is a 400.
  * - T4.10.4: only the project's Provider can add one. The Receiver gets 403,
@@ -54,8 +59,8 @@
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database.
  * - project.updateMany and project.update change `project` in place, honouring
- *   their where filters. $transaction puts `project` back if its work throws,
- *   as the database's rollback would.
+ *   their where filters. $transaction puts `project` and the saved updates
+ *   back if its work throws, as the database's rollback would.
  *
  * Run: npm test (in apps/api).
  */
@@ -68,6 +73,7 @@ import type {
     Paginated,
     Project,
     ProjectUpdate,
+    ProjectUpdateType,
     Review,
 } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
@@ -167,6 +173,8 @@ let created: Record<string, unknown>[] = [];
 let createdReviews: Record<string, unknown>[] = [];
 let reviewAlreadyExists = false;
 let projects: ProjectRow[] = [];
+let timeline: Record<string, unknown>[] = [];
+let timelineQuery: unknown = null;
 
 type ProjectWhereBranch = {
     proposal?: {
@@ -259,17 +267,26 @@ const fakePrisma = {
             project!.projectStatus = data.projectStatus;
             return Promise.resolve({ count: 1 });
         },
-        // A where that misses the row is P2025 in Prisma.
+        // A where that misses the row is P2025 in Prisma. null asks for a
+        // deposit not reported yet (report), { not: null } for one that was
+        // (confirm).
         update: ({
             where,
             data,
         }: {
-            where: { depositReportedAt?: unknown };
-            data: { depositConfirmedAt?: Date; completedAt?: Date };
+            where: { projectStatus?: string; depositReportedAt?: unknown };
+            data: {
+                depositReportedAt?: Date;
+                depositConfirmedAt?: Date;
+                completedAt?: Date;
+            };
         }) => {
+            const reported = project!.depositReportedAt !== null;
             if (
-                where.depositReportedAt &&
-                project!.depositReportedAt === null
+                (where.projectStatus !== undefined &&
+                    project!.projectStatus !== where.projectStatus) ||
+                (where.depositReportedAt === null && reported) ||
+                (where.depositReportedAt && !reported)
             ) {
                 return Promise.reject(
                     Object.assign(new Error('Record not found'), {
@@ -314,6 +331,11 @@ const fakePrisma = {
         },
     },
     projectUpdate: {
+        // Records what it was asked, and answers with `timeline` as it is.
+        findMany: (args: unknown) => {
+            timelineQuery = args;
+            return Promise.resolve(timeline);
+        },
         create: ({ data }: { data: Record<string, unknown> }) => {
             created.push(data);
             return Promise.resolve({
@@ -360,10 +382,12 @@ const fakePrisma = {
     ) => {
         if (typeof work !== 'function') return Promise.all(work);
         const saved = structuredClone(project);
+        const savedCreated = [...created];
         try {
             return await work(fakePrisma);
         } catch (err) {
             project = saved;
+            created = savedCreated;
             throw err;
         }
     },
@@ -388,6 +412,8 @@ beforeEach(() => {
     createdReviews = [];
     reviewAlreadyExists = false;
     projects = [];
+    timeline = [];
+    timelineQuery = null;
 });
 
 function projectIn(
@@ -539,6 +565,14 @@ function postUpdate(
     return call(controller.createProjectUpdate, callerId, body);
 }
 
+function listUpdates(callerId: number): Promise<unknown> {
+    return call(controller.listProjectUpdates, callerId);
+}
+
+function reportDeposit(callerId: number): Promise<unknown> {
+    return call(controller.reportDeposit, callerId);
+}
+
 function confirmDeposit(callerId: number): Promise<unknown> {
     return call(controller.confirmDeposit, callerId);
 }
@@ -658,6 +692,68 @@ function isApiError(status: number) {
     return (err: unknown) => err instanceof ApiError && err.status === status;
 }
 
+// The one timeline event an action saved on project 1 (#212).
+function savedEvent(updateType: ProjectUpdateType) {
+    return [{ projectId: 1, updateType }];
+}
+
+describe('GET /projects/:projectId/updates', () => {
+    it('answers every event of the project, oldest first (#212)', async () => {
+        timeline = [
+            {
+                projectUpdateId: 1,
+                projectId: 1,
+                updateType: 'PROPOSAL_ACCEPTED',
+                updateText: null,
+                createdAt: new Date('2026-10-01T09:00:00.000Z'),
+            },
+            {
+                projectUpdateId: 2,
+                projectId: 1,
+                updateType: 'PROGRESS',
+                updateText: 'Wireframes done',
+                createdAt: new Date('2026-10-02T09:00:00.000Z'),
+            },
+        ];
+        const result = (await listUpdates(RECEIVER)) as {
+            status: number;
+            body: ProjectUpdate[];
+        };
+
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body, [
+            {
+                projectUpdateId: 1,
+                projectId: 1,
+                updateType: 'PROPOSAL_ACCEPTED',
+                updateText: null,
+                createdAt: '2026-10-01T09:00:00.000Z',
+            },
+            {
+                projectUpdateId: 2,
+                projectId: 1,
+                updateType: 'PROGRESS',
+                updateText: 'Wireframes done',
+                createdAt: '2026-10-02T09:00:00.000Z',
+            },
+        ]);
+        // No filter on the type, and the id breaks a tie in the same instant.
+        const { where, orderBy } = timelineQuery as {
+            where: unknown;
+            orderBy: unknown;
+        };
+        assert.deepEqual(where, { projectId: 1 });
+        assert.deepEqual(orderBy, [
+            { createdAt: 'asc' },
+            { projectUpdateId: 'asc' },
+        ]);
+    });
+
+    it('is a 404 for a company outside the project', async () => {
+        assert.ok(isApiError(404)(await listUpdates(OUTSIDER)));
+    });
+});
+
 describe('POST /projects/:projectId/updates', () => {
     it('saves a PROGRESS update with its date and time (T4.10.3)', async () => {
         const startedAt = Date.now();
@@ -702,6 +798,40 @@ describe('POST /projects/:projectId/updates', () => {
     });
 });
 
+describe('POST /projects/:projectId/report-deposit', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_DEPOSIT');
+    });
+
+    it('stamps the time and saves a DEPOSIT_REPORTED event', async () => {
+        const result = (await reportDeposit(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'AWAITING_DEPOSIT');
+        assert.ok(result.body.depositReportedAt);
+        assert.deepEqual(created, savedEvent('DEPOSIT_REPORTED'));
+    });
+
+    // A double click: the second finds the deposit already reported.
+    it('is a 409 when it was already reported, and saves no event', async () => {
+        project = projectIn(
+            'AWAITING_DEPOSIT',
+            new Date('2026-10-22T09:00:00.000Z'),
+        );
+        assert.ok(isApiError(409)(await reportDeposit(RECEIVER)));
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 403 for the Provider and saves no event', async () => {
+        assert.ok(isApiError(403)(await reportDeposit(PROVIDER)));
+        assert.equal(project!.depositReportedAt, null);
+        assert.equal(created.length, 0);
+    });
+});
+
 describe('POST /projects/:projectId/confirm-deposit', () => {
     beforeEach(() => {
         project = projectIn(
@@ -722,6 +852,7 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         const confirmedAt = Date.parse(result.body.depositConfirmedAt!);
         assert.ok(confirmedAt >= startedAt && confirmedAt <= Date.now());
         assert.equal(project!.projectStatus, 'IN_PROGRESS');
+        assert.deepEqual(created, savedEvent('DEPOSIT_CONFIRMED'));
     });
 
     it('is a 409 before the Receiver reports it (T4.7.4)', async () => {
@@ -730,6 +861,7 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         // The status move rolls back with the refused stamp.
         assert.equal(project.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project.depositConfirmedAt, null);
+        assert.equal(created.length, 0);
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.7.4)', async () => {
@@ -752,6 +884,7 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
             [projectOnService('AWAITING_DEPOSIT'), RECEIVER],
         ] as const) {
             project = start;
+            created = [];
             const result = (await cancelProject(callerId)) as {
                 status: number;
                 body: Project;
@@ -760,6 +893,7 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
             assert.equal(result.status, 200);
             assert.equal(result.body.projectStatus, 'CANCELLED');
             assert.equal(project.projectStatus, 'CANCELLED');
+            assert.deepEqual(created, savedEvent('PROJECT_CANCELLED'));
         }
     });
 
@@ -784,6 +918,7 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
         project = projectIn('IN_PROGRESS');
         assert.ok(isApiError(409)(await cancelProject(PROVIDER)));
         assert.equal(project.projectStatus, 'IN_PROGRESS');
+        assert.equal(created.length, 0);
     });
 
     it('is a 409 when the project is in another post-work status or already CANCELLED', async () => {
@@ -809,6 +944,7 @@ describe('POST /projects/:projectId/submit-work', () => {
         assert.equal(result.status, 200);
         assert.equal(result.body.projectStatus, 'AWAITING_ACCEPTANCE');
         assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.deepEqual(created, savedEvent('WORK_SUBMITTED'));
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.11.4)', async () => {
@@ -826,6 +962,7 @@ describe('POST /projects/:projectId/submit-work', () => {
         project = projectIn('AWAITING_ACCEPTANCE');
         assert.ok(isApiError(409)(await submitWork(PROVIDER)));
         assert.equal(project.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(created.length, 0);
     });
 });
 
@@ -892,6 +1029,7 @@ describe('POST /projects/:projectId/accept-work', () => {
         const completedAt = Date.parse(result.body.completedAt!);
         assert.ok(completedAt >= startedAt && completedAt <= Date.now());
         assert.equal(project!.projectStatus, 'COMPLETED');
+        assert.deepEqual(created, savedEvent('WORK_ACCEPTED'));
     });
 
     it('is a 403 for the Provider and changes nothing (T4.13.4)', async () => {
@@ -912,6 +1050,7 @@ describe('POST /projects/:projectId/accept-work', () => {
         assert.ok(isApiError(409)(await acceptWork(RECEIVER)));
         assert.equal(project.projectStatus, 'IN_PROGRESS');
         assert.equal(project.completedAt, null);
+        assert.equal(created.length, 0);
     });
 });
 
