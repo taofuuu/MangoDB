@@ -2,24 +2,30 @@
 
 import { useId } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
 import ModalShell from '@/components/ui/ModalShell';
-import { TERMS_INTRO, TERMS_OF_SERVICE } from '@/lib/terms';
+import type { TermsSection } from '@/lib/terms';
 
-type TermsOfServiceModalProps = {
+type ConsentModalProps = {
     isOpen: boolean;
+    title: string;
+    intro: string;
+    sections: TermsSection[];
     onAccept: () => void;
     onDecline: () => void;
 };
 
-// US1-13. Shown when the company presses Create Account without having
-// accepted yet. Accept is the consent the API requires; Decline (or Escape, or
-// a click on the backdrop) leaves it unaccepted, so registration stays blocked.
-export default function TermsOfServiceModal({
+// US1-13 and #193. A document the company has to accept before Create
+// Account goes through: the Terms of Service first, then the Privacy Policy
+// (PDPA). Decline (or Escape, or a click on the backdrop) leaves it
+// unaccepted, so registration stays blocked.
+export default function ConsentModal({
     isOpen,
+    title,
+    intro,
+    sections,
     onAccept,
     onDecline,
-}: TermsOfServiceModalProps) {
+}: ConsentModalProps) {
     const titleId = useId();
     const bodyId = useId();
 
@@ -38,7 +44,7 @@ export default function TermsOfServiceModal({
             panelClassName="flex h-[92vh] w-[44.6vw] min-w-[320px] flex-col rounded-popup bg-surface px-[2.35vw] py-[3.4vh] text-ink shadow-[6px_6px_10px_rgba(0,0,0,0.25)] max-md:w-[90vw] max-md:px-[6vw]"
         >
             <h2 id={titleId} className="shrink-0 type-hd">
-                Terms of Service
+                {title}
             </h2>
 
             <div className="h-px shrink-0 bg-ink-soft" />
@@ -50,8 +56,8 @@ export default function TermsOfServiceModal({
                 tabIndex={0}
                 className="mt-[3.4vh] min-h-0 flex-1 overflow-y-auto pl-[1.5vw] pr-[1vw] type-md !font-[400] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-                <p className="leading-[1.65]">{TERMS_INTRO}</p>
-                {TERMS_OF_SERVICE.map((section) => (
+                <p className="leading-[1.65]">{intro}</p>
+                {sections.map((section) => (
                     <section key={section.heading}>
                         <h3 className="mt-[0.5em] type-lg !font-[500]">
                             {section.heading}
@@ -59,20 +65,6 @@ export default function TermsOfServiceModal({
                         <p className="leading-[1.65]">{section.body}</p>
                     </section>
                 ))}
-                {/* New tab: following the link in place would unmount the
-                    register form and lose everything typed so far. */}
-                <p className="mt-[1em] leading-[1.65]">
-                    See our{' '}
-                    <Link
-                        href="/privacy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-brand-dark underline underline-offset-2 hover:text-brand-deep"
-                    >
-                        Privacy Policy
-                    </Link>{' '}
-                    for how we use your personal data.
-                </p>
             </div>
 
             <div className="mt-[2vh] flex shrink-0 justify-end gap-[20px] max-sm:gap-3">

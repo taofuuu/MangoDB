@@ -1,4 +1,5 @@
-// Issue #193. The Privacy Policy (PDPA) shown at /privacy. The page renders
+// Issue #193. The Privacy Policy (PDPA) shown at /privacy and in the dialog a
+// company accepts when it registers, after the Terms of Service. Both render
 // whatever this holds, so a change of wording is an edit here: the intro, then
 // one { heading, body } per section in reading order. The team still has to
 // agree the final text.
