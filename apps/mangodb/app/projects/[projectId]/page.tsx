@@ -13,6 +13,7 @@ import type {
 import { ArrowLeft, Plus } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
+import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
 import ProjectSidebar from '@/components/projects/ProjectSidebar';
 import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge';
 import ProjectTimelineFeed, {
@@ -32,6 +33,7 @@ import {
     cancelProject,
     confirmDeposit,
     createProjectUpdate,
+    deleteQuotation,
     getProject,
     getProjectReview,
     listProjectUpdates,
@@ -88,10 +90,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
     // Modals state
     const [isUploadQuotationOpen, setIsUploadQuotationOpen] = useState(false);
+    const [isConfirmDepositOpen, setIsConfirmDepositOpen] = useState(false);
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
@@ -450,20 +454,29 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // Action Handlers
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
+        setActionError(null);
         try {
+            const pending = quotations.find(
+                (q) => q.quotationStatus === 'PENDING',
+            );
+            if (pending) {
+                await deleteQuotation(pending.quotationId, projectId);
+            }
             await uploadQuotation(projectId, file);
             loadData();
         } finally {
             setIsBusy(false);
-            setIsUploadQuotationOpen(false);
         }
     };
 
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
             loadData();
+        } catch (err: unknown) {
+            setActionError(describeError(err));
         } finally {
             setIsBusy(false);
         }
@@ -471,9 +484,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleRejectQuotation = async (quotationId: number) => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await rejectQuotation(quotationId, projectId);
             loadData();
+        } catch (err: unknown) {
+            setActionError(describeError(err));
         } finally {
             setIsBusy(false);
         }
@@ -481,6 +497,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAddUpdate = async (updateText: string) => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await createProjectUpdate(projectId, updateText);
             loadData();
@@ -491,9 +508,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleReportDeposit = async () => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await reportDeposit(projectId);
             loadData();
+        } catch (err: unknown) {
+            setActionError(describeError(err));
         } finally {
             setIsBusy(false);
         }
@@ -501,6 +521,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleConfirmDeposit = async () => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await confirmDeposit(projectId);
             loadData();
@@ -511,45 +532,45 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleSubmitWork = async () => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await submitWork(projectId);
             loadData();
         } finally {
             setIsBusy(false);
-            setIsSubmitConfirmOpen(false);
         }
     };
 
     const handleAcceptWork = async () => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await acceptWork(projectId);
             loadData();
         } finally {
             setIsBusy(false);
-            setIsAcceptConfirmOpen(false);
         }
     };
 
     const handleRejectWork = async (reason: string) => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await rejectWork(projectId, reason);
             loadData();
         } finally {
             setIsBusy(false);
-            setIsRejectModalOpen(false);
         }
     };
 
     const handleCancelProject = async () => {
         setIsBusy(true);
+        setActionError(null);
         try {
             await cancelProject(projectId);
             loadData();
         } finally {
             setIsBusy(false);
-            setIsCancelConfirmOpen(false);
         }
     };
 
@@ -603,6 +624,22 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     </button>
                 </div>
 
+                {actionError && (
+                    <div
+                        role="alert"
+                        className="mb-6 rounded-[14px] border border-danger/40 bg-danger/10 px-4 py-3 type-xs text-danger flex items-center justify-between"
+                    >
+                        <span>{actionError}</span>
+                        <button
+                            type="button"
+                            onClick={() => setActionError(null)}
+                            className="font-semibold underline ml-2 hover:opacity-80 transition-opacity"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
+
                 {/* 2-Column Layout (Sidebar Left, Main Content Right) */}
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
                     {/* Left Sidebar */}
@@ -615,7 +652,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         onAcceptQuotation={handleAcceptQuotation}
                         onRejectQuotation={handleRejectQuotation}
                         onReportDeposit={handleReportDeposit}
-                        onConfirmDeposit={handleConfirmDeposit}
+                        onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
                         onAcceptWork={() => setIsAcceptConfirmOpen(true)}
                         onRejectWork={() => setIsRejectModalOpen(true)}
@@ -739,6 +776,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
             </div>
 
             {/* Modals */}
+            <ConfirmDepositModal
+                isOpen={isConfirmDepositOpen}
+                onClose={() => setIsConfirmDepositOpen(false)}
+                onConfirm={handleConfirmDeposit}
+            />
+
             <UploadQuotationModal
                 isOpen={isUploadQuotationOpen}
                 onClose={() => setIsUploadQuotationOpen(false)}

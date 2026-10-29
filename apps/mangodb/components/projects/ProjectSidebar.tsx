@@ -66,9 +66,8 @@ export default function ProjectSidebar({
     const isReceiver = project.myRole === 'receiver';
     const otherParty = isProvider ? project.receiver : project.provider;
 
-    // Latest quotation
-    const latestQuotation =
-        quotations.length > 0 ? quotations[quotations.length - 1] : null;
+    // Latest quotation (GET /projects/:id/quotations returns newest first)
+    const latestQuotation = quotations[0] ?? null;
     const qStatus = latestQuotation?.quotationStatus;
     const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
     const isQuotationAccepted = isPastQuotation || qStatus === 'ACCEPTED';

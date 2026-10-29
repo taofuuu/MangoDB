@@ -74,6 +74,20 @@ export function uploadQuotation(
     );
 }
 
+// US4-2. Provider deletes a pending quotation.
+export function deleteQuotation(
+    quotationId: number,
+    projectId: number,
+): Promise<void> {
+    return invalidateAfter(
+        apiFetch<void>(`/quotations/${quotationId}`, {
+            method: 'DELETE',
+        }),
+        `/projects/${projectId}`,
+        '/projects/mine',
+    );
+}
+
 // US4-4. Receiver accepts quotation (moves project to AWAITING_DEPOSIT).
 export function acceptQuotation(
     quotationId: number,
@@ -155,6 +169,7 @@ export function acceptWork(projectId: number): Promise<void> {
         }),
         `/projects/${projectId}`,
         '/projects/mine',
+        '/companies',
     );
 }
 

@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { CircleCheck } from 'lucide-react';
 import type { Project } from '@mangodb/shared';
 import ModalShell from '@/components/ui/ModalShell';
@@ -28,7 +27,6 @@ function AcceptProposalDialog({
     companyName,
     isService = false,
 }: Omit<AcceptProposalModalProps, 'isOpen'>) {
-    const router = useRouter();
     const titleId = useId();
     const descriptionId = useId();
     const [isPending, setIsPending] = useState(false);
@@ -61,6 +59,7 @@ function AcceptProposalDialog({
                     'projectId' in project
                 ) {
                     setAcceptedProject(project);
+                } else {
                     onClose();
                 }
             }
