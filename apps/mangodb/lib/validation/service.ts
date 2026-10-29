@@ -18,16 +18,20 @@ export function validateServiceCategory(categoryIds: number[]): string | null {
     return validateCategoryIds(categoryIds);
 }
 
+// Digits with an optional decimal part, like "3" or "1.5". Number() alone
+// would also take "1e1", "0x2" and ".5".
+const PLAIN_DECIMAL = /^-?\d+(\.\d+)?$/;
+
 // Optional. The same rule as a proposal duration (ADR 0007): months in steps
 // of 0.5, at most 120.
 export function validateServiceDuration(value: string): string | null {
     const trimmed = value.trim();
     if (!trimmed) return null;
 
-    const duration = Number(trimmed);
-    if (!Number.isFinite(duration)) {
+    if (!PLAIN_DECIMAL.test(trimmed)) {
         return 'Duration must be a valid number.';
     }
+    const duration = Number(trimmed);
     if (duration <= 0) {
         return 'Duration must be greater than zero.';
     }

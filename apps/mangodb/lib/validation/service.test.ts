@@ -29,6 +29,16 @@ describe('validateServiceDuration', () => {
         );
     });
 
+    it('refuses numbers not written as plain decimals', () => {
+        for (const value of ['1e1', '0x2', '.5', '1.', '+1', '1,5']) {
+            assert.equal(
+                validateServiceDuration(value),
+                'Duration must be a valid number.',
+                value,
+            );
+        }
+    });
+
     it('refuses zero and below', () => {
         assert.equal(
             validateServiceDuration('0'),
