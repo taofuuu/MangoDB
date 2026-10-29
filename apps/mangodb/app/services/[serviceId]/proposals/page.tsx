@@ -117,9 +117,11 @@ export default function ServiceProposalsPage() {
 
     // A service stays open and can have multiple hires (ADR 0016), so accepting
     // a proposal marks only this proposal as ACCEPTED while other proposals remain untouched.
+    // Returns created project for the accept modal.
     const handleAccept = async (proposalId: number) => {
+        let createdProject;
         try {
-            await acceptProposal(proposalId);
+            createdProject = await acceptProposal(proposalId);
         } catch (err) {
             throw new Error(describeError(err));
         }
@@ -132,7 +134,7 @@ export default function ServiceProposalsPage() {
             ),
         );
 
-        setSelectedId(null);
+        return createdProject;
     };
 
     const [currentPage, setCurrentPage] = useState(1);

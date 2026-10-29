@@ -3,8 +3,6 @@
 import { useEffect } from 'react';
 import type { PaginationMeta } from '@mangodb/shared';
 
-import Button from '@/components/ui/Button';
-
 type PaginationProps = {
     pagination: PaginationMeta | null | undefined;
     onPageChange: (page: number) => void;
@@ -36,7 +34,12 @@ export default function Pagination({
         }
     }, [isPageOutOfRange, onPageChange, totalPages]);
 
-    if (!pagination || pagination.totalItems === 0 || isPageOutOfRange) {
+    if (
+        !pagination ||
+        pagination.totalItems === 0 ||
+        totalPages <= 1 ||
+        isPageOutOfRange
+    ) {
         return null;
     }
 
@@ -45,34 +48,30 @@ export default function Pagination({
     return (
         <nav
             aria-label={ariaLabel}
-            className={`mt-[2.22vh] flex shrink-0 items-center justify-between gap-[1.04vw] ${className}`}
+            className={`mt-4 flex shrink-0 items-center justify-between border-t border-line pt-3 ${className}`}
         >
-            <p className="type-sm text-ink">
-                page {page}/{totalPages}
-            </p>
+            <span className="type-xs text-ink-soft">
+                Page {page} of {totalPages}
+            </span>
 
-            <div className="flex items-center gap-[0.63vw]">
-                {page > 1 && (
-                    <Button
-                        variant="outline"
-                        disabled={isLoading}
-                        onClick={() => onPageChange(page - 1)}
-                        className="h-[4.63vh] border-line px-[1.04vw] type-sm"
-                    >
-                        Previous
-                    </Button>
-                )}
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    disabled={isLoading || page <= 1}
+                    onClick={() => onPageChange(page - 1)}
+                    className="px-3 py-1 type-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    ← Prev
+                </button>
 
-                {page < totalPages && (
-                    <Button
-                        variant="outline"
-                        disabled={isLoading}
-                        onClick={() => onPageChange(page + 1)}
-                        className="h-[4.63vh] border-line px-[1.04vw] type-sm"
-                    >
-                        Next
-                    </Button>
-                )}
+                <button
+                    type="button"
+                    disabled={isLoading || page >= totalPages}
+                    onClick={() => onPageChange(page + 1)}
+                    className="px-3 py-1 type-xs rounded-md border border-brand text-brand hover:bg-brand/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                    Next →
+                </button>
             </div>
         </nav>
     );
