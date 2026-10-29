@@ -13,6 +13,8 @@ import { listPortfolios } from '@/lib/portfolios';
 import { companyProfileHref } from '@/lib/profileLinks';
 import { useMyCompany } from '@/lib/useMyCompany';
 import type { ServiceSummary } from '@mangodb/shared';
+import HireRequestModal from '@/components/proposals/HireRequestModal';
+import { isReceiverAccount } from '@/lib/roles';
 import ServiceActionsMenu from './ServiceActionsMenu';
 
 export default function ServiceDetailPanel({
@@ -38,7 +40,17 @@ export default function ServiceDetailPanel({
     // T3.7.1. Your own service's name opens your own profile. getMyProfile
     // is cached, so opening many panels asks the API once.
     const me = useMyCompany();
-    const viewerCompanyId = me.status === 'ready' ? me.company.companyId : null;
+    const viewer = me.status === 'ready' ? me.company : null;
+    const viewerCompanyId = viewer?.companyId ?? null;
+    const [isHireFormOpen, setIsHireFormOpen] = useState(false);
+
+    // US2-15. Only a Receiver may send a hire request, and not on its own
+    // service. The API refuses the other cases (403), so the button is only
+    // offered where a request can succeed.
+    const canSendHireRequest =
+        viewer !== null &&
+        isReceiverAccount(viewer.accountType) &&
+        service.company.companyId !== viewer.companyId;
 
     useEffect(() => {
         const closeOnEscape = (event: KeyboardEvent) => {
@@ -290,7 +302,31 @@ export default function ServiceDetailPanel({
                         </div>
                     )}
                 </div>
+
+                {canSendHireRequest && (
+                    <div className="mt-auto pt-[2vh]">
+                        <button
+                            type="button"
+                            onClick={() => setIsHireFormOpen(true)}
+                            className="flex h-[4.5vh] w-full items-center justify-center rounded-full bg-brand type-md text-surface-white transition hover:bg-brand-dark"
+                        >
+                            Send Hire Request
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* key: a different service starts with an empty form. */}
+            {canSendHireRequest && (
+                <HireRequestModal
+                    key={service.serviceId}
+                    isOpen={isHireFormOpen}
+                    serviceId={service.serviceId}
+                    serviceName={service.listingTitle}
+                    companyName={service.company.companyName}
+                    onClose={() => setIsHireFormOpen(false)}
+                />
+            )}
 
             {onEdit && onDelete && (
                 <div className="mt-auto pt-[2vh]">
