@@ -74,11 +74,6 @@ const ROUTES = [
                   title: 'Edit Service Picker (Temporary)',
                   detail: 'Temporary development page for T2.3.2–T2.3.3. Choose one of your services and open its prefilled edit form; remove this link after T2.2.2 adds the real Edit buttons.',
               },
-              {
-                  href: '/dev/projects/confirm-deposit',
-                  title: 'Confirm Deposit Pop-ups (Temporary)',
-                  detail: 'US4-7 / T4.7.6 — the Provider confirm-deposit pop-ups with sample data, no API call. Remove once the Deposit section (T4.7.2) uses them.',
-              },
           ]
         : []),
     {
