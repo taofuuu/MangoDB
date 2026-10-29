@@ -61,8 +61,6 @@ function AcceptProposalDialog({
                     'projectId' in project
                 ) {
                     setAcceptedProject(project);
-                    router.push(`/projects/${project.projectId}`);
-                } else {
                     onClose();
                 }
             }
@@ -121,7 +119,8 @@ function AcceptProposalDialog({
                             <>
                                 A project with <strong>{companyName}</strong>{' '}
                                 has been created. You can now track its progress
-                                and coordinate with the provider.
+                                and coordinate with the{' '}
+                                {isService ? 'client' : 'provider'}.
                             </>
                         ) : isService ? (
                             <>
