@@ -4,8 +4,14 @@ import { useCallback, useId, useState } from 'react';
 import { X } from 'lucide-react';
 import type { Proposal } from '@mangodb/shared';
 import FieldError from '@/components/ui/FieldError';
+import Input from '@/components/ui/Input';
 import ModalShell from '@/components/ui/ModalShell';
+import Textarea from '@/components/ui/Textarea';
 import HireRequestReceiptModal from './HireRequestReceiptModal';
+import {
+    HIRE_REQUEST_BACKDROP_CLASS,
+    HIRE_REQUEST_PANEL_CLASS,
+} from './hireRequestModalClasses';
 import { createHireRequest } from '@/lib/proposals';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import {
@@ -29,10 +35,7 @@ const HIRE_REQUEST_FIELDS = {
     duration: 'durationMonths',
 } as const;
 
-const INPUT_CLASS =
-    'h-[4.07vh] px-1.5 w-full rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand';
-
-// Same fields and layout as SubmitProposalModal, for a hire request on a
+// Same fields as SubmitProposalModal, for a hire request on a
 // service. The API saves it as a proposal on that service.
 export default function HireRequestModal({
     isOpen,
@@ -125,8 +128,8 @@ export default function HireRequestModal({
             onClose={handleClose}
             isBusy={isSubmitting}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            panelClassName="w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
+            backdropClassName={HIRE_REQUEST_BACKDROP_CLASS}
+            panelClassName={HIRE_REQUEST_PANEL_CLASS}
         >
             <div className="flex items-center justify-between">
                 <h2 id={titleId} className="type-lg">
@@ -159,101 +162,44 @@ export default function HireRequestModal({
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-2">
-                    <div>
-                        <label
-                            htmlFor="hire-request-terms"
-                            className="block type-sm"
-                        >
-                            Request terms*
-                        </label>
-                        <textarea
-                            id="hire-request-terms"
-                            value={requestTerms}
-                            onChange={(event) => {
-                                setRequestTerms(event.target.value);
-                                clearError('requestTerms');
-                            }}
-                            required
-                            maxLength={10_000}
-                            aria-invalid={
-                                errors.requestTerms ? true : undefined
-                            }
-                            aria-describedby={
-                                errors.requestTerms
-                                    ? 'hire-request-terms-error'
-                                    : undefined
-                            }
-                            className="h-[13.36vh] px-1.5 py-1.5 w-full resize-none rounded-input border border-brand bg-surface-white/80 type-sm text-ink placeholder:text-line focus:outline-none focus:ring-1 focus:ring-brand"
-                        />
-                        <FieldError
-                            message={errors.requestTerms}
-                            id="hire-request-terms-error"
-                        />
-                    </div>
+                    <Textarea
+                        id="hire-request-terms"
+                        label="Request terms*"
+                        value={requestTerms}
+                        onChange={(value) => {
+                            setRequestTerms(value);
+                            clearError('requestTerms');
+                        }}
+                        error={errors.requestTerms}
+                        required
+                        maxLength={10_000}
+                    />
 
-                    <div>
-                        <label
-                            htmlFor="hire-request-budget"
-                            className="block type-sm"
-                        >
-                            Budget*
-                        </label>
-                        <input
-                            id="hire-request-budget"
-                            type="text"
-                            inputMode="decimal"
-                            value={budget}
-                            onChange={(event) => {
-                                setBudget(event.target.value);
-                                clearError('budget');
-                            }}
-                            required
-                            aria-invalid={errors.budget ? true : undefined}
-                            aria-describedby={
-                                errors.budget
-                                    ? 'hire-request-budget-error'
-                                    : undefined
-                            }
-                            className={INPUT_CLASS}
-                        />
-                        <FieldError
-                            message={errors.budget}
-                            id="hire-request-budget-error"
-                        />
-                    </div>
+                    <Input
+                        id="hire-request-budget"
+                        label="Budget*"
+                        inputMode="decimal"
+                        value={budget}
+                        onChange={(value) => {
+                            setBudget(value);
+                            clearError('budget');
+                        }}
+                        error={errors.budget}
+                        required
+                    />
 
-                    <div>
-                        <label
-                            htmlFor="hire-request-duration"
-                            className="block type-sm font-normal"
-                        >
-                            Estimated duration (months)*
-                        </label>
-                        <input
-                            id="hire-request-duration"
-                            type="text"
-                            inputMode="decimal"
-                            value={durationMonths}
-                            onChange={(event) => {
-                                setDurationMonths(event.target.value);
-                                clearError('durationMonths');
-                            }}
-                            required
-                            aria-invalid={
-                                errors.durationMonths ? true : undefined
-                            }
-                            aria-describedby={
-                                errors.durationMonths
-                                    ? 'hire-request-duration-error'
-                                    : undefined
-                            }
-                            className={INPUT_CLASS}
-                        />
-                        <FieldError
-                            message={errors.durationMonths}
-                            id="hire-request-duration-error"
-                        />
-                    </div>
+                    <Input
+                        id="hire-request-duration"
+                        label="Estimated duration (months)*"
+                        inputMode="decimal"
+                        value={durationMonths}
+                        onChange={(value) => {
+                            setDurationMonths(value);
+                            clearError('durationMonths');
+                        }}
+                        error={errors.durationMonths}
+                        required
+                    />
                 </div>
 
                 <FieldError message={formError} />

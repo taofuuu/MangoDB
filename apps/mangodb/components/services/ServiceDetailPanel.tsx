@@ -13,7 +13,7 @@ import { listPortfolios } from '@/lib/portfolios';
 import { companyProfileHref } from '@/lib/profileLinks';
 import { useMyCompany } from '@/lib/useMyCompany';
 import type { ServiceSummary } from '@mangodb/shared';
-import HireRequestModal from '@/components/hire-requests/HireRequestModal';
+import HireRequestModal from '@/components/proposals/HireRequestModal';
 import { isReceiverAccount } from '@/lib/roles';
 import ServiceActionsMenu from './ServiceActionsMenu';
 

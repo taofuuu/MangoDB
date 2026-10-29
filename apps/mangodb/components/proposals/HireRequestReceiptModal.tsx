@@ -6,6 +6,10 @@ import type { Proposal } from '@mangodb/shared';
 import ModalShell from '@/components/ui/ModalShell';
 import { formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
+import {
+    HIRE_REQUEST_BACKDROP_CLASS,
+    HIRE_REQUEST_PANEL_CLASS,
+} from './hireRequestModalClasses';
 
 type HireRequestReceiptModalProps = {
     isOpen: boolean;
@@ -31,8 +35,8 @@ export default function HireRequestReceiptModal({
             isOpen={isOpen}
             onClose={onClose}
             labelledBy={titleId}
-            backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            panelClassName="w-[calc(100vw-2rem)] sm:w-[44.5833vw] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl"
+            backdropClassName={HIRE_REQUEST_BACKDROP_CLASS}
+            panelClassName={HIRE_REQUEST_PANEL_CLASS}
         >
             <div className="flex items-center gap-2">
                 <MailCheck className="size-6 text-ink" aria-hidden="true" />
