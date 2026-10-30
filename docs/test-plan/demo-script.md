@@ -63,4 +63,22 @@ cd apps/mangodb && npx playwright show-report
 
 ## Part 3 — Unit testing one backend function (Jest, 100% statement coverage)
 
-_Not set up yet: waiting for the team's decision on installing Jest._
+The function is `assertListingVisible` in `apps/api/src/lib/listing.ts` (lines 69–81). It decides who may read a listing. The tests are in `apps/api/jest/assert-listing-visible.spec.ts`. They need no database and no running server.
+
+```bash
+cd apps/api && npm run test:jest
+```
+
+- The audience should see 7 passed tests, WB-01 … WB-07.
+- Jest reports coverage per file, not per function. So `listing.ts` shows about 39% statements, because we test only one function in it.
+- To show 100% for the function: point at "Uncovered Line #s". No number from 69 to 81 is in that list.
+
+| Test  | Input                                 | Path through the function | Expected output   |
+| ----- | ------------------------------------- | ------------------------- | ----------------- |
+| WB-01 | No listing, `SERVICE`                 | `!listing` is true        | 404, service text |
+| WB-02 | No listing, `JOB`                     | `!listing` is true        | 404, job text     |
+| WB-03 | OPEN, another company                 | Status is OPEN            | Returns the row   |
+| WB-04 | OPEN, the owner                       | Status is OPEN            | Returns the row   |
+| WB-05 | CLOSED, the owner                     | Not OPEN, caller is owner | Returns the row   |
+| WB-06 | CLOSED, another company               | Not OPEN, not the owner   | 404               |
+| WB-07 | CLOSED, listing has no company (null) | Not OPEN, not the owner   | 404               |
