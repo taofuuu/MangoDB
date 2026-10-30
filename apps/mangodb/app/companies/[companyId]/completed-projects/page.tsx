@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { CompletedProject, PaginationMeta } from '@mangodb/shared';
+import { ArrowLeft } from 'lucide-react';
 import {
     describeError,
     isNotSignedIn,
@@ -73,12 +75,21 @@ export default function CompletedProjectsPage() {
 
     const detailOpen = selectedProject !== null;
     return (
-        <main className="min-h-screen bg-surface px-[6.04vw] py-[5.56vh]">
+        <main className="min-h-screen overflow-x-clip bg-surface px-[6.04vw] py-[5.56vh]">
             <div className="flex max-w-[93.75vw] flex-col gap-[2vh]">
                 <div
                     className={detailOpen ? 'w-[91vw]' : 'mx-auto w-[56.56vw]'}
                 >
-                    <div className="flex items-baseline gap-[1vw]">
+                    <div className="flex items-center gap-[1vw]">
+                        {companyId !== null && (
+                            <Link
+                                href={`/companies/${companyId}`}
+                                aria-label="Back to the company profile"
+                                className="rounded-full p-2 transition hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            >
+                                <ArrowLeft size={22} />
+                            </Link>
+                        )}
                         <h1 className="type-lg !font-[700] text-ink">
                             Completed works
                         </h1>

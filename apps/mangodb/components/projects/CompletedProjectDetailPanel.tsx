@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useEffect } from 'react';
 import type { CompletedProject } from '@mangodb/shared';
 import { ArrowLeft } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
@@ -11,6 +12,15 @@ export default function CompletedProjectDetailPanel({
     project: CompletedProject;
     onClose: () => void;
 }) {
+    useEffect(() => {
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+
+        document.addEventListener('keydown', closeOnEscape);
+        return () => document.removeEventListener('keydown', closeOnEscape);
+    }, [onClose]);
+
     return (
         <aside className="flex h-[72.63vh] w-[34vw] flex-col rounded-popup bg-surface-white px-[1.5vw] py-[2.5vh] shadow-[0_0_8px_color-mix(in_srgb,var(--color-brand)_25%,transparent)]">
             <div className="flex items-start justify-between gap-4">
