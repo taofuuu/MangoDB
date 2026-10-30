@@ -1,7 +1,10 @@
 /*
  * Tests for project controller endpoints:
+ * - GET /projects/:projectId/updates (listProjectUpdates, US4-9)
  * - POST /projects/:projectId/updates (createProjectUpdate, US4-10)
+ * - POST /projects/:projectId/report-deposit (reportDeposit, US4-6)
  * - POST /projects/:projectId/confirm-deposit (confirmDeposit, US4-7)
+ * - POST /projects/:projectId/cancel (cancelProject, US4-8)
  * - POST /projects/:projectId/submit-work (submitWork, US4-11)
  * - POST /projects/:projectId/reject-work (rejectWork, US4-12)
  * - POST /projects/:projectId/accept-work (acceptWork, US4-13)
@@ -9,6 +12,9 @@
  * - GET /companies/:companyId/completed-projects (listProviderCompletedProjects, US2-5)
  *
  * What they cover:
+ * - #212: every action saves exactly one timeline event (project_update),
+ *   and a refused one saves none. GET /updates asks for all of them,
+ *   oldest first.
  * - T4.10.3: a saved update has its date and time, set by the server. The
  *   client cannot send one: an extra createdAt field is a 400.
  * - T4.10.4: only the project's Provider can add one. The Receiver gets 403,
@@ -18,6 +24,11 @@
  *   IN_PROGRESS and stamps depositConfirmedAt.
  * - T4.7.4: confirming before the Receiver reported the deposit is a 409, and
  *   the Receiver confirming is a 403. Neither changes the project.
+ * - US4-8: either party (Provider or Receiver) can cancel a project before work starts
+ *   (from AWAITING_QUOTATION or AWAITING_DEPOSIT) on both Job and Service projects,
+ *   moving the status to CANCELLED. An outsider gets 404, invalid projectId 400,
+ *   and any status after work starts (IN_PROGRESS, AWAITING_ACCEPTANCE, COMPLETED, CANCELLED)
+ *   gets 409.
  * - T4.11.4: the Provider reporting the work complete moves the project to
  *   AWAITING_ACCEPTANCE. The Receiver gets 403, an outsider 404, and a project
  *   not IN_PROGRESS 409; none of them changes the project.
@@ -48,8 +59,8 @@
  * - lib/prisma is replaced with mock.module before the controller loads, so no
  *   test touches the shared Supabase database.
  * - project.updateMany and project.update change `project` in place, honouring
- *   their where filters. $transaction puts `project` back if its work throws,
- *   as the database's rollback would.
+ *   their where filters. $transaction puts `project` and the saved updates
+ *   back if its work throws, as the database's rollback would.
  *
  * Run: npm test (in apps/api).
  */
@@ -62,6 +73,7 @@ import type {
     Paginated,
     Project,
     ProjectUpdate,
+    ProjectUpdateType,
     Review,
 } from '@mangodb/shared';
 import { ApiError } from '../lib/api-error';
@@ -87,7 +99,15 @@ type Company = {
 type ProjectRow = {
     projectId: number;
     projectStatus: string;
+    startDate: Date;
     completedAt: Date | null;
+    review: {
+        workQualityScore: number;
+        serviceScore: number;
+        valueForMoneyScore: number;
+        deliveryTimeScore: number;
+        comment: string | null;
+    } | null;
     proposal: {
         senderId: number;
         sender: {
@@ -97,12 +117,21 @@ type ProjectRow = {
         };
         listing: {
             listingTitle: string;
+            listingDesc: string;
             listingType: 'JOB' | 'SERVICE';
             companyId: number;
             company: {
                 companyId: number;
                 companyName: string;
                 companyPhoto: string | null;
+            } | null;
+            listingCategory: {
+                category: { categoryName: string };
+            }[];
+            service: {
+                serviceTechStack: {
+                    techStack: { techStackName: string };
+                }[];
             } | null;
         };
     };
@@ -144,6 +173,8 @@ let created: Record<string, unknown>[] = [];
 let createdReviews: Record<string, unknown>[] = [];
 let reviewAlreadyExists = false;
 let projects: ProjectRow[] = [];
+let timeline: Record<string, unknown>[] = [];
+let timelineQuery: unknown = null;
 
 type ProjectWhereBranch = {
     proposal?: {
@@ -236,17 +267,26 @@ const fakePrisma = {
             project!.projectStatus = data.projectStatus;
             return Promise.resolve({ count: 1 });
         },
-        // A where that misses the row is P2025 in Prisma.
+        // A where that misses the row is P2025 in Prisma. null asks for a
+        // deposit not reported yet (report), { not: null } for one that was
+        // (confirm).
         update: ({
             where,
             data,
         }: {
-            where: { depositReportedAt?: unknown };
-            data: { depositConfirmedAt?: Date; completedAt?: Date };
+            where: { projectStatus?: string; depositReportedAt?: unknown };
+            data: {
+                depositReportedAt?: Date;
+                depositConfirmedAt?: Date;
+                completedAt?: Date;
+            };
         }) => {
+            const reported = project!.depositReportedAt !== null;
             if (
-                where.depositReportedAt &&
-                project!.depositReportedAt === null
+                (where.projectStatus !== undefined &&
+                    project!.projectStatus !== where.projectStatus) ||
+                (where.depositReportedAt === null && reported) ||
+                (where.depositReportedAt && !reported)
             ) {
                 return Promise.reject(
                     Object.assign(new Error('Record not found'), {
@@ -291,6 +331,11 @@ const fakePrisma = {
         },
     },
     projectUpdate: {
+        // Records what it was asked, and answers with `timeline` as it is.
+        findMany: (args: unknown) => {
+            timelineQuery = args;
+            return Promise.resolve(timeline);
+        },
         create: ({ data }: { data: Record<string, unknown> }) => {
             created.push(data);
             return Promise.resolve({
@@ -337,10 +382,12 @@ const fakePrisma = {
     ) => {
         if (typeof work !== 'function') return Promise.all(work);
         const saved = structuredClone(project);
+        const savedCreated = [...created];
         try {
             return await work(fakePrisma);
         } catch (err) {
             project = saved;
+            created = savedCreated;
             throw err;
         }
     },
@@ -365,6 +412,8 @@ beforeEach(() => {
     createdReviews = [];
     reviewAlreadyExists = false;
     projects = [];
+    timeline = [];
+    timelineQuery = null;
 });
 
 function projectIn(
@@ -410,23 +459,65 @@ function row(
     listingType: 'JOB' | 'SERVICE' = 'JOB',
     projectStatus = 'COMPLETED',
     completedAt: Date | null = new Date('2026-10-01T00:00:00Z'),
+    options?: {
+        startDate?: Date;
+        review?: {
+            workQualityScore: number;
+            serviceScore: number;
+            valueForMoneyScore: number;
+            deliveryTimeScore: number;
+            comment: string | null;
+        } | null;
+        listingDesc?: string;
+        categories?: string[];
+        techStack?: string[];
+    },
 ): ProjectRow {
     const [senderId, ownerId] =
         listingType === 'JOB'
             ? [PROVIDER_ID, RECEIVER_ID]
             : [RECEIVER_ID, PROVIDER_ID];
+    const techStack =
+        options?.techStack ??
+        (listingType === 'SERVICE' ? ['TypeScript', 'React'] : []);
+    const categories = options?.categories ?? ['Engineering'];
     return {
         projectId,
         projectStatus,
+        startDate: options?.startDate ?? new Date('2026-09-01T00:00:00Z'),
         completedAt,
+        review:
+            options?.review !== undefined
+                ? options.review
+                : {
+                      workQualityScore: 5,
+                      serviceScore: 5,
+                      valueForMoneyScore: 5,
+                      deliveryTimeScore: 5,
+                      comment: 'Great result',
+                  },
         proposal: {
             senderId,
             sender: brief(senderId),
             listing: {
                 listingTitle: `Project ${projectId}`,
+                listingDesc:
+                    options?.listingDesc ??
+                    `Description for project ${projectId}`,
                 listingType,
                 companyId: ownerId,
                 company: brief(ownerId),
+                listingCategory: categories.map((cat) => ({
+                    category: { categoryName: cat },
+                })),
+                service:
+                    listingType === 'SERVICE'
+                        ? {
+                              serviceTechStack: techStack.map((tech) => ({
+                                  techStack: { techStackName: tech },
+                              })),
+                          }
+                        : null,
             },
         },
     };
@@ -439,10 +530,11 @@ async function call(
     handler: Handler,
     callerId: number,
     body?: unknown,
+    projectId = '1',
 ): Promise<unknown> {
     const req = {
         auth: { companyId: callerId },
-        params: { projectId: '1' },
+        params: { projectId },
         body,
     } as unknown as Request;
     let status = 200;
@@ -473,8 +565,20 @@ function postUpdate(
     return call(controller.createProjectUpdate, callerId, body);
 }
 
+function listUpdates(callerId: number): Promise<unknown> {
+    return call(controller.listProjectUpdates, callerId);
+}
+
+function reportDeposit(callerId: number): Promise<unknown> {
+    return call(controller.reportDeposit, callerId);
+}
+
 function confirmDeposit(callerId: number): Promise<unknown> {
     return call(controller.confirmDeposit, callerId);
+}
+
+function cancelProject(callerId: number, projectId = '1'): Promise<unknown> {
+    return call(controller.cancelProject, callerId, undefined, projectId);
 }
 
 function submitWork(callerId: number): Promise<unknown> {
@@ -588,6 +692,68 @@ function isApiError(status: number) {
     return (err: unknown) => err instanceof ApiError && err.status === status;
 }
 
+// The one timeline event an action saved on project 1 (#212).
+function savedEvent(updateType: ProjectUpdateType) {
+    return [{ projectId: 1, updateType }];
+}
+
+describe('GET /projects/:projectId/updates', () => {
+    it('answers every event of the project, oldest first (#212)', async () => {
+        timeline = [
+            {
+                projectUpdateId: 1,
+                projectId: 1,
+                updateType: 'PROPOSAL_ACCEPTED',
+                updateText: null,
+                createdAt: new Date('2026-10-01T09:00:00.000Z'),
+            },
+            {
+                projectUpdateId: 2,
+                projectId: 1,
+                updateType: 'PROGRESS',
+                updateText: 'Wireframes done',
+                createdAt: new Date('2026-10-02T09:00:00.000Z'),
+            },
+        ];
+        const result = (await listUpdates(RECEIVER)) as {
+            status: number;
+            body: ProjectUpdate[];
+        };
+
+        assert.equal(result.status, 200);
+        assert.deepEqual(result.body, [
+            {
+                projectUpdateId: 1,
+                projectId: 1,
+                updateType: 'PROPOSAL_ACCEPTED',
+                updateText: null,
+                createdAt: '2026-10-01T09:00:00.000Z',
+            },
+            {
+                projectUpdateId: 2,
+                projectId: 1,
+                updateType: 'PROGRESS',
+                updateText: 'Wireframes done',
+                createdAt: '2026-10-02T09:00:00.000Z',
+            },
+        ]);
+        // No filter on the type, and the id breaks a tie in the same instant.
+        const { where, orderBy } = timelineQuery as {
+            where: unknown;
+            orderBy: unknown;
+        };
+        assert.deepEqual(where, { projectId: 1 });
+        assert.deepEqual(orderBy, [
+            { createdAt: 'asc' },
+            { projectUpdateId: 'asc' },
+        ]);
+    });
+
+    it('is a 404 for a company outside the project', async () => {
+        assert.ok(isApiError(404)(await listUpdates(OUTSIDER)));
+    });
+});
+
 describe('POST /projects/:projectId/updates', () => {
     it('saves a PROGRESS update with its date and time (T4.10.3)', async () => {
         const startedAt = Date.now();
@@ -632,6 +798,40 @@ describe('POST /projects/:projectId/updates', () => {
     });
 });
 
+describe('POST /projects/:projectId/report-deposit', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_DEPOSIT');
+    });
+
+    it('stamps the time and saves a DEPOSIT_REPORTED event', async () => {
+        const result = (await reportDeposit(RECEIVER)) as {
+            status: number;
+            body: Project;
+        };
+
+        assert.equal(result.status, 200);
+        assert.equal(result.body.projectStatus, 'AWAITING_DEPOSIT');
+        assert.ok(result.body.depositReportedAt);
+        assert.deepEqual(created, savedEvent('DEPOSIT_REPORTED'));
+    });
+
+    // A double click: the second finds the deposit already reported.
+    it('is a 409 when it was already reported, and saves no event', async () => {
+        project = projectIn(
+            'AWAITING_DEPOSIT',
+            new Date('2026-10-22T09:00:00.000Z'),
+        );
+        assert.ok(isApiError(409)(await reportDeposit(RECEIVER)));
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 403 for the Provider and saves no event', async () => {
+        assert.ok(isApiError(403)(await reportDeposit(PROVIDER)));
+        assert.equal(project!.depositReportedAt, null);
+        assert.equal(created.length, 0);
+    });
+});
+
 describe('POST /projects/:projectId/confirm-deposit', () => {
     beforeEach(() => {
         project = projectIn(
@@ -652,6 +852,7 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         const confirmedAt = Date.parse(result.body.depositConfirmedAt!);
         assert.ok(confirmedAt >= startedAt && confirmedAt <= Date.now());
         assert.equal(project!.projectStatus, 'IN_PROGRESS');
+        assert.deepEqual(created, savedEvent('DEPOSIT_CONFIRMED'));
     });
 
     it('is a 409 before the Receiver reports it (T4.7.4)', async () => {
@@ -660,12 +861,76 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         // The status move rolls back with the refused stamp.
         assert.equal(project.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project.depositConfirmedAt, null);
+        assert.equal(created.length, 0);
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.7.4)', async () => {
         assert.ok(isApiError(403)(await confirmDeposit(RECEIVER)));
         assert.equal(project!.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project!.depositConfirmedAt, null);
+    });
+});
+
+describe('POST /projects/:projectId/cancel (US4-8)', () => {
+    beforeEach(() => {
+        project = projectIn('AWAITING_QUOTATION');
+    });
+
+    it('either party cancels before work starts, on a job or a service', async () => {
+        for (const [start, callerId] of [
+            [projectIn('AWAITING_QUOTATION'), PROVIDER],
+            [projectIn('AWAITING_QUOTATION'), RECEIVER],
+            [projectOnService('AWAITING_DEPOSIT'), PROVIDER],
+            [projectOnService('AWAITING_DEPOSIT'), RECEIVER],
+        ] as const) {
+            project = start;
+            created = [];
+            const result = (await cancelProject(callerId)) as {
+                status: number;
+                body: Project;
+            };
+
+            assert.equal(result.status, 200);
+            assert.equal(result.body.projectStatus, 'CANCELLED');
+            assert.equal(project.projectStatus, 'CANCELLED');
+            assert.deepEqual(created, savedEvent('PROJECT_CANCELLED'));
+        }
+    });
+
+    it('is a 404 for an outsider and changes nothing', async () => {
+        assert.ok(isApiError(404)(await cancelProject(OUTSIDER)));
+        assert.equal(project!.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('is a 404 when the project does not exist', async () => {
+        project = null;
+        assert.ok(isApiError(404)(await cancelProject(PROVIDER)));
+    });
+
+    it('is a 400 when projectId parameter is invalid', async () => {
+        assert.ok(
+            isApiError(400)(await cancelProject(PROVIDER, 'not-a-number')),
+        );
+        assert.equal(project!.projectStatus, 'AWAITING_QUOTATION');
+    });
+
+    it('is a 409 when the project is already IN_PROGRESS', async () => {
+        project = projectIn('IN_PROGRESS');
+        assert.ok(isApiError(409)(await cancelProject(PROVIDER)));
+        assert.equal(project.projectStatus, 'IN_PROGRESS');
+        assert.equal(created.length, 0);
+    });
+
+    it('is a 409 when the project is in another post-work status or already CANCELLED', async () => {
+        for (const status of [
+            'AWAITING_ACCEPTANCE',
+            'COMPLETED',
+            'CANCELLED',
+        ] as const) {
+            project = projectIn(status);
+            assert.ok(isApiError(409)(await cancelProject(RECEIVER)));
+            assert.equal(project.projectStatus, status);
+        }
     });
 });
 
@@ -679,6 +944,7 @@ describe('POST /projects/:projectId/submit-work', () => {
         assert.equal(result.status, 200);
         assert.equal(result.body.projectStatus, 'AWAITING_ACCEPTANCE');
         assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.deepEqual(created, savedEvent('WORK_SUBMITTED'));
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.11.4)', async () => {
@@ -696,6 +962,7 @@ describe('POST /projects/:projectId/submit-work', () => {
         project = projectIn('AWAITING_ACCEPTANCE');
         assert.ok(isApiError(409)(await submitWork(PROVIDER)));
         assert.equal(project.projectStatus, 'AWAITING_ACCEPTANCE');
+        assert.equal(created.length, 0);
     });
 });
 
@@ -762,6 +1029,7 @@ describe('POST /projects/:projectId/accept-work', () => {
         const completedAt = Date.parse(result.body.completedAt!);
         assert.ok(completedAt >= startedAt && completedAt <= Date.now());
         assert.equal(project!.projectStatus, 'COMPLETED');
+        assert.deepEqual(created, savedEvent('WORK_ACCEPTED'));
     });
 
     it('is a 403 for the Provider and changes nothing (T4.13.4)', async () => {
@@ -782,6 +1050,7 @@ describe('POST /projects/:projectId/accept-work', () => {
         assert.ok(isApiError(409)(await acceptWork(RECEIVER)));
         assert.equal(project.projectStatus, 'IN_PROGRESS');
         assert.equal(project.completedAt, null);
+        assert.equal(created.length, 0);
     });
 });
 
@@ -948,8 +1217,30 @@ describe('GET /companies/:companyId/completed-projects', () => {
 
     it('returns completed projects for a Provider on Job listings (newest first)', async () => {
         projects.push(
-            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z')),
-            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z')),
+            row(1, 'JOB', 'COMPLETED', new Date('2026-10-01T00:00:00Z'), {
+                startDate: new Date('2026-08-01T00:00:00Z'),
+                listingDesc: 'Desc 1',
+                categories: ['Dev'],
+                review: {
+                    workQualityScore: 4,
+                    serviceScore: 4,
+                    valueForMoneyScore: 4,
+                    deliveryTimeScore: 4,
+                    comment: 'Nice',
+                },
+            }),
+            row(2, 'JOB', 'COMPLETED', new Date('2026-10-15T00:00:00Z'), {
+                startDate: new Date('2026-09-01T00:00:00Z'),
+                listingDesc: 'Desc 2',
+                categories: ['Design'],
+                review: {
+                    workQualityScore: 5,
+                    serviceScore: 5,
+                    valueForMoneyScore: 5,
+                    deliveryTimeScore: 5,
+                    comment: 'Awesome',
+                },
+            }),
         );
 
         const result = (await listProjects(String(PROVIDER_ID))) as {
@@ -960,7 +1251,16 @@ describe('GET /companies/:companyId/completed-projects', () => {
         assert.equal(result.body.items.length, 2);
         assert.equal(result.body.items[0]!.projectId, 2);
         assert.equal(result.body.items[1]!.projectId, 1);
+        assert.equal(result.body.items[0]!.listingType, 'JOB');
+        assert.equal(result.body.items[0]!.listingTitle, 'Project 2');
+        assert.equal(result.body.items[0]!.listingDesc, 'Desc 2');
+        assert.deepEqual(result.body.items[0]!.categories, ['Design']);
+        assert.deepEqual(result.body.items[0]!.techStack, []);
+        assert.equal(result.body.items[0]!.startDate, '2026-09-01');
+        assert.deepEqual(result.body.items[0]!.provider, brief(PROVIDER_ID));
         assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(result.body.items[0]!.rating, 5);
+        assert.equal(result.body.items[0]!.reviewComment, 'Awesome');
         assert.equal(
             result.body.items[0]!.completedAt,
             '2026-10-15T00:00:00.000Z',
@@ -969,7 +1269,13 @@ describe('GET /companies/:companyId/completed-projects', () => {
 
     it('returns completed projects for a Provider on Service listings (where Provider is service owner)', async () => {
         projects.push(
-            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z')),
+            row(3, 'SERVICE', 'COMPLETED', new Date('2026-10-05T00:00:00Z'), {
+                startDate: new Date('2026-07-15T00:00:00Z'),
+                listingDesc: 'Service Desc',
+                categories: ['DevOps'],
+                techStack: ['Docker', 'Kubernetes'],
+                review: null,
+            }),
         );
 
         const result = (await listProjects(String(PROVIDER_ID))) as {
@@ -979,7 +1285,19 @@ describe('GET /companies/:companyId/completed-projects', () => {
         assert.equal(result.status, 200);
         assert.equal(result.body.items.length, 1);
         assert.equal(result.body.items[0]!.projectId, 3);
+        assert.equal(result.body.items[0]!.listingType, 'SERVICE');
+        assert.equal(result.body.items[0]!.listingTitle, 'Project 3');
+        assert.equal(result.body.items[0]!.listingDesc, 'Service Desc');
+        assert.deepEqual(result.body.items[0]!.categories, ['DevOps']);
+        assert.deepEqual(result.body.items[0]!.techStack, [
+            'Docker',
+            'Kubernetes',
+        ]);
+        assert.equal(result.body.items[0]!.startDate, '2026-07-15');
+        assert.deepEqual(result.body.items[0]!.provider, brief(PROVIDER_ID));
         assert.deepEqual(result.body.items[0]!.receiver, brief(RECEIVER_ID));
+        assert.equal(result.body.items[0]!.rating, null);
+        assert.equal(result.body.items[0]!.reviewComment, null);
     });
 
     it('filters out non-COMPLETED projects', async () => {

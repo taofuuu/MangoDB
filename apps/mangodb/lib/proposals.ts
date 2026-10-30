@@ -30,9 +30,32 @@ export function createProposal(
     );
 }
 
+// US2-15. A hire request is a proposal on a service, sent by a Receiver. The
+// API answers with the same Proposal shape and the same /proposals/mine list.
+export function createHireRequest(
+    serviceId: number,
+    body: CreateProposalRequest,
+): Promise<Proposal> {
+    return invalidateAfter(
+        apiFetch<Proposal>(`/services/${serviceId}/proposals`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        }),
+        '/proposals',
+    );
+}
+
 // US2-10. The proposals sent to one of the caller's jobs.
 export function listJobProposals(jobId: number): Promise<ReceivedProposal[]> {
     const path = `/jobs/${jobId}/proposals`;
+    return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
+}
+
+// US2-16. The proposals sent to one of the caller's services (hire requests).
+export function listServiceProposals(
+    serviceId: number,
+): Promise<ReceivedProposal[]> {
+    const path = `/services/${serviceId}/proposals`;
     return cachedGet(path, () => apiFetch<ReceivedProposal[]>(path));
 }
 
@@ -45,6 +68,8 @@ export function acceptProposal(proposalId: number): Promise<Project> {
         }),
         '/jobs',
         '/proposals',
+        '/services',
+        '/projects',
     );
 }
 
@@ -57,6 +82,7 @@ export function rejectProposal(proposalId: number): Promise<void> {
         }),
         '/jobs',
         '/proposals',
+        '/services',
     );
 }
 export interface GetMyProposalsOptions {

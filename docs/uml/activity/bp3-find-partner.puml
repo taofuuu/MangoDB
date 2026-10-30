@@ -1,0 +1,58 @@
+@startuml bp3-find-partner
+!include style.iuml
+title BP3 Find a Business Partner\n(US3-1 to US3-7, US2-5, US2-7, US5-3)
+
+|Company|
+start
+if (What to find?) then (Service\n[Receiver])
+  :Enter keyword, filters,
+  and sort order;
+  |MangoDB System|
+  :Find active services
+  that match;
+elseif () then (Job posting\n[Provider])
+  |Company|
+  :Enter keyword or category
+  and filters;
+  |MangoDB System|
+  :Find job postings that are
+  Open for Proposals;
+else (Company)
+  |Company|
+  :Enter company name;
+  |MangoDB System|
+  :Find active companies;
+endif
+
+if (Any result?) then (no)
+  :Show no-results message;
+  |Company|
+  stop
+else (yes)
+  |MangoDB System|
+  :Show result list;
+endif
+
+|Company|
+:Select a company;
+
+|MangoDB System|
+:Show public company profile;
+if (Company is a Provider?) then (yes)
+  fork
+    :Show services, technical
+    stack, certificates,
+    and portfolio;
+  fork again
+    :Show completed work;
+  fork again
+    :Show ratings and reviews
+    or "no reviews yet";
+  end fork
+else (no)
+endif
+
+|Company|
+:Evaluate the partner;
+stop
+@enduml

@@ -19,6 +19,7 @@ import {
     projectUpdateSelect,
     projectViewSelect,
     providerCompletedProjectsWhere,
+    saveProjectEvent,
     toCompletedProject,
     toProject,
     toProjectDetail,
@@ -87,9 +88,10 @@ export async function getProject(req: Request, res: Response): Promise<void> {
     res.json(toProjectDetail(row, callerId));
 }
 
-// US4-9 (T4.9.4). The progress timeline, oldest first, for both parties: the
-// Provider's notes and the Receiver's rejected-work reasons (US4-12). A bare
-// array, not paged: one project's timeline stays short.
+// US4-9 (T4.9.4). The project's timeline, oldest first, for both parties:
+// every event its actions saved (#212), with the Provider's notes and the
+// Receiver's rejected-work reasons (US4-12) among them. A bare array, not
+// paged: one project's timeline stays short.
 export async function listProjectUpdates(
     req: Request,
     res: Response,
@@ -157,19 +159,24 @@ export async function reportDeposit(
     }
 
     // The where repeats the checks, so a double click finds no row to update
-    // and becomes a 409 instead of moving the time.
-    const row = await orConflict(
-        prisma.project.update({
-            where: {
-                projectId,
-                projectStatus: 'AWAITING_DEPOSIT' satisfies ProjectStatus,
-                depositReportedAt: null,
-            },
-            data: { depositReportedAt: new Date() },
-            select: projectSelect,
-        }),
-        'Deposit has already been reported',
-    );
+    // and becomes a 409 instead of moving the time. One transaction: the time
+    // and its timeline event (#212) save together, or neither does.
+    const row = await prisma.$transaction(async (tx) => {
+        const updated = await orConflict(
+            tx.project.update({
+                where: {
+                    projectId,
+                    projectStatus: 'AWAITING_DEPOSIT' satisfies ProjectStatus,
+                    depositReportedAt: null,
+                },
+                data: { depositReportedAt: new Date() },
+                select: projectSelect,
+            }),
+            'Deposit has already been reported',
+        );
+        await saveProjectEvent(tx, projectId, 'DEPOSIT_REPORTED');
+        return updated;
+    });
     res.json(toProject(row));
 }
 
@@ -196,7 +203,7 @@ export async function confirmDeposit(
             'AWAITING_DEPOSIT',
             'IN_PROGRESS',
         );
-        return orConflict(
+        const updated = await orConflict(
             tx.project.update({
                 where: { projectId, depositReportedAt: { not: null } },
                 data: { depositConfirmedAt: new Date() },
@@ -204,6 +211,34 @@ export async function confirmDeposit(
             }),
             'The Receiver has not reported the deposit yet',
         );
+        await saveProjectEvent(tx, projectId, 'DEPOSIT_CONFIRMED');
+        return updated;
+    });
+    res.json(toProject(row));
+}
+
+// US4-8. Either party cancels before work starts: AWAITING_QUOTATION or
+// AWAITING_DEPOSIT to CANCELLED (ADR 0015). A project that already moved
+// past deposit confirmation cannot be cancelled.
+export async function cancelProject(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    const row = await prisma.$transaction(async (tx) => {
+        await moveProjectStatus(
+            tx,
+            projectId,
+            project.projectStatus,
+            'CANCELLED',
+        );
+        await saveProjectEvent(tx, projectId, 'PROJECT_CANCELLED');
+        return tx.project.findUniqueOrThrow({
+            where: { projectId },
+            select: projectSelect,
+        });
     });
     res.json(toProject(row));
 }
@@ -228,6 +263,7 @@ export async function submitWork(req: Request, res: Response): Promise<void> {
             'IN_PROGRESS',
             'AWAITING_ACCEPTANCE',
         );
+        await saveProjectEvent(tx, projectId, 'WORK_SUBMITTED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -291,6 +327,7 @@ export async function acceptWork(req: Request, res: Response): Promise<void> {
             'AWAITING_ACCEPTANCE',
             'COMPLETED',
         );
+        await saveProjectEvent(tx, projectId, 'WORK_ACCEPTED');
         return tx.project.update({
             where: { projectId },
             data: { completedAt: new Date() },

@@ -1,0 +1,15 @@
+' Shared style for the business process activity diagrams in this folder.
+' Object nodes are written as  :Name\n<U+005B>state<U+005D>]
+' (<U+005B> and <U+005D> are "[" and "]", escaped so PlantUML does not end the node early).
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ConditionEndStyle hline
+skinparam SwimlaneTitleFontStyle bold
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #555555
+}
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #999999
+}

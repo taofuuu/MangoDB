@@ -61,9 +61,23 @@ export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 export const QUOTATION_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type QuotationStatus = (typeof QUOTATION_STATUSES)[number];
 
-// project_update.update_type: a Provider's progress note (US4-10), or the
-// Receiver's reason for rejecting the work (US4-12).
-export const PROJECT_UPDATE_TYPES = ['PROGRESS', 'WORK_REJECTED'] as const;
+// project_update.update_type: one event on a project's timeline (#212). Only
+// PROGRESS (US4-10) and WORK_REJECTED (US4-12) carry text; the rest are saved
+// by the action they name.
+export const PROJECT_UPDATE_TYPES = [
+    'PROPOSAL_ACCEPTED',
+    'QUOTATION_SENT',
+    'QUOTATION_DELETED',
+    'QUOTATION_REJECTED',
+    'QUOTATION_ACCEPTED',
+    'DEPOSIT_REPORTED',
+    'DEPOSIT_CONFIRMED',
+    'PROGRESS',
+    'WORK_SUBMITTED',
+    'WORK_REJECTED',
+    'WORK_ACCEPTED',
+    'PROJECT_CANCELLED',
+] as const;
 export type ProjectUpdateType = (typeof PROJECT_UPDATE_TYPES)[number];
 
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
@@ -80,6 +94,17 @@ export const SERVICE_SORT_ORDERS = [
     'ratingAsc',
 ] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
+
+// US3-8 (T3.8.2, T3.8.3). Ordering choices of the job search. Never stored,
+// so camelCase like COMPANY_SORT_ORDERS and SERVICE_SORT_ORDERS (section 6).
+export const JOB_SORT_ORDERS = [
+    'newest',
+    'maxBudgetDesc',
+    'maxBudgetAsc',
+    'deadlineAsc',
+    'deadlineDesc',
+] as const;
+export type JobSortOrder = (typeof JOB_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.
 export const API_ERROR_CODES = [
@@ -494,9 +519,17 @@ export interface ProjectDetail extends Project {
 // US2-5. One row of GET /companies/:companyId/completed-projects.
 export interface CompletedProject {
     projectId: number;
+    listingType: ListingType;
     listingTitle: string;
-    receiver: CompanyBrief;
+    listingDesc: string;
+    categories: string[];
+    techStack: string[];
+    startDate: string;
     completedAt: string;
+    provider: CompanyBrief;
+    receiver: CompanyBrief;
+    rating: number | null;
+    reviewComment: string | null;
 }
 
 // ADR 0017. A quotation PDF on a project. Sent as multipart (a `file` field),
@@ -522,12 +555,14 @@ export interface QuotationNotice {
     createdAt: string;
 }
 
-// US4-9. One entry of GET /projects/:projectId/updates, oldest first.
+// US4-9. One entry of GET /projects/:projectId/updates, oldest first: the
+// whole timeline. updateText is null on every type but PROGRESS and
+// WORK_REJECTED.
 export interface ProjectUpdate {
     projectUpdateId: number;
     projectId: number;
     updateType: ProjectUpdateType;
-    updateText: string;
+    updateText: string | null;
     createdAt: string;
 }
 

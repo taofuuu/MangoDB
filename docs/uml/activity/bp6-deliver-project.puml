@@ -1,0 +1,77 @@
+@startuml bp6-deliver-project
+!include style.iuml
+title BP6 Deliver a Project\n(US4-1 to US4-11)
+
+|Provider|
+start
+repeat
+  :Upload and send quotation;
+  |MangoDB System|
+  :Store quotation file
+  and link to project;
+  :Quotation
+  <U+005B>Sent<U+005D>]
+  :Notify Receiver;
+  |Receiver|
+  :View quotation;
+  :Accept or reject quotation;
+  |MangoDB System|
+  :Save decision;
+repeat while (Quotation accepted?) is (no) not (yes)
+
+:Project
+<U+005B>Awaiting Deposit Confirmation<U+005D>]
+
+|Receiver|
+:Pay deposit outside the system;
+:Report deposit paid;
+
+|MangoDB System|
+:Record report and show
+confirmation pending;
+
+|Provider|
+:Confirm deposit received;
+
+|MangoDB System|
+:Start project;
+:Project
+<U+005B>In Progress<U+005D>]
+
+repeat
+  repeat
+    |Provider|
+    :Do the work;
+    :Record progress update;
+    |MangoDB System|
+    :Store update with time;
+  repeat while (Work finished?) is (no) not (yes)
+
+  |Provider|
+  :Report work complete;
+  |MangoDB System|
+  :Project
+  <U+005B>Awaiting Acceptance<U+005D>]
+  |Receiver|
+  :Review delivered work;
+  if (Accept work?) then (yes)
+  else (no)
+    :Reject with a reason;
+    |MangoDB System|
+    :Set project back
+    to In Progress;
+  endif
+repeat while (Work accepted?) is (no) not (yes)
+
+|MangoDB System|
+:Close project and record
+completion time;
+:Project
+<U+005B>Completed<U+005D>]
+stop
+
+note right
+  Both parties can view the progress
+  history in time order (US4-7).
+end note
+@enduml

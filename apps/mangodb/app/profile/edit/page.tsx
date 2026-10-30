@@ -189,7 +189,7 @@ function EditProfilePageInner() {
     };
 
     // Cancel leaves the page. Opening /profile/edit directly leaves nothing to
-    // go back to, so fall back to the index rather than doing nothing.
+    // go back to, so fall back to home rather than doing nothing.
     const handleCancel = () => {
         if (window.history.length > 1) {
             router.back();

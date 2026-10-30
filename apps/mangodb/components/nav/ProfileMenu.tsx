@@ -116,6 +116,13 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                     Your proposals
                 </Link>
                 <Link
+                    href="/projects"
+                    onClick={() => setIsOpen(false)}
+                    className={ITEM_CLASS}
+                >
+                    Your projects
+                </Link>
+                <Link
                     href="/companies"
                     onClick={() => setIsOpen(false)}
                     className={ITEM_CLASS}

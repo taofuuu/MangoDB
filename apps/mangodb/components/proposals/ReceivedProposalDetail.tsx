@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import type { ReceivedProposal } from '@mangodb/shared';
+import type { Project, ReceivedProposal } from '@mangodb/shared';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import AcceptProposalModal from './AcceptProposalModal';
 import ProposalStatusBadge from './ProposalStatusBadge';
-import { CircleCheck, Clock, Calendar, Tag } from 'lucide-react';
+import { Clock, Calendar, Tag } from 'lucide-react';
 import { formatDate, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
 
@@ -12,8 +13,9 @@ interface ReceivedProposalDetailProps {
     proposal: ReceivedProposal;
     onClose: () => void;
     // Both throw on failure, so the dialog can show why.
-    onAccept: () => Promise<void>;
+    onAccept: () => Promise<Project | void>;
     onReject: () => Promise<void>;
+    isService?: boolean;
 }
 
 export default function ReceivedProposalDetail({
@@ -21,6 +23,7 @@ export default function ReceivedProposalDetail({
     onClose,
     onAccept,
     onReject,
+    isService = false,
 }: ReceivedProposalDetailProps) {
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -34,7 +37,9 @@ export default function ReceivedProposalDetail({
                 className={`bg-surface-white rounded-2xl p-6 border shadow-sm relative text-brand max-h-[80vh] overflow-y-auto ${
                     proposal.proposalStatus === 'REJECTED'
                         ? 'border-danger'
-                        : 'border-brand ring-2 ring-brand/10'
+                        : proposal.proposalStatus === 'PENDING'
+                          ? 'border-accent ring-2 ring-accent/20'
+                          : 'border-brand ring-2 ring-brand/10'
                 }`}
             >
                 <div className="flex items-start justify-between pb-4 border-b border-brand">
@@ -131,28 +136,12 @@ export default function ReceivedProposalDetail({
                 </div>
             </div>
 
-            <ConfirmModal
+            <AcceptProposalModal
                 isOpen={showAcceptModal}
                 onClose={() => setShowAcceptModal(false)}
-                onConfirm={onAccept}
-                title="Accept this proposal?"
-                description={
-                    <>
-                        Please review the proposal details before accepting.
-                        Once you accept, a project with{' '}
-                        <strong>{companyName}</strong> will be created and your
-                        job posting will close.
-                    </>
-                }
-                icon={
-                    <CircleCheck
-                        aria-hidden="true"
-                        className="h-[4.6vh] min-h-[38px] w-[3vw] min-w-[44px] shrink-0 text-brand"
-                    />
-                }
-                confirmLabel="Accept proposal"
-                confirmVariant="primary"
-                pendingLabel="Accepting..."
+                onAccept={onAccept}
+                companyName={companyName}
+                isService={isService}
             />
 
             <ConfirmModal

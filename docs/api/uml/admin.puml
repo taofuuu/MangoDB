@@ -1,0 +1,74 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Admin
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Admin" as Admin <<Resource>>
+class "Companies" as AdminCompanies <<Resource>> {
+  + GET()
+}
+class "Company" as AdminCompany <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "CompanyAccountSummary" as CompanyAccountSummaryRep <<Representation>> {
+  -companyId : integer
+  -companyName : string
+  -companyDescription : string?
+  -phone : string
+  -accountType : AccountType
+  -averageRating : integer?
+  -ratingCount : integer
+  -deletedAt : date?
+}
+class "CompanyAccountDetail" as CompanyAccountDetailRep <<Representation>> {
+  -CompanyProfile fields
+  -averageRating : integer?
+  -ratingCount : integer
+  -deletedAt : date?
+}
+class "UpdateCompanyProfileRequest" as UpdateCompanyProfileRequestRep <<Representation>> {
+  -companyName : string?
+  -contactEmail : string?
+  -phone : string?
+  -companyType : string[]?
+  -companyDescription : string?
+  -address : string?
+  -website : string?
+  -serviceTerm : string?
+  -warrantyPolicy : string?
+}
+class "DeleteCompanyAccountRequest" as DeleteCompanyAccountRequestRep <<Representation>> {
+  -currentPassword : string
+}
+
+API -[#B45309,dashed]-> Admin : <i><color:#B45309>«Path» /admin</color></i>
+Admin -[#B45309,dashed]-> AdminCompanies : <i><color:#B45309>«Path» /companies</color></i>
+AdminCompanies -[#BE185D,dashed]-> CompanyAccountSummaryRep : <i><color:#BE185D>«use»</color></i>
+AdminCompanies -[#B45309,dashed]-> AdminCompany : <i><color:#B45309>«Path» /{companyId}</color></i>
+AdminCompany -[#BE185D,dashed]-> CompanyAccountDetailRep : <i><color:#BE185D>«use»</color></i>
+AdminCompany -[#BE185D,dashed]-> UpdateCompanyProfileRequestRep : <i><color:#BE185D>«use»</color></i>
+AdminCompany -[#BE185D,dashed]-> DeleteCompanyAccountRequestRep : <i><color:#BE185D>«use»</color></i>
+@enduml

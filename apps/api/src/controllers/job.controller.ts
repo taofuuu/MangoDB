@@ -32,7 +32,7 @@ import {
     updateJobSchema,
 } from '../schemas/job.schema';
 import { BUDGET_RANGE_ERROR } from '../schemas/listing.schema';
-import { jobSearchWhere, jobSelect, toJob } from '../lib/job';
+import { jobOrderBy, jobSearchWhere, jobSelect, toJob } from '../lib/job';
 
 // US2-6. Create and publish a job posting.
 // Validates body, verifies category existence, and creates listing + job atomically.
@@ -68,11 +68,12 @@ export async function createJob(req: Request, res: Response): Promise<void> {
     res.status(201).json(toJob(created));
 }
 
-// US2-7 / US3-4 / US3-5. List job postings filtered by status, keywords, category, budget, deadline:
+// US2-7 / US3-4 / US3-5 / US3-8. List job postings filtered by status, keywords, category, budget, deadline,
+// ordered by budget, deadline, or newest:
 // - OPEN postings are visible to all authenticated companies.
 // - CLOSED postings are visible ONLY to their creator/owner (companyId === req.auth.companyId).
 export async function listJobs(req: Request, res: Response): Promise<void> {
-    const { page, pageSize, ...filters } = parseQuery(
+    const { page, pageSize, orderBy, ...filters } = parseQuery(
         jobListQuerySchema,
         req.query,
     );
@@ -81,7 +82,7 @@ export async function listJobs(req: Request, res: Response): Promise<void> {
         prisma.listing.count({ where }),
         prisma.listing.findMany({
             where,
-            orderBy: [{ createdAt: 'desc' }, { listingId: 'desc' }],
+            orderBy: jobOrderBy(orderBy),
             ...pageArgs({ page, pageSize }),
             select: jobSelect,
         }),

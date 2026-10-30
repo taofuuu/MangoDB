@@ -15,6 +15,12 @@ import { ApiError } from './api-error';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { toDateOnly } from './dates';
 import { prisma } from './prisma';
+import { averageScore } from './rating';
+import {
+    serviceTechStackSelect,
+    toTechStackNames,
+    type ServiceTechStackRow,
+} from './service';
 
 // The columns a project response carries. Exported with toProject for the
 // project endpoints to come; accept reaches both through
@@ -58,18 +64,36 @@ export function toProject(row: ProjectRow): Project {
 }
 
 // US2-5. What GET /companies/:companyId/completed-projects fetches. The Provider
-// is the subject of the page, so the response names the Receiver (ADR 0016).
+// is the subject of the page, so both parties are named, with listing details,
+// start/completed dates, categories, tech stack, and review summary.
 export const completedProjectSelect = {
     projectId: true,
+    startDate: true,
     completedAt: true,
+    review: {
+        select: {
+            workQualityScore: true,
+            serviceScore: true,
+            valueForMoneyScore: true,
+            deliveryTimeScore: true,
+            comment: true,
+        },
+    },
     proposal: {
         select: {
             sender: { select: companyBriefSelect },
             listing: {
                 select: {
                     listingTitle: true,
+                    listingDesc: true,
                     listingType: true,
                     company: { select: companyBriefSelect },
+                    listingCategory: {
+                        select: {
+                            category: { select: { categoryName: true } },
+                        },
+                    },
+                    service: serviceTechStackSelect,
                 },
             },
         },
@@ -78,7 +102,15 @@ export const completedProjectSelect = {
 
 export type CompletedProjectRow = {
     projectId: number;
+    startDate: Date;
     completedAt: Date | null;
+    review: {
+        workQualityScore: number;
+        serviceScore: number;
+        valueForMoneyScore: number;
+        deliveryTimeScore: number;
+        comment: string | null;
+    } | null;
     proposal: {
         sender: {
             companyId: number;
@@ -87,12 +119,17 @@ export type CompletedProjectRow = {
         };
         listing: {
             listingTitle: string;
+            listingDesc: string;
             listingType: string;
             company: {
                 companyId: number;
                 companyName: string;
                 companyPhoto: string | null;
             } | null;
+            listingCategory: {
+                category: { categoryName: string };
+            }[];
+            service: ServiceTechStackRow;
         };
     };
 };
@@ -105,21 +142,35 @@ export function toCompletedProject(row: CompletedProjectRow): CompletedProject {
             'Completed project has no completedAt',
         );
     }
-    const receiver =
-        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType)
-            ? toCompanyBrief(row.proposal.sender)
-            : toCompanyBrief(row.proposal.listing.company);
+    const isService =
+        row.proposal.listing.listingType === ('SERVICE' satisfies ListingType);
+    const sender = toCompanyBrief(row.proposal.sender);
+    const owner = toCompanyBrief(row.proposal.listing.company);
+    const provider = isService ? owner : sender;
+    const receiver = isService ? sender : owner;
     return {
         projectId: row.projectId,
+        listingType: row.proposal.listing.listingType as ListingType,
         listingTitle: row.proposal.listing.listingTitle,
-        receiver,
+        listingDesc: row.proposal.listing.listingDesc,
+        categories: row.proposal.listing.listingCategory.map(
+            (lc) => lc.category.categoryName,
+        ),
+        techStack: isService
+            ? toTechStackNames(row.proposal.listing.service)
+            : [],
+        startDate: toDateOnly(row.startDate),
         completedAt: row.completedAt.toISOString(),
+        provider,
+        receiver,
+        rating: averageScore(row.review ? [row.review] : []),
+        reviewComment: row.review?.comment ?? null,
     };
 }
 
 // Opens the project for an accepted proposal, inside the caller's
 // transaction: the proposal's budget, starting today (UTC). It waits for the
-// Provider's quotation first (ADR 0015).
+// Provider's quotation first (ADR 0015). Its timeline starts with the accept.
 export async function createProjectFromProposal(
     tx: Prisma.TransactionClient,
     proposal: { proposalId: number; proposalBudget: Prisma.Decimal },
@@ -136,6 +187,7 @@ export async function createProjectFromProposal(
         },
         select: projectSelect,
     });
+    await saveProjectEvent(tx, row.projectId, 'PROPOSAL_ACCEPTED');
     return toProject(row);
 }
 
@@ -342,7 +394,18 @@ export function toProjectDetail(
     };
 }
 
-// One entry of a project's progress timeline (US4-9, US4-10, US4-12).
+// #212. Saves one event on the project's timeline, inside the caller's
+// transaction, so an action that is refused saves no event either. For the
+// events with no text; PROGRESS and WORK_REJECTED write their own row.
+export async function saveProjectEvent(
+    tx: Prisma.TransactionClient,
+    projectId: number,
+    updateType: Exclude<ProjectUpdateType, 'PROGRESS' | 'WORK_REJECTED'>,
+): Promise<void> {
+    await tx.projectUpdate.create({ data: { projectId, updateType } });
+}
+
+// One entry of a project's timeline (US4-9, US4-10, US4-12, #212).
 export const projectUpdateSelect = {
     projectUpdateId: true,
     projectId: true,
@@ -355,7 +418,7 @@ type ProjectUpdateRow = {
     projectUpdateId: number;
     projectId: number;
     updateType: string;
-    updateText: string;
+    updateText: string | null;
     createdAt: Date;
 };
 

@@ -79,12 +79,12 @@ DB column → backend DTO → shared type → frontend lib → component prop �
 
 Every endpoint is built from the same four parts. Keep them separate:
 
-| Part       | Lives in                                        | Holds                                          |
-| ---------- | ----------------------------------------------- | ---------------------------------------------- |
-| Schema     | `apps/api/src/schemas/<area>.schema.ts`         | Zod request validation                         |
-| Lib        | `apps/api/src/lib/<area>.ts`                    | The `select`, the DTO mapper, ownership checks |
-| Controller | `apps/api/src/controllers/<area>.controller.ts` | The work                                       |
-| Route      | `apps/api/src/routes/<area>.routes.ts`          | Path and guards, **no logic**                  |
+| Part       | Lives in                                        | Holds                                             |
+| ---------- | ----------------------------------------------- | ------------------------------------------------- |
+| Schema     | `apps/api/src/schemas/<area>.schema.ts`         | Zod request validation                            |
+| Lib        | `apps/api/src/lib/<area>.ts`                    | The `select`, the DTO mapper, ownership checks    |
+| Controller | `apps/api/src/controllers/<area>.controller.ts` | The work                                          |
+| Route      | `apps/api/src/routes/<area>.routes.ts`          | Path, guards and the @openapi block, **no logic** |
 
 ### Responses
 
@@ -148,6 +148,7 @@ message.
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
+| A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
@@ -421,7 +422,8 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
 - Job search filters beyond keyword, category, budget and deadline. `GET /jobs`
-  takes `q`, `category`, `minBudget`, `maxBudget`, `deadline`, `companyId`,
+  supports `q`, `category`, `minBudget`, `maxBudget`, `deadline`,
+  `orderBy=newest|maxBudgetDesc|maxBudgetAsc|deadlineAsc|deadlineDesc`, `companyId`,
   `status` and paging. The category, budget, deadline and order controls on
   `/jobs` send nothing yet: `useJobList` sends only the keyword.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its
@@ -430,12 +432,14 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - Project, quotation and update endpoints. The tables and the shared types
   exist (ADRs 0015-0018); the only endpoints are accepting a proposal, which
   creates the project row, the reads `GET /projects/mine`,
-  `GET /projects/:projectId` and `…/updates`, the Provider's
+  `GET /projects/:projectId`, `…/updates` and `…/quotations`, the Provider's
   `POST /projects/:projectId/quotations`,
   `DELETE /quotations/:quotationId` and
-  `POST /projects/:projectId/updates`, the deposit pair
+  `POST /projects/:projectId/updates`, the Receiver's
+  `POST /quotations/:quotationId/accept` and `…/reject`, the deposit pair
   `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
-  Provider's `POST /projects/:projectId/submit-work`, the Receiver's
+  cancellation `POST /projects/:projectId/cancel`, the Provider's
+  `POST /projects/:projectId/submit-work`, the Receiver's
   `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
   Provider's completed work, `GET /companies/:companyId/completed-projects` — Sprint
   3 builds the rest. All four review endpoints exist:

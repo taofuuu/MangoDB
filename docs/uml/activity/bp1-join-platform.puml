@@ -1,0 +1,48 @@
+@startuml bp1-join-platform
+!include style.iuml
+title BP1 Join the Platform\n(US1-1, US1-13, US1-2, US1-3)
+
+|Company|
+start
+:Open registration page;
+
+|MangoDB System|
+:Show registration form
+with Terms of Service;
+
+repeat
+  |Company|
+  :Fill company information
+  and select account type;
+  :Accept Terms of Service;
+  :Submit registration form;
+  |MangoDB System|
+  :Validate registration;
+  backward :Show validation errors;
+repeat while (Complete, valid, unique,\nand terms accepted?) is (no) not (yes)
+
+:Create account and
+store consent time;
+:Company Account
+<U+005B>Active<U+005D>]
+
+repeat
+  |Company|
+  :Log in with credentials;
+  |MangoDB System|
+  :Check credentials;
+  backward :Show login error;
+repeat while (Credentials correct?) is (no) not (yes)
+
+:Allow functions for
+the account type;
+
+|Company|
+:Use the platform;
+:Log out;
+
+|MangoDB System|
+:End session and
+redirect to login page;
+stop
+@enduml

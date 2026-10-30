@@ -6,6 +6,9 @@ export const SERVICE_PAGE_SIZE = 10;
 export const PROFILE_LIST_SIZE = 50;
 // US2-9. Your Proposals.
 export const PROPOSAL_PAGE_SIZE = 6;
+// US4-9. Your Projects list.
+export const PROJECT_PAGE_SIZE = 6;
+
 // Lists that sit beside a detail panel, so a page fits the panel's height:
 // another company's services, and the proposals sent to one of your jobs.
 export const COMPANY_SERVICES_PAGE_SIZE = 5;

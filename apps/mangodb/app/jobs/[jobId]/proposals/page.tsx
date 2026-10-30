@@ -24,8 +24,8 @@ import { redirectToUnauthorized } from '@/lib/session';
 
 const NOT_FOUND = 'This job could not be found.';
 
-// The list shows the proposals still in play, or only the rejected ones.
-type ViewMode = 'all' | 'rejected';
+// The list shows the proposals filtered by status.
+type ViewMode = 'pending' | 'accepted' | 'rejected' | null;
 
 // US2-10. The proposals sent to one of your jobs, opened from the job.
 export default function JobProposalsPage() {
@@ -34,7 +34,7 @@ export default function JobProposalsPage() {
     const [listingTitle, setListingTitle] = useState('Job Posting Proposals');
     const [proposals, setProposals] = useState<ReceivedProposal[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [viewMode, setViewMode] = useState<ViewMode>('all');
+    const [viewMode, setViewMode] = useState<ViewMode>('pending');
     const [isLoading, setIsLoading] = useState(jobId !== null);
     const [error, setError] = useState<string | null>(null);
 
@@ -73,15 +73,22 @@ export default function JobProposalsPage() {
     const activeError = jobId === null ? NOT_FOUND : error;
     const activeIsLoading = jobId !== null && isLoading;
 
+    const totalCount = proposals.length;
+    const pendingCount = proposals.filter(
+        (p) => p.proposalStatus === 'PENDING',
+    ).length;
+    const acceptedCount = proposals.filter(
+        (p) => p.proposalStatus === 'ACCEPTED',
+    ).length;
     const rejectedCount = proposals.filter(
         (p) => p.proposalStatus === 'REJECTED',
     ).length;
-    const remainCount = proposals.length - rejectedCount;
 
     // Filter list based on active tab/view
     const activeList = proposals.filter((p) => {
-        const isRejected = p.proposalStatus === 'REJECTED';
-        return viewMode === 'rejected' ? isRejected : !isRejected;
+        if (viewMode === 'rejected') return p.proposalStatus === 'REJECTED';
+        if (viewMode === 'accepted') return p.proposalStatus === 'ACCEPTED';
+        return p.proposalStatus === 'PENDING';
     });
 
     const selectedProposal = proposals.find((p) => p.proposalId === selectedId);
@@ -108,10 +115,11 @@ export default function JobProposalsPage() {
     };
 
     // Accepting rejects every other pending proposal, so the list shows that
-    // without a refetch.
+    // without a refetch. Returns created project for the accept modal.
     const handleAccept = async (proposalId: number) => {
+        let createdProject;
         try {
-            await acceptProposal(proposalId);
+            createdProject = await acceptProposal(proposalId);
         } catch (err) {
             throw new Error(describeError(err));
         }
@@ -128,7 +136,7 @@ export default function JobProposalsPage() {
             }),
         );
 
-        setSelectedId(null);
+        return createdProject;
     };
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -156,7 +164,9 @@ export default function JobProposalsPage() {
                     <h1 className="type-lg !font-[700] text-ink">
                         {viewMode === 'rejected'
                             ? 'Rejected Proposals'
-                            : 'Submitted Proposals'}
+                            : viewMode === 'accepted'
+                              ? 'Accepted Proposals'
+                              : 'Pending Proposals'}
                     </h1>
                     <h2 className="type-md !font-[600] text-ink mt-0.5">
                         {listingTitle}
@@ -165,27 +175,41 @@ export default function JobProposalsPage() {
                 </div>
 
                 {/* Stats & View Switchers */}
-                <div className="mb-6">
+                <div className="mb-6 flex flex-col gap-2">
                     <StatusTabs<ViewMode>
                         tabs={[
                             {
-                                label: 'Remain',
-                                value: 'all',
-                                count: remainCount,
+                                label: 'Pending',
+                                value: 'pending',
+                                count: pendingCount,
+                            },
+                            {
+                                label: 'Accepted',
+                                value: 'accepted',
+                                count: acceptedCount,
                             },
                             {
                                 label: 'Rejected',
                                 value: 'rejected',
                                 count: rejectedCount,
                             },
+                            {
+                                label: 'Total',
+                                // Total is non-clickable and moved to the right side
+                                value: null,
+                                count: totalCount,
+                                className: 'ml-auto',
+                            },
                         ]}
                         value={viewMode}
                         onChange={(mode) => {
-                            setViewMode(mode);
-                            setSelectedId(null);
-                            setCurrentPage(1);
+                            if (mode !== null) {
+                                setViewMode(mode);
+                                setSelectedId(null);
+                                setCurrentPage(1);
+                            }
                         }}
-                        label="Show remaining or rejected proposals"
+                        label="Filter proposals by status"
                     />
                 </div>
 
@@ -203,7 +227,9 @@ export default function JobProposalsPage() {
                         title={
                             viewMode === 'rejected'
                                 ? 'No rejected proposals'
-                                : 'No proposals for this job yet'
+                                : viewMode === 'accepted'
+                                  ? 'No accepted proposals'
+                                  : 'No pending proposals'
                         }
                     />
                 ) : (
