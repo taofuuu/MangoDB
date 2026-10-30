@@ -74,6 +74,10 @@ export default function CompletedProjectsPage() {
         return <div className="min-h-screen bg-surface" />;
 
     const detailOpen = selectedProject !== null;
+    const changePage = (nextPage: number) => {
+        setIsLoading(true);
+        setPage(nextPage);
+    };
     return (
         <main className="min-h-screen overflow-x-clip bg-surface px-[6.04vw] py-[5.56vh]">
             <div className="flex max-w-[93.75vw] flex-col gap-[2vh]">
@@ -151,7 +155,7 @@ export default function CompletedProjectsPage() {
                         </div>
                         <Pagination
                             pagination={error ? null : pagination}
-                            onPageChange={setPage}
+                            onPageChange={changePage}
                             ariaLabel="Completed work pages"
                             isLoading={isLoading}
                         />

@@ -56,7 +56,13 @@ export default function CompletedProjectDetailPanel({
                         </Link>
                     </div>
                 </Detail>
-                <Detail label="Service Name">
+                <Detail
+                    label={
+                        project.listingType === 'SERVICE'
+                            ? 'Service Name'
+                            : 'Job Title'
+                    }
+                >
                     <p className="type-sm text-ink pl-[0.5vw]">
                         {project.listingTitle}
                     </p>

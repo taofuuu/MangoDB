@@ -54,7 +54,7 @@ export default function CompletedWorksPreview({
                 <h2 className="type-md !font-[700] text-ink">
                     Completed Works
                 </h2>
-                {state.status === 'ready' && (
+                {state.status === 'ready' && state.items.length > 0 && (
                     <Link
                         href={`/companies/${companyId}/completed-projects`}
                         className="type-xs text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
