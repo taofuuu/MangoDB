@@ -7,7 +7,11 @@ import { usePathname } from 'next/navigation';
 import type { CompanyProfile } from '@mangodb/shared';
 import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
-import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
+import {
+    isCompanyAccount,
+    isProviderAccount,
+    isReceiverAccount,
+} from '@/lib/roles';
 import ProfileMenu from './ProfileMenu';
 
 // The bar across the top of every page: logo on the left, the signed-in
@@ -17,11 +21,12 @@ import ProfileMenu from './ProfileMenu';
 // in the corner yet.
 const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 
-// The two searches, the app's main ways in. Uppercase on screen to match the
+// The searches, the app's main ways in. Uppercase on screen to match the
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
 // canUse matches the page's own gate: providers look for jobs, receivers for
-// services, and a BOTH company gets the two.
+// services, and a BOTH company gets the two. Every company can look for other
+// companies; admins have /admin/companies instead.
 const NAV_LINKS = [
     {
         href: '/jobs',
@@ -34,6 +39,12 @@ const NAV_LINKS = [
         label: 'Search services',
         shortLabel: 'Services',
         canUse: isReceiverAccount,
+    },
+    {
+        href: '/companies',
+        label: 'Explore companies',
+        shortLabel: 'Companies',
+        canUse: isCompanyAccount,
     },
 ];
 
