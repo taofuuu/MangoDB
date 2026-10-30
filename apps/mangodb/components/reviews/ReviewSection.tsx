@@ -25,6 +25,7 @@ export type ReviewContent = Pick<
 type SharedReviewSectionProps = {
     initialReview?: ReviewContent | null | undefined;
     onCancel?: (() => void) | undefined;
+    onSubmitted?: (() => void) | undefined;
 };
 
 type ReviewSectionProps = SharedReviewSectionProps &
@@ -58,6 +59,7 @@ const REVIEW_FIELDS: Record<string, keyof ReviewFormErrors> = {
 export default function ReviewSection({
     initialReview = null,
     onCancel,
+    onSubmitted,
     ...submission
 }: ReviewSectionProps) {
     const [scores, setScores] = useState(EMPTY_SCORES);
@@ -108,6 +110,7 @@ export default function ReviewSection({
                 ? { ...scores, comment: draft.comment ?? null }
                 : await createReview(submission.projectId, draft);
             setSubmittedReview(saved);
+            onSubmitted?.();
         } catch (cause) {
             const next = toFormErrors(cause, REVIEW_FIELDS);
             setErrors(next.fields);
