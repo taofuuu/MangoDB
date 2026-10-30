@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import type { ProjectDetail, Review } from '@mangodb/shared';
 import { ArrowLeft, BriefcaseBusiness, Wallet } from 'lucide-react';
 import ReviewSection from '@/components/reviews/ReviewSection';
-import { describeError } from '@/lib/api';
+import { ApiRequestError, describeError, isNotSignedIn } from '@/lib/api';
 import { formatBaht } from '@/lib/money';
 import { getProject, getProjectReview } from '@/lib/projects';
+import { redirectToUnauthorized } from '@/lib/session';
 import ReviewPageError from './ReviewPageError';
 
 type ProjectReviewViewProps = {
@@ -27,17 +28,30 @@ export default function ProjectReviewView({
     useEffect(() => {
         let isMounted = true;
 
-        Promise.all([
-            getProject(projectId),
-            getProjectReview(projectId).catch(() => null),
-        ])
+        const loadReview = async () => {
+            try {
+                return await getProjectReview(projectId);
+            } catch (cause) {
+                if (cause instanceof ApiRequestError && cause.status === 404) {
+                    return null;
+                }
+                throw cause;
+            }
+        };
+
+        Promise.all([getProject(projectId), loadReview()])
             .then(([nextProject, nextReview]) => {
                 if (!isMounted) return;
                 setProject(nextProject);
                 setReview(nextReview);
             })
             .catch((cause: unknown) => {
-                if (isMounted) setError(describeError(cause));
+                if (!isMounted) return;
+                if (isNotSignedIn(cause)) {
+                    redirectToUnauthorized();
+                    return;
+                }
+                setError(describeError(cause));
             });
 
         return () => {
@@ -104,6 +118,11 @@ export default function ProjectReviewView({
                         </h2>
                         <p className="mt-1 type-sm text-ink-soft">
                             {project.provider.companyName}
+                        </p>
+                        <p className="mt-1 type-xs text-ink-soft">
+                            {project.listingType === 'SERVICE'
+                                ? 'Service project'
+                                : 'Job project'}
                         </p>
                         <p className="mt-2 flex items-center gap-1 type-xs text-brand">
                             <Wallet aria-hidden="true" className="size-3.5" />

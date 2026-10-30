@@ -1,17 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import type { CreateReviewRequest, Review } from '@mangodb/shared';
+import type { Review } from '@mangodb/shared';
 import Button from '@/components/ui/Button';
 import FieldError from '@/components/ui/FieldError';
-import { createReview } from '@/lib/reviews';
-import { toFormErrors } from '@/lib/validation/formErrors';
-import {
-    type ReviewFormErrors,
-    type ReviewScoreField,
-    validateReviewForm,
-} from '@/lib/validation/review';
+import type { ReviewScoreField } from '@/lib/validation/review';
 import StarRating from './StarRating';
+import { useReviewForm } from './useReviewForm';
 
 export type ReviewContent = Pick<
     Review,
@@ -22,17 +16,12 @@ export type ReviewContent = Pick<
     | 'comment'
 >;
 
-type SharedReviewSectionProps = {
+type ReviewSectionProps = {
+    projectId: number;
     initialReview?: ReviewContent | null | undefined;
     onCancel?: (() => void) | undefined;
     onSubmitted?: (() => void) | undefined;
 };
-
-type ReviewSectionProps = SharedReviewSectionProps &
-    (
-        | { projectId: number; preview?: false | undefined }
-        | { projectId?: never; preview: true }
-    );
 
 const CRITERIA: Array<{ field: ReviewScoreField; label: string }> = [
     { field: 'workQualityScore', label: 'Work quality' },
@@ -41,86 +30,28 @@ const CRITERIA: Array<{ field: ReviewScoreField; label: string }> = [
     { field: 'deliveryTimeScore', label: 'Delivery time' },
 ];
 
-const EMPTY_SCORES: Record<ReviewScoreField, number> = {
-    workQualityScore: 0,
-    serviceScore: 0,
-    valueForMoneyScore: 0,
-    deliveryTimeScore: 0,
-};
-
-const REVIEW_FIELDS: Record<string, keyof ReviewFormErrors> = {
-    workQualityScore: 'workQualityScore',
-    serviceScore: 'serviceScore',
-    valueForMoneyScore: 'valueForMoneyScore',
-    deliveryTimeScore: 'deliveryTimeScore',
-    comment: 'comment',
-};
-
 export default function ReviewSection({
     initialReview = null,
     onCancel,
     onSubmitted,
-    ...submission
+    projectId,
 }: ReviewSectionProps) {
-    const [scores, setScores] = useState(EMPTY_SCORES);
-    const [comment, setComment] = useState('');
-    const [errors, setErrors] = useState<ReviewFormErrors>({});
-    const [formError, setFormError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submittedReview, setSubmittedReview] =
-        useState<ReviewContent | null>(initialReview);
-
-    const clearError = (field: keyof ReviewFormErrors) => {
-        setErrors((previous) => {
-            const next = { ...previous };
-            delete next[field];
-            return next;
-        });
-    };
-
-    const setScore = (field: ReviewScoreField, value: number) => {
-        setScores((previous) => ({ ...previous, [field]: value }));
-        clearError(field);
-    };
+    const {
+        values,
+        setField,
+        errors,
+        formError,
+        isSubmitting,
+        reset,
+        handleSubmit,
+    } = useReviewForm(projectId, onSubmitted);
 
     const handleCancel = () => {
-        setScores(EMPTY_SCORES);
-        setComment('');
-        setErrors({});
-        setFormError(null);
+        reset();
         onCancel?.();
     };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (isSubmitting) return;
-
-        const draft: CreateReviewRequest = {
-            ...scores,
-            comment: comment.trim() || null,
-        };
-        const nextErrors = validateReviewForm(draft);
-        setErrors(nextErrors);
-        setFormError(null);
-        if (Object.keys(nextErrors).length > 0) return;
-
-        setIsSubmitting(true);
-        try {
-            const saved = submission.preview
-                ? { ...scores, comment: draft.comment ?? null }
-                : await createReview(submission.projectId, draft);
-            setSubmittedReview(saved);
-            onSubmitted?.();
-        } catch (cause) {
-            const next = toFormErrors(cause, REVIEW_FIELDS);
-            setErrors(next.fields);
-            setFormError(next.message);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    if (submittedReview) {
+    if (initialReview) {
         return (
             <section
                 aria-labelledby="submitted-review-heading"
@@ -139,7 +70,7 @@ export default function ReviewSection({
                             key={field}
                             name={`submitted-${field}`}
                             label={label}
-                            value={submittedReview[field]}
+                            value={initialReview[field]}
                         />
                     ))}
                 </div>
@@ -147,7 +78,7 @@ export default function ReviewSection({
                 <div className="mt-6 border-t border-line pt-5">
                     <h3 className="type-sm text-ink">Comment</h3>
                     <p className="mt-2 whitespace-pre-wrap type-sm text-ink-soft">
-                        {submittedReview.comment || 'No comment provided.'}
+                        {initialReview.comment || 'No comment provided.'}
                     </p>
                 </div>
             </section>
@@ -167,8 +98,8 @@ export default function ReviewSection({
                             <StarRating
                                 name={field}
                                 label={label}
-                                value={scores[field]}
-                                onChange={(value) => setScore(field, value)}
+                                value={values[field]}
+                                onChange={(value) => setField(field, value)}
                                 errorId={
                                     errors[field]
                                         ? `review-${field}-error`
@@ -196,22 +127,21 @@ export default function ReviewSection({
                         </label>
                         <span
                             className={`type-xs ${
-                                comment.length > 500
+                                values.comment.length > 500
                                     ? 'text-danger'
                                     : 'text-ink-placeholder'
                             }`}
                             aria-live="polite"
                         >
-                            {comment.length}/500
+                            {values.comment.length}/500
                         </span>
                     </div>
                     <textarea
                         id="review-comment"
-                        value={comment}
-                        onChange={(event) => {
-                            setComment(event.target.value);
-                            clearError('comment');
-                        }}
+                        value={values.comment}
+                        onChange={(event) =>
+                            setField('comment', event.target.value)
+                        }
                         rows={5}
                         placeholder="Up to 500 characters"
                         aria-invalid={errors.comment ? true : undefined}
