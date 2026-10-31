@@ -656,6 +656,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
                         onAcceptWork={() => setIsAcceptConfirmOpen(true)}
                         onRejectWork={() => setIsRejectModalOpen(true)}
+                        onReviewProject={() =>
+                            router.push(`/projects/${projectId}/review`)
+                        }
                         onCancelProject={() => setIsCancelConfirmOpen(true)}
                         isBusy={isBusy}
                     />
