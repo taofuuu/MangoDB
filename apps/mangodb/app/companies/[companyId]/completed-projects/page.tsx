@@ -34,6 +34,9 @@ export default function CompletedProjectsPage() {
             return;
         }
         let active = true;
+        queueMicrotask(() => {
+            if (active) setIsLoading(true);
+        });
         listCompletedProjects(companyId, page, COMPLETED_PROJECT_PAGE_SIZE)
             .then((response) => {
                 if (!active) return;
