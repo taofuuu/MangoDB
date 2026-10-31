@@ -1,5 +1,5 @@
 import type { ServiceSummary } from '@mangodb/shared';
-import { Tag, Wallet } from 'lucide-react';
+import { Star, Tag, Wallet } from 'lucide-react';
 import { initials } from '@/components/companies/CompanyAvatar';
 import { formatBudgetRange } from '@/lib/money';
 
@@ -7,6 +7,46 @@ type ServiceCardProps = {
     service: ServiceSummary;
     onViewDetail: (service: ServiceSummary) => void;
 };
+
+// The Provider's average rating as five stars, or "No review" before any.
+function ProviderRating({
+    averageRating,
+    ratingCount,
+}: {
+    averageRating: number | null;
+    ratingCount: number;
+}) {
+    if (averageRating === null) {
+        return <p className="type-xs text-ink-placeholder">No review</p>;
+    }
+
+    const roundedRating = Math.round(averageRating);
+    return (
+        <div className="flex flex-col items-end gap-1">
+            <div
+                className="flex items-center gap-0.5"
+                role="img"
+                aria-label={`${averageRating} out of 5 stars`}
+            >
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                        key={star}
+                        aria-hidden="true"
+                        size={20}
+                        className={
+                            star <= roundedRating
+                                ? 'fill-accent text-accent'
+                                : 'fill-line text-line'
+                        }
+                    />
+                ))}
+            </div>
+            <p className="type-xs text-ink-placeholder">
+                {ratingCount} {ratingCount === 1 ? 'review' : 'reviews'}
+            </p>
+        </div>
+    );
+}
 
 // One service in the search results. A company's own services page uses
 // CompanyServiceCard instead: the design draws the two differently.
@@ -60,13 +100,19 @@ export default function ServiceCard({
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => onViewDetail(service)}
-                    className="rounded-button shrink-0 self-end border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                >
-                    view detail →
-                </button>
+                <div className="flex shrink-0 flex-col items-end justify-between gap-4">
+                    <ProviderRating
+                        averageRating={service.averageRating}
+                        ratingCount={service.ratingCount}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => onViewDetail(service)}
+                        className="rounded-button border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                    >
+                        view detail →
+                    </button>
+                </div>
             </div>
         </div>
     );
