@@ -2,9 +2,8 @@ import type { CreateReviewRequest, Review } from '@mangodb/shared';
 import { apiFetch } from '@/lib/api';
 import { invalidateAfter } from '@/lib/apiCache';
 
-// POST /projects/:projectId/review. The project page owns the project fetch and
-// only passes its id here, so mounting this section does not introduce a second
-// project request (T4.9.13).
+// POST /projects/:projectId/review. The form passes the completed project's id
+// here; this helper owns the endpoint call and the related cache invalidation.
 export function createReview(
     projectId: number,
     body: CreateReviewRequest,

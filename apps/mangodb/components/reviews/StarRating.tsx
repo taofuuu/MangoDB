@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Star } from 'lucide-react';
 
 type StarRatingProps = {
@@ -21,6 +22,8 @@ export default function StarRating({
     onChange,
     errorId,
 }: StarRatingProps) {
+    const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+
     if (!onChange) {
         return (
             <div className="flex items-center justify-between gap-4">
@@ -51,11 +54,15 @@ export default function StarRating({
             aria-describedby={errorId}
         >
             <legend className="float-left type-sm text-ink">{label}</legend>
-            <div className="flex gap-1" role="radiogroup" aria-label={label}>
+            <div
+                className="flex gap-1"
+                onMouseLeave={() => setHoveredStar(null)}
+            >
                 {STARS.map((star) => (
                     <label
                         key={star}
                         className="cursor-pointer rounded-sm focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2"
+                        onMouseEnter={() => setHoveredStar(star)}
                     >
                         <input
                             type="radio"
@@ -69,7 +76,7 @@ export default function StarRating({
                         <Star
                             aria-hidden="true"
                             className={`size-7 transition-colors ${
-                                star <= value
+                                star <= (hoveredStar ?? value)
                                     ? 'fill-accent text-accent'
                                     : 'fill-line text-line hover:fill-accent/40 hover:text-accent'
                             }`}

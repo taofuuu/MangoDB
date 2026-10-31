@@ -45,6 +45,7 @@ export default function ReviewSection({
         reset,
         handleSubmit,
     } = useReviewForm(projectId, onSubmitted);
+    const commentLength = values.comment.trim().length;
 
     const handleCancel = () => {
         reset();
@@ -127,13 +128,13 @@ export default function ReviewSection({
                         </label>
                         <span
                             className={`type-xs ${
-                                values.comment.length > 500
+                                commentLength > 500
                                     ? 'text-danger'
                                     : 'text-ink-placeholder'
                             }`}
                             aria-live="polite"
                         >
-                            {values.comment.length}/500
+                            {commentLength}/500
                         </span>
                     </div>
                     <textarea
