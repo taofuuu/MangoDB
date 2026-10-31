@@ -10,14 +10,6 @@ import Pagination from '@/components/ui/Pagination';
 import ServiceCard from './ServiceCard';
 import EmptyState from '@/components/ui/EmptyState';
 
-// Sample durations (T3.3.10) until services carry one. Keyed by serviceId so
-// a card keeps its value across pages; null shows a card with none.
-const SAMPLE_DURATIONS = [3, 1.5, null, 6, 0.5, 12];
-
-function sampleDuration(serviceId: number): number | null {
-    return SAMPLE_DURATIONS[serviceId % SAMPLE_DURATIONS.length] ?? null;
-}
-
 function CardSkeleton() {
     return (
         <div className="rounded-button h-[160px] animate-pulse border border-line bg-brand-tint" />
@@ -140,7 +132,6 @@ export default function SearchServicesResultsGrid({
                     <ServiceCard
                         key={service.serviceId}
                         service={service}
-                        estimatedDuration={sampleDuration(service.serviceId)}
                         onViewDetail={onViewDetail}
                     />
                 ))}

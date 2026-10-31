@@ -5,15 +5,8 @@ import { formatBudgetRange } from '@/lib/money';
 
 type ServiceCardProps = {
     service: ServiceSummary;
-    // Months. Passed apart from service because ServiceSummary has no
-    // duration yet; null or absent draws no duration line.
-    estimatedDuration?: number | null;
     onViewDetail: (service: ServiceSummary) => void;
 };
-
-function formatDuration(months: number): string {
-    return `${months} ${months === 1 ? 'month' : 'months'}`;
-}
 
 // The Provider's average rating as five stars, or "No review" before any.
 function ProviderRating({
@@ -59,7 +52,6 @@ function ProviderRating({
 // CompanyServiceCard instead: the design draws the two differently.
 export default function ServiceCard({
     service,
-    estimatedDuration,
     onViewDetail,
 }: ServiceCardProps) {
     return (
@@ -92,13 +84,6 @@ export default function ServiceCard({
                                 service.maxBudget,
                             )}
                         </p>
-                        {/* pl-[18px] lines the text up with the budget's,
-                            past its 14px icon and 4px gap. */}
-                        {estimatedDuration != null && (
-                            <p className="type-xs pl-[18px] text-brand">
-                                {formatDuration(estimatedDuration)}
-                            </p>
-                        )}
 
                         {service.techStack.length > 0 && (
                             <div className="mt-2 flex flex-wrap items-center gap-2">
