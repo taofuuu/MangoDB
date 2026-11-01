@@ -1,0 +1,14 @@
+{
+    "request": "POST /projects/<portfolio_id>/cancel",
+    "status": 200,
+    "body": {
+        "completedAt": null,
+        "depositConfirmedAt": null,
+        "depositReportedAt": null,
+        "projectId": "<project_id>",
+        "projectStatus": "CANCELLED",
+        "proposalId": "<proposal_id>",
+        "startDate": "<today>",
+        "totalBudget": 75000
+    }
+}

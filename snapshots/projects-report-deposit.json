@@ -1,0 +1,14 @@
+{
+    "request": "POST /projects/<project_id>/report-deposit",
+    "status": 200,
+    "body": {
+        "completedAt": null,
+        "depositConfirmedAt": null,
+        "depositReportedAt": "<today>T15:13:53.297Z",
+        "projectId": "<project_id>",
+        "projectStatus": "AWAITING_DEPOSIT",
+        "proposalId": "<proposal_id>",
+        "startDate": "<today>",
+        "totalBudget": 95000
+    }
+}

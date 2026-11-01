@@ -5,6 +5,24 @@
         "items": [
             {
                 "averageRating": null,
+                "categories": [],
+                "company": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "listingDesc": "created by scripts/snapshot-api.sh",
+                "listingTitle": "Snapshot Probe no-min service <run>",
+                "maxBudget": 30000,
+                "minBudget": null,
+                "ratingCount": 0,
+                "serviceId": "<service_id>",
+                "techStack": [
+                    "<run>"
+                ]
+            },
+            {
+                "averageRating": null,
                 "categories": [
                     "Web Development"
                 ],
@@ -27,7 +45,7 @@
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 1,
+            "totalItems": 2,
             "totalPages": 1
         }
     }

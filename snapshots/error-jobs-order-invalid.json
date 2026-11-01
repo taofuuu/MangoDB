@@ -1,0 +1,16 @@
+{
+    "request": "GET /jobs?status=OPEN&orderBy=invalidOrder",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "orderBy",
+                    "message": "Invalid option: expected one of \"newest\"|\"maxBudgetDesc\"|\"maxBudgetAsc\"|\"deadlineAsc\"|\"deadlineDesc\""
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

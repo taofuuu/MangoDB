@@ -1,0 +1,11 @@
+{
+    "request": "POST /projects/<project_id>/updates",
+    "status": 201,
+    "body": {
+        "createdAt": "<timestamp>",
+        "projectId": "<project_id>",
+        "projectUpdateId": "<project_update_id>",
+        "updateText": "Snapshot probe progress note.",
+        "updateType": "PROGRESS"
+    }
+}

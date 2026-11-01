@@ -1,0 +1,13 @@
+{
+    "request": "GET /projects/<project_id>/updates",
+    "status": 200,
+    "body": [
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "projectUpdateId": 98,
+            "updateText": null,
+            "updateType": "PROPOSAL_ACCEPTED"
+        }
+    ]
+}
