@@ -11,6 +11,7 @@ import type {
     DeleteCompanyAccountRequest,
     Paginated,
     PublicCompanyProfile,
+    ReviewSummary,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -144,6 +145,13 @@ export function listCompanyReviews(
     });
     const path = `/companies/${companyId}/reviews?${query.toString()}`;
     return cachedGet(path, () => apiFetch<Paginated<CompanyReview>>(path));
+}
+
+export function getCompanyReviewSummary(
+    companyId: number,
+): Promise<ReviewSummary> {
+    const path = `/companies/${companyId}/reviews/summary`;
+    return cachedGet(path, () => apiFetch<ReviewSummary>(path));
 }
 
 export function updateCompanyAccount(

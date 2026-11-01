@@ -170,10 +170,7 @@ export default function ServiceDetailPanel({
             {/* Service Detail */}
             <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
                 {activeTab === 'reviews' && showReviews ? (
-                    <CompanyReviewsTab
-                        companyId={service.company.companyId}
-                        ratingCount={service.ratingCount}
-                    />
+                    <CompanyReviewsTab companyId={service.company.companyId} />
                 ) : (
                     <>
                         {/* Company */}
