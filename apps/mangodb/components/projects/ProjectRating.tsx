@@ -28,7 +28,7 @@ export default function ProjectRating({
                 {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                         key={star}
-                        className={`size-3.5 ${
+                        className={`size-5.5 ${
                             star <= roundedRating
                                 ? 'fill-accent text-accent'
                                 : 'fill-line text-line'
