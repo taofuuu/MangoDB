@@ -1,5 +1,5 @@
 {
-    "request": "POST /projects/<portfolio_id>/cancel",
+    "request": "POST /projects/<project_id>/cancel",
     "status": 200,
     "body": {
         "completedAt": null,

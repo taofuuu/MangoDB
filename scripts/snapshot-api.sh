@@ -124,6 +124,7 @@ FILTER_NO_MIN_ID=""
 # Close jobs (US2-14): a second probe posting, with one pending proposal.
 CLOSE_JOB_ID=""
 # Probe for quotation delete, reject, and cancel
+ACCEPT_PROJECT_ID=""
 PROBE_QUOTE_JOB_ID=""
 PROBE_QUOTE_PROPOSAL_ID=""
 PROBE_QUOTE_PROJECT_ID=""
@@ -131,6 +132,7 @@ DEL_QUOTATION_ID=""
 REJ_QUOTATION_ID=""
 NEW_QUOTATION_ID=""
 NEW_UPDATE_ID=""
+HIRE_PROJECT_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
 # cleanup is "clear it" rather than "delete row N".
@@ -176,6 +178,31 @@ cleanup() {
         $ACCEPT_JOB_ID $PROBE_QUOTE_JOB_ID $HIRE_SERVICE_ID $HIRE_PROPOSAL_SERVICE_ID)"
     # project.proposal_id is ON DELETE RESTRICT, so the accepted proposal's
     # project goes first, or deleting its posting fails.
+    # Before deleting projects, remove any uploaded quotation PDFs from Supabase Storage.
+    local project_ids
+    # shellcheck disable=SC2086
+    project_ids="$(echo $ACCEPT_PROJECT_ID $PROBE_QUOTE_PROJECT_ID $HIRE_PROJECT_ID)"
+    if [ -n "$project_ids" ]; then
+        (
+            cd "$ROOT"
+            npx tsx --env-file=apps/api/.env -e "
+                import { prisma } from './apps/api/src/lib/prisma';
+                import { removeFromStorageByUrl, BUCKETS } from './apps/api/src/lib/storage';
+                async function clean() {
+                    const quotes = await prisma.quotation.findMany({
+                        where: { projectId: { in: [${project_ids// /,}] } },
+                        select: { quotationFile: true }
+                    });
+                    for (const q of quotes) {
+                        if (q.quotationFile) {
+                            await removeFromStorageByUrl(q.quotationFile, BUCKETS.QUOTATION);
+                        }
+                    }
+                }
+                clean().finally(() => prisma.\$disconnect());
+            " >/dev/null 2>&1 || true
+        )
+    fi
     if [ -n "$ACCEPT_PROPOSAL_ID" ]; then
         run_db "prisma.project.deleteMany({ where: { proposalId: $ACCEPT_PROPOSAL_ID } })"
     fi
@@ -251,12 +278,18 @@ api() {
 }
 
 # Calls the API and writes snapshots/<name>.json.
+# Supports --today to replace today's date (YYYY-MM-DD) with <today>.
 snap() {
+    local scrub_today=0
+    if [ "$1" = "--today" ]; then
+        scrub_today=1
+        shift
+    fi
     local name=$1 method=$2 path=$3
     shift 3
     LAST_STATUS="$(api "$method" "$path" "$@")"
     LAST_REQUEST="$method $path"
-    resnap "$name"
+    resnap "$name" "$scrub_today"
     printf '  %-3s %-6s %s\n' "$LAST_STATUS" "$method" "$path"
 }
 
@@ -264,25 +297,18 @@ snap() {
 # its own response, so the call that creates one has to be written twice: once
 # to capture the id, then again with that id in SUBS.
 resnap() {
-    node "$HELPER" normalize \
-        --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
-        <"$BODY" >"$OUT_DIR/$1.json"
-}
-
-resnap_today() {
-    node "$HELPER" normalize \
-        --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
-        --text "today=$(date -u +%F)" \
-        <"$BODY" >"$OUT_DIR/$1.json"
-}
-
-snap_today() {
-    local name=$1 method=$2 path=$3
-    shift 3
-    LAST_STATUS="$(api "$method" "$path" "$@")"
-    LAST_REQUEST="$method $path"
-    resnap_today "$name"
-    printf '  %-3s %-6s %s\n' "$LAST_STATUS" "$method" "$path"
+    local name=$1
+    local scrub_today=${2:-0}
+    if [ "$scrub_today" = 1 ]; then
+        node "$HELPER" normalize \
+            --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
+            --text "today=$(date -u +%F)" \
+            <"$BODY" >"$OUT_DIR/$name.json"
+    else
+        node "$HELPER" normalize \
+            --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
+            <"$BODY" >"$OUT_DIR/$name.json"
+    fi
 }
 
 # Reads one field out of the response snap() just made.
@@ -876,6 +902,13 @@ snap error-jobs-filter-budget-inverted GET "/jobs?status=OPEN&minBudget=100000&m
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap jobs-filter-deadline GET "/jobs?status=OPEN&deadline=2028-12-31" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+# US3-5. Deadline direction: BEFORE (default) and AFTER
+snap jobs-filter-deadline-before GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=BEFORE" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap jobs-filter-deadline-after GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=AFTER" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-jobs-filter-deadline-invalid GET "/jobs?status=OPEN&deadline=not-a-date" \
@@ -1636,9 +1669,9 @@ echo
 echo "projects and quotations"
 
 snap error-projects-mine-unauthorized GET /projects/mine
-snap_today projects-mine-receiver GET /projects/mine \
+snap --today projects-mine-receiver GET /projects/mine \
     -H "$(bearer "$TOKEN_RECEIVER")"
-snap_today projects-mine-provider GET /projects/mine \
+snap --today projects-mine-provider GET /projects/mine \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-projects-one-unauthorized GET "/projects/$ACCEPT_PROJECT_ID"
@@ -1648,7 +1681,7 @@ snap error-projects-one-invalid-id GET /projects/not-a-number \
     -H "$(bearer "$TOKEN_RECEIVER")"
 snap error-projects-one-outsider GET "/projects/$ACCEPT_PROJECT_ID" \
     -H "$(bearer "$TOKEN_ADMIN")"
-snap_today projects-one GET "/projects/$ACCEPT_PROJECT_ID" \
+snap --today projects-one GET "/projects/$ACCEPT_PROJECT_ID" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
 snap error-projects-updates-unauthorized GET "/projects/$ACCEPT_PROJECT_ID/updates"
@@ -1697,7 +1730,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap error-projects-report-deposit-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/report-deposit"
     snap error-projects-report-deposit-forbidden POST "/projects/$ACCEPT_PROJECT_ID/report-deposit" \
         -H "$(bearer "$TOKEN_PROVIDER")"
-    snap_today projects-report-deposit POST "/projects/$ACCEPT_PROJECT_ID/report-deposit" \
+    snap --today projects-report-deposit POST "/projects/$ACCEPT_PROJECT_ID/report-deposit" \
         -H "$(bearer "$TOKEN_RECEIVER")"
     snap error-projects-report-deposit-again POST "/projects/$ACCEPT_PROJECT_ID/report-deposit" \
         -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1705,7 +1738,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap error-projects-confirm-deposit-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/confirm-deposit"
     snap error-projects-confirm-deposit-forbidden POST "/projects/$ACCEPT_PROJECT_ID/confirm-deposit" \
         -H "$(bearer "$TOKEN_RECEIVER")"
-    snap_today projects-confirm-deposit POST "/projects/$ACCEPT_PROJECT_ID/confirm-deposit" \
+    snap --today projects-confirm-deposit POST "/projects/$ACCEPT_PROJECT_ID/confirm-deposit" \
         -H "$(bearer "$TOKEN_PROVIDER")"
     snap error-projects-confirm-deposit-again POST "/projects/$ACCEPT_PROJECT_ID/confirm-deposit" \
         -H "$(bearer "$TOKEN_PROVIDER")"
@@ -1736,7 +1769,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap error-projects-submit-work-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/submit-work"
     snap error-projects-submit-work-forbidden POST "/projects/$ACCEPT_PROJECT_ID/submit-work" \
         -H "$(bearer "$TOKEN_RECEIVER")"
-    snap_today projects-submit-work POST "/projects/$ACCEPT_PROJECT_ID/submit-work" \
+    snap --today projects-submit-work POST "/projects/$ACCEPT_PROJECT_ID/submit-work" \
         -H "$(bearer "$TOKEN_PROVIDER")"
 
     snap error-projects-reject-work-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/reject-work"
@@ -1748,7 +1781,7 @@ if [ "$UPLOADS" = 1 ]; then
         -H "$(bearer "$TOKEN_RECEIVER")" \
         -H 'Content-Type: application/json' \
         -d '{"reason":""}'
-    snap_today projects-reject-work POST "/projects/$ACCEPT_PROJECT_ID/reject-work" \
+    snap --today projects-reject-work POST "/projects/$ACCEPT_PROJECT_ID/reject-work" \
         -H "$(bearer "$TOKEN_RECEIVER")" \
         -H 'Content-Type: application/json' \
         -d '{"reason":"Please revise and deliver again."}'
@@ -1779,7 +1812,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap error-projects-accept-work-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/accept-work"
     snap error-projects-accept-work-forbidden POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
         -H "$(bearer "$TOKEN_PROVIDER")"
-    snap_today projects-accept-work POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
+    snap --today projects-accept-work POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
         -H "$(bearer "$TOKEN_RECEIVER")"
     snap error-projects-accept-work-again POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
         -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1805,10 +1838,14 @@ if [ "$UPLOADS" = 1 ]; then
         SUBS+=(--id "project_id=$PROBE_QUOTE_PROJECT_ID")
     fi
 
-    api POST "/projects/$PROBE_QUOTE_PROJECT_ID/quotations" \
-        -H "$(bearer "$TOKEN_PROVIDER")" \
-        -F "file=@$DOC_FILE;type=application/pdf" >/dev/null
-    DEL_QUOTATION_ID="$(jget quotationId)"
+    upload_quotation() {
+        api POST "/projects/$1/quotations" \
+            -H "$(bearer "$TOKEN_PROVIDER")" \
+            -F "file=@$DOC_FILE;type=application/pdf" >/dev/null
+        jget quotationId
+    }
+
+    DEL_QUOTATION_ID="$(upload_quotation "$PROBE_QUOTE_PROJECT_ID")"
     if [ -n "$DEL_QUOTATION_ID" ]; then
         SUBS+=(--id "quotation_id=$DEL_QUOTATION_ID")
     fi
@@ -1819,10 +1856,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap quotations-delete DELETE "/quotations/$DEL_QUOTATION_ID" \
         -H "$(bearer "$TOKEN_PROVIDER")"
 
-    api POST "/projects/$PROBE_QUOTE_PROJECT_ID/quotations" \
-        -H "$(bearer "$TOKEN_PROVIDER")" \
-        -F "file=@$DOC_FILE;type=application/pdf" >/dev/null
-    REJ_QUOTATION_ID="$(jget quotationId)"
+    REJ_QUOTATION_ID="$(upload_quotation "$PROBE_QUOTE_PROJECT_ID")"
     if [ -n "$REJ_QUOTATION_ID" ]; then
         SUBS+=(--id "quotation_id=$REJ_QUOTATION_ID")
     fi
@@ -1836,7 +1870,7 @@ if [ "$UPLOADS" = 1 ]; then
     snap error-projects-cancel-unauthorized POST "/projects/$PROBE_QUOTE_PROJECT_ID/cancel"
     snap error-projects-cancel-outsider POST "/projects/$PROBE_QUOTE_PROJECT_ID/cancel" \
         -H "$(bearer "$TOKEN_ADMIN")"
-    snap_today projects-cancel POST "/projects/$PROBE_QUOTE_PROJECT_ID/cancel" \
+    snap --today projects-cancel POST "/projects/$PROBE_QUOTE_PROJECT_ID/cancel" \
         -H "$(bearer "$TOKEN_RECEIVER")"
     snap error-projects-cancel-again POST "/projects/$PROBE_QUOTE_PROJECT_ID/cancel" \
         -H "$(bearer "$TOKEN_RECEIVER")"
@@ -1856,14 +1890,21 @@ snap error-projects-review-get-unauthorized GET "/projects/$ACCEPT_PROJECT_ID/re
 snap error-projects-review-get-not-reviewed GET "/projects/$ACCEPT_PROJECT_ID/review" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
-api POST "/projects/$ACCEPT_PROJECT_ID/review" \
+# US5-1 / US5-2. The Receiver submits a review (201). A second review is 409.
+snap projects-review-create POST "/projects/$ACCEPT_PROJECT_ID/review" \
     -H "$(bearer "$TOKEN_RECEIVER")" \
     -H 'Content-Type: application/json' \
-    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}' >/dev/null
+    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}'
 NEW_REVIEW_ID="$(jget reviewId)"
 if [ -n "$NEW_REVIEW_ID" ]; then
     SUBS+=(--id "review_id=$NEW_REVIEW_ID")
+    resnap projects-review-create
 fi
+
+snap error-projects-review-conflict POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":4,"valueForMoneyScore":5,"deliveryTimeScore":4,"comment":"Snapshot Probe Review"}'
 
 # The Receiver and Provider can both read the review (200).
 snap projects-review-get GET "/projects/$ACCEPT_PROJECT_ID/review" \

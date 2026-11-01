@@ -5,35 +5,35 @@
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 98,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "PROPOSAL_ACCEPTED"
         },
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 99,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "QUOTATION_SENT"
         },
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 100,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "QUOTATION_ACCEPTED"
         },
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 101,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "DEPOSIT_REPORTED"
         },
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 102,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "DEPOSIT_CONFIRMED"
         },

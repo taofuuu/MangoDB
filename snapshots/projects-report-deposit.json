@@ -4,7 +4,7 @@
     "body": {
         "completedAt": null,
         "depositConfirmedAt": null,
-        "depositReportedAt": "<today>T15:13:53.297Z",
+        "depositReportedAt": "<timestamp>",
         "projectId": "<project_id>",
         "projectStatus": "AWAITING_DEPOSIT",
         "proposalId": "<proposal_id>",

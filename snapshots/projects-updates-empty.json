@@ -5,7 +5,7 @@
         {
             "createdAt": "<timestamp>",
             "projectId": "<project_id>",
-            "projectUpdateId": 98,
+            "projectUpdateId": "<project_update_id>",
             "updateText": null,
             "updateType": "PROPOSAL_ACCEPTED"
         }
