@@ -1,6 +1,7 @@
 import type { CompletedProject } from '@mangodb/shared';
 import { BriefcaseBusiness, Clock3 } from 'lucide-react';
 import { formatDate } from '@/lib/dates';
+import ProjectRating from './ProjectRating';
 
 type CompletedProjectCardProps = {
     project: CompletedProject;
@@ -48,13 +49,16 @@ export default function CompletedProjectCard({
                     )}
                 </div>
             </div>
-            <button
-                type="button"
-                onClick={() => onViewDetail(project)}
-                className="shrink-0 rounded-button border border-brand px-4 py-2 type-xs text-brand transition hover:bg-brand-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-                view detail →
-            </button>
+            <div className="flex shrink-0 flex-col items-end gap-3">
+                <ProjectRating rating={project.rating} />
+                <button
+                    type="button"
+                    onClick={() => onViewDetail(project)}
+                    className="rounded-button border border-brand px-4 py-2 type-xs text-brand transition hover:bg-brand-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                    view detail →
+                </button>
+            </div>
         </article>
     );
 }
