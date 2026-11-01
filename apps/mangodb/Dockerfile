@@ -29,8 +29,10 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 # standalone leaves out static files and public/, so they are copied beside it.
-COPY --from=build /app/apps/mangodb/.next/standalone ./
-COPY --from=build /app/apps/mangodb/.next/static apps/mangodb/.next/static
+# Owned by node, the user the server runs as: Next caches resized images in
+# .next/cache, and a root-owned .next makes every one of those writes fail.
+COPY --from=build --chown=node:node /app/apps/mangodb/.next/standalone ./
+COPY --from=build --chown=node:node /app/apps/mangodb/.next/static apps/mangodb/.next/static
 COPY --from=build /app/apps/mangodb/public apps/mangodb/public
 
 USER node
