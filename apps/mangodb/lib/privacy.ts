@@ -2,12 +2,12 @@
 // whatever this holds, so a change of wording is an edit here: the intro, then
 // one { heading, body } per section in reading order. The team still has to
 // agree the final text.
-import type { TermsSection } from './terms';
+import type { PolicySection } from './terms';
 
 export const PRIVACY_INTRO =
     'This policy explains what personal data MangoDB keeps, why we keep it, who can see it, and your rights under the Thai Personal Data Protection Act (PDPA).';
 
-export const PRIVACY_POLICY: TermsSection[] = [
+export const PRIVACY_POLICY: PolicySection[] = [
     {
         heading: '1. What Personal Data We Collect',
         body: 'We collect the data you give us when you register and use MangoDB: your company name, email, phone number, and address. We also keep what you add to your profile (photo, description, contact email, website, portfolios, certificates), and the services, job postings, proposals, hire requests, projects, and reviews you create.',
@@ -26,7 +26,7 @@ export const PRIVACY_POLICY: TermsSection[] = [
     },
     {
         heading: '5. Your Rights Under PDPA',
-        body: 'You can ask to see the personal data we hold about you, to correct it, or to delete it. You can also withdraw your consent at any time. Most details can be changed on your profile and in Account Settings. For anything else, contact us using the details below.',
+        body: 'You can ask to see the personal data we hold about you, to correct it, or to delete it. Most details can be changed on your profile and in Account Settings. For anything else, contact us using the details below.',
     },
     {
         heading: '6. Contact',
