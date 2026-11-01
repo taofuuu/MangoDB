@@ -14,3 +14,7 @@ export const PROJECT_PAGE_SIZE = 6;
 export const COMPANY_SERVICES_PAGE_SIZE = 5;
 export const COMPANY_REVIEW_PAGE_SIZE = 5;
 export const RECEIVED_PROPOSAL_PAGE_SIZE = 5;
+// US2-5. Five cards fit beside the completed-work detail panel.
+export const COMPLETED_PROJECT_PAGE_SIZE = 5;
+// The profile section displays the whole collection in its own scroll area.
+export const PROFILE_COMPLETED_PROJECT_SIZE = 50;

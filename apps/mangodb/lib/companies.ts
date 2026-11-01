@@ -4,6 +4,7 @@ import type {
     ChangeCredentialsResponse,
     CompanyAccountDetail,
     CompanyAccountSummary,
+    CompletedProject,
     CompanyProfile,
     CompanyReview,
     CompanySortOrder,
@@ -152,6 +153,21 @@ export function getCompanyReviewSummary(
 ): Promise<ReviewSummary> {
     const path = `/companies/${companyId}/reviews/summary`;
     return cachedGet(path, () => apiFetch<ReviewSummary>(path));
+}
+
+// US2-5. A Provider's public completed work, newest first. The collection is
+// nested below its company profile, just as the API route is.
+export function listCompletedProjects(
+    companyId: number,
+    page: number,
+    pageSize: number,
+): Promise<Paginated<CompletedProject>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/companies/${companyId}/completed-projects?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompletedProject>>(path));
 }
 
 export function updateCompanyAccount(

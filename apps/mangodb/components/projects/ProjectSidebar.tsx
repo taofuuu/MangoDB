@@ -75,6 +75,10 @@ export default function ProjectSidebar({
     // Deposit status
     const isDepositConfirmed = !!project.depositConfirmedAt;
     const isDepositReported = !!project.depositReportedAt;
+    // A project cancelled after the Receiver's report keeps depositReportedAt,
+    // but the API only confirms from AWAITING_DEPOSIT (409 otherwise).
+    const canConfirmDeposit =
+        isDepositReported && project.projectStatus === 'AWAITING_DEPOSIT';
 
     // Review average
     const reviewAverage = review
@@ -570,7 +574,7 @@ export default function ProjectSidebar({
                                     have received the deposit.
                                 </p>
 
-                                {onConfirmDeposit && (
+                                {onConfirmDeposit && canConfirmDeposit && (
                                     <div className="w-full pt-1">
                                         <button
                                             type="button"

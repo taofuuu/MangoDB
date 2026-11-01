@@ -88,6 +88,10 @@ npm run dev -w api       # http://localhost:4000
 npm run dev -w mangodb   # http://localhost:3000
 ```
 
+Or run both in Docker with `docker compose up --build`, also at
+http://localhost:3000. Hosting it that way is in
+[docs/deploy.md](docs/deploy.md#docker-on-one-vm).
+
 To get accounts to sign in with, run `npm run db:seed -w api`. It creates
 `snapshot_` and `demo_` provider, receiver and admin accounts, with the password
 set by `SEED_PASSWORD` in `apps/api/.env`.
