@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { PRIVACY_INTRO, PRIVACY_POLICY } from '@/lib/privacy';
 
 export const metadata = {
@@ -34,17 +33,6 @@ export default function PrivacyPage() {
                         </p>
                     </section>
                 ))}
-
-                <p className="mt-8 type-sm text-ink-soft">
-                    See also the Terms of Service you accept when you{' '}
-                    <Link
-                        href="/register"
-                        className="font-medium text-brand-dark underline underline-offset-2 hover:text-brand-deep"
-                    >
-                        sign up
-                    </Link>
-                    .
-                </p>
             </article>
         </main>
     );

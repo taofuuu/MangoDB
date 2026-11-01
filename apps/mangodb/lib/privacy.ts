@@ -11,7 +11,7 @@ export const PRIVACY_INTRO =
 export const PRIVACY_POLICY: TermsSection[] = [
     {
         heading: '1. What Personal Data We Collect',
-        body: 'We collect the data you give us when you register and use MangoDB: your company name, the contact person’s name, email, phone number, and address. We also keep what you add to your profile (description, website, portfolios, certificates), and the services, job postings, proposals, hire requests, projects, and reviews you create.',
+        body: 'We collect the data you give us when you register and use MangoDB: your company name, email, phone number, and address. We also keep what you add to your profile (photo, description, contact email, website, portfolios, certificates), and the services, job postings, proposals, hire requests, projects, and reviews you create.',
     },
     {
         heading: '2. Why We Use It',
