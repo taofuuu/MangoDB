@@ -65,7 +65,9 @@ HTTPS is not optional: `NODE_ENV=production` makes the session cookie
 
 What the VM needs:
 
-- 2 GB of memory. `next build` runs out on 1 GB unless the VM has swap.
+- 2 GB of memory, plus 2 GB of swap. Compose builds both images at once, and
+  an update builds while the old containers are still running, so `next build`
+  can run out of memory without it.
 - Ports 22, 80 and 443 open, and Docker installed.
 - A domain whose A record points at the VM's IP. Without one,
   `<ip-with-dashes>.sslip.io` (for example `203-0-113-5.sslip.io`) already
@@ -74,6 +76,11 @@ What the VM needs:
 Setup, from the VM:
 
 ```bash
+# Swap, once. The fstab line keeps it after a reboot.
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
 git clone https://github.com/taofuuu/MangoDB.git && cd MangoDB
 cp apps/api/.env.example apps/api/.env   # then fill it in, see below
 echo "DOMAIN=your.domain" > .env         # Caddy's address
