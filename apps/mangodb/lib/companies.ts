@@ -5,6 +5,7 @@ import type {
     CompanyAccountDetail,
     CompanyAccountSummary,
     CompanyProfile,
+    CompanyReview,
     CompanySortOrder,
     CompanySummary,
     DeleteCompanyAccountRequest,
@@ -128,6 +129,21 @@ export function getCompanyProfile(
 ): Promise<PublicCompanyProfile> {
     const path = `/companies/${companyId}`;
     return cachedGet(path, () => apiFetch<PublicCompanyProfile>(path));
+}
+
+// US5-3. Reviews are owned by the Provider company, so a service detail view
+// asks for its offering company's paged review history.
+export function listCompanyReviews(
+    companyId: number,
+    page: number,
+    pageSize: number,
+): Promise<Paginated<CompanyReview>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/companies/${companyId}/reviews?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompanyReview>>(path));
 }
 
 export function updateCompanyAccount(

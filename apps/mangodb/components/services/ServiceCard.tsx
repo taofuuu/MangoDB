@@ -1,5 +1,5 @@
 import type { ServiceSummary } from '@mangodb/shared';
-import { Tag, Wallet } from 'lucide-react';
+import { Star, Tag, Wallet } from 'lucide-react';
 import { initials } from '@/components/companies/CompanyAvatar';
 import { formatBudgetRange } from '@/lib/money';
 
@@ -14,6 +14,8 @@ export default function ServiceCard({
     service,
     onViewDetail,
 }: ServiceCardProps) {
+    const roundedRating = Math.round(service.averageRating ?? 0);
+
     return (
         <div className="rounded-button border border-brand-light bg-surface-white p-5 shadow-card">
             <div className="flex items-stretch justify-between gap-4">
@@ -60,13 +62,56 @@ export default function ServiceCard({
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={() => onViewDetail(service)}
-                    className="rounded-button shrink-0 self-end border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-                >
-                    view detail →
-                </button>
+                <div className="flex shrink-0 flex-col items-end justify-between">
+                    <div
+                        aria-label={
+                            service.averageRating === null
+                                ? 'No reviews yet'
+                                : `${service.averageRating.toFixed(1)} out of 5 stars from ${service.ratingCount} reviews`
+                        }
+                    >
+                        {service.averageRating === null ? (
+                            <span className="type-xs text-ink-soft">
+                                No reviews
+                            </span>
+                        ) : (
+                            <>
+                                <span
+                                    className="flex gap-0.5"
+                                    aria-hidden="true"
+                                >
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                            key={star}
+                                            className={`size-4 ${
+                                                star <= roundedRating
+                                                    ? 'fill-accent text-accent'
+                                                    : 'fill-line text-line'
+                                            }`}
+                                        />
+                                    ))}
+                                </span>
+                                <span className="mt-1 block text-right type-xs text-ink">
+                                    {service.averageRating.toFixed(1)}
+                                    <span className="text-ink-soft">/5</span>
+                                </span>
+                                <span className="mt-1 block text-right type-xs text-ink-soft">
+                                    {service.ratingCount}{' '}
+                                    {service.ratingCount === 1
+                                        ? 'review'
+                                        : 'reviews'}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => onViewDetail(service)}
+                        className="rounded-button border border-brand px-4 py-2 type-xs whitespace-nowrap text-brand hover:bg-brand-tint focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+                    >
+                        view detail →
+                    </button>
+                </div>
             </div>
         </div>
     );
