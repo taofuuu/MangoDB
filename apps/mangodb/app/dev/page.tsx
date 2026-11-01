@@ -74,6 +74,11 @@ const ROUTES = [
                   title: 'Edit Service Picker (Temporary)',
                   detail: 'Temporary development page for T2.3.2–T2.3.3. Choose one of your services and open its prefilled edit form; remove this link after T2.2.2 adds the real Edit buttons.',
               },
+              {
+                  href: '/dev/projects/quotation',
+                  title: 'Quotation section (Temporary)',
+                  detail: 'T4.1.4 — the Quotation card in every state for Provider and Receiver, with the submit, accept and reject pop-ups. Sample data, no API call.',
+              },
           ]
         : []),
     {
