@@ -10,7 +10,7 @@ import type {
     Quotation,
     Review,
 } from '@mangodb/shared';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Send } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
@@ -23,6 +23,7 @@ import RejectWorkModal from '@/components/projects/RejectWorkModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import EmptyState from '@/components/ui/EmptyState';
+import SuccessModal from '@/components/ui/SuccessModal';
 import { describeError, parseId } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { formatDate, formatDateOnly } from '@/lib/dates';
@@ -100,6 +101,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+    const [isSubmitSuccessOpen, setIsSubmitSuccessOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
 
     // Long description expanded state
@@ -536,6 +538,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await submitWork(projectId);
             loadData();
+            setIsSubmitSuccessOpen(true);
         } finally {
             setIsBusy(false);
         }
@@ -818,11 +821,21 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 isOpen={isSubmitConfirmOpen}
                 onClose={() => setIsSubmitConfirmOpen(false)}
                 onConfirm={handleSubmitWork}
-                title="Submit Project for Review"
-                description="Are you ready to submit the completed work to the client for inspection and acceptance?"
-                confirmLabel="Submit Work"
-                cancelLabel="Back"
+                title="Submit Project?"
+                description="Are you sure you want to submit this project? The receiver will review your work and either accept it or request revisions with feedback."
+                icon={<Send aria-hidden="true" className="size-5 text-brand" />}
+                confirmLabel="Yes, Submit"
+                pendingLabel="Submitting..."
+                cancelLabel="Cancel"
                 confirmVariant="primary"
+            />
+
+            <SuccessModal
+                isOpen={isSubmitSuccessOpen}
+                onClose={() => setIsSubmitSuccessOpen(false)}
+                title="Project Submitted Successfully"
+                message="Your project has been submitted and is now awaiting the receiver’s approval. You’ll hear back once they’ve accepted it or requested revisions."
+                actionLabel="OK"
             />
 
             <ConfirmModal
