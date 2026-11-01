@@ -14,16 +14,6 @@
                 "ratingCount": 0
             },
             {
-                "accountType": "BOTH",
-                "averageRating": null,
-                "companyDescription": "aongree1",
-                "companyId": 575,
-                "companyName": "aongree1",
-                "deletedAt": null,
-                "phone": "0812345678",
-                "ratingCount": 0
-            },
-            {
                 "accountType": "RECEIVER",
                 "averageRating": null,
                 "companyDescription": null,
@@ -114,21 +104,31 @@
                 "ratingCount": 0
             },
             {
-                "accountType": "PROVIDER",
-                "averageRating": 4,
+                "accountType": "BOTH",
+                "averageRating": null,
                 "companyDescription": null,
-                "companyId": 483,
-                "companyName": "Demo Provider Co.",
+                "companyId": 107,
+                "companyName": "Dev BOTH Co.",
                 "deletedAt": null,
-                "phone": "0820000001",
-                "ratingCount": 1
+                "phone": "+66 2 000 0000",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Leading provider of database solutions and infrastructure services.",
+                "companyId": 120,
+                "companyName": "Dev PROVIDER Co.",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 70,
-            "totalPages": 6
+            "totalItems": 58,
+            "totalPages": 5
         }
     }
 }

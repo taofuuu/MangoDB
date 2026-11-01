@@ -14,21 +14,21 @@
                 "ratingCount": 0
             },
             {
-                "accountType": "BOTH",
+                "accountType": "PROVIDER",
                 "averageRating": null,
-                "companyDescription": "aongree1",
-                "companyId": 575,
-                "companyName": "aongree1",
+                "companyDescription": "Mobile App Development Agency (iOS/Android)",
+                "companyId": 3,
+                "companyName": "AppSynth",
                 "deletedAt": null,
-                "phone": "0812345678",
+                "phone": "023333333",
                 "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 41,
-            "totalPages": 21
+            "totalItems": 33,
+            "totalPages": 17
         }
     }
 }

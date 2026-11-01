@@ -41,23 +41,23 @@
                 "website": null
             },
             {
-                "accountType": "BOTH",
+                "accountType": "RECEIVER",
                 "categories": [],
-                "companyDescription": "aongree1",
-                "companyId": 575,
-                "companyName": "aongree1",
+                "companyDescription": null,
+                "companyId": 393,
+                "companyName": "aongzera",
                 "companyPhoto": null,
                 "contactEmail": null,
                 "phone": "0812345678",
                 "techStack": [],
-                "website": "https://1111"
+                "website": null
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 70,
-            "totalPages": 35
+            "totalItems": 58,
+            "totalPages": 29
         }
     }
 }

@@ -25,48 +25,52 @@
                 ]
             },
             {
-                "averageRating": 4,
+                "averageRating": null,
                 "categories": [
-                    "Web Development"
+                    "UI/UX Design"
                 ],
                 "company": {
-                    "companyId": 483,
-                    "companyName": "Demo Provider Co.",
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
                     "companyPhoto": null
                 },
-                "listingDesc": "example",
-                "listingTitle": "Web App Development",
-                "maxBudget": 100000,
-                "minBudget": 40000,
-                "ratingCount": 1,
-                "serviceId": 1028,
+                "listingDesc": "A two-week review of your app flows, with a report and Figma redesigns of the worst screens. ([demo] dummy data)",
+                "listingTitle": "[demo] UX review of your product",
+                "maxBudget": 60000,
+                "minBudget": 25000,
+                "ratingCount": 0,
+                "serviceId": 593,
                 "techStack": [
-                    "Express",
-                    "Next.js"
+                    "Figma"
                 ]
             },
             {
-                "averageRating": 3.1,
-                "categories": [],
+                "averageRating": null,
+                "categories": [
+                    "Mobile App Development"
+                ],
                 "company": {
-                    "companyId": 109,
-                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyId": 392,
+                    "companyName": "Snapshot Seed Both",
                     "companyPhoto": null
                 },
-                "listingDesc": "sleep all day",
-                "listingTitle": "kid name mai ork",
-                "maxBudget": null,
-                "minBudget": null,
-                "ratingCount": 12,
-                "serviceId": 1027,
-                "techStack": []
+                "listingDesc": "One React Native codebase for both stores, with push notifications and analytics. ([demo] dummy data)",
+                "listingTitle": "[demo] Mobile app for iOS and Android",
+                "maxBudget": 400000,
+                "minBudget": 150000,
+                "ratingCount": 0,
+                "serviceId": 592,
+                "techStack": [
+                    "Firebase",
+                    "React Native"
+                ]
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 3,
-            "totalItems": 111,
-            "totalPages": 37
+            "totalItems": 107,
+            "totalPages": 36
         }
     }
 }
