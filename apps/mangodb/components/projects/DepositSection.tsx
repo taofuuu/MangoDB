@@ -167,7 +167,34 @@ export default function DepositSection({
         );
     }
 
-    // Initial / Not reported yet (or before quotation is accepted) -> Grey
+    // Provider view before the Receiver reports, from the Figma frames
+    // "deposit section - awaiting quatation" and "- awaiting deposit".
+    if (
+        isProvider &&
+        (isAwaitingDeposit || project.projectStatus === 'AWAITING_QUOTATION')
+    ) {
+        return (
+            <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="flex items-center gap-3">
+                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                    <span className="type-sm !font-[600] text-ink-soft">
+                        Deposit
+                    </span>
+                </div>
+
+                <div className="border-b border-line w-full" />
+
+                <p className="type-sm text-ink-soft leading-relaxed">
+                    {isAwaitingDeposit
+                        ? 'The receiver can let you know once the deposit has been paid.'
+                        : 'The receiver can report deposit payment after accepting the quotation.'}
+                </p>
+            </div>
+        );
+    }
+
+    // Receiver before the quotation is accepted, or a project cancelled
+    // before any report -> Grey
     return (
         <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
             <div className="flex items-center gap-3">
