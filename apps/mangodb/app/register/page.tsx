@@ -14,7 +14,7 @@ import AccountInfoStep, {
     AccountInfoError,
     type AccountInfo,
 } from '@/components/register/AccountInfoStep';
-import ConsentModal from '@/components/register/ConsentModal';
+import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
 import FieldError from '@/components/ui/FieldError';
 import {
     validateConfirmPassword,
@@ -34,8 +34,6 @@ import {
 } from '@/lib/validation/company';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import { register } from '@/lib/session';
-import { TERMS_INTRO, TERMS_OF_SERVICE } from '@/lib/terms';
-import { PRIVACY_INTRO, PRIVACY_POLICY } from '@/lib/privacy';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -55,8 +53,6 @@ const REGISTER_FIELDS = {
 
 const TOS_REQUIRED_MESSAGE =
     'You must accept the Terms of Service to create an account.';
-const PRIVACY_REQUIRED_MESSAGE =
-    'You must accept the Privacy Policy (PDPA) to create an account.';
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -104,14 +100,11 @@ export default function RegisterPage() {
         {},
     );
 
-    // US1-13 and #193. Consent is given in two dialogs, the Terms of Service
-    // and then the Privacy Policy (PDPA). Create Account opens whichever has
-    // not been accepted yet, and only sends once both are.
+    // US1-13. Consent is given in the Terms of Service dialog, which opens on
+    // Create Account until it has been accepted once.
     const [tosAccepted, setTosAccepted] = useState(false);
     const [isTosOpen, setIsTosOpen] = useState(false);
-    const [privacyAccepted, setPrivacyAccepted] = useState(false);
-    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-    const [consentError, setConsentError] = useState('');
+    const [tosError, setTosError] = useState('');
 
     /* ================= NAVIGATION ================= */
 
@@ -197,44 +190,22 @@ export default function RegisterPage() {
             return;
         }
 
-        if (!privacyAccepted) {
-            setIsPrivacyOpen(true);
-            return;
-        }
-
         await sendRegister();
     };
 
-    // Accepting the last dialog is pressing Create Account a second time: the
-    // form was already validated before the first dialog opened.
     const acceptTerms = () => {
         setTosAccepted(true);
-        setConsentError('');
+        setTosError('');
         setIsTosOpen(false);
-        if (privacyAccepted) {
-            void sendRegister();
-        } else {
-            setIsPrivacyOpen(true);
-        }
+        // Accepting is pressing Create Account a second time: the form was
+        // already validated before the dialog opened.
+        void sendRegister();
     };
 
     const declineTerms = () => {
         setTosAccepted(false);
         setIsTosOpen(false);
-        setConsentError(TOS_REQUIRED_MESSAGE);
-    };
-
-    const acceptPrivacy = () => {
-        setPrivacyAccepted(true);
-        setConsentError('');
-        setIsPrivacyOpen(false);
-        void sendRegister();
-    };
-
-    const declinePrivacy = () => {
-        setPrivacyAccepted(false);
-        setIsPrivacyOpen(false);
-        setConsentError(PRIVACY_REQUIRED_MESSAGE);
+        setTosError(TOS_REQUIRED_MESSAGE);
     };
 
     const sendRegister = async () => {
@@ -279,7 +250,7 @@ export default function RegisterPage() {
             // to ask again.
             if (tosField) {
                 setTosAccepted(false);
-                setConsentError(tosField);
+                setTosError(tosField);
             }
 
             if (username || password) {
@@ -379,7 +350,7 @@ export default function RegisterPage() {
             )}
 
             {currentStep === RegisterStep.CompanyInfo && (
-                <FieldError message={consentError} />
+                <FieldError message={tosError} />
             )}
 
             {currentStep === RegisterStep.AccountInfo && (
@@ -415,22 +386,10 @@ export default function RegisterPage() {
                 </div>
             )}
 
-            <ConsentModal
+            <TermsOfServiceModal
                 isOpen={isTosOpen}
-                title="Terms of Service"
-                intro={TERMS_INTRO}
-                sections={TERMS_OF_SERVICE}
                 onAccept={acceptTerms}
                 onDecline={declineTerms}
-            />
-
-            <ConsentModal
-                isOpen={isPrivacyOpen}
-                title="Privacy Policy (PDPA)"
-                intro={PRIVACY_INTRO}
-                sections={PRIVACY_POLICY}
-                onAccept={acceptPrivacy}
-                onDecline={declinePrivacy}
             />
         </RegisterLayout>
     );
