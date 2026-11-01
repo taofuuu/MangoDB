@@ -133,15 +133,10 @@ export default function ServiceDetailPanel({
             <hr className="my-[2vh] border-0 border-t border-brand/30" />
 
             {showReviews && (
-                <div
-                    role="tablist"
-                    aria-label="Service information"
-                    className="mb-[1.5vh] flex gap-2"
-                >
+                <div className="mb-[1.5vh] flex gap-2">
                     <button
                         type="button"
-                        role="tab"
-                        aria-selected={activeTab === 'details'}
+                        aria-pressed={activeTab === 'details'}
                         onClick={() => setActiveTab('details')}
                         className={`rounded-full px-3 py-1 type-xs transition-colors ${
                             activeTab === 'details'
@@ -153,8 +148,7 @@ export default function ServiceDetailPanel({
                     </button>
                     <button
                         type="button"
-                        role="tab"
-                        aria-selected={activeTab === 'reviews'}
+                        aria-pressed={activeTab === 'reviews'}
                         onClick={() => setActiveTab('reviews')}
                         className={`rounded-full px-3 py-1 type-xs transition-colors ${
                             activeTab === 'reviews'
