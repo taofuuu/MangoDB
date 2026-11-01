@@ -811,9 +811,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 onClose={() => setIsCancelConfirmOpen(false)}
                 onConfirm={handleCancelProject}
                 title="Cancel Project"
-                description="Are you sure you want to cancel this project? This action cannot be undone."
-                confirmLabel="Cancel Project"
-                cancelLabel="Keep Project"
+                description="This action cannot be undone."
+                confirmLabel="Confirm"
+                cancelLabel="Go Back"
                 confirmVariant="danger"
             />
 
