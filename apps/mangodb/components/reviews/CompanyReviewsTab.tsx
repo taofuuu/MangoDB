@@ -252,12 +252,14 @@ export default function CompanyReviewsTab({
                             );
                         })}
                     </div>
-                    <Pagination
-                        pagination={data.pagination}
-                        onPageChange={handlePageChange}
-                        ariaLabel="Provider reviews pages"
-                        isLoading={isLoading}
-                    />
+                    <div className="sticky bottom-0 z-10 -mx-1 bg-surface-white px-1 pb-1">
+                        <Pagination
+                            pagination={data.pagination}
+                            onPageChange={handlePageChange}
+                            ariaLabel="Provider reviews pages"
+                            isLoading={isLoading}
+                        />
+                    </div>
                 </>
             )}
         </div>
