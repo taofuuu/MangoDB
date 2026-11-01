@@ -23,6 +23,7 @@ import RejectWorkModal from '@/components/projects/RejectWorkModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import EmptyState from '@/components/ui/EmptyState';
+import SuccessModal from '@/components/ui/SuccessModal';
 import { describeError, parseId } from '@/lib/api';
 import { getCompanyProfile } from '@/lib/companies';
 import { formatDate, formatDateOnly } from '@/lib/dates';
@@ -99,6 +100,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+    const [isCancelSuccessOpen, setIsCancelSuccessOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
 
@@ -569,6 +571,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await cancelProject(projectId);
             loadData();
+            setIsCancelSuccessOpen(true);
         } finally {
             setIsBusy(false);
         }
@@ -812,6 +815,13 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 confirmLabel="Cancel Project"
                 cancelLabel="Keep Project"
                 confirmVariant="danger"
+            />
+
+            <SuccessModal
+                isOpen={isCancelSuccessOpen}
+                onClose={() => setIsCancelSuccessOpen(false)}
+                title="Project cancelled successfully"
+                actionLabel="OK"
             />
 
             <ConfirmModal
