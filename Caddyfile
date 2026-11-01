@@ -1,0 +1,5 @@
+# Serves https://$DOMAIN and passes every request to the web app, which
+# proxies /api/* on to the API. Caddy gets the certificate on its own.
+{$DOMAIN} {
+	reverse_proxy web:3000
+}

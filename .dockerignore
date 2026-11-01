@@ -1,0 +1,15 @@
+# The images install and build their own copy of these.
+**/node_modules
+**/.next
+**/dist
+apps/api/src/generated
+
+# Secrets come in at run time through env_file, never baked into an image.
+**/.env
+**/.env.*
+!**/.env.example
+
+.git
+.husky
+graphify-out
+snapshots
