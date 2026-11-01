@@ -139,7 +139,6 @@ export default function ProjectSidebar({
             {/* 4. Deposit Section */}
             <DepositSection
                 project={project}
-                quotations={quotations}
                 onReportDeposit={onReportDeposit}
                 onConfirmDeposit={onConfirmDeposit}
                 isBusy={isBusy}

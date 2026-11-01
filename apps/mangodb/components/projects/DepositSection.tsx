@@ -1,12 +1,10 @@
 'use client';
 
-import type { ProjectDetail, Quotation } from '@mangodb/shared';
+import type { ProjectDetail } from '@mangodb/shared';
 import { CheckCircle2, CircleCheck, ReceiptText } from 'lucide-react';
 
 type DepositSectionProps = {
     project: ProjectDetail;
-    // Newest first, as GET /projects/:projectId/quotations returns them.
-    quotations: Quotation[];
     onReportDeposit?: (() => void) | undefined;
     onConfirmDeposit?: (() => void) | undefined;
     isBusy?: boolean | undefined;
@@ -17,7 +15,6 @@ type DepositSectionProps = {
 // waiting for the Provider to confirm, and confirmed.
 export default function DepositSection({
     project,
-    quotations,
     onReportDeposit,
     onConfirmDeposit,
     isBusy = false,
@@ -25,18 +22,13 @@ export default function DepositSection({
     const isProvider = project.myRole === 'provider';
     const isReceiver = project.myRole === 'receiver';
 
-    // Latest quotation (GET /projects/:id/quotations returns newest first)
-    const latestQuotation = quotations[0] ?? null;
-    const qStatus = latestQuotation?.quotationStatus;
-    const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
-    const isQuotationAccepted = isPastQuotation || qStatus === 'ACCEPTED';
-
     const isDepositConfirmed = !!project.depositConfirmedAt;
     const isDepositReported = !!project.depositReportedAt;
-    // A project cancelled after the Receiver's report keeps depositReportedAt,
-    // but the API only confirms from AWAITING_DEPOSIT (409 otherwise).
-    const canConfirmDeposit =
-        isDepositReported && project.projectStatus === 'AWAITING_DEPOSIT';
+    // The API takes the report and the confirmation only while the project
+    // is AWAITING_DEPOSIT (409 otherwise). A project cancelled in that state
+    // keeps depositReportedAt, so the flag alone is not enough.
+    const isAwaitingDeposit = project.projectStatus === 'AWAITING_DEPOSIT';
+    const canConfirmDeposit = isDepositReported && isAwaitingDeposit;
 
     if (isDepositConfirmed) {
         if (isReceiver) {
@@ -139,7 +131,7 @@ export default function DepositSection({
     }
 
     // Receiver view when quotation is accepted but deposit is not reported yet
-    if (isReceiver && isQuotationAccepted) {
+    if (isReceiver && isAwaitingDeposit) {
         return (
             <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                 <div className="flex items-center justify-between">
