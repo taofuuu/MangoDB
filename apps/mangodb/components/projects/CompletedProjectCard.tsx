@@ -50,7 +50,7 @@ export default function CompletedProjectCard({
                 </div>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-3">
-                <ProjectRating rating={project.rating} />
+                <ProjectRating rating={project.rating} showNumber={false} />
                 <button
                     type="button"
                     onClick={() => onViewDetail(project)}
