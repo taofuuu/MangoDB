@@ -43,6 +43,34 @@
             "projectUpdateId": "<project_update_id>",
             "updateText": "Snapshot probe progress note.",
             "updateType": "PROGRESS"
+        },
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "projectUpdateId": "<project_update_id>",
+            "updateText": null,
+            "updateType": "WORK_SUBMITTED"
+        },
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "projectUpdateId": "<project_update_id>",
+            "updateText": "Please revise and deliver again.",
+            "updateType": "WORK_REJECTED"
+        },
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "projectUpdateId": "<project_update_id>",
+            "updateText": null,
+            "updateType": "WORK_SUBMITTED"
+        },
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "projectUpdateId": "<project_update_id>",
+            "updateText": null,
+            "updateType": "WORK_ACCEPTED"
         }
     ]
 }

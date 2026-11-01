@@ -172,12 +172,6 @@ function scrubRequest(text) {
     );
 
     for (const sub of idSubs) {
-        // Matched as a whole path segment fallback: /27 but not the 27 inside /271,
-        // and not a 27 that happens to sit in a query value.
-        out = out.replace(
-            new RegExp('/' + sub.value + '(?![0-9])', 'g'),
-            '/' + sub.placeholder,
-        );
         // A query value is replaced only under a param of the same key, as
         // in the body: ?companyId=27 for --id company_id=27, never ?page=27.
         out = out.replace(

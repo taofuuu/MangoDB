@@ -131,7 +131,6 @@ PROBE_QUOTE_PROJECT_ID=""
 DEL_QUOTATION_ID=""
 REJ_QUOTATION_ID=""
 NEW_QUOTATION_ID=""
-NEW_UPDATE_ID=""
 HIRE_PROJECT_ID=""
 # 1 between uploading the provider's photo and clearing it again. Unlike the
 # two above there is no id: the column holds one photo per company, so the
@@ -299,16 +298,14 @@ snap() {
 resnap() {
     local name=$1
     local scrub_today=${2:-0}
+    local extra=()
     if [ "$scrub_today" = 1 ]; then
-        node "$HELPER" normalize \
-            --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
-            --text "today=$(date -u +%F)" \
-            <"$BODY" >"$OUT_DIR/$name.json"
-    else
-        node "$HELPER" normalize \
-            --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
-            <"$BODY" >"$OUT_DIR/$name.json"
+        extra=(--text "today=$(date -u +%F)")
     fi
+    node "$HELPER" normalize \
+        --request "$LAST_REQUEST" --status "$LAST_STATUS" "${SUBS[@]}" \
+        ${extra[@]+"${extra[@]}"} \
+        <"$BODY" >"$OUT_DIR/$name.json"
 }
 
 # Reads one field out of the response snap() just made.
@@ -892,7 +889,7 @@ snap error-jobs-order-invalid GET "/jobs?status=OPEN&orderBy=invalidOrder" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # US3-4, US3-5. Category and budget/deadline filters.
-snap jobs-filter-category GET "/jobs?status=OPEN&category=Software%20Development" \
+snap jobs-filter-category GET "/jobs?status=OPEN&category=Web%20Development" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap jobs-filter-budget GET "/jobs?status=OPEN&minBudget=50000&maxBudget=150000" \
@@ -901,14 +898,14 @@ snap jobs-filter-budget GET "/jobs?status=OPEN&minBudget=50000&maxBudget=150000"
 snap error-jobs-filter-budget-inverted GET "/jobs?status=OPEN&minBudget=100000&maxBudget=50000" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-filter-deadline GET "/jobs?status=OPEN&deadline=2028-12-31" \
-    -H "$(bearer "$TOKEN_PROVIDER")"
-
-# US3-5. Deadline direction: BEFORE (default) and AFTER
+# US3-5. Deadline direction: BEFORE (default), AFTER, and ANY
 snap jobs-filter-deadline-before GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=BEFORE" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap jobs-filter-deadline-after GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=AFTER" \
+    -H "$(bearer "$TOKEN_PROVIDER")"
+
+snap jobs-filter-deadline-any GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=ANY" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-jobs-filter-deadline-invalid GET "/jobs?status=OPEN&deadline=not-a-date" \
@@ -1757,13 +1754,8 @@ if [ "$UPLOADS" = 1 ]; then
         -H "$(bearer "$TOKEN_PROVIDER")" \
         -H 'Content-Type: application/json' \
         -d '{"updateText":"Snapshot probe progress note."}'
-    NEW_UPDATE_ID="$(jget projectUpdateId)"
-    if [ -n "$NEW_UPDATE_ID" ]; then
-        SUBS+=(--id "project_update_id=$NEW_UPDATE_ID")
-        resnap projects-updates-create
-    fi
 
-    snap projects-updates-list GET "/projects/$ACCEPT_PROJECT_ID/updates" \
+    snap projects-updates-initial GET "/projects/$ACCEPT_PROJECT_ID/updates" \
         -H "$(bearer "$TOKEN_RECEIVER")"
 
     snap error-projects-submit-work-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/submit-work"
@@ -1815,6 +1807,10 @@ if [ "$UPLOADS" = 1 ]; then
     snap --today projects-accept-work POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
         -H "$(bearer "$TOKEN_RECEIVER")"
     snap error-projects-accept-work-again POST "/projects/$ACCEPT_PROJECT_ID/accept-work" \
+        -H "$(bearer "$TOKEN_RECEIVER")"
+
+    # US4-9 to US4-13. Full updates timeline covering PROGRESS, WORK_SUBMITTED, WORK_REJECTED, and WORK_ACCEPTED.
+    snap projects-updates-list GET "/projects/$ACCEPT_PROJECT_ID/updates" \
         -H "$(bearer "$TOKEN_RECEIVER")"
 
     # Second probe project for quotation delete, quotation reject, and project cancel
