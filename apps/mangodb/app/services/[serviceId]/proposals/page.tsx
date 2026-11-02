@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import type { ReceivedProposal } from '@mangodb/shared';
 import {
     listServiceProposals,
@@ -29,6 +30,7 @@ type ViewMode = 'pending' | 'accepted' | 'rejected' | null;
 
 // US2-16. The proposals sent to one of your services, opened from the service.
 export default function ServiceProposalsPage() {
+    const router = useRouter();
     const serviceId = parseId(useParams().serviceId);
 
     const [listingTitle, setListingTitle] = useState('Service Proposals');
@@ -150,6 +152,14 @@ export default function ServiceProposalsPage() {
         safePage * RECEIVED_PROPOSAL_PAGE_SIZE,
     );
 
+    const handleBack = () => {
+        if (window.history.length > 1) {
+            router.back();
+        } else {
+            router.push('/services/mine');
+        }
+    };
+
     if (error === NOT_SIGNED_IN) {
         return <div className="min-h-screen bg-surface" />;
     }
@@ -157,6 +167,18 @@ export default function ServiceProposalsPage() {
     return (
         <div className="min-h-screen bg-surface font-sans p-6 flex flex-col items-center">
             <div className="w-full max-w-6xl">
+                {/* Back button */}
+                <div className="mb-6">
+                    <button
+                        type="button"
+                        onClick={handleBack}
+                        className="inline-flex items-center gap-2 type-sm font-semibold text-brand hover:text-brand-dark transition-colors"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </button>
+                </div>
+
                 {/* Main Header Title */}
                 <div className="mb-6">
                     <h1 className="type-lg !font-[700] text-ink">
