@@ -6,7 +6,6 @@ import type {
     ProjectSummary,
     ProjectUpdateType,
 } from '@mangodb/shared';
-import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
@@ -17,6 +16,7 @@ import {
     moveProjectStatus,
     projectSelect,
     projectUpdateSelect,
+    projectPartyWhere,
     projectViewSelect,
     providerCompletedProjectsWhere,
     saveProjectEvent,
@@ -48,13 +48,8 @@ export async function listMyProjects(
     const callerId = req.auth!.companyId;
     const { page, pageSize } = parseQuery(projectListQuerySchema, req.query);
 
-    // The two parties are the proposal's sender and the listing's owner
-    // (projectParties). No deletedAt filter: a project is history.
-    const where: Prisma.ProjectWhereInput = {
-        proposal: {
-            OR: [{ senderId: callerId }, { listing: { companyId: callerId } }],
-        },
-    };
+    // No deletedAt filter: a project is history.
+    const where = projectPartyWhere(callerId);
 
     const [totalItems, rows] = await prisma.$transaction([
         prisma.project.count({ where }),
