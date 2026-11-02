@@ -66,7 +66,6 @@ export default function ServiceCard({
                     <div
                         role="group"
                         aria-label={
-                        aria-label={
                             service.averageRating === null
                                 ? 'No reviews yet'
                                 : `${service.averageRating.toFixed(1)} out of 5 stars from ${service.ratingCount} reviews`

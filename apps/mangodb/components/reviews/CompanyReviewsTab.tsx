@@ -151,8 +151,6 @@ export default function CompanyReviewsTab({
     if (isLoading && !data) {
         return <p className="type-sm text-ink-soft">Loading reviews…</p>;
     }
-        return <p className="type-sm text-ink-soft">Loading reviews…</p>;
-    }
 
     if (error) {
         return (
