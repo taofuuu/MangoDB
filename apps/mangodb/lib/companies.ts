@@ -6,11 +6,13 @@ import type {
     CompanyAccountSummary,
     CompletedProject,
     CompanyProfile,
+    CompanyReview,
     CompanySortOrder,
     CompanySummary,
     DeleteCompanyAccountRequest,
     Paginated,
     PublicCompanyProfile,
+    ReviewSummary,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -129,6 +131,28 @@ export function getCompanyProfile(
 ): Promise<PublicCompanyProfile> {
     const path = `/companies/${companyId}`;
     return cachedGet(path, () => apiFetch<PublicCompanyProfile>(path));
+}
+
+// US5-3. Reviews are owned by the Provider company, so a service detail view
+// asks for its offering company's paged review history.
+export function listCompanyReviews(
+    companyId: number,
+    page: number,
+    pageSize: number,
+): Promise<Paginated<CompanyReview>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/companies/${companyId}/reviews?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompanyReview>>(path));
+}
+
+export function getCompanyReviewSummary(
+    companyId: number,
+): Promise<ReviewSummary> {
+    const path = `/companies/${companyId}/reviews/summary`;
+    return cachedGet(path, () => apiFetch<ReviewSummary>(path));
 }
 
 // US2-5. A Provider's public completed work, newest first. The collection is

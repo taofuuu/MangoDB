@@ -166,6 +166,7 @@ export default function CompletedProjectsPage() {
                     {selectedProject && (
                         <div className="shrink-0 motion-safe:animate-slide-in">
                             <CompletedProjectDetailPanel
+                                key={selectedProject.projectId}
                                 project={selectedProject}
                                 onClose={() => setSelectedProject(null)}
                             />

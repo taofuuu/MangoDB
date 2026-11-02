@@ -31,6 +31,33 @@ export default function DepositSection({
         project.projectStatus === ('AWAITING_DEPOSIT' satisfies ProjectStatus);
     const canConfirmDeposit = isDepositReported && isAwaitingDeposit;
 
+    // A cancelled project, whatever was reported, for both roles (#239).
+    if (project.projectStatus === ('CANCELLED' satisfies ProjectStatus)) {
+        return (
+            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                        <span className="type-sm !font-[600] text-ink-soft">
+                            Deposit
+                        </span>
+                    </div>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
+                        —
+                    </span>
+                </div>
+
+                <div className="border-b border-line w-full" />
+
+                <p className="type-sm text-ink-soft leading-relaxed">
+                    {isDepositConfirmed
+                        ? 'The deposit was confirmed prior to project cancellation.'
+                        : 'This project has been cancelled. Deposit processing has ended.'}
+                </p>
+            </div>
+        );
+    }
+
     if (isDepositConfirmed) {
         if (isReceiver) {
             return (
@@ -196,8 +223,7 @@ export default function DepositSection({
         );
     }
 
-    // Receiver before the quotation is accepted, or a project cancelled
-    // before any report -> Grey
+    // Receiver before the quotation is accepted -> Grey
     return (
         <div className="rounded-status border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
             <div className="flex items-center gap-3">

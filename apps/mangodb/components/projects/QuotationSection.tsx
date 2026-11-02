@@ -35,6 +35,47 @@ export default function QuotationSection({
     const latestQuotation = quotations[0] ?? null;
     const qStatus = latestQuotation?.quotationStatus;
     const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
+    const isCancelled = project.projectStatus === 'CANCELLED';
+
+    if (isCancelled) {
+        return (
+            <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                        <span className="type-sm !font-[600] text-ink-soft">
+                            Quotation
+                        </span>
+                    </div>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                        —
+                    </span>
+                </div>
+
+                <div className="border-b border-line w-full" />
+
+                <p className="type-sm text-ink-soft leading-relaxed">
+                    {latestQuotation?.quotationStatus === 'ACCEPTED'
+                        ? 'The quotation was accepted prior to project cancellation.'
+                        : 'This project has been cancelled. Quotation submissions and reviews are closed.'}
+                </p>
+
+                {latestQuotation?.quotationFile && (
+                    <a
+                        href={latestQuotation.quotationFile}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-line bg-fill-subtle/50 hover:bg-fill-subtle px-3 py-2 type-xs font-semibold text-ink-soft transition-colors shadow-2xs group"
+                    >
+                        <div className="flex items-center gap-2 truncate">
+                            <span className="truncate">View Quotation</span>
+                        </div>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-soft opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                )}
+            </div>
+        );
+    }
 
     if (isPastQuotation || qStatus === 'ACCEPTED') {
         // Accepted -> Blue
