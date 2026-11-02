@@ -65,6 +65,7 @@ export default function ProjectSidebar({
     const isProvider = project.myRole === 'provider';
     const isReceiver = project.myRole === 'receiver';
     const otherParty = isProvider ? project.receiver : project.provider;
+    const isCancelled = project.projectStatus === 'CANCELLED';
 
     // Latest quotation (GET /projects/:id/quotations returns newest first)
     const latestQuotation = quotations[0] ?? null;
@@ -95,12 +96,18 @@ export default function ProjectSidebar({
         <div className="flex w-full flex-col gap-4 sm:w-[320px] shrink-0">
             {/* 1. Other Party Profile Card */}
             <div className="rounded-[20px] border border-line bg-surface-white p-6 shadow-card flex flex-col items-center text-center">
-                <div className="shrink-0 rounded-full p-0.5 ring-2 ring-brand mb-3">
+                <div
+                    className={`shrink-0 rounded-full p-0.5 ring-2 mb-3 ${
+                        isCancelled ? 'ring-line' : 'ring-brand'
+                    }`}
+                >
                     <CompanyAvatar
                         name={otherParty.companyName}
                         photoUrl={otherParty.companyPhoto}
                         size={64}
-                        className="!bg-brand-tint"
+                        className={
+                            isCancelled ? '!bg-fill-subtle' : '!bg-brand-tint'
+                        }
                     />
                 </div>
 
@@ -113,19 +120,31 @@ export default function ProjectSidebar({
 
                 <div className="mt-4 flex flex-col gap-2 w-full text-left type-xs text-ink-soft">
                     <div className="flex items-center gap-2 truncate">
-                        <Globe className="h-3.5 w-3.5 shrink-0 text-brand" />
+                        <Globe
+                            className={`h-3.5 w-3.5 shrink-0 ${
+                                isCancelled ? 'text-ink-soft' : 'text-brand'
+                            }`}
+                        />
                         <span className="truncate">
                             {otherCompanyProfile?.website || '—'}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 truncate">
-                        <Mail className="h-3.5 w-3.5 shrink-0 text-brand" />
+                        <Mail
+                            className={`h-3.5 w-3.5 shrink-0 ${
+                                isCancelled ? 'text-ink-soft' : 'text-brand'
+                            }`}
+                        />
                         <span className="truncate">
                             {otherCompanyProfile?.contactEmail || '—'}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 truncate">
-                        <Phone className="h-3.5 w-3.5 shrink-0 text-brand" />
+                        <Phone
+                            className={`h-3.5 w-3.5 shrink-0 ${
+                                isCancelled ? 'text-ink-soft' : 'text-brand'
+                            }`}
+                        />
                         <span className="truncate">
                             {otherCompanyProfile?.phone || '—'}
                         </span>
@@ -136,12 +155,22 @@ export default function ProjectSidebar({
             {/* 2. Contract Section */}
             <div className="rounded-[20px] border border-line bg-surface-white px-5 py-4 shadow-card flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-brand shrink-0" />
-                    <span className="type-sm !font-[600] text-ink">
+                    <FileText
+                        className={`h-5 w-5 shrink-0 ${
+                            isCancelled ? 'text-ink-soft' : 'text-brand'
+                        }`}
+                    />
+                    <span
+                        className={`type-sm !font-[600] ${
+                            isCancelled ? 'text-ink-soft' : 'text-ink'
+                        }`}
+                    >
                         Contract
                     </span>
                 </div>
-                <span className="type-xs text-ink-soft">Active</span>
+                <span className="type-xs text-ink-soft">
+                    {isCancelled ? 'Cancelled' : 'Active'}
+                </span>
             </div>
 
             {/* 3. Quotation Section */}
@@ -149,6 +178,48 @@ export default function ProjectSidebar({
                 const qStatus = latestQuotation?.quotationStatus;
                 const isPastQuotation =
                     project.projectStatus !== 'AWAITING_QUOTATION';
+
+                if (isCancelled) {
+                    return (
+                        <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                                    <span className="type-sm !font-[600] text-ink-soft">
+                                        Quotation
+                                    </span>
+                                </div>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                                    —
+                                </span>
+                            </div>
+
+                            <div className="border-b border-line w-full" />
+
+                            <p className="type-sm text-ink-soft leading-relaxed">
+                                {latestQuotation?.quotationStatus === 'ACCEPTED'
+                                    ? 'The quotation was accepted prior to project cancellation.'
+                                    : 'This project has been cancelled. Quotation submissions and reviews are closed.'}
+                            </p>
+
+                            {latestQuotation?.quotationFile && (
+                                <a
+                                    href={latestQuotation.quotationFile}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-line bg-fill-subtle/50 hover:bg-fill-subtle px-3 py-2 type-xs font-semibold text-ink-soft transition-colors shadow-2xs group"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <span className="truncate">
+                                            View Quotation
+                                        </span>
+                                    </div>
+                                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-soft opacity-70 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                            )}
+                        </div>
+                    );
+                }
 
                 if (isPastQuotation || qStatus === 'ACCEPTED') {
                     // Accepted -> Blue
@@ -512,6 +583,32 @@ export default function ProjectSidebar({
 
             {/* 4. Deposit Section */}
             {(() => {
+                if (isCancelled) {
+                    return (
+                        <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
+                                    <span className="type-sm !font-[600] text-ink-soft">
+                                        Deposit
+                                    </span>
+                                </div>
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                                    —
+                                </span>
+                            </div>
+
+                            <div className="border-b border-line w-full" />
+
+                            <p className="type-sm text-ink-soft leading-relaxed">
+                                {isDepositConfirmed
+                                    ? 'The deposit was confirmed prior to project cancellation.'
+                                    : 'This project has been cancelled. Deposit processing has ended.'}
+                            </p>
+                        </div>
+                    );
+                }
+
                 if (isDepositConfirmed) {
                     if (isReceiver) {
                         return (
@@ -670,6 +767,26 @@ export default function ProjectSidebar({
 
             {/* 5. Review Section */}
             {(() => {
+                if (isCancelled) {
+                    return (
+                        <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex flex-col gap-3 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <SquarePen className="h-5 w-5 text-ink-soft shrink-0 stroke-[2.2]" />
+                                <span className="type-sm !font-[600] text-ink-soft">
+                                    Review
+                                </span>
+                            </div>
+
+                            <div className="border-b border-line w-full" />
+
+                            <p className="type-xs text-ink-soft leading-relaxed">
+                                Reviews are not available for cancelled
+                                projects.
+                            </p>
+                        </div>
+                    );
+                }
+
                 const isCompleted = project.projectStatus === 'COMPLETED';
 
                 if (!isCompleted) {
