@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProjectDetail } from '@mangodb/shared';
+import type { ProjectDetail, ProjectStatus } from '@mangodb/shared';
 import { CheckCircle2, CircleCheck, ReceiptText } from 'lucide-react';
 
 type DepositSectionProps = {
@@ -27,13 +27,14 @@ export default function DepositSection({
     // The API takes the report and the confirmation only while the project
     // is AWAITING_DEPOSIT (409 otherwise). A project cancelled in that state
     // keeps depositReportedAt, so the flag alone is not enough.
-    const isAwaitingDeposit = project.projectStatus === 'AWAITING_DEPOSIT';
+    const isAwaitingDeposit =
+        project.projectStatus === ('AWAITING_DEPOSIT' satisfies ProjectStatus);
     const canConfirmDeposit = isDepositReported && isAwaitingDeposit;
 
     if (isDepositConfirmed) {
         if (isReceiver) {
             return (
-                <div className="rounded-[20px] border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="rounded-status border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
@@ -56,7 +57,7 @@ export default function DepositSection({
 
         // Confirmed by provider -> Blue (matches Frame in Figma)
         return (
-            <div className="rounded-[20px] border border-brand bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
+            <div className="rounded-status border border-brand bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
                 <div className="flex items-center gap-3">
                     <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-brand" />
                     <span className="type-sm !font-[600] text-ink">
@@ -72,7 +73,7 @@ export default function DepositSection({
         // Added by receiver, awaiting provider confirmation -> Yellow
         if (isProvider) {
             return (
-                <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="rounded-status border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
@@ -109,7 +110,7 @@ export default function DepositSection({
 
         // Receiver view while awaiting provider confirmation
         return (
-            <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+            <div className="rounded-status border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
@@ -133,7 +134,7 @@ export default function DepositSection({
     // Receiver view when quotation is accepted but deposit is not reported yet
     if (isReceiver && isAwaitingDeposit) {
         return (
-            <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
@@ -141,7 +142,7 @@ export default function DepositSection({
                             Deposit
                         </span>
                     </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
                         —
                     </span>
                 </div>
@@ -158,7 +159,7 @@ export default function DepositSection({
                         type="button"
                         onClick={onReportDeposit}
                         disabled={isBusy}
-                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
                     >
                         Report Deposit Payment
                     </button>
@@ -171,10 +172,12 @@ export default function DepositSection({
     // "deposit section - awaiting quatation" and "- awaiting deposit".
     if (
         isProvider &&
-        (isAwaitingDeposit || project.projectStatus === 'AWAITING_QUOTATION')
+        (isAwaitingDeposit ||
+            project.projectStatus ===
+                ('AWAITING_QUOTATION' satisfies ProjectStatus))
     ) {
         return (
-            <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
                 <div className="flex items-center gap-3">
                     <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
                     <span className="type-sm !font-[600] text-ink-soft">
@@ -196,14 +199,14 @@ export default function DepositSection({
     // Receiver before the quotation is accepted, or a project cancelled
     // before any report -> Grey
     return (
-        <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
+        <div className="rounded-status border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
             <div className="flex items-center gap-3">
                 <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-ink-soft" />
                 <span className="type-sm !font-[600] text-ink-soft">
                     Deposit
                 </span>
             </div>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
                 —
             </span>
         </div>
