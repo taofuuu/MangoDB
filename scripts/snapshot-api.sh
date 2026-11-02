@@ -182,25 +182,7 @@ cleanup() {
     # shellcheck disable=SC2086
     project_ids="$(echo $ACCEPT_PROJECT_ID $PROBE_QUOTE_PROJECT_ID $HIRE_PROJECT_ID)"
     if [ -n "$project_ids" ]; then
-        (
-            cd "$ROOT"
-            npx tsx --env-file=apps/api/.env -e "
-                import { prisma } from './apps/api/src/lib/prisma';
-                import { removeFromStorageByUrl, BUCKETS } from './apps/api/src/lib/storage';
-                async function clean() {
-                    const quotes = await prisma.quotation.findMany({
-                        where: { projectId: { in: [${project_ids// /,}] } },
-                        select: { quotationFile: true }
-                    });
-                    for (const q of quotes) {
-                        if (q.quotationFile) {
-                            await removeFromStorageByUrl(q.quotationFile, BUCKETS.QUOTATION);
-                        }
-                    }
-                }
-                clean().finally(() => prisma.\$disconnect());
-            " >/dev/null 2>&1 || true
-        )
+        run_db "import { removeFromStorageByUrl, BUCKETS } from './apps/api/src/lib/storage'; prisma.quotation.findMany({ where: { projectId: { in: [${project_ids// /,}] } } }).then((qs) => Promise.all(qs.map((q) => removeFromStorageByUrl(q.quotationFile, BUCKETS.QUOTATION))))"
     fi
     if [ -n "$ACCEPT_PROPOSAL_ID" ]; then
         run_db "prisma.project.deleteMany({ where: { proposalId: $ACCEPT_PROPOSAL_ID } })"
@@ -1687,6 +1669,25 @@ snap error-projects-updates-outsider GET "/projects/$ACCEPT_PROJECT_ID/updates" 
 snap projects-updates-empty GET "/projects/$ACCEPT_PROJECT_ID/updates" \
     -H "$(bearer "$TOKEN_RECEIVER")"
 
+# Review errors need no upload, so they run outside the UPLOADS gate.
+snap error-projects-review-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/review"
+snap error-projects-review-not-found POST /projects/2147483647/review \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+snap error-projects-review-forbidden POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_PROVIDER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+snap error-projects-review-not-completed POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
+snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review" \
+    -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
+
 if [ "$UPLOADS" = 1 ]; then
     snap error-quotations-create-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/quotations"
     snap error-quotations-create-forbidden POST "/projects/$ACCEPT_PROJECT_ID/quotations" \
@@ -1780,25 +1781,6 @@ if [ "$UPLOADS" = 1 ]; then
 
     # Re-submit work
     api POST "/projects/$ACCEPT_PROJECT_ID/submit-work" -H "$(bearer "$TOKEN_PROVIDER")" >/dev/null
-
-    # Before accepting work, test review error (Project is not COMPLETED)
-    snap error-projects-review-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/review"
-    snap error-projects-review-not-found POST /projects/2147483647/review \
-        -H "$(bearer "$TOKEN_RECEIVER")" \
-        -H 'Content-Type: application/json' \
-        -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
-    snap error-projects-review-forbidden POST "/projects/$ACCEPT_PROJECT_ID/review" \
-        -H "$(bearer "$TOKEN_PROVIDER")" \
-        -H 'Content-Type: application/json' \
-        -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
-    snap error-projects-review-not-completed POST "/projects/$ACCEPT_PROJECT_ID/review" \
-        -H "$(bearer "$TOKEN_RECEIVER")" \
-        -H 'Content-Type: application/json' \
-        -d '{"workQualityScore":5,"serviceScore":5,"valueForMoneyScore":5,"deliveryTimeScore":5}'
-    snap error-projects-review-validation POST "/projects/$ACCEPT_PROJECT_ID/review" \
-        -H "$(bearer "$TOKEN_RECEIVER")" \
-        -H 'Content-Type: application/json' \
-        -d '{"workQualityScore":6,"serviceScore":0,"valueForMoneyScore":3,"deliveryTimeScore":5}'
 
     # Accept work -> COMPLETED
     snap error-projects-accept-work-unauthorized POST "/projects/$ACCEPT_PROJECT_ID/accept-work"

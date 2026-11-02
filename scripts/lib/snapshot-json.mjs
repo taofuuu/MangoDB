@@ -143,7 +143,6 @@ const RESOURCE_PREFIX_KEYS = {
     proposals: ['proposalid'],
     quotations: ['quotationid'],
     companies: ['companyid', 'senderid'],
-    admin: ['companyid'],
 };
 
 function prefixMatchesKey(prefix, normalizedKey) {
