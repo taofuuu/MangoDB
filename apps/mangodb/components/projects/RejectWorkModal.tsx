@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useId } from 'react';
+import { X } from 'lucide-react';
 import ModalShell from '@/components/ui/ModalShell';
+import { useRejectWorkForm } from './useRejectWorkForm';
 
 type RejectWorkModalProps = {
     isOpen: boolean;
@@ -14,94 +16,107 @@ export default function RejectWorkModal({
     onClose,
     onSubmit,
 }: RejectWorkModalProps) {
-    const [reason, setReason] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const titleId = useId();
+    const descriptionId = useId();
+    const reasonErrorId = useId();
+    const {
+        values,
+        setField,
+        fieldError,
+        submitError,
+        isSubmitting,
+        reset,
+        handleSubmit,
+    } = useRejectWorkForm(onSubmit, onClose);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const trimmed = reason.trim();
-        if (!trimmed) {
-            setError('Please describe why the work needs revision.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        setError(null);
-        try {
-            await onSubmit(trimmed);
-            setReason('');
-            onClose();
-        } catch (err: unknown) {
-            setError(
-                err instanceof Error ? err.message : 'Failed to reject work',
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
+    const requestClose = () => {
+        reset();
+        onClose();
     };
 
     return (
         <ModalShell
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={requestClose}
             isBusy={isSubmitting}
-            panelClassName="w-full max-w-lg rounded-popup bg-surface-white p-6 shadow-xl border border-line"
+            role="alertdialog"
+            labelledBy={titleId}
+            describedBy={descriptionId}
+            panelClassName="w-full max-w-[440px] rounded-[20px] bg-surface p-6 shadow-xl"
         >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div>
-                    <h3 className="type-lg !font-[700] text-danger">
-                        Reject Work
-                    </h3>
-                    <p className="type-xs text-ink-soft mt-1">
-                        Please provide a clear reason so the provider knows what
-                        needs to be fixed.
-                    </p>
+            <form onSubmit={handleSubmit} className="flex flex-col">
+                <div className="flex items-start gap-4">
+                    <X
+                        aria-hidden="true"
+                        className="mt-1 size-8 shrink-0 text-danger stroke-[2.5]"
+                    />
+                    <div>
+                        <h2
+                            id={titleId}
+                            className="type-md !font-[600] text-ink"
+                        >
+                            Reject this delivered work?
+                        </h2>
+                        <p
+                            id={descriptionId}
+                            className="mt-2 type-xs leading-relaxed text-ink"
+                        >
+                            Tell the Provider what needs to change. Once you
+                            reject the work, the project goes back to In
+                            Progress so they can revise it.
+                        </p>
+                    </div>
                 </div>
 
-                {error && (
-                    <div className="rounded-input bg-danger/10 p-3 type-sm text-danger border border-danger/20">
-                        {error}
-                    </div>
-                )}
-
-                <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="reject-reason"
-                        className="type-xs font-semibold text-ink"
-                    >
-                        Reason for Revision
+                <div className="mt-4 flex flex-col gap-1.5">
+                    <label htmlFor="reject-reason" className="type-xs text-ink">
+                        Reason*
                     </label>
                     <textarea
                         id="reject-reason"
                         rows={5}
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        placeholder="Describe the issues or missing items that need adjustment..."
-                        className="w-full rounded-input border border-line bg-surface-white p-3 type-sm text-ink placeholder:text-ink-placeholder focus:border-danger focus:outline-none focus:ring-1 focus:ring-danger"
+                        value={values.reason}
+                        onChange={(e) => setField('reason', e.target.value)}
+                        placeholder="e.g. The login page doesn't match the agreed design."
+                        className="min-h-28 w-full resize-y rounded-input border border-line bg-surface-white p-3 type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand aria-[invalid=true]:border-danger aria-[invalid=true]:focus:border-danger aria-[invalid=true]:focus:ring-danger"
                         maxLength={10000}
-                        required
+                        aria-invalid={fieldError ? true : undefined}
+                        aria-describedby={
+                            fieldError ? reasonErrorId : undefined
+                        }
                     />
-                    <div className="text-right type-xs text-ink-soft">
-                        {reason.length} / 10000
-                    </div>
+                    {fieldError && (
+                        <p
+                            id={reasonErrorId}
+                            role="alert"
+                            className="type-xs text-danger"
+                        >
+                            {fieldError}
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
+                {submitError && (
+                    <p role="alert" className="mt-3 type-xs text-danger">
+                        {submitError}
+                    </p>
+                )}
+
+                <div className="mt-3 flex items-center justify-end gap-3 border-t border-line pt-3">
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={requestClose}
                         disabled={isSubmitting}
-                        className="rounded-button border border-line px-4 py-2 type-sm font-semibold text-ink hover:bg-fill-subtle transition-colors disabled:opacity-50"
+                        className="h-9 rounded-button bg-fill-muted px-5 type-xs !font-[600] text-ink-soft transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Cancel
+                        Go Back
                     </button>
                     <button
                         type="submit"
-                        disabled={isSubmitting || !reason.trim()}
-                        className="rounded-button bg-danger px-5 py-2 type-sm font-semibold text-surface-white hover:bg-danger-hover transition-colors disabled:opacity-50 shadow-xs"
+                        disabled={isSubmitting}
+                        className="h-9 rounded-button bg-danger px-5 type-xs !font-[600] text-surface-white transition-colors hover:bg-danger-hover disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {isSubmitting ? 'Rejecting...' : 'Reject Work'}
+                        {isSubmitting ? 'Rejecting...' : 'Reject work'}
                     </button>
                 </div>
             </form>

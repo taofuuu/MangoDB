@@ -11,14 +11,10 @@ import {
     Ban,
     CheckCircle2,
     CircleCheck,
-    ClipboardClock,
-    ClipboardList,
-    ExternalLink,
     FileText,
     Globe,
     Mail,
     Phone,
-    Plus,
     ReceiptText,
     Send,
     SquarePen,
@@ -26,6 +22,7 @@ import {
     X,
 } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import QuotationSection from '@/components/projects/QuotationSection';
 
 type ProjectSidebarProps = {
     project: ProjectDetail;
@@ -580,6 +577,14 @@ export default function ProjectSidebar({
                     </div>
                 );
             })()}
+            <QuotationSection
+                project={project}
+                quotations={quotations}
+                onUploadQuotation={onUploadQuotation}
+                onAcceptQuotation={onAcceptQuotation}
+                onRejectQuotation={onRejectQuotation}
+                isBusy={isBusy}
+            />
 
             {/* 4. Deposit Section */}
             {(() => {
