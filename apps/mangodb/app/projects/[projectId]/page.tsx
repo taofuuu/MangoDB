@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type {
@@ -105,6 +105,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [isSubmitSuccessOpen, setIsSubmitSuccessOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
     const [isProjectCompletedOpen, setIsProjectCompletedOpen] = useState(false);
+    const acceptedWorkRef = useRef(false);
 
     // Long description expanded state
     const [isDescExpanded, setIsDescExpanded] = useState(false);
@@ -552,10 +553,18 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await acceptWork(projectId);
             loadData();
-            setIsProjectCompletedOpen(true);
+            acceptedWorkRef.current = true;
         } finally {
             setIsBusy(false);
         }
+    };
+
+    const handleAcceptConfirmClose = () => {
+        setIsAcceptConfirmOpen(false);
+        if (!acceptedWorkRef.current) return;
+
+        acceptedWorkRef.current = false;
+        setIsProjectCompletedOpen(true);
     };
 
     const handleRejectWork = async (reason: string) => {
@@ -843,7 +852,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
             <ConfirmModal
                 isOpen={isAcceptConfirmOpen}
-                onClose={() => setIsAcceptConfirmOpen(false)}
+                onClose={handleAcceptConfirmClose}
                 onConfirm={handleAcceptWork}
                 icon={
                     <CircleCheck

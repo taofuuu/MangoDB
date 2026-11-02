@@ -16,7 +16,8 @@ export function useRejectWorkForm(
     onSubmitted: () => void,
 ) {
     const [values, setValues] = useState<RejectWorkValues>(EMPTY_VALUES);
-    const [error, setError] = useState<string | null>(null);
+    const [fieldError, setFieldError] = useState<string | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     function setField<Field extends keyof RejectWorkValues>(
@@ -24,12 +25,13 @@ export function useRejectWorkForm(
         value: RejectWorkValues[Field],
     ) {
         setValues((previous) => ({ ...previous, [field]: value }));
-        setError(null);
+        setFieldError(null);
     }
 
     function reset() {
         setValues(EMPTY_VALUES);
-        setError(null);
+        setFieldError(null);
+        setSubmitError(null);
     }
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -38,18 +40,19 @@ export function useRejectWorkForm(
 
         const validationError = validateWorkRejectionReason(values.reason);
         if (validationError) {
-            setError(validationError);
+            setFieldError(validationError);
             return;
         }
 
         setIsSubmitting(true);
-        setError(null);
+        setFieldError(null);
+        setSubmitError(null);
         try {
             await onSubmit(values.reason.trim());
             reset();
             onSubmitted();
         } catch (cause: unknown) {
-            setError(
+            setSubmitError(
                 cause instanceof Error
                     ? cause.message
                     : 'Failed to reject work',
@@ -59,5 +62,13 @@ export function useRejectWorkForm(
         }
     }
 
-    return { values, setField, error, isSubmitting, reset, handleSubmit };
+    return {
+        values,
+        setField,
+        fieldError,
+        submitError,
+        isSubmitting,
+        reset,
+        handleSubmit,
+    };
 }

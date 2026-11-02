@@ -19,8 +19,15 @@ export default function RejectWorkModal({
     const titleId = useId();
     const descriptionId = useId();
     const reasonErrorId = useId();
-    const { values, setField, error, isSubmitting, reset, handleSubmit } =
-        useRejectWorkForm(onSubmit, onClose);
+    const {
+        values,
+        setField,
+        fieldError,
+        submitError,
+        isSubmitting,
+        reset,
+        handleSubmit,
+    } = useRejectWorkForm(onSubmit, onClose);
 
     const requestClose = () => {
         reset();
@@ -73,19 +80,27 @@ export default function RejectWorkModal({
                         placeholder="e.g. The login page doesn't match the agreed design."
                         className="min-h-28 w-full resize-y rounded-input border border-line bg-surface-white p-3 type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand aria-[invalid=true]:border-danger aria-[invalid=true]:focus:border-danger aria-[invalid=true]:focus:ring-danger"
                         maxLength={10000}
-                        aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? reasonErrorId : undefined}
+                        aria-invalid={fieldError ? true : undefined}
+                        aria-describedby={
+                            fieldError ? reasonErrorId : undefined
+                        }
                     />
-                    {error && (
+                    {fieldError && (
                         <p
                             id={reasonErrorId}
                             role="alert"
                             className="type-xs text-danger"
                         >
-                            {error}
+                            {fieldError}
                         </p>
                     )}
                 </div>
+
+                {submitError && (
+                    <p role="alert" className="mt-3 type-xs text-danger">
+                        {submitError}
+                    </p>
+                )}
 
                 <div className="mt-3 flex items-center justify-end gap-3 border-t border-line pt-3">
                     <button
