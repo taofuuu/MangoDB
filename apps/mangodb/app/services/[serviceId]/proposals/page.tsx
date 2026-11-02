@@ -153,7 +153,7 @@ export default function ServiceProposalsPage() {
     );
 
     const handleBack = () => {
-        if (typeof window !== 'undefined' && window.history.state?.idx > 0) {
+        if (window.history.length > 1) {
             router.back();
         } else {
             router.push('/services/mine');
