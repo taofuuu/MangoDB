@@ -21,6 +21,10 @@ import { parseParams } from '../middleware/validate';
 import { projectIdParamSchema } from '../schemas/project.schema';
 import { quotationIdParamSchema } from '../schemas/quotation.schema';
 
+// One wording per rule: each is thrown from more than one place below.
+const ALREADY_PENDING = 'A quotation is already pending';
+const NOT_PENDING = 'Quotation is not PENDING';
+
 // US4-1 (T4.1.3). The Provider uploads a quotation PDF on a project while it
 // is AWAITING_QUOTATION and no quotation is pending (ADR 0017). The project
 // stays AWAITING_QUOTATION until the Receiver accepts one (ADR 0015).
@@ -50,7 +54,7 @@ export async function createQuotation(
         select: { quotationId: true },
     });
     if (pending) {
-        throw ApiError.conflict('A quotation is already pending');
+        throw ApiError.conflict(ALREADY_PENDING);
     }
 
     // The row and its timeline event (#212) save together, or neither does.
@@ -69,7 +73,7 @@ export async function createQuotation(
                 return created;
             }),
         ),
-        'A quotation is already pending',
+        ALREADY_PENDING,
     );
 
     res.status(201).json(toQuotation(row));
@@ -123,7 +127,7 @@ export async function acceptQuotation(
                 },
                 select: quotationSelect,
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await moveProjectStatus(
             tx,
@@ -171,7 +175,7 @@ export async function rejectQuotation(
                 },
                 select: quotationSelect,
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_REJECTED');
         return row;
@@ -209,7 +213,7 @@ export async function deleteQuotation(
                 },
                 select: { quotationFile: true },
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_DELETED');
         return row;
