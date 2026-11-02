@@ -1,9 +1,9 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { X } from 'lucide-react';
 import ModalShell from '@/components/ui/ModalShell';
-import { validateWorkRejectionReason } from '@/lib/validation/project';
+import { useRejectWorkForm } from './useRejectWorkForm';
 
 type RejectWorkModalProps = {
     isOpen: boolean;
@@ -19,37 +19,12 @@ export default function RejectWorkModal({
     const titleId = useId();
     const descriptionId = useId();
     const reasonErrorId = useId();
-    const [reason, setReason] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { values, setField, error, isSubmitting, reset, handleSubmit } =
+        useRejectWorkForm(onSubmit, onClose);
 
     const requestClose = () => {
-        if (isSubmitting) return;
-        setReason('');
-        setError(null);
+        reset();
         onClose();
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const validationError = validateWorkRejectionReason(reason);
-        if (validationError) {
-            setError(validationError);
-            return;
-        }
-
-        setIsSubmitting(true);
-        setError(null);
-        try {
-            await onSubmit(reason.trim());
-            requestClose();
-        } catch (err: unknown) {
-            setError(
-                err instanceof Error ? err.message : 'Failed to reject work',
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
     };
 
     return (
@@ -93,11 +68,8 @@ export default function RejectWorkModal({
                     <textarea
                         id="reject-reason"
                         rows={5}
-                        value={reason}
-                        onChange={(e) => {
-                            setReason(e.target.value);
-                            if (error) setError(null);
-                        }}
+                        value={values.reason}
+                        onChange={(e) => setField('reason', e.target.value)}
                         placeholder="e.g. The login page doesn't match the agreed design."
                         className="min-h-28 w-full resize-y rounded-input border border-line bg-surface-white p-3 type-sm text-ink placeholder:text-ink-placeholder focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand aria-[invalid=true]:border-danger aria-[invalid=true]:focus:border-danger aria-[invalid=true]:focus:ring-danger"
                         maxLength={10000}
