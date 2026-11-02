@@ -10,7 +10,7 @@ import type {
     Quotation,
     Review,
 } from '@mangodb/shared';
-import { ArrowLeft, Plus, Send } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Plus, Send } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
@@ -20,6 +20,7 @@ import ProjectTimelineFeed, {
     type TimelineEvent,
 } from '@/components/projects/ProjectTimelineFeed';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
+import ProjectCompletedModal from '@/components/projects/ProjectCompletedModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import EmptyState from '@/components/ui/EmptyState';
@@ -103,6 +104,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
     const [isSubmitSuccessOpen, setIsSubmitSuccessOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
+    const [isProjectCompletedOpen, setIsProjectCompletedOpen] = useState(false);
 
     // Long description expanded state
     const [isDescExpanded, setIsDescExpanded] = useState(false);
@@ -550,6 +552,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await acceptWork(projectId);
             loadData();
+            setIsProjectCompletedOpen(true);
         } finally {
             setIsBusy(false);
         }
@@ -842,11 +845,27 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 isOpen={isAcceptConfirmOpen}
                 onClose={() => setIsAcceptConfirmOpen(false)}
                 onConfirm={handleAcceptWork}
-                title="Accept Completed Work"
-                description="By accepting the work, this project will be marked as COMPLETED. Are you satisfied with the deliverables?"
-                confirmLabel="Accept Deliverables"
-                cancelLabel="Review Again"
+                icon={
+                    <CircleCheck
+                        aria-hidden="true"
+                        className="size-8 text-brand"
+                    />
+                }
+                title="Accept the delivered work?"
+                description="Accept only if the work meets what you agreed with the Provider. Once you accept, the project is marked Completed and can't be sent back for changes."
+                confirmLabel="Accept work"
+                pendingLabel="Accepting..."
+                cancelLabel="Go Back"
                 confirmVariant="primary"
+            />
+
+            <ProjectCompletedModal
+                isOpen={isProjectCompletedOpen}
+                onReviewLater={() => setIsProjectCompletedOpen(false)}
+                onReview={() => {
+                    setIsProjectCompletedOpen(false);
+                    router.push(`/projects/${projectId}/review`);
+                }}
             />
         </div>
     );
