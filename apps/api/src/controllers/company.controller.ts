@@ -13,11 +13,11 @@ import {
     companyProfileUpdateData,
     companyTypeRepeat,
     editsProviderFields,
-    findPublicCompany,
     publicCompanyProfileSelect,
     toCompanyProfile,
     toPublicCompanyProfile,
 } from '../lib/company-profile';
+import { findPublicCompany } from '../lib/company-lookup';
 import {
     assertCompanyIdentityAvailable,
     identityConflict,

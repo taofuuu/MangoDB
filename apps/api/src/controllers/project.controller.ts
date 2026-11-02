@@ -26,7 +26,7 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
-import { findPublicCompany } from '../lib/company-profile';
+import { findPublicCompany } from '../lib/company-lookup';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { companyIdParamSchema } from '../schemas/company.schema';
