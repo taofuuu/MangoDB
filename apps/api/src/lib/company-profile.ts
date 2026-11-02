@@ -7,8 +7,25 @@ import type {
 import type { Prisma } from '../generated/prisma/client';
 import type { UpdateCompanyProfileInput } from '../schemas/company.schema';
 import { ApiError } from './api-error';
+import { prisma } from './prisma';
 import { isUniqueViolation } from './prisma-errors';
 import { omitUndefined } from './objects';
+
+// Another company, as the public may see it. Unknown, soft-deleted and admin
+// accounts all answer the same 404, so a caller cannot tell which an id is.
+export async function findPublicCompany<S extends Prisma.CompanySelect>(
+    companyId: number,
+    select: S,
+): Promise<Prisma.CompanyGetPayload<{ select: S }>> {
+    // findFirst, not findUnique: the two extra conditions are not part of a
+    // unique key.
+    const company = await prisma.company.findFirst({
+        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
+        select,
+    });
+    if (!company) throw ApiError.notFound('Company not found');
+    return company;
+}
 
 // A company in one line, the way a row it owns or sent shows it (conventions
 // §1). Only these columns: the row also holds the sign-in email and password

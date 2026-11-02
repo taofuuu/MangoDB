@@ -13,6 +13,7 @@ import {
     companyProfileUpdateData,
     companyTypeRepeat,
     editsProviderFields,
+    findPublicCompany,
     publicCompanyProfileSelect,
     toCompanyProfile,
     toPublicCompanyProfile,
@@ -73,17 +74,10 @@ export async function getCompanyProfile(
     res: Response,
 ): Promise<void> {
     const { companyId } = parseParams(companyIdParamSchema, req.params);
-    // findFirst, not findUnique: the two extra conditions are not part of a
-    // unique key.
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: publicCompanyProfileSelect,
-    });
-
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
-
+    const company = await findPublicCompany(
+        companyId,
+        publicCompanyProfileSelect,
+    );
     res.json(toPublicCompanyProfile(company));
 }
 
@@ -336,13 +330,7 @@ export async function listProviderReviews(
         req.query,
     );
 
-    const target = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: { companyId: true },
-    });
-    if (!target) {
-        throw ApiError.notFound('Company not found');
-    }
+    await findPublicCompany(companyId, { companyId: true });
 
     const where: Prisma.ReviewWhereInput = {
         project: providerCompletedProjectsWhere(companyId),
@@ -373,13 +361,6 @@ export async function getProviderReviewSummary(
 ): Promise<void> {
     const { companyId } = parseParams(companyIdParamSchema, req.params);
 
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: ratingSelect,
-    });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
-
+    const company = await findPublicCompany(companyId, ratingSelect);
     res.json(getRating(company));
 }

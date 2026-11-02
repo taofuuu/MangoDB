@@ -26,6 +26,7 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
+import { findPublicCompany } from '../lib/company-profile';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { companyIdParamSchema } from '../schemas/company.schema';
@@ -393,13 +394,7 @@ export async function listProviderCompletedProjects(
         req.query,
     );
 
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: { companyId: true },
-    });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
+    await findPublicCompany(companyId, { companyId: true });
 
     const where = providerCompletedProjectsWhere(companyId);
 
