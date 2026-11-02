@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type {
+    ListingType,
     ProjectDetail,
     ProjectRole,
     ProjectStatus,
@@ -33,11 +34,11 @@ const REPORTED_AT = '2026-10-27T07:05:00.000Z';
 const CONFIRMED_AT = '2026-10-28T03:30:00.000Z';
 
 const STATUS: Record<SampleState, ProjectStatus> = {
-    'awaiting-quotation': 'AWAITING_QUOTATION',
-    'awaiting-deposit': 'AWAITING_DEPOSIT',
-    reported: 'AWAITING_DEPOSIT',
-    confirmed: 'IN_PROGRESS',
-    cancelled: 'CANCELLED',
+    'awaiting-quotation': 'AWAITING_QUOTATION' satisfies ProjectStatus,
+    'awaiting-deposit': 'AWAITING_DEPOSIT' satisfies ProjectStatus,
+    reported: 'AWAITING_DEPOSIT' satisfies ProjectStatus,
+    confirmed: 'IN_PROGRESS' satisfies ProjectStatus,
+    cancelled: 'CANCELLED' satisfies ProjectStatus,
 };
 
 function sampleProject(role: ProjectRole, state: SampleState): ProjectDetail {
@@ -52,7 +53,7 @@ function sampleProject(role: ProjectRole, state: SampleState): ProjectDetail {
         depositConfirmedAt: state === 'confirmed' ? CONFIRMED_AT : null,
         completedAt: null,
         listingId: 1,
-        listingType: 'SERVICE',
+        listingType: 'SERVICE' satisfies ListingType,
         listingTitle: 'Inventory dashboard for a café chain',
         provider: {
             companyId: 1,
@@ -117,6 +118,10 @@ function RolePreview({ role }: { role: ProjectRole }) {
                 ))}
             </div>
 
+            {/* 27.66vw is the Figma card's 531px of 1920. The px floor is the
+                exception docs/ai-brief.md "Sizing" allows ("keep a min-w on
+                anything that must stay tappable"), so the card and its
+                buttons keep a usable width on a narrow window. */}
             <div className="w-full sm:w-[27.66vw] sm:min-w-[300px]">
                 <DepositSection
                     project={sampleProject(role, state)}
