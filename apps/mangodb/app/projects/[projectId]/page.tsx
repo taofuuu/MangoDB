@@ -848,7 +848,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 icon={
                     <CircleCheck
                         aria-hidden="true"
-                        className="size-8 text-brand"
+                        className="size-11 shrink-0 text-brand"
                     />
                 }
                 title="Accept the delivered work?"
@@ -861,6 +861,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
             <ProjectCompletedModal
                 isOpen={isProjectCompletedOpen}
+                providerName={project.provider.companyName}
                 onReviewLater={() => setIsProjectCompletedOpen(false)}
                 onReview={() => {
                     setIsProjectCompletedOpen(false);
