@@ -779,7 +779,7 @@ export default function ProjectSidebar({
 
                             <div className="border-b border-line w-full" />
 
-                            <p className="type-xs text-ink-soft leading-relaxed">
+                            <p className="type-sm text-ink-soft leading-relaxed">
                                 Reviews are not available for cancelled
                                 projects.
                             </p>
@@ -802,7 +802,7 @@ export default function ProjectSidebar({
 
                             <div className="border-b border-line w-full" />
 
-                            <p className="type-xs text-ink-soft leading-relaxed">
+                            <p className="type-sm text-ink-soft leading-relaxed">
                                 The receiver can leave a review once the project
                                 is successfully completed.
                             </p>
