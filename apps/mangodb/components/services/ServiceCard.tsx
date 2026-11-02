@@ -64,6 +64,8 @@ export default function ServiceCard({
 
                 <div className="flex shrink-0 flex-col items-end justify-between">
                     <div
+                        role="group"
+                        aria-label={
                         aria-label={
                             service.averageRating === null
                                 ? 'No reviews yet'
