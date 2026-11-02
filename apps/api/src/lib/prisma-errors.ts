@@ -84,3 +84,17 @@ export async function orConflict<T>(
         throw err;
     }
 }
+
+// Runs a create that only one unique index can reject and turns P2002 (the
+// row already exists) into a 409. Anything else is rethrown unchanged.
+export async function orDuplicate<T>(
+    write: Promise<T>,
+    message: string,
+): Promise<T> {
+    try {
+        return await write;
+    } catch (err) {
+        if (isUniqueViolation(err)) throw ApiError.conflict(message);
+        throw err;
+    }
+}

@@ -363,7 +363,8 @@ const fakePrisma = {
                     'Unique constraint failed on the fields: (proj_id)',
                 );
                 (err as unknown as { code: string }).code = 'P2002';
-                throw err;
+                // Prisma rejects, it never throws synchronously.
+                return Promise.reject(err);
             }
             reviewAlreadyExists = true;
             createdReviews.push(data);

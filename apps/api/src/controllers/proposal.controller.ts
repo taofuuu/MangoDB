@@ -12,7 +12,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
-import { isUniqueViolation } from '../lib/prisma-errors';
+import { orDuplicate } from '../lib/prisma-errors';
 import { parseParams, parseBody, parseQuery } from '../middleware/validate';
 import {
     createProposalSchema,
@@ -88,8 +88,10 @@ async function sendProposalToListing(
         throw ApiError.conflict(msg.notOpen);
     }
 
-    try {
-        const proposal = await prisma.proposal.create({
+    // Only a second PENDING one hits the index; a decided one may repeat
+    // (ADR 0016).
+    const proposal = await orDuplicate(
+        prisma.proposal.create({
             data: {
                 listingId,
                 senderId: callerCompanyId,
@@ -99,17 +101,10 @@ async function sendProposalToListing(
                 proposalStatus: 'PENDING' satisfies ProposalStatus,
             },
             select: proposalSelect,
-        });
-
-        return toProposal(proposal);
-    } catch (err) {
-        // Only a second PENDING one hits the index; a decided one may repeat
-        // (ADR 0016).
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict(msg.repeat);
-        }
-        throw err;
-    }
+        }),
+        msg.repeat,
+    );
+    return toProposal(proposal);
 }
 
 export async function createProposal(

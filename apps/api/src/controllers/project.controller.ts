@@ -10,7 +10,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
-import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
+import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
     completedProjectSelect,
@@ -352,26 +352,14 @@ export async function createReview(req: Request, res: Response): Promise<void> {
         throw ApiError.conflict('Project is not COMPLETED');
     }
 
-    try {
-        const row = await prisma.review.create({
-            data: {
-                projectId,
-                workQualityScore: body.workQualityScore,
-                serviceScore: body.serviceScore,
-                valueForMoneyScore: body.valueForMoneyScore,
-                deliveryTimeScore: body.deliveryTimeScore,
-                comment: body.comment ?? null,
-            },
+    const row = await orDuplicate(
+        prisma.review.create({
+            data: { projectId, ...body, comment: body.comment ?? null },
             select: reviewSelect,
-        });
-
-        res.status(201).json(toReview(row));
-    } catch (err) {
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Project has already been reviewed');
-        }
-        throw err;
-    }
+        }),
+        'Project has already been reviewed',
+    );
+    res.status(201).json(toReview(row));
 }
 // US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404 (conventions §4).
