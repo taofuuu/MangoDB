@@ -798,6 +798,8 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 isOpen={isAddUpdateOpen}
                 onClose={() => setIsAddUpdateOpen(false)}
                 onSubmit={handleAddUpdate}
+                projectName={project?.listingTitle}
+                receiverName={project?.receiver?.companyName}
             />
 
             <RejectWorkModal
