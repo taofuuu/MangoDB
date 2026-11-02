@@ -26,7 +26,7 @@ const STATES: { value: SampleState; label: string }[] = [
     { value: 'awaiting-deposit', label: 'Awaiting deposit' },
     { value: 'reported', label: 'Reported' },
     { value: 'confirmed', label: 'Confirmed' },
-    { value: 'cancelled', label: 'Cancelled before deposit' },
+    { value: 'cancelled', label: 'Cancelled' },
 ];
 
 const REPORTED_AT = '2026-10-27T07:05:00.000Z';
