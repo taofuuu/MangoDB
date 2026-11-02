@@ -30,6 +30,6 @@ export const PRIVACY_POLICY: PolicySection[] = [
     },
     {
         heading: '6. Contact',
-        body: 'For questions about this policy or your personal data, contact the MangoDB team. We will answer your request as soon as we can.',
+        body: 'For questions about this policy or your personal data, email the MangoDB team at privacy@example.com. We will answer your request as soon as we can.',
     },
 ];
