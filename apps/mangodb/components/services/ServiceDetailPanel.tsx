@@ -16,6 +16,7 @@ import type { ServiceSummary } from '@mangodb/shared';
 import HireRequestModal from '@/components/proposals/HireRequestModal';
 import { isReceiverAccount } from '@/lib/roles';
 import ServiceActionsMenu from './ServiceActionsMenu';
+import CompanyReviewsTab from '@/components/reviews/CompanyReviewsTab';
 
 export default function ServiceDetailPanel({
     service,
@@ -23,6 +24,7 @@ export default function ServiceDetailPanel({
     titleId,
     onEdit,
     onDelete,
+    showReviews = false,
 }: {
     service: ServiceSummary;
     onClose: () => void;
@@ -32,6 +34,9 @@ export default function ServiceDetailPanel({
     // Your own service only (My Services): the ⋯ menu beside the ←.
     onEdit?: (service: ServiceSummary) => void;
     onDelete?: (service: ServiceSummary) => void;
+    // Search results expose the Provider's public review history. Other
+    // service-detail surfaces keep their existing focused detail view.
+    showReviews?: boolean;
 }) {
     const [portfolios, setPortfolios] = useState<ServicePortfolio[] | null>(
         null,
@@ -43,6 +48,9 @@ export default function ServiceDetailPanel({
     const viewer = me.status === 'ready' ? me.company : null;
     const viewerCompanyId = viewer?.companyId ?? null;
     const [isHireFormOpen, setIsHireFormOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'details' | 'reviews'>(
+        'details',
+    );
 
     // US2-15. Only a Receiver may send a hire request, and not on its own
     // service. The API refuses the other cases (403), so the button is only
@@ -124,195 +132,246 @@ export default function ServiceDetailPanel({
 
             <hr className="my-[2vh] border-0 border-t border-brand/30" />
 
+            {showReviews && (
+                <div className="mb-[1.5vh] flex gap-2">
+                    <button
+                        type="button"
+                        aria-pressed={activeTab === 'details'}
+                        onClick={() => setActiveTab('details')}
+                        className={`rounded-full px-3 py-1 type-xs transition-colors ${
+                            activeTab === 'details'
+                                ? 'bg-fill-muted text-ink'
+                                : 'text-ink-soft hover:bg-fill-subtle'
+                        }`}
+                    >
+                        Service detail
+                    </button>
+                    <button
+                        type="button"
+                        aria-pressed={activeTab === 'reviews'}
+                        onClick={() => setActiveTab('reviews')}
+                        className={`rounded-full px-3 py-1 type-xs transition-colors ${
+                            activeTab === 'reviews'
+                                ? 'bg-fill-muted text-ink'
+                                : 'text-ink-soft hover:bg-fill-subtle'
+                        }`}
+                    >
+                        Reviews ({service.ratingCount})
+                    </button>
+                </div>
+            )}
+
             {/* Service Detail */}
             <div className="flex flex-1 flex-col overflow-y-auto pr-[0.5vw]">
-                {/* Company */}
-                <div className="flex flex-col gap-[0.6vh]">
-                    <span className="type-sm text-brand">Company</span>
+                {activeTab === 'reviews' && showReviews ? (
+                    <CompanyReviewsTab companyId={service.company.companyId} />
+                ) : (
+                    <>
+                        {/* Company */}
+                        <div className="flex flex-col gap-[0.6vh]">
+                            <span className="type-sm text-brand">Company</span>
 
-                    <div className="flex items-center gap-3 pl-[0.5vw]">
-                        <CompanyAvatar
-                            name={service.company.companyName}
-                            photoUrl={service.company.companyPhoto}
-                            size={44}
-                        />
-                        <Link
-                            href={companyProfileHref(
-                                service.company.companyId,
-                                viewerCompanyId,
-                            )}
-                            className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
-                        >
-                            {service.company.companyName || '-'}
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Categories */}
-                <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
-                    <span className="type-sm text-brand">Categories</span>
-
-                    <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
-                        {service.categories.length > 0 ? (
-                            service.categories.map((category) => (
-                                <span
-                                    key={category}
-                                    className="
-                                        rounded-status
-                                        bg-accent
-                                        px-[0.63vw]
-                                        py-[0.19vh]
-                                        type-sm
-                                        !font-[600]
-                                        text-ink
-                                    "
+                            <div className="flex items-center gap-3 pl-[0.5vw]">
+                                <CompanyAvatar
+                                    name={service.company.companyName}
+                                    photoUrl={service.company.companyPhoto}
+                                    size={44}
+                                />
+                                <Link
+                                    href={companyProfileHref(
+                                        service.company.companyId,
+                                        viewerCompanyId,
+                                    )}
+                                    className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
                                 >
-                                    {category}
-                                </span>
-                            ))
-                        ) : (
-                            <span className="type-sm text-ink-soft">-</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Description */}
-                <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                    <span className="type-sm text-brand">Description</span>
-
-                    <p className="type-sm leading-relaxed whitespace-pre-wrap text-ink pl-[0.5vw]">
-                        {service.listingDesc || '-'}
-                    </p>
-                </div>
-
-                {/* Budget */}
-                <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
-                    <span className="type-sm text-brand">Budget</span>
-
-                    <p className="type-md text-ink pl-[0.5vw]">
-                        {formatBudgetRange(
-                            service.minBudget,
-                            service.maxBudget,
-                        )}
-                    </p>
-                </div>
-
-                {/* Tech Stack */}
-                <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
-                    <span className="type-sm text-brand">Tech Stack</span>
-
-                    <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
-                        {service.techStack.length > 0 ? (
-                            service.techStack.map((technology) => (
-                                <span
-                                    key={technology}
-                                    className="
-                                        rounded-status
-                                        bg-accent
-                                        px-[0.63vw]
-                                        py-[0.19vh]
-                                        type-sm
-                                        !font-[600]
-                                        text-ink
-                                    "
-                                >
-                                    {technology}
-                                </span>
-                            ))
-                        ) : (
-                            <span className="type-sm text-ink-soft">-</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Portfolio */}
-                <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
-                    <span className="type-sm text-brand">Portfolio</span>
-
-                    {portfolios === null && !portfolioError && (
-                        <p
-                            role="status"
-                            className="type-sm text-ink-soft pl-[0.5vw]"
-                        >
-                            Loading portfolio…
-                        </p>
-                    )}
-
-                    {portfolioError && (
-                        <p
-                            role="alert"
-                            className="type-sm text-danger pl-[0.5vw]"
-                        >
-                            Portfolio could not be loaded.
-                        </p>
-                    )}
-
-                    {portfolios?.length === 0 && (
-                        <p className="type-sm text-ink-soft pl-[0.5vw]">
-                            No portfolio provided.
-                        </p>
-                    )}
-
-                    {portfolios && portfolios.length > 0 && (
-                        <div className="flex flex-col gap-3 pl-[0.5vw]">
-                            {portfolios.map((portfolio) => (
-                                <article
-                                    key={portfolio.portfolioId}
-                                    className="rounded-input grid grid-cols-[88px_minmax(0,1fr)] gap-3 border border-line bg-surface-white p-3"
-                                >
-                                    <div className="relative h-[66px] overflow-hidden rounded-input bg-fill-subtle">
-                                        <Image
-                                            src={portfolioImageSrc(
-                                                portfolio.portfolioImage,
-                                            )}
-                                            alt=""
-                                            fill
-                                            sizes="88px"
-                                            className="object-cover"
-                                        />
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <a
-                                            href={portfolio.portfolioLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex max-w-full items-center gap-1 type-sm !font-[600] text-ink hover:text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                                        >
-                                            <span className="truncate">
-                                                {portfolio.portfolioName}
-                                            </span>
-                                            <ExternalLink
-                                                aria-hidden
-                                                className="h-3.5 w-3.5 shrink-0"
-                                            />
-                                        </a>
-                                        <p className="mt-0.5 type-xs text-ink-soft">
-                                            {formatDateOnly(
-                                                portfolio.developmentDate,
-                                            )}
-                                        </p>
-                                        <p className="mt-1 line-clamp-2 type-xs text-ink-soft">
-                                            {portfolio.portfolioDescription ||
-                                                'No description provided.'}
-                                        </p>
-                                    </div>
-                                </article>
-                            ))}
+                                    {service.company.companyName || '-'}
+                                </Link>
+                            </div>
                         </div>
-                    )}
-                </div>
 
-                {canSendHireRequest && (
-                    <div className="mt-auto pt-[2vh]">
-                        <button
-                            type="button"
-                            onClick={() => setIsHireFormOpen(true)}
-                            className="flex h-[4.5vh] w-full items-center justify-center rounded-full bg-brand type-md text-surface-white transition hover:bg-brand-dark"
-                        >
-                            Send Hire Request
-                        </button>
-                    </div>
+                        {/* Categories */}
+                        <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
+                            <span className="type-sm text-brand">
+                                Categories
+                            </span>
+
+                            <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
+                                {service.categories.length > 0 ? (
+                                    service.categories.map((category) => (
+                                        <span
+                                            key={category}
+                                            className="
+                                        rounded-status
+                                        bg-accent
+                                        px-[0.63vw]
+                                        py-[0.19vh]
+                                        type-sm
+                                        !font-[600]
+                                        text-ink
+                                    "
+                                        >
+                                            {category}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="type-sm text-ink-soft">
+                                        -
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
+                            <span className="type-sm text-brand">
+                                Description
+                            </span>
+
+                            <p className="type-sm leading-relaxed whitespace-pre-wrap text-ink pl-[0.5vw]">
+                                {service.listingDesc || '-'}
+                            </p>
+                        </div>
+
+                        {/* Budget */}
+                        <div className="mt-[2vh] flex flex-col gap-[0.6vh]">
+                            <span className="type-sm text-brand">Budget</span>
+
+                            <p className="type-md text-ink pl-[0.5vw]">
+                                {formatBudgetRange(
+                                    service.minBudget,
+                                    service.maxBudget,
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Tech Stack */}
+                        <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
+                            <span className="type-sm text-brand">
+                                Tech Stack
+                            </span>
+
+                            <div className="flex flex-wrap gap-[0.42vw] pl-[0.5vw]">
+                                {service.techStack.length > 0 ? (
+                                    service.techStack.map((technology) => (
+                                        <span
+                                            key={technology}
+                                            className="
+                                        rounded-status
+                                        bg-accent
+                                        px-[0.63vw]
+                                        py-[0.19vh]
+                                        type-sm
+                                        !font-[600]
+                                        text-ink
+                                    "
+                                        >
+                                            {technology}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="type-sm text-ink-soft">
+                                        -
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Portfolio */}
+                        <div className="mt-[2vh] flex flex-col gap-[0.8vh]">
+                            <span className="type-sm text-brand">
+                                Portfolio
+                            </span>
+
+                            {portfolios === null && !portfolioError && (
+                                <p
+                                    role="status"
+                                    className="type-sm text-ink-soft pl-[0.5vw]"
+                                >
+                                    Loading portfolio…
+                                </p>
+                            )}
+
+                            {portfolioError && (
+                                <p
+                                    role="alert"
+                                    className="type-sm text-danger pl-[0.5vw]"
+                                >
+                                    Portfolio could not be loaded.
+                                </p>
+                            )}
+
+                            {portfolios?.length === 0 && (
+                                <p className="type-sm text-ink-soft pl-[0.5vw]">
+                                    No portfolio provided.
+                                </p>
+                            )}
+
+                            {portfolios && portfolios.length > 0 && (
+                                <div className="flex flex-col gap-3 pl-[0.5vw]">
+                                    {portfolios.map((portfolio) => (
+                                        <article
+                                            key={portfolio.portfolioId}
+                                            className="rounded-input grid grid-cols-[88px_minmax(0,1fr)] gap-3 border border-line bg-surface-white p-3"
+                                        >
+                                            <div className="relative h-[66px] overflow-hidden rounded-input bg-fill-subtle">
+                                                <Image
+                                                    src={portfolioImageSrc(
+                                                        portfolio.portfolioImage,
+                                                    )}
+                                                    alt=""
+                                                    fill
+                                                    sizes="88px"
+                                                    className="object-cover"
+                                                />
+                                            </div>
+
+                                            <div className="min-w-0">
+                                                <a
+                                                    href={
+                                                        portfolio.portfolioLink
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex max-w-full items-center gap-1 type-sm !font-[600] text-ink hover:text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                                >
+                                                    <span className="truncate">
+                                                        {
+                                                            portfolio.portfolioName
+                                                        }
+                                                    </span>
+                                                    <ExternalLink
+                                                        aria-hidden
+                                                        className="h-3.5 w-3.5 shrink-0"
+                                                    />
+                                                </a>
+                                                <p className="mt-0.5 type-xs text-ink-soft">
+                                                    {formatDateOnly(
+                                                        portfolio.developmentDate,
+                                                    )}
+                                                </p>
+                                                <p className="mt-1 line-clamp-2 type-xs text-ink-soft">
+                                                    {portfolio.portfolioDescription ||
+                                                        'No description provided.'}
+                                                </p>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {canSendHireRequest && (
+                            <div className="mt-auto pt-[2vh]">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsHireFormOpen(true)}
+                                    className="flex h-[4.5vh] w-full items-center justify-center rounded-full bg-brand type-md text-surface-white transition hover:bg-brand-dark"
+                                >
+                                    Send Hire Request
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

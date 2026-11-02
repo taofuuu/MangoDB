@@ -9,6 +9,7 @@ import { listCompletedProjects } from '@/lib/companies';
 import { formatDate } from '@/lib/dates';
 import { PROFILE_COMPLETED_PROJECT_SIZE } from '@/lib/pagination';
 import { redirectToUnauthorized } from '@/lib/session';
+import ProjectRating from './ProjectRating';
 
 type PreviewState =
     | { status: 'loading' }
@@ -96,15 +97,18 @@ export default function CompletedWorksPreview({
                         {state.items.map((project) => (
                             <li key={project.projectId} className="relative">
                                 <span className="absolute -left-[27px] top-1/2 size-3 -translate-y-1/2 rounded-full border-2 border-brand bg-surface-white" />
-                                <article className="rounded-button border border-line bg-surface-white px-4 py-3 shadow-sm">
-                                    <p className="truncate type-sm !font-[600] text-ink">
-                                        {project.listingTitle}
-                                    </p>
-                                    <p className="mt-1 flex items-center gap-1 type-xs text-brand">
-                                        <Clock3 size={13} aria-hidden />
-                                        Completed{' '}
-                                        {formatDate(project.completedAt)}
-                                    </p>
+                                <article className="flex items-start justify-between gap-3 rounded-button border border-line bg-surface-white px-4 py-3 shadow-sm">
+                                    <div className="min-w-0">
+                                        <p className="truncate type-sm !font-[600] text-ink">
+                                            {project.listingTitle}
+                                        </p>
+                                        <p className="mt-1 flex items-center gap-1 type-xs text-brand">
+                                            <Clock3 size={13} aria-hidden />
+                                            Completed{' '}
+                                            {formatDate(project.completedAt)}
+                                        </p>
+                                    </div>
+                                    <ProjectRating rating={project.rating} />
                                 </article>
                             </li>
                         ))}
