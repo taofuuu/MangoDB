@@ -123,6 +123,7 @@ FILTER_WIDE_ID=""
 FILTER_NO_MIN_ID=""
 # Close jobs (US2-14): a second probe posting, with one pending proposal.
 CLOSE_JOB_ID=""
+FILTER_JOB_ID=""
 # Probe for quotation delete, reject, and cancel
 ACCEPT_PROJECT_ID=""
 PROBE_QUOTE_JOB_ID=""
@@ -171,7 +172,7 @@ cleanup() {
     # ids that were never set, so only real ones reach the query.
     local listing_ids
     # shellcheck disable=SC2086
-    listing_ids="$(echo $NEW_JOB_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
+    listing_ids="$(echo $NEW_JOB_ID $FILTER_JOB_ID $NEW_SERVICE_ID $DELETED_SERVICE_ID \
         $REUSE_SERVICE_ID $DELETE_PROBE_ID $FILTER_WEB_ID $FILTER_MOBILE_ID \
         $FILTER_WIDE_ID $FILTER_NO_MIN_ID $CLOSE_JOB_ID $DELETED_JOB_ID \
         $ACCEPT_JOB_ID $PROBE_QUOTE_JOB_ID $HIRE_SERVICE_ID $HIRE_PROPOSAL_SERVICE_ID)"
@@ -852,46 +853,60 @@ snap jobs-page-2 GET "/jobs?status=OPEN&pageSize=1&page=2" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # US3-8. Order by budget and deadline.
-snap jobs-order-budget-asc GET "/jobs?status=OPEN&orderBy=maxBudgetAsc" \
+# A second probe job with a different budget and deadline lets the sort and filter
+# snapshots prove they work on known rows without picking up dirty rows from the shared DB.
+api POST /jobs -H "$(bearer "$TOKEN_RECEIVER")" \
+    -H 'Content-Type: application/json' \
+    -d '{"listingTitle":"Snapshot Probe filter job","listingDesc":"Testing filters and sorting","minBudget":20000,"maxBudget":80000,"locationPref":"Onsite","duration":"1 Month","deadline":"2028-06-30","categoryIds":[1]}' >/dev/null
+FILTER_JOB_ID="$(jget jobId)"
+if [ -n "$FILTER_JOB_ID" ]; then
+    SUBS+=(--id "job_id=$FILTER_JOB_ID" --id "listing_id=$FILTER_JOB_ID")
+fi
+
+snap jobs-order-budget-asc GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&orderBy=maxBudgetAsc" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-order-budget-desc GET "/jobs?status=OPEN&orderBy=maxBudgetDesc" \
+snap jobs-order-budget-desc GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&orderBy=maxBudgetDesc" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-order-deadline-asc GET "/jobs?status=OPEN&orderBy=deadlineAsc" \
+snap jobs-order-deadline-asc GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&orderBy=deadlineAsc" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-order-deadline-desc GET "/jobs?status=OPEN&orderBy=deadlineDesc" \
+snap jobs-order-deadline-desc GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&orderBy=deadlineDesc" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-order-newest GET "/jobs?status=OPEN&orderBy=newest" \
+snap jobs-order-newest GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&orderBy=newest" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-jobs-order-invalid GET "/jobs?status=OPEN&orderBy=invalidOrder" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # US3-4, US3-5. Category and budget/deadline filters.
-snap jobs-filter-category GET "/jobs?status=OPEN&category=Web%20Development" \
+snap jobs-filter-category GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&category=Web%20Development" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-filter-budget GET "/jobs?status=OPEN&minBudget=50000&maxBudget=150000" \
+snap jobs-filter-budget GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&minBudget=50000&maxBudget=150000" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-jobs-filter-budget-inverted GET "/jobs?status=OPEN&minBudget=100000&maxBudget=50000" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 # US3-5. Deadline direction: BEFORE (default), AFTER, and ANY
-snap jobs-filter-deadline-before GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=BEFORE" \
+snap jobs-filter-deadline-before GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&deadline=2028-09-01&deadlineType=BEFORE" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-filter-deadline-after GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=AFTER" \
+snap jobs-filter-deadline-after GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&deadline=2028-09-01&deadlineType=AFTER" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
-snap jobs-filter-deadline-any GET "/jobs?status=OPEN&deadline=2028-12-31&deadlineType=ANY" \
+snap jobs-filter-deadline-any GET "/jobs?status=OPEN&companyId=$RECEIVER_ID&deadline=2028-09-01&deadlineType=ANY" \
     -H "$(bearer "$TOKEN_PROVIDER")"
 
 snap error-jobs-filter-deadline-invalid GET "/jobs?status=OPEN&deadline=not-a-date" \
     -H "$(bearer "$TOKEN_PROVIDER")"
+
+if [ -n "$FILTER_JOB_ID" ]; then
+    run_db "prisma.listingCategory.deleteMany({ where: { listingId: $FILTER_JOB_ID } }).then(() => prisma.listing.delete({ where: { listingId: $FILTER_JOB_ID } }))"
+fi
 
 if [ -n "$NEW_JOB_ID" ]; then
     run_db "prisma.listing.update({ where: { listingId: $NEW_JOB_ID }, data: { listingStatus: 'CLOSED' } })"
@@ -1629,8 +1644,7 @@ SUBS+=(--id "project_id=$ACCEPT_PROJECT_ID")
 # The project starts today (UTC). The helper leaves YYYY-MM-DD alone on
 # purpose, so this one snapshot names today, and only here: a run-wide rule
 # would also catch any other date that happens to be today.
-node "$HELPER" normalize --request "$LAST_REQUEST" --status "$LAST_STATUS" \
-    "${SUBS[@]}" --text "today=$(date -u +%F)" <"$BODY" >"$OUT_DIR/proposals-accept.json"
+resnap proposals-accept 1
 
 # Accepting closed the posting.
 snap jobs-one-after-accept GET "/jobs/$ACCEPT_JOB_ID" \
@@ -2011,8 +2025,7 @@ HIRE_PROJECT_ID="$(jget projectId)"
 if [ -n "$HIRE_PROJECT_ID" ]; then
     SUBS+=(--id "project_id=$HIRE_PROJECT_ID")
 fi
-node "$HELPER" normalize --request "$LAST_REQUEST" --status "$LAST_STATUS" \
-    "${SUBS[@]}" --text "today=$(date -u +%F)" <"$BODY" >"$OUT_DIR/service-proposals-accept.json"
+resnap service-proposals-accept 1
 
 snap services-one-after-accept GET "/services/$HIRE_PROPOSAL_SERVICE_ID" \
     -H "$(bearer "$TOKEN_PROVIDER")"

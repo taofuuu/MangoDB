@@ -1,5 +1,5 @@
 {
-    "request": "GET /jobs?status=OPEN&orderBy=deadlineDesc",
+    "request": "GET /jobs?status=OPEN&companyId=143&orderBy=deadlineDesc",
     "status": 200,
     "body": {
         "items": [
@@ -39,252 +39,68 @@
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": "2028-12-31",
-                "duration": "2 Months",
-                "jobId": 73,
-                "listingDesc": "Looking for developer team",
+                "deadline": "2028-06-30",
+                "duration": "1 Month",
+                "jobId": "<job_id>",
+                "listingDesc": "Testing filters and sorting",
                 "listingStatus": "OPEN",
-                "listingTitle": "Snapshot Probe job posting",
-                "locationPref": "Remote",
-                "maxBudget": 150000,
-                "minBudget": 50000
+                "listingTitle": "Snapshot Probe filter job",
+                "locationPref": "Onsite",
+                "maxBudget": 80000,
+                "minBudget": 20000
             },
             {
                 "categories": [
-                    "Digital Marketing & SEO"
+                    "Hardware & IoT"
                 ],
                 "categoryIds": [
-                    8
+                    3
                 ],
                 "company": {
-                    "companyId": 17,
-                    "companyName": "RetailX",
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": "2027-12-24",
-                "duration": "5 months",
-                "jobId": 426,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
+                "deadline": "2027-03-21",
+                "duration": "6 months",
+                "jobId": 477,
+                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
                 "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
+                "listingTitle": "[demo] Sales dashboard and reports",
                 "locationPref": "Chiang Mai",
-                "maxBudget": 225000,
-                "minBudget": 135000
+                "maxBudget": 100000,
+                "minBudget": 60000
             },
             {
                 "categories": [
-                    "Digital Marketing & SEO"
+                    "Web Development"
                 ],
                 "categoryIds": [
-                    8
+                    1
                 ],
                 "company": {
-                    "companyId": 121,
-                    "companyName": "Dev RECEIVER Co.",
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": "2027-12-21",
+                "deadline": "2027-01-19",
                 "duration": "4 months",
-                "jobId": 450,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
+                "jobId": 475,
+                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
                 "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 225000,
-                "minBudget": 135000
-            },
-            {
-                "categories": [
-                    "Digital Marketing & SEO"
-                ],
-                "categoryIds": [
-                    8
-                ],
-                "company": {
-                    "companyId": 141,
-                    "companyName": "ce",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-18",
-                "duration": "3 months",
-                "jobId": 474,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 225000,
-                "minBudget": 135000
-            },
-            {
-                "categories": [
-                    "Digital Marketing & SEO"
-                ],
-                "categoryIds": [
-                    8
-                ],
-                "company": {
-                    "companyId": 327,
-                    "companyName": "Suwira",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-15",
-                "duration": "2 months",
-                "jobId": 498,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 225000,
-                "minBudget": 135000
-            },
-            {
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "categoryIds": [
-                    4
-                ],
-                "company": {
-                    "companyId": 9,
-                    "companyName": "EduSphere",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-12",
-                "duration": "3 months",
-                "jobId": 414,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 125000,
-                "minBudget": 75000
-            },
-            {
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "categoryIds": [
-                    4
-                ],
-                "company": {
-                    "companyId": 106,
-                    "companyName": "บริษัท จำรัส จำสัส เอ้ย จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-09",
-                "duration": "2 months",
-                "jobId": 438,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 125000,
-                "minBudget": 75000
-            },
-            {
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "categoryIds": [
-                    4
-                ],
-                "company": {
-                    "companyId": 129,
-                    "companyName": "test4",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-06",
-                "duration": "6 months",
-                "jobId": 462,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 125000,
-                "minBudget": 75000
-            },
-            {
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "categoryIds": [
-                    4
-                ],
-                "company": {
-                    "companyId": 221,
-                    "companyName": "asdasd",
-                    "companyPhoto": "<storage-url>"
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-12-03",
-                "duration": "5 months",
-                "jobId": 486,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 125000,
-                "minBudget": 75000
-            },
-            {
-                "categories": [
-                    "ERP & CRM Systems"
-                ],
-                "categoryIds": [
-                    7
-                ],
-                "company": {
-                    "companyId": 141,
-                    "companyName": "ce",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-11-17",
-                "duration": "2 months",
-                "jobId": 473,
-                "listingDesc": "Temperature and humidity sensors with alerts.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] IoT sensors for the warehouse",
-                "locationPref": "Remote",
-                "maxBudget": 200000,
-                "minBudget": 120000
-            },
-            {
-                "categories": [
-                    "ERP & CRM Systems"
-                ],
-                "categoryIds": [
-                    7
-                ],
-                "company": {
-                    "companyId": 327,
-                    "companyName": "Suwira",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-11-14",
-                "duration": "6 months",
-                "jobId": 497,
-                "listingDesc": "Temperature and humidity sensors with alerts.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] IoT sensors for the warehouse",
-                "locationPref": "Remote",
-                "maxBudget": 200000,
-                "minBudget": 120000
+                "listingTitle": "[demo] Inventory system rewrite",
+                "locationPref": "Bangkok",
+                "maxBudget": 50000,
+                "minBudget": 30000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 112,
-            "totalPages": 10
+            "totalItems": 4,
+            "totalPages": 1
         }
     }
 }

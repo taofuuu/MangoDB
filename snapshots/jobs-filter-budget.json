@@ -1,8 +1,31 @@
 {
-    "request": "GET /jobs?status=OPEN&minBudget=50000&maxBudget=150000",
+    "request": "GET /jobs?status=OPEN&companyId=143&minBudget=50000&maxBudget=150000",
     "status": 200,
     "body": {
         "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2028-06-30",
+                "duration": "1 Month",
+                "jobId": "<job_id>",
+                "listingDesc": "Testing filters and sorting",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe filter job",
+                "locationPref": "Onsite",
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
             {
                 "categories": [
                     "Web Development"
@@ -27,94 +50,6 @@
                 "minBudget": 50000
             },
             {
-                "categories": [],
-                "categoryIds": [],
-                "company": {
-                    "companyId": 132,
-                    "companyName": "Dev RECEIVER Co.",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-10-31",
-                "duration": "3 months",
-                "jobId": 1024,
-                "listingDesc": "build cool shit",
-                "listingStatus": "OPEN",
-                "listingTitle": "aaaaaaaaaaaaa",
-                "locationPref": "remote",
-                "maxBudget": 50000,
-                "minBudget": 2000
-            },
-            {
-                "categories": [
-                    "Artificial Intelligence (AI)"
-                ],
-                "categoryIds": [
-                    5
-                ],
-                "company": {
-                    "companyId": 477,
-                    "companyName": "Stinkier Toes CO.",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobId": 816,
-                "listingDesc": "test",
-                "listingStatus": "OPEN",
-                "listingTitle": "Job test two",
-                "locationPref": null,
-                "maxBudget": 80000,
-                "minBudget": 10000
-            },
-            {
-                "categories": [
-                    "IT Consulting & Security"
-                ],
-                "categoryIds": [
-                    4
-                ],
-                "company": {
-                    "companyId": 392,
-                    "companyName": "Snapshot Seed Both",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-11-30",
-                "duration": "1 month",
-                "jobId": 595,
-                "listingDesc": "Pen test and code review of our web app before the public launch. ([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Security audit before launch",
-                "locationPref": "Remote",
-                "maxBudget": 90000,
-                "minBudget": null
-            },
-            {
-                "categories": [
-                    "ERP & CRM Systems"
-                ],
-                "categoryIds": [
-                    7
-                ],
-                "company": {
-                    "companyId": 392,
-                    "companyName": "Snapshot Seed Both",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-12-31",
-                "duration": "3 months",
-                "jobId": 594,
-                "listingDesc": "We want a small CRM to track leads and follow-ups for 10 sales staff. ([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Need a CRM for our sales team",
-                "locationPref": "Bangkok",
-                "maxBudget": 200000,
-                "minBudget": 80000
-            },
-            {
                 "categories": [
                     "Hardware & IoT"
                 ],
@@ -122,153 +57,50 @@
                     3
                 ],
                 "company": {
-                    "companyId": 109,
-                    "companyName": "taotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotaotao",
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobId": 366,
-                "listingDesc": "so sleepy",
-                "listingStatus": "OPEN",
-                "listingTitle": "Minnie",
-                "locationPref": null,
-                "maxBudget": 500000,
-                "minBudget": 1100
-            },
-            {
-                "categories": [
-                    "Other"
-                ],
-                "categoryIds": [
-                    12
-                ],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-10-15",
-                "duration": "1 week",
-                "jobId": 365,
-                "listingDesc": "spiderman against the world",
-                "listingStatus": "OPEN",
-                "listingTitle": "spider web",
-                "locationPref": "hybrid",
-                "maxBudget": 100000,
-                "minBudget": 20000
-            },
-            {
-                "categories": [
-                    "Artificial Intelligence (AI)"
-                ],
-                "categoryIds": [
-                    5
-                ],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-10-30",
-                "duration": "3 days",
-                "jobId": 343,
-                "listingDesc": "jai",
-                "listingStatus": "OPEN",
-                "listingTitle": "java",
-                "locationPref": "Hybrid",
-                "maxBudget": 100000,
-                "minBudget": 20000
-            },
-            {
-                "categories": [],
-                "categoryIds": [],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobId": 170,
-                "listingDesc": "Build a cross-platform mobile application for service booking and customer management.",
-                "listingStatus": "OPEN",
-                "listingTitle": "Mobile Application Development",
-                "locationPref": null,
-                "maxBudget": 200000,
-                "minBudget": 100000
-            },
-            {
-                "categories": [],
-                "categoryIds": [],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobId": 169,
-                "listingDesc": "Develop a responsive e-commerce website with product management and payment integration.",
-                "listingStatus": "OPEN",
-                "listingTitle": "E-Commerce Website Development",
-                "locationPref": null,
-                "maxBudget": 150000,
-                "minBudget": 80000
-            },
-            {
-                "categories": [],
-                "categoryIds": [],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": null,
-                "duration": null,
-                "jobId": 168,
-                "listingDesc": "Looking for a developer to build an AI-powered chatbot for customer support.",
-                "listingStatus": "OPEN",
-                "listingTitle": "AI Chatbot Development",
-                "locationPref": null,
-                "maxBudget": 100000,
-                "minBudget": 50000
-            },
-            {
-                "categories": [
-                    "Mobile App Development"
-                ],
-                "categoryIds": [
-                    2
-                ],
-                "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-06-09",
+                "deadline": "2027-03-21",
                 "duration": "6 months",
-                "jobId": 492,
-                "listingDesc": "An AI chatbot that answers common questions in Thai and English.\n\n([demo] dummy data)",
+                "jobId": 477,
+                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
                 "listingStatus": "OPEN",
-                "listingTitle": "[demo] Chatbot for customer support",
+                "listingTitle": "[demo] Sales dashboard and reports",
                 "locationPref": "Chiang Mai",
-                "maxBudget": 75000,
-                "minBudget": 45000
+                "maxBudget": 100000,
+                "minBudget": 60000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2027-01-19",
+                "duration": "4 months",
+                "jobId": 475,
+                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Inventory system rewrite",
+                "locationPref": "Bangkok",
+                "maxBudget": 50000,
+                "minBudget": 30000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 83,
-            "totalPages": 7
+            "totalItems": 4,
+            "totalPages": 1
         }
     }
 }

@@ -19,29 +19,12 @@
                 "proposalId": "<proposal_id>",
                 "startDate": "<today>",
                 "totalBudget": 95000
-            },
-            {
-                "completedAt": null,
-                "depositConfirmedAt": null,
-                "depositReportedAt": null,
-                "listingTitle": "Snapshot seed service listing",
-                "myRole": "receiver",
-                "otherParty": {
-                    "companyId": 142,
-                    "companyName": "Snapshot Seed Provider",
-                    "companyPhoto": null
-                },
-                "projectId": 151,
-                "projectStatus": "AWAITING_QUOTATION",
-                "proposalId": 418,
-                "startDate": "2026-10-31",
-                "totalBudget": 1000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 2,
+            "totalItems": 1,
             "totalPages": 1
         }
     }

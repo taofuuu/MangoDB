@@ -1,8 +1,31 @@
 {
-    "request": "GET /jobs?status=OPEN&category=Web%20Development",
+    "request": "GET /jobs?status=OPEN&companyId=143&category=Web%20Development",
     "status": 200,
     "body": {
         "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2028-06-30",
+                "duration": "1 Month",
+                "jobId": "<job_id>",
+                "listingDesc": "Testing filters and sorting",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe filter job",
+                "locationPref": "Onsite",
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
             {
                 "categories": [
                     "Web Development"
@@ -34,169 +57,6 @@
                     1
                 ],
                 "company": {
-                    "companyId": 248,
-                    "companyName": "บ. ริโภคจำนวน จำกัด",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-05-08",
-                "duration": "5 months",
-                "jobId": 491,
-                "listingDesc": "Temperature and humidity sensors with alerts.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] IoT sensors for the warehouse",
-                "locationPref": "Remote",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 143,
-                    "companyName": "Snapshot Seed Receiver",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2028-12-31",
-                "duration": "2 Months",
-                "jobId": 73,
-                "listingDesc": "Looking for developer team",
-                "listingStatus": "OPEN",
-                "listingTitle": "Snapshot Probe job posting",
-                "locationPref": "Remote",
-                "maxBudget": 150000,
-                "minBudget": 50000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 127,
-                    "companyName": "test2",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-09-03",
-                "duration": "3 months",
-                "jobId": 459,
-                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Sales dashboard and reports",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development",
-                    "Mobile App Development"
-                ],
-                "categoryIds": [
-                    1,
-                    2
-                ],
-                "company": {
-                    "companyId": 16,
-                    "companyName": "UrbanLogistics",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-06-01",
-                "duration": "6 Months",
-                "jobId": 12,
-                "listingDesc": "Need a web dashboard to track 500 delivery trucks.",
-                "listingStatus": "OPEN",
-                "listingTitle": "Fleet Tracking System (GPS)",
-                "locationPref": "On-site Bangkok",
-                "maxBudget": 800000,
-                "minBudget": 300000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 9,
-                    "companyName": "EduSphere",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2026-05-20",
-                "duration": "3 Months",
-                "jobId": 4,
-                "listingDesc": "Video streaming, quiz system, and certificate generation.",
-                "listingStatus": "OPEN",
-                "listingTitle": "E-Learning Web Portal",
-                "locationPref": "Remote",
-                "maxBudget": 200000,
-                "minBudget": 80000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 219,
-                    "companyName": "hey",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-09-27",
-                "duration": "2 months",
-                "jobId": 483,
-                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Sales dashboard and reports",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 123,
-                    "companyName": "noeyyy",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-01-22",
-                "duration": "5 months",
-                "jobId": 451,
-                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Inventory system rewrite",
-                "locationPref": "Bangkok",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
                     "companyId": 143,
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
@@ -211,82 +71,13 @@
                 "locationPref": "Bangkok",
                 "maxBudget": 50000,
                 "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 8,
-                    "companyName": "HealthSync",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-09-09",
-                "duration": "5 months",
-                "jobId": 411,
-                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Sales dashboard and reports",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 352,
-                    "companyName": "Palaze Receiver",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-01-16",
-                "duration": "3 months",
-                "jobId": 499,
-                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Inventory system rewrite",
-                "locationPref": "Bangkok",
-                "maxBudget": 50000,
-                "minBudget": 30000
-            },
-            {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
-                "company": {
-                    "companyId": 131,
-                    "companyName": "Dev RECEIVER Co.",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-05-11",
-                "duration": "6 months",
-                "jobId": 467,
-                "listingDesc": "Temperature and humidity sensors with alerts.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] IoT sensors for the warehouse",
-                "locationPref": "Remote",
-                "maxBudget": 50000,
-                "minBudget": 30000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 13,
-            "totalPages": 2
+            "totalItems": 3,
+            "totalPages": 1
         }
     }
 }
