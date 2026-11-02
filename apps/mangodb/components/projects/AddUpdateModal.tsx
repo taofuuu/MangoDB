@@ -124,11 +124,12 @@ export default function AddUpdateModal({
                             htmlFor="update-description"
                             className="mb-1.5 block text-sm font-medium text-ink"
                         >
-                            Description
+                            Description *
                         </label>
                         <textarea
                             id="update-description"
                             rows={5}
+                            maxLength={10000}
                             value={updateText}
                             onChange={(e) => {
                                 setUpdateText(e.target.value);
