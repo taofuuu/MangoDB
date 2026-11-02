@@ -117,7 +117,7 @@ function RolePreview({ role }: { role: ProjectRole }) {
                 ))}
             </div>
 
-            <div className="w-full sm:w-[320px]">
+            <div className="w-full sm:w-[27.66vw] sm:min-w-[300px]">
                 <DepositSection
                     project={sampleProject(role, state)}
                     onReportDeposit={() => setIsReportOpen(true)}
