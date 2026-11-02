@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { ProjectDetail, ProjectStatus } from '@mangodb/shared';
 import { CheckCircle2, CircleCheck, ReceiptText } from 'lucide-react';
 
@@ -34,85 +35,42 @@ export default function DepositSection({
     // A cancelled project, whatever was reported, for both roles (#239).
     if (project.projectStatus === ('CANCELLED' satisfies ProjectStatus)) {
         return (
-            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
-                        <span className="type-sm !font-[600] text-ink-soft">
-                            Deposit
-                        </span>
-                    </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
-                        —
-                    </span>
-                </div>
-
-                <div className="border-b border-line w-full" />
-
+            <DepositCard tone="muted" status={<DashBadge />}>
                 <p className="type-sm text-ink-soft leading-relaxed">
                     {isDepositConfirmed
                         ? 'The deposit was confirmed prior to project cancellation.'
                         : 'This project has been cancelled. Deposit processing has ended.'}
                 </p>
-            </div>
+            </DepositCard>
         );
     }
 
     if (isDepositConfirmed) {
         if (isReceiver) {
             return (
-                <div className="rounded-status border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
-                            <span className="type-sm !font-[600] text-ink">
-                                Deposit
-                            </span>
-                        </div>
-                        <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
-                    </div>
-
-                    <div className="border-b border-brand-light/40 w-full" />
-
+                <DepositCard tone="brand" status={<ConfirmedIcon />}>
                     <p className="type-sm text-ink leading-relaxed">
                         The provider has confirmed receipt of your deposit.
                         You&apos;re all set to move forward with the project!
                     </p>
-                </div>
+                </DepositCard>
             );
         }
 
         // Confirmed by provider -> Blue (matches Frame in Figma)
-        return (
-            <div className="rounded-status border border-brand bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-3">
-                    <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-brand" />
-                    <span className="type-sm !font-[600] text-ink">
-                        Deposit
-                    </span>
-                </div>
-                <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
-            </div>
-        );
+        return <DepositCard tone="brand" compact status={<ConfirmedIcon />} />;
     }
 
     if (isDepositReported) {
         // Added by receiver, awaiting provider confirmation -> Yellow
         if (isProvider) {
             return (
-                <div className="rounded-status border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
-                            <span className="type-sm !font-[600] text-ink">
-                                Deposit
-                            </span>
-                        </div>
+                <DepositCard
+                    tone="accent"
+                    status={
                         <CircleCheck className="h-8 w-8 text-accent shrink-0 stroke-[2.2]" />
-                    </div>
-
-                    <div className="border-b border-accent/40 w-full" />
-
+                    }
+                >
                     <p className="type-sm text-ink leading-relaxed">
                         The receiver has reported that the deposit has been
                         paid. Please confirm whether you have received the
@@ -131,51 +89,30 @@ export default function DepositSection({
                             </button>
                         </div>
                     )}
-                </div>
+                </DepositCard>
             );
         }
 
         // Receiver view while awaiting provider confirmation
         return (
-            <div className="rounded-status border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
-                        <span className="type-sm !font-[600] text-ink">
-                            Deposit
-                        </span>
-                    </div>
+            <DepositCard
+                tone="accent"
+                status={
                     <CircleCheck className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
-                </div>
-
-                <div className="border-b border-accent/40 w-full" />
-
+                }
+            >
                 <p className="type-sm text-ink leading-relaxed">
                     Your deposit payment has been reported. We&apos;re waiting
                     for the provider to confirm receipt.
                 </p>
-            </div>
+            </DepositCard>
         );
     }
 
     // Receiver view when quotation is accepted but deposit is not reported yet
     if (isReceiver && isAwaitingDeposit) {
         return (
-            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
-                        <span className="type-sm !font-[600] text-ink">
-                            Deposit
-                        </span>
-                    </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
-                        —
-                    </span>
-                </div>
-
-                <div className="border-b border-line w-full" />
-
+            <DepositCard tone="neutral" status={<DashBadge />}>
                 <p className="type-sm text-ink leading-relaxed">
                     Your quotation has been accepted! Please pay the deposit and
                     report the payment once it&apos;s done.
@@ -191,7 +128,7 @@ export default function DepositSection({
                         Report Deposit Payment
                     </button>
                 )}
-            </div>
+            </DepositCard>
         );
     }
 
@@ -204,37 +141,122 @@ export default function DepositSection({
                 ('AWAITING_QUOTATION' satisfies ProjectStatus))
     ) {
         return (
-            <div className="rounded-status border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                <div className="flex items-center gap-3">
-                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
-                    <span className="type-sm !font-[600] text-ink-soft">
-                        Deposit
-                    </span>
-                </div>
-
-                <div className="border-b border-line w-full" />
-
+            <DepositCard tone="muted">
                 <p className="type-sm text-ink-soft leading-relaxed">
                     {isAwaitingDeposit
                         ? 'The receiver can let you know once the deposit has been paid.'
                         : 'The receiver can report deposit payment after accepting the quotation.'}
                 </p>
-            </div>
+            </DepositCard>
         );
     }
 
     // Receiver before the quotation is accepted -> Grey
-    return (
-        <div className="rounded-status border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-            <div className="flex items-center gap-3">
-                <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-ink-soft" />
-                <span className="type-sm !font-[600] text-ink-soft">
-                    Deposit
-                </span>
-            </div>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
-                —
+    return <DepositCard tone="muted" compact status={<DashBadge />} />;
+}
+
+// Colours for each state: blue once confirmed, yellow while waiting on the
+// Provider, and grey before that. "neutral" is grey with a dark title, for
+// the one grey state that asks the Receiver to act.
+const TONES = {
+    brand: {
+        border: 'border-brand',
+        icon: 'text-brand',
+        title: 'text-ink',
+        divider: 'border-brand-light/40',
+    },
+    accent: {
+        border: 'border-accent',
+        icon: 'text-accent',
+        title: 'text-ink',
+        divider: 'border-accent/40',
+    },
+    neutral: {
+        border: 'border-line',
+        icon: 'text-ink-soft',
+        title: 'text-ink',
+        divider: 'border-line',
+    },
+    muted: {
+        border: 'border-line',
+        icon: 'text-ink-soft',
+        title: 'text-ink-soft',
+        divider: 'border-line',
+    },
+} as const;
+
+type DepositCardProps = {
+    tone: keyof typeof TONES;
+    // The icon at the right of the header, if the state has one.
+    status?: ReactNode;
+    // A one-line card: the header only, with no divider or body.
+    compact?: boolean;
+    children?: ReactNode;
+};
+
+// The card outline, the "Deposit" header and the divider every state shares,
+// so a change to them is one edit (review on #240).
+function DepositCard({
+    tone,
+    status,
+    compact = false,
+    children,
+}: DepositCardProps) {
+    const colors = TONES[tone];
+
+    const title = (
+        <div className="flex items-center gap-3">
+            <ReceiptText
+                className={`${compact ? 'h-5 w-5' : 'h-6 w-6'} shrink-0 stroke-[2.2] ${colors.icon}`}
+            />
+            <span className={`type-sm !font-[600] ${colors.title}`}>
+                Deposit
             </span>
         </div>
+    );
+
+    if (compact) {
+        return (
+            <div
+                className={`rounded-status border ${colors.border} bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors`}
+            >
+                {title}
+                {status}
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className={`rounded-status border ${colors.border} bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors`}
+        >
+            {status ? (
+                <div className="flex items-center justify-between">
+                    {title}
+                    {status}
+                </div>
+            ) : (
+                title
+            )}
+
+            <div className={`border-b ${colors.divider} w-full`} />
+
+            {children}
+        </div>
+    );
+}
+
+function ConfirmedIcon() {
+    return (
+        <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
+    );
+}
+
+// The grey dash where a state has nothing to show yet.
+function DashBadge() {
+    return (
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder type-xs !font-[700]">
+            —
+        </span>
     );
 }
