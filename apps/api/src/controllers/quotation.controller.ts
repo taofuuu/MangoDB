@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
-import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
+import type { QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    assertProjectStatus,
     moveProjectStatus,
     saveProjectEvent,
 } from '../lib/project';
@@ -35,11 +36,7 @@ export async function createQuotation(
     if (project.myRole !== 'provider') {
         throw ApiError.forbidden('Only the Provider can upload a quotation');
     }
-    if (
-        project.projectStatus !== ('AWAITING_QUOTATION' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_QUOTATION');
-    }
+    assertProjectStatus(project, 'AWAITING_QUOTATION');
 
     // Checked before upload so a repeat attempt does not send a PDF to storage
     // only to delete it again. The partial unique index (ADR 0017) still
@@ -158,12 +155,7 @@ export async function rejectQuotation(
     if (quotation.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can reject a quotation');
     }
-    if (
-        quotation.projectStatus !==
-        ('AWAITING_QUOTATION' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_QUOTATION');
-    }
+    assertProjectStatus(quotation, 'AWAITING_QUOTATION');
 
     // One transaction: the decision and its timeline event (#212) save
     // together, or neither does.
