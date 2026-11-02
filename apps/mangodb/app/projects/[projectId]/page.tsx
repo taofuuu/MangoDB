@@ -457,19 +457,36 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     }, [project, quotations, updates]);
 
     // Action Handlers
+    // US4-1. Upload, Replace File and Revise & Resubmit all land here. The
+    // API refuses a second pending quotation, so Replace File deletes the
+    // pending one first. Errors are rethrown as text for UploadQuotationModal
+    // to show under the picker.
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
         setActionError(null);
+        let removedPending = false;
         try {
             const pending = quotations.find(
                 (q) => q.quotationStatus === 'PENDING',
             );
             if (pending) {
                 await deleteQuotation(pending.quotationId, projectId);
+                removedPending = true;
             }
             await uploadQuotation(projectId, file);
-            loadData();
+        } catch (err: unknown) {
+            const message = describeError(err, {
+                409: 'This quotation changed while you were sending it. Check the Quotation card and try again.',
+            });
+            throw new Error(
+                removedPending
+                    ? `${message} Your previous quotation was removed, so send the new one again.`
+                    : message,
+            );
         } finally {
+            // Also after a failure: a delete that went through, or a decision
+            // the Receiver made meanwhile, must show on the card.
+            loadData();
             setIsBusy(false);
         }
     };
