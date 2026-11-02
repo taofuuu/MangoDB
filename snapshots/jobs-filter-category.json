@@ -1,0 +1,83 @@
+{
+    "request": "GET /jobs?status=OPEN&companyId=143&category=Web%20Development",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2028-06-30",
+                "duration": "1 Month",
+                "jobId": "<job_id>",
+                "listingDesc": "Testing filters and sorting",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe filter job",
+                "locationPref": "Onsite",
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2028-12-31",
+                "duration": "2 Months",
+                "jobId": "<job_id>",
+                "listingDesc": "Looking for developer team",
+                "listingStatus": "OPEN",
+                "listingTitle": "Snapshot Probe job posting",
+                "locationPref": "Remote",
+                "maxBudget": 150000,
+                "minBudget": 50000
+            },
+            {
+                "categories": [
+                    "Web Development"
+                ],
+                "categoryIds": [
+                    1
+                ],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2027-01-19",
+                "duration": "4 months",
+                "jobId": 475,
+                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
+                "listingStatus": "OPEN",
+                "listingTitle": "[demo] Inventory system rewrite",
+                "locationPref": "Bangkok",
+                "maxBudget": 50000,
+                "minBudget": 30000
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 3,
+            "totalPages": 1
+        }
+    }
+}

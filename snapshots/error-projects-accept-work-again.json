@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/accept-work",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Project is not AWAITING_ACCEPTANCE"
+        }
+    }
+}

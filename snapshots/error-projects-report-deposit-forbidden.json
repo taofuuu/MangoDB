@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/report-deposit",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Receiver can report the deposit"
+        }
+    }
+}

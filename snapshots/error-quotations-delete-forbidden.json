@@ -1,0 +1,10 @@
+{
+    "request": "DELETE /quotations/<quotation_id>",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Provider can delete a quotation"
+        }
+    }
+}
