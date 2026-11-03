@@ -813,6 +813,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 title="Cancel Project"
                 description="This action cannot be undone."
                 confirmLabel="Confirm"
+                pendingLabel="Cancelling..."
                 cancelLabel="Go Back"
                 confirmVariant="danger"
             />
