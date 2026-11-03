@@ -32,7 +32,9 @@ export function signAccessToken(payload: AuthTokenPayload): string {
 
 // Throws if the token is malformed, tampered with, or expired.
 export function verifyAccessToken(token: string): AuthTokenClaims {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Only the algorithm jwt.sign uses by default. A token naming any other,
+    // like "none", is refused instead of left to the library's own rules.
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     if (
         typeof decoded === 'string' ||
         typeof decoded.sub !== 'string' ||
