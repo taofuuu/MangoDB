@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { supabaseCredentials } from '../env';
 import { ApiError } from './api-error';
@@ -50,9 +51,8 @@ export async function uploadToStorage(
     folder: string,
 ): Promise<UploadedFile> {
     const extension = FILE_EXTENSIONS[file.mimetype] ?? 'bin';
-    const random = Math.random().toString(36).substring(2);
-
-    const path = `${folder}/${Date.now()}-${random}.${extension}`;
+    // randomUUID, not Math.random: a private file's name must not be guessable.
+    const path = `${folder}/${Date.now()}-${randomUUID()}.${extension}`;
 
     const { error } = await getSupabase()
         .storage.from(bucket)
