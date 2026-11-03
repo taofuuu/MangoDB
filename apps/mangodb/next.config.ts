@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
     // No "X-Powered-By: Next.js": it only tells a scanner what to try.
     poweredByHeader: false,
 
-    // Browser hardening on every response, pages and proxied /api/* alike.
+    // Browser hardening on every page. Proxied /api/* answers do not get these:
+    // a rewrite to another server skips them, and JSON is not framed or run.
     // frame-ancestors only: a script CSP needs per-request nonces for Next's
     // inline scripts, which is a bigger change than these headers.
     async headers() {
