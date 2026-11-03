@@ -101,6 +101,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+    const [isCancelSuccessOpen, setIsCancelSuccessOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
     const [isSubmitSuccessOpen, setIsSubmitSuccessOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
@@ -584,6 +585,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await cancelProject(projectId);
             loadData();
+            setIsCancelSuccessOpen(true);
         } finally {
             setIsBusy(false);
         }
@@ -825,10 +827,18 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 onClose={() => setIsCancelConfirmOpen(false)}
                 onConfirm={handleCancelProject}
                 title="Cancel Project"
-                description="Are you sure you want to cancel this project? This action cannot be undone."
-                confirmLabel="Cancel Project"
-                cancelLabel="Keep Project"
+                description="This action cannot be undone."
+                confirmLabel="Confirm"
+                pendingLabel="Cancelling..."
+                cancelLabel="Go Back"
                 confirmVariant="danger"
+            />
+
+            <SuccessModal
+                isOpen={isCancelSuccessOpen}
+                onClose={() => setIsCancelSuccessOpen(false)}
+                title="Project cancelled successfully"
+                actionLabel="OK"
             />
 
             <ConfirmModal
