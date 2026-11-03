@@ -62,8 +62,11 @@ function DeleteAccountDialog({
                         cannot be undone!
                     </p>
                     <p className="type-xs text-ink mt-[2.2vh] leading-relaxed">
-                        All of your personal data, preferences, and history will
-                        be immediately and permanently deleted.
+                        You will lose access immediately and the account cannot
+                        be restored. Other companies can no longer find or view
+                        your profile, but your listings, proposals, projects,
+                        and reviews are kept, so they keep the history that
+                        depends on them.
                     </p>
                 </>
             }
