@@ -12,6 +12,40 @@ const nextConfig: NextConfig = {
     // into .next/standalone, so the image ships without the full node_modules.
     output: 'standalone',
 
+    // No "X-Powered-By: Next.js": it only tells a scanner what to try.
+    poweredByHeader: false,
+
+    // Browser hardening on every response, pages and proxied /api/* alike.
+    // frame-ancestors only: a script CSP needs per-request nonces for Next's
+    // inline scripts, which is a bigger change than these headers.
+    async headers() {
+        return [
+            {
+                source: '/:path*',
+                headers: [
+                    // No other site may put these pages in a frame (clickjacking).
+                    { key: 'X-Frame-Options', value: 'DENY' },
+                    {
+                        key: 'Content-Security-Policy',
+                        value: "frame-ancestors 'none'",
+                    },
+                    // Use the Content-Type as sent, never guess one.
+                    { key: 'X-Content-Type-Options', value: 'nosniff' },
+                    // Other sites see only our origin, never a full URL with ids.
+                    {
+                        key: 'Referrer-Policy',
+                        value: 'strict-origin-when-cross-origin',
+                    },
+                    // HTTPS only for two years. Browsers ignore it on plain http.
+                    {
+                        key: 'Strict-Transport-Security',
+                        value: 'max-age=63072000; includeSubDomains',
+                    },
+                ],
+            },
+        ];
+    },
+
     // portfolioImage is a Supabase public URL, and next/image refuses to load
     // a host it was not told about.
     images: {

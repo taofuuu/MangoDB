@@ -10,6 +10,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 // Builds the app without listening; index.ts starts it on a port.
 export function createApp() {
     const app = express();
+    // No "X-Powered-By: Express": it only tells a scanner what to try.
+    app.disable('x-powered-by');
 
     // credentials: true plus origin: true would let *any* site make
     // credentialed calls to this API with the visitor's session cookie. It was
