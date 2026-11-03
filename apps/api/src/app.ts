@@ -1,4 +1,8 @@
-import express, { type Request, type Response } from 'express';
+import express, {
+    type NextFunction,
+    type Request,
+    type Response,
+} from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
@@ -59,6 +63,13 @@ export function createApp() {
         res.json(openapiSpec);
     });
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+
+    // Answers carry profiles, emails and admin lists, so neither the browser
+    // nor anything between it and here may keep a copy.
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+        res.set('Cache-Control', 'no-store');
+        next();
+    });
 
     app.use(routes);
 
