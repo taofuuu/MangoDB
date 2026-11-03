@@ -10,6 +10,7 @@ import { FRONTEND_URL } from './env';
 import { openapiSpec } from './openapi';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { refuseCrossSiteWrites } from './middleware/crossSite';
 
 // Builds the app without listening; index.ts starts it on a port.
 export function createApp() {
@@ -33,6 +34,7 @@ export function createApp() {
     );
     app.use(express.json());
     app.use(cookieParser());
+    app.use(refuseCrossSiteWrites);
 
     /**
      * @openapi
