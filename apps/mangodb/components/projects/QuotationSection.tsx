@@ -230,9 +230,8 @@ export default function QuotationSection({
                     <DeleteQuotationModal
                         quotation={isDeleteOpen ? latestQuotation : null}
                         onClose={() => setIsDeleteOpen(false)}
-                        onDeleted={(deletedId) => {
-                            setIsDeleteOpen(false);
-                            onDeleteQuotation?.(deletedId);
+                        onConfirm={async (deletedId) => {
+                            await onDeleteQuotation?.(deletedId);
                         }}
                     />
                 </div>
