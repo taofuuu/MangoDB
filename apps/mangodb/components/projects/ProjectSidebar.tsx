@@ -28,6 +28,8 @@ type ProjectSidebarProps = {
     project: ProjectDetail;
     otherCompanyProfile: PublicCompanyProfile | null;
     quotations: Quotation[];
+    quotationsError?: string | null;
+    onRetryQuotations?: () => Promise<void>;
     review: Review | null;
     onUploadQuotation?: () => void;
     onAcceptQuotation?: (quotationId: number) => void;
@@ -46,6 +48,8 @@ export default function ProjectSidebar({
     project,
     otherCompanyProfile,
     quotations,
+    quotationsError = null,
+    onRetryQuotations,
     review,
     onUploadQuotation,
     onAcceptQuotation,
@@ -174,6 +178,8 @@ export default function ProjectSidebar({
             <QuotationSection
                 project={project}
                 quotations={quotations}
+                loadError={quotationsError}
+                onRetry={onRetryQuotations}
                 onUploadQuotation={onUploadQuotation}
                 onAcceptQuotation={onAcceptQuotation}
                 onRejectQuotation={onRejectQuotation}

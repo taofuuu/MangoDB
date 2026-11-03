@@ -86,6 +86,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
     const [quotations, setQuotations] = useState<Quotation[]>([]);
+    // Kept apart from an empty list, so a failed load is never shown as
+    // "no quotation yet".
+    const [quotationsError, setQuotationsError] = useState<string | null>(null);
     const [review, setReview] = useState<Review | null>(null);
     const [otherCompany, setOtherCompany] =
         useState<PublicCompanyProfile | null>(null);
@@ -118,14 +121,21 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         Promise.all([
             getProject(projectId),
             listProjectUpdates(projectId).catch(() => [] as ProjectUpdate[]),
-            listQuotations(projectId).catch(() => [] as Quotation[]),
+            listQuotations(projectId).then(
+                (items) => ({ items, error: null }),
+                (err: unknown) => ({
+                    items: [] as Quotation[],
+                    error: describeError(err),
+                }),
+            ),
             getProjectReview(projectId).catch(() => null),
         ])
             .then(async ([p, u, q, r]) => {
                 if (!isMounted) return;
                 setProject(p);
                 setUpdates(u);
-                setQuotations(q);
+                setQuotations(q.items);
+                setQuotationsError(q.error);
                 setReview(r);
 
                 // Fetch other party profile
@@ -156,6 +166,17 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     useEffect(() => {
         return loadData();
     }, [loadData]);
+
+    // The Quotation card's Try again: reloads only the quotations, since the
+    // rest of the page loaded.
+    const reloadQuotations = useCallback(async () => {
+        try {
+            setQuotations(await listQuotations(projectId));
+            setQuotationsError(null);
+        } catch (err) {
+            setQuotationsError(describeError(err));
+        }
+    }, [projectId]);
 
     // Build timeline events
     const timelineEvents = useMemo<TimelineEvent[]>(() => {
@@ -664,6 +685,8 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         project={project}
                         otherCompanyProfile={otherCompany}
                         quotations={quotations}
+                        quotationsError={quotationsError}
+                        onRetryQuotations={reloadQuotations}
                         review={review}
                         onUploadQuotation={() => setIsUploadQuotationOpen(true)}
                         onAcceptQuotation={handleAcceptQuotation}
