@@ -12,6 +12,7 @@ import type {
 } from '@mangodb/shared';
 import { ArrowLeft, CircleCheck, Plus, Send } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
+import AcceptQuotationModal from '@/components/projects/AcceptQuotationModal';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
 import ProjectSidebar from '@/components/projects/ProjectSidebar';
@@ -100,6 +101,11 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     // Modals state
     const [isUploadQuotationOpen, setIsUploadQuotationOpen] = useState(false);
+    // The quotation the Receiver is about to accept; null while the
+    // confirmation is closed.
+    const [acceptingQuotationId, setAcceptingQuotationId] = useState<
+        number | null
+    >(null);
     const [isConfirmDepositOpen, setIsConfirmDepositOpen] = useState(false);
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -496,15 +502,24 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         }
     };
 
+    // US4-4. Runs from AcceptQuotationModal's confirm button. Errors are
+    // rethrown as text for the modal to show above its buttons.
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
         setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    404: 'This quotation was removed by the provider. Check the Quotation card for the latest one.',
+                    409: 'This quotation can no longer be accepted. Check the Quotation card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure: a 404 or 409 means the card is out of
+            // date, so it must show what changed.
+            loadData();
             setIsBusy(false);
         }
     };
@@ -689,7 +704,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         onRetryQuotations={reloadQuotations}
                         review={review}
                         onUploadQuotation={() => setIsUploadQuotationOpen(true)}
-                        onAcceptQuotation={handleAcceptQuotation}
+                        onAcceptQuotation={setAcceptingQuotationId}
                         onRejectQuotation={handleRejectQuotation}
                         onReportDeposit={handleReportDeposit}
                         onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
@@ -829,6 +844,16 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 isOpen={isUploadQuotationOpen}
                 onClose={() => setIsUploadQuotationOpen(false)}
                 onSubmit={handleUploadQuotation}
+            />
+
+            <AcceptQuotationModal
+                isOpen={acceptingQuotationId !== null}
+                onClose={() => setAcceptingQuotationId(null)}
+                onConfirm={async () => {
+                    if (acceptingQuotationId === null) return;
+                    await handleAcceptQuotation(acceptingQuotationId);
+                }}
+                providerName={project.provider.companyName}
             />
 
             <AddUpdateModal
