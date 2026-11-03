@@ -152,6 +152,7 @@ message.
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
+| A file in a private bucket          | `signStorageUrls(urls, bucket, seconds)` — links that expire                   |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
 
