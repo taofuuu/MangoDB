@@ -91,7 +91,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         useState<PublicCompanyProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
@@ -139,9 +138,10 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     // Profile not found or private
                 }
             })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                setError(describeError(err));
+            .catch(() => {
+                // A failed first load leaves project null, which shows
+                // "Project Not Found". A failed reload after an action keeps
+                // the page that is already showing, and any open pop-up.
             })
             .finally(() => {
                 if (isMounted) setIsLoading(false);
@@ -614,7 +614,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         );
     }
 
-    if (error || !project) {
+    if (!project) {
         return (
             <main className="min-h-screen bg-surface px-4 py-24 text-ink">
                 <div className="mx-auto max-w-4xl">
