@@ -668,6 +668,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         onUploadQuotation={() => setIsUploadQuotationOpen(true)}
                         onAcceptQuotation={handleAcceptQuotation}
                         onRejectQuotation={handleRejectQuotation}
+                        onDeleteQuotation={loadData}
                         onReportDeposit={handleReportDeposit}
                         onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
