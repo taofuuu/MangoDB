@@ -38,7 +38,8 @@ export function verifyAccessToken(token: string): AuthTokenClaims {
         typeof decoded.sub !== 'string' ||
         !isUserRole(decoded.role) ||
         typeof decoded.jti !== 'string' ||
-        typeof decoded.exp !== 'number'
+        typeof decoded.exp !== 'number' ||
+        typeof decoded.iat !== 'number'
     ) {
         throw new jwt.JsonWebTokenError(
             'Token payload is missing required claims',
@@ -49,5 +50,6 @@ export function verifyAccessToken(token: string): AuthTokenClaims {
         role: decoded.role,
         jti: decoded.jti,
         exp: decoded.exp,
+        iat: decoded.iat,
     };
 }

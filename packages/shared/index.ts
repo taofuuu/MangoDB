@@ -32,10 +32,12 @@ export interface AuthTokenPayload {
 }
 
 // What a verified token carries back. jti identifies the individual token so
-// logout can revoke it; exp bounds how long that revocation must be remembered.
+// logout can revoke it; exp bounds how long that revocation must be remembered;
+// iat (issued at, in seconds) ends tokens older than a credential change.
 export interface AuthTokenClaims extends AuthTokenPayload {
     jti: string;
     exp: number;
+    iat: number;
 }
 
 // The free-text status columns, pinned to a closed set. All are VarChar(50) in
