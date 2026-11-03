@@ -157,7 +157,10 @@ function RolePreview({
                     onUploadQuotation={() => setIsUploadOpen(true)}
                     onAcceptQuotation={() => setIsAcceptOpen(true)}
                     onRejectQuotation={() => setIsRejectOpen(true)}
-                    onDeleteQuotation={() => setState('none')}
+                    onDeleteQuotation={async () => {
+                        await fakeRequest();
+                        setState('none');
+                    }}
                 />
             </div>
 
