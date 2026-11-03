@@ -290,9 +290,10 @@ export interface ChangeCredentialsRequest {
     newPassword?: string | undefined;
 }
 
-// US6-4. The admin's own password, confirming intent before an irreversible
-// delete of another company's account. Same currentPassword shape as
-// ChangeCredentialsRequest, checked against the admin's own row.
+// US1-6 / US6-4. The caller's own password, confirming intent before an
+// irreversible delete: a company deleting itself, or an admin deleting another
+// company. Same currentPassword shape as ChangeCredentialsRequest, checked
+// against the caller's own row.
 export interface DeleteCompanyAccountRequest {
     currentPassword: string;
 }

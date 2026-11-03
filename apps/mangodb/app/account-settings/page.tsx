@@ -92,11 +92,12 @@ export default function AccountPage() {
         setStatus(`${LABELS[mode]} updated.`);
     };
 
-    const handleDeleteAccount = async () => {
+    const handleDeleteAccount = async (currentPassword: string) => {
         try {
-            await deleteMyAccount();
+            await deleteMyAccount({ currentPassword });
         } catch (err) {
-            // Rethrown so ConfirmModal catches and displays the error (e.g. 409 ongoing project)
+            // Rethrown so ConfirmModal catches and displays the error (e.g. 401
+            // wrong password, 409 ongoing project)
             throw new Error(describeError(err));
         }
 

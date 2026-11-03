@@ -41,6 +41,7 @@ import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 import { requireFile } from '../middleware/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
+import { deleteCompanyAccountBodySchema } from '../schemas/admin-company.schema';
 import {
     changeCredentialsSchema,
     companyIdParamSchema,
@@ -271,6 +272,15 @@ export async function deleteMyAccount(
     res: Response,
 ): Promise<void> {
     const companyId = req.auth!.companyId;
+
+    // A delete cannot be undone, so a token alone is not enough: a stolen
+    // session or an unlocked laptop must not be able to do it. Same re-auth
+    // the admin delete asks for.
+    const { currentPassword } = parseBody(
+        deleteCompanyAccountBodySchema,
+        req.body,
+    );
+    await assertCurrentPassword(companyId, currentPassword);
 
     if (await hasOngoingProject(companyId)) {
         throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);

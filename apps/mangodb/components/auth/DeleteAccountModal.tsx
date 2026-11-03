@@ -7,7 +7,8 @@ import ConfirmModal, { type ConfirmModalBaseProps } from '../ui/ConfirmModal';
 
 type DeleteAccountModalProps = Omit<ConfirmModalBaseProps, 'onConfirm'> & {
     expectedEmail: string;
-    onConfirm?: (confirmedEmail: string) => void | Promise<void>;
+    // The API re-checks the password before an irreversible delete.
+    onConfirm?: (currentPassword: string) => void | Promise<void>;
 };
 
 export default function DeleteAccountModal({
@@ -26,7 +27,9 @@ function DeleteAccountDialog({
     ...props
 }: Omit<DeleteAccountModalProps, 'isOpen'>) {
     const emailId = useId();
+    const passwordId = useId();
     const [confirmEmail, setConfirmEmail] = useState('');
+    const [password, setPassword] = useState('');
     const normalizedEmail = expectedEmail.trim().toLowerCase();
     const isMatch =
         normalizedEmail.length > 0 &&
@@ -39,10 +42,8 @@ function DeleteAccountDialog({
             title="Delete Account"
             layout="stacked"
             confirmLabel="Delete your account"
-            confirmDisabled={!isMatch}
-            onConfirm={
-                onConfirm ? () => onConfirm(confirmEmail.trim()) : undefined
-            }
+            confirmDisabled={!isMatch || password.length === 0}
+            onConfirm={onConfirm ? () => onConfirm(password) : undefined}
             icon={
                 <div className="w-[4.8vw] h-[4.8vw] min-w-[56px] min-h-[56px] max-w-[72px] max-h-[72px] rounded-full bg-danger-tint flex items-center justify-center">
                     <Image
@@ -85,6 +86,24 @@ function DeleteAccountDialog({
                         if (event.key === 'Enter') event.preventDefault();
                     }}
                     placeholder={`Type "${expectedEmail}" to confirm`}
+                    className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
+                />
+                <label
+                    htmlFor={passwordId}
+                    className="block type-xs font-medium text-ink mt-[1.6vh] mb-[0.8vh]"
+                >
+                    Password
+                </label>
+                <input
+                    id={passwordId}
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter') event.preventDefault();
+                    }}
                     className="w-full h-[3.8vh] min-h-[34px] px-3 rounded-[12px] border border-ink bg-transparent type-xs text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-1 focus:ring-ink disabled:opacity-60"
                 />
             </div>

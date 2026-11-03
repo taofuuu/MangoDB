@@ -208,10 +208,18 @@ companyRoutes.delete('/me/photo', requireAuth, deleteMyPhoto);
  *   delete:
  *     tags: [Companies]
  *     summary: Delete my account
- *     description: US1-6. Soft delete. 409 while the company has an ongoing project.
+ *     description: US1-6. Soft delete. Needs the company's own password (401 if wrong). 409 while the company has an ongoing project.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/DeleteCompanyAccountRequest'
  *     responses:
  *       '204':
  *         description: Deleted
+ *       '400':
+ *         $ref: '#/components/responses/BadRequest'
  *       '401':
  *         $ref: '#/components/responses/Unauthorized'
  *       '403':
