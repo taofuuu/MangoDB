@@ -21,12 +21,14 @@ import ProfileMenu from './ProfileMenu';
 // in the corner yet.
 const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 
-// The searches, the app's main ways in. Uppercase on screen to match the
-// Figma navbar's links; the source stays sentence case for screen readers.
-// shortLabel is for phones, where the full label wraps onto two lines.
+// The searches and your own work, the app's main ways in, so no page needs a
+// typed URL. Uppercase on screen to match the Figma navbar's links; the source
+// stays sentence case for screen readers. shortLabel is for narrower screens,
+// where five full labels do not fit on one line.
 // canUse matches the page's own gate: providers look for jobs, receivers for
 // services, and a BOTH company gets the two. Every company can look for other
-// companies; admins have /admin/companies instead.
+// companies and has projects and proposals; admins have /admin/companies
+// instead.
 const NAV_LINKS = [
     {
         href: '/jobs',
@@ -42,8 +44,20 @@ const NAV_LINKS = [
     },
     {
         href: '/companies',
-        label: 'Explore companies',
+        label: 'Search companies',
         shortLabel: 'Companies',
+        canUse: isCompanyAccount,
+    },
+    {
+        href: '/projects',
+        label: 'My projects',
+        shortLabel: 'Projects',
+        canUse: isCompanyAccount,
+    },
+    {
+        href: '/proposals',
+        label: 'My proposals',
+        shortLabel: 'Proposals',
         canUse: isCompanyAccount,
     },
 ];
@@ -109,8 +123,11 @@ export default function Navbar() {
                     </span>
                 </Link>
 
-                <div className="flex items-center gap-4 sm:gap-8 xl:gap-10">
-                    <ul className="flex items-center gap-3 sm:gap-6 xl:gap-8">
+                <div className="flex min-w-0 items-center gap-4 sm:gap-8 xl:gap-10">
+                    {/* A BOTH company's five links are wider than a phone, so
+                        there the row scrolls sideways instead of widening the
+                        page. The padding keeps the focus ring inside it. */}
+                    <ul className="flex items-center gap-3 sm:gap-6 xl:gap-8 max-sm:min-w-0 max-sm:overflow-x-auto max-sm:px-1 max-sm:py-2">
                         {links.map((link) => {
                             const isCurrent = pathname === link.href;
                             return (
@@ -128,10 +145,10 @@ export default function Navbar() {
                                                 : 'border-transparent text-ink hover:border-brand/40 hover:text-brand-deep'
                                         }`}
                                     >
-                                        <span className="sm:hidden">
+                                        <span className="xl:hidden">
                                             {link.shortLabel}
                                         </span>
-                                        <span className="max-sm:hidden">
+                                        <span className="max-xl:hidden">
                                             {link.label}
                                         </span>
                                     </Link>
