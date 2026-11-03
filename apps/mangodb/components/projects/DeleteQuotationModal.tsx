@@ -2,25 +2,32 @@
 
 import type { Quotation } from '@mangodb/shared';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import { deleteQuotation } from '@/lib/projects';
+import { describeError } from '@/lib/api';
 
 type DeleteQuotationModalProps = {
     // The one to delete. Null keeps the dialog closed.
     quotation: Quotation | null;
     onClose: () => void;
-    // Called after the API has deleted it, to drop it from the list.
-    onDeleted: (quotationId: number) => void;
+    // Deletes the quotation and updates the caller's state.
+    onConfirm: (quotationId: number) => void | Promise<void>;
 };
 
 export default function DeleteQuotationModal({
     quotation,
     onClose,
-    onDeleted,
+    onConfirm,
 }: DeleteQuotationModalProps) {
     const handleConfirm = async () => {
         if (!quotation) return;
-        await deleteQuotation(quotation.quotationId, quotation.projectId);
-        onDeleted(quotation.quotationId);
+        try {
+            await onConfirm(quotation.quotationId);
+        } catch (err: unknown) {
+            throw new Error(
+                describeError(err, {
+                    offline: 'Failed to delete quotation.',
+                }),
+            );
+        }
     };
 
     return (
