@@ -301,6 +301,10 @@ const fakeStorage = {
     removeFromStorageByUrl: async (url: string, bucket: string) => {
         removedUrls.push({ url, bucket });
     },
+    // The bucket name goes into the fake token, so a test can see which
+    // bucket signed the link.
+    signStorageUrls: async (urls: string[], bucket: string) =>
+        urls.map((url) => `${url}?token=${bucket}`),
 };
 
 function moduleUrl(specifier: string): string {
@@ -557,7 +561,8 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(quotation, {
             quotationId: 1,
             projectId: PROJECT_ID,
-            quotationFile: UPLOADED.url,
+            // A signed link, not the stored URL: the bucket is private.
+            quotationFile: `${UPLOADED.url}?token=quotation`,
             quotationStatus: 'PENDING',
             createdAt: '2026-10-25T08:00:00.000Z',
         });
@@ -848,6 +853,11 @@ describe('GET /projects/:projectId/quotations (US4-3)', () => {
         assert.equal(list[1]!.quotationId, 1);
         assert.equal(list[1]!.quotationStatus, 'REJECTED');
         assert.equal(list[1]!.createdAt, '2026-10-25T08:00:00.000Z');
+        // Each file goes out as a link signed by the private quotation bucket.
+        assert.equal(
+            list[0]!.quotationFile,
+            'https://storage.test/quote2.pdf?token=quotation',
+        );
     });
 
     it('returns the project quotations newest first for the Receiver on a service project', async () => {

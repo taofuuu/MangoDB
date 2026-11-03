@@ -11,7 +11,7 @@ import {
 import {
     assertQuotationParty,
     quotationSelect,
-    toQuotation,
+    toQuotations,
 } from '../lib/quotation';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
@@ -85,7 +85,8 @@ export async function createQuotation(
         throw err;
     }
 
-    res.status(201).json(toQuotation(row));
+    const [body] = await toQuotations([row]);
+    res.status(201).json(body);
 }
 
 // US4-3 (T4.3.1). The project's quotations, newest first, for both parties:
@@ -104,7 +105,7 @@ export async function listQuotations(
         orderBy: [{ createdAt: 'desc' }, { quotationId: 'desc' }],
         select: quotationSelect,
     });
-    res.json(rows.map(toQuotation));
+    res.json(await toQuotations(rows));
 }
 
 // US4-4 (T4.4.1). The Receiver accepts a pending quotation (ADR 0017).
@@ -148,7 +149,8 @@ export async function acceptQuotation(
         return row;
     });
 
-    res.json(toQuotation(updated));
+    const [body] = await toQuotations([updated]);
+    res.json(body);
 }
 
 // US4-5 (T4.5.1). The Receiver rejects a pending quotation (ADR 0017).
@@ -195,7 +197,8 @@ export async function rejectQuotation(
         return row;
     });
 
-    res.json(toQuotation(updated));
+    const [body] = await toQuotations([updated]);
+    res.json(body);
 }
 
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
