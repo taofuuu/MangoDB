@@ -8,6 +8,8 @@ const ORDER_OPTIONS: { value: ServiceSortOrder; label: string }[] = [
     { value: 'newest', label: 'Newest' },
     { value: 'priceAsc', label: 'Budget: low to high' },
     { value: 'priceDesc', label: 'Budget: high to low' },
+    { value: 'ratingDesc', label: 'Rating: high to low' },
+    { value: 'ratingAsc', label: 'Rating: low to high' },
 ];
 
 export default function SearchServicesBar({
