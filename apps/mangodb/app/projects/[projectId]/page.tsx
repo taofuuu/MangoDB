@@ -472,6 +472,10 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
             if (pending) {
                 await deleteQuotation(pending.quotationId, projectId);
                 removedPending = true;
+                // The reload below can fail too, so drop it from the card now.
+                setQuotations((qs) =>
+                    qs.filter((q) => q.quotationId !== pending.quotationId),
+                );
             }
             await uploadQuotation(projectId, file);
         } catch (err: unknown) {
