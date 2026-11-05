@@ -34,6 +34,7 @@ type ProjectSidebarProps = {
     onUploadQuotation?: () => void;
     onAcceptQuotation?: (quotationId: number) => void;
     onRejectQuotation?: (quotationId: number) => void;
+    onDeleteQuotation?: (quotationId: number) => void | Promise<void>;
     onReportDeposit?: () => void;
     onConfirmDeposit?: () => void;
     onSubmitWork?: () => void;
@@ -54,6 +55,7 @@ export default function ProjectSidebar({
     onUploadQuotation,
     onAcceptQuotation,
     onRejectQuotation,
+    onDeleteQuotation,
     onReportDeposit,
     onConfirmDeposit,
     onSubmitWork,
@@ -183,6 +185,7 @@ export default function ProjectSidebar({
                 onUploadQuotation={onUploadQuotation}
                 onAcceptQuotation={onAcceptQuotation}
                 onRejectQuotation={onRejectQuotation}
+                onDeleteQuotation={onDeleteQuotation}
                 isBusy={isBusy}
             />
 
