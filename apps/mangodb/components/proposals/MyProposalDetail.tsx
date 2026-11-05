@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { SentProposal } from '@mangodb/shared';
+import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { ArrowRight, CalendarDays, Clock, Tag, X } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime, formatMonths } from '@/lib/dates';
@@ -90,7 +90,8 @@ export default function MyProposalDetail({
                 {proposal.proposalTerms}
             </p>
 
-            {proposal.proposalStatus === 'ACCEPTED' &&
+            {proposal.proposalStatus ===
+                ('ACCEPTED' satisfies ProposalStatus) &&
                 proposal.projectId !== null && (
                     <div className="mt-4 flex justify-end border-t border-brand/60 pt-4">
                         <Link
