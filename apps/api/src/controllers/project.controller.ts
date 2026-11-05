@@ -6,17 +6,17 @@ import type {
     ProjectSummary,
     ProjectUpdateType,
 } from '@mangodb/shared';
-import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
-import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
+import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
     completedProjectSelect,
     moveProjectStatus,
     projectSelect,
     projectUpdateSelect,
+    projectPartyWhere,
     projectViewSelect,
     providerCompletedProjectsWhere,
     saveProjectEvent,
@@ -26,6 +26,7 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
+import { findPublicCompany } from '../lib/company-lookup';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { companyIdParamSchema } from '../schemas/company.schema';
@@ -47,13 +48,8 @@ export async function listMyProjects(
     const callerId = req.auth!.companyId;
     const { page, pageSize } = parseQuery(projectListQuerySchema, req.query);
 
-    // The two parties are the proposal's sender and the listing's owner
-    // (projectParties). No deletedAt filter: a project is history.
-    const where: Prisma.ProjectWhereInput = {
-        proposal: {
-            OR: [{ senderId: callerId }, { listing: { companyId: callerId } }],
-        },
-    };
+    // No deletedAt filter: a project is history.
+    const where = projectPartyWhere(callerId);
 
     const [totalItems, rows] = await prisma.$transaction([
         prisma.project.count({ where }),
@@ -352,26 +348,14 @@ export async function createReview(req: Request, res: Response): Promise<void> {
         throw ApiError.conflict('Project is not COMPLETED');
     }
 
-    try {
-        const row = await prisma.review.create({
-            data: {
-                projectId,
-                workQualityScore: body.workQualityScore,
-                serviceScore: body.serviceScore,
-                valueForMoneyScore: body.valueForMoneyScore,
-                deliveryTimeScore: body.deliveryTimeScore,
-                comment: body.comment ?? null,
-            },
+    const row = await orDuplicate(
+        prisma.review.create({
+            data: { projectId, ...body, comment: body.comment ?? null },
             select: reviewSelect,
-        });
-
-        res.status(201).json(toReview(row));
-    } catch (err) {
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Project has already been reviewed');
-        }
-        throw err;
-    }
+        }),
+        'Project has already been reviewed',
+    );
+    res.status(201).json(toReview(row));
 }
 // US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404 (conventions §4).
@@ -405,13 +389,7 @@ export async function listProviderCompletedProjects(
         req.query,
     );
 
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: { companyId: true },
-    });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
+    await findPublicCompany(companyId, { companyId: true });
 
     const where = providerCompletedProjectsWhere(companyId);
 

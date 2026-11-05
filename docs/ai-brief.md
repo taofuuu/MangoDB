@@ -146,11 +146,14 @@ message.
 | An id in a query string             | `queryId(name)`, `optionalQueryId(name)`                                       |
 | A cleared field / a param not sent  | `blankToNull` / `blankToUndefined`                                             |
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
+| Another company the public may see  | `findPublicCompany(companyId, select)` — else 404 "Company not found"          |
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
+| Projects a company sits on          | `projectPartyWhere(companyId)` — either side, as a `where`                     |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
+| A create a unique index may reject  | `orDuplicate(write, message)` turns P2002 into a 409                           |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
