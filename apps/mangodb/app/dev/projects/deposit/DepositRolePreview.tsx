@@ -10,26 +10,31 @@ import type {
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
 import DepositSection from '@/components/projects/DepositSection';
 import ReportDepositModal from '@/components/projects/ReportDepositModal';
+import Button from '@/components/ui/Button';
 
 // One role's column on /dev/projects/deposit: a state switch, the Deposit
 // card, and its pop-ups. Sample data until the Receiver's report is wired
 // (T4.6.6). Each action fakes a 600 ms request so the pending labels show,
 // then moves the card to its next state.
 
-type SampleState =
-    | 'awaiting-quotation'
-    | 'awaiting-deposit'
-    | 'reported'
-    | 'confirmed'
-    | 'cancelled';
+// The states the switch offers, in order (conventions §6: the union comes
+// from the array).
+const SAMPLE_STATES = [
+    'awaiting-quotation',
+    'awaiting-deposit',
+    'reported',
+    'confirmed',
+    'cancelled',
+] as const;
+type SampleState = (typeof SAMPLE_STATES)[number];
 
-const STATES: { value: SampleState; label: string }[] = [
-    { value: 'awaiting-quotation', label: 'Awaiting quotation' },
-    { value: 'awaiting-deposit', label: 'Awaiting deposit' },
-    { value: 'reported', label: 'Reported' },
-    { value: 'confirmed', label: 'Confirmed' },
-    { value: 'cancelled', label: 'Cancelled' },
-];
+const LABELS: Record<SampleState, string> = {
+    'awaiting-quotation': 'Awaiting quotation',
+    'awaiting-deposit': 'Awaiting deposit',
+    reported: 'Reported',
+    confirmed: 'Confirmed',
+    cancelled: 'Cancelled',
+};
 
 const REPORTED_AT = '2026-10-27T07:05:00.000Z';
 const CONFIRMED_AT = '2026-10-28T03:30:00.000Z';
@@ -84,20 +89,18 @@ export default function DepositRolePreview({ role }: { role: ProjectRole }) {
             </h2>
 
             <div className="flex flex-wrap gap-2">
-                {STATES.map((s) => (
-                    <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => setState(s.value)}
-                        aria-pressed={state === s.value}
-                        className={`rounded-button border px-3 py-1 type-xs transition-colors ${
-                            state === s.value
-                                ? 'border-brand bg-brand text-surface'
-                                : 'border-line bg-surface-white text-ink hover:bg-fill-subtle'
-                        }`}
+                {SAMPLE_STATES.map((s) => (
+                    <Button
+                        key={s}
+                        variant={state === s ? 'primary' : 'outline'}
+                        onClick={() => setState(s)}
+                        aria-pressed={state === s}
+                        // primary has no border of its own; giving every chip
+                        // one keeps the selected chip the same size.
+                        className="border border-brand px-3 py-1 type-xs"
                     >
-                        {s.label}
-                    </button>
+                        {LABELS[s]}
+                    </Button>
                 ))}
             </div>
 
