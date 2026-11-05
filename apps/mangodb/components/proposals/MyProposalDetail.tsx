@@ -1,7 +1,8 @@
 'use client';
 
-import type { SentProposal } from '@mangodb/shared';
-import { CalendarDays, Clock, Tag, X } from 'lucide-react';
+import Link from 'next/link';
+import type { ProposalStatus, SentProposal } from '@mangodb/shared';
+import { ArrowRight, CalendarDays, Clock, Tag, X } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime, formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
@@ -15,7 +16,8 @@ type MyProposalDetailProps = {
 
 // The right-hand panel: everything the company sent, read back to them. A
 // Provider's job proposal and a Receiver's hire request share it. Everything
-// here is already in the list row, so opening it needs no request.
+// here is already in the list row, so opening it needs no request. An
+// accepted one started a project, so the panel ends with a link to it.
 export default function MyProposalDetail({
     proposal,
     onClose,
@@ -87,6 +89,20 @@ export default function MyProposalDetail({
             <p className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-2 type-sm leading-relaxed text-ink">
                 {proposal.proposalTerms}
             </p>
+
+            {proposal.proposalStatus ===
+                ('ACCEPTED' satisfies ProposalStatus) &&
+                proposal.projectId !== null && (
+                    <div className="mt-4 flex justify-end border-t border-brand/60 pt-4">
+                        <Link
+                            href={`/projects/${proposal.projectId}`}
+                            className="inline-flex items-center gap-2 rounded-button bg-brand px-6 py-2 type-xs text-surface-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                        >
+                            Go to project
+                            <ArrowRight aria-hidden="true" className="size-4" />
+                        </Link>
+                    </div>
+                )}
         </section>
     );
 }
