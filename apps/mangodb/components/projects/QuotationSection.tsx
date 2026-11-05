@@ -23,7 +23,8 @@ type QuotationSectionProps = {
     onUploadQuotation?: (() => void) | undefined;
     onAcceptQuotation?: ((quotationId: number) => void) | undefined;
     onRejectQuotation?: ((quotationId: number) => void) | undefined;
-    onDeleteQuotation?: ((quotationId: number) => void | Promise<void>) | undefined;
+    onDeleteQuotation?:
+        ((quotationId: number) => void | Promise<void>) | undefined;
     isBusy?: boolean | undefined;
 };
 
