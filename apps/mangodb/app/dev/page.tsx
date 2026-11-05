@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 // Developer index of the pages built so far. Nothing links here: reach it by
 // typing /dev. Keep the descriptions true: a link list nobody trusts is worse
@@ -109,6 +110,12 @@ const ROUTES = [
 ];
 
 export default function DevIndexPage() {
+    // Same gate as the other /dev pages: this map of internal routes is not
+    // for the deployed site.
+    if (process.env.NODE_ENV !== 'development') {
+        notFound();
+    }
+
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
             <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">

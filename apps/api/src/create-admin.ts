@@ -29,7 +29,12 @@ async function main(): Promise<void> {
     const hashed = await hashPassword(password);
     const admin = await prisma.company.upsert({
         where: { email },
-        update: { password: hashed, deletedAt: null },
+        // A reset also signs out every session the old password opened.
+        update: {
+            password: hashed,
+            deletedAt: null,
+            credentialsChangedAt: new Date(),
+        },
         create: {
             companyName: 'MangoDB Admin',
             username: 'admin',

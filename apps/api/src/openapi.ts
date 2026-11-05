@@ -616,7 +616,7 @@ const schemas: Record<string, Schema> = {
             quotationFile: {
                 type: 'string',
                 format: 'uri',
-                description: 'Public URL of the PDF',
+                description: 'Link to the PDF. Expires after an hour',
             },
             quotationStatus: { type: 'string', enum: [...QUOTATION_STATUSES] },
             createdAt: { type: 'string', format: 'date-time' },

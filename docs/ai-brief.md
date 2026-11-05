@@ -155,6 +155,7 @@ message.
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | A create a unique index may reject  | `orDuplicate(write, message)` turns P2002 into a 409                           |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
+| A file in a private bucket          | `signStorageUrls(urls, bucket, seconds)` — links that expire                   |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
 
