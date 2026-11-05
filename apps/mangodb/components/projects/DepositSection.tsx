@@ -3,6 +3,7 @@
 import type { ProjectDetail, ProjectStatus } from '@mangodb/shared';
 import { CheckCircle2, CircleCheck } from 'lucide-react';
 import DepositCard from '@/components/projects/DepositCard';
+import Button from '@/components/ui/Button';
 
 type DepositSectionProps = {
     project: ProjectDetail;
@@ -91,14 +92,14 @@ export default function DepositSection({
 
                     {onConfirmDeposit && canConfirmDeposit && (
                         <div className="w-full pt-1">
-                            <button
-                                type="button"
+                            <Button
+                                variant="outline"
                                 onClick={onConfirmDeposit}
                                 disabled={isBusy}
-                                className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm !font-[500] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                                className="w-full py-2 type-sm !font-[500] !text-brand shadow-xs"
                             >
                                 Yes, I’ve Received it
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </DepositCard>
@@ -131,14 +132,14 @@ export default function DepositSection({
                 </p>
 
                 {onReportDeposit && (
-                    <button
-                        type="button"
+                    <Button
+                        variant="outline"
                         onClick={onReportDeposit}
                         disabled={isBusy}
-                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                        className="w-full py-2 type-sm !text-brand shadow-xs"
                     >
                         Report Deposit Payment
-                    </button>
+                    </Button>
                 )}
             </DepositCard>
         );
