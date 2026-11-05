@@ -79,7 +79,8 @@ column is served straight to the browser, with no signing step. `quotation` is
 column still holds the URL `getPublicUrl` gave, but that URL does not open, so
 every quotation endpoint swaps it for a link that expires after an hour
 (`toQuotations` in `src/lib/quotation.ts`, `signStorageUrls` in
-`src/lib/storage.ts`).
+`src/lib/storage.ts`). If signing fails, the failure is logged and the stored URL
+goes out instead, because the row may already be saved.
 
 Create a missing bucket in the Supabase dashboard under Storage → New bucket,
 with "Public bucket" on for the three public ones and off for `quotation`.

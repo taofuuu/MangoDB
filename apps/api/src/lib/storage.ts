@@ -122,6 +122,10 @@ export async function removeFromStorageByUrl(
 // For a private bucket (quotation): the stored public URL does not open, so
 // each one is swapped for a link that works for `expiresInSeconds` only. A URL
 // that is not ours comes back as it was. Same order as the input.
+//
+// Best-effort, like removeFromStorage: a caller may have saved its row already,
+// and a 500 would report that write as failed. On failure the stored URLs come
+// back, so a link may not open until the next load, and the page still works.
 export async function signStorageUrls(
     urls: string[],
     bucket: Bucket,
@@ -131,25 +135,27 @@ export async function signStorageUrls(
     const ours = paths.filter((path) => path !== null);
     if (ours.length === 0) return urls;
 
-    const { data, error } = await getSupabase()
-        .storage.from(bucket)
-        .createSignedUrls(ours, expiresInSeconds);
+    try {
+        const { data, error } = await getSupabase()
+            .storage.from(bucket)
+            .createSignedUrls(ours, expiresInSeconds);
 
-    if (error) {
-        // Our side failed, like a failed upload: log it, tell the caller to retry.
-        console.error('Signing failed:', error.message);
-        throw new ApiError(
-            500,
-            'INTERNAL',
-            'The file link could not be made. Try again.',
+        if (error) {
+            console.error('Signing failed:', error.message);
+            return urls;
+        }
+
+        const signed = new Map(
+            data.map((entry) => [entry.path, entry.signedUrl]),
         );
+        return urls.map((url, i) => {
+            const path = paths[i];
+            return (path && signed.get(path)) || url;
+        });
+    } catch (err) {
+        console.error('Signing failed:', err);
+        return urls;
     }
-
-    const signed = new Map(data.map((entry) => [entry.path, entry.signedUrl]));
-    return urls.map((url, i) => {
-        const path = paths[i];
-        return (path && signed.get(path)) || url;
-    });
 }
 
 export { BUCKETS };

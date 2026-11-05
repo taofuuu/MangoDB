@@ -5,7 +5,8 @@
  * - A stored URL from the bucket comes back as its signed link, in order.
  * - A URL that is not ours (seed data) comes back unchanged and is not sent
  *   to Supabase; with none of ours, Supabase is not called at all.
- * - A Supabase failure is a 500 ApiError.
+ * - A Supabase failure, returned or thrown, is logged and the stored URLs come
+ *   back: the caller may have saved its row already, so it must not be a 500.
  *
  * How:
  * - env and @supabase/supabase-js are replaced with mock.module, so nothing
@@ -16,19 +17,19 @@
 import { before, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { ApiError } from './api-error';
 
 const BASE = 'https://x.supabase.co/storage/v1/object/public/quotation/';
 
 let signedPaths: string[][];
-let failSigning: boolean;
+let signingFailure: 'returned' | 'thrown' | null;
 
 const fakeClient = {
     storage: {
         from: () => ({
             createSignedUrls: async (paths: string[]) => {
                 signedPaths.push(paths);
-                if (failSigning) {
+                if (signingFailure === 'thrown') throw new Error('boom');
+                if (signingFailure === 'returned') {
                     return { data: null, error: { message: 'boom' } };
                 }
                 return {
@@ -59,7 +60,7 @@ before(async () => {
 
 beforeEach(() => {
     signedPaths = [];
-    failSigning = false;
+    signingFailure = null;
 });
 
 describe('signStorageUrls', () => {
@@ -86,11 +87,17 @@ describe('signStorageUrls', () => {
         assert.equal(signedPaths.length, 0);
     });
 
-    it('is a 500 when Supabase cannot sign', async () => {
-        failSigning = true;
-        await assert.rejects(
-            signStorageUrls([`${BASE}quotations/a.pdf`], 'quotation', 60),
-            (err) => err instanceof ApiError && err.status === 500,
-        );
-    });
+    for (const failure of ['returned', 'thrown'] as const) {
+        it(`falls back to the stored URL on a ${failure} failure`, async (t) => {
+            const log = t.mock.method(console, 'error', () => undefined);
+            signingFailure = failure;
+            const stored = [`${BASE}quotations/a.pdf`];
+
+            assert.deepEqual(
+                await signStorageUrls(stored, 'quotation', 60),
+                stored,
+            );
+            assert.equal(log.mock.callCount(), 1);
+        });
+    }
 });
