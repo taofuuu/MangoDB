@@ -79,6 +79,11 @@ const ROUTES = [
                   title: 'Quotation section (Temporary)',
                   detail: 'T4.1.4 — the Quotation card in every state for Provider and Receiver, with the submit, accept and reject pop-ups. Sample data, no API call.',
               },
+              {
+                  href: '/dev/projects/deposit',
+                  title: 'Deposit section (Temporary)',
+                  detail: 'T4.6.3 — the Deposit card in every state for Provider and Receiver, with the report and confirm pop-ups. Sample data, no API call.',
+              },
           ]
         : []),
     {
