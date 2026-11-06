@@ -135,6 +135,12 @@ export default function LoginForm() {
                     Sign Up
                 </Link>
             </p>
+
+            <p className="-mt-3 text-center type-xs text-ink-soft">
+                <Link href="/privacy" className="hover:underline">
+                    Privacy Policy
+                </Link>
+            </p>
         </form>
     );
 }

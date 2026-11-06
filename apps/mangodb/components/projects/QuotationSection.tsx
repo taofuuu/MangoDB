@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { ProjectDetail, Quotation } from '@mangodb/shared';
 import {
     CheckCircle2,
@@ -8,34 +9,91 @@ import {
     ExternalLink,
     Plus,
 } from 'lucide-react';
+import DeleteQuotationModal from '@/components/projects/DeleteQuotationModal';
+import Button from '@/components/ui/Button';
 
 type QuotationSectionProps = {
     project: ProjectDetail;
     // Newest first, as GET /projects/:projectId/quotations returns them.
     quotations: Quotation[];
+    // Set when the quotations could not be loaded. quotations is then empty,
+    // but that does not mean none was sent.
+    loadError?: string | null | undefined;
+    onRetry?: (() => Promise<void>) | undefined;
     onUploadQuotation?: (() => void) | undefined;
     onAcceptQuotation?: ((quotationId: number) => void) | undefined;
     onRejectQuotation?: ((quotationId: number) => void) | undefined;
+    onDeleteQuotation?:
+        ((quotationId: number) => void | Promise<void>) | undefined;
     isBusy?: boolean | undefined;
 };
 
 // The project page's Quotation card, in each state for the Provider and the
 // Receiver: nothing sent yet, waiting on the Receiver, rejected, and
-// accepted (or any status past Awaiting Quotation).
+// accepted (or any status past Awaiting Quotation), plus a failed load.
 export default function QuotationSection({
     project,
     quotations,
+    loadError = null,
+    onRetry,
     onUploadQuotation,
     onAcceptQuotation,
     onRejectQuotation,
+    onDeleteQuotation,
     isBusy = false,
 }: QuotationSectionProps) {
+    const [isRetrying, setIsRetrying] = useState(false);
     const isProvider = project.myRole === 'provider';
     const isReceiver = project.myRole === 'receiver';
     const latestQuotation = quotations[0] ?? null;
     const qStatus = latestQuotation?.quotationStatus;
     const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
     const isCancelled = project.projectStatus === 'CANCELLED';
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+    // Checked first: every other state reads the list, and an empty list
+    // after a failed load would say no quotation was sent, or offer the
+    // Provider an Upload the API would refuse.
+    if (loadError) {
+        const retry = async () => {
+            if (!onRetry) return;
+            setIsRetrying(true);
+            try {
+                await onRetry();
+            } finally {
+                setIsRetrying(false);
+            }
+        };
+
+        return (
+            <div className="rounded-[20px] border border-danger/40 bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
+                <div className="flex items-center gap-3">
+                    <ClipboardList className="h-6 w-6 shrink-0 stroke-[2.2] text-danger" />
+                    <span className="type-sm !font-[600] text-ink">
+                        Quotation
+                    </span>
+                </div>
+
+                <div className="border-b border-danger/30 w-full" />
+
+                <div role="alert" className="type-sm text-danger">
+                    <p>Could not load the quotation. {loadError}</p>
+                </div>
+
+                {onRetry && (
+                    <Button
+                        variant="outline"
+                        onClick={retry}
+                        isLoading={isRetrying}
+                        loadingLabel="Trying again…"
+                        className="w-full rounded-[14px] py-2 type-sm font-semibold"
+                    >
+                        Try again
+                    </Button>
+                )}
+            </div>
+        );
+    }
 
     if (isCancelled) {
         return (
@@ -214,12 +272,21 @@ export default function QuotationSection({
                         </button>
                         <button
                             type="button"
+                            onClick={() => setIsDeleteOpen(true)}
                             disabled={isBusy}
                             className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                         >
                             Remove Quotation
                         </button>
                     </div>
+
+                    <DeleteQuotationModal
+                        quotation={isDeleteOpen ? latestQuotation : null}
+                        onClose={() => setIsDeleteOpen(false)}
+                        onConfirm={async (deletedId) => {
+                            await onDeleteQuotation?.(deletedId);
+                        }}
+                    />
                 </div>
             );
         }

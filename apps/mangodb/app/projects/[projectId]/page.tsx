@@ -12,6 +12,7 @@ import type {
 } from '@mangodb/shared';
 import { ArrowLeft, CircleCheck, Plus, Send } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
+import AcceptQuotationModal from '@/components/projects/AcceptQuotationModal';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
 import ProjectSidebar from '@/components/projects/ProjectSidebar';
@@ -19,6 +20,7 @@ import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge';
 import ProjectTimelineFeed, {
     type TimelineEvent,
 } from '@/components/projects/ProjectTimelineFeed';
+import RejectQuotationModal from '@/components/projects/RejectQuotationModal';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
 import ProjectCompletedModal from '@/components/projects/ProjectCompletedModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
@@ -86,21 +88,34 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
     const [quotations, setQuotations] = useState<Quotation[]>([]);
+    // Kept apart from an empty list, so a failed load is never shown as
+    // "no quotation yet".
+    const [quotationsError, setQuotationsError] = useState<string | null>(null);
     const [review, setReview] = useState<Review | null>(null);
     const [otherCompany, setOtherCompany] =
         useState<PublicCompanyProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
     // Modals state
     const [isUploadQuotationOpen, setIsUploadQuotationOpen] = useState(false);
+    // The quotation the Receiver is about to accept; null while the
+    // confirmation is closed.
+    const [acceptingQuotationId, setAcceptingQuotationId] = useState<
+        number | null
+    >(null);
+    // The quotation the Receiver is about to reject; null while the
+    // confirmation is closed.
+    const [rejectingQuotationId, setRejectingQuotationId] = useState<
+        number | null
+    >(null);
     const [isConfirmDepositOpen, setIsConfirmDepositOpen] = useState(false);
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+    const [isCancelSuccessOpen, setIsCancelSuccessOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
     const [isSubmitSuccessOpen, setIsSubmitSuccessOpen] = useState(false);
     const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
@@ -117,14 +132,21 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         Promise.all([
             getProject(projectId),
             listProjectUpdates(projectId).catch(() => [] as ProjectUpdate[]),
-            listQuotations(projectId).catch(() => [] as Quotation[]),
+            listQuotations(projectId).then(
+                (items) => ({ items, error: null }),
+                (err: unknown) => ({
+                    items: [] as Quotation[],
+                    error: describeError(err),
+                }),
+            ),
             getProjectReview(projectId).catch(() => null),
         ])
             .then(async ([p, u, q, r]) => {
                 if (!isMounted) return;
                 setProject(p);
                 setUpdates(u);
-                setQuotations(q);
+                setQuotations(q.items);
+                setQuotationsError(q.error);
                 setReview(r);
 
                 // Fetch other party profile
@@ -139,9 +161,10 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     // Profile not found or private
                 }
             })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                setError(describeError(err));
+            .catch(() => {
+                // A failed first load leaves project null, which shows
+                // "Project Not Found". A failed reload after an action keeps
+                // the page that is already showing, and any open pop-up.
             })
             .finally(() => {
                 if (isMounted) setIsLoading(false);
@@ -155,6 +178,17 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     useEffect(() => {
         return loadData();
     }, [loadData]);
+
+    // The Quotation card's Try again: reloads only the quotations, since the
+    // rest of the page loaded.
+    const reloadQuotations = useCallback(async () => {
+        try {
+            setQuotations(await listQuotations(projectId));
+            setQuotationsError(null);
+        } catch (err) {
+            setQuotationsError(describeError(err));
+        }
+    }, [projectId]);
 
     // Build timeline events
     const timelineEvents = useMemo<TimelineEvent[]>(() => {
@@ -457,45 +491,84 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     }, [project, quotations, updates]);
 
     // Action Handlers
+    // US4-1. Upload, Replace File and Revise & Resubmit all land here. The
+    // API refuses a second pending quotation, so Replace File deletes the
+    // pending one first. Errors are rethrown as text for UploadQuotationModal
+    // to show under the picker.
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
         setActionError(null);
+        let removedPending = false;
         try {
             const pending = quotations.find(
                 (q) => q.quotationStatus === 'PENDING',
             );
             if (pending) {
                 await deleteQuotation(pending.quotationId, projectId);
+                removedPending = true;
+                // The reload below can fail too, so drop it from the card now.
+                setQuotations((qs) =>
+                    qs.filter((q) => q.quotationId !== pending.quotationId),
+                );
             }
             await uploadQuotation(projectId, file);
-            loadData();
+        } catch (err: unknown) {
+            const message = describeError(err, {
+                409: 'This quotation changed while you were sending it. Check the Quotation card and try again.',
+            });
+            throw new Error(
+                removedPending
+                    ? `${message} Your previous quotation was removed, so send the new one again.`
+                    : message,
+            );
         } finally {
+            // Also after a failure: a delete that went through, or a decision
+            // the Receiver made meanwhile, must show on the card.
+            loadData();
             setIsBusy(false);
         }
     };
 
+    // US4-4. Runs from AcceptQuotationModal's confirm button. Errors are
+    // rethrown as text for the modal to show above its buttons.
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
         setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    404: 'This quotation was removed by the provider. Check the Quotation card for the latest one.',
+                    409: 'This quotation can no longer be accepted. Check the Quotation card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure: a 404 or 409 means the card is out of
+            // date, so it must show what changed.
+            loadData();
             setIsBusy(false);
         }
     };
 
+    // US4-5. Runs from RejectQuotationModal's confirm button, the same way
+    // as accept. Once loadData has the REJECTED quotation, the Provider's
+    // card offers "Revise & Resubmit Quotation".
     const handleRejectQuotation = async (quotationId: number) => {
         setIsBusy(true);
         setActionError(null);
         try {
             await rejectQuotation(quotationId, projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    404: 'This quotation was removed by the provider. Check the Quotation card for the latest one.',
+                    409: 'This quotation can no longer be rejected. Check the Quotation card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure, as with accept.
+            loadData();
             setIsBusy(false);
         }
     };
@@ -584,6 +657,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         try {
             await cancelProject(projectId);
             loadData();
+            setIsCancelSuccessOpen(true);
         } finally {
             setIsBusy(false);
         }
@@ -597,7 +671,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         );
     }
 
-    if (error || !project) {
+    if (!project) {
         return (
             <main className="min-h-screen bg-surface px-4 py-24 text-ink">
                 <div className="mx-auto max-w-4xl">
@@ -662,10 +736,16 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         project={project}
                         otherCompanyProfile={otherCompany}
                         quotations={quotations}
+                        quotationsError={quotationsError}
+                        onRetryQuotations={reloadQuotations}
                         review={review}
                         onUploadQuotation={() => setIsUploadQuotationOpen(true)}
-                        onAcceptQuotation={handleAcceptQuotation}
-                        onRejectQuotation={handleRejectQuotation}
+                        onAcceptQuotation={setAcceptingQuotationId}
+                        onRejectQuotation={setRejectingQuotationId}
+                        onDeleteQuotation={async (quotationId) => {
+                            await deleteQuotation(quotationId, projectId);
+                            loadData();
+                        }}
                         onReportDeposit={handleReportDeposit}
                         onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
@@ -806,6 +886,25 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 onSubmit={handleUploadQuotation}
             />
 
+            <AcceptQuotationModal
+                isOpen={acceptingQuotationId !== null}
+                onClose={() => setAcceptingQuotationId(null)}
+                onConfirm={async () => {
+                    if (acceptingQuotationId === null) return;
+                    await handleAcceptQuotation(acceptingQuotationId);
+                }}
+                providerName={project.provider.companyName}
+            />
+
+            <RejectQuotationModal
+                isOpen={rejectingQuotationId !== null}
+                onClose={() => setRejectingQuotationId(null)}
+                onConfirm={async () => {
+                    if (rejectingQuotationId === null) return;
+                    await handleRejectQuotation(rejectingQuotationId);
+                }}
+            />
+
             <AddUpdateModal
                 isOpen={isAddUpdateOpen}
                 onClose={() => setIsAddUpdateOpen(false)}
@@ -825,10 +924,18 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 onClose={() => setIsCancelConfirmOpen(false)}
                 onConfirm={handleCancelProject}
                 title="Cancel Project"
-                description="Are you sure you want to cancel this project? This action cannot be undone."
-                confirmLabel="Cancel Project"
-                cancelLabel="Keep Project"
+                description="This action cannot be undone."
+                confirmLabel="Confirm"
+                pendingLabel="Cancelling..."
+                cancelLabel="Go Back"
                 confirmVariant="danger"
+            />
+
+            <SuccessModal
+                isOpen={isCancelSuccessOpen}
+                onClose={() => setIsCancelSuccessOpen(false)}
+                title="Project cancelled successfully"
+                actionLabel="OK"
             />
 
             <ConfirmModal

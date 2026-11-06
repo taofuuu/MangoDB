@@ -114,7 +114,8 @@ last deploy.
 
 A new Supabase project also needs:
 
-1. The four public buckets in [apps/api/README.md](../apps/api/README.md#file-storage).
+1. The four buckets in [apps/api/README.md](../apps/api/README.md#file-storage),
+   three public and `quotation` private.
 2. An admin account, from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.alpha`:
 
     ```bash

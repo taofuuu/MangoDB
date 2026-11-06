@@ -2,6 +2,7 @@
 
 import { useId } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import ModalShell from '@/components/ui/ModalShell';
 import { TERMS_INTRO, TERMS_OF_SERVICE } from '@/lib/terms';
 
@@ -58,6 +59,20 @@ export default function TermsOfServiceModal({
                         <p className="leading-[1.65]">{section.body}</p>
                     </section>
                 ))}
+                {/* New tab: following the link in place would unmount the
+                    register form and lose everything typed so far. */}
+                <p className="mt-[1em] leading-[1.65]">
+                    See our{' '}
+                    <Link
+                        href="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-brand-dark underline underline-offset-2 hover:text-brand-deep"
+                    >
+                        Privacy Policy
+                    </Link>{' '}
+                    for how we use your personal data.
+                </p>
             </div>
 
             <div className="mt-[2vh] flex shrink-0 justify-end gap-[20px] max-sm:gap-3">
