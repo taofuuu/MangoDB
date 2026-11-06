@@ -22,6 +22,7 @@ import ProjectTimelineFeed, {
 } from '@/components/projects/ProjectTimelineFeed';
 import RejectQuotationModal from '@/components/projects/RejectQuotationModal';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
+import ReportDepositModal from '@/components/projects/ReportDepositModal';
 import ProjectCompletedModal from '@/components/projects/ProjectCompletedModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -111,6 +112,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [rejectingQuotationId, setRejectingQuotationId] = useState<
         number | null
     >(null);
+    const [isReportDepositOpen, setIsReportDepositOpen] = useState(false);
     const [isConfirmDepositOpen, setIsConfirmDepositOpen] = useState(false);
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -584,15 +586,24 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         }
     };
 
+    // US4-6. Runs from ReportDepositModal's confirm button, the same way as
+    // accepting a quotation. The status stays AWAITING_DEPOSIT; once loadData
+    // has depositReportedAt, the Deposit card shows the waiting state.
     const handleReportDeposit = async () => {
         setIsBusy(true);
         setActionError(null);
         try {
             await reportDeposit(projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    409: 'The deposit can no longer be reported. Check the Deposit card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure: a 409 means the card is out of date (the
+            // deposit was already reported, or the project moved on).
+            loadData();
             setIsBusy(false);
         }
     };
@@ -746,7 +757,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                             await deleteQuotation(quotationId, projectId);
                             loadData();
                         }}
-                        onReportDeposit={handleReportDeposit}
+                        onReportDeposit={() => setIsReportDepositOpen(true)}
                         onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
                         onAcceptWork={() => setIsAcceptConfirmOpen(true)}
@@ -874,6 +885,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
             </div>
 
             {/* Modals */}
+            <ReportDepositModal
+                isOpen={isReportDepositOpen}
+                onClose={() => setIsReportDepositOpen(false)}
+                onConfirm={handleReportDeposit}
+            />
+
             <ConfirmDepositModal
                 isOpen={isConfirmDepositOpen}
                 onClose={() => setIsConfirmDepositOpen(false)}
