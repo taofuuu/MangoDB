@@ -32,13 +32,16 @@ export function signAccessToken(payload: AuthTokenPayload): string {
 
 // Throws if the token is malformed, tampered with, or expired.
 export function verifyAccessToken(token: string): AuthTokenClaims {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    // Only the algorithm jwt.sign uses by default. A token naming any other,
+    // like "none", is refused instead of left to the library's own rules.
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     if (
         typeof decoded === 'string' ||
         typeof decoded.sub !== 'string' ||
         !isUserRole(decoded.role) ||
         typeof decoded.jti !== 'string' ||
-        typeof decoded.exp !== 'number'
+        typeof decoded.exp !== 'number' ||
+        typeof decoded.iat !== 'number'
     ) {
         throw new jwt.JsonWebTokenError(
             'Token payload is missing required claims',
@@ -49,5 +52,6 @@ export function verifyAccessToken(token: string): AuthTokenClaims {
         role: decoded.role,
         jti: decoded.jti,
         exp: decoded.exp,
+        iat: decoded.iat,
     };
 }

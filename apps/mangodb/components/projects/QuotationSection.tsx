@@ -9,6 +9,7 @@ import {
     ExternalLink,
     Plus,
 } from 'lucide-react';
+import DeleteQuotationModal from '@/components/projects/DeleteQuotationModal';
 import Button from '@/components/ui/Button';
 
 type QuotationSectionProps = {
@@ -22,6 +23,8 @@ type QuotationSectionProps = {
     onUploadQuotation?: (() => void) | undefined;
     onAcceptQuotation?: ((quotationId: number) => void) | undefined;
     onRejectQuotation?: ((quotationId: number) => void) | undefined;
+    onDeleteQuotation?:
+        ((quotationId: number) => void | Promise<void>) | undefined;
     isBusy?: boolean | undefined;
 };
 
@@ -36,6 +39,7 @@ export default function QuotationSection({
     onUploadQuotation,
     onAcceptQuotation,
     onRejectQuotation,
+    onDeleteQuotation,
     isBusy = false,
 }: QuotationSectionProps) {
     const [isRetrying, setIsRetrying] = useState(false);
@@ -45,6 +49,7 @@ export default function QuotationSection({
     const qStatus = latestQuotation?.quotationStatus;
     const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
     const isCancelled = project.projectStatus === 'CANCELLED';
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
     // Checked first: every other state reads the list, and an empty list
     // after a failed load would say no quotation was sent, or offer the
@@ -267,12 +272,21 @@ export default function QuotationSection({
                         </button>
                         <button
                             type="button"
+                            onClick={() => setIsDeleteOpen(true)}
                             disabled={isBusy}
                             className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                         >
                             Remove Quotation
                         </button>
                     </div>
+
+                    <DeleteQuotationModal
+                        quotation={isDeleteOpen ? latestQuotation : null}
+                        onClose={() => setIsDeleteOpen(false)}
+                        onConfirm={async (deletedId) => {
+                            await onDeleteQuotation?.(deletedId);
+                        }}
+                    />
                 </div>
             );
         }

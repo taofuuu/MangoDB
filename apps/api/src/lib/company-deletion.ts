@@ -34,14 +34,26 @@ export async function softDeleteCompany(companyId: number): Promise<boolean> {
     return count > 0;
 }
 
-// A row that no longer exists and a row marked deleted both mean the same
-// thing to a caller checking whether an account may act: no. Folding "not
-// found" into "deleted" here means requireAuth gets one boolean instead of
-// having to separately handle a company deleted out from under a live token.
-export async function isCompanyDeleted(companyId: number): Promise<boolean> {
+// requireAuth's one question about the company row, asked on every request.
+// A token is still cryptographically valid after any of these, so all three
+// end the session: the row no longer exists, it is marked deleted, or the
+// token was issued before the last username/email/password change.
+//
+// Whole seconds, because that is all iat holds. The token issued alongside
+// the change shares its second and must survive, so only an older second
+// fails; another token minted in that same second slips through.
+export async function isSessionEnded(
+    companyId: number,
+    issuedAt: number,
+): Promise<boolean> {
     const company = await prisma.company.findUnique({
         where: { companyId },
-        select: { deletedAt: true },
+        select: { deletedAt: true, credentialsChangedAt: true },
     });
-    return !company || company.deletedAt !== null;
+    if (!company || company.deletedAt !== null) return true;
+
+    const changedAt = company.credentialsChangedAt;
+    return (
+        changedAt !== null && issuedAt < Math.floor(changedAt.getTime() / 1000)
+    );
 }

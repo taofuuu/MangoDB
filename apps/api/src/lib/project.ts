@@ -239,6 +239,17 @@ export function providerCompletedProjectsWhere(
     };
 }
 
+// The projects a company sits on, either side: the sender of the accepted
+// proposal or the owner of its listing. The rule projectParties applies,
+// written as a filter.
+export function projectPartyWhere(companyId: number): Prisma.ProjectWhereInput {
+    return {
+        proposal: {
+            OR: [{ senderId: companyId }, { listing: { companyId } }],
+        },
+    };
+}
+
 export type ProjectParty = {
     projectStatus: ProjectStatus;
     providerId: number;

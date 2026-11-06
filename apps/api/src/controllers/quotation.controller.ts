@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
-import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
+import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
     moveProjectStatus,
@@ -11,7 +11,7 @@ import {
 import {
     assertQuotationParty,
     quotationSelect,
-    toQuotation,
+    toQuotations,
 } from '../lib/quotation';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
@@ -57,35 +57,26 @@ export async function createQuotation(
     }
 
     // The row and its timeline event (#212) save together, or neither does.
-    let row;
-    try {
-        row = await saveWithUpload(
-            file,
-            BUCKETS.QUOTATION,
-            'quotations',
-            (quotationFile) =>
-                prisma.$transaction(async (tx) => {
-                    const created = await tx.quotation.create({
-                        data: {
-                            projectId,
-                            quotationFile,
-                            quotationStatus:
-                                'PENDING' satisfies QuotationStatus,
-                        },
-                        select: quotationSelect,
-                    });
-                    await saveProjectEvent(tx, projectId, 'QUOTATION_SENT');
-                    return created;
-                }),
-        );
-    } catch (err) {
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('A quotation is already pending');
-        }
-        throw err;
-    }
+    const row = await orDuplicate(
+        saveWithUpload(file, BUCKETS.QUOTATION, 'quotations', (quotationFile) =>
+            prisma.$transaction(async (tx) => {
+                const created = await tx.quotation.create({
+                    data: {
+                        projectId,
+                        quotationFile,
+                        quotationStatus: 'PENDING' satisfies QuotationStatus,
+                    },
+                    select: quotationSelect,
+                });
+                await saveProjectEvent(tx, projectId, 'QUOTATION_SENT');
+                return created;
+            }),
+        ),
+        'A quotation is already pending',
+    );
 
-    res.status(201).json(toQuotation(row));
+    const [body] = await toQuotations([row]);
+    res.status(201).json(body);
 }
 
 // US4-3 (T4.3.1). The project's quotations, newest first, for both parties:
@@ -104,7 +95,7 @@ export async function listQuotations(
         orderBy: [{ createdAt: 'desc' }, { quotationId: 'desc' }],
         select: quotationSelect,
     });
-    res.json(rows.map(toQuotation));
+    res.json(await toQuotations(rows));
 }
 
 // US4-4 (T4.4.1). The Receiver accepts a pending quotation (ADR 0017).
@@ -148,7 +139,8 @@ export async function acceptQuotation(
         return row;
     });
 
-    res.json(toQuotation(updated));
+    const [body] = await toQuotations([updated]);
+    res.json(body);
 }
 
 // US4-5 (T4.5.1). The Receiver rejects a pending quotation (ADR 0017).
@@ -195,7 +187,8 @@ export async function rejectQuotation(
         return row;
     });
 
-    res.json(toQuotation(updated));
+    const [body] = await toQuotations([updated]);
+    res.json(body);
 }
 
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong

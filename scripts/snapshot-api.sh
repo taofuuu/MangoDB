@@ -72,6 +72,10 @@ PDF="$WORK/sample.pdf"
 RUN="snapshot_probe_$(date +%s)"
 SUBS=(--text "run=$RUN")
 
+# DELETE /companies/me asks for the password. Every probe registers with this
+# one, so one body deletes any of them.
+PROBE_DELETE=(-H 'Content-Type: application/json' -d '{"currentPassword":"snapshot-probe-pw"}')
+
 TOKEN_ADMIN=""
 TOKEN_PROVIDER=""
 TOKEN_A=""
@@ -222,23 +226,23 @@ cleanup() {
             -H "Authorization: Bearer $TOKEN_PROVIDER"
     fi
     if [ "$B_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" "${PROBE_DELETE[@]}" \
             -H "Authorization: Bearer $TOKEN_B"
     fi
     if [ "$C_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" "${PROBE_DELETE[@]}" \
             -H "Authorization: Bearer $TOKEN_C"
     fi
     if [ "$D_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" "${PROBE_DELETE[@]}" \
             -H "Authorization: Bearer $TOKEN_D"
     fi
     if [ "$E_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" "${PROBE_DELETE[@]}" \
             -H "Authorization: Bearer $TOKEN_E"
     fi
     if [ "$F_LIVE" = 1 ]; then
-        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" \
+        curl -sS -o /dev/null -X DELETE "$API_URL/companies/me" "${PROBE_DELETE[@]}" \
             -H "Authorization: Bearer $TOKEN_F"
     fi
     if [ "$A_LIVE" = 1 ]; then
@@ -569,7 +573,8 @@ COMPANY_B_ID="$(jget company.company_id)"
 SUBS+=(--id "company_id=$COMPANY_B_ID")
 resnap auth-register-receiver
 
-snap companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")"
+snap companies-me-delete DELETE /companies/me -H "$(bearer "$TOKEN_B")" \
+    "${PROBE_DELETE[@]}"
 B_LIVE=0
 snap error-session-ended GET /companies/me -H "$(bearer "$TOKEN_B")"
 # A soft-deleted company has no public profile any more.
@@ -1097,7 +1102,7 @@ snap proposals-mine-filter GET "/proposals/mine?status=PENDING&page=1&pageSize=6
 snap proposals-mine-counts GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_E")"
 
-[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_E")")" = 204 ] && E_LIVE=0
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_E")" "${PROBE_DELETE[@]}")" = 204 ] && E_LIVE=0
 
 # The lists below come from probe F, a Receiver only this run can sign in as,
 # to prove that Receivers see their sent hire requests on a Service (US2-9).
@@ -1141,7 +1146,7 @@ snap proposals-mine-receiver-counts GET /proposals/mine/counts \
 # Deleting the service deletes its hire request too (ON DELETE CASCADE).
 run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
 
-[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_F")")" = 204 ] && F_LIVE=0
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_F")" "${PROBE_DELETE[@]}")" = 204 ] && F_LIVE=0
 
 # ---------------------------------------------------------------------------
 # 11. Service search (US3-1)
@@ -1181,7 +1186,7 @@ api POST /services -H "$(bearer "$TOKEN_C")" \
     -H 'Content-Type: application/json' \
     -d "{\"listingTitle\":\"Snapshot Probe deleted service $RUN\",\"listingDesc\":\"created by scripts/snapshot-api.sh\",\"maxBudget\":50000}" >/dev/null
 DELETED_SERVICE_ID="$(jget serviceId)"
-[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")")" = 204 ] && C_LIVE=0
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_C")" "${PROBE_DELETE[@]}")" = 204 ] && C_LIVE=0
 
 # Probe D: a Receiver that posts a job, then deletes itself. A soft delete
 # leaves the job OPEN, so only the deletedAt filter keeps it out of the list,
@@ -1204,7 +1209,7 @@ if [ -z "$DELETED_JOB_ID" ]; then
     cat "$BODY" >&2
     exit 1
 fi
-[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")")" = 204 ] && D_LIVE=0
+[ "$(api DELETE /companies/me -H "$(bearer "$TOKEN_D")" "${PROBE_DELETE[@]}")" = 204 ] && D_LIVE=0
 SUBS+=(--id "deleted_job_id=$DELETED_JOB_ID")
 
 # A deleted company's open job is hidden from the list...

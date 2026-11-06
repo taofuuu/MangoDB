@@ -10,18 +10,17 @@ import type {
 import {
     Ban,
     CheckCircle2,
-    CircleCheck,
     FileText,
     Globe,
     Mail,
     Phone,
-    ReceiptText,
     Send,
     SquarePen,
     Star,
     X,
 } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import DepositSection from '@/components/projects/DepositSection';
 import QuotationSection from '@/components/projects/QuotationSection';
 
 type ProjectSidebarProps = {
@@ -34,6 +33,7 @@ type ProjectSidebarProps = {
     onUploadQuotation?: () => void;
     onAcceptQuotation?: (quotationId: number) => void;
     onRejectQuotation?: (quotationId: number) => void;
+    onDeleteQuotation?: (quotationId: number) => void | Promise<void>;
     onReportDeposit?: () => void;
     onConfirmDeposit?: () => void;
     onSubmitWork?: () => void;
@@ -54,6 +54,7 @@ export default function ProjectSidebar({
     onUploadQuotation,
     onAcceptQuotation,
     onRejectQuotation,
+    onDeleteQuotation,
     onReportDeposit,
     onConfirmDeposit,
     onSubmitWork,
@@ -67,20 +68,6 @@ export default function ProjectSidebar({
     const isReceiver = project.myRole === 'receiver';
     const otherParty = isProvider ? project.receiver : project.provider;
     const isCancelled = project.projectStatus === 'CANCELLED';
-
-    // Latest quotation (GET /projects/:id/quotations returns newest first)
-    const latestQuotation = quotations[0] ?? null;
-    const qStatus = latestQuotation?.quotationStatus;
-    const isPastQuotation = project.projectStatus !== 'AWAITING_QUOTATION';
-    const isQuotationAccepted = isPastQuotation || qStatus === 'ACCEPTED';
-
-    // Deposit status
-    const isDepositConfirmed = !!project.depositConfirmedAt;
-    const isDepositReported = !!project.depositReportedAt;
-    // A project cancelled after the Receiver's report keeps depositReportedAt,
-    // but the API only confirms from AWAITING_DEPOSIT (409 otherwise).
-    const canConfirmDeposit =
-        isDepositReported && project.projectStatus === 'AWAITING_DEPOSIT';
 
     // Review average
     const reviewAverage = review
@@ -183,192 +170,17 @@ export default function ProjectSidebar({
                 onUploadQuotation={onUploadQuotation}
                 onAcceptQuotation={onAcceptQuotation}
                 onRejectQuotation={onRejectQuotation}
+                onDeleteQuotation={onDeleteQuotation}
                 isBusy={isBusy}
             />
 
             {/* 4. Deposit Section */}
-            {(() => {
-                if (isCancelled) {
-                    return (
-                        <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
-                                    <span className="type-sm !font-[600] text-ink-soft">
-                                        Deposit
-                                    </span>
-                                </div>
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
-                                    —
-                                </span>
-                            </div>
-
-                            <div className="border-b border-line w-full" />
-
-                            <p className="type-sm text-ink-soft leading-relaxed">
-                                {isDepositConfirmed
-                                    ? 'The deposit was confirmed prior to project cancellation.'
-                                    : 'This project has been cancelled. Deposit processing has ended.'}
-                            </p>
-                        </div>
-                    );
-                }
-
-                if (isDepositConfirmed) {
-                    if (isReceiver) {
-                        return (
-                            <div className="rounded-[20px] border border-brand bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-brand" />
-                                        <span className="type-sm !font-[600] text-ink">
-                                            Deposit
-                                        </span>
-                                    </div>
-                                    <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
-                                </div>
-
-                                <div className="border-b border-brand-light/40 w-full" />
-
-                                <p className="type-sm text-ink leading-relaxed">
-                                    The provider has confirmed receipt of your
-                                    deposit. You&apos;re all set to move forward
-                                    with the project!
-                                </p>
-                            </div>
-                        );
-                    }
-
-                    // Confirmed by provider -> Blue (matches Frame in Figma)
-                    return (
-                        <div className="rounded-[20px] border border-brand bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-                            <div className="flex items-center gap-3">
-                                <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-brand" />
-                                <span className="type-sm !font-[600] text-ink">
-                                    Deposit
-                                </span>
-                            </div>
-                            <CheckCircle2 className="h-7 w-7 fill-brand text-surface-white shrink-0" />
-                        </div>
-                    );
-                }
-
-                if (isDepositReported) {
-                    // Added by receiver, awaiting provider confirmation -> Yellow
-                    if (isProvider) {
-                        return (
-                            <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
-                                        <span className="type-sm !font-[600] text-ink">
-                                            Deposit
-                                        </span>
-                                    </div>
-                                    <CircleCheck className="h-8 w-8 text-accent shrink-0 stroke-[2.2]" />
-                                </div>
-
-                                <div className="border-b border-accent/40 w-full" />
-
-                                <p className="type-sm text-ink leading-relaxed">
-                                    The receiver has reported that the deposit
-                                    has been paid. Please confirm whether you
-                                    have received the deposit.
-                                </p>
-
-                                {onConfirmDeposit && canConfirmDeposit && (
-                                    <div className="w-full pt-1">
-                                        <button
-                                            type="button"
-                                            onClick={onConfirmDeposit}
-                                            disabled={isBusy}
-                                            className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm !font-[500] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
-                                        >
-                                            Yes, I’ve Received it
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    }
-
-                    // Receiver view while awaiting provider confirmation
-                    return (
-                        <div className="rounded-[20px] border border-accent bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-accent" />
-                                    <span className="type-sm !font-[600] text-ink">
-                                        Deposit
-                                    </span>
-                                </div>
-                                <CircleCheck className="h-7 w-7 text-accent shrink-0 stroke-[2.2]" />
-                            </div>
-
-                            <div className="border-b border-accent/40 w-full" />
-
-                            <p className="type-sm text-ink leading-relaxed">
-                                Your deposit payment has been reported.
-                                We&apos;re waiting for the provider to confirm
-                                receipt.
-                            </p>
-                        </div>
-                    );
-                }
-
-                // Receiver view when quotation is accepted but deposit is not reported yet
-                if (isReceiver && isQuotationAccepted) {
-                    return (
-                        <div className="rounded-[20px] border border-line bg-surface-white p-5 shadow-card flex flex-col gap-3.5 transition-colors">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <ReceiptText className="h-6 w-6 shrink-0 stroke-[2.2] text-ink-soft" />
-                                    <span className="type-sm !font-[600] text-ink">
-                                        Deposit
-                                    </span>
-                                </div>
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
-                                    —
-                                </span>
-                            </div>
-
-                            <div className="border-b border-line w-full" />
-
-                            <p className="type-sm text-ink leading-relaxed">
-                                Your quotation has been accepted! Please pay the
-                                deposit and report the payment once it&apos;s
-                                done.
-                            </p>
-
-                            {onReportDeposit && (
-                                <button
-                                    type="button"
-                                    onClick={onReportDeposit}
-                                    disabled={isBusy}
-                                    className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
-                                >
-                                    Report Deposit Payment
-                                </button>
-                            )}
-                        </div>
-                    );
-                }
-
-                // Initial / Not reported yet (or before quotation is accepted) -> Grey
-                return (
-                    <div className="rounded-[20px] border border-line bg-surface-white p-4 shadow-card flex items-center justify-between transition-colors">
-                        <div className="flex items-center gap-3">
-                            <ReceiptText className="h-5 w-5 shrink-0 stroke-[2.2] text-ink-soft" />
-                            <span className="type-sm !font-[600] text-ink-soft">
-                                Deposit
-                            </span>
-                        </div>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
-                            —
-                        </span>
-                    </div>
-                );
-            })()}
+            <DepositSection
+                project={project}
+                onReportDeposit={onReportDeposit}
+                onConfirmDeposit={onConfirmDeposit}
+                isBusy={isBusy}
+            />
 
             {/* 5. Review Section */}
             {(() => {
