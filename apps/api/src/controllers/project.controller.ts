@@ -12,6 +12,7 @@ import { pageArgs, toPagination } from '../lib/pagination';
 import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    assertProjectStatus,
     completedProjectSelect,
     moveProjectStatus,
     projectSelect,
@@ -119,9 +120,7 @@ export async function createProjectUpdate(
     if (project.myRole !== 'provider') {
         throw ApiError.forbidden('Only the Provider can add a progress update');
     }
-    if (project.projectStatus !== ('IN_PROGRESS' satisfies ProjectStatus)) {
-        throw ApiError.conflict('Project is not IN_PROGRESS');
-    }
+    assertProjectStatus(project, 'IN_PROGRESS');
 
     const row = await prisma.projectUpdate.create({
         data: {
@@ -148,11 +147,7 @@ export async function reportDeposit(
     if (project.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can report the deposit');
     }
-    if (
-        project.projectStatus !== ('AWAITING_DEPOSIT' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_DEPOSIT');
-    }
+    assertProjectStatus(project, 'AWAITING_DEPOSIT');
 
     // The where repeats the checks, so a double click finds no row to update
     // and becomes a 409 instead of moving the time. One transaction: the time
@@ -344,9 +339,7 @@ export async function createReview(req: Request, res: Response): Promise<void> {
     if (project.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can review the project');
     }
-    if (project.projectStatus !== ('COMPLETED' satisfies ProjectStatus)) {
-        throw ApiError.conflict('Project is not COMPLETED');
-    }
+    assertProjectStatus(project, 'COMPLETED');
 
     const row = await orDuplicate(
         prisma.review.create({

@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
-import type { ProjectStatus, QuotationStatus } from '@mangodb/shared';
+import type { QuotationStatus } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    assertProjectStatus,
     moveProjectStatus,
     saveProjectEvent,
 } from '../lib/project';
@@ -19,6 +20,10 @@ import { requireFile } from '../middleware/upload';
 import { parseParams } from '../middleware/validate';
 import { projectIdParamSchema } from '../schemas/project.schema';
 import { quotationIdParamSchema } from '../schemas/quotation.schema';
+
+// One wording per rule: each is thrown from more than one place below.
+const ALREADY_PENDING = 'A quotation is already pending';
+const NOT_PENDING = 'Quotation is not PENDING';
 
 // US4-1 (T4.1.3). The Provider uploads a quotation PDF on a project while it
 // is AWAITING_QUOTATION and no quotation is pending (ADR 0017). The project
@@ -35,11 +40,7 @@ export async function createQuotation(
     if (project.myRole !== 'provider') {
         throw ApiError.forbidden('Only the Provider can upload a quotation');
     }
-    if (
-        project.projectStatus !== ('AWAITING_QUOTATION' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_QUOTATION');
-    }
+    assertProjectStatus(project, 'AWAITING_QUOTATION');
 
     // Checked before upload so a repeat attempt does not send a PDF to storage
     // only to delete it again. The partial unique index (ADR 0017) still
@@ -53,7 +54,7 @@ export async function createQuotation(
         select: { quotationId: true },
     });
     if (pending) {
-        throw ApiError.conflict('A quotation is already pending');
+        throw ApiError.conflict(ALREADY_PENDING);
     }
 
     // The row and its timeline event (#212) save together, or neither does.
@@ -72,7 +73,7 @@ export async function createQuotation(
                 return created;
             }),
         ),
-        'A quotation is already pending',
+        ALREADY_PENDING,
     );
 
     const [body] = await toQuotations([row]);
@@ -127,7 +128,7 @@ export async function acceptQuotation(
                 },
                 select: quotationSelect,
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await moveProjectStatus(
             tx,
@@ -160,12 +161,7 @@ export async function rejectQuotation(
     if (quotation.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can reject a quotation');
     }
-    if (
-        quotation.projectStatus !==
-        ('AWAITING_QUOTATION' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_QUOTATION');
-    }
+    assertProjectStatus(quotation, 'AWAITING_QUOTATION');
 
     // One transaction: the decision and its timeline event (#212) save
     // together, or neither does.
@@ -181,7 +177,7 @@ export async function rejectQuotation(
                 },
                 select: quotationSelect,
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_REJECTED');
         return row;
@@ -220,7 +216,7 @@ export async function deleteQuotation(
                 },
                 select: { quotationFile: true },
             }),
-            'Quotation is not PENDING',
+            NOT_PENDING,
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_DELETED');
         return row;

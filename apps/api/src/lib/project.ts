@@ -291,6 +291,17 @@ export async function assertProjectParty(
     };
 }
 
+// For an action that needs the project in one status but does not move it:
+// a 409 otherwise, worded like moveProjectStatus's below.
+export function assertProjectStatus(
+    project: { projectStatus: ProjectStatus },
+    status: ProjectStatus,
+): void {
+    if (project.projectStatus !== status) {
+        throw ApiError.conflict(`Project is not ${status}`);
+    }
+}
+
 // ADR 0015: the only moves a project may make. COMPLETED and CANCELLED are
 // final. Who may make each move is checked by the endpoint, not here.
 const PROJECT_MOVES: Record<ProjectStatus, readonly ProjectStatus[]> = {
