@@ -1,0 +1,24 @@
+@startuml context
+' C4 Level 1: who uses MangoDB, and what it depends on.
+!include <C4/C4_Context>
+
+LAYOUT_TOP_DOWN()
+HIDE_STEREOTYPE()
+
+title System Context — MangoDB
+
+Person(provider, "Provider company", "Publishes services, sends proposals to jobs, sends quotations")
+Person(receiver, "Receiver company", "Publishes jobs, sends hire requests, accepts work, writes reviews")
+Person(admin, "Admin", "Manages and soft-deletes companies")
+
+System(mangodb, "MangoDB", "B2B software marketplace: matches the two sides and runs each project from proposal to review")
+
+System_Ext(supabase, "Supabase", "Hosted PostgreSQL and file storage")
+
+Rel(provider, mangodb, "Uses", "HTTPS")
+Rel(receiver, mangodb, "Uses", "HTTPS")
+Rel(admin, mangodb, "Uses", "HTTPS")
+Rel(mangodb, supabase, "Stores data and files in", "SQL / HTTPS")
+
+SHOW_LEGEND()
+@enduml
