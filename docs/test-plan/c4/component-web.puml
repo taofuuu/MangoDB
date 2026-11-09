@@ -1,0 +1,65 @@
+@startuml component-web
+' C4 Level 3: the parts inside the web application container (apps/mangodb).
+!include <C4/C4_Component>
+
+LAYOUT_TOP_DOWN()
+HIDE_STEREOTYPE()
+
+title Component diagram — MangoDB web application
+
+Person(user, "Company user", "Provider, Receiver, Both or Admin")
+
+Container_Boundary(web, "Web application (Next.js 16)") {
+
+    Boundary(browser, "Runs in the browser") {
+        Component(shell, "App shell", "app/layout.tsx, components/nav", "Root layout and Navbar: shows who is signed in, profile menu, logout")
+        Component(pages, "Pages", "app/**/page.tsx (App Router)", "login, register, profile, companies, services, jobs, proposals, projects, admin, account-settings")
+        Component(gate, "Access gate", "useMyCompany, PageGate, lib/roles.ts", "Loads the signed-in company. Sends a guest to login and a wrong role to Access Restricted")
+        Component(hooks, "Data hooks", "useJobList, useSearchServices, useCategories", "Search, filters, paging and debounce for list pages")
+
+        Component(features, "Feature components", "components/<feature>/", "Forms, cards, modals and lists for jobs, services, proposals, projects, reviews, profiles")
+        Component(ui, "UI kit", "components/ui/, Tailwind tokens", "Button, Input, ModalShell, Pagination, StatusBadge and other shared parts")
+        Component(validation, "Form validation", "lib/validation/", "Checks fields before submit, maps API field errors to inputs")
+
+        Component(resources, "Resource API modules", "lib/jobs, services, proposals, projects, companies, ...", "One typed function per endpoint, using @mangodb/shared types")
+        Component(session, "Session module", "lib/session.ts", "Login, admin login, register, logout, redirects")
+        Component(cache, "API cache", "lib/apiCache.ts", "Caches GET promises by path. Writes clear what they change, across tabs too")
+        Component(client, "API client", "lib/api.ts", "apiFetch: the only fetch. Reads the error envelope into ApiRequestError")
+    }
+
+    Boundary(server, "Runs on the Next server") {
+        Component(proxy, "API proxy", "next.config.ts rewrites", "Forwards /api/* to API_URL, so the browser stays same-origin")
+    }
+}
+
+Container(api, "API", "Express 5", "REST endpoints and business rules")
+Container(files, "File storage", "Supabase Storage", "Images and PDFs")
+
+Rel(user, shell, "Opens pages in", "HTTPS")
+Rel(shell, pages, "Renders")
+
+Rel(pages, gate, "Waits for the signed-in company with")
+Rel(pages, hooks, "Loads lists with")
+Rel(pages, features, "Composes")
+
+Rel(features, ui, "Is built from")
+Rel(features, validation, "Checks forms with")
+Rel(features, resources, "Reads and saves with")
+Rel(features, session, "Signs in, registers and logs out with")
+Rel(shell, session, "Logs out with")
+
+Rel(shell, resources, "Gets my profile with")
+Rel(gate, resources, "Gets my profile with")
+Rel(hooks, resources, "Calls")
+
+Rel(resources, cache, "Caches GETs and clears after writes with")
+Rel(session, cache, "Clears on login and logout")
+Rel(resources, client, "Calls")
+Rel(session, client, "Calls")
+
+Rel(client, proxy, "Sends same-origin requests to", "HTTPS /api/*")
+Rel(proxy, api, "Forwards to", "HTTP, API_URL")
+Rel(features, files, "Shows images and PDFs from", "HTTPS, public URL")
+
+SHOW_LEGEND()
+@enduml

@@ -1,7 +1,7 @@
 # MangoDB — C4 diagrams
 
 Level 1 (System Context), Level 2 (Container) and Level 3 (Component, for
-the API) of the
+the API and the web application) of the
 [C4 model](https://c4model.com), written in
 [C4-PlantUML](https://github.com/plantuml-stdlib/C4-PlantUML). The `.puml`
 files are the source; the `.png` files are rendered from them.
@@ -56,6 +56,26 @@ Source: [`component.puml`](component.puml)
   and whether the company was deleted.
 - **Not shown:** small `lib/` mappers and select shapes, `env.ts`, and the
   Swagger docs at `/api-docs`.
+
+## Level 3 — Component (web application)
+
+Source: [`component-web.puml`](component-web.puml)
+
+![Component diagram of the web application](component-web.png)
+
+- **Almost everything runs in the browser.** The pages are client
+  components. The Next server serves them and runs the one server-side part
+  shown here: the `/api/*` rewrite.
+- **One way out:** every request goes resource module → `apiFetch` → proxy.
+  Nothing else calls `fetch`.
+- **The cache sits beside the client, not in front of it.** Resource modules
+  wrap their GETs in `cachedGet` and call `invalidateAfter` after a write.
+  Login and logout clear it in every open tab.
+- **The access gate is for display only.** It decides what a page shows; the
+  API's guards are what actually refuse a request.
+- **Not shown:** small helpers (`dates`, `money`, `images`, `profileLinks`)
+  and the `@mangodb/shared` types, which the resource modules and components
+  import.
 
 ## Where the containers run
 
