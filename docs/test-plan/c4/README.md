@@ -1,6 +1,7 @@
 # MangoDB — C4 diagrams
 
-Level 1 (System Context) and Level 2 (Container) of the
+Level 1 (System Context), Level 2 (Container) and Level 3 (Component, for
+the API) of the
 [C4 model](https://c4model.com), written in
 [C4-PlantUML](https://github.com/plantuml-stdlib/C4-PlantUML). The `.puml`
 files are the source; the `.png` files are rendered from them.
@@ -36,6 +37,25 @@ Source: [`container.puml`](container.puml)
   hosts (`apps/mangodb/next.config.ts`).
 - **Prisma CLI** (migrations, Studio) uses the direct `DIRECT_URL`
   connection, not the pooled one (`apps/api/prisma.config.ts`).
+
+## Level 3 — Component (API)
+
+Source: [`component.puml`](component.puml)
+
+![Component diagram of the API](component.png)
+
+- **One request, in order:** pipeline → router → guards and Zod validation
+  (declared per route) → controller → domain rules / Prisma. A thrown
+  `ApiError` goes back to the pipeline's error handler.
+- **Controllers are grouped by feature.** Each box covers the controller
+  files named under it, and the routers that call them.
+- **Controllers and domain rules both query Prisma.** Multi-step writes
+  (accepting a proposal, moving a project's status) live in `lib/` and run
+  in a transaction.
+- **Guards cost two reads per signed-in request:** the revoked-token list
+  and whether the company was deleted.
+- **Not shown:** small `lib/` mappers and select shapes, `env.ts`, and the
+  Swagger docs at `/api-docs`.
 
 ## Where the containers run
 

@@ -1,0 +1,68 @@
+@startuml component
+' C4 Level 3: the parts inside the API container (apps/api/src).
+!include <C4/C4_Component>
+
+LAYOUT_TOP_DOWN()
+HIDE_STEREOTYPE()
+
+title Component diagram — MangoDB API
+
+Container(web, "Web application", "Next.js", "Proxies /api/* from the browser")
+
+Container_Boundary(api, "API (Express 5)") {
+    Component(pipeline, "Request pipeline", "app.ts, errorHandler.ts", "CORS, JSON, cookies, cross-site write guard, no-store. Turns every ApiError into one error envelope")
+    Component(routers, "Routers", "routes/*.routes.ts", "11 routers: /auth, /admin, /companies, /portfolios, /certificates, /services, /jobs, /categories, /proposals, /projects, /quotations")
+
+    Component(guards, "Auth guards", "middleware/auth.ts, rateLimit.ts", "requireAuth, requireRole, login rate limit")
+    Component(validation, "Validation", "Zod, middleware/validate.ts, schemas/", "Parses body, query and params")
+    Component(upload, "Upload", "multer", "5 MB, image and PDF type allowlist")
+
+    Component(accounts, "Account controllers", "auth, admin-company, company, portfolio, certificate", "Register, login, profiles, portfolios, certificates, reviews list, delete company")
+    Component(listings, "Listing controllers", "service, job, category", "Create, search, edit, close and delete services and jobs")
+    Component(proposals, "Proposal controller", "proposal", "Job proposals and hire requests: send, list, accept, reject")
+    Component(projects, "Project controllers", "project, quotation", "Quotation, deposit, progress updates, work acceptance, cancel, review")
+
+    Component(authcore, "Session and tokens", "auth/, lib/session.ts", "JWT sign and verify, bcrypt, httpOnly cookie, revoked-token list")
+    Component(domain, "Domain rules", "lib/proposal, project, company-deletion, review, rating", "acceptProposal, moveProjectStatus, deletion eligibility, rating summary")
+    Component(storageClient, "Storage client", "lib/storage.ts, supabase-js", "Uploads and deletes files, builds public URLs")
+    Component(prisma, "Prisma client", "lib/prisma.ts, Prisma 7 + adapter-pg", "Typed queries over the pooled connection")
+}
+
+ContainerDb(db, "Database", "PostgreSQL (Supabase)", "All app data")
+Container(files, "File storage", "Supabase Storage", "Images and PDFs")
+
+Rel(web, pipeline, "Sends /api/* requests to", "HTTP")
+Rel(pipeline, routers, "Passes request to")
+
+Rel(routers, guards, "Checks access with")
+Rel(routers, validation, "Parses input with")
+Rel(routers, upload, "Reads files with")
+
+Rel(routers, accounts, "Calls")
+Rel(routers, listings, "Calls")
+Rel(routers, proposals, "Calls")
+Rel(routers, projects, "Calls")
+
+Rel(guards, authcore, "Verifies token with")
+Rel(accounts, authcore, "Starts and ends sessions with")
+
+Rel(accounts, domain, "Uses")
+Rel(proposals, domain, "Uses")
+Rel(projects, domain, "Uses")
+
+Rel(accounts, storageClient, "Stores images with")
+Rel(listings, storageClient, "Stores images with")
+Rel(projects, storageClient, "Stores quotation PDFs with")
+
+Rel(accounts, prisma, "Queries")
+Rel(listings, prisma, "Queries")
+Rel(proposals, prisma, "Queries")
+Rel(projects, prisma, "Queries")
+Rel(domain, prisma, "Queries in transactions")
+Rel(authcore, prisma, "Reads and writes revoked tokens")
+
+Rel(prisma, db, "Reads and writes", "SQL")
+Rel(storageClient, files, "Uploads and deletes", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
