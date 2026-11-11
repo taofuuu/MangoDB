@@ -82,6 +82,25 @@ export const PROJECT_UPDATE_TYPES = [
 ] as const;
 export type ProjectUpdateType = (typeof PROJECT_UPDATE_TYPES)[number];
 
+// notification.notification_type: what one bell notice says happened (T4.1.5,
+// ADR 0017). Named like PROJECT_UPDATE_TYPES where it is the same event.
+// PROPOSAL_RECEIVED is a proposal on a job or a hire request on a service.
+export const NOTIFICATION_TYPES = [
+    'PROPOSAL_RECEIVED',
+    'PROPOSAL_ACCEPTED',
+    'PROPOSAL_REJECTED',
+    'QUOTATION_SENT',
+    'QUOTATION_ACCEPTED',
+    'QUOTATION_REJECTED',
+    'DEPOSIT_REPORTED',
+    'DEPOSIT_CONFIRMED',
+    'PROJECT_CANCELLED',
+    'WORK_SUBMITTED',
+    'WORK_REJECTED',
+    'WORK_ACCEPTED',
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
 export const LISTING_TYPES = ['SERVICE', 'JOB'] as const;
 export type ListingType = (typeof LISTING_TYPES)[number];
@@ -566,6 +585,22 @@ export interface ProjectUpdate {
     projectId: number;
     updateType: ProjectUpdateType;
     updateText: string | null;
+    createdAt: string;
+}
+
+// T4.1.5. One notice of GET /notifications/mine, newest first. sender is the
+// company that acted; the listing is the one the proposal was sent to.
+// projectId is null until that proposal is accepted. readAt is null until
+// the recipient opens the bell.
+export interface Notification {
+    notificationId: number;
+    notificationType: NotificationType;
+    sender: CompanyBrief;
+    listingId: number;
+    listingType: ListingType;
+    listingTitle: string;
+    projectId: number | null;
+    readAt: string | null;
     createdAt: string;
 }
 
