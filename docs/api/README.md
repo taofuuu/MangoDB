@@ -187,8 +187,8 @@ sequenceDiagram
         A-->>EH: 401 UNAUTHORIZED
     end
     A->>DB: isTokenRevoked(jti)
-    A->>DB: isCompanyDeleted(sub)
-    alt revoked or deleted
+    A->>DB: isSessionEnded(sub, iat)
+    alt revoked, deleted, or credentials changed
         A-->>EH: 401 Session has ended
     end
     A->>R: req.auth = claims + companyId

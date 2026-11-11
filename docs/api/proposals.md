@@ -116,6 +116,7 @@ sequenceDiagram
         end
         Ctl->>Pr: createProjectFromProposal(tx, proposalId, budget)
         Pr->>DB: project.create (AWAITING_QUOTATION, start today UTC)
+        Pr->>DB: projectUpdate.create PROPOSAL_ACCEPTED (timeline)
     end
     Ctl-->>C: 201 Project
 ```
