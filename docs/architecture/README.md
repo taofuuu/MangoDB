@@ -21,7 +21,6 @@ flowchart TD
     end
 
     subgraph APILayer ["Backend Application Service (Express 5 + TypeScript)"]
-        ProxyRoute["/api/* Route Rewrite & Cookie Forwarding"]
         AuthGuards["Guards & Middleware\n(requireAuth, requireRole, loginLimiter)"]
         Controllers["Resource Controllers\n(proposal.controller, project.controller, etc.)"]
         Validation["Zod Schema Validation\n(parseParams, parseBody, parseQuery)"]
@@ -35,14 +34,14 @@ flowchart TD
     end
 
     Browser -->|HTTPS Request| NextApp
-    NextApp -->|Internal /api rewrite| ProxyRoute
-    ProxyRoute --> AuthGuards
+    NextApp -->|Internal /api rewrite| AuthGuards
     AuthGuards --> Controllers
     Controllers --> Validation
     Controllers --> DomainLib
+    Controllers --> PrismaORM
     DomainLib --> PrismaORM
     PrismaORM -->|Connection Pooling / SQL| Postgres
-    DomainLib -->|S3 REST / Signed URLs| ObjectStore
+    DomainLib -->|supabase-js / Signed URLs| ObjectStore
 ```
 
 ---
@@ -81,9 +80,6 @@ The architectural quality of the REST API is evaluated against four primary soft
     - Both `apps/api` and `apps/mangodb` import these shared types, ensuring compile-time contract compatibility and preventing wire format regressions.
 3. **Uniform Collection Envelopes**:
     - Every paged list answers with the same `{ items, pagination: { page, pageSize, totalItems, totalPages } }` body, built by one helper (`lib/pagination.ts`).
-    - Resource counts (`/counts`) share a predictable aggregation schema for status chips.
-4. **Decoupled Business Services**:
-    - Controllers act solely as HTTP dispatchers, delegating mutations to reusable domain helpers (`lib/proposal.ts`, `lib/listing.ts`, `lib/project.ts`). These functions can be invoked directly by tests, seed scripts, and background tasks without mocking HTTP requests.
 
 ### 4.2 Maintainability
 
@@ -117,7 +113,7 @@ The architectural quality of the REST API is evaluated against four primary soft
     - The Express API keeps no session in memory. A session is a JWT in an `httpOnly` cookie, and logged-out tokens are stored in the database (`revokedToken`), so any API instance can check any request.
     - So more API instances can run behind a reverse proxy (e.g., Caddy) with no session sync. One exception: `loginLimiter` counts failed logins in each process's memory (`middleware/rateLimit.ts`), so two instances would each keep their own count until it moves to a shared store.
 2. **Bounded Lists with Offset Pagination**:
-    - Every collection resource on the diagram is paged. Collection resources (`/jobs`, `/services`, `/proposals/mine`, `/projects/mine`) take `page` and `pageSize`: 12 rows by default, at most 50 (`schemas/common.schema.ts`), so one request cannot pull a whole table.
+    - Collection resources (`/jobs`, `/services`, `/proposals/mine`, `/projects/mine`) take `page` and `pageSize`: 12 rows by default, at most 50 (`schemas/common.schema.ts`), so one request cannot pull a whole table.
     - Each list runs `.count()` and `.findMany()` in one `prisma.$transaction`, selecting only the fields it returns. Short per-project lists (quotations, timeline) are plain arrays.
 3. **Files Stay Out of the Database**:
     - Quotation PDFs and images (profile, portfolio, certificate) live in Supabase Storage; the database keeps only their URLs.
@@ -126,8 +122,8 @@ The architectural quality of the REST API is evaluated against four primary soft
 ### 4.4 Security
 
 1. **Defense-in-Depth Middleware Pipeline**:
-    - Every resource on the diagram sits behind `requireAuth` (or the public whitelist):
-        1. **`loginLimiter`**: Allows 10 failed sign-ins per email in 15 minutes, then answers 429 (`middleware/rateLimit.ts`). It counts per email, not per IP, because every request arrives through the Next proxy, which does not pass the visitor's IP on.
+    - Each route names its guards in `routes/*.routes.ts`. Most take `requireAuth`; sign-up, sign-in and a few public reads (`/categories`, `/portfolios`) skip it. The guards:
+        1. **`loginLimiter`** (the two login routes only): Allows 10 failed sign-ins per email in 15 minutes, then answers 429 (`middleware/rateLimit.ts`). It counts per email, not per IP, because every request arrives through the Next proxy, which does not pass the visitor's IP on.
         2. **`requireAuth`**: Validates the JWT signature and expiry, checks the token was not logged out (`isTokenRevoked(jti)`), and checks the session has not ended (`isSessionEnded`: company deleted, or credentials changed after the token was issued).
         3. **`requireRole('provider' | 'receiver' | 'admin')`**: Enforces strict Role-Based Access Control (RBAC).
 2. **Server-Extracted Identity & 404 for Outsiders**:
