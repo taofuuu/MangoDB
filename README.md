@@ -126,6 +126,7 @@ snapshots/         Recorded API responses, diffed when a response changes
 | ---------------------------------------------------------------------- | --------------------------------------------------- |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                                     | Branches, commits, pull requests, database rules    |
 | [docs/conventions.md](docs/conventions.md)                             | The coding rules in full                            |
+| [docs/architecture/](docs/architecture/README.md)                      | Architecture overview and design-quality discussion |
 | [docs/adding-a-resource.md](docs/adding-a-resource.md)                 | Adding an API endpoint, step by step                |
 | [docs/adr/](docs/adr/README.md)                                        | Decisions that were made, and why                   |
 | [apps/api](apps/api/README.md), [apps/mangodb](apps/mangodb/README.md) | Running and checking each app                       |
