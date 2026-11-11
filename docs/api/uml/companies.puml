@@ -117,7 +117,7 @@ class "CompanyReview" as CompanyReviewRep <<Representation>> {
   -receiver : CompanyBrief
 }
 class "ReviewSummary" as ReviewSummaryRep <<Representation>> {
-  -averageRating : integer?
+  -averageRating : number?
   -ratingCount : integer
 }
 
