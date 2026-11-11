@@ -97,7 +97,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         useState<PublicCompanyProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
     // Modals state
@@ -499,7 +498,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // to show under the picker.
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
-        setActionError(null);
         let removedPending = false;
         try {
             const pending = quotations.find(
@@ -535,7 +533,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // rethrown as text for the modal to show above its buttons.
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
         } catch (err: unknown) {
@@ -558,7 +555,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // card offers "Revise & Resubmit Quotation".
     const handleRejectQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectQuotation(quotationId, projectId);
         } catch (err: unknown) {
@@ -577,7 +573,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAddUpdate = async (updateText: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await createProjectUpdate(projectId, updateText);
             loadData();
@@ -591,7 +586,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // has depositReportedAt, the Deposit card shows the waiting state.
     const handleReportDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await reportDeposit(projectId);
         } catch (err: unknown) {
@@ -610,7 +604,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleConfirmDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await confirmDeposit(projectId);
             loadData();
@@ -621,7 +614,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleSubmitWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await submitWork(projectId);
             loadData();
@@ -633,7 +625,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAcceptWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptWork(projectId);
             loadData();
@@ -653,7 +644,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleRejectWork = async (reason: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectWork(projectId, reason);
             loadData();
@@ -664,7 +654,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleCancelProject = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await cancelProject(projectId);
             loadData();
@@ -723,22 +712,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         Back to your projects
                     </button>
                 </div>
-
-                {actionError && (
-                    <div
-                        role="alert"
-                        className="mb-6 rounded-[14px] border border-danger/40 bg-danger/10 px-4 py-3 type-xs text-danger flex items-center justify-between"
-                    >
-                        <span>{actionError}</span>
-                        <button
-                            type="button"
-                            onClick={() => setActionError(null)}
-                            className="font-semibold underline ml-2 hover:opacity-80 transition-opacity"
-                        >
-                            Dismiss
-                        </button>
-                    </div>
-                )}
 
                 {/* 2-Column Layout (Sidebar Left, Main Content Right) */}
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
