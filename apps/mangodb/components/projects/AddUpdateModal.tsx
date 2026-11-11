@@ -91,7 +91,7 @@ export default function AddUpdateModal({
                     <div className="flex items-center justify-between">
                         <h2
                             id="add-update-title"
-                            className="text-xl font-bold text-ink"
+                            className="type-md !font-[700] text-ink"
                         >
                             Add Update
                         </h2>
@@ -105,9 +105,9 @@ export default function AddUpdateModal({
                         </button>
                     </div>
 
-                    <hr className="my-4 border-t border-[#DDE5EB]" />
+                    <hr className="my-4 border-t border-line" />
 
-                    <p className="text-sm leading-normal text-ink">
+                    <p className="type-sm leading-normal text-ink">
                         Add an update to{' '}
                         <strong className="font-bold text-ink">
                             {displayProjectName}
@@ -115,14 +115,14 @@ export default function AddUpdateModal({
                         so the receiver can track the project&apos;s progress.
                     </p>
 
-                    <p className="mt-3 mb-4 text-xs text-ink-soft">
+                    <p className="mt-3 mb-4 type-xs text-ink-soft">
                         * Indicates required
                     </p>
 
                     <div className="flex flex-col">
                         <label
                             htmlFor="update-description"
-                            className="mb-1.5 block text-sm font-medium text-ink"
+                            className="mb-1.5 block type-sm !font-[500] text-ink"
                         >
                             Description *
                         </label>
@@ -135,28 +135,28 @@ export default function AddUpdateModal({
                                 setUpdateText(e.target.value);
                                 if (error) setError(null);
                             }}
-                            className={`block w-full resize-none rounded-lg border-2 bg-surface-white p-3 text-sm text-ink placeholder:text-ink-placeholder transition-colors focus:outline-none ${
+                            className={`block w-full resize-none rounded-lg border-2 bg-surface-white p-3 type-sm text-ink placeholder:text-ink-placeholder transition-colors focus:outline-none ${
                                 error
                                     ? 'border-danger focus:border-danger'
-                                    : 'border-[#0091FF] focus:border-[#0091FF]'
+                                    : 'border-focus focus:border-focus'
                             }`}
                         />
                         {error && (
                             <p
                                 role="alert"
-                                className="mt-1.5 text-xs text-danger"
+                                className="mt-1.5 type-xs text-danger"
                             >
                                 {error}
                             </p>
                         )}
                     </div>
 
-                    <hr className="my-4 border-t border-[#DDE5EB]" />
+                    <hr className="my-4 border-t border-line" />
 
                     <div className="flex justify-end">
                         <button
                             type="submit"
-                            className="rounded-[10px] bg-brand px-6 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none"
+                            className="rounded-[10px] bg-brand px-6 py-2 type-sm !font-[600] text-surface-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none"
                         >
                             Save
                         </button>
@@ -168,44 +168,40 @@ export default function AddUpdateModal({
                 <div className="flex flex-col">
                     <h2
                         id="confirm-update-title"
-                        className="text-xl font-bold text-ink"
+                        className="type-md !font-[700] text-ink"
                     >
                         Confirm Your Update Statement
                     </h2>
 
-                    <hr className="my-4 border-t border-[#DDE5EB]" />
+                    <hr className="my-4 border-t border-line" />
 
-                    <div className="grid grid-cols-[85px_1fr] gap-y-2.5 text-sm">
-                        <span className="font-medium text-[#5E8494]">
-                            Project
-                        </span>
+                    <div className="grid grid-cols-[85px_1fr] gap-y-2.5 type-sm">
+                        <span className="font-medium text-brand">Project</span>
                         <span className="font-bold text-ink">
                             {displayProjectName}
                         </span>
-                        <span className="font-medium text-[#5E8494]">
-                            Receiver
-                        </span>
+                        <span className="font-medium text-brand">Receiver</span>
                         <span className="text-ink">{displayReceiverName}</span>
                     </div>
 
-                    <div className="my-5 max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words text-sm leading-relaxed text-ink">
+                    <div className="my-5 max-h-[40vh] overflow-y-auto whitespace-pre-wrap break-words type-sm leading-relaxed text-ink">
                         {updateText.trim()}
                     </div>
 
                     {error && (
-                        <p role="alert" className="mb-3 text-xs text-danger">
+                        <p role="alert" className="mb-3 type-xs text-danger">
                             {error}
                         </p>
                     )}
 
-                    <hr className="my-4 border-t border-[#DDE5EB]" />
+                    <hr className="my-4 border-t border-line" />
 
                     <div className="flex justify-end gap-3">
                         <button
                             type="button"
                             onClick={() => setStep('form')}
                             disabled={isSubmitting}
-                            className="rounded-[10px] bg-[#9AA5AF] px-6 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-[#88949E] focus-visible:outline-none disabled:opacity-50"
+                            className="rounded-[10px] bg-fill-muted px-6 py-2 type-sm !font-[600] text-ink-soft shadow-xs transition-colors hover:bg-line focus-visible:outline-none disabled:opacity-50"
                         >
                             Cancel
                         </button>
@@ -213,7 +209,7 @@ export default function AddUpdateModal({
                             type="button"
                             onClick={handleConfirm}
                             disabled={isSubmitting}
-                            className="rounded-[10px] bg-brand px-6 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none disabled:opacity-50"
+                            className="rounded-[10px] bg-brand px-6 py-2 type-sm !font-[600] text-surface-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none disabled:opacity-50"
                         >
                             {isSubmitting ? 'Confirming...' : 'Confirm'}
                         </button>
@@ -242,19 +238,19 @@ export default function AddUpdateModal({
                         </div>
                         <h3
                             id="success-update-title"
-                            className="text-xl font-bold text-ink"
+                            className="type-md !font-[700] text-ink"
                         >
                             Update Added Successfully
                         </h3>
                     </div>
 
-                    <hr className="my-5 border-t border-[#DDE5EB]" />
+                    <hr className="my-5 border-t border-line" />
 
                     <div className="flex justify-end">
                         <button
                             type="button"
                             onClick={handleClose}
-                            className="rounded-[10px] bg-brand px-6 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none"
+                            className="rounded-[10px] bg-brand px-6 py-2 type-sm !font-[600] text-surface-white shadow-xs transition-colors hover:bg-brand-dark focus-visible:outline-none"
                         >
                             OK
                         </button>
