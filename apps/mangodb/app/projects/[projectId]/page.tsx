@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type {
     ProjectDetail,
     ProjectUpdate,
+    ProjectUpdateType,
     PublicCompanyProfile,
     Quotation,
     Review,
@@ -19,6 +20,7 @@ import ProjectSidebar from '@/components/projects/ProjectSidebar';
 import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge';
 import ProjectTimelineFeed, {
     type TimelineEvent,
+    type TimelineEventType,
 } from '@/components/projects/ProjectTimelineFeed';
 import RejectQuotationModal from '@/components/projects/RejectQuotationModal';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
@@ -50,6 +52,79 @@ import {
     uploadQuotation,
 } from '@/lib/projects';
 import { useMyCompany } from '@/lib/useMyCompany';
+
+// The timeline rows that are only a title. PROGRESS and WORK_REJECTED carry
+// text, so they have their own builders below.
+const TITLE_ONLY_EVENTS: Record<
+    Exclude<ProjectUpdateType, 'PROGRESS' | 'WORK_REJECTED'>,
+    { type: TimelineEventType; title: string }
+> = {
+    PROPOSAL_ACCEPTED: {
+        type: 'proposal-accepted',
+        title: 'Proposal Accepted',
+    },
+    QUOTATION_SENT: { type: 'quotation-uploaded', title: 'Quotation Uploaded' },
+    QUOTATION_DELETED: {
+        type: 'quotation-deleted',
+        title: 'Quotation Deleted',
+    },
+    QUOTATION_REJECTED: {
+        type: 'quotation-rejected',
+        title: 'Quotation Rejected',
+    },
+    QUOTATION_ACCEPTED: {
+        type: 'quotation-accepted',
+        title: 'Quotation Accepted',
+    },
+    DEPOSIT_REPORTED: {
+        type: 'deposit-reported',
+        title: 'Receiver reported deposit payment.',
+    },
+    DEPOSIT_CONFIRMED: {
+        type: 'deposit-confirmed',
+        title: 'Deposit payment confirmed.',
+    },
+    WORK_SUBMITTED: { type: 'work-submitted', title: 'Work Submitted' },
+    WORK_ACCEPTED: { type: 'work-accepted', title: 'Work Accepted' },
+    PROJECT_CANCELLED: { type: 'project-cancel', title: 'Project Cancel' },
+};
+
+// A progress update's first line is its title, cut to 60 characters. The
+// rest of the text opens when the row is expanded.
+function progressEvent(update: ProjectUpdate): TimelineEvent {
+    const rawText = update.updateText ?? '';
+    const lines = rawText.split('\n').filter((l) => l.trim().length > 0);
+    const firstLine = lines[0] ?? 'Progress Update';
+    const hasMore = lines.length > 1;
+    const title =
+        firstLine.length <= 60 ? firstLine : `${firstLine.slice(0, 57)}...`;
+    const description = hasMore
+        ? lines.slice(1).join('\n')
+        : firstLine.length > 60
+          ? rawText
+          : undefined;
+
+    return {
+        id: `update-progress-${update.projectUpdateId}`,
+        type: 'progress-update',
+        title: title,
+        description: description ?? (rawText || undefined),
+        date: update.createdAt,
+        expandable: !!description,
+    };
+}
+
+// The Receiver's reason is the row's text.
+function workRejectedEvent(update: ProjectUpdate): TimelineEvent {
+    return {
+        id: `update-rejected-${update.projectUpdateId}`,
+        type: 'work-rejected',
+        title: 'Work Rejected',
+        description: update.updateText ?? undefined,
+        date: update.createdAt,
+        expandable: !!update.updateText,
+    };
+}
 
 export default function ProjectDetailPage({
     params,
@@ -211,126 +286,20 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         if (hasUnifiedEvents) {
             // Full timeline provided directly by GET /projects/:projectId/updates
             for (const u of updates) {
-                switch (u.updateType) {
-                    case 'PROPOSAL_ACCEPTED':
+                if (u.updateType === 'PROGRESS') {
+                    pushEvent(progressEvent(u));
+                } else if (u.updateType === 'WORK_REJECTED') {
+                    pushEvent(workRejectedEvent(u));
+                } else {
+                    // A type the API added after this build is left out.
+                    const row = TITLE_ONLY_EVENTS[u.updateType];
+                    if (row) {
                         pushEvent({
                             id: `update-${u.projectUpdateId}`,
-                            type: 'proposal-accepted',
-                            title: 'Proposal Accepted',
+                            ...row,
                             date: u.createdAt,
                         });
-                        break;
-                    case 'QUOTATION_SENT':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-uploaded',
-                            title: 'Quotation Uploaded',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_DELETED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-deleted',
-                            title: 'Quotation Deleted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_REJECTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-rejected',
-                            title: 'Quotation Rejected',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-accepted',
-                            title: 'Quotation Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_REPORTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-reported',
-                            title: 'Receiver reported deposit payment.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_CONFIRMED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-confirmed',
-                            title: 'Deposit payment confirmed.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROGRESS': {
-                        const rawText = u.updateText ?? '';
-                        const lines = rawText
-                            .split('\n')
-                            .filter((l) => l.trim().length > 0);
-                        const firstLine = lines[0] ?? 'Progress Update';
-                        const hasMore = lines.length > 1;
-                        const title =
-                            firstLine.length <= 60
-                                ? firstLine
-                                : `${firstLine.slice(0, 57)}...`;
-                        const description = hasMore
-                            ? lines.slice(1).join('\n')
-                            : firstLine.length > 60
-                              ? rawText
-                              : undefined;
-
-                        pushEvent({
-                            id: `update-progress-${u.projectUpdateId}`,
-                            type: 'progress-update',
-                            title: title,
-                            description: description ?? (rawText || undefined),
-                            date: u.createdAt,
-                            expandable: !!description,
-                        });
-                        break;
                     }
-                    case 'WORK_SUBMITTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-submitted',
-                            title: 'Work Submitted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'WORK_REJECTED':
-                        pushEvent({
-                            id: `update-rejected-${u.projectUpdateId}`,
-                            type: 'work-rejected',
-                            title: 'Work Rejected',
-                            description: u.updateText ?? undefined,
-                            date: u.createdAt,
-                            expandable: !!u.updateText,
-                        });
-                        break;
-                    case 'WORK_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-accepted',
-                            title: 'Work Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROJECT_CANCELLED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'project-cancel',
-                            title: 'Project Cancel',
-                            date: u.createdAt,
-                        });
-                        break;
-                    default:
-                        break;
                 }
             }
         } else {
@@ -397,39 +366,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         title: 'Work Submitted',
                         date: u.createdAt,
                     });
-                    pushEvent({
-                        id: `update-rejected-${u.projectUpdateId}`,
-                        type: 'work-rejected',
-                        title: 'Work Rejected',
-                        description: u.updateText ?? undefined,
-                        date: u.createdAt,
-                        expandable: !!u.updateText,
-                    });
+                    pushEvent(workRejectedEvent(u));
                 } else if (u.updateType === 'PROGRESS') {
-                    const rawText = u.updateText ?? '';
-                    const lines = rawText
-                        .split('\n')
-                        .filter((l) => l.trim().length > 0);
-                    const firstLine = lines[0] ?? 'Progress Update';
-                    const hasMore = lines.length > 1;
-                    const title =
-                        firstLine.length <= 60
-                            ? firstLine
-                            : `${firstLine.slice(0, 57)}...`;
-                    const description = hasMore
-                        ? lines.slice(1).join('\n')
-                        : firstLine.length > 60
-                          ? rawText
-                          : undefined;
-
-                    pushEvent({
-                        id: `update-progress-${u.projectUpdateId}`,
-                        type: 'progress-update',
-                        title: title,
-                        description: description ?? (rawText || undefined),
-                        date: u.createdAt,
-                        expandable: !!description,
-                    });
+                    pushEvent(progressEvent(u));
                 }
             }
 
