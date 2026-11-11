@@ -70,7 +70,7 @@ export default function StatusMessage({
                     </span>
                 ) : (
                     <span
-                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-danger text-surface-white font-bold type-sm font-sans"
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-danger text-surface-white !font-[700] type-sm font-sans"
                         aria-hidden="true"
                     >
                         !
@@ -84,7 +84,7 @@ export default function StatusMessage({
                     type="button"
                     onClick={onDismiss}
                     aria-label="Dismiss notification"
-                    className="ml-2 cursor-pointer p-1 type-sm font-semibold opacity-60 transition-opacity hover:opacity-100"
+                    className="ml-2 cursor-pointer p-1 type-sm !font-[600] opacity-60 transition-opacity hover:opacity-100"
                 >
                     ✕
                 </button>
