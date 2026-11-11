@@ -105,7 +105,7 @@ export default function QuotationSection({
                             Quotation
                         </span>
                     </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder !font-[700] type-xs">
                         —
                     </span>
                 </div>
@@ -475,7 +475,7 @@ export default function QuotationSection({
                         Quotation
                     </span>
                 </div>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder !font-[700] type-xs">
                     —
                 </span>
             </div>
