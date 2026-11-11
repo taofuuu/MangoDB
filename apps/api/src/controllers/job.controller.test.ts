@@ -322,8 +322,15 @@ function find(args: Args): Row[] {
 }
 
 // Proposals on a job, for the close tests: only the fields close reads.
-type ProposalRow = { listingId: number; proposalStatus: string };
+type ProposalRow = {
+    proposalId?: number;
+    senderId?: number;
+    listingId: number;
+    proposalStatus: string;
+};
 let proposals: ProposalRow[] = [];
+// The bell notices close saves for each rejected sender (T4.1.5).
+let notices: Record<string, unknown>[] = [];
 
 const fakePrisma = {
     listing: {
@@ -346,13 +353,22 @@ const fakePrisma = {
         },
     },
     proposal: {
-        updateMany: async (args: {
+        updateManyAndReturn: async (args: {
             where: unknown;
             data: { proposalStatus: string };
         }) => {
             const hits = proposals.filter((p) => matches(p, args.where));
             for (const p of hits) p.proposalStatus = args.data.proposalStatus;
-            return { count: hits.length };
+            return hits.map((p) => ({
+                proposalId: p.proposalId,
+                senderId: p.senderId,
+            }));
+        },
+    },
+    notification: {
+        createMany: async (args: { data: Record<string, unknown>[] }) => {
+            notices.push(...args.data);
+            return { count: args.data.length };
         },
     },
     // Both forms Prisma has: a list of queries (the paged lists) or a
@@ -378,6 +394,7 @@ before(async () => {
 beforeEach(() => {
     rows = [];
     proposals = [];
+    notices = [];
 });
 
 // Runs a controller as `callerCompanyId` and returns the JSON it sent,
@@ -1164,7 +1181,12 @@ describe('POST /jobs/:jobId/close', () => {
     it('closes the job and rejects its pending proposals', async () => {
         rows = [job(1, OWNER, 'OPEN'), job(2, OWNER, 'OPEN')];
         proposals = [
-            { listingId: 1, proposalStatus: 'PENDING' },
+            {
+                proposalId: 1,
+                senderId: 5,
+                listingId: 1,
+                proposalStatus: 'PENDING',
+            },
             { listingId: 1, proposalStatus: 'REJECTED' },
             // Another job's proposal is not touched.
             { listingId: 2, proposalStatus: 'PENDING' },
@@ -1177,6 +1199,15 @@ describe('POST /jobs/:jobId/close', () => {
             proposals.map((p) => p.proposalStatus),
             ['REJECTED', 'REJECTED', 'PENDING'],
         );
+        // Only the pending one's sender is told, by the job's owner.
+        assert.deepEqual(notices, [
+            {
+                proposalId: 1,
+                senderId: OWNER,
+                recipientId: 5,
+                notificationType: 'PROPOSAL_REJECTED',
+            },
+        ]);
     });
 
     it("is 403 on another company's job and changes nothing", async () => {
@@ -1189,6 +1220,7 @@ describe('POST /jobs/:jobId/close', () => {
         assert.equal(result.status, 403);
         assert.equal(rows[0]!.listingStatus, 'OPEN');
         assert.equal(proposals[0]!.proposalStatus, 'PENDING');
+        assert.equal(notices.length, 0);
     });
 
     it('is 409 on a job that is already closed', async () => {

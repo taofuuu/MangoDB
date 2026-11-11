@@ -58,7 +58,10 @@ export async function toQuotations(rows: QuotationRow[]): Promise<Quotation[]> {
 
 export type QuotationParty = {
     projectId: number;
+    proposalId: number;
     projectStatus: ProjectStatus;
+    providerId: number;
+    receiverId: number;
     myRole: ProjectRole;
 };
 
@@ -77,6 +80,7 @@ export async function assertQuotationParty(
             projectId: true,
             project: {
                 select: {
+                    proposalId: true,
                     projectStatus: true,
                     proposal: {
                         select: {
@@ -101,7 +105,9 @@ export async function assertQuotationParty(
     }
     return {
         projectId: quotation.projectId,
+        proposalId: quotation.project.proposalId,
         projectStatus: quotation.project.projectStatus as ProjectStatus,
+        ...parties,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
 }

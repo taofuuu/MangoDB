@@ -14,6 +14,7 @@ import {
     quotationSelect,
     toQuotations,
 } from '../lib/quotation';
+import { notifyOtherParty } from '../lib/notification';
 import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 import { requireFile } from '../middleware/upload';
@@ -70,6 +71,7 @@ export async function createQuotation(
                     select: quotationSelect,
                 });
                 await saveProjectEvent(tx, projectId, 'QUOTATION_SENT');
+                await notifyOtherParty(tx, project, 'QUOTATION_SENT');
                 return created;
             }),
         ),
@@ -137,6 +139,7 @@ export async function acceptQuotation(
             'AWAITING_DEPOSIT',
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_ACCEPTED');
+        await notifyOtherParty(tx, quotation, 'QUOTATION_ACCEPTED');
         return row;
     });
 
@@ -180,6 +183,7 @@ export async function rejectQuotation(
             NOT_PENDING,
         );
         await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_REJECTED');
+        await notifyOtherParty(tx, quotation, 'QUOTATION_REJECTED');
         return row;
     });
 

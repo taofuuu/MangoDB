@@ -3,6 +3,7 @@ import type {
     CreateProposalRequest,
     ListingStatus,
     ListingType,
+    NotificationType,
     Paginated,
     ProposalStatus,
     ProposalStatusCounts,
@@ -74,7 +75,12 @@ async function sendProposalToListing(
         },
     });
 
-    if (!listing || listing.listingType !== listingType) {
+    // No owner is a broken row; the owner is who gets the notice below.
+    if (
+        !listing ||
+        listing.listingType !== listingType ||
+        listing.companyId === null
+    ) {
         throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
 
@@ -89,18 +95,31 @@ async function sendProposalToListing(
     }
 
     // Only a second PENDING one hits the index; a decided one may repeat
-    // (ADR 0016).
+    // (ADR 0016). The listing's owner gets a notice in the same transaction.
+    const ownerId = listing.companyId;
     const proposal = await orDuplicate(
-        prisma.proposal.create({
-            data: {
-                listingId,
-                senderId: callerCompanyId,
-                proposalBudget: body.proposalBudget,
-                proposalTerms: body.proposalTerms,
-                duration: body.duration,
-                proposalStatus: 'PENDING' satisfies ProposalStatus,
-            },
-            select: proposalSelect,
+        prisma.$transaction(async (tx) => {
+            const created = await tx.proposal.create({
+                data: {
+                    listingId,
+                    senderId: callerCompanyId,
+                    proposalBudget: body.proposalBudget,
+                    proposalTerms: body.proposalTerms,
+                    duration: body.duration,
+                    proposalStatus: 'PENDING' satisfies ProposalStatus,
+                },
+                select: proposalSelect,
+            });
+            await tx.notification.create({
+                data: {
+                    proposalId: created.proposalId,
+                    senderId: callerCompanyId,
+                    recipientId: ownerId,
+                    notificationType:
+                        'PROPOSAL_RECEIVED' satisfies NotificationType,
+                },
+            });
+            return created;
         }),
         msg.repeat,
     );
@@ -209,8 +228,22 @@ export async function acceptProposal(
             );
         }
         await setProposalStatus(tx, proposalId, 'ACCEPTED');
+        await tx.notification.create({
+            data: {
+                proposalId,
+                senderId: callerId,
+                recipientId: proposal.senderId,
+                notificationType:
+                    'PROPOSAL_ACCEPTED' satisfies NotificationType,
+            },
+        });
         if (isJob) {
-            await rejectPendingProposals(tx, proposal.listingId, proposalId);
+            await rejectPendingProposals(
+                tx,
+                proposal.listingId,
+                callerId,
+                proposalId,
+            );
         }
         return createProjectFromProposal(tx, {
             proposalId,
@@ -221,7 +254,8 @@ export async function acceptProposal(
     res.status(201).json(project);
 }
 
-// Rejecting one pending proposal touches no other row.
+// Rejecting one pending proposal touches no other row. Its sender gets a
+// notice in the same transaction.
 export async function rejectProposal(
     req: Request,
     res: Response,
@@ -229,8 +263,19 @@ export async function rejectProposal(
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
 
-    await findPendingProposalFor(prisma, proposalId, callerId);
-    await setProposalStatus(prisma, proposalId, 'REJECTED');
+    await prisma.$transaction(async (tx) => {
+        const proposal = await findPendingProposalFor(tx, proposalId, callerId);
+        await setProposalStatus(tx, proposalId, 'REJECTED');
+        await tx.notification.create({
+            data: {
+                proposalId,
+                senderId: callerId,
+                recipientId: proposal.senderId,
+                notificationType:
+                    'PROPOSAL_REJECTED' satisfies NotificationType,
+            },
+        });
+    });
     res.status(204).end();
 }
 
