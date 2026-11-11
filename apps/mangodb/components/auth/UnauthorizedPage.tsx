@@ -55,7 +55,7 @@ export default function UnauthorizedPage({
                     )}
                 </div>
 
-                <h1 className="type-hd font-bold text-ink mb-2">{title}</h1>
+                <h1 className="type-hd text-ink mb-2">{title}</h1>
 
                 {badge && (
                     <div

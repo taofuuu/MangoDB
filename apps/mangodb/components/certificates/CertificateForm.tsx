@@ -53,7 +53,7 @@ export default function CertificateForm(props: CertificateFormProps) {
             panelClassName="w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
         >
             <div className="flex items-center justify-between">
-                <h2 id={titleId} className="type-lg font-semibold">
+                <h2 id={titleId} className="type-lg">
                     {isEditing
                         ? 'Edit license or certification'
                         : 'Add license or certification'}
@@ -123,7 +123,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                         </legend>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Month
                                 </p>
                                 <MonthDropdown
@@ -134,7 +134,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                                 />
                             </div>
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Year
                                 </p>
                                 <YearDropdown
@@ -156,7 +156,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                         </legend>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Month
                                 </p>
                                 <MonthDropdown
@@ -167,7 +167,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                                 />
                             </div>
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Year
                                 </p>
                                 <YearDropdown

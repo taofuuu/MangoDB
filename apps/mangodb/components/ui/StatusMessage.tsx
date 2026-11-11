@@ -76,7 +76,7 @@ export default function StatusMessage({
                         !
                     </span>
                 )}
-                <span className="type-md font-medium">{status.message}</span>
+                <span className="type-md">{status.message}</span>
             </div>
 
             {onDismiss && (
