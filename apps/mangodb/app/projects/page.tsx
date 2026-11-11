@@ -154,7 +154,7 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                             <button
                                 type="button"
                                 onClick={() => handleRoleChange('provider')}
-                                className={`rounded-button px-5 py-2 type-sm font-semibold transition ${
+                                className={`rounded-button px-5 py-2 type-sm !font-[600] transition ${
                                     activeRole === 'provider'
                                         ? 'bg-surface-white text-brand shadow-xs'
                                         : 'text-ink-soft hover:text-ink'
@@ -165,7 +165,7 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                             <button
                                 type="button"
                                 onClick={() => handleRoleChange('receiver')}
-                                className={`rounded-button px-5 py-2 type-sm font-semibold transition ${
+                                className={`rounded-button px-5 py-2 type-sm !font-[600] transition ${
                                     activeRole === 'receiver'
                                         ? 'bg-surface-white text-brand shadow-xs'
                                         : 'text-ink-soft hover:text-ink'
@@ -193,7 +193,7 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
                     <div className="flex items-center gap-2">
                         <label
                             htmlFor="status-filter"
-                            className="type-sm font-medium text-ink-soft whitespace-nowrap"
+                            className="type-sm !font-[500] text-ink-soft whitespace-nowrap"
                         >
                             Status:
                         </label>
