@@ -11,38 +11,9 @@ This document provides the architectural specification for **MangoDB**, a B2B ma
 
 ## 1. System Architecture Overview
 
-MangoDB follows a three-tier decoupled architecture designed for high cohesiveness, strong type safety, and clear boundaries:
+MangoDB is a Next.js 16 web app (React 19, Tailwind CSS v4), an Express 5 API in TypeScript with Prisma 7, and Supabase for PostgreSQL and file storage. The diagram shows the layers a request passes through; arrows point from caller to callee.
 
-```mermaid
-flowchart TD
-    subgraph ClientLayer ["Client & Frontend (Presentation)"]
-        Browser["User Browser / Client"]
-        NextApp["Next.js 16 Web Application\n(React 19, Tailwind CSS v4)\napps/mangodb"]
-    end
-
-    subgraph APILayer ["Backend Application Service (Express 5 + TypeScript)"]
-        AuthGuards["Guards & Middleware\n(requireAuth, requireRole, loginLimiter)"]
-        Controllers["Resource Controllers\n(proposal.controller, project.controller, etc.)"]
-        Validation["Zod Schema Validation\n(parseParams, parseBody, parseQuery)"]
-        DomainLib["Domain Business Logic\n(lib/proposal, lib/project, lib/listing)"]
-        PrismaORM["Prisma 7 Client ORM\n(lib/prisma.ts)"]
-    end
-
-    subgraph DataStorage ["Data & Storage Layer (Supabase)"]
-        Postgres[("PostgreSQL 15+\nTransactional Relational DB")]
-        ObjectStore[("Supabase Storage\n(PDF Quotations, Photos, Portfolios)")]
-    end
-
-    Browser -->|HTTPS Request| NextApp
-    NextApp -->|Internal /api rewrite| AuthGuards
-    AuthGuards --> Controllers
-    Controllers --> Validation
-    Controllers --> DomainLib
-    Controllers --> PrismaORM
-    DomainLib --> PrismaORM
-    PrismaORM -->|Connection Pooling / SQL| Postgres
-    DomainLib -->|supabase-js / Signed URLs| ObjectStore
-```
+![Component diagram](../api/uml/component.png)
 
 ---
 
