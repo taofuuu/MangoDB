@@ -35,7 +35,7 @@ export default function ServiceEditPicker() {
     return (
         <main className="min-h-screen bg-surface px-6 py-12 text-ink">
             <div className="mx-auto w-full max-w-[900px]">
-                <p className="type-xs font-semibold uppercase tracking-wide text-brand">
+                <p className="type-xs !font-[600] uppercase tracking-wide text-brand">
                     Development tool
                 </p>
                 <h1 className="mt-2 type-hd">Open an edit-service page</h1>
@@ -79,7 +79,7 @@ export default function ServiceEditPicker() {
                     <section className="mt-8 rounded-popup border border-line bg-surface-white p-6 shadow-sm">
                         <label
                             htmlFor="service-picker-search"
-                            className="block type-sm font-semibold"
+                            className="block type-sm !font-[600]"
                         >
                             Find by service title or listing ID
                         </label>
@@ -99,7 +99,7 @@ export default function ServiceEditPicker() {
                                     className="flex flex-col gap-4 rounded-button border border-line p-4 sm:flex-row sm:items-center sm:justify-between"
                                 >
                                     <div className="min-w-0">
-                                        <h2 className="truncate type-sm font-semibold text-ink">
+                                        <h2 className="truncate type-sm !font-[600] text-ink">
                                             {service.listingTitle}
                                         </h2>
                                         <p className="mt-1 type-xs text-ink-soft">
@@ -111,7 +111,7 @@ export default function ServiceEditPicker() {
                                     </div>
                                     <Link
                                         href={`/services/${service.serviceId}/edit`}
-                                        className="shrink-0 rounded-button bg-brand px-4 py-2 text-center type-sm font-semibold text-surface-white transition-colors hover:bg-brand-dark"
+                                        className="shrink-0 rounded-button bg-brand px-4 py-2 text-center type-sm !font-[600] text-surface-white transition-colors hover:bg-brand-dark"
                                     >
                                         Open edit page
                                     </Link>

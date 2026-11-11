@@ -172,7 +172,7 @@ export default function ServiceProposalsPage() {
                     <button
                         type="button"
                         onClick={handleBack}
-                        className="inline-flex items-center gap-2 type-sm font-semibold text-brand hover:text-brand-dark transition-colors"
+                        className="inline-flex items-center gap-2 type-sm !font-[600] text-brand hover:text-brand-dark transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back

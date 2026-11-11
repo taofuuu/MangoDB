@@ -31,12 +31,12 @@ export default function UnsavedChangesModal({
             <div className="flex min-h-0 w-full flex-[2] items-center gap-4 max-sm:pb-6">
                 <WarningIcon />
                 <div>
-                    <h2 id={titleId} className="type-md font-bold text-ink">
+                    <h2 id={titleId} className="type-md !font-[700] text-ink">
                         You have unsaved changes.
                     </h2>
                     <p
                         id={descriptionId}
-                        className="type-md font-bold text-ink"
+                        className="type-md !font-[700] text-ink"
                     >
                         Are you sure you want to leave?
                     </p>
@@ -49,14 +49,14 @@ export default function UnsavedChangesModal({
                 <Button
                     variant="muted"
                     onClick={onKeepEditing}
-                    className="px-5 py-2 type-sm font-bold disabled:opacity-60"
+                    className="px-5 py-2 type-sm !font-[700] disabled:opacity-60"
                 >
                     Cancel
                 </Button>
                 <Button
                     variant="danger"
                     onClick={onDiscard}
-                    className="px-5 py-2 type-sm font-bold"
+                    className="px-5 py-2 type-sm !font-[700]"
                 >
                     Leave
                 </Button>
