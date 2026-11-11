@@ -73,7 +73,7 @@ export default function UnauthorizedPage({
                 <div className="w-full flex flex-col sm:flex-row gap-3 justify-center">
                     <Link
                         href={homeHref}
-                        className={`py-2.5 px-4 rounded-button text-surface-white type-sm font-semibold transition-colors text-center ${
+                        className={`py-2.5 px-4 rounded-button text-surface-white type-sm !font-[600] transition-colors text-center ${
                             showLogin
                                 ? 'flex-1 bg-fill-muted hover:bg-ink-placeholder'
                                 : `w-full sm:w-auto sm:px-8 ${primaryBtnClass}`
@@ -85,7 +85,7 @@ export default function UnauthorizedPage({
                     {showLogin && (
                         <Link
                             href={loginHref}
-                            className={`flex-1 py-2.5 px-4 rounded-button type-sm font-semibold transition-colors text-center ${primaryBtnClass}`}
+                            className={`flex-1 py-2.5 px-4 rounded-button type-sm !font-[600] transition-colors text-center ${primaryBtnClass}`}
                         >
                             Log In
                         </Link>
