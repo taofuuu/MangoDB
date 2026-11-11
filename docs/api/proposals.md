@@ -110,9 +110,11 @@ sequenceDiagram
         alt count is 0 (race)
             P-->>C: 409 Proposal has already been accepted or rejected
         end
+        Ctl->>DB: notification.create (PROPOSAL_ACCEPTED, to the sender)
         opt listing is a JOB
-            Ctl->>L: rejectPendingProposals(tx, listingId, except this one)
-            L->>DB: proposal.updateMany PENDING to REJECTED
+            Ctl->>L: rejectPendingProposals(tx, listingId, caller, except this one)
+            L->>DB: proposal.updateManyAndReturn PENDING to REJECTED
+            L->>DB: notification.createMany (PROPOSAL_REJECTED, one per sender)
         end
         Ctl->>Pr: createProjectFromProposal(tx, proposalId, budget)
         Pr->>DB: project.create (AWAITING_QUOTATION, start today UTC)
@@ -122,7 +124,8 @@ sequenceDiagram
 
 ## POST /proposals/:proposalId/reject
 
-Reject one PENDING proposal. No other row changes.
+Reject one PENDING proposal. No other proposal changes; its sender gets a
+notice in the same transaction.
 
 ```mermaid
 sequenceDiagram
@@ -136,18 +139,22 @@ sequenceDiagram
     C->>G: POST /proposals/:proposalId/reject
     G->>Ctl: req.auth (401 if not signed in)
     Ctl->>Ctl: parseParams(proposalIdParamSchema)
-    Ctl->>P: findPendingProposalFor(prisma, proposalId, caller)
-    alt no proposal
-        P-->>C: 404 Proposal not found
-    else caller does not own the listing
-        P-->>C: 403 You do not own this listing
-    else not PENDING
-        P-->>C: 409 Proposal is not pending
-    end
-    Ctl->>P: setProposalStatus(prisma, proposalId, REJECTED)
-    P->>DB: proposal.updateMany PENDING to REJECTED
-    alt count is 0 (race)
-        P-->>C: 409 Proposal has already been accepted or rejected
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction
+        Ctl->>P: findPendingProposalFor(tx, proposalId, caller)
+        alt no proposal
+            P-->>C: 404 Proposal not found
+        else caller does not own the listing
+            P-->>C: 403 You do not own this listing
+        else not PENDING
+            P-->>C: 409 Proposal is not pending
+        end
+        Ctl->>P: setProposalStatus(tx, proposalId, REJECTED)
+        P->>DB: proposal.updateMany PENDING to REJECTED
+        alt count is 0 (race)
+            P-->>C: 409 Proposal has already been accepted or rejected
+        end
+        Ctl->>DB: notification.create (PROPOSAL_REJECTED, to the sender)
     end
     Ctl-->>C: 204
 ```

@@ -21,20 +21,21 @@ together:
 3. **Sequence diagrams** (Mermaid, on each router page): the steps inside the
    server for each endpoint.
 
-| Router       | Mounted at      | Endpoints | Page                               | UML                                        |
-| ------------ | --------------- | --------- | ---------------------------------- | ------------------------------------------ |
-| Health       | `/health`       | 1         | [below](#get-health)               | [health.puml](uml/health.puml)             |
-| Auth         | `/auth`         | 5         | [auth.md](auth.md)                 | [auth.puml](uml/auth.puml)                 |
-| Admin        | `/admin`        | 4         | [admin.md](admin.md)               | [admin.puml](uml/admin.puml)               |
-| Companies    | `/companies`    | 11        | [companies.md](companies.md)       | [companies.puml](uml/companies.puml)       |
-| Services     | `/services`     | 9         | [services.md](services.md)         | [services.puml](uml/services.puml)         |
-| Portfolios   | `/portfolios`   | 5         | [portfolios.md](portfolios.md)     | [portfolios.puml](uml/portfolios.puml)     |
-| Certificates | `/certificates` | 5         | [certificates.md](certificates.md) | [certificates.puml](uml/certificates.puml) |
-| Jobs         | `/jobs`         | 8         | [jobs.md](jobs.md)                 | [jobs.puml](uml/jobs.puml)                 |
-| Proposals    | `/proposals`    | 4         | [proposals.md](proposals.md)       | [proposals.puml](uml/proposals.puml)       |
-| Projects     | `/projects`     | 14        | [projects.md](projects.md)         | [projects.puml](uml/projects.puml)         |
-| Quotations   | `/quotations`   | 3         | [quotations.md](quotations.md)     | [quotations.puml](uml/quotations.puml)     |
-| Categories   | `/categories`   | 1         | [categories.md](categories.md)     | [categories.puml](uml/categories.puml)     |
+| Router        | Mounted at       | Endpoints | Page                                 | UML                                          |
+| ------------- | ---------------- | --------- | ------------------------------------ | -------------------------------------------- |
+| Health        | `/health`        | 1         | [below](#get-health)                 | [health.puml](uml/health.puml)               |
+| Auth          | `/auth`          | 5         | [auth.md](auth.md)                   | [auth.puml](uml/auth.puml)                   |
+| Admin         | `/admin`         | 4         | [admin.md](admin.md)                 | [admin.puml](uml/admin.puml)                 |
+| Companies     | `/companies`     | 11        | [companies.md](companies.md)         | [companies.puml](uml/companies.puml)         |
+| Services      | `/services`      | 9         | [services.md](services.md)           | [services.puml](uml/services.puml)           |
+| Portfolios    | `/portfolios`    | 5         | [portfolios.md](portfolios.md)       | [portfolios.puml](uml/portfolios.puml)       |
+| Certificates  | `/certificates`  | 5         | [certificates.md](certificates.md)   | [certificates.puml](uml/certificates.puml)   |
+| Jobs          | `/jobs`          | 8         | [jobs.md](jobs.md)                   | [jobs.puml](uml/jobs.puml)                   |
+| Proposals     | `/proposals`     | 4         | [proposals.md](proposals.md)         | [proposals.puml](uml/proposals.puml)         |
+| Projects      | `/projects`      | 14        | [projects.md](projects.md)           | [projects.puml](uml/projects.puml)           |
+| Quotations    | `/quotations`    | 3         | [quotations.md](quotations.md)       | [quotations.puml](uml/quotations.puml)       |
+| Categories    | `/categories`    | 1         | [categories.md](categories.md)       | [categories.puml](uml/categories.puml)       |
+| Notifications | `/notifications` | 2         | [notifications.md](notifications.md) | [notifications.puml](uml/notifications.puml) |
 
 When you add or change an endpoint, update its `.puml` (and `.svg`), its
 `@openapi` block, and its sequence diagram in the same PR.

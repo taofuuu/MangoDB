@@ -152,6 +152,7 @@ message.
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A project in one status, no move    | `assertProjectStatus(project, status)` — else 409                              |
 | A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
+| A bell notice for the other party   | `notifyOtherParty(tx, party, type)`, `party` from `assertProjectParty`         |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | A create a unique index may reject  | `orDuplicate(write, message)` turns P2002 into a 409                           |
