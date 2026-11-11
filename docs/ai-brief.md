@@ -256,15 +256,15 @@ if (me.status !== 'ready') {
 An id from the URL goes through `parseId` (from `@/lib/api`); `null` is shown
 as not found.
 
-| Need                         | From                                                     |
-| ---------------------------- | -------------------------------------------------------- |
-| A date column (`2026-09-01`) | `formatDateOnly` in `lib/dates` — never `new Date(day)`  |
-| A timestamp                  | `formatDate`, `formatDateTime` in `lib/dates`            |
-| An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
-| A page size                  | the constants in `lib/pagination`                        |
-| A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
-| The category list for a form | `useCategories()` in `lib/useCategories`                 |
-| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`               |
+| Need                         | From                                                             |
+| ---------------------------- | ---------------------------------------------------------------- |
+| A date column (`2026-09-01`) | `formatDateOnly` in `lib/dates` — never `new Date(day)`          |
+| A timestamp                  | `formatDate`, `formatDateTime`, `formatSlashDate` in `lib/dates` |
+| An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`                 |
+| A page size                  | the constants in `lib/pagination`                                |
+| A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it         |
+| The category list for a form | `useCategories()` in `lib/useCategories`                         |
+| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`                       |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
