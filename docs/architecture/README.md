@@ -2,9 +2,10 @@
 
 This document provides the architectural specification for **MangoDB**, a B2B marketplace platform for IT services and job contracting. It covers:
 
-1. **System Architecture & UML API Diagram** (Sparx Systems REST Profile)
-2. **Sequence Diagram for Core Use Case** (US2-11: Accept Proposal & Initialize Project)
-3. **Design Quality Evaluation** (Reusability, Maintainability, Scalability, Security)
+1. **System Architecture Overview**
+2. **UML API Diagram** (Sparx Systems REST Profile)
+3. **Sequence Diagram** (US2-11: Accept Proposal)
+4. **Discussion of the UML API Diagram in terms of Design Quality** (Reusability, Maintainability, Scalability, Security)
 
 ---
 
@@ -48,399 +49,90 @@ flowchart TD
 
 ## 2. UML API Diagram
 
-The UML API Diagram below follows the **Sparx Systems REST Profile** standard commonly used in software engineering curriculum:
+The diagrams follow the Sparx Systems REST profile from the lecture (`«Application»`, `«Path»`, `«Resource»`, `«Representation»`). The full API, all 70 endpoints, is [`mangodb-api.svg`](../api/uml/mangodb-api.svg). The three routers this document discusses:
 
-- `«Application»`: Represents the API root endpoint with `basePath = "/"`.
-- `«Path»`: Connectors defining URI hierarchy segments.
-- `«Resource»`: REST resource entity exposing standard HTTP verbs (`GET`, `POST`, `PATCH`, `DELETE`).
-- `«Representation»`: JSON payload structures exchanged between client and server (`«use»` dependency).
+![Proposals](../api/uml/proposals.svg)
 
-The diagram focuses on the central business engine of MangoDB: **Proposals & Projects**.
+![Projects](../api/uml/projects.svg)
 
-### 2.1 Mermaid UML API Diagram
-
-```mermaid
-classDiagram
-    direction LR
-
-    class API {
-        <<Application>>
-        basePath = "/"
-    }
-
-    class Proposals {
-        <<Resource>>
-    }
-
-    class MyProposals {
-        <<Resource>>
-        +GET()
-    }
-
-    class ProposalCounts {
-        <<Resource>>
-        +GET()
-    }
-
-    class ProposalItem {
-        <<Resource>>
-    }
-
-    class AcceptProposal {
-        <<Resource>>
-        +POST()
-    }
-
-    class RejectProposal {
-        <<Resource>>
-        +POST()
-    }
-
-    class Projects {
-        <<Resource>>
-    }
-
-    class MyProjects {
-        <<Resource>>
-        +GET()
-    }
-
-    class ProjectItem {
-        <<Resource>>
-        +GET()
-    }
-
-    class ProjectQuotation {
-        <<Resource>>
-        +GET()
-        +POST()
-    }
-
-    class ConfirmDeposit {
-        <<Resource>>
-        +POST()
-    }
-
-    class AcceptWork {
-        <<Resource>>
-        +POST()
-    }
-
-    class ProjectReview {
-        <<Resource>>
-        +GET()
-        +POST()
-    }
-
-    %% Representations
-    class SentProposalRep {
-        <<Representation>>
-        -proposalId: int
-        -listingTitle: string
-        -listingType: ListingType
-        -status: ProposalStatus
-        -proposedBudget: decimal
-        -proposedDurationMonths: int
-    }
-
-    class ProposalCountsRep {
-        <<Representation>>
-        -total: int
-        -PENDING: int
-        -ACCEPTED: int
-        -REJECTED: int
-    }
-
-    class ProjectRep {
-        <<Representation>>
-        -projectId: int
-        -proposalId: int
-        -totalBudget: decimal
-        -startDate: date
-        -projectStatus: ProjectStatus
-        -depositConfirmedAt: date?
-        -completedAt: date?
-    }
-
-    class ReviewRep {
-        <<Representation>>
-        -reviewId: int
-        -ratingWorkQuality: int
-        -ratingValueForMoney: int
-        -comment: string
-    }
-
-    %% Paths and Usages
-    API ..> Proposals : «Path» /proposals
-    Proposals ..> MyProposals : «Path» /mine
-    MyProposals ..> SentProposalRep : «use»
-
-    MyProposals ..> ProposalCounts : «Path» /counts
-    ProposalCounts ..> ProposalCountsRep : «use»
-
-    Proposals ..> ProposalItem : «Path» /{proposalId}
-    ProposalItem ..> AcceptProposal : «Path» /accept
-    AcceptProposal ..> ProjectRep : «use» (returns)
-
-    ProposalItem ..> RejectProposal : «Path» /reject
-
-    API ..> Projects : «Path» /projects
-    Projects ..> MyProjects : «Path» /mine
-    Projects ..> ProjectItem : «Path» /{projectId}
-    ProjectItem ..> ProjectRep : «use»
-
-    ProjectItem ..> ProjectQuotation : «Path» /quotation
-    ProjectItem ..> ConfirmDeposit : «Path» /deposit/confirm
-    ProjectItem ..> AcceptWork : «Path» /accept-work
-    ProjectItem ..> ProjectReview : «Path» /review
-    ProjectReview ..> ReviewRep : «use»
-```
-
-### 2.2 PlantUML Source (Exact Course Specification)
-
-```plantuml
-@startuml
-left to right direction
-skinparam classAttributeIconSize 0
-hide circle
-hide empty members
-skinparam shadowing false
-skinparam roundcorner 8
-
-skinparam class {
-  BackgroundColor<<Application>> #E8EDF2
-  BorderColor<<Application>> #475569
-  BackgroundColor<<Resource>> #DDEFEF
-  BorderColor<<Resource>> #0F766E
-  BackgroundColor<<Representation>> #FCE4F0
-  BorderColor<<Representation>> #BE185D
-}
-
-class "MangoDB API" as API <<Application>> {
-  basePath = "/"
-}
-
-class "Proposals" as Proposals <<Resource>>
-class "MyProposals" as MyProposals <<Resource>> {
-  + GET()
-}
-class "Counts" as Counts <<Resource>> {
-  + GET()
-}
-class "Proposal" as ProposalR <<Resource>>
-class "Accept" as Accept <<Resource>> {
-  + POST()
-}
-class "Reject" as Reject <<Resource>> {
-  + POST()
-}
-
-class "Projects" as Projects <<Resource>>
-class "MyProjects" as MyProjects <<Resource>> {
-  + GET()
-}
-class "Project" as ProjectR <<Resource>> {
-  + GET()
-}
-class "Quotation" as Quotation <<Resource>> {
-  + GET()
-  + POST()
-}
-class "ConfirmDeposit" as ConfirmDeposit <<Resource>> {
-  + POST()
-}
-class "AcceptWork" as AcceptWork <<Resource>> {
-  + POST()
-}
-class "Review" as Review <<Resource>> {
-  + GET()
-  + POST()
-}
-
-class "SentProposal" as SentProposalRep <<Representation>> {
-  - proposalId : int
-  - listingTitle : string
-  - listingType : ListingType
-  - status : ProposalStatus
-}
-class "Project" as ProjectRep <<Representation>> {
-  - projectId : int
-  - proposalId : int
-  - totalBudget : decimal
-  - projectStatus : ProjectStatus
-}
-
-API -[#B45309,dashed]-> Proposals : «Path» /proposals
-Proposals -[#B45309,dashed]-> MyProposals : «Path» /mine
-MyProposals -[#BE185D,dashed]-> SentProposalRep : «use»
-MyProposals -[#B45309,dashed]-> Counts : «Path» /counts
-Proposals -[#B45309,dashed]-> ProposalR : «Path» /{proposalId}
-ProposalR -[#B45309,dashed]-> Accept : «Path» /accept
-Accept -[#BE185D,dashed]-> ProjectRep : «use»
-ProposalR -[#B45309,dashed]-> Reject : «Path» /reject
-
-API -[#B45309,dashed]-> Projects : «Path» /projects
-Projects -[#B45309,dashed]-> MyProjects : «Path» /mine
-Projects -[#B45309,dashed]-> ProjectR : «Path» /{projectId}
-ProjectR -[#BE185D,dashed]-> ProjectRep : «use»
-ProjectR -[#B45309,dashed]-> Quotation : «Path» /quotation
-ProjectR -[#B45309,dashed]-> ConfirmDeposit : «Path» /deposit/confirm
-ProjectR -[#B45309,dashed]-> AcceptWork : «Path» /accept-work
-ProjectR -[#B45309,dashed]-> Review : «Path» /review
-@enduml
-```
+![Quotations](../api/uml/quotations.svg)
 
 ---
 
-## 3. Sequence Diagram (Use Case US2-11: Accept Proposal)
+## 3. Sequence Diagram (US2-11: Accept Proposal)
 
-This sequence diagram illustrates the complete end-to-end flow of the **Accept Proposal** operation (`POST /api/proposals/{proposalId}/accept`). It highlights how the platform verifies authentication, asserts authorization and ownership, isolates database mutations inside a strict ACID transaction, and standardizes errors.
+`POST /proposals/{proposalId}/accept`, from the click to the database. Source: [`accept-proposal-implementation.puml`](../uml/sequence/accept-proposal-implementation.puml).
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Receiver as Receiver (Client)
-    participant UI as Next.js Page<br/>(jobs/[id]/proposals)
-    participant Proxy as Next.js Rewrite<br/>(/api/* proxy)
-    participant AuthMW as Middleware<br/>(requireAuth)
-    participant Ctrl as ProposalController<br/>(acceptProposal)
-    participant Zod as Zod Validation<br/>(validate.ts)
-    participant Lib as Domain Libs<br/>(proposal, listing, project)
-    participant DB as PostgreSQL<br/>(Prisma Transaction)
-    participant EH as ErrorHandler<br/>(errorHandler.ts)
-
-    Receiver->>UI: Click "Accept Proposal" & confirm
-    UI->>Proxy: POST /api/proposals/14/accept<br/>Cookie: access_token (httpOnly)
-    Proxy->>AuthMW: Forward request with Cookie header
-
-    %% Authentication & Session verification
-    AuthMW->>AuthMW: verifyAccessToken(jwt)
-    alt Invalid / Missing JWT
-        AuthMW-->>EH: throw ApiError.unauthorized()
-        EH-->>UI: 401 UNAUTHORIZED
-    end
-
-    AuthMW->>DB: isTokenRevoked(jti) & isCompanyDeleted(companyId)
-    alt Token Revoked or Account Soft-Deleted
-        AuthMW-->>EH: throw ApiError.unauthorized("Session ended")
-        EH-->>UI: 401 UNAUTHORIZED
-    end
-
-    AuthMW->>Ctrl: next() with req.auth = { companyId, role }
-
-    %% Controller & Input Validation
-    Ctrl->>Zod: parseParams(proposalIdParamSchema)
-    alt Invalid UUID / Integer format
-        Zod-->>EH: throw ApiError.validationFailed(details)
-        EH-->>UI: 400 VALIDATION_FAILED
-    end
-
-    %% Database ACID Transaction
-    rect rgb(240, 245, 255)
-        Note over Ctrl, DB: prisma.$transaction (Atomic Execution)
-        Ctrl->>DB: BEGIN $transaction
-
-        Ctrl->>Lib: findPendingProposalFor(tx, proposalId, callerId)
-        Lib->>DB: proposal.findUnique({ id, include: listing })
-        DB-->>Lib: proposal + listing data
-
-        alt Proposal Not Found
-            Lib-->>EH: throw ApiError.notFound("Proposal not found")
-            EH-->>UI: 404 NOT_FOUND
-        else Caller Does Not Own Listing
-            Lib-->>EH: throw ApiError.forbidden("You do not own this listing")
-            EH-->>UI: 403 FORBIDDEN
-        else Proposal Not PENDING or Listing Not OPEN
-            Lib-->>EH: throw ApiError.conflict("State invalid for acceptance")
-            EH-->>UI: 409 CONFLICT
-        end
-
-        opt Listing is a Job Listing
-            Ctrl->>Lib: closeOpenListing(tx, listingId)
-            Lib->>DB: listing.updateMany(status: OPEN -> CLOSED)
-        end
-
-        Ctrl->>Lib: setProposalStatus(tx, proposalId, ACCEPTED)
-        Lib->>DB: proposal.updateMany(status: PENDING -> ACCEPTED)
-
-        opt Listing is a Job Listing
-            Ctrl->>Lib: rejectPendingProposals(tx, listingId, except: proposalId)
-            Lib->>DB: proposal.updateMany(status: PENDING -> REJECTED)
-        end
-
-        Ctrl->>Lib: createProjectFromProposal(tx, proposal)
-        Lib->>DB: project.create(status: AWAITING_QUOTATION)
-        DB-->>Lib: created project row
-
-        Ctrl->>DB: COMMIT
-    end
-
-    Ctrl-->>UI: 201 Created + Project JSON
-    UI-->>Receiver: Update UI: Status = ACCEPTED & link to /projects/{id}
-```
+![US2-11 Accept Proposal](../uml/sequence/accept-proposal-implementation.png)
 
 ---
 
 ## 4. Discussion of the UML API Diagram in terms of Design Quality
 
-The architectural quality of the REST API is evaluated against four primary software quality attributes: **Reusability**, **Maintainability**, **Scalability**, and **Security**.
+The architectural quality of the REST API is evaluated against four primary software quality attributes: **Reusability**, **Maintainability**, **Scalability**, and **Security**, referencing the UML API diagrams directly.
 
 ### 4.1 Reusability
 
-1. **Shared Schema Representations (`packages/shared`)**:
-    - Instead of defining disparate shapes across client and server, representations (`Project`, `SentProposal`, `CompanyProfile`, etc.) are declared once in `packages/shared` as single sources of truth.
-    - Client-side data fetching hooks and backend controllers both bind directly to these types, ensuring compile-time contract compatibility and preventing wire format regressions.
-2. **Uniform Resource Hierarchy & Polymorphic Proposals**:
-    - Per ADR 0016, both job bidding (Provider bidding on Receiver's Job) and direct hire requests (Receiver hiring Provider's Service) reuse the same underlying `«Resource» Proposal` and state machine (`PENDING`, `ACCEPTED`, `REJECTED`).
-    - Common pagination wrappers (`{ items: T[], pagination: { page, pageSize, total, totalPages } }`) and summary counters (`/counts`) are reused across all collection endpoints.
-3. **Decoupled Business Services**:
-    - The controllers delegate core mutations to reusable domain libraries (`lib/proposal.ts`, `lib/listing.ts`, `lib/project.ts`), making the business logic callable not only by HTTP handlers but also by asynchronous background jobs or automated test harnesses.
+1. **Polymorphic Proposal Resource (ADR 0016)**:
+    - On the diagram, a single `«Resource» Proposals` serves both job bids (Provider bidding on Receiver's Job) and hire requests (Receiver hiring Provider's Service). Both follow the identical lifecycle (`PENDING` $\rightarrow$ `ACCEPTED` / `REJECTED`).
+    - One `«Representation» Project` is returned uniformly across multiple lifecycle actions: `POST /proposals/{proposalId}/accept`, `POST /projects/{projectId}/confirm-deposit`, `POST /projects/{projectId}/accept-work`, and `POST /projects/{projectId}/cancel`.
+2. **Shared Schema Representations (`packages/shared`)**:
+    - Instead of defining disparate shapes across client and server, all representations (`Project`, `SentProposal`, `CompanyBrief`, etc.) are declared once in `packages/shared` as single sources of truth.
+    - Both `apps/api` and `apps/mangodb` import these shared types, ensuring compile-time contract compatibility and preventing wire format regressions.
+3. **Uniform Collection Envelopes**:
+    - Every paged list answers with the same `{ items, pagination: { page, pageSize, totalItems, totalPages } }` body, built by one helper (`lib/pagination.ts`).
+    - Resource counts (`/counts`) share a predictable aggregation schema for status chips.
+4. **Decoupled Business Services**:
+    - Controllers act solely as HTTP dispatchers, delegating mutations to reusable domain helpers (`lib/proposal.ts`, `lib/listing.ts`, `lib/project.ts`). These functions can be invoked directly by tests, seed scripts, and background tasks without mocking HTTP requests.
 
 ### 4.2 Maintainability
 
-1. **Strict Separation of Concerns**:
-    - The design neatly delineates **Paths** (URI routing in Express), **Resources** (HTTP verb dispatches), and **Representations** (DTOs). Routing (`*.routes.ts`), request parsing (`validate.ts`), business rules (`lib/*.ts`), and persistence (`prisma.ts`) are completely decoupled.
+1. **One Router per Top-Level «Path» & Clean URI Hierarchy**:
+    - The diagram assigns each resource domain its own top-level `«Path»` (`/proposals`, `/projects`, `/quotations`).
+    - Sub-resources that identify a distinct entity do not nest parents needlessly: for example, `/quotations/{quotationId}` is a top-level resource path rather than nested under `/projects/{projectId}/quotations/{quotationId}` (conventions §2.4).
 2. **Declarative Validation via Zod Schemas**:
-    - All inbound payloads (path parameters, query filters, and JSON bodies) are validated through declarative schemas before reaching controller logic. If an API contract evolves, updating the schema updates input validation, documentation, and TypeScript types simultaneously.
+    - All inbound payloads (path parameters, query filters, and JSON bodies) are validated by Zod schemas (`parseParams`, `parseQuery`, `parseBody`) before the handler uses them.
+    - The OpenAPI comments and the `packages/shared` types are kept by hand next to the schema, so a contract change edits all three in the same PR.
 3. **Normalized Error Envelope**:
-    - All failures flow through a centralized `errorHandler` that outputs a predictable RFC-compliant JSON envelope:
+    - All failures flow through one `errorHandler`, which answers in the same JSON envelope (`ApiErrorResponse` in `packages/shared`):
         ```json
         {
             "error": {
                 "code": "VALIDATION_FAILED",
-                "message": "Invalid input",
+                "message": "Request body is invalid",
                 "details": [
                     {
-                        "field": "proposedBudget",
-                        "message": "Expected number, received string"
+                        "field": "proposalBudget",
+                        "message": "Required"
                     }
                 ]
             }
         }
         ```
-    - This prevents error format fragmentation and dramatically reduces frontend error-handling boilerplate.
+    - Consistent HTTP status codes keep errors distinct: 400 (schema/validation rejection), 401 (not signed in or session ended), 403 (wrong role or permission), 404 (missing entity or outsider access), 409 (state conflict), and 429 (rate limit exceeded).
 
 ### 4.3 Scalability
 
 1. **Stateless API Design**:
-    - The Express API maintains no server-side in-memory session states. Client authentication relies on self-contained JSON Web Tokens (JWT) carried in `httpOnly` secure cookies.
-    - As traffic scales, additional API instances can be spun up behind a standard reverse proxy (e.g., Caddy/Nginx) without requiring session synchronization or sticky load balancing.
-2. **Defensive Query Execution & Cursor/Offset Pagination**:
-    - All collection resources (`/jobs`, `/services`, `/proposals/mine`, `/projects/mine`) mandate pagination parameters (`page`, `pageSize` with hard upper caps).
-    - Unbounded queries (`SELECT *`) are banned. Prisma transactions bundle `.count()` and `.findMany()` with selective field projection (`select: { id, title, status }`), minimizing network bandwidth and database memory footprint.
-3. **Static & Media Offloading**:
-    - Large binary payloads (PDF quotations, project deliverables, company certificates) are stored directly in S3-compatible cloud buckets (Supabase Storage). The API only exchanges signed URLs and metadata, keeping backend network I/O lean.
+    - The Express API keeps no session in memory. A session is a JWT in an `httpOnly` cookie, and logged-out tokens are stored in the database (`revokedToken`), so any API instance can check any request.
+    - So more API instances can run behind a reverse proxy (e.g., Caddy) with no session sync. One exception: `loginLimiter` counts failed logins in each process's memory (`middleware/rateLimit.ts`), so two instances would each keep their own count until it moves to a shared store.
+2. **Bounded Lists with Offset Pagination**:
+    - Every collection resource on the diagram is paged. Collection resources (`/jobs`, `/services`, `/proposals/mine`, `/projects/mine`) take `page` and `pageSize`: 12 rows by default, at most 50 (`schemas/common.schema.ts`), so one request cannot pull a whole table.
+    - Each list runs `.count()` and `.findMany()` in one `prisma.$transaction`, selecting only the fields it returns. Short per-project lists (quotations, timeline) are plain arrays.
+3. **Files Stay Out of the Database**:
+    - Quotation PDFs and images (profile, portfolio, certificate) live in Supabase Storage; the database keeps only their URLs.
+    - An upload passes through the API once (multer holds it in memory, up to 5 MB), and reads go straight to storage: public URLs for images, short-lived signed URLs for quotation PDFs.
 
 ### 4.4 Security
 
 1. **Defense-in-Depth Middleware Pipeline**:
-    - Requests traverse a multi-stage security pipeline prior to business logic execution:
-        1. **`loginLimiter`**: Rate-limits authentication attempts (e.g., max 10 failed logins per email/IP in 15 mins) to prevent brute-force attacks.
-        2. **`requireAuth`**: Validates JWT cryptographic signature, expiry (`exp`), revocation status via `isTokenRevoked(jti)`, and verifies the company has not been soft-deleted (`isCompanyDeleted`).
+    - Every resource on the diagram sits behind `requireAuth` (or the public whitelist):
+        1. **`loginLimiter`**: Allows 10 failed sign-ins per email in 15 minutes, then answers 429 (`middleware/rateLimit.ts`). It counts per email, not per IP, because every request arrives through the Next proxy, which does not pass the visitor's IP on.
+        2. **`requireAuth`**: Validates the JWT signature and expiry, checks the token was not logged out (`isTokenRevoked(jti)`), and checks the session has not ended (`isSessionEnded`: company deleted, or credentials changed after the token was issued).
         3. **`requireRole('provider' | 'receiver' | 'admin')`**: Enforces strict Role-Based Access Control (RBAC).
-2. **No Relying on Client-Supplied Identifiers (IDOR Mitigation)**:
-    - For sensitive user actions (such as fetching one's proposals or creating a listing), the platform reads the authenticated `companyId` directly from the validated token claims (`req.auth.companyId`), never trusting client-supplied URL query or body IDs.
-    - Resource access enforces strict ownership checks in domain helpers (e.g., ensuring `proposal.listing.companyId === callerId`).
-3. **Cross-Site Scripting (XSS) & CORS Protection**:
-    - Access tokens are encapsulated in `httpOnly`, `SameSite=Lax`, `Secure` cookies inaccessible to JavaScript running in the browser.
-    - The Next.js frontend proxies `/api/*` calls server-to-server, rendering external cross-origin requests (`CORS`) unnecessary and neutralizing credential leakage vectors.
+2. **Server-Extracted Identity & 404 for Outsiders**:
+    - Sensitive operations read the caller's company identity directly from cryptographically validated token claims (`req.auth.companyId`), preventing IDOR attacks from spoofed request bodies or URL parameters.
+    - Outsiders calling a resource they do not participate in receive a 404 (or 403), ensuring callers cannot probe private project data or verify the existence of confidential listings.
+3. **Cookie Security, CORS & Cross-Site Guard**:
+    - Access tokens are kept in `httpOnly`, `SameSite=Lax` cookies (`Secure` in production), so JavaScript in the browser cannot read them.
+    - The browser only talks to Next.js, which proxies `/api/*` to the API, so no cross-origin call is needed. The API still allows only `FRONTEND_URL` through CORS and refuses cross-site writes (`refuseCrossSiteWrites`, using the browser's `Sec-Fetch-Site` header).
