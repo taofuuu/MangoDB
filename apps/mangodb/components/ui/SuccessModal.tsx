@@ -52,7 +52,10 @@ export default function SuccessModal({
                         </svg>
                     </div>
                     <div>
-                        <h3 id={titleId} className="type-md font-bold text-ink">
+                        <h3
+                            id={titleId}
+                            className="type-md !font-[700] text-ink"
+                        >
                             {title}
                         </h3>
                         {message && (
@@ -72,7 +75,7 @@ export default function SuccessModal({
                 <div className="w-full flex justify-end">
                     <Button
                         onClick={onClose}
-                        className="px-8 py-2 type-sm font-semibold"
+                        className="px-8 py-2 type-sm !font-[600]"
                     >
                         {actionLabel}
                     </Button>

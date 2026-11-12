@@ -142,7 +142,7 @@ export default function ProjectDetailPage({
     if (!projectId) {
         return (
             <div className="min-h-screen bg-surface px-4 py-16 text-center">
-                <p className="type-md font-semibold text-danger">
+                <p className="type-md !font-[600] text-danger">
                     Invalid project id
                 </p>
                 <Link
@@ -645,7 +645,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     <button
                         type="button"
                         onClick={() => router.push('/projects')}
-                        className="inline-flex items-center gap-2 type-sm font-semibold text-brand hover:text-brand-dark transition-colors"
+                        className="inline-flex items-center gap-2 type-sm !font-[600] text-brand hover:text-brand-dark transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back to your projects
@@ -742,7 +742,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
                                 {/* Description */}
                                 <div className="mt-2">
-                                    <h4 className="type-xs font-semibold text-ink-soft mb-1">
+                                    <h4 className="type-xs !font-[600] text-ink-soft mb-1">
                                         Description
                                     </h4>
                                     <p className="type-sm text-ink leading-relaxed">
@@ -782,7 +782,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                                             onClick={() =>
                                                 setIsAddUpdateOpen(true)
                                             }
-                                            className="inline-flex items-center gap-1.5 rounded-button bg-brand px-4 py-2 type-xs font-semibold text-surface-white hover:bg-brand-dark transition-colors shadow-xs"
+                                            className="inline-flex items-center gap-1.5 rounded-button bg-brand px-4 py-2 type-xs !font-[600] text-surface-white hover:bg-brand-dark transition-colors shadow-xs"
                                         >
                                             <Plus className="h-4 w-4" />
                                             Add Update
