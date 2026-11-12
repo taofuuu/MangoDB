@@ -2,7 +2,7 @@
 // seed.ts refuses NODE_ENV=production because its accounts have known
 // passwords; this one takes the password from ADMIN_PASSWORD instead.
 //
-//   node --env-file=.env.alpha --import tsx src/create-admin.ts   (from apps/api)
+//   node --env-file=.env.hosted --import tsx src/create-admin.ts   (from apps/api)
 //
 // There is no forgot-password (ADR 0012), so running it again is also how a
 // lost admin password is replaced.
