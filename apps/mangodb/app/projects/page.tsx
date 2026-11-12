@@ -8,9 +8,9 @@ import type {
     ProjectStatus,
     ProjectSummary,
 } from '@mangodb/shared';
-import { ChevronDown } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
 import ProjectCard from '@/components/projects/ProjectCard';
+import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import { PROJECT_STATUS_CONFIGS } from '@/components/projects/ProjectStatusBadge';
@@ -20,6 +20,13 @@ import { listMyProjects } from '@/lib/projects';
 import { useMyCompany } from '@/lib/useMyCompany';
 
 type StatusFilter = ProjectStatus | 'ALL';
+
+const STATUS_OPTIONS: DropdownOption<StatusFilter>[] = [
+    { value: 'ALL', label: 'All Statuses' },
+    ...(Object.keys(PROJECT_STATUS_CONFIGS) as ProjectStatus[]).map(
+        (value) => ({ value, label: PROJECT_STATUS_CONFIGS[value].label }),
+    ),
+];
 
 export default function ProjectsPage() {
     const me = useMyCompany();
@@ -191,37 +198,16 @@ function ProjectsView({ companyAccountType }: { companyAccountType: string }) {
 
                     {/* Status Filter Dropdown */}
                     <div className="flex items-center gap-2">
-                        <label
-                            htmlFor="status-filter"
-                            className="type-sm !font-[500] text-ink-soft whitespace-nowrap"
-                        >
+                        <span className="type-sm !font-[500] text-ink-soft whitespace-nowrap">
                             Status:
-                        </label>
-                        <div className="relative inline-flex items-center">
-                            <select
-                                id="status-filter"
-                                value={statusFilter}
-                                onChange={(e) =>
-                                    handleStatusChange(
-                                        e.target.value as StatusFilter,
-                                    )
-                                }
-                                className="appearance-none cursor-pointer rounded-full border border-line bg-surface-white pl-4 pr-11 py-2 type-sm text-ink transition hover:border-brand focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand shadow-2xs"
-                            >
-                                <option value="ALL">All Statuses</option>
-                                {Object.entries(PROJECT_STATUS_CONFIGS).map(
-                                    ([statusKey, config]) => (
-                                        <option
-                                            key={statusKey}
-                                            value={statusKey}
-                                        >
-                                            {config.label}
-                                        </option>
-                                    ),
-                                )}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-4 h-4 w-4 text-ink-soft" />
-                        </div>
+                        </span>
+                        <Dropdown
+                            value={statusFilter}
+                            options={STATUS_OPTIONS}
+                            onChange={handleStatusChange}
+                            label="Filter projects by status"
+                            className="w-[10.4vw] min-w-[200px]"
+                        />
                     </div>
                 </div>
 

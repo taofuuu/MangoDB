@@ -285,7 +285,7 @@ export default function ProjectSidebar({
                         <div className="flex items-center gap-2">
                             <span className="type-sm !font-[600] text-ink">
                                 Average Rating {reviewAverage}
-                                <span className="text-ink-soft font-normal text-xs ml-0.5">
+                                <span className="text-ink-soft type-xs ml-0.5">
                                     /5
                                 </span>
                             </span>
