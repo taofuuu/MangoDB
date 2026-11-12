@@ -437,8 +437,6 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
-- The navbar notification bell from ADR 0017. There is no table, endpoint or
-  component for it.
 
 ---
 
