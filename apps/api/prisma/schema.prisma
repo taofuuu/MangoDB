@@ -49,21 +49,21 @@ model Certificate {
 }
 
 model Company {
-  companyId            Int           @id @default(autoincrement()) @map("company_id")
-  companyName          String        @map("company_name") @db.VarChar(255)
-  companyDescription   String?       @map("company_description")
-  username             String        @unique @db.VarChar(50)
-  password             String        @db.VarChar(255)
-  email                String        @unique @db.VarChar(100)
-  phone                String        @db.VarChar(20)
+  companyId            Int            @id @default(autoincrement()) @map("company_id")
+  companyName          String         @map("company_name") @db.VarChar(255)
+  companyDescription   String?        @map("company_description")
+  username             String         @unique @db.VarChar(50)
+  password             String         @db.VarChar(255)
+  email                String         @unique @db.VarChar(100)
+  phone                String         @db.VarChar(20)
   address              String?
-  website              String?       @db.VarChar(255)
-  accountType          String        @map("account_type") @db.VarChar(100)
-  contactEmail         String?       @map("contact_email") @db.VarChar(100)
+  website              String?        @db.VarChar(255)
+  accountType          String         @map("account_type") @db.VarChar(100)
+  contactEmail         String?        @map("contact_email") @db.VarChar(100)
   // Public URL of the photo in the `profile` storage bucket. Null until the
   // company uploads one. Same shape as certImage and portfolioImage: the
   // bytes live in storage, the column only points at them.
-  companyPhoto         String?       @map("company_photo") @db.VarChar(255)
+  companyPhoto         String?        @map("company_photo") @db.VarChar(255)
   // Soft delete. Null means active; a timestamp means the account is gone as
   // far as discovery is concerned, while everything it is attached to -
   // listings, proposals, projects, reviews - stays exactly where it is.
@@ -71,20 +71,22 @@ model Company {
   // The rule this creates: discovery queries (company search, browse, find a
   // provider) filter on deletedAt; history queries (past projects, reviews)
   // must NOT, or they hide the very history this column exists to keep.
-  deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  deletedAt            DateTime?      @map("deleted_at") @db.Timestamptz(6)
   // When the company accepted the Terms of Service at registration. Nullable
   // because accounts created before the ToS existed never accepted it; new
   // registrations set it (T1.13.5).
-  tosAcceptedAt        DateTime?     @map("tos_accepted_at") @db.Timestamptz(6)
+  tosAcceptedAt        DateTime?      @map("tos_accepted_at") @db.Timestamptz(6)
   // When the username, email, or password last changed. requireAuth turns
   // away any token issued before it, so a change signs out every other
   // session. Null means never changed.
-  credentialsChangedAt DateTime?     @map("credentials_changed_at") @db.Timestamptz(6)
+  credentialsChangedAt DateTime?      @map("credentials_changed_at") @db.Timestamptz(6)
   companyType          CompanyType[]
   listing              Listing[]
   proposal             Proposal[]
   provider             Provider?
   receiver             Receiver?
+  notificationReceived Notification[] @relation("NotificationRecipient")
+  notificationSent     Notification[] @relation("NotificationSender")
 
   @@index([deletedAt])
   @@map("company")
@@ -194,6 +196,27 @@ model ProjectUpdate {
   @@map("project_update")
 }
 
+// T4.1.5, ADR 0017. One notice in the navbar bell, for the company an action
+// happened to. Saved by that action, in its transaction. Every notice comes
+// from one proposal, which also leads to its listing and its project.
+model Notification {
+  notificationId   Int       @id @default(autoincrement()) @map("notification_id")
+  recipientId      Int       @map("recipient_id")
+  senderId         Int       @map("sender_id")
+  proposalId       Int       @map("proposal_id")
+  // One of NOTIFICATION_TYPES in packages/shared.
+  notificationType String    @map("notification_type") @db.VarChar(50)
+  // Null until the recipient opens the bell.
+  readAt           DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  recipient        Company   @relation("NotificationRecipient", fields: [recipientId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  sender           Company   @relation("NotificationSender", fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  proposal         Proposal  @relation(fields: [proposalId], references: [proposalId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([recipientId, createdAt])
+  @@map("notification")
+}
+
 // ADR 0018. One per project, by its Receiver, once COMPLETED. Final: no edit
 // or delete. Each score is 1 to 5; Zod enforces it, like the status columns.
 model Review {
@@ -221,17 +244,18 @@ model ProjectContract {
 }
 
 model Proposal {
-  proposalId     Int      @id @default(autoincrement()) @map("proposal_id")
-  listingId      Int      @map("listing_id")
-  senderId       Int      @map("sender_id")
-  proposalBudget Decimal  @map("proposal_budget") @db.Decimal(12, 2)
-  proposalTerms  String   @map("proposal_terms")
-  duration       Decimal  @db.Decimal(4, 1)
-  proposalStatus String   @map("proposal_status") @db.VarChar(50)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  proposalId     Int            @id @default(autoincrement()) @map("proposal_id")
+  listingId      Int            @map("listing_id")
+  senderId       Int            @map("sender_id")
+  proposalBudget Decimal        @map("proposal_budget") @db.Decimal(12, 2)
+  proposalTerms  String         @map("proposal_terms")
+  duration       Decimal        @db.Decimal(4, 1)
+  proposalStatus String         @map("proposal_status") @db.VarChar(50)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   project        Project?
-  listing        Listing  @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
-  sender         Company  @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
+  notification   Notification[]
+  listing        Listing        @relation(fields: [listingId], references: [listingId], onDelete: Cascade, onUpdate: NoAction)
+  sender         Company        @relation(fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
 
   // ADR 0016. One PENDING proposal per sender per listing. Once it is decided
   // the same company may send another.

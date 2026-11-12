@@ -28,6 +28,7 @@ import {
     toProjectUpdate,
 } from '../lib/project';
 import { findPublicCompany } from '../lib/company-lookup';
+import { notifyOtherParty } from '../lib/notification';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { companyIdParamSchema } from '../schemas/company.schema';
@@ -166,6 +167,7 @@ export async function reportDeposit(
             'Deposit has already been reported',
         );
         await saveProjectEvent(tx, projectId, 'DEPOSIT_REPORTED');
+        await notifyOtherParty(tx, project, 'DEPOSIT_REPORTED');
         return updated;
     });
     res.json(toProject(row));
@@ -203,6 +205,7 @@ export async function confirmDeposit(
             'The Receiver has not reported the deposit yet',
         );
         await saveProjectEvent(tx, projectId, 'DEPOSIT_CONFIRMED');
+        await notifyOtherParty(tx, project, 'DEPOSIT_CONFIRMED');
         return updated;
     });
     res.json(toProject(row));
@@ -226,6 +229,7 @@ export async function cancelProject(
             'CANCELLED',
         );
         await saveProjectEvent(tx, projectId, 'PROJECT_CANCELLED');
+        await notifyOtherParty(tx, project, 'PROJECT_CANCELLED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -255,6 +259,7 @@ export async function submitWork(req: Request, res: Response): Promise<void> {
             'AWAITING_ACCEPTANCE',
         );
         await saveProjectEvent(tx, projectId, 'WORK_SUBMITTED');
+        await notifyOtherParty(tx, project, 'WORK_SUBMITTED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -291,6 +296,7 @@ export async function rejectWork(req: Request, res: Response): Promise<void> {
                 updateText: reason,
             },
         });
+        await notifyOtherParty(tx, project, 'WORK_REJECTED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -319,6 +325,7 @@ export async function acceptWork(req: Request, res: Response): Promise<void> {
             'COMPLETED',
         );
         await saveProjectEvent(tx, projectId, 'WORK_ACCEPTED');
+        await notifyOtherParty(tx, project, 'WORK_ACCEPTED');
         return tx.project.update({
             where: { projectId },
             data: { completedAt: new Date() },

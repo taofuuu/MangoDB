@@ -4,6 +4,7 @@
 import type {
     ListingStatus,
     ListingType,
+    NotificationType,
     ProposalStatus,
 } from '@mangodb/shared';
 import type { Prisma } from '../generated/prisma/client';
@@ -180,13 +181,15 @@ export async function closeOpenListing(
 }
 
 // Rejects every PENDING proposal on a listing, inside the caller's
-// transaction. Accepting one passes its id, so only the others are rejected.
+// transaction, and gives each sender a notice from the owner. Accepting one
+// passes its id, so only the others are rejected.
 export async function rejectPendingProposals(
     tx: Prisma.TransactionClient,
     listingId: number,
+    ownerId: number,
     exceptProposalId?: number,
 ): Promise<void> {
-    await tx.proposal.updateMany({
+    const rejected = await tx.proposal.updateManyAndReturn({
         where: {
             listingId,
             ...(exceptProposalId !== undefined && {
@@ -195,5 +198,14 @@ export async function rejectPendingProposals(
             proposalStatus: 'PENDING' satisfies ProposalStatus,
         },
         data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
+        select: { proposalId: true, senderId: true },
+    });
+    await tx.notification.createMany({
+        data: rejected.map((proposal) => ({
+            proposalId: proposal.proposalId,
+            senderId: ownerId,
+            recipientId: proposal.senderId,
+            notificationType: 'PROPOSAL_REJECTED' satisfies NotificationType,
+        })),
     });
 }

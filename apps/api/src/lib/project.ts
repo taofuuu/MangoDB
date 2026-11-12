@@ -251,6 +251,7 @@ export function projectPartyWhere(companyId: number): Prisma.ProjectWhereInput {
 }
 
 export type ProjectParty = {
+    proposalId: number;
     projectStatus: ProjectStatus;
     providerId: number;
     receiverId: number;
@@ -269,6 +270,7 @@ export async function assertProjectParty(
     const project = await prisma.project.findUnique({
         where: { projectId },
         select: {
+            proposalId: true,
             projectStatus: true,
             proposal: {
                 select: {
@@ -285,6 +287,7 @@ export async function assertProjectParty(
         throw ApiError.notFound(PROJECT_NOT_FOUND);
     }
     return {
+        proposalId: project.proposalId,
         projectStatus: project.projectStatus as ProjectStatus,
         ...parties,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',

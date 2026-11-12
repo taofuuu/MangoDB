@@ -306,9 +306,13 @@ sequenceDiagram
     else service not OPEN
         Ctl-->>C: 409 This service is not open for hire requests
     end
-    Ctl->>DB: proposal.create (PENDING)
-    alt already a PENDING request from this sender (P2002)
-        Ctl-->>C: 409 You already have a pending hire request on this service
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction
+        Ctl->>DB: proposal.create (PENDING)
+        alt already a PENDING request from this sender (P2002)
+            Ctl-->>C: 409 You already have a pending hire request on this service
+        end
+        Ctl->>DB: notification.create (PROPOSAL_RECEIVED, to the service's owner)
     end
     Ctl-->>C: 201 Proposal
 ```

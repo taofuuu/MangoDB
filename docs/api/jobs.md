@@ -237,8 +237,9 @@ sequenceDiagram
         alt count is 0
             L-->>C: 409 Only an open job can be closed (rollback)
         end
-        Ctl->>L: rejectPendingProposals(tx, jobId)
-        L->>DB: proposal.updateMany PENDING to REJECTED
+        Ctl->>L: rejectPendingProposals(tx, jobId, caller)
+        L->>DB: proposal.updateManyAndReturn PENDING to REJECTED
+        L->>DB: notification.createMany (PROPOSAL_REJECTED, one per sender)
         Ctl->>DB: listing.findUniqueOrThrow
     end
     Ctl-->>C: 200 Job (CLOSED)
@@ -272,9 +273,13 @@ sequenceDiagram
     else job not OPEN
         Ctl-->>C: 409 This job is not open for proposals
     end
-    Ctl->>DB: proposal.create (PENDING)
-    alt already a PENDING proposal from this sender (P2002)
-        Ctl-->>C: 409 You already have a pending proposal on this job
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction
+        Ctl->>DB: proposal.create (PENDING)
+        alt already a PENDING proposal from this sender (P2002)
+            Ctl-->>C: 409 You already have a pending proposal on this job
+        end
+        Ctl->>DB: notification.create (PROPOSAL_RECEIVED, to the job's owner)
     end
     Ctl-->>C: 201 Proposal
 ```

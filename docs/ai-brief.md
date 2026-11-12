@@ -152,6 +152,7 @@ message.
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
 | A project in one status, no move    | `assertProjectStatus(project, status)` — else 409                              |
 | A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
+| A bell notice for the other party   | `notifyOtherParty(tx, party, type)`, `party` from `assertProjectParty`         |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
 | A create a unique index may reject  | `orDuplicate(write, message)` turns P2002 into a 409                           |
@@ -266,6 +267,7 @@ as not found.
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it         |
 | The category list for a form | `useCategories()` in `lib/useCategories`                         |
 | A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`                       |
+| Click-away and Escape close  | `useDismiss(rootRef, isOpen, close)` in `lib/useDismiss`         |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
@@ -436,8 +438,6 @@ Saying "that isn't built" is a useful answer. Inventing it is not.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
-- The navbar notification bell from ADR 0017. There is no table, endpoint or
-  component for it.
 
 ---
 

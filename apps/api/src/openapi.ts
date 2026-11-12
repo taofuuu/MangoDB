@@ -6,6 +6,7 @@ import {
     JOB_SORT_ORDERS,
     LISTING_STATUSES,
     LISTING_TYPES,
+    NOTIFICATION_TYPES,
     PROJECT_STATUSES,
     PROJECT_UPDATE_TYPES,
     PROPOSAL_STATUSES,
@@ -641,6 +642,24 @@ const schemas: Record<string, Schema> = {
             categoryName: { type: 'string' },
         },
     },
+
+    // The navbar bell (T4.1.5, ADR 0017).
+    Notification: {
+        type: 'object',
+        properties: {
+            notificationId: { type: 'integer' },
+            notificationType: { type: 'string', enum: [...NOTIFICATION_TYPES] },
+            // The company that acted.
+            sender: ref('CompanyBrief'),
+            listingId: { type: 'integer' },
+            listingType: { type: 'string', enum: [...LISTING_TYPES] },
+            listingTitle: { type: 'string' },
+            // Null until the proposal is accepted.
+            projectId: nullable('integer'),
+            readAt: nullable('string', { format: 'date-time' }),
+            createdAt: { type: 'string', format: 'date-time' },
+        },
+    },
 };
 
 const errorResponse = (description: string) => ({
@@ -686,6 +705,7 @@ const definition = {
         'Projects',
         'Quotations',
         'Categories',
+        'Notifications',
     ].map((name) => ({ name })),
     servers: [
         { url: '/', description: 'The API itself (localhost:4000)' },

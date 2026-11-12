@@ -141,6 +141,7 @@ export async function findPendingProposalFor(
         where: { proposalId },
         select: {
             listingId: true,
+            senderId: true,
             proposalStatus: true,
             proposalBudget: true,
             listing: {
