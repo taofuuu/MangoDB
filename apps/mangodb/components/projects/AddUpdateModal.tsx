@@ -91,7 +91,7 @@ export default function AddUpdateModal({
                     <div className="flex items-center justify-between">
                         <h2
                             id="add-update-title"
-                            className="type-md !font-[700] text-ink"
+                            className="type-md !text-[20px] !font-[700] text-ink"
                         >
                             Add Update
                         </h2>
@@ -168,7 +168,7 @@ export default function AddUpdateModal({
                 <div className="flex flex-col">
                     <h2
                         id="confirm-update-title"
-                        className="type-md !font-[700] text-ink"
+                        className="type-md !text-[20px] !font-[700] text-ink"
                     >
                         Confirm Your Update Statement
                     </h2>
@@ -238,7 +238,7 @@ export default function AddUpdateModal({
                         </div>
                         <h3
                             id="success-update-title"
-                            className="type-md !font-[700] text-ink"
+                            className="type-md !text-[20px] !font-[700] text-ink"
                         >
                             Update Added Successfully
                         </h3>
