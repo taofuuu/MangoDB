@@ -1,6 +1,6 @@
 # Deploying
 
-The hosted alpha is three pieces. Both hosts redeploy `main` on every push.
+The hosted beta is three pieces. Both hosts redeploy `main` on every push.
 
 | Piece                     | Host                  | Built from     |
 | ------------------------- | --------------------- | -------------- |
