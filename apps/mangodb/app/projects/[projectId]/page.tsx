@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type {
     ProjectDetail,
     ProjectUpdate,
+    ProjectUpdateType,
     PublicCompanyProfile,
     Quotation,
     Review,
@@ -19,6 +20,7 @@ import ProjectSidebar from '@/components/projects/ProjectSidebar';
 import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge';
 import ProjectTimelineFeed, {
     type TimelineEvent,
+    type TimelineEventType,
 } from '@/components/projects/ProjectTimelineFeed';
 import RejectQuotationModal from '@/components/projects/RejectQuotationModal';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
@@ -50,6 +52,79 @@ import {
     uploadQuotation,
 } from '@/lib/projects';
 import { useMyCompany } from '@/lib/useMyCompany';
+
+// The timeline rows that are only a title. PROGRESS and WORK_REJECTED carry
+// text, so they have their own builders below.
+const TITLE_ONLY_EVENTS: Record<
+    Exclude<ProjectUpdateType, 'PROGRESS' | 'WORK_REJECTED'>,
+    { type: TimelineEventType; title: string }
+> = {
+    PROPOSAL_ACCEPTED: {
+        type: 'proposal-accepted',
+        title: 'Proposal Accepted',
+    },
+    QUOTATION_SENT: { type: 'quotation-uploaded', title: 'Quotation Uploaded' },
+    QUOTATION_DELETED: {
+        type: 'quotation-deleted',
+        title: 'Quotation Deleted',
+    },
+    QUOTATION_REJECTED: {
+        type: 'quotation-rejected',
+        title: 'Quotation Rejected',
+    },
+    QUOTATION_ACCEPTED: {
+        type: 'quotation-accepted',
+        title: 'Quotation Accepted',
+    },
+    DEPOSIT_REPORTED: {
+        type: 'deposit-reported',
+        title: 'Receiver reported deposit payment.',
+    },
+    DEPOSIT_CONFIRMED: {
+        type: 'deposit-confirmed',
+        title: 'Deposit payment confirmed.',
+    },
+    WORK_SUBMITTED: { type: 'work-submitted', title: 'Work Submitted' },
+    WORK_ACCEPTED: { type: 'work-accepted', title: 'Work Accepted' },
+    PROJECT_CANCELLED: { type: 'project-cancel', title: 'Project Cancel' },
+};
+
+// A progress update's first line is its title, cut to 60 characters. The
+// rest of the text opens when the row is expanded.
+function progressEvent(update: ProjectUpdate): TimelineEvent {
+    const rawText = update.updateText ?? '';
+    const lines = rawText.split('\n').filter((l) => l.trim().length > 0);
+    const firstLine = lines[0] ?? 'Progress Update';
+    const hasMore = lines.length > 1;
+    const title =
+        firstLine.length <= 60 ? firstLine : `${firstLine.slice(0, 57)}...`;
+    const description = hasMore
+        ? lines.slice(1).join('\n')
+        : firstLine.length > 60
+          ? rawText
+          : undefined;
+
+    return {
+        id: `update-progress-${update.projectUpdateId}`,
+        type: 'progress-update',
+        title: title,
+        description: description ?? (rawText || undefined),
+        date: update.createdAt,
+        expandable: !!description,
+    };
+}
+
+// The Receiver's reason is the row's text.
+function workRejectedEvent(update: ProjectUpdate): TimelineEvent {
+    return {
+        id: `update-rejected-${update.projectUpdateId}`,
+        type: 'work-rejected',
+        title: 'Work Rejected',
+        description: update.updateText ?? undefined,
+        date: update.createdAt,
+        expandable: !!update.updateText,
+    };
+}
 
 export default function ProjectDetailPage({
     params,
@@ -97,7 +172,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         useState<PublicCompanyProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
     // Modals state
@@ -212,126 +286,20 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         if (hasUnifiedEvents) {
             // Full timeline provided directly by GET /projects/:projectId/updates
             for (const u of updates) {
-                switch (u.updateType) {
-                    case 'PROPOSAL_ACCEPTED':
+                if (u.updateType === 'PROGRESS') {
+                    pushEvent(progressEvent(u));
+                } else if (u.updateType === 'WORK_REJECTED') {
+                    pushEvent(workRejectedEvent(u));
+                } else {
+                    // A type the API added after this build is left out.
+                    const row = TITLE_ONLY_EVENTS[u.updateType];
+                    if (row) {
                         pushEvent({
                             id: `update-${u.projectUpdateId}`,
-                            type: 'proposal-accepted',
-                            title: 'Proposal Accepted',
+                            ...row,
                             date: u.createdAt,
                         });
-                        break;
-                    case 'QUOTATION_SENT':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-uploaded',
-                            title: 'Quotation Uploaded',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_DELETED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-deleted',
-                            title: 'Quotation Deleted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_REJECTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-rejected',
-                            title: 'Quotation Rejected',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-accepted',
-                            title: 'Quotation Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_REPORTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-reported',
-                            title: 'Receiver reported deposit payment.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_CONFIRMED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-confirmed',
-                            title: 'Deposit payment confirmed.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROGRESS': {
-                        const rawText = u.updateText ?? '';
-                        const lines = rawText
-                            .split('\n')
-                            .filter((l) => l.trim().length > 0);
-                        const firstLine = lines[0] ?? 'Progress Update';
-                        const hasMore = lines.length > 1;
-                        const title =
-                            firstLine.length <= 60
-                                ? firstLine
-                                : `${firstLine.slice(0, 57)}...`;
-                        const description = hasMore
-                            ? lines.slice(1).join('\n')
-                            : firstLine.length > 60
-                              ? rawText
-                              : undefined;
-
-                        pushEvent({
-                            id: `update-progress-${u.projectUpdateId}`,
-                            type: 'progress-update',
-                            title: title,
-                            description: description ?? (rawText || undefined),
-                            date: u.createdAt,
-                            expandable: !!description,
-                        });
-                        break;
                     }
-                    case 'WORK_SUBMITTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-submitted',
-                            title: 'Work Submitted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'WORK_REJECTED':
-                        pushEvent({
-                            id: `update-rejected-${u.projectUpdateId}`,
-                            type: 'work-rejected',
-                            title: 'Work Rejected',
-                            description: u.updateText ?? undefined,
-                            date: u.createdAt,
-                            expandable: !!u.updateText,
-                        });
-                        break;
-                    case 'WORK_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-accepted',
-                            title: 'Work Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROJECT_CANCELLED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'project-cancel',
-                            title: 'Project Cancel',
-                            date: u.createdAt,
-                        });
-                        break;
-                    default:
-                        break;
                 }
             }
         } else {
@@ -398,39 +366,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         title: 'Work Submitted',
                         date: u.createdAt,
                     });
-                    pushEvent({
-                        id: `update-rejected-${u.projectUpdateId}`,
-                        type: 'work-rejected',
-                        title: 'Work Rejected',
-                        description: u.updateText ?? undefined,
-                        date: u.createdAt,
-                        expandable: !!u.updateText,
-                    });
+                    pushEvent(workRejectedEvent(u));
                 } else if (u.updateType === 'PROGRESS') {
-                    const rawText = u.updateText ?? '';
-                    const lines = rawText
-                        .split('\n')
-                        .filter((l) => l.trim().length > 0);
-                    const firstLine = lines[0] ?? 'Progress Update';
-                    const hasMore = lines.length > 1;
-                    const title =
-                        firstLine.length <= 60
-                            ? firstLine
-                            : `${firstLine.slice(0, 57)}...`;
-                    const description = hasMore
-                        ? lines.slice(1).join('\n')
-                        : firstLine.length > 60
-                          ? rawText
-                          : undefined;
-
-                    pushEvent({
-                        id: `update-progress-${u.projectUpdateId}`,
-                        type: 'progress-update',
-                        title: title,
-                        description: description ?? (rawText || undefined),
-                        date: u.createdAt,
-                        expandable: !!description,
-                    });
+                    pushEvent(progressEvent(u));
                 }
             }
 
@@ -499,7 +437,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // to show under the picker.
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
-        setActionError(null);
         let removedPending = false;
         try {
             const pending = quotations.find(
@@ -535,7 +472,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // rethrown as text for the modal to show above its buttons.
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
         } catch (err: unknown) {
@@ -558,7 +494,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // card offers "Revise & Resubmit Quotation".
     const handleRejectQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectQuotation(quotationId, projectId);
         } catch (err: unknown) {
@@ -577,7 +512,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAddUpdate = async (updateText: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await createProjectUpdate(projectId, updateText);
             loadData();
@@ -591,7 +525,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     // has depositReportedAt, the Deposit card shows the waiting state.
     const handleReportDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await reportDeposit(projectId);
         } catch (err: unknown) {
@@ -610,7 +543,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleConfirmDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await confirmDeposit(projectId);
             loadData();
@@ -621,7 +553,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleSubmitWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await submitWork(projectId);
             loadData();
@@ -633,7 +564,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAcceptWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptWork(projectId);
             loadData();
@@ -653,7 +583,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleRejectWork = async (reason: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectWork(projectId, reason);
             loadData();
@@ -664,7 +593,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleCancelProject = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await cancelProject(projectId);
             loadData();
@@ -723,22 +651,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         Back to your projects
                     </button>
                 </div>
-
-                {actionError && (
-                    <div
-                        role="alert"
-                        className="mb-6 rounded-[14px] border border-danger/40 bg-danger/10 px-4 py-3 type-xs text-danger flex items-center justify-between"
-                    >
-                        <span>{actionError}</span>
-                        <button
-                            type="button"
-                            onClick={() => setActionError(null)}
-                            className="font-semibold underline ml-2 hover:opacity-80 transition-opacity"
-                        >
-                            Dismiss
-                        </button>
-                    </div>
-                )}
 
                 {/* 2-Column Layout (Sidebar Left, Main Content Right) */}
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
