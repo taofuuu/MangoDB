@@ -52,6 +52,8 @@ class "ServiceSummary" as ServiceSummaryRep <<Representation>> {
   -categories : string[]
   -techStack : string[]
   -company : CompanyBrief
+  -averageRating : number?
+  -ratingCount : integer
 }
 class "CreateServiceRequest" as CreateServiceRequestRep <<Representation>> {
   -listingTitle : string

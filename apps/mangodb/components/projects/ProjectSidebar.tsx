@@ -254,7 +254,7 @@ export default function ProjectSidebar({
                                         type="button"
                                         onClick={onReviewProject}
                                         disabled={isBusy}
-                                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                                        className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm !font-[600] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
                                     >
                                         Review this project
                                     </button>
@@ -285,7 +285,7 @@ export default function ProjectSidebar({
                         <div className="flex items-center gap-2">
                             <span className="type-sm !font-[600] text-ink">
                                 Average Rating {reviewAverage}
-                                <span className="text-ink-soft font-normal text-xs ml-0.5">
+                                <span className="text-ink-soft type-xs ml-0.5">
                                     /5
                                 </span>
                             </span>
@@ -369,7 +369,7 @@ export default function ProjectSidebar({
                                         isBusy ||
                                         project.projectStatus !== 'IN_PROGRESS'
                                     }
-                                    className="flex items-center justify-center gap-2 rounded-button bg-brand py-2.5 type-sm font-semibold text-surface-white hover:bg-brand-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
+                                    className="flex items-center justify-center gap-2 rounded-button bg-brand py-2.5 type-sm !font-[600] text-surface-white hover:bg-brand-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs"
                                 >
                                     <Send className="h-4 w-4" />
                                     Submit Project
@@ -387,7 +387,7 @@ export default function ProjectSidebar({
                                             project.projectStatus !==
                                                 'AWAITING_DEPOSIT')
                                     }
-                                    className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm font-semibold hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm !font-[600] hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Ban className="h-4 w-4" />
                                     Cancel Project
@@ -406,7 +406,7 @@ export default function ProjectSidebar({
                                         type="button"
                                         onClick={onAcceptWork}
                                         disabled={isBusy}
-                                        className="flex items-center justify-center gap-2 rounded-button bg-brand py-2.5 type-sm font-semibold text-surface-white hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-xs"
+                                        className="flex items-center justify-center gap-2 rounded-button bg-brand py-2.5 type-sm !font-[600] text-surface-white hover:bg-brand-dark transition-colors disabled:opacity-50 shadow-xs"
                                     >
                                         <CheckCircle2 className="h-4 w-4" />
                                         Accept Work
@@ -417,7 +417,7 @@ export default function ProjectSidebar({
                                         type="button"
                                         onClick={onRejectWork}
                                         disabled={isBusy}
-                                        className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50"
+                                        className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm !font-[600] hover:bg-danger/10 transition-colors disabled:opacity-50"
                                     >
                                         <X className="h-4 w-4" />
                                         Reject Work
@@ -433,7 +433,7 @@ export default function ProjectSidebar({
                                     type="button"
                                     onClick={onCancelProject}
                                     disabled={isBusy}
-                                    className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50"
+                                    className="flex items-center justify-center gap-2 rounded-button border border-danger text-danger bg-surface-white py-2.5 type-sm !font-[600] hover:bg-danger/10 transition-colors disabled:opacity-50"
                                 >
                                     <Ban className="h-4 w-4" />
                                     Cancel Project

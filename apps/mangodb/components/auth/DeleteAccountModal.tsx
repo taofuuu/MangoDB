@@ -74,7 +74,7 @@ function DeleteAccountDialog({
             <div className="mt-[2.2vh]">
                 <label
                     htmlFor={emailId}
-                    className="block type-xs font-medium text-ink mb-[0.8vh]"
+                    className="block type-xs !font-[500] text-ink mb-[0.8vh]"
                 >
                     Confirm email
                 </label>
@@ -93,7 +93,7 @@ function DeleteAccountDialog({
                 />
                 <label
                     htmlFor={passwordId}
-                    className="block type-xs font-medium text-ink mt-[1.6vh] mb-[0.8vh]"
+                    className="block type-xs !font-[500] text-ink mt-[1.6vh] mb-[0.8vh]"
                 >
                     Password
                 </label>

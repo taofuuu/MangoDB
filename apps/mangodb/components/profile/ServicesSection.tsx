@@ -229,7 +229,7 @@ export default function ServicesSection({
                     <div className="mb-2 flex justify-end">
                         <Link
                             href="/services/create"
-                            className="type-xs text-brand hover:underline font-medium"
+                            className="type-xs text-brand hover:underline !font-[500]"
                         >
                             + Create Service
                         </Link>
@@ -319,7 +319,7 @@ export default function ServicesSection({
                                     ? `/companies/${companyId}/jobs`
                                     : '/jobs/mine'
                             }
-                            className="type-xs text-brand hover:underline font-medium"
+                            className="type-xs text-brand hover:underline !font-[500]"
                         >
                             See more
                         </Link>
@@ -337,7 +337,7 @@ export default function ServicesSection({
                                     ? `/companies/${companyId}/services`
                                     : '/services/mine'
                             }
-                            className="type-xs text-brand hover:underline font-medium"
+                            className="type-xs text-brand hover:underline !font-[500]"
                         >
                             See more
                         </Link>

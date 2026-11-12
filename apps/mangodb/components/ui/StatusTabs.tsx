@@ -49,7 +49,7 @@ export default function StatusTabs<T>({
                                 if (isClickable) onChange(tab.value);
                             }}
                             aria-pressed={isActive}
-                            className={`flex h-[4.17vh] w-[6.77vw] items-center justify-center rounded-full border type-md font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                            className={`flex h-[4.17vh] w-[6.77vw] items-center justify-center rounded-full border type-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                                 isActive
                                     ? `${tab.activeClass ?? 'bg-accent text-surface-white'} border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.18),0_3px_6px_rgba(0,0,0,0.18)]`
                                     : 'border-line bg-surface-white text-ink shadow-[inset_0_2px_4px_rgba(0,0,0,0.08),0_2px_5px_rgba(0,0,0,0.12)] hover:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1),0_3px_7px_rgba(0,0,0,0.16)]'

@@ -86,7 +86,7 @@ export default function QuotationSection({
                         onClick={retry}
                         isLoading={isRetrying}
                         loadingLabel="Trying again…"
-                        className="w-full rounded-[14px] py-2 type-sm font-semibold"
+                        className="w-full rounded-[14px] py-2 type-sm !font-[600]"
                     >
                         Try again
                     </Button>
@@ -105,7 +105,7 @@ export default function QuotationSection({
                             Quotation
                         </span>
                     </div>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder !font-[700] type-xs">
                         —
                     </span>
                 </div>
@@ -123,7 +123,7 @@ export default function QuotationSection({
                         href={latestQuotation.quotationFile}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-line bg-fill-subtle/50 hover:bg-fill-subtle px-3 py-2 type-xs font-semibold text-ink-soft transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-line bg-fill-subtle/50 hover:bg-fill-subtle px-3 py-2 type-xs !font-[600] text-ink-soft transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -169,7 +169,7 @@ export default function QuotationSection({
                                 e.preventDefault();
                             }
                         }}
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs font-semibold text-brand transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs !font-[600] text-brand transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -206,7 +206,7 @@ export default function QuotationSection({
                         href={latestQuotation.quotationFile}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs font-semibold text-brand transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-brand/20 bg-brand-mist/50 hover:bg-brand-mist px-3 py-2 type-xs !font-[600] text-brand transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -253,7 +253,7 @@ export default function QuotationSection({
                                 e.preventDefault();
                             }
                         }}
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs font-semibold text-ink transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs !font-[600] text-ink transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -266,7 +266,7 @@ export default function QuotationSection({
                             type="button"
                             onClick={onUploadQuotation}
                             disabled={isBusy}
-                            className="flex-1 rounded-[14px] border border-brand bg-surface-white py-2 px-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                            className="flex-1 rounded-[14px] border border-brand bg-surface-white py-2 px-2 type-xs !font-[600] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                         >
                             Replace File
                         </button>
@@ -274,7 +274,7 @@ export default function QuotationSection({
                             type="button"
                             onClick={() => setIsDeleteOpen(true)}
                             disabled={isBusy}
-                            className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                            className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs !font-[600] hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                         >
                             Remove Quotation
                         </button>
@@ -311,7 +311,7 @@ export default function QuotationSection({
                         href={latestQuotation.quotationFile}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs font-semibold text-ink transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-accent/30 bg-accent-tint/50 hover:bg-accent-tint px-3 py-2 type-xs !font-[600] text-ink transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -340,7 +340,7 @@ export default function QuotationSection({
                                     )
                                 }
                                 disabled={isBusy}
-                                className="flex-1 rounded-[14px] border border-brand bg-surface-white text-brand py-2 px-2 type-xs font-semibold hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                className="flex-1 rounded-[14px] border border-brand bg-surface-white text-brand py-2 px-2 type-xs !font-[600] hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                             >
                                 Accept
                             </button>
@@ -352,7 +352,7 @@ export default function QuotationSection({
                                     )
                                 }
                                 disabled={isBusy}
-                                className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs font-semibold hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
+                                className="flex-1 rounded-[14px] border border-danger text-danger bg-surface-white py-2 px-2 type-xs !font-[600] hover:bg-danger/10 transition-colors disabled:opacity-50 shadow-xs text-center"
                             >
                                 Reject
                             </button>
@@ -401,7 +401,7 @@ export default function QuotationSection({
                         href={latestQuotation.quotationFile}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-danger/20 bg-danger-wash hover:bg-danger-tint/50 px-3 py-2 type-xs font-semibold text-danger transition-colors shadow-2xs group"
+                        className="w-full flex items-center justify-between gap-2 rounded-[12px] border border-danger/20 bg-danger-wash hover:bg-danger-tint/50 px-3 py-2 type-xs !font-[600] text-danger transition-colors shadow-2xs group"
                     >
                         <div className="flex items-center gap-2 truncate">
                             <span className="truncate">View Quotation</span>
@@ -417,7 +417,7 @@ export default function QuotationSection({
                             type="button"
                             onClick={onUploadQuotation}
                             disabled={isBusy}
-                            className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                            className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm !font-[600] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
                         >
                             Revise & Resubmit Quotation
                         </button>
@@ -457,7 +457,7 @@ export default function QuotationSection({
                     type="button"
                     onClick={onUploadQuotation}
                     disabled={isBusy}
-                    className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm font-semibold text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
+                    className="w-full rounded-[14px] border border-brand bg-surface-white py-2 type-sm !font-[600] text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 shadow-xs"
                 >
                     Upload
                 </button>
@@ -475,7 +475,7 @@ export default function QuotationSection({
                         Quotation
                     </span>
                 </div>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder font-bold text-xs">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-subtle text-ink-placeholder !font-[700] type-xs">
                     —
                 </span>
             </div>

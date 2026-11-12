@@ -39,13 +39,13 @@ class "CompanyAccountSummary" as CompanyAccountSummaryRep <<Representation>> {
   -companyDescription : string?
   -phone : string
   -accountType : AccountType
-  -averageRating : integer?
+  -averageRating : number?
   -ratingCount : integer
   -deletedAt : date?
 }
 class "CompanyAccountDetail" as CompanyAccountDetailRep <<Representation>> {
   -CompanyProfile fields
-  -averageRating : integer?
+  -averageRating : number?
   -ratingCount : integer
   -deletedAt : date?
 }

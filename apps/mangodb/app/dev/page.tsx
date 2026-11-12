@@ -131,7 +131,7 @@ export default function DevIndexPage() {
 
                 {/* Developer Routes Navigation */}
                 <div className="mt-8 text-left">
-                    <h2 className="type-sm font-semibold text-brand uppercase tracking-wider">
+                    <h2 className="type-sm !font-[600] text-brand uppercase tracking-wider">
                         Pages built so far
                     </h2>
                     <ul className="mt-3 flex flex-col gap-2">
@@ -141,7 +141,7 @@ export default function DevIndexPage() {
                                     href={route.href}
                                     className="block rounded-lg border border-brand/30 bg-surface-white p-3 text-left transition hover:bg-brand/10"
                                 >
-                                    <span className="block type-sm font-bold text-ink">
+                                    <span className="block type-sm !font-[700] text-ink">
                                         {route.title}
                                     </span>
                                     <span className="mt-0.5 block type-xs text-ink-soft">

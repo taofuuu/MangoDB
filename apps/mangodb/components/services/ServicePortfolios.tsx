@@ -30,11 +30,11 @@ export default function ServicePortfolios({
     return (
         <div className="w-full md:w-[400px] bg-surface-white rounded-2xl p-6 shadow-sm border border-line flex flex-col">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="type-md font-bold text-ink">Portfolio</h2>
+                <h2 className="type-md !font-[700] text-ink">Portfolio</h2>
                 <button
                     type="button"
                     onClick={() => setIsAdding(true)}
-                    className="px-4 py-1.5 border border-brand rounded-button type-xs font-semibold text-brand hover:bg-brand-tint transition-colors"
+                    className="px-4 py-1.5 border border-brand rounded-button type-xs !font-[600] text-brand hover:bg-brand-tint transition-colors"
                 >
                     Add Portfolio
                 </button>
@@ -51,7 +51,7 @@ export default function ServicePortfolios({
                             key={item.portfolioId}
                             className="flex items-center justify-between border border-line rounded-input p-3 type-sm"
                         >
-                            <span className="font-medium text-ink type-xs truncate max-w-[180px]">
+                            <span className="!font-[500] text-ink type-xs truncate max-w-[180px]">
                                 {item.portfolioName}
                             </span>
                             <div className="ml-2 flex shrink-0 items-center gap-3">
@@ -59,14 +59,14 @@ export default function ServicePortfolios({
                                     href={item.portfolioLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="type-xs font-semibold text-brand hover:underline"
+                                    className="type-xs !font-[600] text-brand hover:underline"
                                 >
                                     View
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setToEdit(item)}
-                                    className="type-xs font-semibold text-brand hover:underline"
+                                    className="type-xs !font-[600] text-brand hover:underline"
                                 >
                                     Edit
                                 </button>
@@ -78,7 +78,7 @@ export default function ServicePortfolios({
                             key={item.id}
                             className="flex items-center justify-between border border-line rounded-input p-3 type-sm"
                         >
-                            <span className="font-medium text-ink type-xs truncate max-w-[180px]">
+                            <span className="!font-[500] text-ink type-xs truncate max-w-[180px]">
                                 {item.name}
                                 <span className="ml-2 font-normal text-ink-placeholder">
                                     Pending
@@ -93,7 +93,7 @@ export default function ServicePortfolios({
                                 <button
                                     type="button"
                                     onClick={() => onRemovePending(item.id)}
-                                    className="type-xs font-semibold text-danger hover:text-danger-hover transition-colors"
+                                    className="type-xs !font-[600] text-danger hover:text-danger-hover transition-colors"
                                 >
                                     Remove
                                 </button>

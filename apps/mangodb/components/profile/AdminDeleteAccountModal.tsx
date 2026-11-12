@@ -69,7 +69,7 @@ function AdminDeleteAccountDialog({
             <div className="mt-[2.2vh]">
                 <label
                     htmlFor={passwordId}
-                    className="block type-xs font-medium text-ink mb-[0.8vh]"
+                    className="block type-xs !font-[500] text-ink mb-[0.8vh]"
                 >
                     Enter your admin password to confirm
                 </label>

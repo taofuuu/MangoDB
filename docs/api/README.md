@@ -101,28 +101,9 @@ the full diagram for its part. Source:
 
 The layers a request passes through. Arrows point from caller to callee.
 
-```mermaid
-flowchart LR
-    Browser["Browser<br/>(Next.js app)"] -->|/api/* proxy| Next["Next.js server<br/>next.config.ts rewrite"]
-    Next -->|HTTP JSON / multipart| App["app.ts<br/>cors, json, cookieParser"]
+![Component diagram](uml/component.png)
 
-    subgraph API["apps/api"]
-        App --> Routes["routes/*.routes.ts"]
-        Routes --> MW["middleware<br/>requireAuth, requireRole,<br/>uploadImage, loginLimiter"]
-        MW --> Ctl["controllers/*.controller.ts"]
-        Ctl --> Val["middleware/validate.ts<br/>parseBody, parseParams, parseQuery<br/>(Zod schemas/*)"]
-        Ctl --> Lib["lib/*<br/>business rules, selects, mappers"]
-        Ctl --> Prisma["lib/prisma.ts<br/>Prisma client"]
-        Lib --> Prisma
-        Lib --> Storage["lib/storage.ts"]
-        Ctl -. throws ApiError .-> EH["middleware/errorHandler.ts"]
-        Lib -. throws ApiError .-> EH
-    end
-
-    Prisma --> DB[("PostgreSQL<br/>(Supabase)")]
-    Storage --> Bucket[("Supabase Storage<br/>buckets")]
-    MW --> Deny[("revokedToken<br/>+ company.deletedAt")]
-```
+Source: [uml/component.mmd](uml/component.mmd). After an edit, export the PNG again.
 
 ## Class diagram: error envelope
 
@@ -188,8 +169,8 @@ sequenceDiagram
         A-->>EH: 401 UNAUTHORIZED
     end
     A->>DB: isTokenRevoked(jti)
-    A->>DB: isCompanyDeleted(sub)
-    alt revoked or deleted
+    A->>DB: isSessionEnded(sub, iat)
+    alt revoked, deleted, or credentials changed
         A-->>EH: 401 Session has ended
     end
     A->>R: req.auth = claims + companyId
