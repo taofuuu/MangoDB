@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import {
@@ -686,7 +687,10 @@ const definition = {
     openapi: '3.1.0',
     info: {
         title: 'MangoDB API',
-        version: '1.0.0',
+        // The release number, so `npm version` is the only place to bump it.
+        version: JSON.parse(
+            readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'),
+        ).version,
         description:
             'Sign in with POST /auth/login, copy accessToken, then press Authorize. ' +
             'UML API Diagrams for the same endpoints are in docs/api/.',
