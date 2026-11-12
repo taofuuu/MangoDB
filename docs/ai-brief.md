@@ -267,6 +267,7 @@ as not found.
 | A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it         |
 | The category list for a form | `useCategories()` in `lib/useCategories`                         |
 | A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`                       |
+| Click-away and Escape close  | `useDismiss(rootRef, isOpen, close)` in `lib/useDismiss`         |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
