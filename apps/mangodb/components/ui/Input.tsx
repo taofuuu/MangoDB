@@ -19,8 +19,6 @@ type InputProps = {
     // A small button drawn inside the box at its right edge, like
     // PasswordInput's eye. Position it with absolute right-*.
     trailing?: React.ReactNode;
-    className?: string | undefined;
-    inputClassName?: string | undefined;
 } & Omit<
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'className'
@@ -32,6 +30,7 @@ const VARIANTS = {
         label: 'mb-[0.93vh] block type-md leading-[1.15]',
         input: 'h-[4.79vh] px-[0.83vw] type-sm placeholder:text-line',
         border: 'border-brand focus:border-brand focus:ring-brand',
+        rounded: 'rounded-input',
     },
     // No type-* on the input: it inherits the page's 16px.
     login: {
@@ -39,18 +38,21 @@ const VARIANTS = {
         label: 'block type-sm',
         input: 'h-[4.89vh] px-1.5 placeholder:text-line',
         border: 'border-brand-dark focus:border-brand-dark focus:ring-brand-dark',
+        rounded: 'rounded-input',
     },
     compact: {
         field: '',
         label: 'mb-1 block type-xs text-ink',
         input: 'h-[38px] px-3 type-xs placeholder:text-ink-placeholder',
         border: 'border-brand focus:border-brand focus:ring-brand',
+        rounded: 'rounded-input',
     },
     small: {
         field: 'gap-1',
         label: 'mb-1.5 block type-sm !font-[600] text-ink',
         input: 'h-10 px-3.5 type-sm placeholder:text-line',
         border: 'border-line focus:border-brand focus:ring-brand',
+        rounded: 'rounded-md',
     },
 };
 
@@ -68,8 +70,6 @@ export default function Input({
     type = 'text',
     variant = 'form',
     trailing,
-    className,
-    inputClassName,
     ...props
 }: InputProps) {
     const fallbackId = useId();
@@ -81,9 +81,7 @@ export default function Input({
     const look = VARIANTS[variant];
 
     return (
-        <div
-            className={`flex min-w-0 flex-1 flex-col ${look.field} ${className ?? ''}`}
-        >
+        <div className={`flex min-w-0 flex-1 flex-col ${look.field}`}>
             <label htmlFor={inputId} className={look.label}>
                 {label}
             </label>
@@ -96,7 +94,7 @@ export default function Input({
                     onChange={(e) => onChange(e.target.value)}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? `${inputId}-error` : undefined}
-                    className={`${look.input} ${trailing ? 'pr-10' : ''} ${inputClassName ?? ''} w-full rounded-input border bg-surface-white text-ink transition-colors focus:ring-1 focus:outline-none ${
+                    className={`${look.input} ${trailing ? 'pr-10' : ''} ${look.rounded} w-full border bg-surface-white text-ink transition-colors focus:ring-1 focus:outline-none ${
                         error
                             ? 'border-danger focus:border-danger focus:ring-danger'
                             : look.border

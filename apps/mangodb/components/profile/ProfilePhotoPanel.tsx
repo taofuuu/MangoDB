@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AccountType } from '@mangodb/shared';
 import { Pencil, Trash2, Upload } from 'lucide-react';
+import { useDismiss } from '@/lib/useDismiss';
 import FieldError from '../ui/FieldError';
 import RoleTags from '../companies/RoleTags';
 
@@ -43,31 +44,7 @@ export default function ProfilePhotoPanel({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState(false);
 
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isOpen]);
+    useDismiss(dropdownRef, isOpen, () => setIsOpen(false));
 
     // Derived, not state: the URL is a pure function of the picked file, and
     // setting state from an effect would render once without the preview.
@@ -138,10 +115,10 @@ export default function ProfilePhotoPanel({
                             onClick={() => setIsOpen((prev) => !prev)}
                             className="flex items-center gap-1 rounded-md border border-line bg-surface-white px-2.5 py-1 type-xs !font-[500] text-ink shadow-md transition hover:bg-fill-subtle cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand"
                             aria-expanded={isOpen}
-                            aria-haspopup="true"
+                            aria-label="Edit profile photo"
                         >
                             <Pencil className="size-3 text-ink-soft" />
-                            <span>Edit</span>
+                            <span>{isRemoving ? 'Removing…' : 'Edit'}</span>
                         </button>
 
                         {isOpen && (
@@ -174,8 +151,8 @@ export default function ProfilePhotoPanel({
                                             className="flex w-full items-center gap-2 border-t border-line/60 px-2.5 py-1.5 text-left type-xs text-danger hover:bg-danger-wash transition-colors cursor-pointer disabled:opacity-60"
                                         >
                                             <Trash2 className="size-3.5 text-danger" />
-                                            {isRemoving
-                                                ? 'Removing…'
+                                            {pendingPhoto
+                                                ? 'Discard new photo'
                                                 : 'Remove photo'}
                                         </button>
                                     )}

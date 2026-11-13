@@ -7,8 +7,6 @@ type TextareaProps = {
     value: string;
     onChange: (value: string) => void;
     error?: string | undefined;
-    // Height or custom styles — e.g. custom height for location
-    className?: string | undefined;
     variant?: 'form' | 'small';
 } & Omit<
     React.TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -21,12 +19,14 @@ const VARIANTS = {
         label: 'mb-[0.93vh] block type-md leading-[1.15]',
         textarea: 'h-[13.36vh] px-[0.83vw] py-[1vh]',
         border: 'border-brand focus:border-brand focus:ring-brand',
+        rounded: 'rounded-input',
     },
     small: {
         field: 'gap-1',
         label: 'mb-1.5 block type-sm !font-[600] text-ink',
         textarea: 'h-[88px] px-3.5 py-2',
         border: 'border-line focus:border-brand focus:ring-brand',
+        rounded: 'rounded-md',
     },
 };
 
@@ -35,7 +35,6 @@ export default function Textarea({
     value,
     onChange,
     error,
-    className,
     variant = 'form',
     id,
     ...props
@@ -55,7 +54,7 @@ export default function Textarea({
                 onChange={(e) => onChange(e.target.value)}
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? `${inputId}-error` : undefined}
-                className={`block w-full resize-none rounded-input border bg-surface-white type-sm text-ink placeholder:text-line transition-colors focus:ring-1 focus:outline-none ${look.textarea} ${className ?? ''} ${
+                className={`block w-full resize-none ${look.rounded} border bg-surface-white type-sm text-ink placeholder:text-line transition-colors focus:ring-1 focus:outline-none ${look.textarea} ${
                     error
                         ? 'border-danger focus:border-danger focus:ring-danger'
                         : look.border

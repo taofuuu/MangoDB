@@ -181,6 +181,7 @@ export default function CompanyProfileForm({
                         value={data.companyType}
                         onChange={(v) => setField('companyType', v)}
                         error={displayErrors.companyType}
+                        variant="small"
                     />
 
                     <Textarea
