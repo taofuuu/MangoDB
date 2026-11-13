@@ -167,26 +167,26 @@ export default function NotificationBell() {
                 // stays on screen instead of hanging off the bell's left side.
                 // Width and padding are the Figma's 720px popup on 1920; gaps
                 // between text stay in px, like the type-* sizes they sit in.
-                className="absolute right-[2.19vw] top-full z-40 mt-3 max-h-[80vh] w-[37.5vw] min-w-[min(22rem,calc(100vw-2rem))] max-w-[480px] origin-top-right overflow-y-auto rounded-popup border border-brand bg-surface-white p-5 shadow-[0_16px_40px_-12px_color-mix(in_srgb,var(--color-brand-deep)_45%,transparent)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
+                className="absolute right-[2.19vw] top-full z-40 mt-3 max-h-[80vh] w-[37.5vw] min-w-[min(22rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-popup border border-brand bg-surface-white px-[2.08vw] py-[2.31vh] max-sm:px-4 shadow-[0_16px_40px_-12px_color-mix(in_srgb,var(--color-brand-deep)_45%,transparent)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
             >
-                <div className="flex items-center gap-2.5 border-b border-brand-light/40 pb-3">
+                <div className="flex items-center gap-3 border-b border-brand pb-[1.67vh]">
                     <Bell
-                        className="size-6 text-brand"
+                        className="size-[2.92vw] min-h-8 min-w-8 text-brand"
                         fill="currentColor"
                         aria-hidden
                     />
-                    <h2 className="type-md !font-[700] text-ink">
+                    <h2 className="type-hd !font-[600] text-ink">
                         Notification ({notices.length})
                     </h2>
                 </div>
 
                 {loadError && (
-                    <p role="alert" className="py-4 type-xs text-danger">
+                    <p role="alert" className="pt-[2.31vh] type-sm text-danger">
                         {loadError}
                     </p>
                 )}
                 {!loadError && notices.length === 0 && (
-                    <p className="py-6 text-center type-sm text-ink-soft">
+                    <p className="pt-[2.31vh] type-md !font-[400] text-ink-soft">
                         No notifications yet.
                     </p>
                 )}
@@ -205,14 +205,14 @@ export default function NotificationBell() {
                                     onClick={() => setIsOpen(false)}
                                     // New since this list loaded: a light
                                     // brand fill, kept while the popup is open.
-                                    className={`my-1.5 flex gap-3 rounded-button px-3 py-2.5 transition-colors hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline-none ${
+                                    className={`my-[1.2vh] flex gap-3 rounded-button px-3 py-[1.2vh] transition-colors hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline-none ${
                                         notice.readAt === null
                                             ? 'bg-brand-mist'
                                             : ''
                                     }`}
                                 >
                                     <Icon
-                                        className={`size-6 min-h-6 min-w-6 shrink-0 mt-0.5 ${
+                                        className={`size-[3.75vw] min-h-10 min-w-10 shrink-0 ${
                                             isBad
                                                 ? 'text-danger'
                                                 : 'text-brand-light'
@@ -220,10 +220,10 @@ export default function NotificationBell() {
                                         aria-hidden
                                     />
                                     <div className="min-w-0 flex-1">
-                                        <p className="type-sm !font-[600] text-ink">
+                                        <p className="type-lg !font-[500] text-ink">
                                             {titleOf(notice)}
                                         </p>
-                                        <p className="flex gap-1.5 type-xs !font-[400]">
+                                        <p className="flex gap-2 type-md !font-[400]">
                                             <span className="text-ink-placeholder">
                                                 From
                                             </span>
@@ -231,7 +231,7 @@ export default function NotificationBell() {
                                                 {notice.sender.companyName}
                                             </span>
                                         </p>
-                                        <p className="flex gap-1.5 type-xs !font-[400]">
+                                        <p className="flex gap-2 type-md !font-[400]">
                                             <span className="text-ink-placeholder">
                                                 {listingLabel(notice)}
                                             </span>
@@ -239,9 +239,9 @@ export default function NotificationBell() {
                                                 {notice.listingTitle}
                                             </span>
                                         </p>
-                                        <p className="flex items-center gap-1.5 type-xs !font-[400] text-brand">
+                                        <p className="flex items-center gap-1.5 type-md !font-[400] text-brand">
                                             <Calendar
-                                                className="h-3.5 w-3.5 shrink-0"
+                                                className="h-5 w-5 shrink-0"
                                                 aria-hidden
                                             />
                                             {formatDateTime(notice.createdAt)}

@@ -43,16 +43,23 @@ export default function CompanyTypeField({
     };
 
     return (
-        <div>
-            <span className="mb-[0.93vh] block type-md leading-[1.15]">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="mb-1.5 block type-sm !font-[600] text-ink">
                 {label}
             </span>
 
-            <div className="flex h-[13.36vh] w-full flex-wrap content-start gap-x-[1.68vw] gap-y-[2.41vh] overflow-y-auto rounded-button border-[0.75px] border-ink bg-surface-white px-[0.97vw] py-[2vh]">
+            <div
+                className={`flex min-h-[76px] max-h-[105px] w-full flex-wrap content-start gap-1.5 overflow-y-auto rounded-input border bg-surface-white p-2.5 transition-colors focus-within:ring-1 ${
+                    error
+                        ? 'border-danger focus-within:border-danger focus-within:ring-danger'
+                        : 'border-line focus-within:border-brand focus-within:ring-brand'
+                }`}
+            >
                 {value.map((tag) => (
                     <Tag
                         key={tag}
                         label={tag}
+                        size="sm"
                         onRemove={() => remove(tag)}
                         className="bg-fill-muted text-ink"
                     />
@@ -79,7 +86,7 @@ export default function CompanyTypeField({
                             }}
                             placeholder="Company type"
                             aria-label="New company type"
-                            className="h-[3.33vh] w-[12.89vw] rounded-status bg-fill-muted px-[0.94vw] type-sm text-ink placeholder:text-ink-placeholder focus:outline-none"
+                            className="h-6 min-w-[110px] rounded-status bg-fill-muted px-2.5 type-xs text-ink placeholder:text-ink-placeholder focus:outline-none"
                         />
                         <datalist id="predefined-company-types">
                             {PREDEFINED_COMPANY_TYPES.map((type) => (
@@ -92,7 +99,7 @@ export default function CompanyTypeField({
                         type="button"
                         onClick={() => setAdding(true)}
                         aria-label="Add company type"
-                        className="h-[3.33vh] cursor-pointer rounded-status bg-fill-muted px-[1.15vw] type-sm text-ink hover:bg-line"
+                        className="h-6 px-2.5 cursor-pointer rounded-status bg-fill-muted type-xs text-ink hover:bg-line"
                     >
                         +
                     </button>

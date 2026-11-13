@@ -19,6 +19,8 @@ type InputProps = {
     // A small button drawn inside the box at its right edge, like
     // PasswordInput's eye. Position it with absolute right-*.
     trailing?: React.ReactNode;
+    className?: string | undefined;
+    inputClassName?: string | undefined;
 } & Omit<
     React.InputHTMLAttributes<HTMLInputElement>,
     'value' | 'onChange' | 'className'
@@ -44,6 +46,12 @@ const VARIANTS = {
         input: 'h-[38px] px-3 type-xs placeholder:text-ink-placeholder',
         border: 'border-brand focus:border-brand focus:ring-brand',
     },
+    small: {
+        field: 'gap-1',
+        label: 'mb-1.5 block type-sm !font-[600] text-ink',
+        input: 'h-10 px-3.5 type-sm placeholder:text-line',
+        border: 'border-line focus:border-brand focus:ring-brand',
+    },
 };
 
 // The design draws Username with a 5.625 corner radius and every other
@@ -60,6 +68,8 @@ export default function Input({
     type = 'text',
     variant = 'form',
     trailing,
+    className,
+    inputClassName,
     ...props
 }: InputProps) {
     const fallbackId = useId();
@@ -71,7 +81,9 @@ export default function Input({
     const look = VARIANTS[variant];
 
     return (
-        <div className={`flex min-w-0 flex-1 flex-col ${look.field}`}>
+        <div
+            className={`flex min-w-0 flex-1 flex-col ${look.field} ${className ?? ''}`}
+        >
             <label htmlFor={inputId} className={look.label}>
                 {label}
             </label>
@@ -84,7 +96,7 @@ export default function Input({
                     onChange={(e) => onChange(e.target.value)}
                     aria-invalid={error ? true : undefined}
                     aria-describedby={error ? `${inputId}-error` : undefined}
-                    className={`${look.input} ${trailing ? 'pr-10' : ''} w-full rounded-input border bg-surface-white text-ink focus:ring-1 focus:outline-none ${
+                    className={`${look.input} ${trailing ? 'pr-10' : ''} ${inputClassName ?? ''} w-full rounded-input border bg-surface-white text-ink transition-colors focus:ring-1 focus:outline-none ${
                         error
                             ? 'border-danger focus:border-danger focus:ring-danger'
                             : look.border
