@@ -28,8 +28,18 @@ test.describe('US2-7 View jobs by status', () => {
         await loginAs(page, 'RECEIVER');
         openJobTitle = tag('Visible job');
         closedJobTitle = tag('Private job');
-        openJobId = await createJob(page, openJobTitle);
-        closedJobId = await createJob(page, closedJobTitle);
+        openJobId = await createJob(page, {
+            listingTitle: openJobTitle,
+            listingDesc: 'A job created for US2-7 status-filter testing.',
+            minBudget: 20000,
+            maxBudget: 80000,
+        });
+        closedJobId = await createJob(page, {
+            listingTitle: closedJobTitle,
+            listingDesc: 'A job created for US2-7 status-filter testing.',
+            minBudget: 20000,
+            maxBudget: 80000,
+        });
         await closeJob(page, closedJobId);
         await page.close();
     });
