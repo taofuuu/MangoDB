@@ -177,11 +177,15 @@ export default function ServiceDetailPanel({
                                     photoUrl={service.company.companyPhoto}
                                     size={44}
                                 />
+                                {/* Close first: the link can be the page
+                                    you're on, and a same-URL navigation
+                                    leaves the modal open. */}
                                 <Link
                                     href={companyProfileHref(
                                         service.company.companyId,
                                         viewerCompanyId,
                                     )}
+                                    onNavigate={onClose}
                                     className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
                                 >
                                     {service.company.companyName || '-'}
