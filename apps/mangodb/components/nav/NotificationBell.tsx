@@ -3,23 +3,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-    Ban,
-    Bell,
-    Calendar,
-    CheckCheck,
-    CircleX,
-    ClipboardCheck,
-    ClipboardList,
-    CopyCheck,
-    FileText,
-    ListChecks,
-    Receipt,
-    RefreshCw,
-    Send,
-    SquareX,
-    type LucideIcon,
-} from 'lucide-react';
 import type { Notification, NotificationType } from '@mangodb/shared';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import { formatDateTime } from '@/lib/dates';
@@ -28,37 +11,62 @@ import {
     markNotificationsRead,
 } from '@/lib/notifications';
 import { useDismiss } from '@/lib/useDismiss';
+import {
+    ASSIGNMENT,
+    ASSIGNMENT_TURNED_IN,
+    AUTORENEW,
+    BLOCK,
+    CALENDAR,
+    CANCEL_SCHEDULE_SEND,
+    DESCRIPTION,
+    DISABLED_BY_DEFAULT,
+    DONE_ALL,
+    FACT_CHECK,
+    LIBRARY_ADD_CHECK,
+    NOTIFICATIONS,
+    RECEIPT,
+    SEND,
+    SvgIcon,
+    type IconShape,
+} from './notificationIcons';
 
 // T4.1.5, ADR 0017. The bell in the navbar and the popup list it opens. The
 // badge counts unread notices; opening the popup marks them all read. The
 // panel stays mounted and is only hidden when closed, like ProfileMenu.
 
-// Each notice's title and icon, the nearest lucide match to the Figma one.
-// isBad turns the icon red, as the Figma does for rejections and cancels.
+// Each notice's title and Figma icon. isBad turns the icon red, as the
+// Figma does for rejections and cancels.
 const NOTICE_LOOK: Record<
     NotificationType,
-    { title: string; Icon: LucideIcon; isBad?: boolean }
+    { title: string; icon: IconShape; isBad?: boolean }
 > = {
-    PROPOSAL_RECEIVED: { title: 'New Proposal', Icon: FileText },
-    PROPOSAL_ACCEPTED: { title: 'Proposal Accepted', Icon: CopyCheck },
+    PROPOSAL_RECEIVED: { title: 'New Proposal', icon: DESCRIPTION },
+    PROPOSAL_ACCEPTED: { title: 'Proposal Accepted', icon: LIBRARY_ADD_CHECK },
     PROPOSAL_REJECTED: {
         title: 'Proposal Rejected',
-        Icon: SquareX,
+        icon: DISABLED_BY_DEFAULT,
         isBad: true,
     },
-    QUOTATION_SENT: { title: 'New Quotation', Icon: ClipboardList },
-    QUOTATION_ACCEPTED: { title: 'Quotation Accepted', Icon: ClipboardCheck },
+    QUOTATION_SENT: { title: 'New Quotation', icon: ASSIGNMENT },
+    QUOTATION_ACCEPTED: {
+        title: 'Quotation Accepted',
+        icon: ASSIGNMENT_TURNED_IN,
+    },
     QUOTATION_REJECTED: {
         title: 'Quotation Rejected',
-        Icon: RefreshCw,
+        icon: AUTORENEW,
         isBad: true,
     },
-    DEPOSIT_REPORTED: { title: 'Deposit Payment Report', Icon: Receipt },
-    DEPOSIT_CONFIRMED: { title: 'Deposit Receipt Confirmed', Icon: ListChecks },
-    PROJECT_CANCELLED: { title: 'Project Cancelled', Icon: Ban, isBad: true },
-    WORK_SUBMITTED: { title: 'Work Submitted', Icon: Send },
-    WORK_REJECTED: { title: 'Work Rejected', Icon: CircleX, isBad: true },
-    WORK_ACCEPTED: { title: 'Work Accepted', Icon: CheckCheck },
+    DEPOSIT_REPORTED: { title: 'Deposit Payment Report', icon: RECEIPT },
+    DEPOSIT_CONFIRMED: { title: 'Deposit Receipt Confirmed', icon: FACT_CHECK },
+    PROJECT_CANCELLED: { title: 'Project Cancelled', icon: BLOCK, isBad: true },
+    WORK_SUBMITTED: { title: 'Work Submitted', icon: SEND },
+    WORK_REJECTED: {
+        title: 'Work Rejected',
+        icon: CANCEL_SCHEDULE_SEND,
+        isBad: true,
+    },
+    WORK_ACCEPTED: { title: 'Work Accepted', icon: DONE_ALL },
 };
 
 // A hire request is a proposal on a service (ADR 0016); the Figma calls it
@@ -148,13 +156,9 @@ export default function NotificationBell() {
                 aria-controls={panelId}
                 className="relative block rounded-full p-0.5 text-brand transition-colors hover:text-brand-dark focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand cursor-pointer"
             >
-                <Bell
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    fill="currentColor"
-                    aria-hidden
-                />
+                <SvgIcon shape={NOTIFICATIONS} className="size-7 sm:size-8" />
                 {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 type-xs !font-[600] text-surface-white">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 type-xs !font-[600] text-surface-white">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -165,65 +169,64 @@ export default function NotificationBell() {
                 hidden={!isOpen}
                 // Anchored to the sticky header, not the bell, so on a phone it
                 // stays on screen instead of hanging off the bell's left side.
-                // Width and padding are the Figma's 720px popup on 1920; gaps
-                // between text stay in px, like the type-* sizes they sit in.
-                className="absolute right-[2.19vw] top-full z-40 mt-3 max-h-[80vh] w-[37.5vw] min-w-[min(22rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-popup border border-brand bg-surface-white px-[2.08vw] py-[2.31vh] max-sm:px-4 shadow-[0_16px_40px_-12px_color-mix(in_srgb,var(--color-brand-deep)_45%,transparent)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
+                // The Figma's 720px popup at the navbar's own scale (its 108px
+                // bar is 64px here), in px like the ProfileMenu beside it.
+                className="absolute right-[2.19vw] top-full z-40 mt-3 max-h-[80vh] w-[27rem] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto rounded-2xl border border-brand bg-surface-white px-6 py-4 max-sm:px-4 shadow-[0_4px_10px_rgb(0_0_0/0.25)] transition-[opacity,scale] duration-150 ease-out starting:scale-95 starting:opacity-0 motion-reduce:transition-none"
             >
-                <div className="flex items-center gap-3 border-b border-brand pb-[1.67vh]">
-                    <Bell
-                        className="size-[2.92vw] min-h-8 min-w-8 text-brand"
-                        fill="currentColor"
-                        aria-hidden
+                <div className="flex items-center gap-2 border-b border-brand-dark pb-3">
+                    <SvgIcon
+                        shape={NOTIFICATIONS}
+                        className="size-8 text-brand"
                     />
-                    <h2 className="type-hd !font-[600] text-ink">
+                    <h2 className="type-lg text-ink">
                         Notification ({notices.length})
                     </h2>
                 </div>
 
                 {loadError && (
-                    <p role="alert" className="pt-[2.31vh] type-sm text-danger">
+                    <p role="alert" className="pt-4 type-sm text-danger">
                         {loadError}
                     </p>
                 )}
                 {!loadError && notices.length === 0 && (
-                    <p className="pt-[2.31vh] type-md !font-[400] text-ink-soft">
+                    <p className="pt-4 type-sm text-ink-soft">
                         No notifications yet.
                     </p>
                 )}
 
                 <ul>
                     {notices.map((notice) => {
-                        const { Icon, isBad } =
+                        const { icon, isBad } =
                             NOTICE_LOOK[notice.notificationType];
                         return (
                             <li
                                 key={notice.notificationId}
-                                className="border-b border-line last:border-b-0"
+                                className="border-b border-brand-dark/50 last:border-b-0"
                             >
                                 <Link
                                     href={hrefOf(notice)}
                                     onClick={() => setIsOpen(false)}
                                     // New since this list loaded: a light
                                     // brand fill, kept while the popup is open.
-                                    className={`my-[1.2vh] flex gap-3 rounded-button px-3 py-[1.2vh] transition-colors hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline-none ${
+                                    className={`my-1.5 flex gap-3 rounded-button px-2 py-2.5 transition-colors hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline-none ${
                                         notice.readAt === null
                                             ? 'bg-brand-mist'
                                             : ''
                                     }`}
                                 >
-                                    <Icon
-                                        className={`size-[3.75vw] min-h-10 min-w-10 shrink-0 ${
+                                    <SvgIcon
+                                        shape={icon}
+                                        className={`size-11 shrink-0 ${
                                             isBad
                                                 ? 'text-danger'
                                                 : 'text-brand-light'
                                         }`}
-                                        aria-hidden
                                     />
                                     <div className="min-w-0 flex-1">
-                                        <p className="type-lg !font-[500] text-ink">
+                                        <p className="type-md text-ink">
                                             {titleOf(notice)}
                                         </p>
-                                        <p className="flex gap-2 type-md !font-[400]">
+                                        <p className="flex gap-2 type-sm">
                                             <span className="text-ink-placeholder">
                                                 From
                                             </span>
@@ -231,7 +234,7 @@ export default function NotificationBell() {
                                                 {notice.sender.companyName}
                                             </span>
                                         </p>
-                                        <p className="flex gap-2 type-md !font-[400]">
+                                        <p className="flex gap-2 type-sm">
                                             <span className="text-ink-placeholder">
                                                 {listingLabel(notice)}
                                             </span>
@@ -239,10 +242,10 @@ export default function NotificationBell() {
                                                 {notice.listingTitle}
                                             </span>
                                         </p>
-                                        <p className="flex items-center gap-1.5 type-md !font-[400] text-brand">
-                                            <Calendar
-                                                className="h-5 w-5 shrink-0"
-                                                aria-hidden
+                                        <p className="flex items-center gap-1.5 type-sm text-brand">
+                                            <SvgIcon
+                                                shape={CALENDAR}
+                                                className="h-3.5 w-3 shrink-0"
                                             />
                                             {formatDateTime(notice.createdAt)}
                                         </p>
