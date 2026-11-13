@@ -215,41 +215,45 @@ function EditProfilePageInner() {
     }
 
     return (
-        // pt matches the gap the design leaves under the 108px navbar, which
-        // is a separate task, so spacing stays right once that lands.
-        <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
-            {loadError && loadError !== NOT_SIGNED_IN && (
-                <p className="type-md !font-[400] text-danger">{loadError}</p>
-            )}
+        <main className="min-h-screen bg-surface px-4 py-8 text-ink sm:px-6">
+            <div className="mx-auto max-w-3xl">
+                {loadError && loadError !== NOT_SIGNED_IN && (
+                    <p className="type-md !font-[400] text-danger">
+                        {loadError}
+                    </p>
+                )}
 
-            {!loadError && !saved && (
-                <p className="type-md !font-[400]">Loading…</p>
-            )}
+                {!loadError && !saved && (
+                    <p className="type-md !font-[400]">Loading…</p>
+                )}
 
-            {saved && (
-                <CompanyProfileForm
-                    initialData={saved}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    // Only for a company editing itself: PATCH /companies/me/photo
-                    // acts on the caller, so there is nothing behind an
-                    // administrator changing someone else's.
-                    canEditPhoto={!isAdminEditingOther}
-                    photoError={photoError}
-                    onPhotoError={setPhotoError}
-                    onPhotoRemove={handleRemovePhoto}
-                    isRemovingPhoto={isRemovingPhoto}
-                    errors={errors}
-                    status={status}
-                    onDeleteAccount={
-                        isAdminEditingOther ? handleDeleteAccount : undefined
-                    }
-                    deleteAccountUsername={targetUsername ?? undefined}
-                    isSaving={isSaving}
-                    onClearError={handleClearError}
-                    onDismissStatus={() => setStatus(null)}
-                />
-            )}
+                {saved && (
+                    <CompanyProfileForm
+                        initialData={saved}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                        // Only for a company editing itself: PATCH /companies/me/photo
+                        // acts on the caller, so there is nothing behind an
+                        // administrator changing someone else's.
+                        canEditPhoto={!isAdminEditingOther}
+                        photoError={photoError}
+                        onPhotoError={setPhotoError}
+                        onPhotoRemove={handleRemovePhoto}
+                        isRemovingPhoto={isRemovingPhoto}
+                        errors={errors}
+                        status={status}
+                        onDeleteAccount={
+                            isAdminEditingOther
+                                ? handleDeleteAccount
+                                : undefined
+                        }
+                        deleteAccountUsername={targetUsername ?? undefined}
+                        isSaving={isSaving}
+                        onClearError={handleClearError}
+                        onDismissStatus={() => setStatus(null)}
+                    />
+                )}
+            </div>
         </main>
     );
 }
@@ -259,8 +263,10 @@ export default function EditProfilePage() {
     return (
         <Suspense
             fallback={
-                <main className="min-h-screen bg-surface px-[2.19vw] pt-[6.25vh] text-ink">
-                    <p className="type-md !font-[400]">Loading…</p>
+                <main className="min-h-screen bg-surface px-4 py-8 text-ink sm:px-6">
+                    <div className="mx-auto max-w-3xl">
+                        <p className="type-md !font-[400]">Loading…</p>
+                    </div>
                 </main>
             }
         >
