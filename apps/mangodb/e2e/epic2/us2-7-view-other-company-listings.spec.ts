@@ -148,7 +148,7 @@ test.describe.serial("US2-7 View another company's listings", () => {
 
     test('TC-2-39: another company profile is public but excludes sign-in fields', async ({
         page,
-    }) => {
+    }, testInfo) => {
         await loginAs(page, 'RECEIVER');
         const response = await page.request.get(
             `/api/companies/${provider.companyId}`,
@@ -161,6 +161,12 @@ test.describe.serial("US2-7 View another company's listings", () => {
         });
         expect(profile).not.toHaveProperty('email');
         expect(profile).not.toHaveProperty('username');
+        await page.goto(`/companies/${provider.companyId}`);
+        await expect(page.getByText(provider.companyName)).toBeVisible();
+        await page.screenshot({
+            path: testInfo.outputPath('actual-output.png'),
+            fullPage: true,
+        });
     });
 
     test('TC-2-40: an unknown company is not found in the API and UI', async ({
@@ -199,6 +205,8 @@ test.describe.serial("US2-7 View another company's listings", () => {
                 companyName: provider.companyName,
             },
         });
+        await page.goto(`/companies/${provider.companyId}`);
+        await expect(page.getByText(openService.listingTitle)).toBeVisible();
     });
 
     test('TC-2-42: another company profile shows an OPEN service read-only', async ({
@@ -236,16 +244,6 @@ test.describe.serial("US2-7 View another company's listings", () => {
         await expect(
             page.getByRole('link', { name: receiver.companyName }).last(),
         ).toBeVisible();
-    });
-
-    test('TC-2-46: the owner job list shows cards and a CLOSED status badge', async ({
-        page,
-    }) => {
-        await loginAs(page, 'RECEIVER');
-        await page.goto('/jobs/mine');
-        await expect(page.getByText(openJob.listingTitle)).toBeVisible();
-        await expect(page.getByText(closedJob.listingTitle)).toBeVisible();
-        await expect(page.getByText('Closed').first()).toBeVisible();
     });
 
     test('TC-2-44: an empty another-company profile uses the open-listings empty states', async ({
@@ -322,6 +320,13 @@ test.describe.serial("US2-7 View another company's listings", () => {
         );
         expect(jobs.status()).toBe(200);
         expect(((await jobs.json()) as Paginated<Job>).items).toHaveLength(0);
+
+        await viewerPage.goto(`/companies/${deletedCompany.companyId}`);
+        await expect(
+            viewerPage.getByText(
+                'This company could not be found. It may have deleted its account.',
+            ),
+        ).toBeVisible();
 
         await viewerPage.close();
         await ownerPage.close();

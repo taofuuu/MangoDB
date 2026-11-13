@@ -53,10 +53,18 @@ test.describe('US2-7 View jobs by status', () => {
 
     test('TC-2-33: an unauthenticated caller cannot list jobs', async ({
         browser,
-    }) => {
+    }, testInfo) => {
         const page = await browser.newPage();
         const response = await page.request.get('/api/jobs');
         expect(response.status()).toBe(401);
+        await page.goto('/login');
+        await expect(
+            page.getByRole('button', { name: /log in/i }),
+        ).toBeVisible();
+        await page.screenshot({
+            path: testInfo.outputPath('actual-output.png'),
+            fullPage: true,
+        });
         await page.close();
     });
 
@@ -67,6 +75,8 @@ test.describe('US2-7 View jobs by status', () => {
         await loginAs(page, 'PROVIDER');
         const jobs = await listJobs(page, OPEN_STATUS);
         expect(jobs.items.map((job) => job.jobId)).toContain(openJobId);
+        await page.goto('/jobs');
+        await expect(page.getByText(openJobTitle)).toBeVisible();
         await page.close();
     });
 
@@ -77,6 +87,11 @@ test.describe('US2-7 View jobs by status', () => {
         await loginAs(page, 'PROVIDER');
         const jobs = await listJobs(page, CLOSED_STATUS);
         expect(jobs.items.map((job) => job.jobId)).not.toContain(closedJobId);
+        await page.goto('/jobs');
+        await expect(
+            page.getByRole('heading', { name: 'All Jobs' }),
+        ).toBeVisible();
+        await expect(page.getByText(closedJobTitle)).toHaveCount(0);
         await page.close();
     });
 
@@ -92,6 +107,12 @@ test.describe('US2-7 View jobs by status', () => {
             listingStatus: OPEN_STATUS,
             listingTitle: openJobTitle,
         });
+        await page.goto('/jobs');
+        const openJobCard = page
+            .getByRole('heading', { name: openJobTitle })
+            .locator('xpath=ancestor::div[contains(@class, "relative")][1]');
+        await openJobCard.getByRole('button', { name: 'View Detail' }).click();
+        await expect(page.getByText(openJobTitle).last()).toBeVisible();
         await page.close();
     });
 
@@ -102,6 +123,11 @@ test.describe('US2-7 View jobs by status', () => {
         await loginAs(page, 'PROVIDER');
         const response = await page.request.get(`/api/jobs/${closedJobId}`);
         expect(response.status()).toBe(404);
+        await page.goto('/jobs');
+        await expect(
+            page.getByRole('heading', { name: 'All Jobs' }),
+        ).toBeVisible();
+        await expect(page.getByText(closedJobTitle)).toHaveCount(0);
         await page.close();
     });
 
@@ -109,5 +135,8 @@ test.describe('US2-7 View jobs by status', () => {
         await loginAs(page, 'RECEIVER');
         const jobs = await listJobs(page, CLOSED_STATUS);
         expect(jobs.items.map((job) => job.jobId)).toContain(closedJobId);
+        await page.goto('/jobs/mine');
+        await page.getByRole('button', { name: 'CLOSED' }).click();
+        await expect(page.getByText(closedJobTitle)).toBeVisible();
     });
 });
