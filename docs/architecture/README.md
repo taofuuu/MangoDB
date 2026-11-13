@@ -19,7 +19,7 @@ MangoDB is a Next.js 16 web app (React 19, Tailwind CSS v4), an Express 5 API in
 
 ## 2. UML API Diagram
 
-The diagrams follow the Sparx Systems REST profile from the lecture (`«Application»`, `«Path»`, `«Resource»`, `«Representation»`). The full API, all 70 endpoints, is [`mangodb-api.svg`](../api/uml/mangodb-api.svg). The three routers this document discusses:
+The diagrams follow the Sparx Systems REST profile from the lecture (`«Application»`, `«Path»`, `«Resource»`, `«Representation»`). The full API, all 72 endpoints, is [`mangodb-api.svg`](../api/uml/mangodb-api.svg). The three routers this document discusses:
 
 ![Proposals](../api/uml/proposals.svg)
 
