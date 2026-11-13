@@ -28,7 +28,7 @@ export default function MyProposalDetail({
     return (
         <section
             aria-label={`${kind.label} for ${proposal.listingTitle}`}
-            className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[80vh] lg:max-h-none lg:flex-1"
+            className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[calc(100vh-8rem)] lg:max-h-none lg:flex-1"
         >
             <div className="flex items-start gap-4">
                 <CompanyAvatar

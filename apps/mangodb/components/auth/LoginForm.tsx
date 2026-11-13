@@ -123,7 +123,7 @@ export default function LoginForm() {
                 loadingLabel="Logging in…"
                 className="-mt-2 w-full py-3 type-sm !font-[600]"
             >
-                log in
+                Log in
             </Button>
 
             <div className="text-center type-sm text-ink">
