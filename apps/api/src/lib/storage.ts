@@ -97,6 +97,26 @@ export async function removeFromStorage(
     }
 }
 
+// For the seed only: puts a file at a fixed path, replacing what is there, so
+// a rerun does not pile up copies. Returns the URL a row stores, the same kind
+// uploadToStorage gives.
+export async function putStorageFile(
+    bucket: Bucket,
+    path: string,
+    body: Buffer,
+    contentType: string,
+): Promise<string> {
+    const storage = getSupabase().storage.from(bucket);
+    const { error } = await storage.upload(path, body, {
+        contentType,
+        upsert: true,
+    });
+    if (error) {
+        throw new Error(`Could not upload ${path}: ${error.message}`);
+    }
+    return storage.getPublicUrl(path).data.publicUrl;
+}
+
 // The file's path inside its bucket, from the URL getPublicUrl gave it. Null
 // for a URL that is not one of ours (seed data, a hand-edited row).
 function storagePath(url: string, bucket: Bucket): string | null {
