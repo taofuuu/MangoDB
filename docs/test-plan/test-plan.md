@@ -309,34 +309,43 @@ Valid values used when a test case does not mention an input: Receiver account, 
 
 | EC ID | Input             | Equivalence class                                            | Valid / Invalid |
 | ----- | ----------------- | ------------------------------------------------------------ | --------------- |
+| A1    | Account           | Provider (or Both) account                                   | Valid           |
+| A2    | Account           | Receiver account                                             | Invalid         |
 | J1    | Job posting       | OPEN job of another company, no pending proposal from me yet | Valid           |
 | J2    | Job posting       | CLOSED job                                                   | Invalid         |
 | J3    | Job posting       | I already have a PENDING proposal on it                      | Invalid         |
+| J4    | Job posting       | My own job posting                                           | Invalid         |
 | M1    | Terms             | 1–10,000 characters                                          | Valid           |
 | M2    | Terms             | Empty                                                        | Invalid         |
+| M3    | Terms             | More than 10,000 characters                                  | Invalid         |
 | B1    | Proposed budget   | Number > 0 (at most 9,999,999,999.99)                        | Valid           |
 | B2    | Proposed budget   | Empty                                                        | Invalid         |
 | B3    | Proposed budget   | ≤ 0                                                          | Invalid         |
+| B4    | Proposed budget   | More than 9,999,999,999.99                                   | Invalid         |
 | U1    | Duration (months) | 0.5–120, in steps of 0.5                                     | Valid           |
 | U2    | Duration (months) | ≤ 0                                                          | Invalid         |
 | U3    | Duration (months) | More than 120                                                | Invalid         |
 | U4    | Duration (months) | Not a step of 0.5 (e.g. 1.3)                                 | Invalid         |
+| U5    | Duration (months) | Empty                                                        | Invalid         |
 
-**Test cases** (logged in as the Provider account; the Receiver account owns one OPEN and one CLOSED `[e2e]` job)
+**Test cases** (the Receiver account owns one OPEN and one CLOSED `[e2e]` job; the Provider account owns one OPEN `[e2e]` job)
 
-Valid values used when a test case does not mention an input: job = the Receiver's OPEN job, terms = `[e2e] We can deliver in phases.`, budget = `45000`, duration = `2.5`.
+Valid values used when a test case does not mention an input: logged in as Provider account, job = the Receiver's OPEN job, terms = `[e2e] We can deliver in phases.`, budget = `45000`, duration = `2.5`.
 
-| Test Case ID | Inputs                                   | Expected Outputs                                                                                                     | Actual Outputs                                                                                                           | Classes Covered |
-| ------------ | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
-| TC-2-18      | All valid values above                   | Proposal is sent; it shows as PENDING in "My Proposals"                                                              | Proposal is sent; it shows as PENDING in "My Proposals" (P)                                                              | J1, M1, B1, U1  |
-| TC-2-19      | Job = the Receiver's CLOSED job          | The job has no "Add Proposal" button; sending a proposal anyway is refused with "This job is not open for proposals" | The job has no "Add Proposal" button; sending a proposal anyway is refused with "This job is not open for proposals" (P) | J2              |
-| TC-2-20      | Same OPEN job again, right after TC-2-18 | "You already have a pending proposal on this job"                                                                    | "You already have a pending proposal on this job" (P)                                                                    | J3              |
-| TC-2-21      | Terms = (empty)                          | "Proposal terms are required"                                                                                        | "Proposal terms are required" (P)                                                                                        | M2              |
-| TC-2-22      | Budget = (empty)                         | "Proposal budget is required"                                                                                        | "Proposal budget is required" (P)                                                                                        | B2              |
-| TC-2-23      | Budget = `0`                             | "Proposal budget must be greater than zero"                                                                          | "Proposal budget must be greater than zero" (P)                                                                          | B3              |
-| TC-2-24      | Duration = `0`                           | "Duration must be greater than zero"                                                                                 | "Duration must be greater than zero" (P)                                                                                 | U2              |
-| TC-2-25      | Duration = `121`                         | "Duration cannot exceed 120 months"                                                                                  | "Duration cannot exceed 120 months" (P)                                                                                  | U3              |
-| TC-2-26      | Duration = `1.3`                         | "Duration must be in half-month increments (e.g. 0.5, 1, 1.5)"                                                       | "Duration must be in half-month increments (e.g. 0.5, 1, 1.5)" (P)                                                       | U4              |
+| Test Case ID | Inputs                                                  | Expected Outputs                                                                                                             | Actual Outputs                                                                                                                   | Classes Covered    |
+| ------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| TC-2-18      | All valid values above                                  | Proposal is sent; it shows as PENDING in "My Proposals"                                                                      | Proposal is sent; it shows as PENDING in "My Proposals" (P)                                                                      | A1, J1, M1, B1, U1 |
+| TC-2-19      | Job = the Receiver's CLOSED job                         | The job has no "Add Proposal" button; sending a proposal anyway is refused with "This job is not open for proposals"         | The job has no "Add Proposal" button; sending a proposal anyway is refused with "This job is not open for proposals" (P)         | J2                 |
+| TC-2-20      | Same OPEN job again, right after TC-2-18                | "You already have a pending proposal on this job"                                                                            | "You already have a pending proposal on this job" (P)                                                                            | J3                 |
+| TC-2-21      | Terms = (empty)                                         | "Proposal terms are required"                                                                                                | "Proposal terms are required" (P)                                                                                                | M2                 |
+| TC-2-22      | Budget = (empty)                                        | "Proposal budget is required"                                                                                                | "Proposal budget is required" (P)                                                                                                | B2                 |
+| TC-2-23      | Budget = `0`                                            | "Proposal budget must be greater than zero"                                                                                  | "Proposal budget must be greater than zero" (P)                                                                                  | B3                 |
+| TC-2-24      | Duration = `0`                                          | "Duration must be greater than zero"                                                                                         | "Duration must be greater than zero" (P)                                                                                         | U2                 |
+| TC-2-25      | Duration = `121`                                        | "Duration cannot exceed 120 months"                                                                                          | "Duration cannot exceed 120 months" (P)                                                                                          | U3                 |
+| TC-2-26      | Duration = `1.3`                                        | "Duration must be in half-month increments (e.g. 0.5, 1, 1.5)"                                                               | "Duration must be in half-month increments (e.g. 0.5, 1, 1.5)" (P)                                                               | U4                 |
+| TC-2-39      | Logged in as Receiver account; view Receiver's OPEN job | The job has no "Add Proposal" button; sending a proposal anyway is refused with "You must be a Provider" (HTTP 403)          | The job has no "Add Proposal" button; sending a proposal anyway is refused with "You must be a Provider" (HTTP 403) (P)          | A2                 |
+| TC-2-40      | Logged in as Provider account; view Provider's own job  | The job has no "Add Proposal" button; sending a proposal anyway is refused with "You cannot send a proposal to your own job" | The job has no "Add Proposal" button; sending a proposal anyway is refused with "You cannot send a proposal to your own job" (P) | J4                 |
+| TC-2-41      | Duration = (empty)                                      | "Duration is required"                                                                                                       | "Duration is required" (P)                                                                                                       | U5                 |
 
 #### US2-13 Edit a job posting
 
@@ -375,15 +384,15 @@ Valid values used when a test case does not mention an input: job = the Receiver
 
 ### 2.4 Test Coverage Matrix
 
-| User Story ID | Test Cases ID     | Status                                            |
-| ------------- | ----------------- | ------------------------------------------------- |
-| US1-1         | TC-1-01 – TC-1-17 | P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P |
-| US1-2         | TC-1-18 – TC-1-23 | P, P, P, P, P, P                                  |
-| US1-5         | TC-1-24 – TC-1-31 | P, P, P, P, P, P, P, P                            |
-| US1-7         | TC-1-32 – TC-1-39 | P, P, P, P, N/A, P, P, P                          |
-| US2-1         | TC-2-01 – TC-2-10 | P, P, P, P, P, P, P, P, P, P                      |
-| US2-6         | TC-2-11 – TC-2-17 | P, P, P, P, P, P, P                               |
-| US2-8         | TC-2-18 – TC-2-26 | P, P, P, P, P, P, P, P, P                         |
-| US2-13        | TC-2-27 – TC-2-32 | P, P, P, P, P, P                                  |
+| User Story ID | Test Cases ID                        | Status                                            |
+| ------------- | ------------------------------------ | ------------------------------------------------- |
+| US1-1         | TC-1-01 – TC-1-17                    | P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P, P |
+| US1-2         | TC-1-18 – TC-1-23                    | P, P, P, P, P, P                                  |
+| US1-5         | TC-1-24 – TC-1-31                    | P, P, P, P, P, P, P, P                            |
+| US1-7         | TC-1-32 – TC-1-39                    | P, P, P, P, N/A, P, P, P                          |
+| US2-1         | TC-2-01 – TC-2-10                    | P, P, P, P, P, P, P, P, P, P                      |
+| US2-6         | TC-2-11 – TC-2-17                    | P, P, P, P, P, P, P                               |
+| US2-8         | TC-2-18 – TC-2-26, TC-2-39 – TC-2-41 | P, P, P, P, P, P, P, P, P, P, P, P                |
+| US2-13        | TC-2-27 – TC-2-32                    | P, P, P, P, P, P                                  |
 
 Total: 71 test cases (39 for EPIC 1, 32 for EPIC 2). Passed: 70. Failed: 0. Not executable: 1 (TC-1-36).
