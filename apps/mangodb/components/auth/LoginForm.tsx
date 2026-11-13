@@ -106,7 +106,7 @@ export default function LoginForm() {
                     behind it. */}
             </div>
 
-            <p
+            <div
                 role={error ? 'alert' : undefined}
                 aria-live="polite"
                 aria-hidden={!error}
@@ -115,7 +115,7 @@ export default function LoginForm() {
                 }`}
             >
                 {error || '\u00A0'}
-            </p>
+            </div>
 
             <Button
                 type="submit"
@@ -126,7 +126,7 @@ export default function LoginForm() {
                 log in
             </Button>
 
-            <p className="text-center type-sm text-ink">
+            <div className="text-center type-sm text-ink">
                 Don&apos;t have an account?{' '}
                 <Link
                     href="/register"
@@ -134,13 +134,13 @@ export default function LoginForm() {
                 >
                     Sign Up
                 </Link>
-            </p>
+            </div>
 
-            <p className="-mt-3 text-center type-xs text-ink-soft">
+            <div className="-mt-3 text-center type-xs text-ink-soft">
                 <Link href="/privacy" className="hover:underline">
                     Privacy Policy
                 </Link>
-            </p>
+            </div>
         </form>
     );
 }
