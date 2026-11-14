@@ -284,6 +284,9 @@ const fakePrisma = {
             const [deleted] = quotations.splice(idx, 1);
             return { quotationFile: deleted!.quotationFile };
         },
+        count: async ({ where }: { where: { quotationFile: string } }) =>
+            quotations.filter((q) => q.quotationFile === where.quotationFile)
+                .length,
     },
 };
 
@@ -795,6 +798,21 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.deepEqual(events, [
             { projectId: PROJECT_ID, updateType: 'QUOTATION_DELETED' },
         ]);
+    });
+
+    it('keeps a PDF another quotation still points at, like the shared demo PDF', async () => {
+        quotations.push({
+            quotationId: 2,
+            projectId: PROJECT_ID + 1,
+            quotationFile: UPLOADED.url,
+            quotationStatus: 'ACCEPTED',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+
+        const { status } = await deleteQuotationById(PROVIDER, '1');
+
+        assert.equal(status, 204);
+        assert.equal(removedUrls.length, 0);
     });
 
     it('deletes a PENDING quotation as the Provider on a service project', async () => {
