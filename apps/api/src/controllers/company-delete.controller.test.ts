@@ -36,6 +36,9 @@ const fakePrisma = {
     project: {
         findFirst: () => Promise.resolve(null),
     },
+    // softDeleteCompany's pending-proposal sweep: none to reject here.
+    listing: { findMany: () => Promise.resolve([]) },
+    $transaction: (work: (tx: unknown) => Promise<unknown>) => work(fakePrisma),
 };
 
 function moduleUrl(specifier: string): string {
