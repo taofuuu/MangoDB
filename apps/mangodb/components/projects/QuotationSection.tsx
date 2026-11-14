@@ -197,7 +197,10 @@ export default function QuotationSection({
                 <div className="border-b border-brand-light/40 w-full" />
 
                 <p className="type-sm text-ink leading-relaxed">
-                    {receiverAcceptedQuotationMessage(project.projectStatus)}
+                    {receiverAcceptedQuotationMessage(
+                        project.projectStatus,
+                        project.depositReportedAt,
+                    )}
                 </p>
 
                 {latestQuotation?.quotationFile && (
