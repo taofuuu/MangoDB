@@ -84,7 +84,7 @@ quotationRoutes.post('/:quotationId/reject', requireAuth, rejectQuotation);
  *     tags: [Quotations]
  *     summary: Delete a pending quotation (Provider)
  *     description: >-
- *       US4-2. Only while PENDING (409 if the Receiver has decided). Also removes the PDF from storage. The Receiver gets 403; outsiders get 404.
+ *       US4-2. Only while PENDING and the project is AWAITING_QUOTATION (409 if the Receiver has decided or the project was cancelled). Also removes the PDF from storage. The Receiver gets 403; outsiders get 404.
  *     parameters:
  *       - $ref: '#/components/parameters/quotationId'
  *     responses:

@@ -194,7 +194,8 @@ export async function rejectQuotation(
 // US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
 // PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
 // where status = PENDING, so if the Receiver decides at the same moment, the
-// delete answers 409 and keeps the decided PDF in storage.
+// delete answers 409 and keeps the decided PDF in storage. Refuses with 409
+// if the project has moved on or was cancelled.
 export async function deleteQuotation(
     req: Request,
     res: Response,
@@ -208,6 +209,7 @@ export async function deleteQuotation(
     if (quotation.myRole !== 'provider') {
         throw ApiError.forbidden('Only the Provider can delete a quotation');
     }
+    assertProjectStatus(quotation, 'AWAITING_QUOTATION');
 
     // The timeline keeps the QUOTATION_SENT event and adds this one: it is
     // append-only (#212). A 409 saves neither the delete nor the event.

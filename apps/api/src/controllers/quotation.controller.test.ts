@@ -896,6 +896,23 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.equal(events.length, 0);
         assert.equal(notices.length, 0);
     });
+
+    it('is a 409 and keeps the PDF when the project was cancelled (#261)', async () => {
+        project!.projectStatus = 'CANCELLED';
+
+        await assert.rejects(
+            () => deleteQuotationById(PROVIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 409);
+                assert.equal(err.message, 'Project is not AWAITING_QUOTATION');
+                return true;
+            },
+        );
+        assert.equal(quotations.length, 1);
+        assert.equal(removedUrls.length, 0);
+        assert.equal(events.length, 0);
+    });
 });
 
 describe('GET /projects/:projectId/quotations (US4-3)', () => {
