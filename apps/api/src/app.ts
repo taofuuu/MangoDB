@@ -6,7 +6,7 @@ import express, {
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
-import { FRONTEND_URL } from './env';
+import { FRONTEND_URL, IS_PRODUCTION } from './env';
 import { openapiSpec } from './openapi';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -60,11 +60,15 @@ export function createApp() {
     });
 
     // The API docs (OpenAPI 3.1, from the @openapi comments above each route).
-    // Before the routes, so notFoundHandler never sees them.
-    app.get('/openapi.json', (_req: Request, res: Response) => {
-        res.json(openapiSpec);
-    });
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+    // Before the routes, so notFoundHandler never sees them. Local only: in
+    // production they would hand a stranger a map of every endpoint, so there
+    // both paths fall through to the 404.
+    if (!IS_PRODUCTION) {
+        app.get('/openapi.json', (_req: Request, res: Response) => {
+            res.json(openapiSpec);
+        });
+        app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+    }
 
     // Answers carry profiles, emails and admin lists, so neither the browser
     // nor anything between it and here may keep a copy.
