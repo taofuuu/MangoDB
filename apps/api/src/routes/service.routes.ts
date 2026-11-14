@@ -229,7 +229,7 @@ serviceRoutes.patch('/:serviceId', requireAuth, updateService);
  *   delete:
  *     tags: [Services]
  *     summary: Delete my service
- *     description: US2-4. 409 when any project came from this service.
+ *     description: US2-4. 409 when any project came from this service, or (#264) while it has a pending hire request.
  *     parameters:
  *       - $ref: '#/components/parameters/serviceId'
  *     responses:

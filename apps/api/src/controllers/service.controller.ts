@@ -3,6 +3,7 @@ import type {
     ListingStatus,
     ListingType,
     Paginated,
+    ProposalStatus,
     ServiceSummary,
 } from '@mangodb/shared';
 import { prisma } from '../lib/prisma';
@@ -301,6 +302,22 @@ export async function deleteService(
     });
     if (projectCount > 0) {
         throw ApiError.conflict('A service with projects cannot be deleted');
+    }
+
+    // #264: deleting the listing cascades to its hire requests and their
+    // notices, so a pending one would vanish from the Receiver's Your
+    // Proposals with no notice. The Provider rejects them first instead,
+    // which sends the usual notice.
+    const pendingCount = await prisma.proposal.count({
+        where: {
+            listingId: serviceId,
+            proposalStatus: 'PENDING' satisfies ProposalStatus,
+        },
+    });
+    if (pendingCount > 0) {
+        throw ApiError.conflict(
+            'Reject the pending hire requests before deleting this service',
+        );
     }
 
     // A service may carry zero or more portfolio items. service_portfolio
