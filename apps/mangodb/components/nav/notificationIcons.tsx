@@ -15,8 +15,6 @@ export function SvgIcon({
         <svg
             viewBox={shape.viewBox}
             fill="currentColor"
-            // fact_check needs evenodd for its cut-outs; the rest draw the same.
-            fillRule="evenodd"
             aria-hidden
             className={className}
         >
