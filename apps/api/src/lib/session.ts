@@ -23,7 +23,7 @@ const COOKIE_OPTIONS = {
 // Register, login, and a credential change all hand back a company and a token
 // to act as it. One place decides what that pair looks like, so the three
 // cannot drift on the claims they mint.
-function issueSession(company: CompanyProfile): SessionResponse {
+function issueSession(company: CompanyProfile): Required<SessionResponse> {
     const accessToken = signAccessToken({
         sub: String(company.companyId),
         role: accountTypeToRole(company.accountType),
@@ -35,8 +35,11 @@ function issueSession(company: CompanyProfile): SessionResponse {
 // The only way to hand out a session. Those same three endpoints all have to
 // set the cookie the browser authenticates with, and routing them through here
 // is what stops one of them forgetting — which is exactly how login shipped
-// without storing anything at all. The token stays in the body too, for callers
-// that are not a browser: curl, Postman, the dev session page.
+// without storing anything at all.
+//
+// Production answers with the cookie alone: a token in the body is one that
+// page JS can read, which undoes httpOnly. Locally the body keeps it for the
+// callers that are not a browser: Swagger's Authorize and snapshot-api.sh.
 export function sendSession(
     res: Response,
     company: CompanyProfile,
@@ -44,5 +47,5 @@ export function sendSession(
 ): void {
     const session = issueSession(company);
     res.cookie('access_token', session.accessToken, COOKIE_OPTIONS);
-    res.status(status).json(session);
+    res.status(status).json(IS_PRODUCTION ? { company } : session);
 }

@@ -97,7 +97,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
 }
 
 // US1-2. The mirror of register: it also logs you in, so it returns the same
-// { company, accessToken } pair rather than a bare resource. 200, not 201 —
+// session (see sendSession) rather than a bare resource. 200, not 201 —
 // login creates nothing.
 export async function login(req: Request, res: Response): Promise<void> {
     const { email, password } = parseBody(loginSchema, req.body);

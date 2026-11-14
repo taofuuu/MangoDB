@@ -212,7 +212,9 @@ const schemas: Record<string, Schema> = {
             company: ref('CompanyProfile'),
             accessToken: {
                 type: 'string',
-                description: 'JWT. Also set as the access_token cookie.',
+                description:
+                    'JWT, local only. Also set as the access_token cookie, ' +
+                    'which is all production sends.',
             },
         },
     },

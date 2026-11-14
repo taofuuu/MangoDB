@@ -277,9 +277,10 @@ export interface ServiceFilterOptions {
 
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
+// accessToken is local only; production sends just the session cookie.
 export interface SessionResponse {
     company: CompanyProfile;
-    accessToken: string;
+    accessToken?: string;
 }
 
 // US1-5. What a profile edit accepts: an absent field means "leave it", and
