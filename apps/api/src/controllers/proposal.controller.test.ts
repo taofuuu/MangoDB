@@ -24,6 +24,7 @@
  *   are rejected; on a service, the service stays OPEN and other pending hire
  *   requests stay PENDING. The project's timeline starts with a
  *   PROPOSAL_ACCEPTED event (#212). A refusal (404, 403, 409) changes nothing.
+ *   A proposal from a company that has deleted its account is 409 (#262).
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
@@ -79,6 +80,8 @@ type ProposalRow = {
     proposalTerms?: string;
     duration?: number;
     createdAt?: Date;
+    // Set when the sending company has deleted its account (#262).
+    senderDeletedAt?: Date;
     sender?: {
         companyId: number;
         companyName: string;
@@ -204,6 +207,7 @@ const fakePrisma = {
                 senderId: p.senderId,
                 proposalStatus: p.proposalStatus,
                 proposalBudget: p.proposalBudget,
+                sender: { deletedAt: p.senderDeletedAt ?? null },
                 listing: l
                     ? {
                           listingId: l.listingId,
@@ -1176,6 +1180,22 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.equal(snapshotTables(), before);
     });
 
+    // #262: the other party could never sign in to the project.
+    it("a deleted company's proposal is 409 and changes nothing", async () => {
+        listings = [job('OPEN')];
+        proposals = [
+            { ...proposal(1, 'PENDING'), senderDeletedAt: new Date() },
+            proposal(2, 'PENDING'),
+        ];
+        const before = snapshotTables();
+
+        const result = await accept(1, OWNER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 409);
+        assert.equal(snapshotTables(), before);
+    });
+
     // [what, outcome, proposal status, job status, caller, expected code]
     const refusals: [
         string,
@@ -1278,6 +1298,16 @@ describe('POST /proposals/:proposalId/reject', () => {
                 notificationType: 'PROPOSAL_REJECTED',
             },
         ]);
+    });
+
+    // #262: only accept is refused, so the owner can still clear it.
+    it("still rejects a deleted company's proposal", async () => {
+        proposals[0]!.senderDeletedAt = new Date();
+
+        const result = (await reject(OWNER)) as { status: number };
+
+        assert.equal(result.status, 204);
+        assert.equal(proposals[0]!.proposalStatus, 'REJECTED');
     });
 
     it("is 403 on someone else's job and changes nothing", async () => {

@@ -144,6 +144,7 @@ export async function findPendingProposalFor(
             senderId: true,
             proposalStatus: true,
             proposalBudget: true,
+            sender: { select: { deletedAt: true } },
             listing: {
                 select: {
                     listingType: true,

@@ -216,6 +216,11 @@ export async function acceptProposal(
         ) {
             throw ApiError.conflict('Listing has already been closed');
         }
+        // #262: a deleted company can never sign in to the project. Rejecting
+        // its proposal stays allowed, so the owner can still clear it.
+        if (proposal.sender.deletedAt !== null) {
+            throw ApiError.conflict('This company has deleted its account');
+        }
 
         const isJob =
             proposal.listing.listingType === ('JOB' satisfies ListingType);
