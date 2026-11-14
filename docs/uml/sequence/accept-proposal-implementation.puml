@@ -75,10 +75,13 @@ else authenticated
     DB --> Lib : count
     deactivate Lib
 
+    Ctrl -> DB : notification.create\nPROPOSAL_ACCEPTED to the proposal sender
+
     Ctrl -> Lib : rejectPendingProposals(tx, listingId, except proposalId)
     activate Lib
-    Lib -> DB : proposal.updateMany\nother PENDING -> REJECTED
-    DB --> Lib : count
+    Lib -> DB : proposal.updateManyAndReturn\nother PENDING -> REJECTED
+    DB --> Lib : rejected proposals
+    Lib -> DB : notification.createMany\nPROPOSAL_REJECTED to each rejected sender
     deactivate Lib
 
     Ctrl -> Lib : createProjectFromProposal(tx, proposal)
