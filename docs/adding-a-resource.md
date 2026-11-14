@@ -60,6 +60,11 @@ before anyone applies it: the database is shared. **Never `prisma migrate
 dev`, never `db:pull`, never the Supabase dashboard**
 ([conventions §14](conventions.md#14-migrations)).
 
+`migrate diff` does not write this line, so add it to the migration by hand:
+`ALTER TABLE "bookmark" ENABLE ROW LEVEL SECURITY;`. Without it, Supabase's Data
+API can read the table with the publishable key. The API is not affected,
+because it connects as the table's owner.
+
 ---
 
 ## 2. The schema — what a valid request looks like
@@ -565,7 +570,7 @@ on `/unauthorized`. The console stays clean.
 ## Checklist
 
 ```
-[ ] table/columns exist: camelCase + @map, NOT NULL foreign keys, migration via migrate diff, announced
+[ ] table/columns exist: camelCase + @map, NOT NULL foreign keys, migration via migrate diff + RLS line, announced
 [ ] schemas/: fields shared, strictObject bodies, pageQueryFields, optionalQueryId, blankToNull/blankToUndefined
 [ ] lib/: select satisfies Prisma.XSelect, one DTO, ownership check, existing helpers reused
 [ ] controller: Promise<void>, parse* first, req.auth!.companyId, owner in the write, ApiError, one wording
