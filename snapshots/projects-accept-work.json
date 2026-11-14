@@ -1,0 +1,14 @@
+{
+    "request": "POST /projects/<project_id>/accept-work",
+    "status": 200,
+    "body": {
+        "completedAt": "<timestamp>",
+        "depositConfirmedAt": "<timestamp>",
+        "depositReportedAt": "<timestamp>",
+        "projectId": "<project_id>",
+        "projectStatus": "COMPLETED",
+        "proposalId": "<proposal_id>",
+        "startDate": "<today>",
+        "totalBudget": 95000
+    }
+}

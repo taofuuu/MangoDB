@@ -158,7 +158,7 @@ export default function PortfolioCertificateList({
             <div className="mt-3 text-right">
                 <Link
                     href={seeMoreHref}
-                    className="type-xs text-brand hover:underline font-medium"
+                    className="type-xs text-brand hover:underline !font-[500]"
                 >
                     See more
                 </Link>

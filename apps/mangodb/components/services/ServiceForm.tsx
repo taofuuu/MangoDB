@@ -132,7 +132,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                     <Button
                         variant="outline"
                         onClick={() => router.back()}
-                        className="mt-6 px-5 py-2 type-sm font-semibold"
+                        className="mt-6 px-5 py-2 type-sm !font-[600]"
                     >
                         Go back
                     </Button>
@@ -152,7 +152,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                     {isEditing ? 'Edit Service' : 'Add My Service'}
                 </h1>
                 <hr className="border-brand/40 mb-4" />
-                <p className="type-sm text-ink-soft font-medium mb-6">
+                <p className="type-sm text-ink-soft !font-[500] mb-6">
                     * Indicates required
                 </p>
 
@@ -163,7 +163,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                             <div className="space-y-4">
                                 {/* Title */}
                                 <div>
-                                    <label className="block type-sm font-semibold mb-1 text-ink">
+                                    <label className="block type-sm !font-[600] mb-1 text-ink">
                                         Title*
                                     </label>
                                     <input
@@ -184,7 +184,7 @@ export default function ServiceForm(props: ServiceFormProps) {
 
                                 {/* Description */}
                                 <div>
-                                    <label className="block type-sm font-semibold mb-1 text-ink">
+                                    <label className="block type-sm !font-[600] mb-1 text-ink">
                                         Description*
                                     </label>
                                     <textarea
@@ -208,7 +208,7 @@ export default function ServiceForm(props: ServiceFormProps) {
 
                                 {/* Service Category */}
                                 <div>
-                                    <label className="block type-sm font-semibold mb-2 text-ink">
+                                    <label className="block type-sm !font-[600] mb-2 text-ink">
                                         Service Category*
                                     </label>
                                     {categoriesError && (
@@ -234,7 +234,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                                             cat.categoryId,
                                                         )
                                                     }
-                                                    className={`px-3.5 py-1.5 rounded-status type-xs font-medium transition-colors border ${
+                                                    className={`px-3.5 py-1.5 rounded-status type-xs !font-[500] transition-colors border ${
                                                         isSelected
                                                             ? 'bg-brand text-surface-white border-brand'
                                                             : 'bg-brand-tint text-ink-soft border-transparent hover:bg-brand-mist'
@@ -262,7 +262,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                 {/* Budget */}
                                 <div className="flex gap-4">
                                     <div className="flex-1">
-                                        <label className="block type-sm font-semibold mb-1 text-ink">
+                                        <label className="block type-sm !font-[600] mb-1 text-ink">
                                             Min Budget
                                         </label>
                                         <input
@@ -286,7 +286,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block type-sm font-semibold mb-1 text-ink">
+                                        <label className="block type-sm !font-[600] mb-1 text-ink">
                                             Max Budget
                                         </label>
                                         <input
@@ -323,7 +323,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                     </div>
 
                     {formError && (
-                        <p className="mt-4 type-sm text-danger font-medium">
+                        <p className="mt-4 type-sm text-danger !font-[500]">
                             {formError}
                         </p>
                     )}
@@ -335,7 +335,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                 variant="danger"
                                 onClick={() => setOpenModal('delete')}
                                 disabled={isSubmitting}
-                                className="mr-auto px-5 py-2 type-sm font-semibold disabled:opacity-60"
+                                className="mr-auto px-5 py-2 type-sm !font-[600] disabled:opacity-60"
                             >
                                 Delete Service
                             </Button>
@@ -345,7 +345,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                             variant="muted"
                             onClick={handleCancel}
                             disabled={isSubmitting}
-                            className="px-5 py-2 type-sm font-semibold disabled:opacity-60"
+                            className="px-5 py-2 type-sm !font-[600] disabled:opacity-60"
                         >
                             Cancel
                         </Button>
@@ -355,7 +355,7 @@ export default function ServiceForm(props: ServiceFormProps) {
                                 isSubmitting ||
                                 (isEditing && !hasUnsavedChanges)
                             }
-                            className="px-5 py-2 rounded-button bg-brand text-surface-white type-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="px-5 py-2 rounded-button bg-brand text-surface-white type-sm !font-[600] hover:bg-brand-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {isSubmitting
                                 ? 'Saving…'

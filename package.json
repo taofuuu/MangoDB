@@ -1,6 +1,6 @@
 {
     "name": "mangodb",
-    "version": "1.0.0",
+    "version": "0.1.0-beta.1",
     "description": "MangoDB",
     "homepage": "https://github.com/taofuuu/MangoDB#readme",
     "bugs": {
@@ -21,7 +21,7 @@
         "node": ">=22"
     },
     "scripts": {
-        "prepare": "husky",
+        "prepare": "husky || true",
         "lint": "npm run lint --workspaces --if-present",
         "typecheck": "npm run typecheck --workspaces --if-present",
         "test": "npm run test --workspaces --if-present",

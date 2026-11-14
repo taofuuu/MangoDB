@@ -56,7 +56,7 @@ export default function TechStackInput({
         <div>
             <label
                 htmlFor="tech-stack-input"
-                className="block type-sm font-semibold mb-1 text-ink"
+                className="block type-sm !font-[600] mb-1 text-ink"
             >
                 Tech stack*
             </label>
@@ -71,7 +71,7 @@ export default function TechStackInput({
                 {value.map((name) => (
                     <span
                         key={name}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-status type-xs font-medium bg-brand text-surface-white"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-status type-xs !font-[500] bg-brand text-surface-white"
                     >
                         {name}
                         <button

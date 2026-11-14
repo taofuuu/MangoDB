@@ -467,7 +467,7 @@ export default function JobListPage(props: JobListPageProps) {
                         />
                         <h2
                             id="post-success-title"
-                            className="type-md font-semibold text-ink"
+                            className="type-md !font-[600] text-ink"
                         >
                             {searchParams.get('success') === 'closed'
                                 ? 'Job closed successfully!'

@@ -4,12 +4,15 @@ import type {
     ChangeCredentialsResponse,
     CompanyAccountDetail,
     CompanyAccountSummary,
+    CompletedProject,
     CompanyProfile,
+    CompanyReview,
     CompanySortOrder,
     CompanySummary,
     DeleteCompanyAccountRequest,
     Paginated,
     PublicCompanyProfile,
+    ReviewSummary,
     UpdateCompanyProfileRequest,
 } from '@mangodb/shared';
 import { apiFetch } from './api';
@@ -130,6 +133,43 @@ export function getCompanyProfile(
     return cachedGet(path, () => apiFetch<PublicCompanyProfile>(path));
 }
 
+// US5-3. Reviews are owned by the Provider company, so a service detail view
+// asks for its offering company's paged review history.
+export function listCompanyReviews(
+    companyId: number,
+    page: number,
+    pageSize: number,
+): Promise<Paginated<CompanyReview>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/companies/${companyId}/reviews?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompanyReview>>(path));
+}
+
+export function getCompanyReviewSummary(
+    companyId: number,
+): Promise<ReviewSummary> {
+    const path = `/companies/${companyId}/reviews/summary`;
+    return cachedGet(path, () => apiFetch<ReviewSummary>(path));
+}
+
+// US2-5. A Provider's public completed work, newest first. The collection is
+// nested below its company profile, just as the API route is.
+export function listCompletedProjects(
+    companyId: number,
+    page: number,
+    pageSize: number,
+): Promise<Paginated<CompletedProject>> {
+    const query = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+    const path = `/companies/${companyId}/completed-projects?${query.toString()}`;
+    return cachedGet(path, () => apiFetch<Paginated<CompletedProject>>(path));
+}
+
 export function updateCompanyAccount(
     companyId: number,
     body: UpdateCompanyProfileRequest,
@@ -174,13 +214,16 @@ export async function changeMyCredentials(
     return company;
 }
 
-// US1-6. 204 on success, so apiFetch resolves with undefined. If the company
-// has an ongoing project, the API responds with 409 Conflict, which surfaces
-// as an ApiRequestError for the confirm modal to catch and show inline.
-export function deleteMyAccount(): Promise<void> {
+// US1-6. 204 on success, so apiFetch resolves with undefined. A wrong password
+// is a 401 and an ongoing project a 409; both surface as an ApiRequestError
+// for the confirm modal to catch and show inline.
+export function deleteMyAccount(
+    body: DeleteCompanyAccountRequest,
+): Promise<void> {
     return invalidateAfter(
         apiFetch<void>('/companies/me', {
             method: 'DELETE',
+            body: JSON.stringify(body),
         }),
     );
 }

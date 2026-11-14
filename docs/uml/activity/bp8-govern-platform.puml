@@ -1,0 +1,59 @@
+@startuml bp8-govern-platform
+!include style.iuml
+title BP8 Govern the Platform\n(US6-1 to US6-4)
+
+|Administrator|
+start
+:Log in with administrator account;
+
+|MangoDB System|
+if (Valid administrator?) then (no)
+  :Deny access and show error;
+  |Administrator|
+  stop
+else (yes)
+  |MangoDB System|
+  :Open administration area;
+endif
+
+|Administrator|
+:Search and filter
+company accounts;
+
+|MangoDB System|
+:Show paginated account list;
+
+|Administrator|
+:Select a company account;
+
+|MangoDB System|
+:Show full profile with
+private contact information;
+
+|Administrator|
+if (Action?) then (Edit)
+  repeat
+    |Administrator|
+    :Edit company information;
+    |MangoDB System|
+    :Validate changes;
+    backward :Show the reason;
+  repeat while (Valid?) is (no) not (yes)
+  :Save and show
+  updated information;
+elseif () then (Delete)
+  |MangoDB System|
+  if (Company has a project\nin progress?) then (yes)
+    :Reject deletion and ask to
+    resolve active projects first;
+  else (no)
+    :Revoke login access;
+    :Company Account
+    <U+005B>Deleted<U+005D>]
+  endif
+else (View only)
+endif
+
+|Administrator|
+stop
+@enduml

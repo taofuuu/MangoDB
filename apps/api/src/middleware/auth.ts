@@ -3,7 +3,7 @@ import type { AuthTokenClaims, UserRole } from '@mangodb/shared';
 import { verifyAccessToken } from '../auth/jwt';
 import { isTokenRevoked } from '../auth/tokenDenylist';
 import { ApiError } from '../lib/api-error';
-import { isCompanyDeleted } from '../lib/company-deletion';
+import { isSessionEnded } from '../lib/company-deletion';
 import { roleGrants } from '../auth/roles';
 
 const BEARER_PREFIX = 'Bearer ';
@@ -50,14 +50,15 @@ export async function requireAuth(
         return;
     }
 
-    // US1-6 / US6-4. A token issued before deletion stays cryptographically
-    // valid until it expires, and there is no per-company list of outstanding
-    // jtis to revoke individually — so every authenticated request re-checks
-    // the account itself. Same message as a revoked token: this is not the
-    // caller's business to distinguish from a plain logout.
+    // US1-6 / US6-4. A token issued before deletion or a credential change
+    // stays cryptographically valid until it expires, and there is no
+    // per-company list of outstanding jtis to revoke individually — so every
+    // authenticated request re-checks the account itself. Same message as a
+    // revoked token: this is not the caller's business to distinguish from a
+    // plain logout.
     const companyId = Number(claims.sub);
 
-    if (await isCompanyDeleted(companyId)) {
+    if (await isSessionEnded(companyId, claims.iat)) {
         next(ApiError.unauthorized('Session has ended'));
         return;
     }

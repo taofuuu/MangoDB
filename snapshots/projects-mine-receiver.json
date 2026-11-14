@@ -1,0 +1,31 @@
+{
+    "request": "GET /projects/mine",
+    "status": 200,
+    "body": {
+        "items": [
+            {
+                "completedAt": null,
+                "depositConfirmedAt": null,
+                "depositReportedAt": null,
+                "listingTitle": "Snapshot Probe job posting to accept",
+                "myRole": "receiver",
+                "otherParty": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "projectId": "<project_id>",
+                "projectStatus": "AWAITING_QUOTATION",
+                "proposalId": "<proposal_id>",
+                "startDate": "<today>",
+                "totalBudget": 95000
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "pageSize": 12,
+            "totalItems": 1,
+            "totalPages": 1
+        }
+    }
+}

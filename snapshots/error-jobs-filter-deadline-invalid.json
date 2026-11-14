@@ -1,0 +1,16 @@
+{
+    "request": "GET /jobs?status=OPEN&deadline=not-a-date",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "deadline",
+                    "message": "Deadline must be in YYYY-MM-DD format"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

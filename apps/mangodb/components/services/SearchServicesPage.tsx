@@ -145,6 +145,7 @@ export default function SearchServicesPage({
                                 key={selectedService.serviceId}
                                 service={selectedService}
                                 onClose={closeDetail}
+                                showReviews
                             />
                         </div>
                     </div>

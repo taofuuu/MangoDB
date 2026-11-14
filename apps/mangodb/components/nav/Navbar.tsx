@@ -7,21 +7,27 @@ import { usePathname } from 'next/navigation';
 import type { CompanyProfile } from '@mangodb/shared';
 import { isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
-import { isProviderAccount, isReceiverAccount } from '@/lib/roles';
+import {
+    isCompanyAccount,
+    isProviderAccount,
+    isReceiverAccount,
+} from '@/lib/roles';
+import NotificationBell from './NotificationBell';
 import ProfileMenu from './ProfileMenu';
 
-// The bar across the top of every page: logo on the left, the signed-in
-// company's avatar on the right.
+// The bar across the top of every page: logo on the left, the notification
+// bell and the signed-in company's avatar on the right.
 
 // The sign-in pages draw their own full-screen layout and have nobody to show
 // in the corner yet.
 const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 
-// The two searches, the app's main ways in. Uppercase on screen to match the
+// The searches, the app's main ways in. Uppercase on screen to match the
 // Figma navbar's links; the source stays sentence case for screen readers.
 // shortLabel is for phones, where the full label wraps onto two lines.
 // canUse matches the page's own gate: providers look for jobs, receivers for
-// services, and a BOTH company gets the two.
+// services, and a BOTH company gets the two. Every company can look for other
+// companies; admins have /admin/companies instead.
 const NAV_LINKS = [
     {
         href: '/jobs',
@@ -34,6 +40,12 @@ const NAV_LINKS = [
         label: 'Search services',
         shortLabel: 'Services',
         canUse: isReceiverAccount,
+    },
+    {
+        href: '/companies',
+        label: 'Explore companies',
+        shortLabel: 'Companies',
+        canUse: isCompanyAccount,
     },
 ];
 
@@ -77,7 +89,9 @@ export default function Navbar() {
         // The page's cream with a grey line and a soft shadow in the brand's
         // deep teal. The accents inside stay teal, the app's action colour.
         <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_color-mix(in_srgb,var(--color-brand-deep)_18%,transparent)]">
-            <nav className="flex h-16 items-center justify-between gap-6 px-[2.19vw]">
+            {/* The phone gaps are tight so a BOTH company's three links, the bell
+                and the avatar still fit on a 360px screen. */}
+            <nav className="flex h-16 items-center justify-between gap-3 px-[2.19vw] sm:gap-6">
                 <Link
                     href="/"
                     aria-label="MangoDB home"
@@ -89,7 +103,7 @@ export default function Navbar() {
                         width={48}
                         height={48}
                         priority
-                        className="h-12 w-12 object-contain"
+                        className="h-10 w-10 object-contain sm:h-12 sm:w-12"
                     />
                     {/* Hidden on phones, where it would push the links and the
                         avatar off the edge. The logo still says "home". */}
@@ -98,8 +112,8 @@ export default function Navbar() {
                     </span>
                 </Link>
 
-                <div className="flex items-center gap-4 sm:gap-8 xl:gap-10">
-                    <ul className="flex items-center gap-3 sm:gap-6 xl:gap-8">
+                <div className="flex items-center gap-2 sm:gap-8 xl:gap-10">
+                    <ul className="flex items-center gap-2 sm:gap-6 xl:gap-8">
                         {links.map((link) => {
                             const isCurrent = pathname === link.href;
                             return (
@@ -132,6 +146,11 @@ export default function Navbar() {
                     {state.status === 'loading' && (
                         <div className="h-10 w-10 rounded-full bg-fill-muted" />
                     )}
+                    {/* Admins get no bell: no action sends them a notice. */}
+                    {state.status === 'signed-in' &&
+                        isCompanyAccount(state.profile.accountType) && (
+                            <NotificationBell />
+                        )}
                     {state.status === 'signed-in' && (
                         <ProfileMenu profile={state.profile} />
                     )}

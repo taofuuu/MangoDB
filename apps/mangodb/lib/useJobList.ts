@@ -1,19 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Job, ListingStatus, Paginated } from '@mangodb/shared';
+import type {
+    Job,
+    JobSortOrder,
+    ListingStatus,
+    Paginated,
+} from '@mangodb/shared';
 import {
     NOT_SIGNED_IN,
     describeError,
     isForbidden,
     isNotSignedIn,
 } from './api';
-import { listJobs, listMyJobs, type ListJobsOptions } from './jobs';
+import {
+    listJobs,
+    listMyJobs,
+    type ListJobsOptions,
+    type SearchJobsFilters,
+    EMPTY_SEARCH_JOBS_FILTERS,
+} from './jobs';
 import { JOB_PAGE_SIZE } from './pagination';
 import { redirectToUnauthorized } from './session';
 
 // Which jobs the list shows:
-// 'search'  — /jobs: every company's open jobs, narrowed by a keyword
+// 'search'  — /jobs: every company's open jobs, narrowed by keyword & filters
 // 'mine'    — My Jobs: the signed-in company's jobs, any status
 // 'company' — one company's open jobs, from its profile
 export type JobListOptions =
@@ -33,6 +44,10 @@ export function useJobList(options: JobListOptions) {
     const [page, setPage] = useState(1);
     const [q, setQ] = useState('');
     const [status, setStatus] = useState<JobStatusFilter>('');
+    const [filters, setFiltersState] = useState<SearchJobsFilters>(
+        EMPTY_SEARCH_JOBS_FILTERS,
+    );
+    const [orderBy, setOrderByState] = useState<JobSortOrder>('newest');
     const [result, setResult] = useState<Paginated<Job> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     // A sentence to show, or NOT_SIGNED_IN while the page leaves for login.
@@ -57,9 +72,24 @@ export function useJobList(options: JobListOptions) {
                 status ? { status } : undefined,
             );
         } else {
-            const filters: ListJobsOptions = { status: 'OPEN', q };
-            if (companyId !== null) filters.companyId = companyId;
-            request = listJobs(page, JOB_PAGE_SIZE, filters);
+            const listFilters: ListJobsOptions = {
+                status: 'OPEN',
+                q,
+                category:
+                    filters.categories.length > 0
+                        ? filters.categories
+                        : undefined,
+                minBudget: filters.minBudget ?? undefined,
+                maxBudget: filters.maxBudget ?? undefined,
+                deadline:
+                    filters.deadlineType !== 'ANY' && filters.deadlineDate
+                        ? filters.deadlineDate
+                        : undefined,
+                deadlineType: filters.deadlineType,
+                orderBy,
+            };
+            if (companyId !== null) listFilters.companyId = companyId;
+            request = listJobs(page, JOB_PAGE_SIZE, listFilters);
         }
 
         request
@@ -86,7 +116,7 @@ export function useJobList(options: JobListOptions) {
         return () => {
             cancelled = true;
         };
-    }, [view, companyId, page, q, status, reloadKey]);
+    }, [view, companyId, page, q, status, filters, orderBy, reloadKey]);
 
     // A new keyword or status starts again from page 1.
     function search(keyword: string) {
@@ -94,8 +124,23 @@ export function useJobList(options: JobListOptions) {
         setPage(1);
     }
 
+    function setOrderBy(next: JobSortOrder) {
+        setOrderByState(next);
+        setPage(1);
+    }
+
     function changeStatus(next: JobStatusFilter) {
         setStatus(next);
+        setPage(1);
+    }
+
+    function setFilters(next: SearchJobsFilters) {
+        setFiltersState(next);
+        setPage(1);
+    }
+
+    function clearFilters() {
+        setFiltersState(EMPTY_SEARCH_JOBS_FILTERS);
         setPage(1);
     }
 
@@ -111,6 +156,11 @@ export function useJobList(options: JobListOptions) {
         page,
         q,
         status,
+        filters,
+        orderBy,
+        setOrderBy,
+        setFilters,
+        clearFilters,
         isLoading,
         error,
         isRestricted,

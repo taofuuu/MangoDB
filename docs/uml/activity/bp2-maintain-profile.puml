@@ -1,0 +1,53 @@
+@startuml bp2-maintain-profile
+!include style.iuml
+title BP2 Maintain Company Profile\n(US1-4 to US1-12, US1-6, US2-1 to US2-4)
+
+|Company|
+start
+:Open own profile;
+
+|MangoDB System|
+:Show company information
+and mark missing fields;
+
+|Company|
+switch (What to maintain?)
+case (Company information)
+  :Edit company information;
+case (Portfolio\n[Provider])
+  :Add, edit, or delete
+  portfolio item;
+case (Certificate\n[Provider])
+  :Add, edit, or delete
+  certificate with file;
+case (Service listing\n[Provider])
+  :Create, edit, or delete
+  service listing;
+case (Account)
+  :Request account deletion;
+endswitch
+
+|MangoDB System|
+:Check data and ownership;
+if (Valid, owned by the company,\nand no blocking project?) then (yes)
+  :Save change;
+  :Company Profile
+  <U+005B>Updated<U+005D>]
+  :Show latest information;
+else (no)
+  :Reject change and
+  show the reason;
+endif
+
+|Company|
+:Review profile;
+stop
+
+note right
+  Blocking project rules:
+  - a service linked to a project cannot be deleted (US2-4)
+  - an account with a project in progress cannot be deleted (US1-6)
+  A deleted account cannot log in, but its project
+  history stays for other companies.
+end note
+@enduml

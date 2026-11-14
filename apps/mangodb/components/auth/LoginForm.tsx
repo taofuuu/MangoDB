@@ -123,7 +123,7 @@ export default function LoginForm() {
                 loadingLabel="Logging in…"
                 className="-mt-2 w-full py-3 type-sm !font-[600]"
             >
-                log in
+                Log in
             </Button>
 
             <p className="text-center type-sm text-ink">
@@ -133,6 +133,12 @@ export default function LoginForm() {
                     className="font-medium text-orange hover:underline"
                 >
                     Sign Up
+                </Link>
+            </p>
+
+            <p className="-mt-3 text-center type-xs text-ink-soft">
+                <Link href="/privacy" className="hover:underline">
+                    Privacy Policy
                 </Link>
             </p>
         </form>

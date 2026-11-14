@@ -1,0 +1,52 @@
+@startuml bp5-hire-directly
+!include style.iuml
+title BP5 Hire a Provider Directly\n(US2-15 to US2-18, US2-9)
+
+|Receiver|
+start
+:Find a service;
+:Enter request details, budget,
+and expected duration;
+:Send hire request;
+
+|MangoDB System|
+if (Service open, Provider active,\nnot own service, no pending\nrequest, and valid?) then (no)
+  :Reject request and
+  show the reason;
+  |Receiver|
+  stop
+else (yes)
+  |MangoDB System|
+  :Store hire request and
+  record send time;
+  :Hire Request
+  <U+005B>Pending<U+005D>]
+endif
+
+|Provider|
+:View hire requests
+on own service;
+:Evaluate the Receiver;
+
+if (Decision?) then (accept)
+  |MangoDB System|
+  :Mark request Accepted;
+  :Create project linked
+  to the request;
+  :Project
+  <U+005B>Awaiting Quotation<U+005D>]
+else (reject)
+  |MangoDB System|
+  :Mark request Rejected;
+endif
+
+|Receiver|
+:See the result in My Proposals;
+stop
+
+note right
+  Accepting keeps the service open.
+  Other pending requests on it
+  stay unchanged (US2-17).
+end note
+@enduml

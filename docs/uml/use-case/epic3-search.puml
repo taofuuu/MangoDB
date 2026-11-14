@@ -1,0 +1,34 @@
+@startuml epic3-search
+!include style.iuml
+title EPIC 3: Search
+
+actor Provider
+actor Company
+
+rectangle "MangoDB" {
+  usecase "Search job postings\n(US3-4)" as US3_4
+  usecase "Filter job postings\n(US3-5)" as US3_5
+
+  usecase "Search companies\n(US3-6)" as US3_6
+  usecase "View another company's profile\n(US3-7)" as US3_7
+
+  usecase "Search services\n(US3-1)" as US3_1
+  usecase "Filter services\n(US3-2)" as US3_2
+  usecase "Sort services\n(US3-3)" as US3_3
+}
+
+actor Receiver
+
+Provider -up-|> Company
+Receiver -up-|> Company
+
+Provider --> US3_4
+Company --> US3_6
+Company --> US3_7
+US3_1 <-- Receiver
+
+' Filter and sort are optional steps on the result list.
+US3_5 .up.> US3_4 : <<extend>>
+US3_2 .up.> US3_1 : <<extend>>
+US3_3 .up.> US3_1 : <<extend>>
+@enduml

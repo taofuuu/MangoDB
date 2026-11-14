@@ -1,0 +1,11 @@
+{
+    "request": "POST /quotations/<quotation_id>/reject",
+    "status": 200,
+    "body": {
+        "createdAt": "<timestamp>",
+        "projectId": "<project_id>",
+        "quotationFile": "<storage-url>",
+        "quotationId": "<quotation_id>",
+        "quotationStatus": "REJECTED"
+    }
+}

@@ -9,6 +9,7 @@
                 "listingId": "<listing_id>",
                 "listingTitle": "Snapshot Probe job posting",
                 "listingType": "JOB",
+                "projectId": null,
                 "proposalBudget": 80000,
                 "proposalId": "<proposal_id>",
                 "proposalStatus": "PENDING",

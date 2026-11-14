@@ -106,7 +106,7 @@ export default function JobListing({
                     href={
                         readOnly ? `/companies/${companyId}/jobs` : '/jobs/mine'
                     }
-                    className="type-xs text-brand hover:underline font-medium"
+                    className="type-xs text-brand hover:underline !font-[500]"
                 >
                     See more
                 </Link>

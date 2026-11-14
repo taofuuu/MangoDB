@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { CompanyProfile } from '@mangodb/shared';
 import LogoutButton from '@/components/auth/LogoutButton';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
+import { useDismiss } from '@/lib/useDismiss';
 
 // The avatar button and the small panel it opens, like GitHub's profile menu:
 // who is signed in at the top, then View profile, Edit profile, Your
@@ -28,27 +29,7 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
     const panelId = useId();
-
-    // Only listen while open: a closed menu has nothing to close.
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const handlePointerDown = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setIsOpen(false);
-        };
-
-        document.addEventListener('mousedown', handlePointerDown);
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handlePointerDown);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isOpen]);
+    useDismiss(rootRef, isOpen, () => setIsOpen(false));
 
     return (
         <div ref={rootRef} className="relative">
@@ -114,6 +95,13 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                     className={ITEM_CLASS}
                 >
                     Your proposals
+                </Link>
+                <Link
+                    href="/projects"
+                    onClick={() => setIsOpen(false)}
+                    className={ITEM_CLASS}
+                >
+                    Your projects
                 </Link>
                 <Link
                     href="/companies"

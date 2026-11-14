@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/reject-work",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Receiver can reject the work"
+        }
+    }
+}

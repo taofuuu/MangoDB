@@ -224,7 +224,7 @@ export async function deleteCompanyAccount(
         },
     });
 
-    // Same "deleted = gone" convention as isCompanyDeleted: an already-deleted
+    // Same "deleted = gone" convention as isSessionEnded: an already-deleted
     // company 404s here instead of falling through to the eligibility check.
     if (!company || company.deletedAt !== null) {
         throw ApiError.notFound('Company account not found');

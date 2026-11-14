@@ -45,15 +45,15 @@ export const ratingSelect = {
     },
 } as const satisfies Prisma.CompanySelect;
 
+export interface ReviewScores {
+    workQualityScore: number;
+    serviceScore: number;
+    valueForMoneyScore: number;
+    deliveryTimeScore: number;
+}
+
 export interface ReviewScoresRow {
-    project: {
-        review: {
-            workQualityScore: number;
-            serviceScore: number;
-            valueForMoneyScore: number;
-            deliveryTimeScore: number;
-        } | null;
-    } | null;
+    project: { review: ReviewScores | null } | null;
 }
 
 export interface RatingSource {
@@ -61,20 +61,10 @@ export interface RatingSource {
     listing: { proposal: ReviewScoresRow[] }[];
 }
 
-// The mean of every score in the Provider's reviews, to one decimal place.
-// ratingCount is the number of reviews, not of scores (ADR 0018, T5.1.3).
-export function getRating(source: RatingSource): ReviewSummary {
-    const reviews = [
-        ...source.proposal,
-        ...source.listing.flatMap((listing) => listing.proposal),
-    ]
-        .map(({ project }) => project?.review)
-        .filter((review) => review != null);
-
-    if (reviews.length === 0) {
-        return { averageRating: null, ratingCount: 0 };
-    }
-
+// The mean of every score in these reviews, to one decimal place, or null for
+// none. A Provider's rating and one project's rating both use it (ADR 0018).
+export function averageScore(reviews: ReviewScores[]): number | null {
+    if (reviews.length === 0) return null;
     const total = reviews.reduce(
         (sum, review) =>
             sum +
@@ -85,10 +75,21 @@ export function getRating(source: RatingSource): ReviewSummary {
         0,
     );
     // Every review has the same four scores (ADR 0018).
-    const average = total / (reviews.length * 4);
+    return Math.round((total / (reviews.length * 4)) * 10) / 10;
+}
+
+// A Provider's rating. ratingCount is the number of reviews, not of scores
+// (ADR 0018, T5.1.3).
+export function getRating(source: RatingSource): ReviewSummary {
+    const reviews = [
+        ...source.proposal,
+        ...source.listing.flatMap((listing) => listing.proposal),
+    ]
+        .map(({ project }) => project?.review)
+        .filter((review) => review != null);
 
     return {
-        averageRating: Math.round(average * 10) / 10,
+        averageRating: averageScore(reviews),
         ratingCount: reviews.length,
     };
 }

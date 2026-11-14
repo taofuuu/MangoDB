@@ -18,8 +18,9 @@ export const companyAccountIdParamSchema = z.object({
     companyId: int4Id,
 });
 
-// US6-4. The admin's own password, same field changeCredentialsSchema takes,
-// confirming intent before this endpoint's irreversible delete.
+// US6-4. The caller's own password, same field changeCredentialsSchema takes,
+// confirming intent before an irreversible delete. The admin delete and a
+// company's own DELETE /companies/me both take this body.
 export const deleteCompanyAccountBodySchema = z.object({
     currentPassword: companyFields.passwordAttempt,
 });

@@ -3,7 +3,7 @@
 import type { PublicCompanyProfile } from '@mangodb/shared';
 import CompanyProfileCard from './CompanyProfileCard';
 import ServicesSection from './ServicesSection';
-import ProjectTimeline from './ProjectTimeline';
+import CompletedWorksPreview from '@/components/projects/CompletedWorksPreview';
 import PortfolioCertificateList from './PortfolioCertificateList';
 
 // The provider-shaped profile: the company card, its services, a project
@@ -38,7 +38,7 @@ export default function ProviderProfileView({
                     <ServicesSection profile={profile} readOnly={readOnly} />
                 </div>
                 <div className="lg:col-span-3">
-                    <ProjectTimeline />
+                    <CompletedWorksPreview companyId={profile.companyId} />
                 </div>
                 <div className="lg:col-span-2">
                     <PortfolioCertificateList

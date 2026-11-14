@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AccountType } from '@mangodb/shared';
-import Button from '../ui/Button';
+import { Pencil, Trash2, Upload } from 'lucide-react';
+import { useDismiss } from '@/lib/useDismiss';
 import FieldError from '../ui/FieldError';
 import RoleTags from '../companies/RoleTags';
 
@@ -19,7 +20,7 @@ type ProfilePhotoPanelProps = {
     pendingPhoto: File | null;
     // Absent when the panel is read-only — an administrator editing another
     // company, which has no endpoint behind it.
-    onPhotoChange?: ((file: File) => void) | undefined;
+    onPhotoChange?: ((file: File | null) => void) | undefined;
     // Clears the stored photo. Its own request, made straight away rather than
     // on Save: there is no "delete this later" state for the form to hold.
     onPhotoRemove?: (() => void) | undefined;
@@ -40,6 +41,10 @@ export default function ProfilePhotoPanel({
     accountType,
 }: ProfilePhotoPanelProps) {
     const fileRef = useRef<HTMLInputElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isOpen, setIsOpen] = useState(false);
+
+    useDismiss(dropdownRef, isOpen, () => setIsOpen(false));
 
     // Derived, not state: the URL is a pure function of the picked file, and
     // setting state from an effect would render once without the preview.
@@ -86,16 +91,74 @@ export default function ProfilePhotoPanel({
 
     return (
         <div className="flex flex-col items-center">
-            <div className="mt-[2.78vh] size-[15.63vw] overflow-hidden rounded-full bg-fill-muted">
-                {shown && (
-                    // A blob: URL cannot go through next/image without turning
-                    // off optimisation for it, which buys nothing here.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={shown}
-                        alt="Company profile"
-                        className="size-full object-cover"
-                    />
+            <div className="relative">
+                <div className="size-50 overflow-hidden rounded-full bg-fill-muted shadow-sm">
+                    {shown && (
+                        // A blob: URL cannot go through next/image without turning
+                        // off optimisation for it, which buys nothing here.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={shown}
+                            alt="Company profile"
+                            className="size-full object-cover"
+                        />
+                    )}
+                </div>
+
+                {onPhotoChange && (
+                    <div
+                        className="absolute bottom-1 right-1 z-10"
+                        ref={dropdownRef}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen((prev) => !prev)}
+                            className="flex items-center gap-1 rounded-md border border-line bg-surface-white px-2.5 py-1 type-xs !font-[500] text-ink shadow-md transition hover:bg-fill-subtle cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand"
+                            aria-expanded={isOpen}
+                            aria-label="Edit profile photo"
+                        >
+                            <Pencil className="size-3 text-ink-soft" />
+                            <span>{isRemoving ? 'Removing…' : 'Edit'}</span>
+                        </button>
+
+                        {isOpen && (
+                            <div className="absolute right-0 top-full z-20 mt-1.5 w-40 overflow-hidden rounded-md border border-line bg-surface-white py-1 shadow-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsOpen(false);
+                                        fileRef.current?.click();
+                                    }}
+                                    className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left type-xs text-ink hover:bg-fill-subtle transition-colors cursor-pointer"
+                                >
+                                    <Upload className="size-3.5 text-ink-soft" />
+                                    Upload a photo...
+                                </button>
+
+                                {Boolean(pendingPhoto || photoUrl) &&
+                                    onPhotoRemove && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                if (pendingPhoto) {
+                                                    onPhotoChange?.(null);
+                                                } else {
+                                                    onPhotoRemove();
+                                                }
+                                            }}
+                                            disabled={isRemoving}
+                                            className="flex w-full items-center gap-2 border-t border-line/60 px-2.5 py-1.5 text-left type-xs text-danger hover:bg-danger-wash transition-colors cursor-pointer disabled:opacity-60"
+                                        >
+                                            <Trash2 className="size-3.5 text-danger" />
+                                            {pendingPhoto
+                                                ? 'Discard new photo'
+                                                : 'Remove photo'}
+                                        </button>
+                                    )}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -109,31 +172,10 @@ export default function ProfilePhotoPanel({
 
             {onPhotoChange && (
                 <>
-                    <Button
-                        variant="outline"
-                        onClick={() => fileRef.current?.click()}
-                        className="mt-[5.6vh] h-[5.46vh] w-[12.66vw] cursor-pointer type-md !font-[600]"
-                    >
-                        Change Photo
-                    </Button>
-
                     {pendingPhoto && !error && (
-                        <p className="mt-[0.93vh] type-sm text-ink-soft">
+                        <p className="mt-2 text-center type-xs text-ink-soft">
                             Saved when you select Save.
                         </p>
-                    )}
-
-                    {/* Only with a stored photo to clear: a pending one is
-                        dropped by Cancel, which is not what this does. */}
-                    {photoUrl && !pendingPhoto && onPhotoRemove && (
-                        <button
-                            type="button"
-                            onClick={onPhotoRemove}
-                            disabled={isRemoving}
-                            className="mt-[0.93vh] cursor-pointer type-sm !font-[600] text-danger hover:text-danger-hover disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isRemoving ? 'Removing…' : 'Remove photo'}
-                        </button>
                     )}
 
                     <FieldError message={error} />
@@ -146,8 +188,8 @@ export default function ProfilePhotoPanel({
                 button, rather than one that only pretends to work. */}
             <RoleTags
                 accountType={accountType}
-                className="mt-[4.49vh] gap-[1.04vw]"
-                tagClassName="h-[3.33vh] w-[8.48vw]"
+                className="mt-4 gap-2"
+                tagClassName="min-h-[32px] px-3 type-sm"
             />
         </div>
     );

@@ -75,7 +75,9 @@ so both parties can see the history.
   with the same 5 MB limit (T4.1.2).
 - **The Receiver only learns of a quotation by opening the app.**
 - **The navbar gets a bell.** Other events can add notices to it later; this
-  sprint's stories ask only for the new quotation.
+  sprint's stories ask only for the new quotation. T4.1.5 (11 Nov 2026) built
+  it for every proposal and project event, in a `notification` table; see
+  `docs/api/notifications.md`.
 - **The system does not read the PDF.** The amount inside is not checked
   against the project's `totalBudget`, which stays the proposal's budget.
 - **Delete and decide can happen at the same moment.** Delete runs

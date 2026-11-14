@@ -160,37 +160,37 @@ export default function CompanyProfileForm({
         // browser's own check on type="email" silently blocks submit and shows
         // its own tooltip, which skips the error slots under each field.
         <form onSubmit={handleSubmit} noValidate>
-            <h1 className="pl-[1.88vw] type-hd leading-none">Edit Profile</h1>
+            <header className="border-b border-brand/50 pb-3">
+                <h1 className="type-hd text-ink">Edit Profile</h1>
+            </header>
 
-            <div className="mt-[1.85vh] flex">
-                <div className="w-[17.99vw] shrink-0">
-                    <ProfilePhotoPanel
-                        photoUrl={data.companyPhoto}
-                        pendingPhoto={photo}
-                        {...(canEditPhoto && {
-                            onPhotoChange: (file: File) => {
-                                setPhoto(file);
-                                onPhotoError?.(undefined);
-                            },
-                            onPhotoRemove,
-                            onPhotoError,
-                        })}
-                        error={photoError}
-                        isRemoving={isRemovingPhoto}
-                        accountType={data.accountType}
+            <div className="mt-8 flex flex-col-reverse md:flex-row md:items-start md:justify-between gap-10">
+                {/* Form fields in a single vertical column */}
+                <div className="flex-1 max-w-lg space-y-4">
+                    <Input
+                        label="Company Name"
+                        value={data.companyName}
+                        onChange={(v) => setField('companyName', v)}
+                        error={displayErrors.companyName}
+                        maxLength={255}
+                        variant="small"
                     />
-                </div>
 
-                {/* Middle column */}
-                <div className="ml-[4.73vw] w-[31.13vw] shrink-0">
-                    {/* Username is edited on /account-settings now, beside the
-                        email and password, so the column starts here. */}
+                    <CompanyTypeField
+                        label="Company Type"
+                        value={data.companyType}
+                        onChange={(v) => setField('companyType', v)}
+                        error={displayErrors.companyType}
+                        variant="small"
+                    />
+
                     <Textarea
                         label="Company Description"
                         value={data.companyDescription ?? ''}
                         onChange={(v) => setField('companyDescription', v)}
                         error={displayErrors.companyDescription}
                         maxLength={1000}
+                        variant="small"
                     />
 
                     {isProvider && (
@@ -202,116 +202,108 @@ export default function CompanyProfileForm({
                         />
                     )}
 
-                    <div className="mt-[3.09vh]">
-                        <Input
-                            label="Contact Email"
-                            type="email"
-                            value={data.contactEmail ?? ''}
-                            onChange={(v) => setField('contactEmail', v)}
-                            error={displayErrors.contactEmail}
-                            maxLength={100}
-                        />
-                    </div>
+                    <Textarea
+                        label="Company Location"
+                        value={data.address ?? ''}
+                        onChange={(v) => setField('address', v)}
+                        error={displayErrors.address}
+                        maxLength={500}
+                        variant="small"
+                    />
 
-                    {/* The design draws this one taller than every other
-                        single-line field; built at the common height. */}
-                    <div className="mt-[3.09vh]">
-                        <Input
-                            label="Website"
-                            value={data.website ?? ''}
-                            onChange={(v) => setField('website', v)}
-                            error={displayErrors.website}
-                            maxLength={255}
-                        />
-                    </div>
+                    <Input
+                        label="Contact Email"
+                        type="email"
+                        value={data.contactEmail ?? ''}
+                        onChange={(v) => setField('contactEmail', v)}
+                        error={displayErrors.contactEmail}
+                        maxLength={100}
+                        variant="small"
+                    />
+
+                    <Input
+                        label="Phone Number"
+                        type="tel"
+                        value={data.phone}
+                        onChange={(v) => setField('phone', v)}
+                        error={displayErrors.phone}
+                        maxLength={20}
+                        variant="small"
+                    />
+
+                    <Input
+                        label="Website"
+                        value={data.website ?? ''}
+                        onChange={(v) => setField('website', v)}
+                        error={displayErrors.website}
+                        maxLength={255}
+                        variant="small"
+                    />
 
                     {/* US6-4. Admin-only: hidden unless the page wires a
                         delete handler for the account being edited. */}
                     {onDeleteAccount && (
-                        <div className="mt-[3.09vh]">
-                            <h2 className="border-b border-danger/40 pb-[0.74vh] type-md !font-[600] text-danger">
+                        <div className="pt-4 border-t border-danger/20">
+                            <h2 className="border-b border-danger/40 pb-2 type-sm !font-[600] text-danger">
                                 Delete account
                             </h2>
-                            <p className="mt-[1.11vh] type-sm !font-[400] text-ink-soft">
+                            <p className="mt-1.5 type-xs text-ink-soft">
                                 Once you delete this account, there is no going
                                 back. Please be certain.
                             </p>
                             <Button
                                 variant="danger"
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="mt-[1.48vh] h-[4.63vh] px-[1.25vw] type-sm"
+                                className="mt-3 min-h-[36px] px-4 type-xs !font-[600]"
                             >
                                 Delete this account
                             </Button>
                         </div>
                     )}
-                </div>
 
-                {/* Right column */}
-                <div className="ml-[8.97vw] w-[31.13vw] shrink-0">
-                    <Input
-                        label="Company Name"
-                        value={data.companyName}
-                        onChange={(v) => setField('companyName', v)}
-                        error={displayErrors.companyName}
-                        maxLength={255}
+                    <StatusMessage
+                        status={displayStatus}
+                        onDismiss={handleDismissStatus}
                     />
 
-                    <div className="mt-[3.09vh]">
-                        <CompanyTypeField
-                            label="Company Type"
-                            value={data.companyType}
-                            onChange={(v) => setField('companyType', v)}
-                            error={displayErrors.companyType}
-                        />
-                    </div>
+                    <div className="pt-4 flex items-center gap-3">
+                        <Button
+                            type="submit"
+                            disabled={isSaving}
+                            className="min-w-[130px] px-5 py-2 cursor-pointer type-sm !font-[600]"
+                        >
+                            {isSaving ? 'Saving…' : 'Save Changes'}
+                        </Button>
 
-                    <div className="mt-[3.09vh]">
-                        <Input
-                            label="Phone Number"
-                            type="tel"
-                            value={data.phone}
-                            onChange={(v) => setField('phone', v)}
-                            error={displayErrors.phone}
-                            maxLength={20}
-                        />
-                    </div>
-
-                    <div className="mt-[3.09vh]">
-                        <Textarea
-                            label="Company Location"
-                            value={data.address ?? ''}
-                            onChange={(v) => setField('address', v)}
-                            error={displayErrors.address}
-                            className="h-[20.86vh]"
-                            maxLength={500}
-                        />
+                        <Button
+                            variant="outline"
+                            onClick={handleCancel}
+                            disabled={isSaving}
+                            className="min-w-[130px] px-5 py-2 cursor-pointer type-sm !font-[600]"
+                        >
+                            Cancel
+                        </Button>
                     </div>
                 </div>
-            </div>
 
-            <StatusMessage
-                status={displayStatus}
-                onDismiss={handleDismissStatus}
-            />
-
-            <div className="mt-[8.33vh] flex justify-center gap-[5.23vw] pb-[6vh]">
-                <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    disabled={isSaving}
-                    className="h-[7.04vh] w-[13.91vw] cursor-pointer type-md"
-                >
-                    Cancel
-                </Button>
-
-                <Button
-                    type="submit"
-                    disabled={isSaving}
-                    className="h-[7.13vh] w-[13.96vw] cursor-pointer type-md"
-                >
-                    {isSaving ? 'Saving…' : 'Save Changes'}
-                </Button>
+                {/* Profile photo panel on the right */}
+                <div className="w-full md:w-48 shrink-0 flex flex-col items-center">
+                    <ProfilePhotoPanel
+                        photoUrl={data.companyPhoto}
+                        pendingPhoto={photo}
+                        {...(canEditPhoto && {
+                            onPhotoChange: (file: File | null) => {
+                                setPhoto(file);
+                                onPhotoError?.(undefined);
+                            },
+                            onPhotoRemove,
+                            onPhotoError,
+                        })}
+                        error={photoError}
+                        isRemoving={isRemovingPhoto}
+                        accountType={data.accountType}
+                    />
+                </div>
             </div>
 
             {onDeleteAccount && (

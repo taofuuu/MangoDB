@@ -23,7 +23,7 @@ Container_Boundary(api, "API (Express 5)") {
     Component(projects, "Project controllers", "project, quotation", "Quotation, deposit, progress updates, work acceptance, cancel, review")
 
     Component(authcore, "Session and tokens", "auth/, lib/session.ts", "JWT sign and verify, bcrypt, httpOnly cookie, revoked-token list")
-    Component(domain, "Domain rules", "lib/proposal, project, company-deletion, review, rating", "acceptProposal, moveProjectStatus, deletion eligibility, rating summary")
+    Component(domain, "Domain rules", "lib/proposal, project, project-eligibility, company-deletion, review, rating", "Pending-proposal check, moveProjectStatus, deletion eligibility, rating summary")
     Component(storageClient, "Storage client", "lib/storage.ts, supabase-js", "Uploads and deletes files, builds public URLs")
     Component(prisma, "Prisma client", "lib/prisma.ts, Prisma 7 + adapter-pg", "Typed queries over the pooled connection")
 }

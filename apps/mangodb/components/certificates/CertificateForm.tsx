@@ -53,7 +53,7 @@ export default function CertificateForm(props: CertificateFormProps) {
             panelClassName="w-full max-w-[45vw] rounded-xl bg-surface p-[1.5vw] text-ink shadow-xl max-h-[calc(100vh-2rem)] overflow-y-auto max-md:max-w-[90vw]"
         >
             <div className="flex items-center justify-between">
-                <h2 id={titleId} className="type-lg font-semibold">
+                <h2 id={titleId} className="type-lg">
                     {isEditing
                         ? 'Edit license or certification'
                         : 'Add license or certification'}
@@ -78,7 +78,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                     <div>
                         <label
                             htmlFor="certificate-name"
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                         >
                             Name*
                         </label>
@@ -99,7 +99,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                     <div>
                         <label
                             htmlFor="certificate-organization"
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                         >
                             Issuing organization*
                         </label>
@@ -118,12 +118,12 @@ export default function CertificateForm(props: CertificateFormProps) {
                     </div>
 
                     <fieldset>
-                        <legend className="block type-sm font-medium">
+                        <legend className="block type-sm !font-[500]">
                             Issue date
                         </legend>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Month
                                 </p>
                                 <MonthDropdown
@@ -134,7 +134,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                                 />
                             </div>
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Year
                                 </p>
                                 <YearDropdown
@@ -151,12 +151,12 @@ export default function CertificateForm(props: CertificateFormProps) {
                     </fieldset>
 
                     <fieldset>
-                        <legend className="block type-sm font-medium">
+                        <legend className="block type-sm !font-[500]">
                             Expiration date
                         </legend>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Month
                                 </p>
                                 <MonthDropdown
@@ -167,7 +167,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                                 />
                             </div>
                             <div className="flex-1">
-                                <p className="mb-1 type-xs text-ink-soft font-normal">
+                                <p className="mb-1 type-xs text-ink-soft">
                                     Year
                                 </p>
                                 <YearDropdown
@@ -186,7 +186,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                     <div>
                         <label
                             htmlFor="certificate-credential-id"
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                         >
                             Credential ID
                         </label>
@@ -206,7 +206,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                     <div>
                         <label
                             htmlFor="certificate-credential-url"
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                         >
                             Credential URL
                         </label>
@@ -258,7 +258,7 @@ export default function CertificateForm(props: CertificateFormProps) {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm font-medium hover:bg-brand-darker transition-colors disabled:opacity-50 min-w-[80px]"
+                        className="rounded-status bg-brand-dark px-6 h-[4vh] text-surface type-sm !font-[500] hover:bg-brand-darker transition-colors disabled:opacity-50 min-w-[80px]"
                     >
                         {isSubmitting ? 'Saving...' : 'Save'}
                     </button>

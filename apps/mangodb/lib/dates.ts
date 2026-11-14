@@ -54,16 +54,23 @@ export function formatDate(iso: string): string {
     );
 }
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+// A timestamp as "dd/mm/yyyy" in the viewer's local time, for the project
+// timeline. Text that is not a date comes back as it was.
+export function formatSlashDate(iso: string): string {
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return iso;
+
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
 // A timestamp as "dd/mm/yyyy hh:mm" in the viewer's local time, for the
 // proposal cards that show when it was sent.
 export function formatDateTime(iso: string): string {
     const date = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, '0');
 
-    return (
-        `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ` +
-        `${pad(date.getHours())}:${pad(date.getMinutes())}`
-    );
+    return `${formatSlashDate(iso)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 // A proposal's duration, which is stored in months (conventions section 8).

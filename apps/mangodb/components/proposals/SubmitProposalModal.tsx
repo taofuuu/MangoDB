@@ -268,7 +268,7 @@ export default function SubmitProposalModal({
                     <div>
                         <label
                             htmlFor="proposal-estimated-duration-months"
-                            className="block type-sm font-normal"
+                            className="block type-sm"
                         >
                             Estimated duration (months)*
                         </label>

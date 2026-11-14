@@ -1,0 +1,41 @@
+@startuml epic1-account
+!include style.iuml
+title EPIC 1: Account and Company Information Management
+
+actor Company
+actor Provider
+Provider -up-|> Company
+
+rectangle "MangoDB" {
+  usecase "Register account\n(US1-1)" as US1_1
+  usecase "Accept Terms of Service\n(US1-13)" as US1_13
+  usecase "Log in\n(US1-2)" as US1_2
+  usecase "Log out\n(US1-3)" as US1_3
+  usecase "View own company information\n(US1-4)" as US1_4
+  usecase "Edit own company information\n(US1-5)" as US1_5
+  usecase "Request account deletion\n(US1-6)" as US1_6
+  usecase "Add portfolio item\n(US1-7)" as US1_7
+  usecase "Edit portfolio item\n(US1-8)" as US1_8
+  usecase "Delete portfolio item\n(US1-9)" as US1_9
+  usecase "Add certificate\n(US1-10)" as US1_10
+  usecase "Edit certificate\n(US1-11)" as US1_11
+  usecase "Delete certificate\n(US1-12)" as US1_12
+}
+
+Company --> US1_1
+Company --> US1_2
+Company --> US1_3
+Company --> US1_4
+Company --> US1_5
+Company --> US1_6
+
+Provider --> US1_7
+Provider --> US1_8
+Provider --> US1_9
+Provider --> US1_10
+Provider --> US1_11
+Provider --> US1_12
+
+' Registration is rejected unless the Terms of Service box is checked.
+US1_1 ..> US1_13 : <<include>>
+@enduml

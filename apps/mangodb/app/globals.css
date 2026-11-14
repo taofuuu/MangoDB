@@ -56,6 +56,10 @@
 
     --color-orange: #d9603b;
 
+    /* The Add Update textarea's border. The one blue outside the brand
+       family, kept on purpose rather than merged into brand. */
+    --color-focus: #0091ff;
+
     /* The fill behind a "Provider" role label, on a company card and behind a
        profile photo. Its counterpart is brand-light, which fills "Receiver" —
        that one keeps a colour name because it is also a hover border on the

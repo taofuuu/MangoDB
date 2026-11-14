@@ -1,0 +1,50 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Notifications
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Notifications" as Notifications <<Resource>>
+class "MyNotifications" as MyNotifications <<Resource>> {
+  + GET()
+}
+class "Read" as ReadNotifications <<Resource>> {
+  + POST()
+}
+class "Notification" as NotificationRep <<Representation>> {
+  -notificationId : integer
+  -notificationType : NotificationType
+  -sender : CompanyBrief
+  -listingId : integer
+  -listingType : ListingType
+  -listingTitle : string
+  -projectId : integer?
+  -readAt : date?
+  -createdAt : date
+}
+
+API -[#B45309,dashed]-> Notifications : <i><color:#B45309>«Path» /notifications</color></i>
+Notifications -[#B45309,dashed]-> MyNotifications : <i><color:#B45309>«Path» /mine</color></i>
+MyNotifications -[#B45309,dashed]-> ReadNotifications : <i><color:#B45309>«Path» /read</color></i>
+MyNotifications -[#BE185D,dashed]-> NotificationRep : <i><color:#BE185D>«use»</color></i>
+@enduml

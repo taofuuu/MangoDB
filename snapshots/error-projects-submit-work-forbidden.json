@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/submit-work",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Provider can report the work complete"
+        }
+    }
+}

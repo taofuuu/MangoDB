@@ -92,11 +92,12 @@ export default function AccountPage() {
         setStatus(`${LABELS[mode]} updated.`);
     };
 
-    const handleDeleteAccount = async () => {
+    const handleDeleteAccount = async (currentPassword: string) => {
         try {
-            await deleteMyAccount();
+            await deleteMyAccount({ currentPassword });
         } catch (err) {
-            // Rethrown so ConfirmModal catches and displays the error (e.g. 409 ongoing project)
+            // Rethrown so ConfirmModal catches and displays the error (e.g. 401
+            // wrong password, 409 ongoing project)
             throw new Error(describeError(err));
         }
 
@@ -116,7 +117,7 @@ export default function AccountPage() {
         <main className="min-h-screen p-10 bg-surface">
             <div className="max-w-xl mx-auto space-y-6">
                 <header className="border-b border-line pb-4">
-                    <h1 className="type-lg font-bold text-ink">
+                    <h1 className="type-lg !font-[700] text-ink">
                         Account Settings
                     </h1>
                     <p className="type-xs text-ink-soft mt-1">
@@ -139,7 +140,7 @@ export default function AccountPage() {
                         {status && (
                             <p
                                 role="status"
-                                className="type-xs font-medium text-brand"
+                                className="type-xs !font-[500] text-brand"
                             >
                                 {status}
                             </p>
@@ -148,7 +149,7 @@ export default function AccountPage() {
                         {/* Account Information Card with Segmented Rows */}
                         <div className="rounded-xl border border-line bg-surface-white shadow-sm overflow-hidden">
                             <div className="p-6 pb-4 border-b border-line">
-                                <h2 className="type-md font-semibold text-ink">
+                                <h2 className="type-md !font-[600] text-ink">
                                     Account Information
                                 </h2>
                             </div>
@@ -160,7 +161,7 @@ export default function AccountPage() {
                                         <span className="block type-xs text-ink-soft">
                                             Username
                                         </span>
-                                        <span className="block type-sm font-medium text-ink mt-0.5">
+                                        <span className="block type-sm !font-[500] text-ink mt-0.5">
                                             {profile.username}
                                         </span>
                                     </div>
@@ -188,7 +189,7 @@ export default function AccountPage() {
                                         <span className="block type-xs text-ink-soft">
                                             Email
                                         </span>
-                                        <span className="block type-sm font-medium text-ink mt-0.5">
+                                        <span className="block type-sm !font-[500] text-ink mt-0.5">
                                             {profile.email}
                                         </span>
                                     </div>
@@ -214,7 +215,7 @@ export default function AccountPage() {
                                         <span className="block type-xs text-ink-soft">
                                             Password
                                         </span>
-                                        <span className="block type-sm font-medium text-ink mt-0.5 tracking-wider">
+                                        <span className="block type-sm !font-[500] text-ink mt-0.5 tracking-wider">
                                             ••••••••
                                         </span>
                                     </div>
@@ -241,7 +242,7 @@ export default function AccountPage() {
                         {/* Session */}
                         <div className="flex items-center justify-between rounded-xl border border-line bg-surface-white p-6 shadow-sm">
                             <div>
-                                <h2 className="type-md font-semibold text-ink">
+                                <h2 className="type-md !font-[600] text-ink">
                                     Logout
                                 </h2>
                                 <p className="mt-1 type-xs text-ink-soft">
@@ -255,7 +256,7 @@ export default function AccountPage() {
 
                         {/* Danger Zone */}
                         <div className="rounded-xl border border-danger-tint bg-danger-wash/40 p-6 shadow-sm">
-                            <h2 className="type-md font-semibold text-danger">
+                            <h2 className="type-md !font-[600] text-danger">
                                 Danger Zone
                             </h2>
                             <p className="mt-1 type-xs text-ink-soft">
@@ -266,7 +267,7 @@ export default function AccountPage() {
                             <button
                                 type="button"
                                 onClick={() => setIsDeleteOpen(true)}
-                                className="mt-4 rounded-lg bg-danger px-4 py-2 type-xs font-semibold text-surface transition-colors hover:bg-danger-hover cursor-pointer"
+                                className="mt-4 rounded-lg bg-danger px-4 py-2 type-xs !font-[600] text-surface transition-colors hover:bg-danger-hover cursor-pointer"
                             >
                                 Delete Account
                             </button>

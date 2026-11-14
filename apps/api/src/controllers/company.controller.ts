@@ -17,6 +17,7 @@ import {
     toCompanyProfile,
     toPublicCompanyProfile,
 } from '../lib/company-profile';
+import { findPublicCompany } from '../lib/company-lookup';
 import {
     assertCompanyIdentityAvailable,
     identityConflict,
@@ -41,6 +42,7 @@ import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
 import { saveWithUpload } from '../lib/upload';
 import { requireFile } from '../middleware/upload';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
+import { deleteCompanyAccountBodySchema } from '../schemas/admin-company.schema';
 import {
     changeCredentialsSchema,
     companyIdParamSchema,
@@ -73,17 +75,10 @@ export async function getCompanyProfile(
     res: Response,
 ): Promise<void> {
     const { companyId } = parseParams(companyIdParamSchema, req.params);
-    // findFirst, not findUnique: the two extra conditions are not part of a
-    // unique key.
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: publicCompanyProfileSelect,
-    });
-
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
-
+    const company = await findPublicCompany(
+        companyId,
+        publicCompanyProfileSelect,
+    );
     res.json(toPublicCompanyProfile(company));
 }
 
@@ -162,6 +157,8 @@ export async function changeMyCredentials(
                 ...(newPassword
                     ? { password: await hashPassword(newPassword) }
                     : {}),
+                // Ends every other session: requireAuth refuses older tokens.
+                credentialsChangedAt: new Date(),
             },
             select: companyProfileSelect,
         });
@@ -176,9 +173,9 @@ export async function changeMyCredentials(
     }
 
     // After the write, never before: a wrong password or a 409 must not cost
-    // the caller its session. Revoking the presented jti is the only revocation
-    // this codebase can do — there is no per-company token version — so it ends
-    // any copy of this token and nothing else.
+    // the caller its session. credentialsChangedAt above already ends older
+    // tokens; this also ends the presented one if it was minted in the same
+    // second, which that whole-second check lets through.
     await revokeToken(req.auth!.jti, req.auth!.exp);
 
     // Replaces the cookie as well as the body. The token just revoked is the
@@ -272,6 +269,15 @@ export async function deleteMyAccount(
 ): Promise<void> {
     const companyId = req.auth!.companyId;
 
+    // A delete cannot be undone, so a token alone is not enough: a stolen
+    // session or an unlocked laptop must not be able to do it. Same re-auth
+    // the admin delete asks for.
+    const { currentPassword } = parseBody(
+        deleteCompanyAccountBodySchema,
+        req.body,
+    );
+    await assertCurrentPassword(companyId, currentPassword);
+
     if (await hasOngoingProject(companyId)) {
         throw ApiError.conflict(ONGOING_PROJECT_BLOCKS_DELETE);
     }
@@ -336,13 +342,7 @@ export async function listProviderReviews(
         req.query,
     );
 
-    const target = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: { companyId: true },
-    });
-    if (!target) {
-        throw ApiError.notFound('Company not found');
-    }
+    await findPublicCompany(companyId, { companyId: true });
 
     const where: Prisma.ReviewWhereInput = {
         project: providerCompletedProjectsWhere(companyId),
@@ -373,13 +373,6 @@ export async function getProviderReviewSummary(
 ): Promise<void> {
     const { companyId } = parseParams(companyIdParamSchema, req.params);
 
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: ratingSelect,
-    });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
-
+    const company = await findPublicCompany(companyId, ratingSelect);
     res.json(getRating(company));
 }

@@ -1,0 +1,10 @@
+{
+    "request": "DELETE /quotations/<quotation_id>",
+    "status": 401,
+    "body": {
+        "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Missing or malformed Authorization header"
+        }
+    }
+}

@@ -2,7 +2,7 @@
 // in the Figma "ToS" frame. The modal renders whatever this holds, so a future
 // revision is an edit here: the intro, then one { heading, body } per section
 // in reading order.
-export type TermsSection = {
+export type PolicySection = {
     heading: string;
     body: string;
 };
@@ -10,7 +10,7 @@ export type TermsSection = {
 export const TERMS_INTRO =
     'By creating an account and using MangoDB, you agree to the following terms.';
 
-export const TERMS_OF_SERVICE: TermsSection[] = [
+export const TERMS_OF_SERVICE: PolicySection[] = [
     {
         heading: '1. Account Information',
         body: 'You must provide accurate and up-to-date information when creating and maintaining your account.',

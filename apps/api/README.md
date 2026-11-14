@@ -6,8 +6,10 @@ Express 5 + TypeScript. Prisma 7 against Postgres (Supabase), through the
 This page is how to run and check the API. **The rules for writing it are in
 one place, [docs/conventions.md](../../docs/conventions.md)**, and the order to
 apply them in is [docs/adding-a-resource.md](../../docs/adding-a-resource.md).
-There is no endpoint catalogue: `src/routes/` is the list, with the _why_ in a
-comment beside each route.
+`src/routes/` is the list of endpoints, with the _why_ in a comment beside
+each route and an `@openapi` block above it. With the API running, Swagger UI
+is at http://localhost:4000/api-docs. The UML API Diagrams and sequence
+diagrams are in [docs/api/](../../docs/api/README.md).
 
 ## Run it
 
@@ -58,29 +60,39 @@ database the moment it runs.
 `0_init` is a baseline: the database as it was before migrations existed,
 marked applied rather than run.
 
-## Image storage
+## File storage
 
-Certificates, portfolios and profile photos keep their bytes in Supabase
-Storage and only the public URL in Postgres. One bucket per kind, named in
-`src/lib/storage.ts`:
+Certificates, portfolios, profile photos and quotation PDFs keep their bytes in
+Supabase Storage and only the public URL in Postgres. One bucket per kind, named
+in `src/lib/storage.ts`:
 
 | Bucket        | Folder          | Column                              |
 | ------------- | --------------- | ----------------------------------- |
 | `certificate` | `certificates/` | `certificate.cert_image`            |
 | `portfolio`   | `portfolios/`   | `service_portfolio.portfolio_image` |
 | `profile`     | `companies/`    | `company.company_photo`             |
+| `quotation`   | `quotations/`   | `quotation.quotation_file`          |
 
-All three are **public** buckets: the URL in the column is served straight to
-an image, with no signing step. Create a missing one in the Supabase dashboard
-under Storage → New bucket, with "Public bucket" on. Nothing in the app creates
-buckets, so an upload into a missing one answers 500 and logs
-`Bucket not found`.
+`certificate`, `portfolio` and `profile` are **public** buckets: the URL in the
+column is served straight to the browser, with no signing step. `quotation` is
+**private**, because a quotation is a price sheet between two companies: the
+column still holds the URL `getPublicUrl` gave, but that URL does not open, so
+every quotation endpoint swaps it for a link that expires after an hour
+(`toQuotations` in `src/lib/quotation.ts`, `signStorageUrls` in
+`src/lib/storage.ts`). If signing fails, the failure is logged and the stored URL
+goes out instead, because the row may already be saved.
 
-Uploads are capped at 5 MB and limited to PNG, JPEG and WebP
+Create a missing bucket in the Supabase dashboard under Storage → New bucket,
+with "Public bucket" on for the three public ones and off for `quotation`.
+Nothing in the app creates buckets, so an upload into a missing one answers 500
+and logs `Bucket not found`.
+
+Uploads are capped at 5 MB. Images are limited to PNG, JPEG and WebP
 (`IMAGE_EXTENSIONS` in `src/lib/storage.ts`), not `image/*`: an SVG is a
 document the browser runs scripts from when its public URL is opened directly.
-Every upload goes through `saveWithUpload` (`src/lib/upload.ts`), which removes
-the new file if the row cannot be written and the replaced one once it is.
+Quotations are limited to `application/pdf` (`PDF_MIME_TYPE`). Every upload goes
+through `saveWithUpload` (`src/lib/upload.ts`), which removes the new file if
+the row cannot be written and the replaced one once it is.
 
 ## How a request is authenticated
 

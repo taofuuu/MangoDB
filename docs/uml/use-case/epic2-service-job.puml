@@ -1,0 +1,62 @@
+@startuml epic2-service-job
+!include style.iuml
+title EPIC 2: Service and Job Posting Management
+
+actor Provider
+actor Company
+
+rectangle "MangoDB" {
+  usecase "Create service listing\n(US2-1)" as US2_1
+  usecase "View own service listings\n(US2-2)" as US2_2
+  usecase "Edit service listing\n(US2-3)" as US2_3
+  usecase "Delete service listing\n(US2-4)" as US2_4
+  usecase "Submit proposal\n(US2-8)" as US2_8
+  usecase "View hire requests\non own service\n(US2-16)" as US2_16
+  usecase "Accept hire request\n(US2-17)" as US2_17
+  usecase "Reject hire request\n(US2-18)" as US2_18
+
+  usecase "View job postings by status\n(US2-7)" as US2_7
+  usecase "Track sent proposals\nand hire requests\n(US2-9)" as US2_9
+
+  usecase "View Provider's completed work\n(US2-5)" as US2_5
+  usecase "Create and publish job posting\n(US2-6)" as US2_6
+  usecase "View proposals on own job\n(US2-10)" as US2_10
+  usecase "Accept proposal\n(US2-11)" as US2_11
+  usecase "Reject proposal\n(US2-12)" as US2_12
+  usecase "Edit job posting\n(US2-13)" as US2_13
+  usecase "Close job posting\n(US2-14)" as US2_14
+  usecase "Send hire request\n(US2-15)" as US2_15
+}
+
+actor Receiver
+
+Provider -up-|> Company
+Receiver -up-|> Company
+
+Provider --> US2_1
+Provider --> US2_2
+Provider --> US2_3
+Provider --> US2_4
+Provider --> US2_8
+Provider --> US2_16
+Provider --> US2_17
+Provider --> US2_18
+
+Company --> US2_7
+Company --> US2_9
+
+US2_5 <-- Receiver
+US2_6 <-- Receiver
+US2_10 <-- Receiver
+US2_11 <-- Receiver
+US2_12 <-- Receiver
+US2_13 <-- Receiver
+US2_14 <-- Receiver
+US2_15 <-- Receiver
+
+' Accept and reject are done from the list the owner is viewing.
+US2_17 .up.> US2_16 : <<extend>>
+US2_18 .up.> US2_16 : <<extend>>
+US2_11 .up.> US2_10 : <<extend>>
+US2_12 .up.> US2_10 : <<extend>>
+@enduml

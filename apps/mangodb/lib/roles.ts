@@ -16,6 +16,10 @@ export function isReceiverAccount(accountType: string): boolean {
     return accountType === 'RECEIVER' || accountType === 'BOTH';
 }
 
+export function isCompanyAccount(accountType: string): boolean {
+    return isProviderAccount(accountType) || isReceiverAccount(accountType);
+}
+
 export type ListingTab = 'services' | 'jobs';
 
 // The listing tabs on a profile's ServicesSection, your own or another

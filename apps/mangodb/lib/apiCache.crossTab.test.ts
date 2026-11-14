@@ -37,12 +37,16 @@ function nextMessage(channel: BroadcastChannel): Promise<unknown> {
     });
 }
 
-// The module's listener runs in the same message turn the other tab's channel
-// would, but not synchronously with postMessage. Waiting for our own copy of
-// the message is not possible (a channel skips its own posts), so give the
-// event loop a turn.
-function flushMessages(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 20));
+// The message reaches the module's listener some time after postMessage, and
+// later still on a busy machine, so a fixed wait failed now and then (#260).
+// A channel skips its own posts, so there is no event to await: check every
+// few ms until the cache is empty, and give up after a second so a listener
+// that never runs still fails the test.
+async function waitForEmptyCache(): Promise<void> {
+    const giveUpAt = Date.now() + 1000;
+    while (apiCache.cacheSize() > 0 && Date.now() < giveUpAt) {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+    }
 }
 
 before(async () => {
@@ -67,7 +71,7 @@ describe('cross-tab clearing', () => {
         assert.equal(apiCache.cacheSize(), 1);
 
         otherTab.postMessage('clear');
-        await flushMessages();
+        await waitForEmptyCache();
 
         assert.equal(apiCache.cacheSize(), 0);
         await apiCache.cachedGet('/admin/companies/7', load);

@@ -1,0 +1,162 @@
+@startuml code-domain
+' C4 Level 4 (Code): inside the "Domain rules" component of component.puml.
+' C4-PlantUML has no Level 4 macros, so this is a plain UML class diagram.
+' Each <<module>> box is one file in apps/api/src/lib with its exported
+' functions. Nothing here is a real class: the code is functions and types.
+
+top to bottom direction
+hide empty members
+hide circle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #555555
+skinparam ClassBorderColor #3C7FC0
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassBackgroundColor<<component>> #EAEAEA
+skinparam ClassBorderColor<<component>> #999999
+skinparam ClassBackgroundColor<<Prisma model>> #FFF6E5
+skinparam ClassBorderColor<<Prisma model>> #C08A2E
+skinparam PackageBorderColor #3C7FC0
+skinparam PackageFontColor #3C7FC0
+
+title Code diagram — Domain rules (MangoDB API, apps/api/src/lib)
+
+package "Callers (Level 3 components)" {
+    class "proposal.controller" as proposalCtl <<component>>
+    class "project.controller" as projectCtl <<component>>
+    class "quotation.controller" as quotationCtl <<component>>
+    class "company.controller" as companyCtl <<component>>
+    class "admin-company.controller" as adminCtl <<component>>
+    class "requireAuth" as requireAuth <<component>>
+}
+
+package "Domain rules" {
+    class "proposal.ts" as proposal <<module>> {
+        -- queries --
+        findPendingProposalFor(client, proposalId, callerId)
+        setProposalStatus(client, proposalId, ACCEPTED | REJECTED)
+        .. shapes ..
+        proposalSelect, receivedProposalSelect, sentProposalSelect
+        toProposal(), toReceivedProposal(), toSentProposal()
+        toProposalStatusCounts(groups)
+    }
+
+    class "project.ts" as project <<module>> {
+        PROJECT_MOVES : Record<ProjectStatus, ProjectStatus[]>
+        -- queries --
+        createProjectFromProposal(tx, proposal) : Project
+        moveProjectStatus(tx, projectId, from, to)
+        assertProjectParty(projectId, callerId) : ProjectParty
+        saveProjectEvent(tx, projectId, updateType)
+        .. rules, no database ..
+        projectParties(proposal) : { providerId, receiverId }
+        assertProjectStatus(project, status)
+        projectPartyWhere(companyId)
+        providerCompletedProjectsWhere(companyId)
+        .. shapes ..
+        projectSelect, projectViewSelect, completedProjectSelect
+        toProject(), toProjectSummary(), toProjectDetail()
+        toCompletedProject(), toProjectUpdate()
+    }
+
+    class "project-eligibility.ts" as eligibility <<module>> {
+        FINISHED_STATUSES = COMPLETED, CANCELLED
+        ONGOING_PROJECT_BLOCKS_DELETE : string
+        -- queries --
+        hasOngoingProject(companyId) : boolean
+    }
+
+    class "company-deletion.ts" as deletion <<module>> {
+        -- queries --
+        softDeleteCompany(companyId) : boolean
+        isSessionEnded(companyId, issuedAt) : boolean
+    }
+
+    class "review.ts" as review <<module>> {
+        .. shapes ..
+        reviewSelect, companyReviewSelect
+        toReview(), toCompanyReview()
+    }
+
+    class "rating.ts" as rating <<module>> {
+        .. rules, no database ..
+        averageScore(reviews) : number | null
+        getRating(source) : ReviewSummary
+        .. shapes ..
+        ratingSelect
+    }
+}
+
+package "Prisma models (schema)" {
+    class Company <<Prisma model>> {
+        companyId
+        accountType
+        deletedAt
+        credentialsChangedAt
+    }
+    class Listing <<Prisma model>> {
+        listingId
+        companyId
+        listingType
+        listingStatus
+    }
+    class Proposal <<Prisma model>> {
+        proposalId
+        listingId
+        senderId
+        proposalBudget
+        proposalStatus
+    }
+    class Project <<Prisma model>> {
+        projectId
+        proposalId
+        projectStatus
+        depositReportedAt
+        completedAt
+    }
+    class ProjectUpdate <<Prisma model>> {
+        projectUpdateId
+        projectId
+        updateType
+        updateText
+    }
+    class Review <<Prisma model>> {
+        reviewId
+        projectId
+        4 scores, comment
+    }
+
+    Company "1" -right- "*" Listing : owns
+    Company "1" -[norank]- "*" Proposal : sends
+    Listing "1" -right- "*" Proposal
+    Proposal "1" -right- "0..1" Project : accepted
+    Project "1" -right- "*" ProjectUpdate : timeline
+    Project "1" -right- "0..1" Review
+}
+
+' Callers -> modules
+proposalCtl --> proposal : find pending,\nset status
+proposalCtl --> project : createProjectFromProposal
+projectCtl --> project : assert party,\nmove status
+projectCtl --> review : toReview
+quotationCtl --> project : assert party,\nmove status
+companyCtl --> eligibility : hasOngoingProject
+companyCtl --> deletion : softDeleteCompany
+companyCtl --> rating : getRating
+companyCtl --> review : toCompanyReview
+adminCtl --> eligibility : hasOngoingProject
+adminCtl --> deletion : softDeleteCompany
+requireAuth --> deletion : isSessionEnded
+
+' Modules -> modules
+project ..> rating : averageScore
+eligibility ..> project : projectPartyWhere
+
+' Modules -> models (reads and writes made by the module itself)
+proposal ---> Proposal : reads, updates status
+project ---> Project : creates,\nupdates status
+project ---> ProjectUpdate : creates events
+eligibility ---> Project : reads
+deletion ---> Company : reads,\nsets deletedAt
+
+@enduml

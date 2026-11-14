@@ -13,6 +13,7 @@ import { prisma } from './prisma';
 import { companyBriefSelect, toCompanyBrief } from './company-profile';
 import { containsWord, splitWords } from './search';
 import { categoryNameWhere, listingBudgetWhere } from './listing';
+import { getRating, ratingSelect, type RatingSource } from './rating';
 import type { Prisma } from '../generated/prisma/client';
 import type { ServiceListQuery } from '../schemas/service.schema';
 
@@ -202,6 +203,17 @@ export function serviceFilterWhere({
     return where;
 }
 
+export type RatingSortOrder = Extract<
+    ServiceListQuery['orderBy'],
+    'ratingDesc' | 'ratingAsc'
+>;
+
+export function isRatingSortOrder(
+    orderBy: ServiceListQuery['orderBy'],
+): orderBy is RatingSortOrder {
+    return orderBy === 'ratingDesc' || orderBy === 'ratingAsc';
+}
+
 // Ordering is applied in the database, before pagination. Price ordering uses
 // the start of the service's range consistently in both directions. Missing
 // prices sort last because "Contact for pricing" must not be presented as the
@@ -223,6 +235,9 @@ export function serviceOrderBy(
                 { listingId: 'desc' },
             ];
         case 'newest':
+        case 'ratingDesc':
+        case 'ratingAsc':
+            // Only the tie-break for rating; sortServicesByRating does the rest.
             return [{ createdAt: 'desc' }, { listingId: 'desc' }];
     }
 }
@@ -247,8 +262,9 @@ export function serviceSearchWhere({
     };
 }
 
-// US3-1. What one service search card needs. Only these company fields, never
-// the whole row: it holds the sign-in email and password hash (ADR 0001).
+// US3-1, US3-3. What one service search card needs. Only these company fields
+// and completed-project review scores, never the whole row: it holds the
+// sign-in email and password hash (ADR 0001).
 export const serviceSummarySelect = {
     listingId: true,
     listingTitle: true,
@@ -259,7 +275,7 @@ export const serviceSummarySelect = {
         select: { category: { select: { categoryName: true } } },
     },
     service: serviceTechStackSelect,
-    company: { select: companyBriefSelect },
+    company: { select: { ...companyBriefSelect, ...ratingSelect } },
 } as const satisfies Prisma.ListingSelect;
 
 interface ServiceSummaryRow {
@@ -270,7 +286,31 @@ interface ServiceSummaryRow {
     maxBudget: number | null;
     listingCategory: { category: { categoryName: string } }[];
     service: ServiceTechStackRow;
-    company: CompanyBrief | null;
+    company: (CompanyBrief & RatingSource) | null;
+}
+
+// US3-3. Orders services by their Provider's averageRating using getRating.
+// Unrated Providers (averageRating === null) sort last in both directions.
+// Array.prototype.sort is stable in ES2019+, so rows already ordered by
+// serviceOrderBy('newest') keep their newest-first tie-breaker.
+export function sortServicesByRating<
+    T extends { company: RatingSource | null },
+>(rows: readonly T[], orderBy: RatingSortOrder): T[] {
+    const scored = rows.map((row) => ({
+        row,
+        rating: row.company ? getRating(row.company).averageRating : null,
+    }));
+
+    scored.sort((a, b) => {
+        if (a.rating === null && b.rating === null) return 0;
+        if (a.rating === null) return 1;
+        if (b.rating === null) return -1;
+        return orderBy === 'ratingDesc'
+            ? b.rating - a.rating
+            : a.rating - b.rating;
+    });
+
+    return scored.map(({ row }) => row);
 }
 
 export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
@@ -286,6 +326,9 @@ export function toServiceSummary(row: ServiceSummaryRow): ServiceSummary {
             .sort(),
         techStack: toTechStackNames(row.service),
         company: toCompanyBrief(row.company),
+        ...(row.company
+            ? getRating(row.company)
+            : { averageRating: null, ratingCount: 0 }),
     };
 }
 

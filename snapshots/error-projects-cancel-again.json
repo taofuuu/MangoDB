@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/cancel",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "Project cannot move from CANCELLED to CANCELLED"
+        }
+    }
+}
