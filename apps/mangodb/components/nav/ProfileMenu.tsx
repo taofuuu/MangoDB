@@ -9,9 +9,9 @@ import { useDismiss } from '@/lib/useDismiss';
 
 // The avatar button and the small panel it opens, like GitHub's profile menu:
 // who is signed in at the top, then View profile, Edit profile, Your
-// proposals, Explore companies, Settings and Logout. Your proposals is the
-// proposals a Provider sent and the hire requests a Receiver sent, so every
-// company sees it.
+// proposals, Your projects, Search companies, Settings and Logout. Your
+// proposals is the proposals a Provider sent and the hire requests a Receiver
+// sent, so every company sees it.
 //
 // The panel stays mounted and is only hidden when closed. LogoutButton owns
 // its confirmation modal, so unmounting the panel would unmount the modal too.
@@ -108,7 +108,7 @@ export default function ProfileMenu({ profile }: ProfileMenuProps) {
                     onClick={() => setIsOpen(false)}
                     className={ITEM_CLASS}
                 >
-                    Explore companies
+                    Search companies
                 </Link>
                 <Link
                     href="/account-settings"

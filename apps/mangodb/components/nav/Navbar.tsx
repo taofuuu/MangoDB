@@ -22,12 +22,14 @@ import ProfileMenu from './ProfileMenu';
 // in the corner yet.
 const HIDDEN_ON = ['/login', '/admin/login', '/register'];
 
-// The searches, the app's main ways in. Uppercase on screen to match the
-// Figma navbar's links; the source stays sentence case for screen readers.
-// shortLabel is for phones, where the full label wraps onto two lines.
+// The searches and your own work, the app's main ways in, so no page needs a
+// typed URL. Uppercase on screen to match the Figma navbar's links; the source
+// stays sentence case for screen readers. shortLabel is for narrower screens,
+// where five full labels do not fit on one line.
 // canUse matches the page's own gate: providers look for jobs, receivers for
 // services, and a BOTH company gets the two. Every company can look for other
-// companies; admins have /admin/companies instead.
+// companies and has projects and proposals; admins have /admin/companies
+// instead.
 const NAV_LINKS = [
     {
         href: '/jobs',
@@ -43,8 +45,20 @@ const NAV_LINKS = [
     },
     {
         href: '/companies',
-        label: 'Explore companies',
+        label: 'Search companies',
         shortLabel: 'Companies',
+        canUse: isCompanyAccount,
+    },
+    {
+        href: '/projects',
+        label: 'My projects',
+        shortLabel: 'Projects',
+        canUse: isCompanyAccount,
+    },
+    {
+        href: '/proposals',
+        label: 'My proposals',
+        shortLabel: 'Proposals',
         canUse: isCompanyAccount,
     },
 ];
@@ -89,8 +103,8 @@ export default function Navbar() {
         // The page's cream with a grey line and a soft shadow in the brand's
         // deep teal. The accents inside stay teal, the app's action colour.
         <header className="sticky top-0 z-30 border-b border-line bg-surface shadow-[0_4px_12px_-6px_color-mix(in_srgb,var(--color-brand-deep)_18%,transparent)]">
-            {/* The phone gaps are tight so a BOTH company's three links, the bell
-                and the avatar still fit on a 360px screen. */}
+            {/* The phone gaps are tight so the links keep as much room as they
+                can next to the bell and the avatar on a 360px screen. */}
             <nav className="flex h-16 items-center justify-between gap-3 px-[2.19vw] sm:gap-6">
                 <Link
                     href="/"
@@ -112,8 +126,12 @@ export default function Navbar() {
                     </span>
                 </Link>
 
-                <div className="flex items-center gap-2 sm:gap-8 xl:gap-10">
-                    <ul className="flex items-center gap-2 sm:gap-6 xl:gap-8">
+                <div className="flex min-w-0 items-center gap-2 sm:gap-8 xl:gap-10">
+                    {/* A BOTH company's five links are wider than a phone or
+                        tablet, so there the row scrolls sideways instead of
+                        widening the page. The padding keeps the focus ring
+                        inside it. */}
+                    <ul className="flex items-center gap-2 sm:gap-6 xl:gap-8 max-lg:min-w-0 max-lg:overflow-x-auto max-lg:px-1 max-lg:py-2">
                         {links.map((link) => {
                             const isCurrent = pathname === link.href;
                             return (
@@ -131,10 +149,10 @@ export default function Navbar() {
                                                 : 'border-transparent text-ink hover:border-brand/40 hover:text-brand-deep'
                                         }`}
                                     >
-                                        <span className="sm:hidden">
+                                        <span className="xl:hidden">
                                             {link.shortLabel}
                                         </span>
-                                        <span className="max-sm:hidden">
+                                        <span className="max-xl:hidden">
                                             {link.label}
                                         </span>
                                     </Link>
