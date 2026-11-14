@@ -47,9 +47,9 @@ class "SentProposal" as SentProposalRep <<Representation>> {
 }
 class "ProposalStatusCounts" as ProposalStatusCountsRep <<Representation>> {
   -total : integer
-  -PENDING : integer
-  -ACCEPTED : integer
-  -REJECTED : integer
+  -pending : integer
+  -accepted : integer
+  -rejected : integer
 }
 class "Project" as ProjectRep <<Representation>> {
   -projectId : integer

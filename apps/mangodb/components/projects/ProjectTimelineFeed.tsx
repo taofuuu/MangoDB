@@ -16,6 +16,7 @@ import {
     SendHorizontal,
     Trash2,
 } from 'lucide-react';
+import { formatSlashDate } from '@/lib/dates';
 
 export type TimelineEventType =
     | 'proposal-accepted'
@@ -43,20 +44,6 @@ export type TimelineEvent = {
 type ProjectTimelineFeedProps = {
     events: TimelineEvent[];
 };
-
-function formatSlashDate(iso?: string | null): string {
-    if (!iso) return '';
-    try {
-        const d = new Date(iso);
-        if (isNaN(d.getTime())) return iso;
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}/${month}/${year}`;
-    } catch {
-        return iso;
-    }
-}
 
 export default function ProjectTimelineFeed({
     events,

@@ -8,6 +8,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { ApiError } from './api-error';
 import { prisma } from './prisma';
 import { projectParties } from './project';
+import { BUCKETS, signStorageUrls } from './storage';
 
 // US4-1, ADR 0017. A quotation PDF on a project.
 export const quotationSelect = {
@@ -37,9 +38,30 @@ export function toQuotation(row: QuotationRow): Quotation {
     };
 }
 
+// How long a quotation link opens for: an hour, the same as a session.
+const QUOTATION_LINK_SECONDS = 60 * 60;
+
+// What every quotation endpoint answers with. The quotation bucket is private
+// (a price sheet is the two parties' business), so quotationFile goes out as a
+// signed link that expires instead of the stored URL, which does not open.
+export async function toQuotations(rows: QuotationRow[]): Promise<Quotation[]> {
+    const links = await signStorageUrls(
+        rows.map((row) => row.quotationFile),
+        BUCKETS.QUOTATION,
+        QUOTATION_LINK_SECONDS,
+    );
+    return rows.map((row, i) => ({
+        ...toQuotation(row),
+        quotationFile: links[i]!,
+    }));
+}
+
 export type QuotationParty = {
     projectId: number;
+    proposalId: number;
     projectStatus: ProjectStatus;
+    providerId: number;
+    receiverId: number;
     myRole: ProjectRole;
 };
 
@@ -58,6 +80,7 @@ export async function assertQuotationParty(
             projectId: true,
             project: {
                 select: {
+                    proposalId: true,
                     projectStatus: true,
                     proposal: {
                         select: {
@@ -82,7 +105,9 @@ export async function assertQuotationParty(
     }
     return {
         projectId: quotation.projectId,
+        proposalId: quotation.project.proposalId,
         projectStatus: quotation.project.projectStatus as ProjectStatus,
+        ...parties,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
 }

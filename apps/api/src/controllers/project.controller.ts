@@ -6,17 +6,18 @@ import type {
     ProjectSummary,
     ProjectUpdateType,
 } from '@mangodb/shared';
-import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../lib/api-error';
 import { pageArgs, toPagination } from '../lib/pagination';
-import { isUniqueViolation, orConflict } from '../lib/prisma-errors';
+import { orConflict, orDuplicate } from '../lib/prisma-errors';
 import {
     assertProjectParty,
+    assertProjectStatus,
     completedProjectSelect,
     moveProjectStatus,
     projectSelect,
     projectUpdateSelect,
+    projectPartyWhere,
     projectViewSelect,
     providerCompletedProjectsWhere,
     saveProjectEvent,
@@ -26,6 +27,8 @@ import {
     toProjectSummary,
     toProjectUpdate,
 } from '../lib/project';
+import { findPublicCompany } from '../lib/company-lookup';
+import { notifyOtherParty } from '../lib/notification';
 import { reviewSelect, toReview } from '../lib/review';
 import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { companyIdParamSchema } from '../schemas/company.schema';
@@ -47,13 +50,8 @@ export async function listMyProjects(
     const callerId = req.auth!.companyId;
     const { page, pageSize } = parseQuery(projectListQuerySchema, req.query);
 
-    // The two parties are the proposal's sender and the listing's owner
-    // (projectParties). No deletedAt filter: a project is history.
-    const where: Prisma.ProjectWhereInput = {
-        proposal: {
-            OR: [{ senderId: callerId }, { listing: { companyId: callerId } }],
-        },
-    };
+    // No deletedAt filter: a project is history.
+    const where = projectPartyWhere(callerId);
 
     const [totalItems, rows] = await prisma.$transaction([
         prisma.project.count({ where }),
@@ -123,9 +121,7 @@ export async function createProjectUpdate(
     if (project.myRole !== 'provider') {
         throw ApiError.forbidden('Only the Provider can add a progress update');
     }
-    if (project.projectStatus !== ('IN_PROGRESS' satisfies ProjectStatus)) {
-        throw ApiError.conflict('Project is not IN_PROGRESS');
-    }
+    assertProjectStatus(project, 'IN_PROGRESS');
 
     const row = await prisma.projectUpdate.create({
         data: {
@@ -152,11 +148,7 @@ export async function reportDeposit(
     if (project.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can report the deposit');
     }
-    if (
-        project.projectStatus !== ('AWAITING_DEPOSIT' satisfies ProjectStatus)
-    ) {
-        throw ApiError.conflict('Project is not AWAITING_DEPOSIT');
-    }
+    assertProjectStatus(project, 'AWAITING_DEPOSIT');
 
     // The where repeats the checks, so a double click finds no row to update
     // and becomes a 409 instead of moving the time. One transaction: the time
@@ -175,6 +167,7 @@ export async function reportDeposit(
             'Deposit has already been reported',
         );
         await saveProjectEvent(tx, projectId, 'DEPOSIT_REPORTED');
+        await notifyOtherParty(tx, project, 'DEPOSIT_REPORTED');
         return updated;
     });
     res.json(toProject(row));
@@ -212,6 +205,7 @@ export async function confirmDeposit(
             'The Receiver has not reported the deposit yet',
         );
         await saveProjectEvent(tx, projectId, 'DEPOSIT_CONFIRMED');
+        await notifyOtherParty(tx, project, 'DEPOSIT_CONFIRMED');
         return updated;
     });
     res.json(toProject(row));
@@ -235,6 +229,7 @@ export async function cancelProject(
             'CANCELLED',
         );
         await saveProjectEvent(tx, projectId, 'PROJECT_CANCELLED');
+        await notifyOtherParty(tx, project, 'PROJECT_CANCELLED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -264,6 +259,7 @@ export async function submitWork(req: Request, res: Response): Promise<void> {
             'AWAITING_ACCEPTANCE',
         );
         await saveProjectEvent(tx, projectId, 'WORK_SUBMITTED');
+        await notifyOtherParty(tx, project, 'WORK_SUBMITTED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -300,6 +296,7 @@ export async function rejectWork(req: Request, res: Response): Promise<void> {
                 updateText: reason,
             },
         });
+        await notifyOtherParty(tx, project, 'WORK_REJECTED');
         return tx.project.findUniqueOrThrow({
             where: { projectId },
             select: projectSelect,
@@ -328,6 +325,7 @@ export async function acceptWork(req: Request, res: Response): Promise<void> {
             'COMPLETED',
         );
         await saveProjectEvent(tx, projectId, 'WORK_ACCEPTED');
+        await notifyOtherParty(tx, project, 'WORK_ACCEPTED');
         return tx.project.update({
             where: { projectId },
             data: { completedAt: new Date() },
@@ -348,30 +346,16 @@ export async function createReview(req: Request, res: Response): Promise<void> {
     if (project.myRole !== 'receiver') {
         throw ApiError.forbidden('Only the Receiver can review the project');
     }
-    if (project.projectStatus !== ('COMPLETED' satisfies ProjectStatus)) {
-        throw ApiError.conflict('Project is not COMPLETED');
-    }
+    assertProjectStatus(project, 'COMPLETED');
 
-    try {
-        const row = await prisma.review.create({
-            data: {
-                projectId,
-                workQualityScore: body.workQualityScore,
-                serviceScore: body.serviceScore,
-                valueForMoneyScore: body.valueForMoneyScore,
-                deliveryTimeScore: body.deliveryTimeScore,
-                comment: body.comment ?? null,
-            },
+    const row = await orDuplicate(
+        prisma.review.create({
+            data: { projectId, ...body, comment: body.comment ?? null },
             select: reviewSelect,
-        });
-
-        res.status(201).json(toReview(row));
-    } catch (err) {
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict('Project has already been reviewed');
-        }
-        throw err;
-    }
+        }),
+        'Project has already been reviewed',
+    );
+    res.status(201).json(toReview(row));
 }
 // US5-3. The project's review, for both parties. 404 until the Receiver submits
 // one. Outsiders get 404 (conventions §4).
@@ -405,13 +389,7 @@ export async function listProviderCompletedProjects(
         req.query,
     );
 
-    const company = await prisma.company.findFirst({
-        where: { companyId, deletedAt: null, accountType: { not: 'ADMIN' } },
-        select: { companyId: true },
-    });
-    if (!company) {
-        throw ApiError.notFound('Company not found');
-    }
+    await findPublicCompany(companyId, { companyId: true });
 
     const where = providerCompletedProjectsWhere(companyId);
 

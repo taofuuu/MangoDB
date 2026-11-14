@@ -21,20 +21,21 @@ together:
 3. **Sequence diagrams** (Mermaid, on each router page): the steps inside the
    server for each endpoint.
 
-| Router       | Mounted at      | Endpoints | Page                               | UML                                        |
-| ------------ | --------------- | --------- | ---------------------------------- | ------------------------------------------ |
-| Health       | `/health`       | 1         | [below](#get-health)               | [health.puml](uml/health.puml)             |
-| Auth         | `/auth`         | 5         | [auth.md](auth.md)                 | [auth.puml](uml/auth.puml)                 |
-| Admin        | `/admin`        | 4         | [admin.md](admin.md)               | [admin.puml](uml/admin.puml)               |
-| Companies    | `/companies`    | 11        | [companies.md](companies.md)       | [companies.puml](uml/companies.puml)       |
-| Services     | `/services`     | 9         | [services.md](services.md)         | [services.puml](uml/services.puml)         |
-| Portfolios   | `/portfolios`   | 5         | [portfolios.md](portfolios.md)     | [portfolios.puml](uml/portfolios.puml)     |
-| Certificates | `/certificates` | 5         | [certificates.md](certificates.md) | [certificates.puml](uml/certificates.puml) |
-| Jobs         | `/jobs`         | 8         | [jobs.md](jobs.md)                 | [jobs.puml](uml/jobs.puml)                 |
-| Proposals    | `/proposals`    | 4         | [proposals.md](proposals.md)       | [proposals.puml](uml/proposals.puml)       |
-| Projects     | `/projects`     | 14        | [projects.md](projects.md)         | [projects.puml](uml/projects.puml)         |
-| Quotations   | `/quotations`   | 3         | [quotations.md](quotations.md)     | [quotations.puml](uml/quotations.puml)     |
-| Categories   | `/categories`   | 1         | [categories.md](categories.md)     | [categories.puml](uml/categories.puml)     |
+| Router        | Mounted at       | Endpoints | Page                                 | UML                                          |
+| ------------- | ---------------- | --------- | ------------------------------------ | -------------------------------------------- |
+| Health        | `/health`        | 1         | [below](#get-health)                 | [health.puml](uml/health.puml)               |
+| Auth          | `/auth`          | 5         | [auth.md](auth.md)                   | [auth.puml](uml/auth.puml)                   |
+| Admin         | `/admin`         | 4         | [admin.md](admin.md)                 | [admin.puml](uml/admin.puml)                 |
+| Companies     | `/companies`     | 11        | [companies.md](companies.md)         | [companies.puml](uml/companies.puml)         |
+| Services      | `/services`      | 9         | [services.md](services.md)           | [services.puml](uml/services.puml)           |
+| Portfolios    | `/portfolios`    | 5         | [portfolios.md](portfolios.md)       | [portfolios.puml](uml/portfolios.puml)       |
+| Certificates  | `/certificates`  | 5         | [certificates.md](certificates.md)   | [certificates.puml](uml/certificates.puml)   |
+| Jobs          | `/jobs`          | 8         | [jobs.md](jobs.md)                   | [jobs.puml](uml/jobs.puml)                   |
+| Proposals     | `/proposals`     | 4         | [proposals.md](proposals.md)         | [proposals.puml](uml/proposals.puml)         |
+| Projects      | `/projects`      | 14        | [projects.md](projects.md)           | [projects.puml](uml/projects.puml)           |
+| Quotations    | `/quotations`    | 3         | [quotations.md](quotations.md)       | [quotations.puml](uml/quotations.puml)       |
+| Categories    | `/categories`    | 1         | [categories.md](categories.md)       | [categories.puml](uml/categories.puml)       |
+| Notifications | `/notifications` | 2         | [notifications.md](notifications.md) | [notifications.puml](uml/notifications.puml) |
 
 When you add or change an endpoint, update its `.puml` (and `.svg`), its
 `@openapi` block, and its sequence diagram in the same PR.
@@ -100,28 +101,9 @@ the full diagram for its part. Source:
 
 The layers a request passes through. Arrows point from caller to callee.
 
-```mermaid
-flowchart LR
-    Browser["Browser<br/>(Next.js app)"] -->|/api/* proxy| Next["Next.js server<br/>next.config.ts rewrite"]
-    Next -->|HTTP JSON / multipart| App["app.ts<br/>cors, json, cookieParser"]
+![Component diagram](uml/component.png)
 
-    subgraph API["apps/api"]
-        App --> Routes["routes/*.routes.ts"]
-        Routes --> MW["middleware<br/>requireAuth, requireRole,<br/>uploadImage, loginLimiter"]
-        MW --> Ctl["controllers/*.controller.ts"]
-        Ctl --> Val["middleware/validate.ts<br/>parseBody, parseParams, parseQuery<br/>(Zod schemas/*)"]
-        Ctl --> Lib["lib/*<br/>business rules, selects, mappers"]
-        Ctl --> Prisma["lib/prisma.ts<br/>Prisma client"]
-        Lib --> Prisma
-        Lib --> Storage["lib/storage.ts"]
-        Ctl -. throws ApiError .-> EH["middleware/errorHandler.ts"]
-        Lib -. throws ApiError .-> EH
-    end
-
-    Prisma --> DB[("PostgreSQL<br/>(Supabase)")]
-    Storage --> Bucket[("Supabase Storage<br/>buckets")]
-    MW --> Deny[("revokedToken<br/>+ company.deletedAt")]
-```
+Source: [uml/component.mmd](uml/component.mmd). After an edit, export the PNG again.
 
 ## Class diagram: error envelope
 
@@ -187,8 +169,8 @@ sequenceDiagram
         A-->>EH: 401 UNAUTHORIZED
     end
     A->>DB: isTokenRevoked(jti)
-    A->>DB: isCompanyDeleted(sub)
-    alt revoked or deleted
+    A->>DB: isSessionEnded(sub, iat)
+    alt revoked, deleted, or credentials changed
         A-->>EH: 401 Session has ended
     end
     A->>R: req.auth = claims + companyId

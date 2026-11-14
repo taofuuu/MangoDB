@@ -239,7 +239,19 @@ export function providerCompletedProjectsWhere(
     };
 }
 
+// The projects a company sits on, either side: the sender of the accepted
+// proposal or the owner of its listing. The rule projectParties applies,
+// written as a filter.
+export function projectPartyWhere(companyId: number): Prisma.ProjectWhereInput {
+    return {
+        proposal: {
+            OR: [{ senderId: companyId }, { listing: { companyId } }],
+        },
+    };
+}
+
 export type ProjectParty = {
+    proposalId: number;
     projectStatus: ProjectStatus;
     providerId: number;
     receiverId: number;
@@ -258,6 +270,7 @@ export async function assertProjectParty(
     const project = await prisma.project.findUnique({
         where: { projectId },
         select: {
+            proposalId: true,
             projectStatus: true,
             proposal: {
                 select: {
@@ -274,10 +287,22 @@ export async function assertProjectParty(
         throw ApiError.notFound(PROJECT_NOT_FOUND);
     }
     return {
+        proposalId: project.proposalId,
         projectStatus: project.projectStatus as ProjectStatus,
         ...parties,
         myRole: callerId === parties.providerId ? 'provider' : 'receiver',
     };
+}
+
+// For an action that needs the project in one status but does not move it:
+// a 409 otherwise, worded like moveProjectStatus's below.
+export function assertProjectStatus(
+    project: { projectStatus: ProjectStatus },
+    status: ProjectStatus,
+): void {
+    if (project.projectStatus !== status) {
+        throw ApiError.conflict(`Project is not ${status}`);
+    }
 }
 
 // ADR 0015: the only moves a project may make. COMPLETED and CANCELLED are

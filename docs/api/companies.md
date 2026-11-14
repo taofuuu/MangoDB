@@ -249,7 +249,7 @@ sequenceDiagram
     Ctl->>D: softDeleteCompany(companyId)
     D->>DB: company.updateMany set deletedAt = now
     Ctl-->>C: 204
-    Note over C,DB: The next request with the old token fails in requireAuth (isCompanyDeleted) with 401.
+    Note over C,DB: The next request with the old token fails in requireAuth (isSessionEnded) with 401.
 ```
 
 ## GET /companies/:companyId/completed-projects

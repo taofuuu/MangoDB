@@ -32,10 +32,12 @@ export interface AuthTokenPayload {
 }
 
 // What a verified token carries back. jti identifies the individual token so
-// logout can revoke it; exp bounds how long that revocation must be remembered.
+// logout can revoke it; exp bounds how long that revocation must be remembered;
+// iat (issued at, in seconds) ends tokens older than a credential change.
 export interface AuthTokenClaims extends AuthTokenPayload {
     jti: string;
     exp: number;
+    iat: number;
 }
 
 // The free-text status columns, pinned to a closed set. All are VarChar(50) in
@@ -79,6 +81,25 @@ export const PROJECT_UPDATE_TYPES = [
     'PROJECT_CANCELLED',
 ] as const;
 export type ProjectUpdateType = (typeof PROJECT_UPDATE_TYPES)[number];
+
+// notification.notification_type: what one bell notice says happened (T4.1.5,
+// ADR 0017). Named like PROJECT_UPDATE_TYPES where it is the same event.
+// PROPOSAL_RECEIVED is a proposal on a job or a hire request on a service.
+export const NOTIFICATION_TYPES = [
+    'PROPOSAL_RECEIVED',
+    'PROPOSAL_ACCEPTED',
+    'PROPOSAL_REJECTED',
+    'QUOTATION_SENT',
+    'QUOTATION_ACCEPTED',
+    'QUOTATION_REJECTED',
+    'DEPOSIT_REPORTED',
+    'DEPOSIT_CONFIRMED',
+    'PROJECT_CANCELLED',
+    'WORK_SUBMITTED',
+    'WORK_REJECTED',
+    'WORK_ACCEPTED',
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
 export const LISTING_TYPES = ['SERVICE', 'JOB'] as const;
@@ -290,9 +311,10 @@ export interface ChangeCredentialsRequest {
     newPassword?: string | undefined;
 }
 
-// US6-4. The admin's own password, confirming intent before an irreversible
-// delete of another company's account. Same currentPassword shape as
-// ChangeCredentialsRequest, checked against the admin's own row.
+// US1-6 / US6-4. The caller's own password, confirming intent before an
+// irreversible delete: a company deleting itself, or an admin deleting another
+// company. Same currentPassword shape as ChangeCredentialsRequest, checked
+// against the caller's own row.
 export interface DeleteCompanyAccountRequest {
     currentPassword: string;
 }
@@ -563,6 +585,22 @@ export interface ProjectUpdate {
     projectId: number;
     updateType: ProjectUpdateType;
     updateText: string | null;
+    createdAt: string;
+}
+
+// T4.1.5. One notice of GET /notifications/mine, newest first. sender is the
+// company that acted; the listing is the one the proposal was sent to.
+// projectId is null until that proposal is accepted. readAt is null until
+// the recipient opens the bell.
+export interface Notification {
+    notificationId: number;
+    notificationType: NotificationType;
+    sender: CompanyBrief;
+    listingId: number;
+    listingType: ListingType;
+    listingTitle: string;
+    projectId: number | null;
+    readAt: string | null;
     createdAt: string;
 }
 

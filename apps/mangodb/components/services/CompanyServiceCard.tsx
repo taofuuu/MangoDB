@@ -66,7 +66,7 @@ export default function CompanyServiceCard({
                         </p>
                     )}
 
-                    <div className="mt-1.5 flex items-center gap-1.5 type-xs font-medium text-brand">
+                    <div className="mt-1.5 flex items-center gap-1.5 type-xs !font-[500] text-brand">
                         <Tag className="h-3.5 w-3.5 shrink-0 rotate-90" />
                         <span>
                             {formatBudgetRange(

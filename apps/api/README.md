@@ -73,11 +73,19 @@ in `src/lib/storage.ts`:
 | `profile`     | `companies/`    | `company.company_photo`             |
 | `quotation`   | `quotations/`   | `quotation.quotation_file`          |
 
-All four are **public** buckets: the URL in the column is served straight to
-the browser, with no signing step. Create a missing one in the Supabase
-dashboard under Storage → New bucket, with "Public bucket" on. Nothing in the
-app creates buckets, so an upload into a missing one answers 500 and logs
-`Bucket not found`.
+`certificate`, `portfolio` and `profile` are **public** buckets: the URL in the
+column is served straight to the browser, with no signing step. `quotation` is
+**private**, because a quotation is a price sheet between two companies: the
+column still holds the URL `getPublicUrl` gave, but that URL does not open, so
+every quotation endpoint swaps it for a link that expires after an hour
+(`toQuotations` in `src/lib/quotation.ts`, `signStorageUrls` in
+`src/lib/storage.ts`). If signing fails, the failure is logged and the stored URL
+goes out instead, because the row may already be saved.
+
+Create a missing bucket in the Supabase dashboard under Storage → New bucket,
+with "Public bucket" on for the three public ones and off for `quotation`.
+Nothing in the app creates buckets, so an upload into a missing one answers 500
+and logs `Bucket not found`.
 
 Uploads are capped at 5 MB. Images are limited to PNG, JPEG and WebP
 (`IMAGE_EXTENSIONS` in `src/lib/storage.ts`), not `image/*`: an SVG is a

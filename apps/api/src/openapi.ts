@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import {
@@ -6,6 +7,7 @@ import {
     JOB_SORT_ORDERS,
     LISTING_STATUSES,
     LISTING_TYPES,
+    NOTIFICATION_TYPES,
     PROJECT_STATUSES,
     PROJECT_UPDATE_TYPES,
     PROPOSAL_STATUSES,
@@ -616,7 +618,7 @@ const schemas: Record<string, Schema> = {
             quotationFile: {
                 type: 'string',
                 format: 'uri',
-                description: 'Public URL of the PDF',
+                description: 'Link to the PDF. Expires after an hour',
             },
             quotationStatus: { type: 'string', enum: [...QUOTATION_STATUSES] },
             createdAt: { type: 'string', format: 'date-time' },
@@ -639,6 +641,24 @@ const schemas: Record<string, Schema> = {
         properties: {
             categoryId: { type: 'integer' },
             categoryName: { type: 'string' },
+        },
+    },
+
+    // The navbar bell (T4.1.5, ADR 0017).
+    Notification: {
+        type: 'object',
+        properties: {
+            notificationId: { type: 'integer' },
+            notificationType: { type: 'string', enum: [...NOTIFICATION_TYPES] },
+            // The company that acted.
+            sender: ref('CompanyBrief'),
+            listingId: { type: 'integer' },
+            listingType: { type: 'string', enum: [...LISTING_TYPES] },
+            listingTitle: { type: 'string' },
+            // Null until the proposal is accepted.
+            projectId: nullable('integer'),
+            readAt: nullable('string', { format: 'date-time' }),
+            createdAt: { type: 'string', format: 'date-time' },
         },
     },
 };
@@ -667,7 +687,10 @@ const definition = {
     openapi: '3.1.0',
     info: {
         title: 'MangoDB API',
-        version: '1.0.0',
+        // The release number, so `npm version` is the only place to bump it.
+        version: JSON.parse(
+            readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'),
+        ).version,
         description:
             'Sign in with POST /auth/login, copy accessToken, then press Authorize. ' +
             'UML API Diagrams for the same endpoints are in docs/api/.',
@@ -686,6 +709,7 @@ const definition = {
         'Projects',
         'Quotations',
         'Categories',
+        'Notifications',
     ].map((name) => ({ name })),
     servers: [
         { url: '/', description: 'The API itself (localhost:4000)' },

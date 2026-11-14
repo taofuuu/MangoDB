@@ -89,7 +89,7 @@ export default function ProjectReviewView({
             <div className="mx-auto w-full max-w-3xl">
                 <Link
                     href={projectPath}
-                    className="inline-flex items-center gap-2 type-sm font-semibold text-brand transition-colors hover:text-brand-dark"
+                    className="inline-flex items-center gap-2 type-sm !font-[600] text-brand transition-colors hover:text-brand-dark"
                 >
                     <ArrowLeft aria-hidden="true" className="size-4" />
                     Back to project

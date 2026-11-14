@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { SentProposal } from '@mangodb/shared';
+import type { ProposalStatus, SentProposal } from '@mangodb/shared';
 import { ArrowRight, CalendarDays, Clock, Tag, X } from 'lucide-react';
 import CompanyAvatar from '@/components/companies/CompanyAvatar';
 import { formatDateTime, formatMonths } from '@/lib/dates';
@@ -28,7 +28,7 @@ export default function MyProposalDetail({
     return (
         <section
             aria-label={`${kind.label} for ${proposal.listingTitle}`}
-            className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[80vh] lg:max-h-none lg:flex-1"
+            className="flex max-h-[78vh] w-full min-w-0 flex-col rounded-popup border border-brand/40 bg-surface-white px-6 py-6 shadow-card lg:h-[calc(100vh-8rem)] lg:max-h-none lg:flex-1"
         >
             <div className="flex items-start gap-4">
                 <CompanyAvatar
@@ -90,7 +90,8 @@ export default function MyProposalDetail({
                 {proposal.proposalTerms}
             </p>
 
-            {proposal.proposalStatus === 'ACCEPTED' &&
+            {proposal.proposalStatus ===
+                ('ACCEPTED' satisfies ProposalStatus) &&
                 proposal.projectId !== null && (
                     <div className="mt-4 flex justify-end border-t border-brand/60 pt-4">
                         <Link

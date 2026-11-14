@@ -16,13 +16,15 @@ import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 // T4.3.2 load, T4.4.2 accept, T4.5.2 reject). Every action fakes a 600 ms
 // request so the pending labels show, then moves the card to its next state.
 
-type SampleState = 'none' | QuotationStatus;
+// 'load-error' is a failed GET /projects/:projectId/quotations.
+type SampleState = 'none' | 'load-error' | QuotationStatus;
 
 const STATES: { value: SampleState; label: string }[] = [
     { value: 'none', label: 'No quotation yet' },
     { value: 'PENDING', label: 'Pending' },
     { value: 'REJECTED', label: 'Rejected' },
     { value: 'ACCEPTED', label: 'Accepted' },
+    { value: 'load-error', label: 'Load failed' },
 ];
 
 const PROVIDER = {
@@ -58,7 +60,7 @@ function sampleProject(role: ProjectRole, state: SampleState): ProjectDetail {
 }
 
 function sampleQuotations(state: SampleState): Quotation[] {
-    if (state === 'none') return [];
+    if (state === 'none' || state === 'load-error') return [];
     return [
         {
             quotationId: 1,
@@ -154,9 +156,22 @@ function RolePreview({
                 <QuotationSection
                     project={sampleProject(role, state)}
                     quotations={sampleQuotations(state)}
+                    loadError={
+                        state === 'load-error'
+                            ? 'Could not reach the server. Please try again.'
+                            : null
+                    }
+                    onRetry={async () => {
+                        await fakeRequest();
+                        setState('PENDING');
+                    }}
                     onUploadQuotation={() => setIsUploadOpen(true)}
                     onAcceptQuotation={() => setIsAcceptOpen(true)}
                     onRejectQuotation={() => setIsRejectOpen(true)}
+                    onDeleteQuotation={async () => {
+                        await fakeRequest();
+                        setState('none');
+                    }}
                 />
             </div>
 

@@ -1,16 +1,12 @@
 import { notFound } from 'next/navigation';
 import ServiceForm from '@/components/services/ServiceForm';
-
-const INT4_MAX = 2_147_483_647;
+import { parseId } from '@/lib/api';
 
 export default async function EditServicePage({
     params,
 }: PageProps<'/services/[serviceId]/edit'>) {
-    const { serviceId } = await params;
-    if (!/^\d+$/.test(serviceId)) notFound();
+    const serviceId = parseId((await params).serviceId);
+    if (serviceId === null) notFound();
 
-    const parsedServiceId = Number(serviceId);
-    if (parsedServiceId < 1 || parsedServiceId > INT4_MAX) notFound();
-
-    return <ServiceForm mode="edit" serviceId={parsedServiceId} />;
+    return <ServiceForm mode="edit" serviceId={serviceId} />;
 }

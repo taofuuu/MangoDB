@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 // Developer index of the pages built so far. Nothing links here: reach it by
 // typing /dev. Keep the descriptions true: a link list nobody trusts is worse
@@ -79,6 +80,11 @@ const ROUTES = [
                   title: 'Quotation section (Temporary)',
                   detail: 'T4.1.4 — the Quotation card in every state for Provider and Receiver, with the submit, accept and reject pop-ups. Sample data, no API call.',
               },
+              {
+                  href: '/dev/projects/deposit',
+                  title: 'Deposit section (Temporary)',
+                  detail: 'T4.6.3 — the Deposit card in every state for Provider and Receiver, with the report and confirm pop-ups. Sample data, no API call.',
+              },
           ]
         : []),
     {
@@ -104,6 +110,12 @@ const ROUTES = [
 ];
 
 export default function DevIndexPage() {
+    // Same gate as the other /dev pages: this map of internal routes is not
+    // for the deployed site.
+    if (process.env.NODE_ENV !== 'development') {
+        notFound();
+    }
+
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-accent-tint p-8">
             <div className="w-full max-w-md rounded-2xl bg-surface p-10 text-center shadow-[6px_6px_10px_rgba(0,0,0,0.25)]">
@@ -119,7 +131,7 @@ export default function DevIndexPage() {
 
                 {/* Developer Routes Navigation */}
                 <div className="mt-8 text-left">
-                    <h2 className="type-sm font-semibold text-brand uppercase tracking-wider">
+                    <h2 className="type-sm !font-[600] text-brand uppercase tracking-wider">
                         Pages built so far
                     </h2>
                     <ul className="mt-3 flex flex-col gap-2">
@@ -129,7 +141,7 @@ export default function DevIndexPage() {
                                     href={route.href}
                                     className="block rounded-lg border border-brand/30 bg-surface-white p-3 text-left transition hover:bg-brand/10"
                                 >
-                                    <span className="block type-sm font-bold text-ink">
+                                    <span className="block type-sm !font-[700] text-ink">
                                         {route.title}
                                     </span>
                                     <span className="mt-0.5 block type-xs text-ink-soft">
