@@ -226,8 +226,14 @@ export async function deleteQuotation(
         return row;
     });
 
-    // Best-effort cleanup of the PDF in storage once the row is gone.
-    await removeFromStorageByUrl(deleted.quotationFile, BUCKETS.QUOTATION);
+    // Best-effort cleanup of the PDF in storage once the row is gone. Seeded
+    // demo quotations share one PDF (seed.ts), so it stays while a row uses it.
+    const stillUsed = await prisma.quotation.count({
+        where: { quotationFile: deleted.quotationFile },
+    });
+    if (stillUsed === 0) {
+        await removeFromStorageByUrl(deleted.quotationFile, BUCKETS.QUOTATION);
+    }
 
     res.status(204).end();
 }

@@ -15,7 +15,8 @@
 // It also adds a second set, the `demo_` accounts, with a project in every
 // status and its in-between states (F.11), so each project screen can be
 // built before the whole flow works. They are kept apart from `snapshot_` so
-// the snapshot baseline never sees them.
+// the snapshot baseline never sees them. Their quotations open one sample PDF
+// that the seed uploads to the quotation bucket (seedDemoQuotationFile).
 //
 // It does not replace the existing seed data. It deletes only two things: the
 // spent probe accounts the snapshot script leaves behind (pruneProbeAccounts),
@@ -26,8 +27,11 @@ import type {
     ProjectUpdateType,
     QuotationStatus,
 } from '@mangodb/shared';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { IS_PRODUCTION, SEED_PASSWORD } from './env';
 import { prisma } from './lib/prisma';
+import { BUCKETS, PDF_MIME_TYPE, putStorageFile } from './lib/storage';
 import { fromDateOnly } from './lib/dates';
 import { hashPassword } from './auth/password';
 
@@ -276,9 +280,14 @@ const DEMO_ACCOUNTS: SeedAccount[] = [
 const DEMO_TITLE = 'Demo project:';
 const DEMO_BUDGET = 120000;
 
-// shortcut: a dead placeholder link, not a real PDF; upload one once the
-// quotation upload (T4.1.3) has a storage bucket.
-const DEMO_QUOTATION_FILE = 'https://demo.local/quotation.pdf';
+// The PDF every demo quotation opens (#259). It goes to one fixed path in the
+// private quotation bucket, so a rerun replaces it instead of adding copies.
+const DEMO_QUOTATION_PDF = path.join(__dirname, 'demo-quotation.pdf');
+const DEMO_QUOTATION_PATH = 'demo/quotation.pdf';
+
+// The dead link demo quotations stored before that PDF existed. A rerun moves
+// them to the real one.
+const OLD_DEMO_QUOTATION_FILE = 'https://demo.local/quotation.pdf';
 
 interface DemoProject {
     projectStatus: ProjectStatus;
@@ -457,6 +466,23 @@ const DEMO_REVIEW = {
     createdAt: october(22),
 };
 
+// Uploads the demo PDF and moves every quotation still on the old dead link to
+// it. Returns the URL new demo quotations store.
+async function seedDemoQuotationFile(): Promise<string> {
+    const quotationFile = await putStorageFile(
+        BUCKETS.QUOTATION,
+        DEMO_QUOTATION_PATH,
+        readFileSync(DEMO_QUOTATION_PDF),
+        PDF_MIME_TYPE,
+    );
+    const { count } = await prisma.quotation.updateMany({
+        where: { quotationFile: OLD_DEMO_QUOTATION_FILE },
+        data: { quotationFile },
+    });
+    console.log(`ok  demo quotation PDF, ${count} old link(s) repaired`);
+    return quotationFile;
+}
+
 // Creates only the demo projects whose job is missing. Everyone shares one
 // database, so a rerun must not undo a status someone is testing. With reset,
 // it deletes them all first and builds them again, with new project ids.
@@ -465,6 +491,7 @@ async function seedDemoProjects(
     providerId: number,
     receiverId: number,
     reset: boolean,
+    quotationFile: string,
 ): Promise<number> {
     const demoJobs = {
         companyId: receiverId,
@@ -524,7 +551,7 @@ async function seedDemoProjects(
                                 quotation: {
                                     create: demo.quotations.map(
                                         (quotationStatus, i) => ({
-                                            quotationFile: DEMO_QUOTATION_FILE,
+                                            quotationFile,
                                             quotationStatus,
                                             createdAt: october(2 + i),
                                         }),
@@ -592,10 +619,12 @@ async function main(): Promise<void> {
 
     // npm run db:seed -w api -- --reset-demo
     const reset = process.argv.includes('--reset-demo');
+    const quotationFile = await seedDemoQuotationFile();
     const created = await seedDemoProjects(
         demoProviderId,
         demoReceiverId,
         reset,
+        quotationFile,
     );
     console.log(
         `ok  ${DEMO_PROJECTS.length} demo projects, ${created} created` +
