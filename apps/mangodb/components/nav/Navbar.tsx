@@ -127,10 +127,11 @@ export default function Navbar() {
                 </Link>
 
                 <div className="flex min-w-0 items-center gap-2 sm:gap-8 xl:gap-10">
-                    {/* A BOTH company's five links are wider than a phone, so
-                        there the row scrolls sideways instead of widening the
-                        page. The padding keeps the focus ring inside it. */}
-                    <ul className="flex items-center gap-2 sm:gap-6 xl:gap-8 max-sm:min-w-0 max-sm:overflow-x-auto max-sm:px-1 max-sm:py-2">
+                    {/* A BOTH company's five links are wider than a phone or
+                        tablet, so there the row scrolls sideways instead of
+                        widening the page. The padding keeps the focus ring
+                        inside it. */}
+                    <ul className="flex items-center gap-2 sm:gap-6 xl:gap-8 max-lg:min-w-0 max-lg:overflow-x-auto max-lg:px-1 max-lg:py-2">
                         {links.map((link) => {
                             const isCurrent = pathname === link.href;
                             return (
