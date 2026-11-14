@@ -27,80 +27,220 @@
                 "minBudget": 50000
             },
             {
-                "categories": [
-                    "Hardware & IoT"
-                ],
-                "categoryIds": [
-                    3
-                ],
+                "categories": [],
+                "categoryIds": [],
                 "company": {
                     "companyId": 143,
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": "2027-03-21",
-                "duration": "6 months",
-                "jobId": 477,
-                "listingDesc": "Daily sales dashboard pulling from our POS database.\n\n([demo] dummy data)",
-                "listingStatus": "OPEN",
-                "listingTitle": "[demo] Sales dashboard and reports",
-                "locationPref": "Chiang Mai",
-                "maxBudget": 100000,
-                "minBudget": 60000
-            },
-            {
-                "categories": [
-                    "Mobile App Development"
-                ],
-                "categoryIds": [
-                    2
-                ],
-                "company": {
-                    "companyId": 143,
-                    "companyName": "Snapshot Seed Receiver",
-                    "companyPhoto": null
-                },
-                "createdAt": "<timestamp>",
-                "deadline": "2027-02-20",
-                "duration": "5 months",
-                "jobId": 476,
-                "listingDesc": "iOS and Android app where customers book and pay.\n\n([demo] dummy data)",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1376,
+                "listingDesc": "A job for the deal-flow test.",
                 "listingStatus": "CLOSED",
-                "listingTitle": "[demo] Mobile app for customer bookings",
-                "locationPref": "Remote",
-                "maxBudget": 75000,
-                "minBudget": 45000
+                "listingTitle": "[e2e] Deal Flow Job mwg6rdol",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
             },
             {
-                "categories": [
-                    "Web Development"
-                ],
-                "categoryIds": [
-                    1
-                ],
+                "categories": [],
+                "categoryIds": [],
                 "company": {
                     "companyId": 143,
                     "companyName": "Snapshot Seed Receiver",
                     "companyPhoto": null
                 },
                 "createdAt": "<timestamp>",
-                "deadline": "2027-01-19",
-                "duration": "4 months",
-                "jobId": 475,
-                "listingDesc": "Replace our spreadsheet stock tracking with a web app.\n\n([demo] dummy data)",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1375,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg6n6j7",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1374,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg6ipf9",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1373,
+                "listingDesc": "A job for the deal-flow test.",
                 "listingStatus": "OPEN",
-                "listingTitle": "[demo] Inventory system rewrite",
-                "locationPref": "Bangkok",
-                "maxBudget": 50000,
-                "minBudget": 30000
+                "listingTitle": "[e2e] Deal Flow Job mwg6get5",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1372,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg6c787",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1371,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg67w7f",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1370,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg6493x",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1369,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Deal Flow Job mwg6096z",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1368,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Deal Flow Job mwg5y2p3",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2027-01-13",
+                "duration": null,
+                "jobId": 1367,
+                "listingDesc": "A job for the proposal tests.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Closed Job mwg5tjg2",
+                "locationPref": null,
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2027-01-13",
+                "duration": null,
+                "jobId": 1366,
+                "listingDesc": "A job for the proposal tests.",
+                "listingStatus": "CLOSED",
+                "listingTitle": "[e2e] Proposal Target mwg5tjg2",
+                "locationPref": null,
+                "maxBudget": 80000,
+                "minBudget": 20000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 4,
-            "totalPages": 1
+            "totalItems": 68,
+            "totalPages": 6
         }
     }
 }

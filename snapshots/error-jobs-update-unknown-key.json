@@ -8,6 +8,10 @@
                 {
                     "field": "(body)",
                     "message": "Unrecognized key: \"listingTitel\""
+                },
+                {
+                    "field": "(body)",
+                    "message": "Provide at least one field to update"
                 }
             ],
             "message": "Request body is invalid"

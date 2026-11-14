@@ -19,12 +19,182 @@
                 "proposalId": "<proposal_id>",
                 "startDate": "<today>",
                 "totalBudget": 95000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": "<timestamp>",
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] Deal Flow Job mwg6rdol",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 245,
+                "projectStatus": "COMPLETED",
+                "proposalId": 602,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": "<timestamp>",
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] Deal Flow Job mwg6n6j7",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 244,
+                "projectStatus": "COMPLETED",
+                "proposalId": 600,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": "<timestamp>",
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] Deal Flow Job mwg6ipf9",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 243,
+                "projectStatus": "COMPLETED",
+                "proposalId": 598,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": "<timestamp>",
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] Deal Flow Job mwg6c787",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 242,
+                "projectStatus": "COMPLETED",
+                "proposalId": 594,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": null,
+                "depositConfirmedAt": null,
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] Deal Flow Job mwg67w7f",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 241,
+                "projectStatus": "AWAITING_DEPOSIT",
+                "proposalId": 592,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": null,
+                "depositConfirmedAt": null,
+                "depositReportedAt": null,
+                "listingTitle": "[e2e] Deal Flow Job mwg6493x",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 240,
+                "projectStatus": "AWAITING_QUOTATION",
+                "proposalId": 590,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": null,
+                "depositConfirmedAt": null,
+                "depositReportedAt": null,
+                "listingTitle": "[e2e] Deal Flow Job mwg6096z",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 239,
+                "projectStatus": "AWAITING_QUOTATION",
+                "proposalId": 588,
+                "startDate": "<today>",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": "<timestamp>",
+                "depositReportedAt": "<timestamp>",
+                "listingTitle": "[e2e] explore mwg5ribi",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "projectId": 238,
+                "projectStatus": "COMPLETED",
+                "proposalId": 585,
+                "startDate": "<today>",
+                "totalBudget": 20000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": null,
+                "depositReportedAt": null,
+                "listingTitle": "Snapshot seed service listing",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 671,
+                    "companyName": "EP1 Account A4",
+                    "companyPhoto": null
+                },
+                "projectId": 237,
+                "projectStatus": "COMPLETED",
+                "proposalId": 576,
+                "startDate": "2026-11-01",
+                "totalBudget": 40000
+            },
+            {
+                "completedAt": "<timestamp>",
+                "depositConfirmedAt": null,
+                "depositReportedAt": null,
+                "listingTitle": "Snapshot seed service listing",
+                "myRole": "provider",
+                "otherParty": {
+                    "companyId": 668,
+                    "companyName": "EP1 Account A3",
+                    "companyPhoto": null
+                },
+                "projectId": 236,
+                "projectStatus": "COMPLETED",
+                "proposalId": 575,
+                "startDate": "2026-10-01",
+                "totalBudget": 50000
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 1,
+            "totalItems": 11,
             "totalPages": 1
         }
     }

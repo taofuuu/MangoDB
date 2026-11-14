@@ -6,72 +6,71 @@
             {
                 "averageRating": null,
                 "categories": [
+                    "Mobile App Development",
                     "UI/UX Design"
                 ],
                 "company": {
-                    "companyId": 392,
-                    "companyName": "Snapshot Seed Both",
+                    "companyId": 248,
+                    "companyName": "บ. ริโภคจำนวน จำกัด",
                     "companyPhoto": null
                 },
-                "listingDesc": "A two-week review of your app flows, with a report and Figma redesigns of the worst screens. ([demo] dummy data)",
-                "listingTitle": "[demo] UX review of your product",
-                "maxBudget": 60000,
-                "minBudget": 25000,
+                "listingDesc": "ไม่รู้",
+                "listingTitle": "รีบไปไหน",
+                "maxBudget": 1000000,
+                "minBudget": 20000,
                 "ratingCount": 0,
-                "serviceId": 593,
+                "serviceId": 1260,
                 "techStack": [
-                    "Figma"
+                    "ความลับ",
+                    "จ้ะ",
+                    "นะ"
                 ]
             },
             {
                 "averageRating": null,
-                "categories": [
-                    "Mobile App Development"
-                ],
+                "categories": [],
                 "company": {
-                    "companyId": 392,
-                    "companyName": "Snapshot Seed Both",
+                    "companyId": 663,
+                    "companyName": "[e2e] EP1 Provider",
                     "companyPhoto": null
                 },
-                "listingDesc": "One React Native codebase for both stores, with push notifications and analytics. ([demo] dummy data)",
-                "listingTitle": "[demo] Mobile app for iOS and Android",
-                "maxBudget": 400000,
-                "minBudget": 150000,
+                "listingDesc": "We build web apps.",
+                "listingTitle": "[e2e] EP1 Web App Service",
+                "maxBudget": 50000,
+                "minBudget": 10000,
                 "ratingCount": 0,
-                "serviceId": 592,
+                "serviceId": 1255,
                 "techStack": [
-                    "Firebase",
-                    "React Native"
+                    "React"
                 ]
             },
             {
-                "averageRating": null,
+                "averageRating": 4,
                 "categories": [
                     "Web Development"
                 ],
                 "company": {
-                    "companyId": 392,
-                    "companyName": "Snapshot Seed Both",
+                    "companyId": 483,
+                    "companyName": "Demo Provider Co.",
                     "companyPhoto": null
                 },
-                "listingDesc": "We build fast, SEO-friendly company websites with Next.js and a simple CMS. ([demo] dummy data)",
-                "listingTitle": "[demo] Company website in Next.js",
-                "maxBudget": 120000,
+                "listingDesc": "example",
+                "listingTitle": "Web App Development",
+                "maxBudget": 100000,
                 "minBudget": 40000,
-                "ratingCount": 0,
-                "serviceId": 591,
+                "ratingCount": 3,
+                "serviceId": 1028,
                 "techStack": [
-                    "Next.js",
-                    "Tailwind CSS",
-                    "TypeScript"
+                    "Express",
+                    "Next.js"
                 ]
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 3,
-            "totalItems": 106,
-            "totalPages": 36
+            "totalItems": 112,
+            "totalPages": 38
         }
     }
 }

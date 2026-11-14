@@ -2,12 +2,167 @@
     "request": "GET /companies/142/completed-projects",
     "status": 200,
     "body": {
-        "items": [],
+        "items": [
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "A job for the deal-flow test.",
+                "listingTitle": "[e2e] Deal Flow Job mwg6rdol",
+                "listingType": "JOB",
+                "projectId": 245,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": 4,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewComment": "[e2e] Good work. mwg6rdol",
+                "startDate": "2026-11-14",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "A job for the deal-flow test.",
+                "listingTitle": "[e2e] Deal Flow Job mwg6n6j7",
+                "listingType": "JOB",
+                "projectId": 244,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": 4,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewComment": "[e2e] Good work. mwg6n6j7",
+                "startDate": "2026-11-14",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "A job for the deal-flow test.",
+                "listingTitle": "[e2e] Deal Flow Job mwg6ipf9",
+                "listingType": "JOB",
+                "projectId": 243,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": null,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewComment": null,
+                "startDate": "2026-11-14",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "A job for the deal-flow test.",
+                "listingTitle": "[e2e] Deal Flow Job mwg6c787",
+                "listingType": "JOB",
+                "projectId": 242,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": null,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewComment": null,
+                "startDate": "2026-11-14",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "explore",
+                "listingTitle": "[e2e] explore mwg5ribi",
+                "listingType": "JOB",
+                "projectId": 238,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": null,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewComment": null,
+                "startDate": "2026-11-14",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
+                "listingTitle": "Snapshot seed service listing",
+                "listingType": "SERVICE",
+                "projectId": 237,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": 4.3,
+                "receiver": {
+                    "companyId": 671,
+                    "companyName": "EP1 Account A4",
+                    "companyPhoto": null
+                },
+                "reviewComment": "EP1 test review A4",
+                "startDate": "2026-11-01",
+                "techStack": []
+            },
+            {
+                "categories": [],
+                "completedAt": "<timestamp>",
+                "listingDesc": "Owned by src/seed.ts so the snapshot script has a listing to post against.",
+                "listingTitle": "Snapshot seed service listing",
+                "listingType": "SERVICE",
+                "projectId": 236,
+                "provider": {
+                    "companyId": 142,
+                    "companyName": "Snapshot Seed Provider",
+                    "companyPhoto": null
+                },
+                "rating": 4.5,
+                "receiver": {
+                    "companyId": 668,
+                    "companyName": "EP1 Account A3",
+                    "companyPhoto": null
+                },
+                "reviewComment": "EP1 test review",
+                "startDate": "2026-10-01",
+                "techStack": []
+            }
+        ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 0,
-            "totalPages": 0
+            "totalItems": 7,
+            "totalPages": 1
         }
     }
 }

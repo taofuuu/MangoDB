@@ -50,6 +50,44 @@
                 "minBudget": 60000
             },
             {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1373,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Deal Flow Job mwg6get5",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": null,
+                "duration": null,
+                "jobId": 1368,
+                "listingDesc": "A job for the deal-flow test.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Deal Flow Job mwg5y2p3",
+                "locationPref": null,
+                "maxBudget": 90000,
+                "minBudget": 10000
+            },
+            {
                 "categories": [
                     "Web Development"
                 ],
@@ -69,6 +107,44 @@
                 "listingStatus": "OPEN",
                 "listingTitle": "Snapshot Probe filter job",
                 "locationPref": "Onsite",
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": null,
+                "jobId": 1346,
+                "listingDesc": "iOS and Android app.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Need a Mobile App mwf8c4gb",
+                "locationPref": null,
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": null,
+                "jobId": 1345,
+                "listingDesc": "iOS and Android app.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Need a Mobile App mwf85u1u",
+                "locationPref": null,
                 "maxBudget": 80000,
                 "minBudget": 20000
             },
@@ -99,7 +175,7 @@
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 4,
+            "totalItems": 8,
             "totalPages": 1
         }
     }

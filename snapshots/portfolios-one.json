@@ -1,13 +1,13 @@
 {
-    "request": "GET /portfolios/24",
+    "request": "GET /portfolios/200",
     "status": 200,
     "body": {
-        "developmentDate": "2026-01-15",
-        "portfolioDescription": "A fixed row for GET /portfolios/:portfolioId to answer with.",
-        "portfolioId": 24,
-        "portfolioImage": "https://snapshot.local/portfolio.png",
-        "portfolioLink": "https://snapshot.local/portfolio",
-        "portfolioName": "Snapshot seed portfolio",
+        "developmentDate": "2026-11-01",
+        "portfolioDescription": null,
+        "portfolioId": 200,
+        "portfolioImage": "<storage-url>",
+        "portfolioLink": "https://example.com/ep1-other-portfolio",
+        "portfolioName": "Other Portfolio",
         "serviceId": 25
     }
 }

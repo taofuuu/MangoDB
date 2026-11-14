@@ -4,7 +4,7 @@
     "body": {
         "items": [
             {
-                "averageRating": null,
+                "averageRating": 4.2,
                 "categories": [],
                 "company": {
                     "companyId": 142,
@@ -15,7 +15,7 @@
                 "listingTitle": "Snapshot Probe wide service <run>",
                 "maxBudget": 200000,
                 "minBudget": 50000,
-                "ratingCount": 0,
+                "ratingCount": 4,
                 "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"

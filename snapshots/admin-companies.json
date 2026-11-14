@@ -4,11 +4,101 @@
     "body": {
         "items": [
             {
+                "accountType": "BOTH",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 728,
+                "companyName": "[e2e] BOTH mwg8hcrf_2",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "RECEIVER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 665,
+                "companyName": "[e2e] EP1 Account B",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "We build web apps.",
+                "companyId": 663,
+                "companyName": "[e2e] EP1 Provider",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Edited by e2e.",
+                "companyId": 712,
+                "companyName": "[e2e] Lifecycle mwg7fyga Edited",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 713,
+                "companyName": "[e2e] Lifecycle mwg7imk3",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Edited by e2e.",
+                "companyId": 714,
+                "companyName": "[e2e] Lifecycle mwg7kxu9 Edited",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": "Edited by e2e.",
+                "companyId": 715,
+                "companyName": "[e2e] Lifecycle mwg7mv8q Edited",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "PROVIDER",
+                "averageRating": null,
+                "companyDescription": null,
+                "companyId": 727,
+                "companyName": "[e2e] PROVIDER mwg8hcrf_1",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
                 "accountType": "PROVIDER",
                 "averageRating": null,
                 "companyDescription": null,
                 "companyId": 231,
                 "companyName": "Acme Solutions Ltd.",
+                "deletedAt": null,
+                "phone": "0812345678",
+                "ratingCount": 0
+            },
+            {
+                "accountType": "BOTH",
+                "averageRating": null,
+                "companyDescription": "aongree1",
+                "companyId": 575,
+                "companyName": "aongree1",
                 "deletedAt": null,
                 "phone": "0812345678",
                 "ratingCount": 0
@@ -32,103 +122,13 @@
                 "deletedAt": null,
                 "phone": "023333333",
                 "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": "asdasd",
-                "companyId": 221,
-                "companyName": "asdasd",
-                "deletedAt": null,
-                "phone": "023234234",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 141,
-                "companyName": "ce",
-                "deletedAt": null,
-                "phone": "0967849322",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "PROVIDER",
-                "averageRating": null,
-                "companyDescription": "Cloud Infrastructure and DevOps Consulting",
-                "companyId": 11,
-                "companyName": "CloudScale Solutions",
-                "deletedAt": null,
-                "phone": "021110011",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "PROVIDER",
-                "averageRating": null,
-                "companyDescription": "Edited by admin US6-3",
-                "companyId": 1,
-                "companyName": "CodeCrafters",
-                "deletedAt": null,
-                "phone": "021111111",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "RECEIVER",
-                "averageRating": null,
-                "companyDescription": "Digital Marketing and Advertising",
-                "companyId": 19,
-                "companyName": "Creative Agency TH",
-                "deletedAt": null,
-                "phone": "021110019",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "PROVIDER",
-                "averageRating": null,
-                "companyDescription": "Data Science and Machine Learning Agency",
-                "companyId": 12,
-                "companyName": "DataMind AI",
-                "deletedAt": null,
-                "phone": "021110012",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "PROVIDER",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 252,
-                "companyName": "Delete_listing_test",
-                "deletedAt": null,
-                "phone": "0812345678",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "BOTH",
-                "averageRating": null,
-                "companyDescription": null,
-                "companyId": 107,
-                "companyName": "Dev BOTH Co.",
-                "deletedAt": null,
-                "phone": "+66 2 000 0000",
-                "ratingCount": 0
-            },
-            {
-                "accountType": "PROVIDER",
-                "averageRating": null,
-                "companyDescription": "Leading provider of database solutions and infrastructure services.",
-                "companyId": 120,
-                "companyName": "Dev PROVIDER Co.",
-                "deletedAt": null,
-                "phone": "0812345678",
-                "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 58,
-            "totalPages": 5
+            "totalItems": 82,
+            "totalPages": 7
         }
     }
 }
