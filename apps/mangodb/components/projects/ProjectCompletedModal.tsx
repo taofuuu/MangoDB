@@ -3,6 +3,7 @@
 import { useId } from 'react';
 import { CircleCheck } from 'lucide-react';
 import ModalShell from '@/components/ui/ModalShell';
+import { endSentence } from '@/lib/sentences';
 
 type ProjectCompletedModalProps = {
     isOpen: boolean;
@@ -42,7 +43,8 @@ export default function ProjectCompletedModal({
                     id={descriptionId}
                     className="mt-3 type-xs leading-relaxed text-ink"
                 >
-                    You accepted the work from {providerName}. How did it go?
+                    You accepted the work from {endSentence(providerName)} How
+                    did it go?
                     <br />
                     Your review helps other companies choose a Provider.
                 </p>
