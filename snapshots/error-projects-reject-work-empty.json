@@ -1,0 +1,16 @@
+{
+    "request": "POST /projects/<project_id>/reject-work",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "reason",
+                    "message": "Reason is required"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

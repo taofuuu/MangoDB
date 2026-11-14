@@ -225,7 +225,7 @@ export default function EditAccountModal({
         >
             {/* Header */}
             <div>
-                <h2 id={titleId} className="type-md font-semibold text-ink">
+                <h2 id={titleId} className="type-md !font-[600] text-ink">
                     {modalTitles[mode]}
                 </h2>
             </div>
@@ -353,14 +353,14 @@ export default function EditAccountModal({
                         type="button"
                         onClick={onClose}
                         disabled={isSaving}
-                        className="rounded-status border border-brand px-5 py-2 type-xs font-semibold text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-status border border-brand px-5 py-2 type-xs !font-[600] text-brand hover:bg-brand/10 transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className="rounded-status bg-brand-dark px-6 py-2 type-xs font-semibold text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-status bg-brand-dark px-6 py-2 type-xs !font-[600] text-surface hover:bg-brand-darker transition-colors cursor-pointer min-h-[36px] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isSaving ? 'Saving…' : 'Save'}
                     </button>

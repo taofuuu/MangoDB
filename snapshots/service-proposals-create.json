@@ -1,0 +1,14 @@
+{
+    "request": "POST /services/<service_id>/proposals",
+    "status": 201,
+    "body": {
+        "createdAt": "<timestamp>",
+        "duration": 2,
+        "listingId": "<listing_id>",
+        "proposalBudget": 60000,
+        "proposalId": "<proposal_id>",
+        "proposalStatus": "PENDING",
+        "proposalTerms": "Hire request for platform backend delivery.",
+        "senderId": 143
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "request": "POST /services/<service_id>/proposals",
+    "status": 409,
+    "body": {
+        "error": {
+            "code": "CONFLICT",
+            "message": "This service is not open for hire requests"
+        }
+    }
+}

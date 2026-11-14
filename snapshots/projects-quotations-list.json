@@ -1,0 +1,13 @@
+{
+    "request": "GET /projects/<project_id>/quotations",
+    "status": 200,
+    "body": [
+        {
+            "createdAt": "<timestamp>",
+            "projectId": "<project_id>",
+            "quotationFile": "<storage-url>",
+            "quotationId": "<quotation_id>",
+            "quotationStatus": "PENDING"
+        }
+    ]
+}

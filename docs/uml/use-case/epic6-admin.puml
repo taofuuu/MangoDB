@@ -1,0 +1,18 @@
+@startuml epic6-admin
+!include style.iuml
+title EPIC 6: Administrative Data Management
+
+actor Administrator as Admin
+
+rectangle "MangoDB" {
+  usecase "Log in as administrator\n(US6-1)" as US6_1
+  usecase "View company accounts\n(US6-2)" as US6_2
+  usecase "Edit company account\n(US6-3)" as US6_3
+  usecase "Delete company account\n(US6-4)" as US6_4
+}
+
+Admin --> US6_1
+Admin --> US6_2
+Admin --> US6_3
+Admin --> US6_4
+@enduml

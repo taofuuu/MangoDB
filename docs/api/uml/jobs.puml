@@ -1,0 +1,106 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Jobs
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Jobs" as Jobs <<Resource>> {
+  + GET()
+  + POST()
+}
+class "MyJobs" as MyJobs <<Resource>> {
+  + GET()
+}
+class "Job" as JobR <<Resource>> {
+  + GET()
+  + PATCH()
+}
+class "Close" as CloseJob <<Resource>> {
+  + POST()
+}
+class "JobProposals" as JobProposals <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Job" as JobRep <<Representation>> {
+  -jobId : integer
+  -company : CompanyBrief
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number?
+  -listingStatus : OPEN, CLOSED
+  -locationPref : string?
+  -duration : string?
+  -deadline : date?
+  -categoryIds : integer[]
+  -categories : string[]
+}
+class "CreateJobRequest" as CreateJobRequestRep <<Representation>> {
+  -listingTitle : string
+  -listingDesc : string
+  -minBudget : number?
+  -maxBudget : number
+  -locationPref : string?
+  -duration : string?
+  -deadline : date?
+  -categoryIds : integer[]?
+}
+class "UpdateJobRequest" as UpdateJobRequestRep <<Representation>> {
+  -any CreateJobRequest field, all optional
+}
+class "ReceivedProposal" as ReceivedProposalRep <<Representation>> {
+  -Proposal fields
+  -sender : CompanyBrief
+}
+class "CreateProposalRequest" as CreateProposalRequestRep <<Representation>> {
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+}
+class "Proposal" as ProposalRep <<Representation>> {
+  -proposalId : integer
+  -listingId : integer
+  -senderId : integer
+  -proposalBudget : number
+  -proposalTerms : string
+  -duration : number
+  -proposalStatus : PENDING, ACCEPTED, REJECTED
+  -createdAt : date
+}
+
+API -[#B45309,dashed]-> Jobs : <i><color:#B45309>«Path» /jobs</color></i>
+Jobs -[#BE185D,dashed]-> JobRep : <i><color:#BE185D>«use»</color></i>
+Jobs -[#BE185D,dashed]-> CreateJobRequestRep : <i><color:#BE185D>«use»</color></i>
+Jobs -[#B45309,dashed]-> MyJobs : <i><color:#B45309>«Path» /mine</color></i>
+MyJobs -[#BE185D,dashed]-> JobRep : <i><color:#BE185D>«use»</color></i>
+Jobs -[#B45309,dashed]-> JobR : <i><color:#B45309>«Path» /{jobId}</color></i>
+JobR -[#BE185D,dashed]-> JobRep : <i><color:#BE185D>«use»</color></i>
+JobR -[#BE185D,dashed]-> UpdateJobRequestRep : <i><color:#BE185D>«use»</color></i>
+JobR -[#B45309,dashed]-> CloseJob : <i><color:#B45309>«Path» /close</color></i>
+CloseJob -[#BE185D,dashed]-> JobRep : <i><color:#BE185D>«use»</color></i>
+JobR -[#B45309,dashed]-> JobProposals : <i><color:#B45309>«Path» /proposals</color></i>
+JobProposals -[#BE185D,dashed]-> ReceivedProposalRep : <i><color:#BE185D>«use»</color></i>
+JobProposals -[#BE185D,dashed]-> CreateProposalRequestRep : <i><color:#BE185D>«use»</color></i>
+JobProposals -[#BE185D,dashed]-> ProposalRep : <i><color:#BE185D>«use»</color></i>
+@enduml

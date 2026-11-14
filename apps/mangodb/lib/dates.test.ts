@@ -16,7 +16,12 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatDateOnly, formatDateTime, formatMonthYear } from './dates';
+import {
+    formatDateOnly,
+    formatDateTime,
+    formatMonthYear,
+    formatSlashDate,
+} from './dates';
 
 describe('formatDateTime', () => {
     it('zero-pads every part', () => {
@@ -29,6 +34,12 @@ describe('formatDateTime', () => {
         const iso = new Date(2026, 11, 25, 15, 30).toISOString();
 
         assert.equal(formatDateTime(iso), '25/12/2026 15:30');
+    });
+});
+
+describe('formatSlashDate', () => {
+    it('returns text that is not a date unchanged', () => {
+        assert.equal(formatSlashDate('not a date'), 'not a date');
     });
 });
 

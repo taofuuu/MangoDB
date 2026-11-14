@@ -1,0 +1,10 @@
+{
+    "request": "GET /services/<service_id>/proposals",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "This service belongs to another company"
+        }
+    }
+}

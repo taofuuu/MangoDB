@@ -4,6 +4,7 @@
     "body": {
         "items": [
             {
+                "averageRating": null,
                 "categories": [
                     "Web Development"
                 ],
@@ -16,6 +17,7 @@
                 "listingTitle": "Snapshot Probe service <run>",
                 "maxBudget": 50000,
                 "minBudget": 10000,
+                "ratingCount": 0,
                 "serviceId": "<service_id>",
                 "techStack": [
                     "<run>-Node.js",

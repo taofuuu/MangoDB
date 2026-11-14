@@ -1,0 +1,16 @@
+{
+    "request": "GET /jobs?status=OPEN&minBudget=100000&maxBudget=50000",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "BAD_REQUEST",
+            "details": [
+                {
+                    "field": "minBudget",
+                    "message": "Minimum budget cannot exceed maximum budget"
+                }
+            ],
+            "message": "Query parameters are invalid"
+        }
+    }
+}

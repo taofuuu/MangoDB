@@ -1,0 +1,71 @@
+@startuml bp4-hire-via-job-posting
+!include style.iuml
+title BP4 Hire Through a Job Posting\n(US2-6, US2-8, US2-9, US2-10 to US2-14)
+
+|Receiver|
+start
+repeat
+  :Enter job details, budget,
+  and deadline;
+  |MangoDB System|
+  :Validate job posting;
+  backward :Show fields to correct;
+repeat while (Complete and valid?) is (no) not (yes)
+
+:Publish job posting and
+record publish time;
+:Job Posting
+<U+005B>Open for Proposals<U+005D>]
+
+repeat
+  |Provider|
+  :Find job posting;
+  :Submit proposal with price
+  and duration;
+  |MangoDB System|
+  if (Job open, not own job,\nfirst proposal, and valid?) then (yes)
+    :Store proposal and
+    record submit time;
+    :Proposal
+    <U+005B>Pending<U+005D>]
+  else (no)
+    :Reject submission;
+  endif
+repeat while (More Providers send proposals?) is (yes) not (no)
+
+|Receiver|
+:View proposals on the job;
+:Compare Providers;
+
+if (Decision?) then (accept one)
+  |MangoDB System|
+  fork
+    :Mark proposal Accepted;
+  fork again
+    :Close job posting;
+  fork again
+    :Reject other
+    pending proposals;
+  end fork
+  :Create project;
+  :Project
+  <U+005B>Awaiting Quotation<U+005D>]
+else (stop hiring)
+  |Receiver|
+  :Close job posting;
+  |MangoDB System|
+  :Close job and reject
+  all pending proposals;
+  :Job Posting
+  <U+005B>Closed for Proposals<U+005D>]
+endif
+
+|Provider|
+:See the result in My Proposals;
+stop
+
+note right
+  While the job is open, the Receiver may also
+  edit it (US2-13) or reject single proposals (US2-12).
+end note
+@enduml

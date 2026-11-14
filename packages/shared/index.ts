@@ -32,10 +32,12 @@ export interface AuthTokenPayload {
 }
 
 // What a verified token carries back. jti identifies the individual token so
-// logout can revoke it; exp bounds how long that revocation must be remembered.
+// logout can revoke it; exp bounds how long that revocation must be remembered;
+// iat (issued at, in seconds) ends tokens older than a credential change.
 export interface AuthTokenClaims extends AuthTokenPayload {
     jti: string;
     exp: number;
+    iat: number;
 }
 
 // The free-text status columns, pinned to a closed set. All are VarChar(50) in
@@ -61,10 +63,43 @@ export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 export const QUOTATION_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED'] as const;
 export type QuotationStatus = (typeof QUOTATION_STATUSES)[number];
 
-// project_update.update_type: a Provider's progress note (US4-10), or the
-// Receiver's reason for rejecting the work (US4-12).
-export const PROJECT_UPDATE_TYPES = ['PROGRESS', 'WORK_REJECTED'] as const;
+// project_update.update_type: one event on a project's timeline (#212). Only
+// PROGRESS (US4-10) and WORK_REJECTED (US4-12) carry text; the rest are saved
+// by the action they name.
+export const PROJECT_UPDATE_TYPES = [
+    'PROPOSAL_ACCEPTED',
+    'QUOTATION_SENT',
+    'QUOTATION_DELETED',
+    'QUOTATION_REJECTED',
+    'QUOTATION_ACCEPTED',
+    'DEPOSIT_REPORTED',
+    'DEPOSIT_CONFIRMED',
+    'PROGRESS',
+    'WORK_SUBMITTED',
+    'WORK_REJECTED',
+    'WORK_ACCEPTED',
+    'PROJECT_CANCELLED',
+] as const;
 export type ProjectUpdateType = (typeof PROJECT_UPDATE_TYPES)[number];
+
+// notification.notification_type: what one bell notice says happened (T4.1.5,
+// ADR 0017). Named like PROJECT_UPDATE_TYPES where it is the same event.
+// PROPOSAL_RECEIVED is a proposal on a job or a hire request on a service.
+export const NOTIFICATION_TYPES = [
+    'PROPOSAL_RECEIVED',
+    'PROPOSAL_ACCEPTED',
+    'PROPOSAL_REJECTED',
+    'QUOTATION_SENT',
+    'QUOTATION_ACCEPTED',
+    'QUOTATION_REJECTED',
+    'DEPOSIT_REPORTED',
+    'DEPOSIT_CONFIRMED',
+    'PROJECT_CANCELLED',
+    'WORK_SUBMITTED',
+    'WORK_REJECTED',
+    'WORK_ACCEPTED',
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 // listing.listing_type: which kind of listing a row is (section 7, ADR 0020).
 export const LISTING_TYPES = ['SERVICE', 'JOB'] as const;
@@ -72,8 +107,25 @@ export type ListingType = (typeof LISTING_TYPES)[number];
 
 // Ordering choices of the service search. Never stored, so camelCase like
 // COMPANY_SORT_ORDERS (section 6).
-export const SERVICE_SORT_ORDERS = ['newest', 'priceAsc', 'priceDesc'] as const;
+export const SERVICE_SORT_ORDERS = [
+    'newest',
+    'priceAsc',
+    'priceDesc',
+    'ratingDesc',
+    'ratingAsc',
+] as const;
 export type ServiceSortOrder = (typeof SERVICE_SORT_ORDERS)[number];
+
+// US3-8 (T3.8.2, T3.8.3). Ordering choices of the job search. Never stored,
+// so camelCase like COMPANY_SORT_ORDERS and SERVICE_SORT_ORDERS (section 6).
+export const JOB_SORT_ORDERS = [
+    'newest',
+    'maxBudgetDesc',
+    'maxBudgetAsc',
+    'deadlineAsc',
+    'deadlineDesc',
+] as const;
+export type JobSortOrder = (typeof JOB_SORT_ORDERS)[number];
 
 // The frontend switches on these; a rename is a breaking change for both sides.
 export const API_ERROR_CODES = [
@@ -201,9 +253,10 @@ export interface CompanySummary {
 export const COMPANY_SORT_ORDERS = ['nameAsc', 'nameDesc'] as const;
 export type CompanySortOrder = (typeof COMPANY_SORT_ORDERS)[number];
 
-// US3-1. One service search result card: the service, with a short profile of
-// the company that offers it (ADR 0001). techStack is this service's own.
-export interface ServiceSummary {
+// US3-1, US3-3. One service search result card: the service, with a short
+// profile of the company that offers it (ADR 0001) and its Provider rating
+// summary (T3.3.2). techStack is this service's own.
+export interface ServiceSummary extends ReviewSummary {
     serviceId: number;
     listingTitle: string;
     listingDesc: string;
@@ -258,9 +311,10 @@ export interface ChangeCredentialsRequest {
     newPassword?: string | undefined;
 }
 
-// US6-4. The admin's own password, confirming intent before an irreversible
-// delete of another company's account. Same currentPassword shape as
-// ChangeCredentialsRequest, checked against the admin's own row.
+// US1-6 / US6-4. The caller's own password, confirming intent before an
+// irreversible delete: a company deleting itself, or an admin deleting another
+// company. Same currentPassword shape as ChangeCredentialsRequest, checked
+// against the caller's own row.
 export interface DeleteCompanyAccountRequest {
     currentPassword: string;
 }
@@ -391,9 +445,8 @@ export interface UpdateJobRequest {
     categoryIds?: number[] | undefined;
 }
 
-// US2-8. A proposal sent to a listing (ADR 0021). Today every listing it is
-// sent to is a job; the names say sender and listing so a hire request on a
-// service can use the same row.
+// US2-8, US2-15. A proposal sent to a listing (ADR 0016, ADR 0021): a
+// Provider's proposal on a job, or a Receiver's hire request on a service.
 export interface Proposal {
     proposalId: number;
     listingId: number;
@@ -432,14 +485,15 @@ export interface CompanyBrief {
     companyPhoto: string | null;
 }
 
-// US2-10. One row of GET /jobs/:jobId/proposals, as the listing's owner sees
-// it: the proposal, with a short profile of the company that sent it, so the
-// owner can choose.
+// US2-10, US2-16. One row of GET /jobs/:jobId/proposals or
+// GET /services/:serviceId/proposals, as the listing's owner sees it: the
+// proposal, with a short profile of the company that sent it, so the owner
+// can choose.
 export interface ReceivedProposal extends Proposal {
     sender: CompanyBrief;
 }
 
-// What POST /jobs/:jobId/proposals accepts.
+// What POST /jobs/:jobId/proposals and POST /services/:serviceId/proposals accept.
 export interface CreateProposalRequest {
     proposalBudget: number;
     proposalTerms: string;
@@ -487,9 +541,17 @@ export interface ProjectDetail extends Project {
 // US2-5. One row of GET /companies/:companyId/completed-projects.
 export interface CompletedProject {
     projectId: number;
+    listingType: ListingType;
     listingTitle: string;
-    receiver: CompanyBrief;
+    listingDesc: string;
+    categories: string[];
+    techStack: string[];
+    startDate: string;
     completedAt: string;
+    provider: CompanyBrief;
+    receiver: CompanyBrief;
+    rating: number | null;
+    reviewComment: string | null;
 }
 
 // ADR 0017. A quotation PDF on a project. Sent as multipart (a `file` field),
@@ -515,12 +577,30 @@ export interface QuotationNotice {
     createdAt: string;
 }
 
-// US4-9. One entry of GET /projects/:projectId/updates, oldest first.
+// US4-9. One entry of GET /projects/:projectId/updates, oldest first: the
+// whole timeline. updateText is null on every type but PROGRESS and
+// WORK_REJECTED.
 export interface ProjectUpdate {
     projectUpdateId: number;
     projectId: number;
     updateType: ProjectUpdateType;
-    updateText: string;
+    updateText: string | null;
+    createdAt: string;
+}
+
+// T4.1.5. One notice of GET /notifications/mine, newest first. sender is the
+// company that acted; the listing is the one the proposal was sent to.
+// projectId is null until that proposal is accepted. readAt is null until
+// the recipient opens the bell.
+export interface Notification {
+    notificationId: number;
+    notificationType: NotificationType;
+    sender: CompanyBrief;
+    listingId: number;
+    listingType: ListingType;
+    listingTitle: string;
+    projectId: number | null;
+    readAt: string | null;
     createdAt: string;
 }
 

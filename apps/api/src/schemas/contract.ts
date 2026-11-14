@@ -21,6 +21,7 @@ import type {
     CreateServiceRequest,
     DeleteCompanyAccountRequest,
     RegisterRequest,
+    RejectWorkRequest,
     UpdateCompanyProfileRequest,
     UpdateJobRequest,
     UpdateServiceRequest,
@@ -36,6 +37,7 @@ import type { createProposalSchema } from './proposal.schema';
 import type {
     createProjectUpdateSchema,
     createReviewSchema,
+    rejectWorkSchema,
 } from './project.schema';
 import type {
     createServiceSchema,
@@ -127,6 +129,10 @@ type _ContractMatchesCreateProjectUpdate = Assert<
     CreateProjectUpdateRequest,
     CreateProjectUpdateInput
 >;
+
+type RejectWorkInput = z.infer<typeof rejectWorkSchema>;
+type _RejectWorkMatchesContract = Assert<RejectWorkInput, RejectWorkRequest>;
+type _ContractMatchesRejectWork = Assert<RejectWorkRequest, RejectWorkInput>;
 
 type CreateReviewInput = z.infer<typeof createReviewSchema>;
 type _CreateReviewMatchesContract = Assert<

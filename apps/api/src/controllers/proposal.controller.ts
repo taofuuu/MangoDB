@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
 import type {
+    CreateProposalRequest,
     ListingStatus,
     ListingType,
+    NotificationType,
     Paginated,
     ProposalStatus,
     ProposalStatusCounts,
@@ -11,7 +13,7 @@ import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { pageArgs, toPagination } from '../lib/pagination';
 import { ApiError } from '../lib/api-error';
-import { isUniqueViolation } from '../lib/prisma-errors';
+import { orDuplicate } from '../lib/prisma-errors';
 import { parseParams, parseBody, parseQuery } from '../middleware/validate';
 import {
     createProposalSchema,
@@ -19,6 +21,7 @@ import {
     proposalListQuerySchema,
 } from '../schemas/proposal.schema';
 import { jobIdParamSchema } from '../schemas/job.schema';
+import { serviceIdParamSchema } from '../schemas/service.schema';
 import {
     assertListingOwned,
     LISTING_MESSAGES,
@@ -38,18 +41,32 @@ import {
     setProposalStatus,
 } from '../lib/proposal';
 
-export async function createProposal(
-    req: Request,
-    res: Response,
-): Promise<void> {
-    const { jobId } = parseParams(jobIdParamSchema, req.params);
-    const body = parseBody(createProposalSchema, req.body);
-    const callerCompanyId = req.auth!.companyId;
+const PROPOSE_MESSAGES: Record<
+    ListingType,
+    { own: string; notOpen: string; repeat: string }
+> = {
+    JOB: {
+        own: 'You cannot send a proposal to your own job',
+        notOpen: 'This job is not open for proposals',
+        repeat: 'You already have a pending proposal on this job',
+    },
+    SERVICE: {
+        own: 'You cannot send a hire request to your own service',
+        notOpen: 'This service is not open for hire requests',
+        repeat: 'You already have a pending hire request on this service',
+    },
+};
 
-    // A soft-deleted company's postings stay OPEN in the table, so the where
-    // hides them here, the same 404 that GET /jobs/:jobId gives.
-    const posting = await prisma.listing.findUnique({
-        where: { listingId: jobId, company: { deletedAt: null } },
+async function sendProposalToListing(
+    listingId: number,
+    listingType: ListingType,
+    callerCompanyId: number,
+    body: CreateProposalRequest,
+) {
+    // A soft-deleted company's listings stay OPEN in the table, so the where
+    // hides them here, the same 404 that GET /jobs/:jobId and GET /services/:serviceId give.
+    const listing = await prisma.listing.findUnique({
+        where: { listingId, company: { deletedAt: null } },
         select: {
             listingId: true,
             listingType: true,
@@ -58,69 +75,133 @@ export async function createProposal(
         },
     });
 
-    if (!posting || posting.listingType !== ('JOB' satisfies ListingType)) {
-        throw ApiError.notFound(LISTING_MESSAGES.JOB.notFound);
+    // No owner is a broken row; the owner is who gets the notice below.
+    if (
+        !listing ||
+        listing.listingType !== listingType ||
+        listing.companyId === null
+    ) {
+        throw ApiError.notFound(LISTING_MESSAGES[listingType].notFound);
     }
 
-    if (posting.companyId === callerCompanyId) {
-        throw ApiError.forbidden('You cannot send a proposal to your own job');
+    const msg = PROPOSE_MESSAGES[listingType];
+
+    if (listing.companyId === callerCompanyId) {
+        throw ApiError.forbidden(msg.own);
     }
 
-    if (posting.listingStatus !== ('OPEN' satisfies ListingStatus)) {
-        throw ApiError.conflict('This job is not open for proposals');
+    if (listing.listingStatus !== ('OPEN' satisfies ListingStatus)) {
+        throw ApiError.conflict(msg.notOpen);
     }
 
-    try {
-        const proposal = await prisma.proposal.create({
-            data: {
-                listingId: jobId,
-                senderId: callerCompanyId,
-                proposalBudget: body.proposalBudget,
-                proposalTerms: body.proposalTerms,
-                duration: body.duration,
-                proposalStatus: 'PENDING' satisfies ProposalStatus,
-            },
-            select: proposalSelect,
-        });
-
-        res.status(201).json(toProposal(proposal));
-    } catch (err) {
-        // Only a second PENDING one hits the index; a decided one may repeat
-        // (ADR 0016).
-        if (isUniqueViolation(err)) {
-            throw ApiError.conflict(
-                'You already have a pending proposal on this job',
-            );
-        }
-        throw err;
-    }
+    // Only a second PENDING one hits the index; a decided one may repeat
+    // (ADR 0016). The listing's owner gets a notice in the same transaction.
+    const ownerId = listing.companyId;
+    const proposal = await orDuplicate(
+        prisma.$transaction(async (tx) => {
+            const created = await tx.proposal.create({
+                data: {
+                    listingId,
+                    senderId: callerCompanyId,
+                    proposalBudget: body.proposalBudget,
+                    proposalTerms: body.proposalTerms,
+                    duration: body.duration,
+                    proposalStatus: 'PENDING' satisfies ProposalStatus,
+                },
+                select: proposalSelect,
+            });
+            await tx.notification.create({
+                data: {
+                    proposalId: created.proposalId,
+                    senderId: callerCompanyId,
+                    recipientId: ownerId,
+                    notificationType:
+                        'PROPOSAL_RECEIVED' satisfies NotificationType,
+                },
+            });
+            return created;
+        }),
+        msg.repeat,
+    );
+    return toProposal(proposal);
 }
 
-// US2-10. Every proposal on one job posting, newest first, each with a short
-// profile of its Provider. Soft-deleted Providers are kept: a proposal is
+export async function createProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { jobId } = parseParams(jobIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        jobId,
+        'JOB',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
+}
+
+// US2-15. Send a hire request (stored as a PENDING proposal) on an open service.
+export async function createServiceProposal(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    const body = parseBody(createProposalSchema, req.body);
+
+    const proposal = await sendProposalToListing(
+        serviceId,
+        'SERVICE',
+        req.auth!.companyId,
+        body,
+    );
+    res.status(201).json(proposal);
+}
+
+// US2-10, US2-16. Every proposal on one listing, newest first, each with a
+// short profile of its sender. Soft-deleted senders are kept: a proposal is
 // history, not discovery (see Company.deletedAt).
-// Only the posting's owner may read them: the list carries every competing
-// Provider's price and terms.
+// Only the listing's owner may read them: the list carries every sender's
+// price and terms.
+async function listListingProposals(
+    listingId: number,
+    listingType: ListingType,
+    callerId: number,
+) {
+    await assertListingOwned(listingId, listingType, callerId);
+
+    const proposals = await prisma.proposal.findMany({
+        where: { listingId },
+        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
+        select: receivedProposalSelect,
+    });
+
+    return proposals.map(toReceivedProposal);
+}
+
 export async function listJobProposals(
     req: Request,
     res: Response,
 ): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
-    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
-
-    const proposals = await prisma.proposal.findMany({
-        where: { listingId: jobId },
-        orderBy: [{ createdAt: 'desc' }, { proposalId: 'desc' }],
-        select: receivedProposalSelect,
-    });
-
-    res.json(proposals.map(toReceivedProposal));
+    res.json(await listListingProposals(jobId, 'JOB', req.auth!.companyId));
 }
 
-// US2-11. Accepting a proposal on a job closes the job, rejects the other
-// proposals and opens a project, all or nothing. Each step is a lib helper,
-// so an accept that must leave its listing open (a hire request on a service)
-// leaves out closeOpenListing.
+export async function listServiceProposals(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { serviceId } = parseParams(serviceIdParamSchema, req.params);
+    res.json(
+        await listListingProposals(serviceId, 'SERVICE', req.auth!.companyId),
+    );
+}
+
+// US2-11, US2-17. Accepting a proposal on a job closes the job, rejects the
+// other proposals and opens a project, all or nothing. On a service (ADR 0016),
+// the service stays open and other pending hire requests are left pending so
+// the Provider can serve multiple Receivers.
 export async function acceptProposal(
     req: Request,
     res: Response,
@@ -135,14 +216,40 @@ export async function acceptProposal(
         ) {
             throw ApiError.conflict('Listing has already been closed');
         }
+        // #262: a deleted company can never sign in to the project. Rejecting
+        // its proposal stays allowed, so the owner can still clear it.
+        if (proposal.sender.deletedAt !== null) {
+            throw ApiError.conflict('This company has deleted its account');
+        }
 
-        await closeOpenListing(
-            tx,
-            proposal.listingId,
-            'Listing has already been closed',
-        );
+        const isJob =
+            proposal.listing.listingType === ('JOB' satisfies ListingType);
+
+        if (isJob) {
+            await closeOpenListing(
+                tx,
+                proposal.listingId,
+                'Listing has already been closed',
+            );
+        }
         await setProposalStatus(tx, proposalId, 'ACCEPTED');
-        await rejectPendingProposals(tx, proposal.listingId, proposalId);
+        await tx.notification.create({
+            data: {
+                proposalId,
+                senderId: callerId,
+                recipientId: proposal.senderId,
+                notificationType:
+                    'PROPOSAL_ACCEPTED' satisfies NotificationType,
+            },
+        });
+        if (isJob) {
+            await rejectPendingProposals(
+                tx,
+                proposal.listingId,
+                callerId,
+                proposalId,
+            );
+        }
         return createProjectFromProposal(tx, {
             proposalId,
             proposalBudget: proposal.proposalBudget,
@@ -152,7 +259,8 @@ export async function acceptProposal(
     res.status(201).json(project);
 }
 
-// Rejecting one pending proposal touches no other row.
+// Rejecting one pending proposal touches no other row. Its sender gets a
+// notice in the same transaction.
 export async function rejectProposal(
     req: Request,
     res: Response,
@@ -160,8 +268,19 @@ export async function rejectProposal(
     const callerId = req.auth!.companyId;
     const { proposalId } = parseParams(proposalIdParamSchema, req.params);
 
-    await findPendingProposalFor(prisma, proposalId, callerId);
-    await setProposalStatus(prisma, proposalId, 'REJECTED');
+    await prisma.$transaction(async (tx) => {
+        const proposal = await findPendingProposalFor(tx, proposalId, callerId);
+        await setProposalStatus(tx, proposalId, 'REJECTED');
+        await tx.notification.create({
+            data: {
+                proposalId,
+                senderId: callerId,
+                recipientId: proposal.senderId,
+                notificationType:
+                    'PROPOSAL_REJECTED' satisfies NotificationType,
+            },
+        });
+    });
     res.status(204).end();
 }
 

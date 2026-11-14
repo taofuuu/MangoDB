@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { type ReactNode, useRef } from 'react';
 import Image from 'next/image';
 import upload from '../../assets/icons/upload-icon.png';
 
@@ -8,9 +8,21 @@ import upload from '../../assets/icons/upload-icon.png';
 // here too is not security — the server's check is — it is so the user finds
 // out before waiting for an upload to be rejected.
 //
-// Not image/*: image/svg+xml is a document the browser executes scripts from
-// when its public URL is opened directly.
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+// Images are not image/*: image/svg+xml is a document the browser executes
+// scripts from when its public URL is opened directly. PDFs are for
+// quotations (ADR 0017).
+const FILE_RULES = {
+    image: {
+        types: ['image/png', 'image/jpeg', 'image/webp'],
+        typeError: 'Only PNG, JPEG or WebP images are allowed.',
+        sizeError: 'Image must be 5MB or smaller.',
+    },
+    pdf: {
+        types: ['application/pdf'],
+        typeError: 'Only PDF files are allowed.',
+        sizeError: 'PDF must be 5MB or smaller.',
+    },
+} as const;
 const MAX_BYTES = 5 * 1024 * 1024;
 
 type FileUploadProps = {
@@ -20,8 +32,13 @@ type FileUploadProps = {
     // caller shows the message wherever it shows its other errors.
     onError?: (message: string) => void;
     className?: string;
-    accept?: string;
+    // Which rules above the picked file must pass. Also sets what the
+    // browser's file dialog offers.
+    kind?: keyof typeof FILE_RULES;
     label?: string;
+    // Replaces the default icon and label inside the button, for a picker
+    // that looks different but keeps the same rules.
+    children?: ReactNode;
 };
 
 export default function FileUpload({
@@ -29,17 +46,18 @@ export default function FileUpload({
     onChange,
     onError,
     className = '',
-    // Matches IMAGE_TYPES. The old default offered .pdf, which the API refuses.
-    accept = 'image/png,image/jpeg,image/webp',
+    kind = 'image',
     label = 'Upload',
+    children,
 }: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
+    const rules = FILE_RULES[kind];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
 
-        if (file && !IMAGE_TYPES.includes(file.type)) {
-            onError?.('Only PNG, JPEG or WebP images are allowed.');
+        if (file && !(rules.types as readonly string[]).includes(file.type)) {
+            onError?.(rules.typeError);
             // Clear the input, or picking the same bad file again fires no
             // change event and the user sees nothing happen.
             e.target.value = '';
@@ -47,7 +65,7 @@ export default function FileUpload({
         }
 
         if (file && file.size > MAX_BYTES) {
-            onError?.('Image must be 5MB or smaller.');
+            onError?.(rules.sizeError);
             e.target.value = '';
             return;
         }
@@ -64,7 +82,7 @@ export default function FileUpload({
             <input
                 ref={inputRef}
                 type="file"
-                accept={accept}
+                accept={rules.types.join(',')}
                 onChange={handleFileChange}
                 className="hidden"
             />
@@ -75,17 +93,21 @@ export default function FileUpload({
                 onClick={() => inputRef.current?.click()}
                 className={className || defaultClassName}
             >
-                <Image
-                    src={upload}
-                    alt="Upload"
-                    width={24}
-                    height={24}
-                    className="ml-1 mt-2"
-                />
+                {children ?? (
+                    <>
+                        <Image
+                            src={upload}
+                            alt="Upload"
+                            width={24}
+                            height={24}
+                            className="ml-1 mt-2"
+                        />
 
-                <span className="mt-2 max-w-full truncate px-2 type-sm !font-[500] underline">
-                    {value?.name ?? label}
-                </span>
+                        <span className="mt-2 max-w-full truncate px-2 type-sm !font-[500] underline">
+                            {value?.name ?? label}
+                        </span>
+                    </>
+                )}
             </button>
         </div>
     );

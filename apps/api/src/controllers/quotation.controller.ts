@@ -1,0 +1,241 @@
+import type { Request, Response } from 'express';
+import type { QuotationStatus } from '@mangodb/shared';
+import { prisma } from '../lib/prisma';
+import { ApiError } from '../lib/api-error';
+import { orConflict, orDuplicate } from '../lib/prisma-errors';
+import {
+    assertProjectParty,
+    assertProjectStatus,
+    moveProjectStatus,
+    saveProjectEvent,
+} from '../lib/project';
+import {
+    assertQuotationParty,
+    quotationSelect,
+    toQuotations,
+} from '../lib/quotation';
+import { notifyOtherParty } from '../lib/notification';
+import { BUCKETS, removeFromStorageByUrl } from '../lib/storage';
+import { saveWithUpload } from '../lib/upload';
+import { requireFile } from '../middleware/upload';
+import { parseParams } from '../middleware/validate';
+import { projectIdParamSchema } from '../schemas/project.schema';
+import { quotationIdParamSchema } from '../schemas/quotation.schema';
+
+// One wording per rule: each is thrown from more than one place below.
+const ALREADY_PENDING = 'A quotation is already pending';
+const NOT_PENDING = 'Quotation is not PENDING';
+
+// US4-1 (T4.1.3). The Provider uploads a quotation PDF on a project while it
+// is AWAITING_QUOTATION and no quotation is pending (ADR 0017). The project
+// stays AWAITING_QUOTATION until the Receiver accepts one (ADR 0015).
+export async function createQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    const file = requireFile(req.file, 'file', 'Choose a PDF first');
+    const project = await assertProjectParty(projectId, req.auth!.companyId);
+
+    // A party already knows the project exists, so the Receiver gets 403, not 404.
+    if (project.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can upload a quotation');
+    }
+    assertProjectStatus(project, 'AWAITING_QUOTATION');
+
+    // Checked before upload so a repeat attempt does not send a PDF to storage
+    // only to delete it again. The partial unique index (ADR 0017) still
+    // catches a concurrent second upload below, and saveWithUpload cleans up
+    // the orphan file.
+    const pending = await prisma.quotation.findFirst({
+        where: {
+            projectId,
+            quotationStatus: 'PENDING' satisfies QuotationStatus,
+        },
+        select: { quotationId: true },
+    });
+    if (pending) {
+        throw ApiError.conflict(ALREADY_PENDING);
+    }
+
+    // The row and its timeline event (#212) save together, or neither does.
+    const row = await orDuplicate(
+        saveWithUpload(file, BUCKETS.QUOTATION, 'quotations', (quotationFile) =>
+            prisma.$transaction(async (tx) => {
+                const created = await tx.quotation.create({
+                    data: {
+                        projectId,
+                        quotationFile,
+                        quotationStatus: 'PENDING' satisfies QuotationStatus,
+                    },
+                    select: quotationSelect,
+                });
+                await saveProjectEvent(tx, projectId, 'QUOTATION_SENT');
+                await notifyOtherParty(tx, project, 'QUOTATION_SENT');
+                return created;
+            }),
+        ),
+        ALREADY_PENDING,
+    );
+
+    const [body] = await toQuotations([row]);
+    res.status(201).json(body);
+}
+
+// US4-3 (T4.3.1). The project's quotations, newest first, for both parties:
+// each with its file link and decision status (ADR 0017). A bare array, not
+// paged: one project's quotation history stays short.
+export async function listQuotations(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { projectId } = parseParams(projectIdParamSchema, req.params);
+    await assertProjectParty(projectId, req.auth!.companyId);
+
+    const rows = await prisma.quotation.findMany({
+        where: { projectId },
+        // The id breaks a tie between two quotations saved in the same instant.
+        orderBy: [{ createdAt: 'desc' }, { quotationId: 'desc' }],
+        select: quotationSelect,
+    });
+    res.json(await toQuotations(rows));
+}
+
+// US4-4 (T4.4.1). The Receiver accepts a pending quotation (ADR 0017).
+// Transitions the quotation to ACCEPTED and the project from AWAITING_QUOTATION
+// to AWAITING_DEPOSIT in one transaction (ADR 0015).
+export async function acceptQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can accept a quotation');
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.update({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                data: {
+                    quotationStatus: 'ACCEPTED' satisfies QuotationStatus,
+                },
+                select: quotationSelect,
+            }),
+            NOT_PENDING,
+        );
+        await moveProjectStatus(
+            tx,
+            quotation.projectId,
+            'AWAITING_QUOTATION',
+            'AWAITING_DEPOSIT',
+        );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_ACCEPTED');
+        await notifyOtherParty(tx, quotation, 'QUOTATION_ACCEPTED');
+        return row;
+    });
+
+    const [body] = await toQuotations([updated]);
+    res.json(body);
+}
+
+// US4-5 (T4.5.1). The Receiver rejects a pending quotation (ADR 0017).
+// Transitions the quotation to REJECTED so the Provider can send a new one;
+// the project stays AWAITING_QUOTATION (ADR 0015). Refuses with 409 if the
+// project has moved on or was cancelled.
+export async function rejectQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'receiver') {
+        throw ApiError.forbidden('Only the Receiver can reject a quotation');
+    }
+    assertProjectStatus(quotation, 'AWAITING_QUOTATION');
+
+    // One transaction: the decision and its timeline event (#212) save
+    // together, or neither does.
+    const updated = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.update({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                data: {
+                    quotationStatus: 'REJECTED' satisfies QuotationStatus,
+                },
+                select: quotationSelect,
+            }),
+            NOT_PENDING,
+        );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_REJECTED');
+        await notifyOtherParty(tx, quotation, 'QUOTATION_REJECTED');
+        return row;
+    });
+
+    const [body] = await toQuotations([updated]);
+    res.json(body);
+}
+
+// US4-2 (T4.2.2). The Provider deletes a pending quotation so a wrong
+// PDF can be replaced before the Receiver answers (ADR 0017). Deletes with
+// where status = PENDING, so if the Receiver decides at the same moment, the
+// delete answers 409 and keeps the decided PDF in storage. Refuses with 409
+// if the project has moved on or was cancelled.
+export async function deleteQuotation(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const { quotationId } = parseParams(quotationIdParamSchema, req.params);
+    const quotation = await assertQuotationParty(
+        quotationId,
+        req.auth!.companyId,
+    );
+
+    if (quotation.myRole !== 'provider') {
+        throw ApiError.forbidden('Only the Provider can delete a quotation');
+    }
+    assertProjectStatus(quotation, 'AWAITING_QUOTATION');
+
+    // The timeline keeps the QUOTATION_SENT event and adds this one: it is
+    // append-only (#212). A 409 saves neither the delete nor the event.
+    const deleted = await prisma.$transaction(async (tx) => {
+        const row = await orConflict(
+            tx.quotation.delete({
+                where: {
+                    quotationId,
+                    quotationStatus: 'PENDING' satisfies QuotationStatus,
+                },
+                select: { quotationFile: true },
+            }),
+            NOT_PENDING,
+        );
+        await saveProjectEvent(tx, quotation.projectId, 'QUOTATION_DELETED');
+        return row;
+    });
+
+    // Best-effort cleanup of the PDF in storage once the row is gone. Seeded
+    // demo quotations share one PDF (seed.ts), so it stays while a row uses it.
+    const stillUsed = await prisma.quotation.count({
+        where: { quotationFile: deleted.quotationFile },
+    });
+    if (stillUsed === 0) {
+        await removeFromStorageByUrl(deleted.quotationFile, BUCKETS.QUOTATION);
+    }
+
+    res.status(204).end();
+}

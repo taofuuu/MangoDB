@@ -1,0 +1,13 @@
+' Shared style for the use case diagrams in this folder.
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #555555
+}
+skinparam rectangle {
+  BorderColor #888888
+  FontStyle bold
+}

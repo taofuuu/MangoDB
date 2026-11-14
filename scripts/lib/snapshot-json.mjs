@@ -111,6 +111,8 @@ function scrub(value, key) {
 
     if (typeof value === 'number') {
         const wanted = normalizeKey(key ?? '');
+        // Automatic system-generated updates create auto-incrementing projectUpdateIds for the probe project
+        if (wanted === 'projectupdateid') return '<project_update_id>';
         const hit = idSubs.find(
             (sub) => sub.value === value && sub.key === wanted,
         );
@@ -119,16 +121,33 @@ function scrub(value, key) {
 
     if (typeof value !== 'string') return value;
 
+    // Date-only strings (YYYY-MM-DD) are deliberately left alone: the wire
+    // format of a date is something this refactor is supposed to pin down.
+    if (JWT.test(value)) return '<jwt>';
+    if (ISO_TIMESTAMP.test(value)) return '<timestamp>';
+    if (STORAGE_URL.test(value)) return '<storage-url>';
+
     let text = value;
     for (const [name, raw] of textSubs) {
         text = text.split(raw).join(`<${name}>`);
     }
-    // Date-only strings (YYYY-MM-DD) are deliberately left alone: the wire
-    // format of a date is something this refactor is supposed to pin down.
-    if (JWT.test(text)) return '<jwt>';
-    if (ISO_TIMESTAMP.test(text)) return '<timestamp>';
-    if (STORAGE_URL.test(text)) return '<storage-url>';
     return text;
+}
+
+const RESOURCE_PREFIX_KEYS = {
+    projects: ['projectid'],
+    portfolios: ['portfolioid'],
+    certificates: ['certificateid'],
+    services: ['serviceid', 'listingid', 'deleteprobeid', 'deletedserviceid'],
+    jobs: ['jobid', 'listingid', 'deletedjobid'],
+    proposals: ['proposalid'],
+    quotations: ['quotationid'],
+    companies: ['companyid', 'senderid'],
+};
+
+function prefixMatchesKey(prefix, normalizedKey) {
+    const allowed = RESOURCE_PREFIX_KEYS[prefix.toLowerCase()];
+    return allowed ? allowed.includes(normalizedKey) : true;
 }
 
 // The request line carries the same ids the body does — PATCH /portfolios/26 —
@@ -138,13 +157,20 @@ function scrubRequest(text) {
     for (const [name, raw] of textSubs) {
         out = out.split(raw).join(`<${name}>`);
     }
+
+    // Replace resource path segment when preceded by known route prefix, e.g. /projects/188
+    out = out.replace(
+        /\/([a-zA-Z0-9_-]+)\/(\d+)(?![0-9])/g,
+        (whole, prefix, numStr) => {
+            const num = Number(numStr);
+            const hit = idSubs.find(
+                (sub) => sub.value === num && prefixMatchesKey(prefix, sub.key),
+            );
+            return hit ? `/${prefix}/${hit.placeholder}` : whole;
+        },
+    );
+
     for (const sub of idSubs) {
-        // Matched as a whole path segment: /27 but not the 27 inside /271,
-        // and not a 27 that happens to sit in a query value.
-        out = out.replace(
-            new RegExp('/' + sub.value + '(?![0-9])', 'g'),
-            '/' + sub.placeholder,
-        );
         // A query value is replaced only under a param of the same key, as
         // in the body: ?companyId=27 for --id company_id=27, never ?page=27.
         out = out.replace(

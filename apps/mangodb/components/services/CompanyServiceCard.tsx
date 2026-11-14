@@ -1,5 +1,6 @@
+import Link from 'next/link';
 import type { ServiceSummary } from '@mangodb/shared';
-import { Tag } from 'lucide-react';
+import { ArrowRight, Tag } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { formatBudgetRange } from '@/lib/money';
 import ServiceActionsMenu from './ServiceActionsMenu';
@@ -65,7 +66,7 @@ export default function CompanyServiceCard({
                         </p>
                     )}
 
-                    <div className="mt-1.5 flex items-center gap-1.5 type-xs font-medium text-brand">
+                    <div className="mt-1.5 flex items-center gap-1.5 type-xs !font-[500] text-brand">
                         <Tag className="h-3.5 w-3.5 shrink-0 rotate-90" />
                         <span>
                             {formatBudgetRange(
@@ -104,18 +105,30 @@ export default function CompanyServiceCard({
                     />
                 )}
 
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        // The card's own click would fire too and toggle twice.
-                        e.stopPropagation();
-                        onViewDetail(service);
-                    }}
-                    // mt-auto keeps it at the bottom, under the menu or not.
-                    className="mt-auto flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:border-brand hover:bg-brand/10"
-                >
-                    view detail →
-                </button>
+                <div className="mt-auto flex items-center gap-2">
+                    {onEdit && onDelete && (
+                        <Link
+                            href={`/services/${service.serviceId}/proposals`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:border-brand hover:bg-brand/10"
+                        >
+                            Proposals
+                            <ArrowRight size={14} />
+                        </Link>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            // The card's own click would fire too and toggle twice.
+                            e.stopPropagation();
+                            onViewDetail(service);
+                        }}
+                        className="flex items-center gap-1 rounded-[8px] border border-brand/50 px-3 py-1 type-xs text-brand transition hover:border-brand hover:bg-brand/10"
+                    >
+                        view detail →
+                    </button>
+                </div>
             </div>
         </div>
     );

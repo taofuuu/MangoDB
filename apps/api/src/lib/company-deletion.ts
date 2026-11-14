@@ -1,9 +1,11 @@
+import type { ProposalStatus } from '@mangodb/shared';
+import { rejectPendingProposals } from './listing';
 import { prisma } from './prisma';
 
 // US1-6 / US6-4. The write side of company.deletedAt (see the migration note
-// on that column). Marks the account gone without touching anything it owns —
-// no cascade, no cleanup — so listings, proposals, projects, and reviews stay
-// exactly where they are for the history that depends on them.
+// on that column). Marks the account gone without deleting anything it owns —
+// no cascade — so listings, proposals, projects, and reviews stay exactly
+// where they are for the history that depends on them.
 //
 // A company's own deletion request and an administrator's deletion of a company
 // both end here, so the two paths cannot drift on what "deleted" means.
@@ -22,26 +24,61 @@ import { prisma } from './prisma';
 // lands, is covered without having to remember this rule. A caller that wants
 // to explain the refusal checks accountType itself first; here an
 // administrator simply never matches, and the call is a no-op like any other.
+//
+// The one thing it does clean up (#263): pending proposals on the company's
+// listings are rejected, with a notice to each sender, the way closing a job
+// does. Nobody is left to answer them, so they would stay Pending forever.
+// Only the call that did the delete rejects, in the same transaction.
 export async function softDeleteCompany(companyId: number): Promise<boolean> {
-    const { count } = await prisma.company.updateMany({
-        where: {
-            companyId,
-            deletedAt: null,
-            accountType: { not: 'ADMIN' },
-        },
-        data: { deletedAt: new Date() },
+    return prisma.$transaction(async (tx) => {
+        const { count } = await tx.company.updateMany({
+            where: {
+                companyId,
+                deletedAt: null,
+                accountType: { not: 'ADMIN' },
+            },
+            data: { deletedAt: new Date() },
+        });
+        if (count === 0) return false;
+
+        const listings = await tx.listing.findMany({
+            where: {
+                companyId,
+                proposal: {
+                    some: {
+                        proposalStatus: 'PENDING' satisfies ProposalStatus,
+                    },
+                },
+            },
+            select: { listingId: true },
+        });
+        for (const { listingId } of listings) {
+            await rejectPendingProposals(tx, listingId, companyId);
+        }
+        return true;
     });
-    return count > 0;
 }
 
-// A row that no longer exists and a row marked deleted both mean the same
-// thing to a caller checking whether an account may act: no. Folding "not
-// found" into "deleted" here means requireAuth gets one boolean instead of
-// having to separately handle a company deleted out from under a live token.
-export async function isCompanyDeleted(companyId: number): Promise<boolean> {
+// requireAuth's one question about the company row, asked on every request.
+// A token is still cryptographically valid after any of these, so all three
+// end the session: the row no longer exists, it is marked deleted, or the
+// token was issued before the last username/email/password change.
+//
+// Whole seconds, because that is all iat holds. The token issued alongside
+// the change shares its second and must survive, so only an older second
+// fails; another token minted in that same second slips through.
+export async function isSessionEnded(
+    companyId: number,
+    issuedAt: number,
+): Promise<boolean> {
     const company = await prisma.company.findUnique({
         where: { companyId },
-        select: { deletedAt: true },
+        select: { deletedAt: true, credentialsChangedAt: true },
     });
-    return !company || company.deletedAt !== null;
+    if (!company || company.deletedAt !== null) return true;
+
+    const changedAt = company.credentialsChangedAt;
+    return (
+        changedAt !== null && issuedAt < Math.floor(changedAt.getTime() / 1000)
+    );
 }

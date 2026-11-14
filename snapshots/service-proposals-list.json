@@ -1,0 +1,21 @@
+{
+    "request": "GET /services/<service_id>/proposals",
+    "status": 200,
+    "body": [
+        {
+            "createdAt": "<timestamp>",
+            "duration": 2,
+            "listingId": "<listing_id>",
+            "proposalBudget": 60000,
+            "proposalId": "<proposal_id>",
+            "proposalStatus": "PENDING",
+            "proposalTerms": "Hire request for platform backend delivery.",
+            "sender": {
+                "companyId": 143,
+                "companyName": "Snapshot Seed Receiver",
+                "companyPhoto": null
+            },
+            "senderId": 143
+        }
+    ]
+}

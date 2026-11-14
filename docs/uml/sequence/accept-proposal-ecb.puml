@@ -1,0 +1,84 @@
+@startuml accept-proposal-ecb
+' Sequence diagram for US2-11 Accept proposal, in the course style:
+' Entity-Control-Boundary objects (Lecture 3, slides 47-51) and the
+' sequence diagram rules in Lecture 4 (slides 5-9, 16).
+' Same steps and checks as accept-proposal-implementation.puml, without code details.
+title Sequence Diagram: Accept Proposal (US2-11)
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 15
+hide footbox
+
+actor "aReceiver : Receiver" as Receiver
+boundary ":ProposalListUI" as UI
+control ":AcceptProposalControl" as Ctrl
+entity "aProposal : Proposal" as Proposal
+entity "aJobPosting : JobPosting" as Job
+entity "otherProposal : Proposal" as Other
+
+Receiver -> UI : selectAccept(proposalId)
+activate UI
+UI -> UI : confirmAccept()
+UI -> Ctrl : acceptProposal(proposalId, receiverId)
+activate Ctrl
+note right of UI
+  REST: POST /proposals/{proposalId}/accept
+end note
+
+Ctrl -> Proposal : getDetails()
+activate Proposal
+Proposal --> Ctrl : status, jobPostingId
+deactivate Proposal
+
+Ctrl -> Job : getOwnerAndStatus()
+activate Job
+Job --> Ctrl : ownerId, status
+deactivate Job
+
+alt proposal not found
+  Ctrl --> UI : error("Proposal not found")
+  UI --> Receiver : showError()
+else ownerId != receiverId
+  Ctrl --> UI : error("You do not own this job")
+  UI --> Receiver : showError()
+else proposal status != Pending
+  Ctrl --> UI : error("Proposal is not pending")
+  UI --> Receiver : showError()
+else job status != Open for Proposals
+  Ctrl --> UI : error("Job has already been closed")
+  UI --> Receiver : showError()
+else valid
+  Ctrl -> Job : close()
+  activate Job
+  deactivate Job
+
+  Ctrl -> Proposal : setStatus(Accepted)
+  activate Proposal
+  deactivate Proposal
+
+  loop for each other Pending proposal on aJobPosting
+    Ctrl -> Other : setStatus(Rejected)
+    activate Other
+    deactivate Other
+  end
+
+  create entity "aProject : Project" as Project
+  Ctrl -> Project : <<create>>(aProposal, budget)
+  activate Project
+  Project -> Project : setStatus(Awaiting Quotation)
+  Project --> Ctrl : aProject
+  deactivate Project
+
+  Ctrl --> UI : success(aProject)
+  UI --> Receiver : showAccepted()
+end
+deactivate Ctrl
+deactivate UI
+
+note over Ctrl, Other
+  All changes in the "valid" fragment are saved together.
+  If one step fails, none of them are saved.
+end note
+@enduml

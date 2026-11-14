@@ -105,8 +105,14 @@ export default function JobDetailPanel({
                                 photoUrl={job.company.companyPhoto}
                                 size={44}
                             />
+                            {/* Close first: on that company's own profile
+                                the link is the page you're on, and a
+                                same-URL navigation leaves the modal open.
+                                onNavigate, not onClick, so a Ctrl-click
+                                into a new tab leaves it open here. */}
                             <Link
                                 href={`/companies/${job.company.companyId}`}
+                                onNavigate={onClose}
                                 className="type-md text-ink hover:underline [overflow-wrap:anywhere]"
                             >
                                 {job.company.companyName}

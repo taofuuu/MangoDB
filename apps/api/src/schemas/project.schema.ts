@@ -25,6 +25,16 @@ export const createProjectUpdateSchema = z.strictObject({
         .max(10000, 'Update text cannot exceed 10000 characters'),
 });
 
+// US4-12. POST /projects/:projectId/reject-work. The reason becomes a timeline
+// entry, so it has the same 10000 cap as a progress update.
+export const rejectWorkSchema = z.strictObject({
+    reason: z
+        .string()
+        .trim()
+        .min(1, 'Reason is required')
+        .max(10000, 'Reason cannot exceed 10000 characters'),
+});
+
 const scoreSchema = z.number().int().min(1).max(5);
 
 // ADR 0018, US5-1, US5-2. Four 1-5 scores and an optional comment up to 500 characters.

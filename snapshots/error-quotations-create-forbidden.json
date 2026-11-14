@@ -1,0 +1,10 @@
+{
+    "request": "POST /projects/<project_id>/quotations",
+    "status": 403,
+    "body": {
+        "error": {
+            "code": "FORBIDDEN",
+            "message": "Only the Provider can upload a quotation"
+        }
+    }
+}

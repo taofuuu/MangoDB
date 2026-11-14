@@ -1,13 +1,22 @@
-import express, { type Request, type Response } from 'express';
+import express, {
+    type NextFunction,
+    type Request,
+    type Response,
+} from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 import { FRONTEND_URL } from './env';
+import { openapiSpec } from './openapi';
 import { routes } from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { refuseCrossSiteWrites } from './middleware/crossSite';
 
 // Builds the app without listening; index.ts starts it on a port.
 export function createApp() {
     const app = express();
+    // No "X-Powered-By: Express": it only tells a scanner what to try.
+    app.disable('x-powered-by');
 
     // credentials: true plus origin: true would let *any* site make
     // credentialed calls to this API with the visitor's session cookie. It was
@@ -25,9 +34,43 @@ export function createApp() {
     );
     app.use(express.json());
     app.use(cookieParser());
+    app.use(refuseCrossSiteWrites);
 
+    /**
+     * @openapi
+     * /health:
+     *   get:
+     *     tags: [Health]
+     *     summary: Check the API is up
+     *     security: []
+     *     responses:
+     *       '200':
+     *         description: The API is up
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   example: ok
+     */
     app.get('/health', (_req: Request, res: Response) => {
         res.json({ status: 'ok' });
+    });
+
+    // The API docs (OpenAPI 3.1, from the @openapi comments above each route).
+    // Before the routes, so notFoundHandler never sees them.
+    app.get('/openapi.json', (_req: Request, res: Response) => {
+        res.json(openapiSpec);
+    });
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
+
+    // Answers carry profiles, emails and admin lists, so neither the browser
+    // nor anything between it and here may keep a copy.
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+        res.set('Cache-Control', 'no-store');
+        next();
     });
 
     app.use(routes);

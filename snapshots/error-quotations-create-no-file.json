@@ -1,0 +1,16 @@
+{
+    "request": "POST /projects/<project_id>/quotations",
+    "status": 400,
+    "body": {
+        "error": {
+            "code": "VALIDATION_FAILED",
+            "details": [
+                {
+                    "field": "file",
+                    "message": "Choose a PDF first"
+                }
+            ],
+            "message": "Request body is invalid"
+        }
+    }
+}

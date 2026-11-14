@@ -4,6 +4,7 @@
     "body": {
         "items": [
             {
+                "averageRating": null,
                 "categories": [
                     "Mobile App Development"
                 ],
@@ -16,6 +17,7 @@
                 "listingTitle": "Snapshot Probe mobile service <run>",
                 "maxBudget": 120000,
                 "minBudget": 80000,
+                "ratingCount": 0,
                 "serviceId": "<service_id>",
                 "techStack": [
                     "<run>"

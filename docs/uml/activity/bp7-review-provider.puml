@@ -1,0 +1,42 @@
+@startuml bp7-review-provider
+!include style.iuml
+title BP7 Review a Provider\n(US5-1, US5-2, US5-3)
+
+|Receiver|
+start
+:Open completed project;
+
+|MangoDB System|
+if (Project Completed and\nReceiver may review?) then (no)
+  :Hide review option;
+  |Receiver|
+  stop
+else (yes)
+endif
+
+repeat
+  |Receiver|
+  :Rate work quality, service,
+  value for money, and delivery time;
+  :Add comment (optional);
+  :Submit review;
+  |MangoDB System|
+  :Validate ratings and comment;
+  backward :Show error message;
+repeat while (All ratings valid and\ncomment within limit?) is (no) not (yes)
+
+:Store ratings and comment;
+:Review
+<U+005B>Saved<U+005D>]
+:Update Provider average rating
+from eligible reviews;
+
+|Company|
+:Open Provider's ratings
+and reviews;
+
+|MangoDB System|
+:Show ratings and comments
+or "no reviews yet";
+stop
+@enduml

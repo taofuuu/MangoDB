@@ -1,0 +1,67 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+hide circle
+hide empty members
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam ClassFontStyle bold
+skinparam ClassAttributeFontStyle plain
+skinparam ArrowFontSize 11
+skinparam class {
+  BackgroundColor<<Application>> #E8EDF2
+  BorderColor<<Application>> #475569
+  BackgroundColor<<Resource>> #DDEFEF
+  BorderColor<<Resource>> #0F766E
+  BackgroundColor<<Representation>> #FCE4F0
+  BorderColor<<Representation>> #BE185D
+  StereotypeFontColor<<Application>> #475569
+  StereotypeFontColor<<Resource>> #0F766E
+  StereotypeFontColor<<Representation>> #BE185D
+}
+title MangoDB API: Portfolios
+
+class "MangoDB API" as API <<Application>> {
+  basePath = "/"
+}
+class "Portfolios" as Portfolios <<Resource>> {
+  + GET()
+  + POST()
+}
+class "Portfolio" as PortfolioR <<Resource>> {
+  + GET()
+  + PATCH()
+  + DELETE()
+}
+class "ServicePortfolio" as ServicePortfolioRep <<Representation>> {
+  -portfolioId : integer
+  -serviceId : integer
+  -portfolioName : string
+  -portfolioDescription : string?
+  -developmentDate : date
+  -portfolioImage : url
+  -portfolioLink : url
+}
+class "CreatePortfolioRequest" as CreatePortfolioRequestRep <<Representation>> {
+  -serviceId : integer
+  -portfolioName : string
+  -portfolioDescription : string?
+  -developmentDate : date
+  -portfolioLink : url
+  -portfolioImage : image file, multipart
+}
+class "UpdatePortfolioRequest" as UpdatePortfolioRequestRep <<Representation>> {
+  -portfolioName : string?
+  -portfolioDescription : string?
+  -developmentDate : date?
+  -portfolioLink : url?
+  -portfolioImage : image file?
+}
+
+API -[#B45309,dashed]-> Portfolios : <i><color:#B45309>«Path» /portfolios</color></i>
+Portfolios -[#BE185D,dashed]-> ServicePortfolioRep : <i><color:#BE185D>«use»</color></i>
+Portfolios -[#BE185D,dashed]-> CreatePortfolioRequestRep : <i><color:#BE185D>«use»</color></i>
+Portfolios -[#B45309,dashed]-> PortfolioR : <i><color:#B45309>«Path» /{portfolioId}</color></i>
+PortfolioR -[#BE185D,dashed]-> ServicePortfolioRep : <i><color:#BE185D>«use»</color></i>
+PortfolioR -[#BE185D,dashed]-> UpdatePortfolioRequestRep : <i><color:#BE185D>«use»</color></i>
+@enduml

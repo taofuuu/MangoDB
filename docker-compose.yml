@@ -1,0 +1,57 @@
+# Runs the web app and the API. The database and file storage stay on
+# Supabase, so nothing here keeps data except Caddy's certificates.
+#
+#   Locally:   docker compose up --build                     -> localhost:3000
+#   On a VM:   docker compose --profile cloud up -d --build  -> https://$DOMAIN
+#
+# docs/deploy.md has the VM steps.
+
+services:
+    api:
+        build:
+            context: .
+            dockerfile: apps/api/Dockerfile
+        # The same file `npm run dev` reads. On the VM it holds that
+        # deployment's values instead, with NODE_ENV=production.
+        env_file: apps/api/.env
+        restart: unless-stopped
+        # No ports: only web talks to it, at http://api:4000 on compose's
+        # own network.
+
+    web:
+        build:
+            context: .
+            dockerfile: apps/mangodb/Dockerfile
+            args:
+                API_URL: http://api:4000
+        depends_on: [api]
+        restart: unless-stopped
+        # 127.0.0.1 so only this machine can reach it. Docker opens published
+        # ports past the VM's firewall, and the public way in is Caddy.
+        ports:
+            - '127.0.0.1:3000:3000'
+
+    # The HTTPS front door. Only on the VM, so it never fights for ports 80 and
+    # 443 on a laptop. It fetches and renews the certificate for $DOMAIN itself.
+    caddy:
+        image: caddy:2-alpine
+        profiles: [cloud]
+        depends_on: [web]
+        restart: unless-stopped
+        ports:
+            - '80:80'
+            - '443:443'
+        environment:
+            # From the .env beside this file, which compose reads by itself.
+            # Unset means localhost, with a self-signed certificate.
+            DOMAIN: ${DOMAIN:-localhost}
+        volumes:
+            - ./Caddyfile:/etc/caddy/Caddyfile:ro
+            - caddy_data:/data
+            - caddy_config:/config
+
+volumes:
+    # Keeps the certificate across restarts, so Caddy does not ask Let's
+    # Encrypt for a new one each time and hit its rate limit.
+    caddy_data:
+    caddy_config:

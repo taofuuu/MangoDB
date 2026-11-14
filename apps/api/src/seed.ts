@@ -15,7 +15,8 @@
 // It also adds a second set, the `demo_` accounts, with a project in every
 // status and its in-between states (F.11), so each project screen can be
 // built before the whole flow works. They are kept apart from `snapshot_` so
-// the snapshot baseline never sees them.
+// the snapshot baseline never sees them. Their quotations open one sample PDF
+// that the seed uploads to the quotation bucket (seedDemoQuotationFile).
 //
 // It does not replace the existing seed data. It deletes only two things: the
 // spent probe accounts the snapshot script leaves behind (pruneProbeAccounts),
@@ -26,8 +27,11 @@ import type {
     ProjectUpdateType,
     QuotationStatus,
 } from '@mangodb/shared';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { IS_PRODUCTION, SEED_PASSWORD } from './env';
 import { prisma } from './lib/prisma';
+import { BUCKETS, PDF_MIME_TYPE, putStorageFile } from './lib/storage';
 import { fromDateOnly } from './lib/dates';
 import { hashPassword } from './auth/password';
 
@@ -276,16 +280,29 @@ const DEMO_ACCOUNTS: SeedAccount[] = [
 const DEMO_TITLE = 'Demo project:';
 const DEMO_BUDGET = 120000;
 
-// shortcut: a dead placeholder link, not a real PDF; upload one once the
-// quotation upload (T4.1.3) has a storage bucket.
-const DEMO_QUOTATION_FILE = 'https://demo.local/quotation.pdf';
+// The PDF every demo quotation opens (#259). It goes to one fixed path in the
+// private quotation bucket, so a rerun replaces it instead of adding copies.
+const DEMO_QUOTATION_PDF = path.join(__dirname, 'demo-quotation.pdf');
+const DEMO_QUOTATION_PATH = 'demo/quotation.pdf';
+
+// The dead link demo quotations stored before that PDF existed. A rerun moves
+// them to the real one.
+const OLD_DEMO_QUOTATION_FILE = 'https://demo.local/quotation.pdf';
 
 interface DemoProject {
     projectStatus: ProjectStatus;
     title: string;
     // Oldest first. Only the last may be PENDING or ACCEPTED (ADR 0017).
     quotations: QuotationStatus[];
-    updates: { updateType: ProjectUpdateType; updateText: string }[];
+    // The work after the deposit, oldest first. The other timeline events
+    // come from the fields around it (demoTimeline, #212).
+    updates: {
+        updateType: Extract<
+            ProjectUpdateType,
+            'PROGRESS' | 'WORK_SUBMITTED' | 'WORK_REJECTED'
+        >;
+        updateText?: string;
+    }[];
     // In-between states the status alone does not tell apart (issue #176).
     depositReported?: boolean;
     withoutReview?: boolean;
@@ -331,6 +348,7 @@ const DEMO_PROJECTS: DemoProject[] = [
         quotations: ['ACCEPTED'],
         updates: [
             { updateType: 'PROGRESS', updateText: 'Booking form is done.' },
+            { updateType: 'WORK_SUBMITTED' },
             {
                 updateType: 'WORK_REJECTED',
                 updateText: 'The confirmation email is never sent.',
@@ -344,6 +362,7 @@ const DEMO_PROJECTS: DemoProject[] = [
         updates: [
             { updateType: 'PROGRESS', updateText: 'Charts are connected.' },
             { updateType: 'PROGRESS', updateText: 'Ready for your review.' },
+            { updateType: 'WORK_SUBMITTED' },
         ],
     },
     {
@@ -353,13 +372,17 @@ const DEMO_PROJECTS: DemoProject[] = [
         updates: [
             { updateType: 'PROGRESS', updateText: 'Checkout works.' },
             { updateType: 'PROGRESS', updateText: 'Published to the stores.' },
+            { updateType: 'WORK_SUBMITTED' },
         ],
     },
     {
         projectStatus: 'COMPLETED',
         title: 'Blog platform',
         quotations: ['ACCEPTED'],
-        updates: [{ updateType: 'PROGRESS', updateText: 'Blog is live.' }],
+        updates: [
+            { updateType: 'PROGRESS', updateText: 'Blog is live.' },
+            { updateType: 'WORK_SUBMITTED' },
+        ],
         withoutReview: true,
     },
     {
@@ -377,9 +400,60 @@ const PAID_STATUSES: ProjectStatus[] = [
     'COMPLETED',
 ];
 
-// 9:00 UTC on a day of October 2026, so every timeline sorts the same way.
-function october(day: number): Date {
-    return new Date(Date.UTC(2026, 9, day, 9));
+// A fixed hour (9:00 UTC unless given) on a day of October 2026, so every
+// timeline sorts the same way.
+function october(day: number, hour = 9): Date {
+    return new Date(Date.UTC(2026, 9, day, hour));
+}
+
+type DemoEvent = {
+    updateType: ProjectUpdateType;
+    updateText?: string;
+    createdAt: Date;
+};
+
+// #212. A demo project's whole timeline: the events the endpoints would have
+// saved, dated to match its columns. Accepted on the 1st, one quotation a day
+// from the 2nd (decided at 15:00), deposit on the 5th and 6th, cancelled on
+// the 8th, the work from the 10th, five days apart, completed on the 22nd.
+function demoTimeline(
+    demo: DemoProject,
+    reported: boolean,
+    paid: boolean,
+): DemoEvent[] {
+    const events: DemoEvent[] = [
+        { updateType: 'PROPOSAL_ACCEPTED', createdAt: october(1) },
+    ];
+    demo.quotations.forEach((quotationStatus, i) => {
+        events.push({
+            updateType: 'QUOTATION_SENT',
+            createdAt: october(2 + i),
+        });
+        if (quotationStatus === 'PENDING') return;
+        events.push({
+            updateType:
+                quotationStatus === 'ACCEPTED'
+                    ? 'QUOTATION_ACCEPTED'
+                    : 'QUOTATION_REJECTED',
+            createdAt: october(2 + i, 15),
+        });
+    });
+    if (reported) {
+        events.push({ updateType: 'DEPOSIT_REPORTED', createdAt: october(5) });
+    }
+    if (paid) {
+        events.push({ updateType: 'DEPOSIT_CONFIRMED', createdAt: october(6) });
+    }
+    if (demo.projectStatus === 'CANCELLED') {
+        events.push({ updateType: 'PROJECT_CANCELLED', createdAt: october(8) });
+    }
+    demo.updates.forEach((update, i) => {
+        events.push({ ...update, createdAt: october(10 + 5 * i) });
+    });
+    if (demo.projectStatus === 'COMPLETED') {
+        events.push({ updateType: 'WORK_ACCEPTED', createdAt: october(22) });
+    }
+    return events;
 }
 
 // ADR 0018: the completed project's one review, four 1-5 scores.
@@ -392,6 +466,23 @@ const DEMO_REVIEW = {
     createdAt: october(22),
 };
 
+// Uploads the demo PDF and moves every quotation still on the old dead link to
+// it. Returns the URL new demo quotations store.
+async function seedDemoQuotationFile(): Promise<string> {
+    const quotationFile = await putStorageFile(
+        BUCKETS.QUOTATION,
+        DEMO_QUOTATION_PATH,
+        readFileSync(DEMO_QUOTATION_PDF),
+        PDF_MIME_TYPE,
+    );
+    const { count } = await prisma.quotation.updateMany({
+        where: { quotationFile: OLD_DEMO_QUOTATION_FILE },
+        data: { quotationFile },
+    });
+    console.log(`ok  demo quotation PDF, ${count} old link(s) repaired`);
+    return quotationFile;
+}
+
 // Creates only the demo projects whose job is missing. Everyone shares one
 // database, so a rerun must not undo a status someone is testing. With reset,
 // it deletes them all first and builds them again, with new project ids.
@@ -400,6 +491,7 @@ async function seedDemoProjects(
     providerId: number,
     receiverId: number,
     reset: boolean,
+    quotationFile: string,
 ): Promise<number> {
     const demoJobs = {
         companyId: receiverId,
@@ -459,17 +551,14 @@ async function seedDemoProjects(
                                 quotation: {
                                     create: demo.quotations.map(
                                         (quotationStatus, i) => ({
-                                            quotationFile: DEMO_QUOTATION_FILE,
+                                            quotationFile,
                                             quotationStatus,
                                             createdAt: october(2 + i),
                                         }),
                                     ),
                                 },
                                 projectUpdate: {
-                                    create: demo.updates.map((update, i) => ({
-                                        ...update,
-                                        createdAt: october(10 + 5 * i),
-                                    })),
+                                    create: demoTimeline(demo, reported, paid),
                                 },
                                 // Spread, not review: undefined, which
                                 // exactOptionalPropertyTypes refuses.
@@ -530,10 +619,12 @@ async function main(): Promise<void> {
 
     // npm run db:seed -w api -- --reset-demo
     const reset = process.argv.includes('--reset-demo');
+    const quotationFile = await seedDemoQuotationFile();
     const created = await seedDemoProjects(
         demoProviderId,
         demoReceiverId,
         reset,
+        quotationFile,
     );
     console.log(
         `ok  ${DEMO_PROJECTS.length} demo projects, ${created} created` +

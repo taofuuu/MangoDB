@@ -130,7 +130,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
 
                     <div>
                         <label
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                             htmlFor="portfolio-link"
                         >
                             Link to your portfolio*
@@ -168,7 +168,6 @@ export default function PortfolioForm(props: PortfolioFormProps) {
                         value={values.image}
                         onChange={(file) => setField('image', file)}
                         onError={(message) => setFieldError('image', message)}
-                        accept="image/png,image/jpeg,image/webp"
                         label="Upload Image"
                         className="upload-box mx-auto my-8 flex h-[20.64vh] w-[14.11vw] cursor-pointer flex-col items-center justify-center rounded-lg bg-brand-mist/40 hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     />

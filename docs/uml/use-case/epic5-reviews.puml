@@ -1,0 +1,21 @@
+@startuml epic5-reviews
+!include style.iuml
+title EPIC 5: Ratings and Reviews
+
+actor Company
+actor Receiver
+Receiver -up-|> Company
+
+rectangle "MangoDB" {
+  usecase "Rate project by criteria\n(US5-1)" as US5_1
+  usecase "Add review comment\n(US5-2)" as US5_2
+  usecase "View Provider's ratings\nand reviews\n(US5-3)" as US5_3
+}
+
+Receiver --> US5_1
+Receiver --> US5_2
+Company --> US5_3
+
+' The comment is optional when rating (US5-2, AC 2).
+US5_2 .up.> US5_1 : <<extend>>
+@enduml
