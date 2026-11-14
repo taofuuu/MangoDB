@@ -17,6 +17,7 @@ import { JOB_PAGE_SIZE } from '@/lib/pagination';
 import { useJobList } from '@/lib/useJobList';
 import { useMyCompany } from '@/lib/useMyCompany';
 import { getJobFilterOptions, type JobFilterOptions } from '@/lib/jobs';
+import { formatItemCount } from '@/lib/itemCount';
 
 const ORDER_OPTIONS: { label: string; value: JobSortOrder }[] = [
     { label: 'Newest', value: 'newest' },
@@ -177,8 +178,8 @@ function OtherJobPage() {
                             <h2 className="type-lg">All Jobs</h2>
 
                             <div className="type-sm text-ink-placeholder">
-                                (Search result: {pagination?.totalItems ?? 0}{' '}
-                                items)
+                                (Search result:{' '}
+                                {formatItemCount(pagination?.totalItems ?? 0)})
                             </div>
                         </div>
 
