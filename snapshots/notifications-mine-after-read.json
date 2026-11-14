@@ -1,0 +1,21 @@
+{
+    "request": "GET /notifications/mine",
+    "status": 200,
+    "body": [
+        {
+            "createdAt": "<timestamp>",
+            "listingId": "<listing_id>",
+            "listingTitle": "Snapshot Probe service for hire <run>",
+            "listingType": "SERVICE",
+            "notificationId": "<notification_id>",
+            "notificationType": "PROPOSAL_REJECTED",
+            "projectId": null,
+            "readAt": "<timestamp>",
+            "sender": {
+                "companyId": 142,
+                "companyName": "Snapshot Seed Provider",
+                "companyPhoto": null
+            }
+        }
+    ]
+}

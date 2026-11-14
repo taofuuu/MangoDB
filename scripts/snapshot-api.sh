@@ -108,7 +108,7 @@ D_LIVE=0
 # Probe E: the Provider whose own proposal list section 10b records.
 TOKEN_E=""
 E_LIVE=0
-# Probe F: the Receiver whose own hire request list section 10b records.
+# Probe F: the Receiver whose own hire request list and bell section 10b records.
 TOKEN_F=""
 F_LIVE=0
 HIRE_SERVICE_ID=""
@@ -1142,6 +1142,29 @@ snap proposals-mine-receiver GET /proposals/mine \
 
 snap proposals-mine-receiver-counts GET /proposals/mine/counts \
     -H "$(bearer "$TOKEN_F")"
+
+# T4.1.5. The bell, from probe F: only this run can reach its notices, so the
+# list is the one notice the reject below sends, every run.
+snap error-notifications-mine-unauthorized GET /notifications/mine
+snap error-notifications-read-unauthorized POST /notifications/mine/read
+
+if [ -n "$F_PROPOSAL_ID" ]; then
+    api POST "/proposals/$F_PROPOSAL_ID/reject" -H "$(bearer "$TOKEN_PROVIDER")" >/dev/null
+
+    snap notifications-mine GET /notifications/mine -H "$(bearer "$TOKEN_F")"
+    NOTIFICATION_ID="$(jget 0.notificationId)"
+    if [ -n "$NOTIFICATION_ID" ]; then
+        SUBS+=(--id "notification_id=$NOTIFICATION_ID")
+        resnap notifications-mine
+    fi
+
+    # 204, then the same notice with readAt set.
+    snap notifications-read POST /notifications/mine/read -H "$(bearer "$TOKEN_F")"
+    snap notifications-mine-after-read GET /notifications/mine \
+        -H "$(bearer "$TOKEN_F")"
+else
+    echo "  --  skip   GET /notifications/mine (no probe F hire request)"
+fi
 
 # Deleting the service deletes its hire request too (ON DELETE CASCADE).
 run_db "prisma.listing.deleteMany({ where: { listingId: $HIRE_SERVICE_ID } })"
