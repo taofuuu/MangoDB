@@ -21,25 +21,23 @@ export default function ProviderTermsFields({
 }: ProviderTermsFieldsProps) {
     return (
         <>
-            <div className="mt-[3.09vh]">
-                <Textarea
-                    label="Service Terms"
-                    value={serviceTerm ?? ''}
-                    onChange={(value) => onChange('serviceTerm', value)}
-                    error={errors.serviceTerm}
-                    maxLength={2000}
-                />
-            </div>
+            <Textarea
+                label="Service Terms"
+                value={serviceTerm ?? ''}
+                onChange={(value) => onChange('serviceTerm', value)}
+                error={errors.serviceTerm}
+                maxLength={2000}
+                variant="small"
+            />
 
-            <div className="mt-[3.09vh]">
-                <Textarea
-                    label="Company Warranty Policy"
-                    value={warrantyPolicy ?? ''}
-                    onChange={(value) => onChange('warrantyPolicy', value)}
-                    error={errors.warrantyPolicy}
-                    maxLength={2000}
-                />
-            </div>
+            <Textarea
+                label="Company Warranty Policy"
+                value={warrantyPolicy ?? ''}
+                onChange={(value) => onChange('warrantyPolicy', value)}
+                error={errors.warrantyPolicy}
+                maxLength={2000}
+                variant="small"
+            />
         </>
     );
 }

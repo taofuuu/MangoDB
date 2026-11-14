@@ -219,12 +219,13 @@ export async function updateJob(req: Request, res: Response): Promise<void> {
 export async function closeJob(req: Request, res: Response): Promise<void> {
     const { jobId } = parseParams(jobIdParamSchema, req.params);
 
+    const callerId = req.auth!.companyId;
     // 404 if no such posting, 403 if it is someone else's.
-    await assertListingOwned(jobId, 'JOB', req.auth!.companyId);
+    await assertListingOwned(jobId, 'JOB', callerId);
 
     const closed = await prisma.$transaction(async (tx) => {
         await closeOpenListing(tx, jobId, 'Only an open job can be closed');
-        await rejectPendingProposals(tx, jobId);
+        await rejectPendingProposals(tx, jobId, callerId);
 
         return tx.listing.findUniqueOrThrow({
             where: { listingId: jobId },

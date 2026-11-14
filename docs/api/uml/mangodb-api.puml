@@ -201,6 +201,13 @@ class "Categories" as Categories <<Resource>> {
 class "Health" as HealthR <<Resource>> {
   + GET()
 }
+class "Notifications" as Notifications <<Resource>>
+class "MyNotifications" as MyNotifications <<Resource>> {
+  + GET()
+}
+class "Read" as ReadNotifications <<Resource>> {
+  + POST()
+}
 
 API -[#B45309,dashed]-> Auth : <i><color:#B45309>«Path» /auth</color></i>
 Auth -[#B45309,dashed]-> Register : <i><color:#B45309>«Path» /register</color></i>
@@ -259,4 +266,7 @@ QuotationR -[#B45309,dashed]-> AcceptQuotation : <i><color:#B45309>«Path» /acc
 QuotationR -[#B45309,dashed]-> RejectQuotation : <i><color:#B45309>«Path» /reject</color></i>
 API -[#B45309,dashed]-> Categories : <i><color:#B45309>«Path» /categories</color></i>
 API -[#B45309,dashed]-> HealthR : <i><color:#B45309>«Path» /health</color></i>
+API -[#B45309,dashed]-> Notifications : <i><color:#B45309>«Path» /notifications</color></i>
+Notifications -[#B45309,dashed]-> MyNotifications : <i><color:#B45309>«Path» /mine</color></i>
+MyNotifications -[#B45309,dashed]-> ReadNotifications : <i><color:#B45309>«Path» /read</color></i>
 @enduml

@@ -61,6 +61,7 @@ const PROVIDER = 3;
 const RECEIVER = 9;
 const OUTSIDER = 42;
 const PROJECT_ID = 15;
+const PROPOSAL_ID = 7;
 
 const UPLOADED = {
     path: 'quotations/1700000000000-abc.pdf',
@@ -77,6 +78,7 @@ type FakeQuotation = {
 
 type FakeProject = {
     projectId: number;
+    proposalId: number;
     projectStatus: ProjectStatus;
     proposal: {
         senderId: number;
@@ -91,6 +93,8 @@ let project: FakeProject | null = null;
 let quotations: FakeQuotation[] = [];
 // The timeline events saved on the project (#212).
 let events: Record<string, unknown>[] = [];
+// The bell notices saved for the other party (T4.1.5).
+let notices: Record<string, unknown>[] = [];
 let uploadedBuckets: { bucket: string; folder: string }[] = [];
 let removedPaths: { path: string; bucket: string }[] = [];
 let removedUrls: { url: string; bucket: string }[] = [];
@@ -103,6 +107,7 @@ function jobProject(
     // On a job, the proposal sender is the Provider and the listing owner is the Receiver.
     return {
         projectId: PROJECT_ID,
+        proposalId: PROPOSAL_ID,
         projectStatus,
         proposal: {
             senderId: PROVIDER,
@@ -117,6 +122,7 @@ function serviceProject(
     // On a service, the listing owner is the Provider and the proposal sender is the Receiver.
     return {
         projectId: PROJECT_ID,
+        proposalId: PROPOSAL_ID,
         projectStatus,
         proposal: {
             senderId: RECEIVER,
@@ -130,18 +136,25 @@ const fakePrisma = {
         const savedProject = structuredClone(project);
         const savedQuotations = structuredClone(quotations);
         const savedEvents = [...events];
+        const savedNotices = [...notices];
         try {
             return await work(fakePrisma);
         } catch (err) {
             project = savedProject;
             quotations = savedQuotations;
             events = savedEvents;
+            notices = savedNotices;
             throw err;
         }
     },
     projectUpdate: {
         create: async ({ data }: { data: Record<string, unknown> }) => {
             events.push(data);
+        },
+    },
+    notification: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+            notices.push(data);
         },
     },
     project: {
@@ -271,6 +284,9 @@ const fakePrisma = {
             const [deleted] = quotations.splice(idx, 1);
             return { quotationFile: deleted!.quotationFile };
         },
+        count: async ({ where }: { where: { quotationFile: string } }) =>
+            quotations.filter((q) => q.quotationFile === where.quotationFile)
+                .length,
     },
 };
 
@@ -301,6 +317,10 @@ const fakeStorage = {
     removeFromStorageByUrl: async (url: string, bucket: string) => {
         removedUrls.push({ url, bucket });
     },
+    // The bucket name goes into the fake token, so a test can see which
+    // bucket signed the link.
+    signStorageUrls: async (urls: string[], bucket: string) =>
+        urls.map((url) => `${url}?token=${bucket}`),
 };
 
 function moduleUrl(specifier: string): string {
@@ -325,6 +345,7 @@ beforeEach(() => {
     project = jobProject('AWAITING_QUOTATION');
     quotations = [];
     events = [];
+    notices = [];
     uploadedBuckets = [];
     removedPaths = [];
     removedUrls = [];
@@ -474,12 +495,14 @@ async function rejectQuotationById(
 }
 
 // Builds a minimal multipart/form-data request stream so Multer's real
-// fileFilter and 5 MB limit run end-to-end in memory.
-function runUploadPdf(
+// fileFilter and 5 MB limit run end-to-end in memory. uploadPdf unless told
+// otherwise.
+function runUpload(
     fieldName: string,
     filename: string,
     mimeType: string,
     content: Buffer,
+    mw = uploadMiddleware.uploadPdf('file'),
 ): Promise<{ err: unknown; file: Express.Multer.File | undefined }> {
     const boundary = '----MangoTestBoundary';
     const header = Buffer.from(
@@ -497,7 +520,6 @@ function runUploadPdf(
         },
     }) as unknown as Request;
     const res = {} as Response;
-    const mw = uploadMiddleware.uploadPdf('file');
 
     return new Promise((resolve) => {
         mw(req, res, (err: unknown) => {
@@ -508,7 +530,7 @@ function runUploadPdf(
 
 describe('uploadPdf middleware (T4.1.2)', () => {
     it('accepts a PDF within the 5 MB limit', async () => {
-        const { err, file } = await runUploadPdf(
+        const { err, file } = await runUpload(
             'file',
             'quote.pdf',
             'application/pdf',
@@ -521,7 +543,7 @@ describe('uploadPdf middleware (T4.1.2)', () => {
     });
 
     it('rejects a non-PDF file with 400', async () => {
-        const { err } = await runUploadPdf(
+        const { err } = await runUpload(
             'file',
             'photo.png',
             'image/png',
@@ -533,9 +555,44 @@ describe('uploadPdf middleware (T4.1.2)', () => {
         assert.equal(err.message, 'Only PDF files are allowed');
     });
 
+    it('rejects a file that claims to be a PDF but is not one', async () => {
+        const { err } = await runUpload(
+            'file',
+            'fake.pdf',
+            'application/pdf',
+            Buffer.from('<html>not a pdf</html>'),
+        );
+
+        assert.ok(err instanceof ApiError);
+        assert.equal(err.status, 400);
+        assert.equal(err.message, 'Only PDF files are allowed');
+    });
+
+    it('uploadImage checks the bytes too: a real PNG passes, text does not', async () => {
+        const png = Buffer.from('\x89PNG\r\n\x1a\nrest', 'latin1');
+        const ok = await runUpload(
+            'photo',
+            'a.png',
+            'image/png',
+            png,
+            uploadMiddleware.uploadImage('photo'),
+        );
+        assert.equal(ok.err, undefined);
+
+        const { err } = await runUpload(
+            'photo',
+            'a.png',
+            'image/png',
+            Buffer.from('<svg onload="alert(1)"/>'),
+            uploadMiddleware.uploadImage('photo'),
+        );
+        assert.ok(err instanceof ApiError);
+        assert.equal(err.message, 'Only PNG, JPEG or WebP images are allowed');
+    });
+
     it('rejects a PDF over 5 MB with 400', async () => {
         const overFiveMb = Buffer.alloc(5 * 1024 * 1024 + 1, 0x20);
-        const { err } = await runUploadPdf(
+        const { err } = await runUpload(
             'file',
             'huge.pdf',
             'application/pdf',
@@ -557,7 +614,8 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         assert.deepEqual(quotation, {
             quotationId: 1,
             projectId: PROJECT_ID,
-            quotationFile: UPLOADED.url,
+            // A signed link, not the stored URL: the bucket is private.
+            quotationFile: `${UPLOADED.url}?token=quotation`,
             quotationStatus: 'PENDING',
             createdAt: '2026-10-25T08:00:00.000Z',
         });
@@ -566,6 +624,15 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         ]);
         assert.deepEqual(events, [
             { projectId: PROJECT_ID, updateType: 'QUOTATION_SENT' },
+        ]);
+        // T4.1.5: the Receiver gets a New Quotation notice.
+        assert.deepEqual(notices, [
+            {
+                proposalId: PROPOSAL_ID,
+                senderId: PROVIDER,
+                recipientId: RECEIVER,
+                notificationType: 'QUOTATION_SENT',
+            },
         ]);
     });
 
@@ -662,6 +729,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         }
         assert.equal(uploadedBuckets.length, 0);
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('is a 409 without uploading when a quotation is already PENDING', async () => {
@@ -684,6 +752,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
         );
         assert.equal(uploadedBuckets.length, 0);
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('removes the uploaded PDF and answers 409 when a concurrent upload hits the partial unique index', async () => {
@@ -702,6 +771,7 @@ describe('POST /projects/:projectId/quotations (US4-1)', () => {
             { path: UPLOADED.path, bucket: 'quotation' },
         ]);
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 });
 
@@ -728,6 +798,21 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.deepEqual(events, [
             { projectId: PROJECT_ID, updateType: 'QUOTATION_DELETED' },
         ]);
+    });
+
+    it('keeps a PDF another quotation still points at, like the shared demo PDF', async () => {
+        quotations.push({
+            quotationId: 2,
+            projectId: PROJECT_ID + 1,
+            quotationFile: UPLOADED.url,
+            quotationStatus: 'ACCEPTED',
+            createdAt: new Date('2026-10-25T08:00:00.000Z'),
+        });
+
+        const { status } = await deleteQuotationById(PROVIDER, '1');
+
+        assert.equal(status, 204);
+        assert.equal(removedUrls.length, 0);
     });
 
     it('deletes a PENDING quotation as the Provider on a service project', async () => {
@@ -790,6 +875,7 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         assert.equal(quotations.length, 1);
         assert.equal(removedUrls.length, 0);
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('is a 409 and keeps the PDF when the Receiver decides at the same moment', async () => {
@@ -806,6 +892,24 @@ describe('DELETE /quotations/:quotationId (US4-2)', () => {
         );
         assert.equal(quotations.length, 1);
         assert.equal(quotations[0]!.quotationStatus, 'ACCEPTED');
+        assert.equal(removedUrls.length, 0);
+        assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
+    });
+
+    it('is a 409 and keeps the PDF when the project was cancelled (#261)', async () => {
+        project!.projectStatus = 'CANCELLED';
+
+        await assert.rejects(
+            () => deleteQuotationById(PROVIDER, '1'),
+            (err: unknown) => {
+                assert.ok(err instanceof ApiError);
+                assert.equal(err.status, 409);
+                assert.equal(err.message, 'Project is not AWAITING_QUOTATION');
+                return true;
+            },
+        );
+        assert.equal(quotations.length, 1);
         assert.equal(removedUrls.length, 0);
         assert.equal(events.length, 0);
     });
@@ -848,6 +952,11 @@ describe('GET /projects/:projectId/quotations (US4-3)', () => {
         assert.equal(list[1]!.quotationId, 1);
         assert.equal(list[1]!.quotationStatus, 'REJECTED');
         assert.equal(list[1]!.createdAt, '2026-10-25T08:00:00.000Z');
+        // Each file goes out as a link signed by the private quotation bucket.
+        assert.equal(
+            list[0]!.quotationFile,
+            'https://storage.test/quote2.pdf?token=quotation',
+        );
     });
 
     it('returns the project quotations newest first for the Receiver on a service project', async () => {
@@ -941,6 +1050,14 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
         assert.deepEqual(events, [
             { projectId: PROJECT_ID, updateType: 'QUOTATION_ACCEPTED' },
         ]);
+        assert.deepEqual(notices, [
+            {
+                proposalId: PROPOSAL_ID,
+                senderId: RECEIVER,
+                recipientId: PROVIDER,
+                notificationType: 'QUOTATION_ACCEPTED',
+            },
+        ]);
     });
 
     it('the Receiver accepts a pending quotation on a service project, moving project to AWAITING_DEPOSIT', async () => {
@@ -1023,6 +1140,7 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
             );
         }
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('answers 409 Project is not AWAITING_QUOTATION and rolls back quotation status if project is not AWAITING_QUOTATION', async () => {
@@ -1039,6 +1157,7 @@ describe('POST /quotations/:quotationId/accept (US4-4)', () => {
         );
         assert.equal(quotations[0]!.quotationStatus, 'PENDING');
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 });
 
@@ -1064,6 +1183,14 @@ describe('POST /quotations/:quotationId/reject (US4-5)', () => {
         assert.equal(project?.projectStatus, 'AWAITING_QUOTATION');
         assert.deepEqual(events, [
             { projectId: PROJECT_ID, updateType: 'QUOTATION_REJECTED' },
+        ]);
+        assert.deepEqual(notices, [
+            {
+                proposalId: PROPOSAL_ID,
+                senderId: RECEIVER,
+                recipientId: PROVIDER,
+                notificationType: 'QUOTATION_REJECTED',
+            },
         ]);
     });
 
@@ -1146,6 +1273,7 @@ describe('POST /quotations/:quotationId/reject (US4-5)', () => {
             );
         }
         assert.equal(events.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('answers 409 Project is not AWAITING_QUOTATION when the project was cancelled', async () => {

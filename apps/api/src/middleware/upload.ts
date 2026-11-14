@@ -5,6 +5,33 @@ import { IMAGE_EXTENSIONS, PDF_MIME_TYPE } from '../lib/storage';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
+const IMAGE_TYPE_MESSAGE = 'Only PNG, JPEG or WebP images are allowed';
+const PDF_TYPE_MESSAGE = 'Only PDF files are allowed';
+
+// file.mimetype is whatever the client claimed, so the bytes must agree: each
+// allowed type starts with a fixed signature. A PDF may have a little junk
+// before its header, which readers accept, so it is searched for, not matched.
+function startsLikeItsType(file: Express.Multer.File): boolean {
+    const bytes = file.buffer;
+    switch (file.mimetype) {
+        case 'image/png':
+            return bytes
+                .subarray(0, 8)
+                .equals(Buffer.from('\x89PNG\r\n\x1a\n', 'latin1'));
+        case 'image/jpeg':
+            return bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+        case 'image/webp':
+            return (
+                bytes.toString('latin1', 0, 4) === 'RIFF' &&
+                bytes.toString('latin1', 8, 12) === 'WEBP'
+            );
+        case PDF_MIME_TYPE:
+            return bytes.subarray(0, 1024).includes('%PDF-');
+        default:
+            return false;
+    }
+}
+
 const imageUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: MAX_BYTES },
@@ -12,11 +39,7 @@ const imageUpload = multer({
         if (Object.hasOwn(IMAGE_EXTENSIONS, file.mimetype)) {
             cb(null, true);
         } else {
-            cb(
-                ApiError.badRequest(
-                    'Only PNG, JPEG or WebP images are allowed',
-                ),
-            );
+            cb(ApiError.badRequest(IMAGE_TYPE_MESSAGE));
         }
     },
 });
@@ -30,7 +53,7 @@ const pdfUpload = multer({
         if (file.mimetype === PDF_MIME_TYPE) {
             cb(null, true);
         } else {
-            cb(ApiError.badRequest('Only PDF files are allowed'));
+            cb(ApiError.badRequest(PDF_TYPE_MESSAGE));
         }
     },
 });
@@ -42,6 +65,7 @@ function singleUpload(
     uploader: multer.Multer,
     field: string,
     sizeMessage: string,
+    typeMessage: string,
 ) {
     const middleware = uploader.single(field);
 
@@ -55,17 +79,33 @@ function singleUpload(
                 );
                 return;
             }
+            // Here, not in fileFilter: the bytes only exist once multer has
+            // read the whole file.
+            if (!err && req.file && !startsLikeItsType(req.file)) {
+                next(ApiError.badRequest(typeMessage));
+                return;
+            }
             next(err);
         });
     };
 }
 
 export function uploadImage(field: string) {
-    return singleUpload(imageUpload, field, 'Image must be 5MB or smaller');
+    return singleUpload(
+        imageUpload,
+        field,
+        'Image must be 5MB or smaller',
+        IMAGE_TYPE_MESSAGE,
+    );
 }
 
 export function uploadPdf(field: string) {
-    return singleUpload(pdfUpload, field, 'PDF must be 5MB or smaller');
+    return singleUpload(
+        pdfUpload,
+        field,
+        'PDF must be 5MB or smaller',
+        PDF_TYPE_MESSAGE,
+    );
 }
 
 // A route whose file upload is required. Called after parseBody, so a bad field

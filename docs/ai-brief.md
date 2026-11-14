@@ -146,12 +146,18 @@ message.
 | An id in a query string             | `queryId(name)`, `optionalQueryId(name)`                                       |
 | A cleared field / a param not sent  | `blankToNull` / `blankToUndefined`                                             |
 | "This listing is yours, or 403/404" | `assertListingOwned(id, type, companyId)`                                      |
+| Another company the public may see  | `findPublicCompany(companyId, select)` — else 404 "Company not found"          |
 | A project's two parties, else 404   | `assertProjectParty(projectId, companyId)` — gives `myRole`                    |
+| Projects a company sits on          | `projectPartyWhere(companyId)` — either side, as a `where`                     |
 | A project status move (ADR 0015)    | `moveProjectStatus(tx, projectId, from, to)` — else 409                        |
+| A project in one status, no move    | `assertProjectStatus(project, status)` — else 409                              |
 | A project timeline event (#212)     | `saveProjectEvent(tx, projectId, updateType)` in the action's transaction      |
+| A bell notice for the other party   | `notifyOtherParty(tx, party, type)`, `party` from `assertProjectParty`         |
 | A write that may hit a missing row  | `orNotFound(write, message)` turns P2025 into a 404                            |
 | A write whose where checks state    | `orConflict(write, message)` turns P2025 into a 409                            |
+| A create a unique index may reject  | `orDuplicate(write, message)` turns P2002 into a 409                           |
 | Upload a file, write, roll back     | `saveWithUpload(...)`                                                          |
+| A file in a private bucket          | `signStorageUrls(urls, bucket, seconds)` — links that expire                   |
 | Keyword search                      | `splitWords(q)`, `containsWord(word)`, `escapeLike`                            |
 | A date-only column                  | `toDateOnly` / `fromDateOnly`                                                  |
 
@@ -239,27 +245,29 @@ if (me.status !== 'ready') {
 
 ### Pages and where their pieces live
 
-| Page                                   | Route                                                                                 |
-| -------------------------------------- | ------------------------------------------------------------------------------------- |
-| Your own profile                       | `/profile/view`, `/profile/edit`                                                      |
-| Another company                        | `/companies/[companyId]` and `…/services`, `…/jobs`, `…/portfolios`, `…/certificates` |
-| Jobs: search, yours, new, edit         | `/jobs`, `/jobs/mine`, `/jobs/create`, `/jobs/[jobId]/edit`                           |
-| The proposals sent to one of your jobs | `/jobs/[jobId]/proposals`                                                             |
-| The proposals you sent                 | `/proposals`                                                                          |
-| Services: search, yours, new, edit     | `/services`, `/services/mine`, `/services/create`, `/services/[serviceId]/edit`       |
+| Page                                               | Route                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Your own profile                                   | `/profile/view`, `/profile/edit`                                                                              |
+| Another company                                    | `/companies/[companyId]` and `…/services`, `…/jobs`, `…/portfolios`, `…/certificates`, `…/completed-projects` |
+| Jobs: search, yours, new, edit                     | `/jobs`, `/jobs/mine`, `/jobs/create`, `/jobs/[jobId]/edit`                                                   |
+| The proposals sent to one of your jobs or services | `/jobs/[jobId]/proposals`, `/services/[serviceId]/proposals` — both are `ReceivedProposalsPage`               |
+| The proposals you sent                             | `/proposals`                                                                                                  |
+| Services: search, yours, new, edit                 | `/services`, `/services/mine`, `/services/create`, `/services/[serviceId]/edit`                               |
+| Projects: yours, one, its review                   | `/projects`, `/projects/[projectId]`, `/projects/[projectId]/review`                                          |
 
 An id from the URL goes through `parseId` (from `@/lib/api`); `null` is shown
 as not found.
 
-| Need                         | From                                                     |
-| ---------------------------- | -------------------------------------------------------- |
-| A date column (`2026-09-01`) | `formatDateOnly` in `lib/dates` — never `new Date(day)`  |
-| A timestamp                  | `formatDate`, `formatDateTime` in `lib/dates`            |
-| An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`         |
-| A page size                  | the constants in `lib/pagination`                        |
-| A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it |
-| The category list for a form | `useCategories()` in `lib/useCategories`                 |
-| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`               |
+| Need                         | From                                                             |
+| ---------------------------- | ---------------------------------------------------------------- |
+| A date column (`2026-09-01`) | `formatDateOnly` in `lib/dates` — never `new Date(day)`          |
+| A timestamp                  | `formatDate`, `formatDateTime`, `formatSlashDate` in `lib/dates` |
+| An amount, a budget range    | `formatBaht`, `formatBudgetRange` in `lib/money`                 |
+| A page size                  | the constants in `lib/pagination`                                |
+| A form rule the API also has | `lib/validation/<schema>.ts`, worded as the API words it         |
+| The category list for a form | `useCategories()` in `lib/useCategories`                         |
+| A page of jobs with controls | `useJobList({ view })` in `lib/useJobList`                       |
+| Click-away and Escape close  | `useDismiss(rootRef, isOpen, close)` in `lib/useDismiss`         |
 
 Components live in one folder per API noun (`components/jobs`,
 `components/services`, …); `components/ui` holds only pieces that know no
@@ -292,7 +300,7 @@ Every colour is a token. Use as `bg-`, `text-` or `border-`:
 ```
 brand  brand-dark  brand-light  brand-tint  brand-mist  brand-darker  brand-deep
 danger  danger-hover  danger-deep  danger-tint  danger-wash
-accent  accent-tint   orange   role-provider
+accent  accent-tint   orange   role-provider   focus
 surface  surface-white
 ink  ink-soft  ink-placeholder
 line  fill-muted  fill-subtle
@@ -326,6 +334,8 @@ tappable.
 | A pick-many filter        | `FilterGroup` — chosen values as tags, a + for the rest        |
 | A list with nothing in it | `EmptyState`                                                   |
 | A status pill / filter    | `StatusBadge` (tone), `StatusTabs`                             |
+| A project's status        | `ProjectStatusBadge` — its labels are `PROJECT_STATUS_CONFIGS` |
+| A project's history       | `ProjectTimelineFeed`, fed from `GET …/updates`                |
 | A company's picture       | `CompanyAvatar` — guards the host, falls back to initials      |
 | One field's error         | `FieldError`                                                   |
 | An image at full size     | `ImageModal`                                                   |
@@ -418,33 +428,16 @@ Every row has really happened on this codebase.
 Saying "that isn't built" is a useful answer. Inventing it is not.
 
 - `/forgot-password` — no route and no story; the login form no longer links it
-- `ProjectTimeline` — real layout, hardcoded mock data, no API
 - Company search filters beyond its keyword do not exist. `GET /companies`
   supports `q`, `orderBy=nameAsc|nameDesc`, `page`, and `pageSize`.
-- Job search filters beyond keyword, category, budget and deadline. `GET /jobs`
-  supports `q`, `category`, `minBudget`, `maxBudget`, `deadline`,
+- Job search filters beyond keyword, category, budget, deadline and order.
+  `GET /jobs` supports `q`, `category`, `minBudget`, `maxBudget`, `deadline`,
+  `deadlineType=ANY|BEFORE|AFTER`,
   `orderBy=newest|maxBudgetDesc|maxBudgetAsc|deadlineAsc|deadlineDesc`, `companyId`,
-  `status` and paging. The category, budget, deadline and order controls on
-  `/jobs` send nothing yet: `useJobList` sends only the keyword.
+  `status` and paging, and `useJobList` sends all of them.
 - A delivery duration on a service, by decision (ADR 0019, rejected). Its
   price is the listing's `minBudget`/`maxBudget` range, the same columns a
   job uses.
-- Project, quotation and update endpoints. The tables and the shared types
-  exist (ADRs 0015-0018); the only endpoints are accepting a proposal, which
-  creates the project row, the reads `GET /projects/mine`,
-  `GET /projects/:projectId`, `…/updates` and `…/quotations`, the Provider's
-  `POST /projects/:projectId/quotations`,
-  `DELETE /quotations/:quotationId` and
-  `POST /projects/:projectId/updates`, the Receiver's
-  `POST /quotations/:quotationId/accept` and `…/reject`, the deposit pair
-  `POST /projects/:projectId/report-deposit` and `…/confirm-deposit`, the
-  cancellation `POST /projects/:projectId/cancel`, the Provider's
-  `POST /projects/:projectId/submit-work`, the Receiver's
-  `POST /projects/:projectId/reject-work` and `…/accept-work`, and a
-  Provider's completed work, `GET /companies/:companyId/completed-projects` — Sprint
-  3 builds the rest. All four review endpoints exist:
-  `POST`/`GET /projects/:projectId/review`,
-  `GET /companies/:companyId/reviews` and `…/reviews/summary`.
 
 ---
 

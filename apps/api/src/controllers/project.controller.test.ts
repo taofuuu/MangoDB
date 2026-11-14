@@ -70,6 +70,7 @@ import { pathToFileURL } from 'node:url';
 import type { Request, Response } from 'express';
 import type {
     CompletedProject,
+    NotificationType,
     Paginated,
     Project,
     ProjectUpdate,
@@ -170,6 +171,7 @@ const companies: Company[] = [
 
 let project: ReturnType<typeof projectIn> | null = projectIn('IN_PROGRESS');
 let created: Record<string, unknown>[] = [];
+let notices: Record<string, unknown>[] = [];
 let createdReviews: Record<string, unknown>[] = [];
 let reviewAlreadyExists = false;
 let projects: ProjectRow[] = [];
@@ -345,6 +347,12 @@ const fakePrisma = {
             });
         },
     },
+    notification: {
+        create: ({ data }: { data: Record<string, unknown> }) => {
+            notices.push(data);
+            return Promise.resolve(data);
+        },
+    },
     review: {
         findUnique: ({ where }: { where: { projectId: number } }) => {
             const found = createdReviews.find(
@@ -363,7 +371,8 @@ const fakePrisma = {
                     'Unique constraint failed on the fields: (proj_id)',
                 );
                 (err as unknown as { code: string }).code = 'P2002';
-                throw err;
+                // Prisma rejects, it never throws synchronously.
+                return Promise.reject(err);
             }
             reviewAlreadyExists = true;
             createdReviews.push(data);
@@ -383,11 +392,13 @@ const fakePrisma = {
         if (typeof work !== 'function') return Promise.all(work);
         const saved = structuredClone(project);
         const savedCreated = [...created];
+        const savedNotices = [...notices];
         try {
             return await work(fakePrisma);
         } catch (err) {
             project = saved;
             created = savedCreated;
+            notices = savedNotices;
             throw err;
         }
     },
@@ -409,6 +420,7 @@ before(async () => {
 beforeEach(() => {
     project = projectIn('IN_PROGRESS');
     created = [];
+    notices = [];
     createdReviews = [];
     reviewAlreadyExists = false;
     projects = [];
@@ -697,6 +709,15 @@ function savedEvent(updateType: ProjectUpdateType) {
     return [{ projectId: 1, updateType }];
 }
 
+// T4.1.5. The one notice an action saves: from the caller, to the other party.
+function savedNotice(
+    notificationType: NotificationType,
+    senderId: number,
+    recipientId: number,
+) {
+    return [{ proposalId: 1, senderId, recipientId, notificationType }];
+}
+
 describe('GET /projects/:projectId/updates', () => {
     it('answers every event of the project, oldest first (#212)', async () => {
         timeline = [
@@ -813,6 +834,10 @@ describe('POST /projects/:projectId/report-deposit', () => {
         assert.equal(result.body.projectStatus, 'AWAITING_DEPOSIT');
         assert.ok(result.body.depositReportedAt);
         assert.deepEqual(created, savedEvent('DEPOSIT_REPORTED'));
+        assert.deepEqual(
+            notices,
+            savedNotice('DEPOSIT_REPORTED', RECEIVER, PROVIDER),
+        );
     });
 
     // A double click: the second finds the deposit already reported.
@@ -829,6 +854,7 @@ describe('POST /projects/:projectId/report-deposit', () => {
         assert.ok(isApiError(403)(await reportDeposit(PROVIDER)));
         assert.equal(project!.depositReportedAt, null);
         assert.equal(created.length, 0);
+        assert.equal(notices.length, 0);
     });
 });
 
@@ -853,6 +879,10 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         assert.ok(confirmedAt >= startedAt && confirmedAt <= Date.now());
         assert.equal(project!.projectStatus, 'IN_PROGRESS');
         assert.deepEqual(created, savedEvent('DEPOSIT_CONFIRMED'));
+        assert.deepEqual(
+            notices,
+            savedNotice('DEPOSIT_CONFIRMED', PROVIDER, RECEIVER),
+        );
     });
 
     it('is a 409 before the Receiver reports it (T4.7.4)', async () => {
@@ -862,6 +892,7 @@ describe('POST /projects/:projectId/confirm-deposit', () => {
         assert.equal(project.projectStatus, 'AWAITING_DEPOSIT');
         assert.equal(project.depositConfirmedAt, null);
         assert.equal(created.length, 0);
+        assert.equal(notices.length, 0);
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.7.4)', async () => {
@@ -885,6 +916,7 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
         ] as const) {
             project = start;
             created = [];
+            notices = [];
             const result = (await cancelProject(callerId)) as {
                 status: number;
                 body: Project;
@@ -894,6 +926,12 @@ describe('POST /projects/:projectId/cancel (US4-8)', () => {
             assert.equal(result.body.projectStatus, 'CANCELLED');
             assert.equal(project.projectStatus, 'CANCELLED');
             assert.deepEqual(created, savedEvent('PROJECT_CANCELLED'));
+            // T4.1.5: whoever cancels, the other party is told.
+            const otherParty = callerId === PROVIDER ? RECEIVER : PROVIDER;
+            assert.deepEqual(
+                notices,
+                savedNotice('PROJECT_CANCELLED', callerId, otherParty),
+            );
         }
     });
 
@@ -945,6 +983,10 @@ describe('POST /projects/:projectId/submit-work', () => {
         assert.equal(result.body.projectStatus, 'AWAITING_ACCEPTANCE');
         assert.equal(project!.projectStatus, 'AWAITING_ACCEPTANCE');
         assert.deepEqual(created, savedEvent('WORK_SUBMITTED'));
+        assert.deepEqual(
+            notices,
+            savedNotice('WORK_SUBMITTED', PROVIDER, RECEIVER),
+        );
     });
 
     it('is a 403 for the Receiver and changes nothing (T4.11.4)', async () => {
@@ -987,6 +1029,10 @@ describe('POST /projects/:projectId/reject-work', () => {
                 updateText: 'The logo is the wrong colour',
             },
         ]);
+        assert.deepEqual(
+            notices,
+            savedNotice('WORK_REJECTED', RECEIVER, PROVIDER),
+        );
     });
 
     it('is a 400 without a reason and changes nothing (T4.12.3)', async () => {
@@ -1030,6 +1076,10 @@ describe('POST /projects/:projectId/accept-work', () => {
         assert.ok(completedAt >= startedAt && completedAt <= Date.now());
         assert.equal(project!.projectStatus, 'COMPLETED');
         assert.deepEqual(created, savedEvent('WORK_ACCEPTED'));
+        assert.deepEqual(
+            notices,
+            savedNotice('WORK_ACCEPTED', RECEIVER, PROVIDER),
+        );
     });
 
     it('is a 403 for the Provider and changes nothing (T4.13.4)', async () => {

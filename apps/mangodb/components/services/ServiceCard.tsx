@@ -21,7 +21,7 @@ export default function ServiceCard({
             <div className="flex items-stretch justify-between gap-4">
                 <div className="flex items-start gap-3">
                     {/* Initials only, never the photo, as the search design draws it. */}
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent type-md font-semibold text-surface-white">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent type-md !font-[600] text-surface-white">
                         {initials(service.company.companyName)}
                     </div>
 

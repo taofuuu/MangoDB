@@ -67,6 +67,6 @@ export function adminCredentials(): { email: string; password: string } {
     };
 }
 
-// Unset means "allow any origin", which is fine locally and is not fine
-// deployed. app.ts decides what to do about that; this only reports the value.
+// Unset means app.ts allows only http://localhost:3000, so a deployed API
+// must set it. This only reports the value.
 export const FRONTEND_URL = process.env.FRONTEND_URL;

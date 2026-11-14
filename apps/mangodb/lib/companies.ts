@@ -214,13 +214,16 @@ export async function changeMyCredentials(
     return company;
 }
 
-// US1-6. 204 on success, so apiFetch resolves with undefined. If the company
-// has an ongoing project, the API responds with 409 Conflict, which surfaces
-// as an ApiRequestError for the confirm modal to catch and show inline.
-export function deleteMyAccount(): Promise<void> {
+// US1-6. 204 on success, so apiFetch resolves with undefined. A wrong password
+// is a 401 and an ongoing project a 409; both surface as an ApiRequestError
+// for the confirm modal to catch and show inline.
+export function deleteMyAccount(
+    body: DeleteCompanyAccountRequest,
+): Promise<void> {
     return invalidateAfter(
         apiFetch<void>('/companies/me', {
             method: 'DELETE',
+            body: JSON.stringify(body),
         }),
     );
 }

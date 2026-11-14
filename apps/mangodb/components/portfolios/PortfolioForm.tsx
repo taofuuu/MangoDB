@@ -130,7 +130,7 @@ export default function PortfolioForm(props: PortfolioFormProps) {
 
                     <div>
                         <label
-                            className="block type-sm font-medium"
+                            className="block type-sm !font-[500]"
                             htmlFor="portfolio-link"
                         >
                             Link to your portfolio*

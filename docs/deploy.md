@@ -1,6 +1,6 @@
 # Deploying
 
-The hosted alpha is three pieces. Both hosts redeploy `main` on every push.
+The hosted beta is three pieces. Both hosts redeploy `main` on every push.
 
 | Piece                     | Host                  | Built from     |
 | ------------------------- | --------------------- | -------------- |
@@ -100,23 +100,24 @@ is what adds Caddy.
 
 ## Database
 
-Deploys do not run migrations. Keep the alpha database's values in
-`apps/api/.env.alpha` (gitignored) and run against it from `apps/api`:
+Deploys do not run migrations. Keep the hosted database's values in
+`apps/api/.env.hosted` (gitignored) and run against it from `apps/api`:
 
 ```bash
-node --env-file=.env.alpha ../../node_modules/prisma/build/index.js migrate status
-node --env-file=.env.alpha ../../node_modules/prisma/build/index.js migrate deploy
+node --env-file=.env.hosted ../../node_modules/prisma/build/index.js migrate status
+node --env-file=.env.hosted ../../node_modules/prisma/build/index.js migrate deploy
 ```
 
 `--env-file` wins over `.env`, so these never touch the team database. Run
-`status` first: on the alpha database it lists only migrations merged since the
+`status` first: on the hosted database it lists only migrations merged since the
 last deploy.
 
 A new Supabase project also needs:
 
-1. The four public buckets in [apps/api/README.md](../apps/api/README.md#file-storage).
-2. An admin account, from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.alpha`:
+1. The four buckets in [apps/api/README.md](../apps/api/README.md#file-storage),
+   three public and `quotation` private.
+2. An admin account, from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.hosted`:
 
     ```bash
-    node --env-file=.env.alpha --import tsx src/create-admin.ts
+    node --env-file=.env.hosted --import tsx src/create-admin.ts
     ```

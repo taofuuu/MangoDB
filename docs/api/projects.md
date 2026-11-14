@@ -154,6 +154,9 @@ refused action (403, 409) saves none (#212). Only `PROGRESS` and `WORK_REJECTED`
 A deleted quotation keeps its `QUOTATION_SENT` event: the timeline is
 append-only.
 
+Most of these actions also save a bell notice for the other party, in the
+same transaction. Which ones is listed in [notifications.md](notifications.md).
+
 ```mermaid
 sequenceDiagram
     autonumber

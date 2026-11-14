@@ -6,20 +6,25 @@ import { useRouter } from 'next/navigation';
 import type {
     ProjectDetail,
     ProjectUpdate,
+    ProjectUpdateType,
     PublicCompanyProfile,
     Quotation,
     Review,
 } from '@mangodb/shared';
 import { ArrowLeft, CircleCheck, Plus, Send } from 'lucide-react';
 import PageGate from '@/components/auth/PageGate';
+import AcceptQuotationModal from '@/components/projects/AcceptQuotationModal';
 import AddUpdateModal from '@/components/projects/AddUpdateModal';
 import ConfirmDepositModal from '@/components/projects/ConfirmDepositModal';
 import ProjectSidebar from '@/components/projects/ProjectSidebar';
 import ProjectStatusBadge from '@/components/projects/ProjectStatusBadge';
 import ProjectTimelineFeed, {
     type TimelineEvent,
+    type TimelineEventType,
 } from '@/components/projects/ProjectTimelineFeed';
+import RejectQuotationModal from '@/components/projects/RejectQuotationModal';
 import RejectWorkModal from '@/components/projects/RejectWorkModal';
+import ReportDepositModal from '@/components/projects/ReportDepositModal';
 import ProjectCompletedModal from '@/components/projects/ProjectCompletedModal';
 import UploadQuotationModal from '@/components/projects/UploadQuotationModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -48,6 +53,79 @@ import {
 } from '@/lib/projects';
 import { useMyCompany } from '@/lib/useMyCompany';
 
+// The timeline rows that are only a title. PROGRESS and WORK_REJECTED carry
+// text, so they have their own builders below.
+const TITLE_ONLY_EVENTS: Record<
+    Exclude<ProjectUpdateType, 'PROGRESS' | 'WORK_REJECTED'>,
+    { type: TimelineEventType; title: string }
+> = {
+    PROPOSAL_ACCEPTED: {
+        type: 'proposal-accepted',
+        title: 'Proposal Accepted',
+    },
+    QUOTATION_SENT: { type: 'quotation-uploaded', title: 'Quotation Uploaded' },
+    QUOTATION_DELETED: {
+        type: 'quotation-deleted',
+        title: 'Quotation Deleted',
+    },
+    QUOTATION_REJECTED: {
+        type: 'quotation-rejected',
+        title: 'Quotation Rejected',
+    },
+    QUOTATION_ACCEPTED: {
+        type: 'quotation-accepted',
+        title: 'Quotation Accepted',
+    },
+    DEPOSIT_REPORTED: {
+        type: 'deposit-reported',
+        title: 'Receiver reported deposit payment.',
+    },
+    DEPOSIT_CONFIRMED: {
+        type: 'deposit-confirmed',
+        title: 'Deposit payment confirmed.',
+    },
+    WORK_SUBMITTED: { type: 'work-submitted', title: 'Work Submitted' },
+    WORK_ACCEPTED: { type: 'work-accepted', title: 'Work Accepted' },
+    PROJECT_CANCELLED: { type: 'project-cancel', title: 'Project Cancel' },
+};
+
+// A progress update's first line is its title, cut to 60 characters. The
+// rest of the text opens when the row is expanded.
+function progressEvent(update: ProjectUpdate): TimelineEvent {
+    const rawText = update.updateText ?? '';
+    const lines = rawText.split('\n').filter((l) => l.trim().length > 0);
+    const firstLine = lines[0] ?? 'Progress Update';
+    const hasMore = lines.length > 1;
+    const title =
+        firstLine.length <= 60 ? firstLine : `${firstLine.slice(0, 57)}...`;
+    const description = hasMore
+        ? lines.slice(1).join('\n')
+        : firstLine.length > 60
+          ? rawText
+          : undefined;
+
+    return {
+        id: `update-progress-${update.projectUpdateId}`,
+        type: 'progress-update',
+        title: title,
+        description: description ?? (rawText || undefined),
+        date: update.createdAt,
+        expandable: !!description,
+    };
+}
+
+// The Receiver's reason is the row's text.
+function workRejectedEvent(update: ProjectUpdate): TimelineEvent {
+    return {
+        id: `update-rejected-${update.projectUpdateId}`,
+        type: 'work-rejected',
+        title: 'Work Rejected',
+        description: update.updateText ?? undefined,
+        date: update.createdAt,
+        expandable: !!update.updateText,
+    };
+}
+
 export default function ProjectDetailPage({
     params,
 }: {
@@ -64,7 +142,7 @@ export default function ProjectDetailPage({
     if (!projectId) {
         return (
             <div className="min-h-screen bg-surface px-4 py-16 text-center">
-                <p className="type-md font-semibold text-danger">
+                <p className="type-md !font-[600] text-danger">
                     Invalid project id
                 </p>
                 <Link
@@ -86,17 +164,29 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
     const [quotations, setQuotations] = useState<Quotation[]>([]);
+    // Kept apart from an empty list, so a failed load is never shown as
+    // "no quotation yet".
+    const [quotationsError, setQuotationsError] = useState<string | null>(null);
     const [review, setReview] = useState<Review | null>(null);
     const [otherCompany, setOtherCompany] =
         useState<PublicCompanyProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [actionError, setActionError] = useState<string | null>(null);
     const [isBusy, setIsBusy] = useState(false);
 
     // Modals state
     const [isUploadQuotationOpen, setIsUploadQuotationOpen] = useState(false);
+    // The quotation the Receiver is about to accept; null while the
+    // confirmation is closed.
+    const [acceptingQuotationId, setAcceptingQuotationId] = useState<
+        number | null
+    >(null);
+    // The quotation the Receiver is about to reject; null while the
+    // confirmation is closed.
+    const [rejectingQuotationId, setRejectingQuotationId] = useState<
+        number | null
+    >(null);
+    const [isReportDepositOpen, setIsReportDepositOpen] = useState(false);
     const [isConfirmDepositOpen, setIsConfirmDepositOpen] = useState(false);
     const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -118,14 +208,21 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         Promise.all([
             getProject(projectId),
             listProjectUpdates(projectId).catch(() => [] as ProjectUpdate[]),
-            listQuotations(projectId).catch(() => [] as Quotation[]),
+            listQuotations(projectId).then(
+                (items) => ({ items, error: null }),
+                (err: unknown) => ({
+                    items: [] as Quotation[],
+                    error: describeError(err),
+                }),
+            ),
             getProjectReview(projectId).catch(() => null),
         ])
             .then(async ([p, u, q, r]) => {
                 if (!isMounted) return;
                 setProject(p);
                 setUpdates(u);
-                setQuotations(q);
+                setQuotations(q.items);
+                setQuotationsError(q.error);
                 setReview(r);
 
                 // Fetch other party profile
@@ -140,9 +237,10 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     // Profile not found or private
                 }
             })
-            .catch((err: unknown) => {
-                if (!isMounted) return;
-                setError(describeError(err));
+            .catch(() => {
+                // A failed first load leaves project null, which shows
+                // "Project Not Found". A failed reload after an action keeps
+                // the page that is already showing, and any open pop-up.
             })
             .finally(() => {
                 if (isMounted) setIsLoading(false);
@@ -156,6 +254,17 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     useEffect(() => {
         return loadData();
     }, [loadData]);
+
+    // The Quotation card's Try again: reloads only the quotations, since the
+    // rest of the page loaded.
+    const reloadQuotations = useCallback(async () => {
+        try {
+            setQuotations(await listQuotations(projectId));
+            setQuotationsError(null);
+        } catch (err) {
+            setQuotationsError(describeError(err));
+        }
+    }, [projectId]);
 
     // Build timeline events
     const timelineEvents = useMemo<TimelineEvent[]>(() => {
@@ -177,126 +286,20 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         if (hasUnifiedEvents) {
             // Full timeline provided directly by GET /projects/:projectId/updates
             for (const u of updates) {
-                switch (u.updateType) {
-                    case 'PROPOSAL_ACCEPTED':
+                if (u.updateType === 'PROGRESS') {
+                    pushEvent(progressEvent(u));
+                } else if (u.updateType === 'WORK_REJECTED') {
+                    pushEvent(workRejectedEvent(u));
+                } else {
+                    // A type the API added after this build is left out.
+                    const row = TITLE_ONLY_EVENTS[u.updateType];
+                    if (row) {
                         pushEvent({
                             id: `update-${u.projectUpdateId}`,
-                            type: 'proposal-accepted',
-                            title: 'Proposal Accepted',
+                            ...row,
                             date: u.createdAt,
                         });
-                        break;
-                    case 'QUOTATION_SENT':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-uploaded',
-                            title: 'Quotation Uploaded',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_DELETED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-deleted',
-                            title: 'Quotation Deleted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_REJECTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-rejected',
-                            title: 'Quotation Rejected',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'QUOTATION_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'quotation-accepted',
-                            title: 'Quotation Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_REPORTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-reported',
-                            title: 'Receiver reported deposit payment.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'DEPOSIT_CONFIRMED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'deposit-confirmed',
-                            title: 'Deposit payment confirmed.',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROGRESS': {
-                        const rawText = u.updateText ?? '';
-                        const lines = rawText
-                            .split('\n')
-                            .filter((l) => l.trim().length > 0);
-                        const firstLine = lines[0] ?? 'Progress Update';
-                        const hasMore = lines.length > 1;
-                        const title =
-                            firstLine.length <= 60
-                                ? firstLine
-                                : `${firstLine.slice(0, 57)}...`;
-                        const description = hasMore
-                            ? lines.slice(1).join('\n')
-                            : firstLine.length > 60
-                              ? rawText
-                              : undefined;
-
-                        pushEvent({
-                            id: `update-progress-${u.projectUpdateId}`,
-                            type: 'progress-update',
-                            title: title,
-                            description: description ?? (rawText || undefined),
-                            date: u.createdAt,
-                            expandable: !!description,
-                        });
-                        break;
                     }
-                    case 'WORK_SUBMITTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-submitted',
-                            title: 'Work Submitted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'WORK_REJECTED':
-                        pushEvent({
-                            id: `update-rejected-${u.projectUpdateId}`,
-                            type: 'work-rejected',
-                            title: 'Work Rejected',
-                            description: u.updateText ?? undefined,
-                            date: u.createdAt,
-                            expandable: !!u.updateText,
-                        });
-                        break;
-                    case 'WORK_ACCEPTED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'work-accepted',
-                            title: 'Work Accepted',
-                            date: u.createdAt,
-                        });
-                        break;
-                    case 'PROJECT_CANCELLED':
-                        pushEvent({
-                            id: `update-${u.projectUpdateId}`,
-                            type: 'project-cancel',
-                            title: 'Project Cancel',
-                            date: u.createdAt,
-                        });
-                        break;
-                    default:
-                        break;
                 }
             }
         } else {
@@ -363,39 +366,9 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         title: 'Work Submitted',
                         date: u.createdAt,
                     });
-                    pushEvent({
-                        id: `update-rejected-${u.projectUpdateId}`,
-                        type: 'work-rejected',
-                        title: 'Work Rejected',
-                        description: u.updateText ?? undefined,
-                        date: u.createdAt,
-                        expandable: !!u.updateText,
-                    });
+                    pushEvent(workRejectedEvent(u));
                 } else if (u.updateType === 'PROGRESS') {
-                    const rawText = u.updateText ?? '';
-                    const lines = rawText
-                        .split('\n')
-                        .filter((l) => l.trim().length > 0);
-                    const firstLine = lines[0] ?? 'Progress Update';
-                    const hasMore = lines.length > 1;
-                    const title =
-                        firstLine.length <= 60
-                            ? firstLine
-                            : `${firstLine.slice(0, 57)}...`;
-                    const description = hasMore
-                        ? lines.slice(1).join('\n')
-                        : firstLine.length > 60
-                          ? rawText
-                          : undefined;
-
-                    pushEvent({
-                        id: `update-progress-${u.projectUpdateId}`,
-                        type: 'progress-update',
-                        title: title,
-                        description: description ?? (rawText || undefined),
-                        date: u.createdAt,
-                        expandable: !!description,
-                    });
+                    pushEvent(progressEvent(u));
                 }
             }
 
@@ -458,52 +431,87 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
     }, [project, quotations, updates]);
 
     // Action Handlers
+    // US4-1. Upload, Replace File and Revise & Resubmit all land here. The
+    // API refuses a second pending quotation, so Replace File deletes the
+    // pending one first. Errors are rethrown as text for UploadQuotationModal
+    // to show under the picker.
     const handleUploadQuotation = async (file: File) => {
         setIsBusy(true);
-        setActionError(null);
+        let removedPending = false;
         try {
             const pending = quotations.find(
                 (q) => q.quotationStatus === 'PENDING',
             );
             if (pending) {
                 await deleteQuotation(pending.quotationId, projectId);
+                removedPending = true;
+                // The reload below can fail too, so drop it from the card now.
+                setQuotations((qs) =>
+                    qs.filter((q) => q.quotationId !== pending.quotationId),
+                );
             }
             await uploadQuotation(projectId, file);
-            loadData();
+        } catch (err: unknown) {
+            const message = describeError(err, {
+                409: 'This quotation changed while you were sending it. Check the Quotation card and try again.',
+            });
+            throw new Error(
+                removedPending
+                    ? `${message} Your previous quotation was removed, so send the new one again.`
+                    : message,
+            );
         } finally {
+            // Also after a failure: a delete that went through, or a decision
+            // the Receiver made meanwhile, must show on the card.
+            loadData();
             setIsBusy(false);
         }
     };
 
+    // US4-4. Runs from AcceptQuotationModal's confirm button. Errors are
+    // rethrown as text for the modal to show above its buttons.
     const handleAcceptQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptQuotation(quotationId, projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    404: 'This quotation was removed by the provider. Check the Quotation card for the latest one.',
+                    409: 'This quotation can no longer be accepted. Check the Quotation card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure: a 404 or 409 means the card is out of
+            // date, so it must show what changed.
+            loadData();
             setIsBusy(false);
         }
     };
 
+    // US4-5. Runs from RejectQuotationModal's confirm button, the same way
+    // as accept. Once loadData has the REJECTED quotation, the Provider's
+    // card offers "Revise & Resubmit Quotation".
     const handleRejectQuotation = async (quotationId: number) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectQuotation(quotationId, projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    404: 'This quotation was removed by the provider. Check the Quotation card for the latest one.',
+                    409: 'This quotation can no longer be rejected. Check the Quotation card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure, as with accept.
+            loadData();
             setIsBusy(false);
         }
     };
 
     const handleAddUpdate = async (updateText: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await createProjectUpdate(projectId, updateText);
             loadData();
@@ -512,22 +520,29 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         }
     };
 
+    // US4-6. Runs from ReportDepositModal's confirm button, the same way as
+    // accepting a quotation. The status stays AWAITING_DEPOSIT; once loadData
+    // has depositReportedAt, the Deposit card shows the waiting state.
     const handleReportDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await reportDeposit(projectId);
-            loadData();
         } catch (err: unknown) {
-            setActionError(describeError(err));
+            throw new Error(
+                describeError(err, {
+                    409: 'The deposit can no longer be reported. Check the Deposit card for its latest status.',
+                }),
+            );
         } finally {
+            // Also after a failure: a 409 means the card is out of date (the
+            // deposit was already reported, or the project moved on).
+            loadData();
             setIsBusy(false);
         }
     };
 
     const handleConfirmDeposit = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await confirmDeposit(projectId);
             loadData();
@@ -538,7 +553,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleSubmitWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await submitWork(projectId);
             loadData();
@@ -550,7 +564,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleAcceptWork = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await acceptWork(projectId);
             loadData();
@@ -570,7 +583,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleRejectWork = async (reason: string) => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await rejectWork(projectId, reason);
             loadData();
@@ -581,7 +593,6 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
     const handleCancelProject = async () => {
         setIsBusy(true);
-        setActionError(null);
         try {
             await cancelProject(projectId);
             loadData();
@@ -599,7 +610,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
         );
     }
 
-    if (error || !project) {
+    if (!project) {
         return (
             <main className="min-h-screen bg-surface px-4 py-24 text-ink">
                 <div className="mx-auto max-w-4xl">
@@ -634,28 +645,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                     <button
                         type="button"
                         onClick={() => router.push('/projects')}
-                        className="inline-flex items-center gap-2 type-sm font-semibold text-brand hover:text-brand-dark transition-colors"
+                        className="inline-flex items-center gap-2 type-sm !font-[600] text-brand hover:text-brand-dark transition-colors"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back to your projects
                     </button>
                 </div>
-
-                {actionError && (
-                    <div
-                        role="alert"
-                        className="mb-6 rounded-[14px] border border-danger/40 bg-danger/10 px-4 py-3 type-xs text-danger flex items-center justify-between"
-                    >
-                        <span>{actionError}</span>
-                        <button
-                            type="button"
-                            onClick={() => setActionError(null)}
-                            className="font-semibold underline ml-2 hover:opacity-80 transition-opacity"
-                        >
-                            Dismiss
-                        </button>
-                    </div>
-                )}
 
                 {/* 2-Column Layout (Sidebar Left, Main Content Right) */}
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
@@ -664,11 +659,17 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                         project={project}
                         otherCompanyProfile={otherCompany}
                         quotations={quotations}
+                        quotationsError={quotationsError}
+                        onRetryQuotations={reloadQuotations}
                         review={review}
                         onUploadQuotation={() => setIsUploadQuotationOpen(true)}
-                        onAcceptQuotation={handleAcceptQuotation}
-                        onRejectQuotation={handleRejectQuotation}
-                        onReportDeposit={handleReportDeposit}
+                        onAcceptQuotation={setAcceptingQuotationId}
+                        onRejectQuotation={setRejectingQuotationId}
+                        onDeleteQuotation={async (quotationId) => {
+                            await deleteQuotation(quotationId, projectId);
+                            loadData();
+                        }}
+                        onReportDeposit={() => setIsReportDepositOpen(true)}
                         onConfirmDeposit={() => setIsConfirmDepositOpen(true)}
                         onSubmitWork={() => setIsSubmitConfirmOpen(true)}
                         onAcceptWork={() => setIsAcceptConfirmOpen(true)}
@@ -741,7 +742,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
 
                                 {/* Description */}
                                 <div className="mt-2">
-                                    <h4 className="type-xs font-semibold text-ink-soft mb-1">
+                                    <h4 className="type-xs !font-[600] text-ink-soft mb-1">
                                         Description
                                     </h4>
                                     <p className="type-sm text-ink leading-relaxed">
@@ -781,7 +782,7 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                                             onClick={() =>
                                                 setIsAddUpdateOpen(true)
                                             }
-                                            className="inline-flex items-center gap-1.5 rounded-button bg-brand px-4 py-2 type-xs font-semibold text-surface-white hover:bg-brand-dark transition-colors shadow-xs"
+                                            className="inline-flex items-center gap-1.5 rounded-button bg-brand px-4 py-2 type-xs !font-[600] text-surface-white hover:bg-brand-dark transition-colors shadow-xs"
                                         >
                                             <Plus className="h-4 w-4" />
                                             Add Update
@@ -796,6 +797,12 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
             </div>
 
             {/* Modals */}
+            <ReportDepositModal
+                isOpen={isReportDepositOpen}
+                onClose={() => setIsReportDepositOpen(false)}
+                onConfirm={handleReportDeposit}
+            />
+
             <ConfirmDepositModal
                 isOpen={isConfirmDepositOpen}
                 onClose={() => setIsConfirmDepositOpen(false)}
@@ -806,6 +813,25 @@ function ProjectDetailView({ projectId }: { projectId: number }) {
                 isOpen={isUploadQuotationOpen}
                 onClose={() => setIsUploadQuotationOpen(false)}
                 onSubmit={handleUploadQuotation}
+            />
+
+            <AcceptQuotationModal
+                isOpen={acceptingQuotationId !== null}
+                onClose={() => setAcceptingQuotationId(null)}
+                onConfirm={async () => {
+                    if (acceptingQuotationId === null) return;
+                    await handleAcceptQuotation(acceptingQuotationId);
+                }}
+                providerName={project.provider.companyName}
+            />
+
+            <RejectQuotationModal
+                isOpen={rejectingQuotationId !== null}
+                onClose={() => setRejectingQuotationId(null)}
+                onConfirm={async () => {
+                    if (rejectingQuotationId === null) return;
+                    await handleRejectQuotation(rejectingQuotationId);
+                }}
             />
 
             <AddUpdateModal

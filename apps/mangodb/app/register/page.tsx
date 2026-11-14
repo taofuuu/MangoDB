@@ -326,7 +326,7 @@ export default function RegisterPage() {
         >
             {/* Server Error Message Display */}
             {errorMessage && (
-                <div className="my-2 rounded-md border border-danger-tint bg-danger-wash p-3 type-sm font-medium text-danger">
+                <div className="my-2 rounded-md border border-danger-tint bg-danger-wash p-3 type-sm !font-[500] text-danger">
                     {errorMessage}
                 </div>
             )}

@@ -9,7 +9,11 @@ title US2-11 Accept Proposal - Sequence Diagram
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam sequenceMessageAlign center
-skinparam ParticipantPadding 12
+<style>
+participant {
+  Padding 12
+}
+</style>
 autonumber
 
 actor Receiver
@@ -30,7 +34,7 @@ activate Auth
 Auth -> Auth : verifyAccessToken(token)
 Auth -> DB : isTokenRevoked(jti)
 DB --> Auth : false
-Auth -> DB : isCompanyDeleted(companyId)
+Auth -> DB : isSessionEnded(companyId, iat)
 DB --> Auth : false
 
 alt token missing, invalid, revoked, or company deleted
@@ -81,6 +85,7 @@ else authenticated
     activate Lib
     Lib -> DB : project.create\nstatus AWAITING_QUOTATION
     DB --> Lib : project row
+    Lib -> DB : projectUpdate.create\nPROPOSAL_ACCEPTED (timeline)
     Lib --> Ctrl : Project
     deactivate Lib
 

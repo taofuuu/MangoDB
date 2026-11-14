@@ -24,6 +24,7 @@
  *   are rejected; on a service, the service stays OPEN and other pending hire
  *   requests stay PENDING. The project's timeline starts with a
  *   PROPOSAL_ACCEPTED event (#212). A refusal (404, 403, 409) changes nothing.
+ *   A proposal from a company that has deleted its account is 409 (#262).
  *
  * How:
  * - The test calls the controller function directly with a fake req and a
@@ -79,6 +80,8 @@ type ProposalRow = {
     proposalTerms?: string;
     duration?: number;
     createdAt?: Date;
+    // Set when the sending company has deleted its account (#262).
+    senderDeletedAt?: Date;
     sender?: {
         companyId: number;
         companyName: string;
@@ -99,10 +102,43 @@ let listings: ListingRow[] = [];
 let proposals: ProposalRow[] = [];
 let projects: ProjectRow[] = [];
 let projectUpdates: Record<string, unknown>[] = [];
+let notices: Record<string, unknown>[] = [];
 
 // Copies of every table, so a test can check that a refusal wrote nothing.
 function snapshotTables(): string {
-    return JSON.stringify({ listings, proposals, projects, projectUpdates });
+    return JSON.stringify({
+        listings,
+        proposals,
+        projects,
+        projectUpdates,
+        notices,
+    });
+}
+
+type ProposalUpdateArgs = {
+    where: {
+        proposalId?: number | { not: number };
+        listingId?: number;
+        proposalStatus: string;
+    };
+    data: { proposalStatus: string };
+};
+
+// Matches on the fields accept and reject filter by: one proposal by id, or
+// every other one on the listing ({ not: id }), by status.
+function updateProposals(args: ProposalUpdateArgs): ProposalRow[] {
+    const { proposalId, listingId, proposalStatus } = args.where;
+    const hits = proposals.filter(
+        (p) =>
+            p.proposalStatus === proposalStatus &&
+            (listingId === undefined || p.listingId === listingId) &&
+            (proposalId === undefined ||
+                (typeof proposalId === 'number'
+                    ? p.proposalId === proposalId
+                    : p.proposalId !== proposalId.not)),
+    );
+    for (const p of hits) p.proposalStatus = args.data.proposalStatus;
+    return hits;
 }
 
 const fakePrisma = {
@@ -121,6 +157,15 @@ const fakePrisma = {
     projectUpdate: {
         create: async (args: { data: Record<string, unknown> }) => {
             projectUpdates.push(args.data);
+        },
+    },
+    notification: {
+        create: async (args: { data: Record<string, unknown> }) => {
+            notices.push(args.data);
+        },
+        createMany: async (args: { data: Record<string, unknown>[] }) => {
+            notices.push(...args.data);
+            return { count: args.data.length };
         },
     },
     listing: {
@@ -159,8 +204,10 @@ const fakePrisma = {
             const l = listings.find((row) => row.listingId === p.listingId);
             return {
                 listingId: p.listingId,
+                senderId: p.senderId,
                 proposalStatus: p.proposalStatus,
                 proposalBudget: p.proposalBudget,
+                sender: { deletedAt: p.senderDeletedAt ?? null },
                 listing: l
                     ? {
                           listingId: l.listingId,
@@ -171,29 +218,15 @@ const fakePrisma = {
                     : null,
             };
         },
-        // Matches on the fields acceptProposalTx filters by: one proposal by
-        // id, or every other one on the listing ({ not: id }), by status.
-        updateMany: async (args: {
-            where: {
-                proposalId?: number | { not: number };
-                listingId?: number;
-                proposalStatus: string;
-            };
-            data: { proposalStatus: string };
-        }) => {
-            const { proposalId, listingId, proposalStatus } = args.where;
-            const hits = proposals.filter(
-                (p) =>
-                    p.proposalStatus === proposalStatus &&
-                    (listingId === undefined || p.listingId === listingId) &&
-                    (proposalId === undefined ||
-                        (typeof proposalId === 'number'
-                            ? p.proposalId === proposalId
-                            : p.proposalId !== proposalId.not)),
-            );
-            for (const p of hits) p.proposalStatus = args.data.proposalStatus;
-            return { count: hits.length };
-        },
+        updateMany: async (args: ProposalUpdateArgs) => ({
+            count: updateProposals(args).length,
+        }),
+        // rejectPendingProposals: the rejected rows come back, for their notices.
+        updateManyAndReturn: async (args: ProposalUpdateArgs) =>
+            updateProposals(args).map((p) => ({
+                proposalId: p.proposalId,
+                senderId: p.senderId,
+            })),
         create: async (args: {
             data: {
                 listingId: number;
@@ -332,6 +365,7 @@ beforeEach(() => {
     proposals = [];
     projects = [];
     projectUpdates = [];
+    notices = [];
 });
 
 async function getCounts(
@@ -664,6 +698,15 @@ describe('POST /jobs/:jobId/proposals', () => {
         assert.equal(result.body.listingId, 10);
         assert.equal(result.body.senderId, PROVIDER);
         assert.equal(rows.length, 1);
+        // T4.1.5: the job's owner gets a New Proposal notice.
+        assert.deepEqual(notices, [
+            {
+                proposalId: result.body.proposalId,
+                senderId: PROVIDER,
+                recipientId: OWNER,
+                notificationType: 'PROPOSAL_RECEIVED',
+            },
+        ]);
     });
 });
 
@@ -966,6 +1009,8 @@ describe('GET /services/:serviceId/proposals', () => {
 describe('POST /proposals/:proposalId/accept', () => {
     const OWNER = 1;
     const PROVIDER = 2;
+    // Proposal n was sent by company SENDER_BASE + n.
+    const SENDER_BASE = 100;
 
     function job(listingStatus: 'OPEN' | 'CLOSED'): ListingRow {
         return {
@@ -995,6 +1040,7 @@ describe('POST /proposals/:proposalId/accept', () => {
         return {
             proposalId,
             listingId,
+            senderId: SENDER_BASE + proposalId,
             proposalBudget: 80000,
             proposalStatus,
         };
@@ -1058,6 +1104,22 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.deepEqual(projectUpdates, [
             { projectId: 1, updateType: 'PROPOSAL_ACCEPTED' },
         ]);
+        // T4.1.5: the winner hears it was accepted, the other pending sender
+        // that it was rejected. The already-rejected one hears nothing new.
+        assert.deepEqual(notices, [
+            {
+                proposalId: 1,
+                senderId: OWNER,
+                recipientId: SENDER_BASE + 1,
+                notificationType: 'PROPOSAL_ACCEPTED',
+            },
+            {
+                proposalId: 2,
+                senderId: OWNER,
+                recipientId: SENDER_BASE + 2,
+                notificationType: 'PROPOSAL_REJECTED',
+            },
+        ]);
     });
 
     it('on a service, creates the project, keeps the service OPEN and leaves other requests PENDING (US2-17)', async () => {
@@ -1118,6 +1180,22 @@ describe('POST /proposals/:proposalId/accept', () => {
         assert.equal(snapshotTables(), before);
     });
 
+    // #262: the other party could never sign in to the project.
+    it("a deleted company's proposal is 409 and changes nothing", async () => {
+        listings = [job('OPEN')];
+        proposals = [
+            { ...proposal(1, 'PENDING'), senderDeletedAt: new Date() },
+            proposal(2, 'PENDING'),
+        ];
+        const before = snapshotTables();
+
+        const result = await accept(1, OWNER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 409);
+        assert.equal(snapshotTables(), before);
+    });
+
     // [what, outcome, proposal status, job status, caller, expected code]
     const refusals: [
         string,
@@ -1154,4 +1232,91 @@ describe('POST /proposals/:proposalId/accept', () => {
             assert.equal(snapshotTables(), before);
         });
     }
+});
+
+describe('POST /proposals/:proposalId/reject', () => {
+    const OWNER = 1;
+    const SENDER = 2;
+
+    beforeEach(() => {
+        listings = [
+            {
+                listingId: 10,
+                listingType: 'JOB',
+                companyId: OWNER,
+                listingStatus: 'OPEN',
+                company: { deletedAt: null },
+            },
+        ];
+        proposals = [
+            {
+                proposalId: 1,
+                listingId: 10,
+                senderId: SENDER,
+                proposalBudget: 80000,
+                proposalStatus: 'PENDING',
+            },
+        ];
+    });
+
+    // Rejects as callerId. Returns the status it answered with, or the
+    // ApiError it threw.
+    async function reject(callerId: number): Promise<unknown> {
+        const req = {
+            auth: { companyId: callerId },
+            params: { proposalId: '1' },
+        } as unknown as Request;
+        let status = 200;
+        const res = {
+            status(code: number) {
+                status = code;
+                return this;
+            },
+            end() {
+                return this;
+            },
+        } as unknown as Response;
+
+        try {
+            await controller.rejectProposal(req, res);
+        } catch (err) {
+            return err;
+        }
+        return { status };
+    }
+
+    it('rejects the proposal and tells its sender (T4.1.5)', async () => {
+        const result = (await reject(OWNER)) as { status: number };
+
+        assert.equal(result.status, 204);
+        assert.equal(proposals[0]!.proposalStatus, 'REJECTED');
+        assert.deepEqual(notices, [
+            {
+                proposalId: 1,
+                senderId: OWNER,
+                recipientId: SENDER,
+                notificationType: 'PROPOSAL_REJECTED',
+            },
+        ]);
+    });
+
+    // #262: only accept is refused, so the owner can still clear it.
+    it("still rejects a deleted company's proposal", async () => {
+        proposals[0]!.senderDeletedAt = new Date();
+
+        const result = (await reject(OWNER)) as { status: number };
+
+        assert.equal(result.status, 204);
+        assert.equal(proposals[0]!.proposalStatus, 'REJECTED');
+    });
+
+    it("is 403 on someone else's job and changes nothing", async () => {
+        const before = snapshotTables();
+
+        const result = await reject(SENDER);
+
+        assert.ok(result instanceof ApiError, 'expected an ApiError');
+        assert.equal(result.status, 403);
+        assert.equal(snapshotTables(), before);
+    });
 });
