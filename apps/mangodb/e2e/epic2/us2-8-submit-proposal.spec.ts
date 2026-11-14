@@ -192,11 +192,16 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         ).toBeVisible();
     });
 
-    test('TC-2-39: a RECEIVER account cannot submit a proposal', async ({
+    test('TC-2-46: a RECEIVER account cannot submit a proposal', async ({
         page,
     }) => {
         await loginAs(page, 'RECEIVER');
-        await openJob(page, OPEN_JOB);
+        await page.goto('/jobs');
+        await expect(
+            page.getByText(
+                'You need a Provider account to search job postings.',
+            ),
+        ).toBeVisible();
         await expect(
             page.getByRole('button', { name: 'Add Proposal' }),
         ).toHaveCount(0);
@@ -214,7 +219,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         expect(res.status()).toBe(403);
     });
 
-    test('TC-2-40: a Provider cannot submit a proposal to their own job', async ({
+    test('TC-2-47: a Provider cannot submit a proposal to their own job', async ({
         page,
     }) => {
         await loginAs(page, 'BOTH');
@@ -239,7 +244,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         );
     });
 
-    test('TC-2-41: duration is empty', async ({ page }) => {
+    test('TC-2-48: duration is empty', async ({ page }) => {
         await submitProposal(page, { duration: '' });
         await expect(page.getByText('Duration is required')).toBeVisible();
     });
