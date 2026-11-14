@@ -271,7 +271,9 @@ export default function ReceivedProposalsPage({
                     />
                 </div>
 
-                {/* Loading / Error / Empty States */}
+                {/* Loading / Error / Empty States. An open proposal keeps the
+                    grid, so accepting the last pending one doesn't unmount
+                    the accept modal before it shows "Open project". */}
                 {activeIsLoading ? (
                     <div className="py-20 text-center text-ink-soft !font-[500] type-sm">
                         Loading proposals...
@@ -280,7 +282,7 @@ export default function ReceivedProposalsPage({
                     <div className="py-20 text-center text-danger !font-[500] type-sm">
                         {activeError}
                     </div>
-                ) : activeList.length === 0 ? (
+                ) : activeList.length === 0 && !selectedProposal ? (
                     <EmptyState
                         title={
                             viewMode === 'rejected'
