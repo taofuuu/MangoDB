@@ -34,6 +34,7 @@ import {
 } from '@/lib/validation/company';
 import { toFormErrors } from '@/lib/validation/formErrors';
 import { register } from '@/lib/session';
+import { useRedirectIfSignedIn } from '@/lib/useRedirectIfSignedIn';
 
 // Which input each field the API can reject belongs under. Username and
 // password live on the previous step, so their messages are held until the
@@ -62,6 +63,8 @@ export enum RegisterStep {
 }
 
 export default function RegisterPage() {
+    useRedirectIfSignedIn();
+
     /* ================= STATE ================= */
 
     const [currentStep, setCurrentStep] = useState<RegisterStep>(

@@ -8,6 +8,7 @@ import PasswordInput from '@/components/ui/PasswordInput';
 import Button from '@/components/ui/Button';
 import { describeError } from '@/lib/api';
 import { login, sanitizeReturnUrl } from '@/lib/session';
+import { useRedirectIfSignedIn } from '@/lib/useRedirectIfSignedIn';
 
 // A wrong password and a malformed email both have to read the same. The API
 // rejects the second as VALIDATION_FAILED, and showing that would tell an
@@ -15,6 +16,7 @@ import { login, sanitizeReturnUrl } from '@/lib/session';
 export default function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    useRedirectIfSignedIn();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
