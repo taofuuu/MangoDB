@@ -45,7 +45,7 @@ export function adminLogin(
 }
 
 // US1-1. Creates the company and signs it in: the API sets the session cookie
-// on this response, the same as login. The accessToken in the body is for
+// on this response, the same as login. The accessToken in a local body is for
 // callers that are not a browser, so it is not kept.
 export async function register(body: RegisterRequest): Promise<CompanyProfile> {
     const { company } = await apiFetch<SessionResponse>('/auth/register', {

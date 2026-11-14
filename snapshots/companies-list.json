@@ -4,48 +4,23 @@
     "body": {
         "items": [
             {
-                "accountType": "PROVIDER",
-                "categories": [
-                    "Hardware & IoT",
-                    "Mobile App Development",
-                    "Web Development"
-                ],
+                "accountType": "BOTH",
+                "categories": [],
                 "companyDescription": null,
-                "companyId": 231,
-                "companyName": "Acme Solutions Ltd.",
+                "companyId": 728,
+                "companyName": "[e2e] BOTH mwg8hcrf_2",
                 "companyPhoto": null,
                 "contactEmail": null,
                 "phone": "0812345678",
-                "techStack": [
-                    "AWS",
-                    "Docker",
-                    "Express",
-                    "Firebase",
-                    "Google Cloud",
-                    "GraphQL",
-                    "Kotlin",
-                    "MongoDB",
-                    "MySQL",
-                    "Next.js",
-                    "Node.js",
-                    "PostgreSQL",
-                    "Prisma",
-                    "React",
-                    "Redis",
-                    "Redux",
-                    "Supabase",
-                    "Tailwind CSS",
-                    "TypeScript",
-                    "Vite"
-                ],
+                "techStack": [],
                 "website": null
             },
             {
                 "accountType": "RECEIVER",
                 "categories": [],
                 "companyDescription": null,
-                "companyId": 393,
-                "companyName": "aongzera",
+                "companyId": 665,
+                "companyName": "[e2e] EP1 Account B",
                 "companyPhoto": null,
                 "contactEmail": null,
                 "phone": "0812345678",
@@ -56,8 +31,8 @@
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 58,
-            "totalPages": 29
+            "totalItems": 82,
+            "totalPages": 41
         }
     }
 }

@@ -1,0 +1,10 @@
+{
+    "request": "GET /notifications/mine",
+    "status": 401,
+    "body": {
+        "error": {
+            "code": "UNAUTHORIZED",
+            "message": "Missing or malformed Authorization header"
+        }
+    }
+}

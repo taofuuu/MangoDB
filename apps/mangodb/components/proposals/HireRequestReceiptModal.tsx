@@ -6,6 +6,7 @@ import type { Proposal } from '@mangodb/shared';
 import ModalShell from '@/components/ui/ModalShell';
 import { formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
+import { endSentence } from '@/lib/sentences';
 import {
     HIRE_REQUEST_BACKDROP_CLASS,
     HIRE_REQUEST_PANEL_CLASS,
@@ -47,7 +48,7 @@ export default function HireRequestReceiptModal({
 
             <p className="my-[2.22vh] type-md !font-[600]">
                 Your hire request for {serviceName} has been sent to{' '}
-                {companyName}
+                {endSentence(companyName)}
             </p>
 
             <div>

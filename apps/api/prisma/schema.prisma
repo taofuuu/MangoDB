@@ -199,11 +199,17 @@ model ProjectUpdate {
 // T4.1.5, ADR 0017. One notice in the navbar bell, for the company an action
 // happened to. Saved by that action, in its transaction. Every notice comes
 // from one proposal, which also leads to its listing and its project.
+// Deleting a service deletes its proposals, but a rejection notice outlives
+// them (#264): proposalId goes null and the bell reads the listing title and
+// type copied here just before the delete.
 model Notification {
   notificationId   Int       @id @default(autoincrement()) @map("notification_id")
   recipientId      Int       @map("recipient_id")
   senderId         Int       @map("sender_id")
-  proposalId       Int       @map("proposal_id")
+  proposalId       Int?      @map("proposal_id")
+  // Null while the proposal exists; the listing is read through it then.
+  listingTitle     String?   @map("listing_title") @db.VarChar(255)
+  listingType      String?   @map("listing_type") @db.VarChar(20)
   // One of NOTIFICATION_TYPES in packages/shared.
   notificationType String    @map("notification_type") @db.VarChar(50)
   // Null until the recipient opens the bell.
@@ -211,7 +217,7 @@ model Notification {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   recipient        Company   @relation("NotificationRecipient", fields: [recipientId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
   sender           Company   @relation("NotificationSender", fields: [senderId], references: [companyId], onDelete: Cascade, onUpdate: NoAction)
-  proposal         Proposal  @relation(fields: [proposalId], references: [proposalId], onDelete: Cascade, onUpdate: NoAction)
+  proposal         Proposal? @relation(fields: [proposalId], references: [proposalId], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([recipientId, createdAt])
   @@map("notification")

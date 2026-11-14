@@ -4,11 +4,11 @@
     "body": {
         "items": [
             {
-                "accountType": "PROVIDER",
+                "accountType": "BOTH",
                 "averageRating": null,
                 "companyDescription": null,
-                "companyId": 231,
-                "companyName": "Acme Solutions Ltd.",
+                "companyId": 728,
+                "companyName": "[e2e] BOTH mwg8hcrf_2",
                 "deletedAt": null,
                 "phone": "0812345678",
                 "ratingCount": 0
@@ -16,19 +16,19 @@
             {
                 "accountType": "PROVIDER",
                 "averageRating": null,
-                "companyDescription": "Mobile App Development Agency (iOS/Android)",
-                "companyId": 3,
-                "companyName": "AppSynth",
+                "companyDescription": "We build web apps.",
+                "companyId": 663,
+                "companyName": "[e2e] EP1 Provider",
                 "deletedAt": null,
-                "phone": "023333333",
+                "phone": "0812345678",
                 "ratingCount": 0
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 2,
-            "totalItems": 33,
-            "totalPages": 17
+            "totalItems": 51,
+            "totalPages": 26
         }
     }
 }

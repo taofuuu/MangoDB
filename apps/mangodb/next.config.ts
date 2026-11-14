@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { STORAGE_HOSTS, STORAGE_PUBLIC_PATH } from './lib/images';
 
 // The API is its own server, but the browser only ever talks to this one:
 // /api/* is proxied through, so every request the browser makes is same-origin.
@@ -47,10 +48,14 @@ const nextConfig: NextConfig = {
         ];
     },
 
-    // portfolioImage is a Supabase public URL, and next/image refuses to load
-    // a host it was not told about.
+    // Uploads are Supabase public URLs, and next/image refuses to load a host
+    // it was not told about. The list and its reason live in lib/images.ts.
     images: {
-        remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }],
+        remotePatterns: STORAGE_HOSTS.map((hostname) => ({
+            protocol: 'https' as const,
+            hostname,
+            pathname: `${STORAGE_PUBLIC_PATH}**`,
+        })),
     },
 
     async rewrites() {

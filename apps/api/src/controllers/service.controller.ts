@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type {
     ListingStatus,
     ListingType,
+    NotificationType,
     Paginated,
     ServiceSummary,
 } from '@mangodb/shared';
@@ -19,6 +20,7 @@ import {
     LISTING_MESSAGES,
     categoryCreate,
     categoryReplace,
+    rejectPendingProposals,
 } from '../lib/listing';
 import {
     DEFAULT_LISTING_STATUS,
@@ -279,10 +281,10 @@ export async function getService(req: Request, res: Response): Promise<void> {
 
 // DELETE /services/:serviceId. Hard delete. listingCategory, the service row
 // and any proposals on the listing cascade with it (prisma/schema.prisma
-// onDelete: Cascade). A project blocks the delete instead (project ->
-// proposal is onDelete: Restrict), so a service with projects is refused with
-// 409 before the write (US2-4). Unlike portfolio there is no stored image to
-// remove.
+// onDelete: Cascade). Pending hire requests are rejected first, so their
+// senders get a notice that outlives the delete (#264). A project blocks the
+// delete instead (project -> proposal is onDelete: Restrict), so a service
+// with projects is refused with 409 before the write (US2-4).
 export async function deleteService(
     req: Request,
     res: Response,
@@ -313,14 +315,43 @@ export async function deleteService(
         select: { portfolioImage: true },
     });
 
+    // #264: pending hire requests are rejected with the usual notice, and every
+    // rejection notice keeps the service's title, so the senders still see it
+    // after the proposals cascade away. One transaction: all or nothing.
     // A 404 if it was deleted between the ownership check and here.
     await orNotFound(
-        prisma.listing.delete({
-            where: {
-                listingId: serviceId,
-                companyId,
-                listingType: 'SERVICE' satisfies ListingType,
-            },
+        prisma.$transaction(async (tx) => {
+            const { listingTitle } = await tx.listing.findUniqueOrThrow({
+                where: { listingId: serviceId },
+                select: { listingTitle: true },
+            });
+            await rejectPendingProposals(tx, serviceId, companyId);
+
+            const onThisService = { proposal: { listingId: serviceId } };
+            // The Provider's own notices would lead to a page that is gone.
+            await tx.notification.deleteMany({
+                where: {
+                    ...onThisService,
+                    notificationType: {
+                        not: 'PROPOSAL_REJECTED' satisfies NotificationType,
+                    },
+                },
+            });
+            await tx.notification.updateMany({
+                where: onThisService,
+                data: {
+                    listingTitle,
+                    listingType: 'SERVICE' satisfies ListingType,
+                },
+            });
+
+            await tx.listing.delete({
+                where: {
+                    listingId: serviceId,
+                    companyId,
+                    listingType: 'SERVICE' satisfies ListingType,
+                },
+            });
         }),
         LISTING_MESSAGES.SERVICE.notFound,
     );

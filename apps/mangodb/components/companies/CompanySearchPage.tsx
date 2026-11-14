@@ -13,6 +13,7 @@ import Pagination from '@/components/ui/Pagination';
 import { describeError, isNotSignedIn, NOT_SIGNED_IN } from '@/lib/api';
 import { listCompanies } from '@/lib/companies';
 import { COMPANY_PAGE_SIZE } from '@/lib/pagination';
+import { formatItemCount } from '@/lib/itemCount';
 import CompanySearchCard from './CompanySearchCard';
 import CompanySearchDetail from './CompanySearchDetail';
 import Dropdown from '@/components/ui/Dropdown';
@@ -113,7 +114,7 @@ export default function CompanySearchPage() {
                         </h1>
                         <span className="type-md text-ink-soft">
                             {pagination
-                                ? `(Search result: ${pagination.totalItems} items)`
+                                ? `(Search result: ${formatItemCount(pagination.totalItems)})`
                                 : '(Loading results)'}
                         </span>
                     </div>

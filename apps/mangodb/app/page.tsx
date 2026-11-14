@@ -7,7 +7,7 @@ import { describeError, isNotSignedIn } from '@/lib/api';
 import { getMyProfile } from '@/lib/companies';
 
 // No landing page of its own (ADR 0014). Signed in goes to your own profile,
-// signed out to login. The developer link list moved to /dev.
+// signed out to login.
 export default function Home() {
     const router = useRouter();
     const [loadError, setLoadError] = useState<string | null>(null);

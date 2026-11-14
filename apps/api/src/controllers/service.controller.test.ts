@@ -1,6 +1,8 @@
 /*
  * Tests for the ?companyId= filter and ?orderBy=ratingDesc|ratingAsc sort on
- * GET /services (listServices in service.controller.ts).
+ * GET /services (listServices in service.controller.ts), and for
+ * DELETE /services/:serviceId (deleteService): pending hire requests are
+ * rejected with a notice, and the rejection notices keep the title (#264).
  *
  * What they cover:
  * - ?companyId= narrows the search to one company's services.
@@ -161,6 +163,40 @@ function matches(row: Record<string, unknown>, where: unknown): boolean {
 
 type Args = { where: unknown };
 
+// deleteService's writes, in order, as [model.method, args].
+let writes: [string, unknown][] = [];
+let projectCount = 0;
+// What tx.listing.findUniqueOrThrow does: answer a title, or throw P2025.
+let listingGone = false;
+
+function record(name: string, answer: unknown = { count: 1 }) {
+    return async (args: unknown) => {
+        writes.push([name, args]);
+        return answer;
+    };
+}
+
+const fakeTx = {
+    listing: {
+        findUniqueOrThrow: async () => {
+            if (listingGone)
+                throw Object.assign(new Error(), { code: 'P2025' });
+            return { listingTitle: 'Logo design' };
+        },
+        delete: record('listing.delete'),
+    },
+    proposal: {
+        updateManyAndReturn: record('proposal.updateManyAndReturn', [
+            { proposalId: 40, senderId: BETA },
+        ]),
+    },
+    notification: {
+        createMany: record('notification.createMany'),
+        deleteMany: record('notification.deleteMany'),
+        updateMany: record('notification.updateMany'),
+    },
+};
+
 const fakePrisma = {
     listing: {
         count: async (args: Args) =>
@@ -168,8 +204,15 @@ const fakePrisma = {
         // Paging and order are not under test here; every match comes back.
         findMany: async (args: Args) =>
             rows.filter((r) => matches(r, args.where)),
+        findUnique: async (args: { where: { listingId: number } }) =>
+            rows.find((r) => r.listingId === args.where.listingId) ?? null,
     },
-    $transaction: (ops: Promise<unknown>[]) => Promise.all(ops),
+    project: { count: async () => projectCount },
+    servicePortfolio: { findMany: async () => [] },
+    // The search passes an array, the delete a function.
+    $transaction: (
+        work: Promise<unknown>[] | ((tx: unknown) => Promise<unknown>),
+    ) => (typeof work === 'function' ? work(fakeTx) : Promise.all(work)),
 };
 
 function moduleUrl(specifier: string): string {
@@ -195,6 +238,9 @@ before(async () => {
 
 beforeEach(() => {
     rows = [];
+    writes = [];
+    projectCount = 0;
+    listingGone = false;
 });
 
 // Runs listServices with this query string's values and returns the JSON it
@@ -442,5 +488,113 @@ describe('GET /services?orderBy=ratingDesc|ratingAsc (US3-3)', () => {
             totalItems: 3,
             totalPages: 2,
         });
+    });
+});
+
+// Runs deleteService on service 10 as its owner, ALPHA, and returns the status
+// it answered, or the ApiError it threw.
+async function deleteTen(): Promise<unknown> {
+    const req = {
+        params: { serviceId: '10' },
+        auth: { companyId: ALPHA, role: 'provider', jti: 'j' },
+    } as unknown as Request;
+    let status = 0;
+    const res = {
+        status(code: number) {
+            status = code;
+            return this;
+        },
+        end() {
+            return this;
+        },
+    } as unknown as Response;
+    try {
+        await controller.deleteService(req, res);
+    } catch (err) {
+        return err;
+    }
+    return status;
+}
+
+describe('DELETE /services/:serviceId (#264)', () => {
+    it('rejects pending hire requests and keeps the rejection notices', async () => {
+        rows = [service(10, ALPHA)];
+
+        assert.equal(await deleteTen(), 204);
+        const onThisService = { proposal: { listingId: 10 } };
+        assert.deepEqual(writes, [
+            [
+                'proposal.updateManyAndReturn',
+                {
+                    where: { listingId: 10, proposalStatus: 'PENDING' },
+                    data: { proposalStatus: 'REJECTED' },
+                    select: { proposalId: true, senderId: true },
+                },
+            ],
+            [
+                'notification.createMany',
+                {
+                    data: [
+                        {
+                            proposalId: 40,
+                            senderId: ALPHA,
+                            recipientId: BETA,
+                            notificationType: 'PROPOSAL_REJECTED',
+                        },
+                    ],
+                },
+            ],
+            // The Provider's own notices go.
+            [
+                'notification.deleteMany',
+                {
+                    where: {
+                        ...onThisService,
+                        notificationType: { not: 'PROPOSAL_REJECTED' },
+                    },
+                },
+            ],
+            // The rest keep the title, before the delete nulls proposalId.
+            [
+                'notification.updateMany',
+                {
+                    where: onThisService,
+                    data: {
+                        listingTitle: 'Logo design',
+                        listingType: 'SERVICE',
+                    },
+                },
+            ],
+            [
+                'listing.delete',
+                {
+                    where: {
+                        listingId: 10,
+                        companyId: ALPHA,
+                        listingType: 'SERVICE',
+                    },
+                },
+            ],
+        ]);
+    });
+
+    it('refuses a service with a project, before any write', async () => {
+        rows = [service(10, ALPHA)];
+        projectCount = 1;
+
+        const result = await deleteTen();
+        assert.ok(result instanceof ApiError);
+        assert.equal(result.status, 409);
+        assert.deepEqual(writes, []);
+    });
+
+    it('answers 404 when the service went before the transaction', async () => {
+        rows = [service(10, ALPHA)];
+        listingGone = true;
+
+        const result = await deleteTen();
+        assert.ok(result instanceof ApiError);
+        assert.equal(result.status, 404);
+        assert.deepEqual(writes, []);
     });
 });

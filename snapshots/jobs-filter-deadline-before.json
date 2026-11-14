@@ -27,6 +27,44 @@
                 "minBudget": 20000
             },
             {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": null,
+                "jobId": 1346,
+                "listingDesc": "iOS and Android app.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Need a Mobile App mwf8c4gb",
+                "locationPref": null,
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
+                "categories": [],
+                "categoryIds": [],
+                "company": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "createdAt": "<timestamp>",
+                "deadline": "2026-12-31",
+                "duration": null,
+                "jobId": 1345,
+                "listingDesc": "iOS and Android app.",
+                "listingStatus": "OPEN",
+                "listingTitle": "[e2e] Need a Mobile App mwf85u1u",
+                "locationPref": null,
+                "maxBudget": 80000,
+                "minBudget": 20000
+            },
+            {
                 "categories": [
                     "Hardware & IoT"
                 ],
@@ -76,7 +114,7 @@
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 3,
+            "totalItems": 5,
             "totalPages": 1
         }
     }

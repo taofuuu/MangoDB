@@ -6,6 +6,7 @@ import type { Job, Proposal } from '@mangodb/shared';
 import ModalShell from '@/components/ui/ModalShell';
 import { formatMonths } from '@/lib/dates';
 import { formatBaht } from '@/lib/money';
+import { endSentence } from '@/lib/sentences';
 
 type ProposalReceiptModalProps = {
     isOpen: boolean;
@@ -41,7 +42,7 @@ export default function ProposalReceiptModal({
 
             <p className="my-[2.22vh] type-md !font-[600]">
                 Your proposal for {job.listingTitle} has been sent to{' '}
-                {job.company.companyName}.
+                {endSentence(job.company.companyName)}
             </p>
 
             <div>

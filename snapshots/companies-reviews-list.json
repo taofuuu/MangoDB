@@ -17,12 +17,72 @@
                 "serviceScore": 4,
                 "valueForMoneyScore": 5,
                 "workQualityScore": 5
+            },
+            {
+                "comment": "[e2e] Good work. mwg6rdol",
+                "createdAt": "<timestamp>",
+                "deliveryTimeScore": 4,
+                "projectId": 245,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewId": 62,
+                "serviceScore": 4,
+                "valueForMoneyScore": 4,
+                "workQualityScore": 4
+            },
+            {
+                "comment": "[e2e] Good work. mwg6n6j7",
+                "createdAt": "<timestamp>",
+                "deliveryTimeScore": 4,
+                "projectId": 244,
+                "receiver": {
+                    "companyId": 143,
+                    "companyName": "Snapshot Seed Receiver",
+                    "companyPhoto": null
+                },
+                "reviewId": 61,
+                "serviceScore": 4,
+                "valueForMoneyScore": 4,
+                "workQualityScore": 4
+            },
+            {
+                "comment": "EP1 test review A4",
+                "createdAt": "<timestamp>",
+                "deliveryTimeScore": 4,
+                "projectId": 237,
+                "receiver": {
+                    "companyId": 671,
+                    "companyName": "EP1 Account A4",
+                    "companyPhoto": null
+                },
+                "reviewId": 60,
+                "serviceScore": 4,
+                "valueForMoneyScore": 5,
+                "workQualityScore": 4
+            },
+            {
+                "comment": "EP1 test review",
+                "createdAt": "<timestamp>",
+                "deliveryTimeScore": 5,
+                "projectId": 236,
+                "receiver": {
+                    "companyId": 668,
+                    "companyName": "EP1 Account A3",
+                    "companyPhoto": null
+                },
+                "reviewId": 59,
+                "serviceScore": 4,
+                "valueForMoneyScore": 4,
+                "workQualityScore": 5
             }
         ],
         "pagination": {
             "page": 1,
             "pageSize": 12,
-            "totalItems": 1,
+            "totalItems": 5,
             "totalPages": 1
         }
     }

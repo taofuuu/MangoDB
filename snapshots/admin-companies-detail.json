@@ -4,7 +4,7 @@
     "body": {
         "accountType": "PROVIDER",
         "address": null,
-        "averageRating": null,
+        "averageRating": 4.2,
         "companyDescription": null,
         "companyId": 142,
         "companyName": "Snapshot Seed Provider",
@@ -16,7 +16,7 @@
         "deletedAt": null,
         "email": "provider@snapshot.local",
         "phone": "0810000001",
-        "ratingCount": 0,
+        "ratingCount": 4,
         "serviceTerm": "Delivery within 30 days of the agreed start.",
         "username": "snapshot_provider",
         "warrantyPolicy": "90 days of bug fixes after handover.",

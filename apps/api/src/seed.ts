@@ -503,6 +503,10 @@ async function seedDemoProjects(
         await prisma.project.deleteMany({
             where: { proposal: { listing: demoJobs } },
         });
+        // A notice outlives its proposal now (#264), so clear them by hand.
+        await prisma.notification.deleteMany({
+            where: { proposal: { listing: demoJobs } },
+        });
         await prisma.listing.deleteMany({ where: demoJobs });
     }
 

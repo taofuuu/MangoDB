@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { describeError, isNotSignedIn } from '@/lib/api';
 import type { ServiceFilterOptions, ServiceSummary } from '@mangodb/shared';
 import { getServiceFilterOptions } from '@/lib/services';
+import { formatItemCount } from '@/lib/itemCount';
 import {
     useSearchServices,
     type SearchServicesMode,
@@ -94,7 +95,8 @@ export default function SearchServicesPage({
             <div className="mb-4 flex items-baseline gap-2 border-b border-brand-dark pb-2">
                 <h1 className="type-hd text-ink">All Services</h1>
                 <span className="type-xs text-ink-soft">
-                    (Search result: {pagination?.totalItems ?? 0} items)
+                    (Search result:{' '}
+                    {formatItemCount(pagination?.totalItems ?? 0)})
                 </span>
             </div>
 

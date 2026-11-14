@@ -27,5 +27,8 @@
         ".next/dev/types/**/*.ts",
         "**/*.mts"
     ],
-    "exclude": ["node_modules"]
+    // Next re-adds the .next/dev/types include, but those files go stale once a
+    // page is deleted, until `next dev` runs again. typecheck and build read
+    // the fresh .next/types instead, which typegen and build regenerate.
+    "exclude": ["node_modules", ".next/dev"]
 }

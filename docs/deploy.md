@@ -9,7 +9,8 @@ The hosted beta is three pieces. Both hosts redeploy `main` on every push.
 | Database and file storage | Supabase, own project | —              |
 
 Live at https://mango-db-beta.vercel.app, with the API at
-https://mangodb-api.onrender.com and its docs at `/api-docs`.
+https://mangodb-api.onrender.com. Its docs at `/api-docs` are local only, since
+production hides them.
 
 The Supabase project is **not** the one the team develops against, so testers
 and teammates never write into each other's data.

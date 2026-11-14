@@ -1,0 +1,5 @@
+{
+    "request": "POST /notifications/mine/read",
+    "status": 204,
+    "body": null
+}

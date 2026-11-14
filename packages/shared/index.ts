@@ -277,9 +277,10 @@ export interface ServiceFilterOptions {
 
 // A company and a token to act as it. Register, login, and a credential change
 // all answer with this pair, so it is named once rather than three times.
+// accessToken is local only; production sends just the session cookie.
 export interface SessionResponse {
     company: CompanyProfile;
-    accessToken: string;
+    accessToken?: string;
 }
 
 // US1-5. What a profile edit accepts: an absent field means "leave it", and
@@ -590,13 +591,14 @@ export interface ProjectUpdate {
 
 // T4.1.5. One notice of GET /notifications/mine, newest first. sender is the
 // company that acted; the listing is the one the proposal was sent to.
-// projectId is null until that proposal is accepted. readAt is null until
-// the recipient opens the bell.
+// projectId is null until that proposal is accepted. listingId is null once
+// the listing was deleted (#264). readAt is null until the recipient opens
+// the bell.
 export interface Notification {
     notificationId: number;
     notificationType: NotificationType;
     sender: CompanyBrief;
-    listingId: number;
+    listingId: number | null;
     listingType: ListingType;
     listingTitle: string;
     projectId: number | null;
