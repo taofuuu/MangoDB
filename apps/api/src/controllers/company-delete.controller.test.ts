@@ -25,7 +25,17 @@ const PASSWORD = 'correct-horse';
 let storedHash: string;
 let softDeletes: number;
 
+// softDeleteCompany's own writes (pending proposals, notices) are covered in
+// lib/company-deletion.test.ts; here they only need to answer.
 const fakePrisma = {
+    $transaction: (work: (tx: unknown) => Promise<unknown>) => work(fakePrisma),
+    proposal: {
+        updateMany: () => Promise.resolve({ count: 0 }),
+        updateManyAndReturn: () => Promise.resolve([]),
+    },
+    notification: {
+        createMany: () => Promise.resolve({ count: 0 }),
+    },
     company: {
         findUnique: () => Promise.resolve({ password: storedHash }),
         updateMany: () => {

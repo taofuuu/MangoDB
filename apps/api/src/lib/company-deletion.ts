@@ -1,9 +1,11 @@
+import type { NotificationType, ProposalStatus } from '@mangodb/shared';
 import { prisma } from './prisma';
 
 // US1-6 / US6-4. The write side of company.deletedAt (see the migration note
 // on that column). Marks the account gone without touching anything it owns —
 // no cascade, no cleanup — so listings, proposals, projects, and reviews stay
-// exactly where they are for the history that depends on them.
+// exactly where they are for the history that depends on them. Pending
+// proposals are the one exception, explained below.
 //
 // A company's own deletion request and an administrator's deletion of a company
 // both end here, so the two paths cannot drift on what "deleted" means.
@@ -22,16 +24,58 @@ import { prisma } from './prisma';
 // lands, is covered without having to remember this rule. A caller that wants
 // to explain the refusal checks accountType itself first; here an
 // administrator simply never matches, and the call is a no-op like any other.
+//
+// The one exception to "touches nothing else" is PENDING proposals and hire
+// requests, rejected in the same transaction. Accepted and rejected ones are
+// history and stay as they are.
+// - The ones it sent (#262): otherwise a listing owner could accept one and
+//   open a project with a party that can never sign in again. No notice: the
+//   listing owner just sees it as Rejected, and there is no notice type for
+//   "the sender left".
+// - The ones on its listings (#263): otherwise their senders wait on Pending
+//   forever. Each sender gets a PROPOSAL_REJECTED notice from the deleted
+//   company, the same notice rejectPendingProposals gives when a job closes.
+//   One query for all its listings, instead of rejectPendingProposals once
+//   per listing.
 export async function softDeleteCompany(companyId: number): Promise<boolean> {
-    const { count } = await prisma.company.updateMany({
-        where: {
-            companyId,
-            deletedAt: null,
-            accountType: { not: 'ADMIN' },
-        },
-        data: { deletedAt: new Date() },
+    return prisma.$transaction(async (tx) => {
+        const { count } = await tx.company.updateMany({
+            where: {
+                companyId,
+                deletedAt: null,
+                accountType: { not: 'ADMIN' },
+            },
+            data: { deletedAt: new Date() },
+        });
+        if (count === 0) return false;
+
+        await tx.proposal.updateMany({
+            where: {
+                senderId: companyId,
+                proposalStatus: 'PENDING' satisfies ProposalStatus,
+            },
+            data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
+        });
+
+        const rejected = await tx.proposal.updateManyAndReturn({
+            where: {
+                listing: { companyId },
+                proposalStatus: 'PENDING' satisfies ProposalStatus,
+            },
+            data: { proposalStatus: 'REJECTED' satisfies ProposalStatus },
+            select: { proposalId: true, senderId: true },
+        });
+        await tx.notification.createMany({
+            data: rejected.map((proposal) => ({
+                proposalId: proposal.proposalId,
+                senderId: companyId,
+                recipientId: proposal.senderId,
+                notificationType:
+                    'PROPOSAL_REJECTED' satisfies NotificationType,
+            })),
+        });
+        return true;
     });
-    return count > 0;
 }
 
 // requireAuth's one question about the company row, asked on every request.
