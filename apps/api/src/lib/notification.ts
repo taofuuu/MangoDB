@@ -14,6 +14,8 @@ export const notificationSelect = {
     notificationType: true,
     readAt: true,
     createdAt: true,
+    listingTitle: true,
+    listingType: true,
     sender: { select: companyBriefSelect },
     proposal: {
         select: {
@@ -34,17 +36,18 @@ type NotificationRow = Prisma.NotificationGetPayload<{
 }>;
 
 // The casts are safe because only NOTIFICATION_TYPES and LISTING_TYPES values
-// are written.
+// are written. With no proposal the listing was deleted, and deleteService
+// copied its title and type onto the notice first (#264).
 export function toNotification(row: NotificationRow): Notification {
-    const { listing, project } = row.proposal;
+    const listing = row.proposal?.listing;
     return {
         notificationId: row.notificationId,
         notificationType: row.notificationType as NotificationType,
         sender: toCompanyBrief(row.sender),
-        listingId: listing.listingId,
-        listingType: listing.listingType as ListingType,
-        listingTitle: listing.listingTitle,
-        projectId: project?.projectId ?? null,
+        listingId: listing?.listingId ?? null,
+        listingType: (listing?.listingType ?? row.listingType) as ListingType,
+        listingTitle: (listing?.listingTitle ?? row.listingTitle) as string,
+        projectId: row.proposal?.project?.projectId ?? null,
         readAt: row.readAt?.toISOString() ?? null,
         createdAt: row.createdAt.toISOString(),
     };

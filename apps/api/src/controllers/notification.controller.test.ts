@@ -6,7 +6,8 @@
  * What they cover:
  * - The list asks only for the caller's notices, newest first with the id
  *   breaking a tie, 20 at most, and maps each row to the DTO: projectId is
- *   null before the proposal became a project, and set after.
+ *   null before the proposal became a project, and set after. A notice whose
+ *   listing was deleted answers the title and type copied onto it (#264).
  * - Mark-read touches only the caller's unread notices and answers 204.
  *
  * How: lib/prisma is replaced with mock.module before the controller loads.
@@ -93,6 +94,8 @@ function row(notificationId: number, projectId: number | null) {
         notificationType: projectId ? 'QUOTATION_SENT' : 'PROPOSAL_RECEIVED',
         readAt: null,
         createdAt: new Date('2026-11-11T08:00:00.000Z'),
+        listingTitle: null,
+        listingType: null,
         sender: { companyId: 3, companyName: 'Acme', companyPhoto: null },
         proposal: {
             listing: {
@@ -137,6 +140,27 @@ describe('GET /notifications/mine', () => {
             createdAt: '2026-11-11T08:00:00.000Z',
         });
         assert.equal(notices[1]!.projectId, null);
+    });
+
+    // #264: deleteService copied the title and type before the delete.
+    it('answers the copied title once the listing was deleted', async () => {
+        rows = [
+            {
+                ...row(3, null),
+                notificationType: 'PROPOSAL_REJECTED',
+                listingTitle: 'Logo design',
+                listingType: 'SERVICE',
+                proposal: null,
+            },
+        ];
+
+        const { body } = await call(controller.listMyNotifications);
+
+        const [notice] = body as Notification[];
+        assert.equal(notice!.listingId, null);
+        assert.equal(notice!.listingType, 'SERVICE');
+        assert.equal(notice!.listingTitle, 'Logo design');
+        assert.equal(notice!.projectId, null);
     });
 });
 

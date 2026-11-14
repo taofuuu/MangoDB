@@ -590,13 +590,14 @@ export interface ProjectUpdate {
 
 // T4.1.5. One notice of GET /notifications/mine, newest first. sender is the
 // company that acted; the listing is the one the proposal was sent to.
-// projectId is null until that proposal is accepted. readAt is null until
-// the recipient opens the bell.
+// projectId is null until that proposal is accepted. listingId is null once
+// the listing was deleted (#264). readAt is null until the recipient opens
+// the bell.
 export interface Notification {
     notificationId: number;
     notificationType: NotificationType;
     sender: CompanyBrief;
-    listingId: number;
+    listingId: number | null;
     listingType: ListingType;
     listingTitle: string;
     projectId: number | null;
