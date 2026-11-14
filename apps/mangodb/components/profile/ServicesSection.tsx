@@ -255,7 +255,9 @@ export default function ServicesSection({
                     {displayItems?.length === 0 && !loadError && (
                         <p className="py-2 type-xs text-ink-placeholder">
                             {activeTab === 'services'
-                                ? 'No services yet.'
+                                ? readOnly
+                                    ? 'No open listings.'
+                                    : 'No services yet.'
                                 : readOnly
                                   ? 'No open job listings.'
                                   : 'No job listings yet.'}

@@ -1,10 +1,11 @@
 /*
  * US2-8 Submit a proposal to an open job posting — black-box test cases
- * TC-2-18 … TC-2-26 from docs/test-plan/test-plan.md §2.3. The Receiver
- * account posts one OPEN and one CLOSED [e2e] job first; the Provider account
- * then fills the real "Submit a proposal" form on the job search page. Serial,
- * because TC-2-20 (a second pending proposal) needs the one TC-2-18 sends.
- * Both jobs are closed afterwards.
+ * TC-2-18 … TC-2-26, TC-2-39 … TC-2-41 from docs/test-plan/test-plan.md §2.3.
+ * The Receiver account posts one OPEN and one CLOSED [e2e] job first; the
+ * BOTH account posts one OPEN [e2e] job; the Provider account then fills the
+ * real "Submit a proposal" form on the job search page. Serial, because
+ * TC-2-20 (a second pending proposal) needs the one TC-2-18 sends.
+ * All run jobs are closed afterwards.
  */
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -20,7 +21,10 @@ test.describe.configure({ mode: 'serial' });
 
 const OPEN_JOB = tag('Proposal Target');
 const CLOSED_JOB = tag('Closed Job');
+const BOTH_OWN_JOB = tag('Own Job');
+let openJobId: number;
 let closedJobId: number;
+let bothOwnJobId: number;
 
 const VALID = {
     terms: tag('We can deliver in phases.'),
@@ -60,13 +64,21 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
             maxBudget: 80000,
             deadline: daysFromToday(60),
         };
-        await createJob(page, { ...job, listingTitle: OPEN_JOB });
+        openJobId = await createJob(page, { ...job, listingTitle: OPEN_JOB });
         closedJobId = await createJob(page, {
             ...job,
             listingTitle: CLOSED_JOB,
         });
         await closeJob(page, closedJobId);
         await page.close();
+
+        const both = await browser.newPage();
+        await loginAs(both, 'BOTH');
+        bothOwnJobId = await createJob(both, {
+            ...job,
+            listingTitle: BOTH_OWN_JOB,
+        });
+        await both.close();
     });
 
     test.afterAll(async ({ browser }) => {
@@ -74,6 +86,11 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         await loginAs(page, 'RECEIVER');
         await closeMyRunJobs(page);
         await page.close();
+
+        const both = await browser.newPage();
+        await loginAs(both, 'BOTH');
+        await closeMyRunJobs(both);
+        await both.close();
     });
 
     test.beforeEach(async ({ page }) => {
@@ -173,5 +190,57 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
                 'Duration must be in half-month increments (e.g. 0.5, 1, 1.5)',
             ),
         ).toBeVisible();
+    });
+
+    test('TC-2-39: a RECEIVER account cannot submit a proposal', async ({
+        page,
+    }) => {
+        await loginAs(page, 'RECEIVER');
+        await openJob(page, OPEN_JOB);
+        await expect(
+            page.getByRole('button', { name: 'Add Proposal' }),
+        ).toHaveCount(0);
+
+        const res = await page.request.post(
+            `/api/jobs/${openJobId}/proposals`,
+            {
+                data: {
+                    proposalTerms: VALID.terms,
+                    proposalBudget: 45000,
+                    duration: 2.5,
+                },
+            },
+        );
+        expect(res.status()).toBe(403);
+    });
+
+    test('TC-2-40: a Provider cannot submit a proposal to their own job', async ({
+        page,
+    }) => {
+        await loginAs(page, 'BOTH');
+        await openJob(page, BOTH_OWN_JOB);
+        await expect(
+            page.getByRole('button', { name: 'Add Proposal' }),
+        ).toHaveCount(0);
+
+        const res = await page.request.post(
+            `/api/jobs/${bothOwnJobId}/proposals`,
+            {
+                data: {
+                    proposalTerms: VALID.terms,
+                    proposalBudget: 45000,
+                    duration: 2.5,
+                },
+            },
+        );
+        expect(res.status()).toBe(403);
+        expect(JSON.stringify(await res.json())).toContain(
+            'You cannot send a proposal to your own job',
+        );
+    });
+
+    test('TC-2-41: duration is empty', async ({ page }) => {
+        await submitProposal(page, { duration: '' });
+        await expect(page.getByText('Duration is required')).toBeVisible();
     });
 });
