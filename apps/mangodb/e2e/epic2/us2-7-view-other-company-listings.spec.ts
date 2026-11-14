@@ -91,7 +91,7 @@ async function registerTemporaryCompany(
     return ((await response.json()) as SessionResponse).company;
 }
 
-test.describe.serial("US2-7 View another company's listings", () => {
+test.describe("US2-7 View another company's listings", () => {
     test.beforeAll(async ({ browser }) => {
         const receiverPage = await browser.newPage();
         await loginAs(receiverPage, 'RECEIVER');
@@ -163,6 +163,7 @@ test.describe.serial("US2-7 View another company's listings", () => {
         expect(profile).not.toHaveProperty('username');
         await page.goto(`/companies/${provider.companyId}`);
         await expect(page.getByText(provider.companyName)).toBeVisible();
+        await expect(page.getByText('No completed works yet.')).toBeVisible();
         await page.screenshot({
             path: testInfo.outputPath('actual-output.png'),
             fullPage: true,
@@ -248,7 +249,7 @@ test.describe.serial("US2-7 View another company's listings", () => {
 
     test('TC-2-44: an empty another-company profile uses the open-listings empty states', async ({
         browser,
-    }) => {
+    }, testInfo) => {
         const ownerPage = await browser.newPage();
         const emptyCompany = await registerTemporaryCompany(
             ownerPage,
@@ -264,8 +265,14 @@ test.describe.serial("US2-7 View another company's listings", () => {
         await expect(
             viewerPage.getByText('No open job listings.'),
         ).toBeVisible();
+        await viewerPage.screenshot({
+            path: testInfo.outputPath('actual-output.png'),
+            fullPage: true,
+        });
 
-        const deletion = await ownerPage.request.delete('/api/companies/me');
+        const deletion = await ownerPage.request.delete('/api/companies/me', {
+            data: { currentPassword: PASSWORD },
+        });
         expect(deletion.status()).toBe(204);
         await viewerPage.close();
         await ownerPage.close();
@@ -290,7 +297,9 @@ test.describe.serial("US2-7 View another company's listings", () => {
             minBudget: 20000,
             maxBudget: 80000,
         });
-        const deletion = await ownerPage.request.delete('/api/companies/me');
+        const deletion = await ownerPage.request.delete('/api/companies/me', {
+            data: { currentPassword: PASSWORD },
+        });
         expect(deletion.status()).toBe(204);
 
         const viewerPage = await browser.newPage();

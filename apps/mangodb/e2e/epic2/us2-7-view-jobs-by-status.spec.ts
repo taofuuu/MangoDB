@@ -131,12 +131,18 @@ test.describe('US2-7 View jobs by status', () => {
         await page.close();
     });
 
-    test('TC-2-38: the owner can list its own CLOSED job', async ({ page }) => {
+    test('TC-2-38: the owner sees its own OPEN and CLOSED job cards', async ({
+        page,
+    }, testInfo) => {
         await loginAs(page, 'RECEIVER');
         const jobs = await listJobs(page, CLOSED_STATUS);
         expect(jobs.items.map((job) => job.jobId)).toContain(closedJobId);
         await page.goto('/jobs/mine');
-        await page.getByRole('button', { name: 'CLOSED' }).click();
+        await expect(page.getByText(openJobTitle)).toBeVisible();
         await expect(page.getByText(closedJobTitle)).toBeVisible();
+        await page.screenshot({
+            path: testInfo.outputPath('actual-output.png'),
+            fullPage: true,
+        });
     });
 });
