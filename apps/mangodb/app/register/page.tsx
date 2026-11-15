@@ -112,7 +112,7 @@ export default function RegisterPage() {
     const [isTosOpen, setIsTosOpen] = useState(false);
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-    const [tosError, setTosError] = useState('');
+    const [consentError, setConsentError] = useState('');
 
     /* ================= NAVIGATION ================= */
 
@@ -207,7 +207,7 @@ export default function RegisterPage() {
 
     const acceptTerms = () => {
         setTosAccepted(true);
-        setTosError('');
+        setConsentError('');
         setIsTosOpen(false);
         // The Privacy Policy comes next, unless it was accepted on an earlier
         // try.
@@ -220,7 +220,7 @@ export default function RegisterPage() {
 
     const acceptPrivacy = () => {
         setPrivacyAccepted(true);
-        setTosError('');
+        setConsentError('');
         setIsPrivacyOpen(false);
         // Both consents are given and the form was already validated before
         // the first dialog opened, so this is the account being created.
@@ -230,13 +230,13 @@ export default function RegisterPage() {
     const declinePrivacy = () => {
         setPrivacyAccepted(false);
         setIsPrivacyOpen(false);
-        setTosError(PRIVACY_REQUIRED_MESSAGE);
+        setConsentError(PRIVACY_REQUIRED_MESSAGE);
     };
 
     const declineTerms = () => {
         setTosAccepted(false);
         setIsTosOpen(false);
-        setTosError(TOS_REQUIRED_MESSAGE);
+        setConsentError(TOS_REQUIRED_MESSAGE);
     };
 
     const sendRegister = async () => {
@@ -281,7 +281,7 @@ export default function RegisterPage() {
             // to ask again.
             if (tosField) {
                 setTosAccepted(false);
-                setTosError(tosField);
+                setConsentError(tosField);
             }
 
             if (username || password) {
@@ -381,7 +381,7 @@ export default function RegisterPage() {
             )}
 
             {currentStep === RegisterStep.CompanyInfo && (
-                <FieldError message={tosError} />
+                <FieldError message={consentError} />
             )}
 
             {currentStep === RegisterStep.AccountInfo && (
