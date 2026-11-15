@@ -15,6 +15,7 @@ import AccountInfoStep, {
     type AccountInfo,
 } from '@/components/register/AccountInfoStep';
 import TermsOfServiceModal from '@/components/register/TermsOfServiceModal';
+import PrivacyPolicyModal from '@/components/register/PrivacyPolicyModal';
 import FieldError from '@/components/ui/FieldError';
 import {
     validateConfirmPassword,
@@ -54,6 +55,8 @@ const REGISTER_FIELDS = {
 
 const TOS_REQUIRED_MESSAGE =
     'You must accept the Terms of Service to create an account.';
+const PRIVACY_REQUIRED_MESSAGE =
+    'You must accept the Privacy Policy to create an account.';
 
 export enum RegisterStep {
     SelectRole = 'SELECT_ROLE',
@@ -103,10 +106,12 @@ export default function RegisterPage() {
         {},
     );
 
-    // US1-13. Consent is given in the Terms of Service dialog, which opens on
-    // Create Account until it has been accepted once.
+    // US1-13 and #193. Consent is given in two dialogs, Terms of Service then
+    // Privacy Policy. Create Account opens the first one not yet accepted.
     const [tosAccepted, setTosAccepted] = useState(false);
     const [isTosOpen, setIsTosOpen] = useState(false);
+    const [privacyAccepted, setPrivacyAccepted] = useState(false);
+    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
     const [tosError, setTosError] = useState('');
 
     /* ================= NAVIGATION ================= */
@@ -192,6 +197,10 @@ export default function RegisterPage() {
             setIsTosOpen(true);
             return;
         }
+        if (!privacyAccepted) {
+            setIsPrivacyOpen(true);
+            return;
+        }
 
         await sendRegister();
     };
@@ -200,9 +209,28 @@ export default function RegisterPage() {
         setTosAccepted(true);
         setTosError('');
         setIsTosOpen(false);
-        // Accepting is pressing Create Account a second time: the form was
-        // already validated before the dialog opened.
+        // The Privacy Policy comes next, unless it was accepted on an earlier
+        // try.
+        if (privacyAccepted) {
+            void sendRegister();
+        } else {
+            setIsPrivacyOpen(true);
+        }
+    };
+
+    const acceptPrivacy = () => {
+        setPrivacyAccepted(true);
+        setTosError('');
+        setIsPrivacyOpen(false);
+        // Both consents are given and the form was already validated before
+        // the first dialog opened, so this is the account being created.
         void sendRegister();
+    };
+
+    const declinePrivacy = () => {
+        setPrivacyAccepted(false);
+        setIsPrivacyOpen(false);
+        setTosError(PRIVACY_REQUIRED_MESSAGE);
     };
 
     const declineTerms = () => {
@@ -393,6 +421,11 @@ export default function RegisterPage() {
                 isOpen={isTosOpen}
                 onAccept={acceptTerms}
                 onDecline={declineTerms}
+            />
+            <PrivacyPolicyModal
+                isOpen={isPrivacyOpen}
+                onAccept={acceptPrivacy}
+                onDecline={declinePrivacy}
             />
         </RegisterLayout>
     );
