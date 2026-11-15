@@ -127,8 +127,8 @@ export default function DepositSection({
         return (
             <DepositCard tone="neutral" status={DASH_BADGE}>
                 <p className="type-sm text-ink leading-relaxed">
-                    Your quotation has been accepted! Please pay the deposit and
-                    report the payment once it&apos;s done.
+                    You&apos;ve accepted the quotation. Please pay the deposit
+                    and report the payment once it&apos;s done.
                 </p>
 
                 {onReportDeposit && (
