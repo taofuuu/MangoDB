@@ -8,12 +8,13 @@ import { expect, type Page } from '@playwright/test';
 export type Role = 'PROVIDER' | 'RECEIVER' | 'BOTH';
 
 function findEnvFile(): string {
+    const fallback = path.resolve(process.cwd(), 'scripts/.env.snapshot');
     const candidates = [
-        path.resolve(process.cwd(), 'scripts/.env.snapshot'),
+        fallback,
         path.resolve(process.cwd(), '../../scripts/.env.snapshot'),
         path.resolve(__dirname, '../../../../scripts/.env.snapshot'),
     ];
-    return candidates.find(existsSync) ?? candidates[0];
+    return candidates.find(existsSync) ?? fallback;
 }
 
 const ENV_FILE = findEnvFile();
