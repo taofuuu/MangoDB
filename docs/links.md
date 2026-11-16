@@ -4,7 +4,7 @@
 
 | Resource | Link                             |
 | -------- | -------------------------------- |
-| Web      | https://mango-db-beta.vercel.app |
+| Web      | https://mangodb-app.vercel.app   |
 | API      | https://mangodb-api.onrender.com |
 
 The API is on Render's free plan and sleeps after 15 minutes idle, so the first

@@ -8,7 +8,7 @@ The hosted app is three pieces. Both hosts redeploy `main` on every push.
 | API                       | Render, free web plan | `apps/api`     |
 | Database and file storage | Supabase, own project | —              |
 
-Live at https://mango-db-beta.vercel.app, with the API at
+Live at https://mangodb-app.vercel.app, with the API at
 https://mangodb-api.onrender.com. Its docs at `/api-docs` are local only, since
 production hides them.
 
