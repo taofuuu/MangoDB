@@ -19,22 +19,26 @@ The action saves the notice in its own transaction, so a refused action
 (403, 409) saves none. The sender is always the company that acted; the
 recipient is the other side.
 
-| `notificationType`   | Saved by                                                                         | Recipient       |
-| -------------------- | -------------------------------------------------------------------------------- | --------------- |
-| `PROPOSAL_RECEIVED`  | `POST /jobs/:jobId/proposals`, `POST /services/:serviceId/proposals`             | listing owner   |
-| `PROPOSAL_ACCEPTED`  | `POST /proposals/:proposalId/accept`                                             | proposal sender |
-| `PROPOSAL_REJECTED`  | `POST /proposals/:proposalId/reject`, accept on a job, `POST /jobs/:jobId/close` | proposal sender |
-| `QUOTATION_SENT`     | `POST /projects/:projectId/quotations`                                           | Receiver        |
-| `QUOTATION_ACCEPTED` | `POST /quotations/:quotationId/accept`                                           | Provider        |
-| `QUOTATION_REJECTED` | `POST /quotations/:quotationId/reject`                                           | Provider        |
-| `DEPOSIT_REPORTED`   | `POST /projects/:projectId/report-deposit`                                       | Provider        |
-| `DEPOSIT_CONFIRMED`  | `POST /projects/:projectId/confirm-deposit`                                      | Receiver        |
-| `PROJECT_CANCELLED`  | `POST /projects/:projectId/cancel`                                               | the other party |
-| `WORK_SUBMITTED`     | `POST /projects/:projectId/submit-work`                                          | Receiver        |
-| `WORK_REJECTED`      | `POST /projects/:projectId/reject-work`                                          | Provider        |
-| `WORK_ACCEPTED`      | `POST /projects/:projectId/accept-work`                                          | Provider        |
+| `notificationType`   | Saved by                                                                                                                                                                                         | Recipient       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| `PROPOSAL_RECEIVED`  | `POST /jobs/:jobId/proposals`, `POST /services/:serviceId/proposals`                                                                                                                             | listing owner   |
+| `PROPOSAL_ACCEPTED`  | `POST /proposals/:proposalId/accept`                                                                                                                                                             | proposal sender |
+| `PROPOSAL_REJECTED`  | `POST /proposals/:proposalId/reject`, accept on a job, `POST /jobs/:jobId/close`, `DELETE /services/:serviceId`, a company delete (`DELETE /companies/me`, `DELETE /admin/companies/:companyId`) | proposal sender |
+| `QUOTATION_SENT`     | `POST /projects/:projectId/quotations`                                                                                                                                                           | Receiver        |
+| `QUOTATION_ACCEPTED` | `POST /quotations/:quotationId/accept`                                                                                                                                                           | Provider        |
+| `QUOTATION_REJECTED` | `POST /quotations/:quotationId/reject`                                                                                                                                                           | Provider        |
+| `DEPOSIT_REPORTED`   | `POST /projects/:projectId/report-deposit`                                                                                                                                                       | Provider        |
+| `DEPOSIT_CONFIRMED`  | `POST /projects/:projectId/confirm-deposit`                                                                                                                                                      | Receiver        |
+| `PROJECT_CANCELLED`  | `POST /projects/:projectId/cancel`                                                                                                                                                               | the other party |
+| `WORK_SUBMITTED`     | `POST /projects/:projectId/submit-work`                                                                                                                                                          | Receiver        |
+| `WORK_REJECTED`      | `POST /projects/:projectId/reject-work`                                                                                                                                                          | Provider        |
+| `WORK_ACCEPTED`      | `POST /projects/:projectId/accept-work`                                                                                                                                                          | Provider        |
 
 A progress note and a deleted quotation save no notice.
+
+A rejection notice outlives a deleted service: its `listingId` becomes null,
+and it answers the service's title, copied onto the notice before the delete
+(#264).
 
 ## UML API Diagram
 

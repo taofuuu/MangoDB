@@ -6,11 +6,15 @@ Back to the [index](README.md).
 
 | Method | Path                       | Guards         | Success                                                      |
 | ------ | -------------------------- | -------------- | ------------------------------------------------------------ |
-| POST   | `/auth/register`           | public         | 201 `{ company, accessToken }` + cookie                      |
-| POST   | `/auth/login`              | `loginLimiter` | 200 `{ company, accessToken }` + cookie                      |
-| POST   | `/auth/admin/login`        | `loginLimiter` | 200 `{ company, accessToken }` + cookie                      |
+| POST   | `/auth/register`           | public         | 201 `{ company }` + cookie                                   |
+| POST   | `/auth/login`              | `loginLimiter` | 200 `{ company }` + cookie                                   |
+| POST   | `/auth/admin/login`        | `loginLimiter` | 200 `{ company }` + cookie                                   |
 | POST   | `/auth/check-availability` | public         | 200 `{ username, email, usernameAvailable, emailAvailable }` |
 | POST   | `/auth/logout`             | `requireAuth`  | 204, cookie cleared                                          |
+
+Production answers with the cookie alone. Locally the body also has
+`accessToken`, for Swagger's Authorize and `snapshot-api.sh` (`sendSession`
+in `lib/session.ts`).
 
 ## UML API Diagram
 
@@ -55,7 +59,7 @@ sequenceDiagram
     DB-->>Ctl: company (companyProfileSelect)
     Ctl->>S: sendSession(company, 201)
     S->>S: issueSession (sign JWT)
-    S-->>C: 201 { company, accessToken } + Set-Cookie access_token
+    S-->>C: 201 { company } + Set-Cookie access_token
 ```
 
 ## POST /auth/login
@@ -88,7 +92,7 @@ sequenceDiagram
         Ctl-->>C: 403 Administrators must use the administrator login
     end
     Ctl->>S: sendSession(company)
-    S-->>C: 200 { company, accessToken } + Set-Cookie
+    S-->>C: 200 { company } + Set-Cookie
 ```
 
 ## POST /auth/admin/login
@@ -120,7 +124,7 @@ sequenceDiagram
         Ctl-->>C: 403 This is not an administrator account
     end
     Ctl->>S: sendSession(company)
-    S-->>C: 200 { company, accessToken } + Set-Cookie
+    S-->>C: 200 { company } + Set-Cookie
 ```
 
 ## POST /auth/check-availability

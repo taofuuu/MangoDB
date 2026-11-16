@@ -8,19 +8,19 @@ Back to the [index](README.md).
 Every route needs `requireAuth`. "Company" in the guard column means
 `requireRole('provider', 'receiver')`: any company, not admins.
 
-| Method | Path                                       | Guards                       | Success                                 |
-| ------ | ------------------------------------------ | ---------------------------- | --------------------------------------- |
-| GET    | `/companies`                               | company                      | 200 `{ items, pagination }`             |
-| GET    | `/companies/me`                            | auth                         | 200 CompanyProfile                      |
-| PATCH  | `/companies/me`                            | auth                         | 200 CompanyProfile                      |
-| PATCH  | `/companies/me/credentials`                | auth                         | 200 `{ company, accessToken }` + cookie |
-| PATCH  | `/companies/me/photo`                      | auth, `uploadImage('photo')` | 200 CompanyProfile                      |
-| DELETE | `/companies/me/photo`                      | auth                         | 200 CompanyProfile                      |
-| DELETE | `/companies/me`                            | company                      | 204                                     |
-| GET    | `/companies/:companyId/completed-projects` | company                      | 200 `{ items, pagination }`             |
-| GET    | `/companies/:companyId/reviews`            | company                      | 200 `{ items, pagination }`             |
-| GET    | `/companies/:companyId/reviews/summary`    | company                      | 200 rating summary                      |
-| GET    | `/companies/:companyId`                    | company                      | 200 PublicCompanyProfile                |
+| Method | Path                                       | Guards                       | Success                                             |
+| ------ | ------------------------------------------ | ---------------------------- | --------------------------------------------------- |
+| GET    | `/companies`                               | company                      | 200 `{ items, pagination }`                         |
+| GET    | `/companies/me`                            | auth                         | 200 CompanyProfile                                  |
+| PATCH  | `/companies/me`                            | auth                         | 200 CompanyProfile                                  |
+| PATCH  | `/companies/me/credentials`                | auth                         | 200 `{ company }` + cookie (see [auth.md](auth.md)) |
+| PATCH  | `/companies/me/photo`                      | auth, `uploadImage('photo')` | 200 CompanyProfile                                  |
+| DELETE | `/companies/me/photo`                      | auth                         | 200 CompanyProfile                                  |
+| DELETE | `/companies/me`                            | company                      | 204                                                 |
+| GET    | `/companies/:companyId/completed-projects` | company                      | 200 `{ items, pagination }`                         |
+| GET    | `/companies/:companyId/reviews`            | company                      | 200 `{ items, pagination }`                         |
+| GET    | `/companies/:companyId/reviews/summary`    | company                      | 200 rating summary                                  |
+| GET    | `/companies/:companyId`                    | company                      | 200 PublicCompanyProfile                            |
 
 ## UML API Diagram
 
@@ -153,7 +153,7 @@ sequenceDiagram
     end
     Ctl->>D: revokeToken(old jti, exp)
     Ctl->>S: sendSession(company)
-    S-->>C: 200 { company, accessToken } + new Set-Cookie
+    S-->>C: 200 { company } + new Set-Cookie
 ```
 
 ## PATCH /companies/me/photo
@@ -223,6 +223,9 @@ sequenceDiagram
 ## DELETE /companies/me
 
 US1-6. A company deletes itself (soft delete). Admins cannot use this route.
+The company types its own password first. Pending proposals on its listings
+are rejected, with a notice to each sender, since nobody is left to answer
+them (#263).
 
 ```mermaid
 sequenceDiagram
@@ -230,24 +233,40 @@ sequenceDiagram
     actor C as Client
     participant G as requireAuth + requireRole(provider, receiver)
     participant Ctl as company.controller<br/>deleteMyAccount
+    participant P as auth/password
     participant E as lib/project-eligibility
     participant D as lib/company-deletion
+    participant L as lib/listing
     participant DB as PostgreSQL
 
-    C->>G: DELETE /companies/me
+    C->>G: DELETE /companies/me { currentPassword }
     alt not signed in
         G-->>C: 401
     else admin
         G-->>C: 403
     end
     G->>Ctl: req.auth.companyId
+    Ctl->>Ctl: parseBody(deleteCompanyAccountBodySchema)
+    Ctl->>P: assertCurrentPassword(companyId, currentPassword)
+    alt wrong password
+        P-->>C: 401 Current password is incorrect
+    end
     Ctl->>E: hasOngoingProject(companyId)
     E->>DB: project.findFirst not COMPLETED / CANCELLED, as sender or owner
     alt ongoing project
         Ctl-->>C: 409 A company with an ongoing project cannot be deleted
     end
     Ctl->>D: softDeleteCompany(companyId)
-    D->>DB: company.updateMany set deletedAt = now
+    rect rgba(128, 128, 128, 0.12)
+        Note over D,DB: prisma.$transaction
+        D->>DB: company.updateMany set deletedAt = now
+        D->>DB: listing.findMany (own listings with a PENDING proposal)
+        loop each listing
+            D->>L: rejectPendingProposals(tx, listingId, companyId)
+            L->>DB: proposal.updateManyAndReturn PENDING to REJECTED
+            L->>DB: notification.createMany (PROPOSAL_REJECTED, one per sender)
+        end
+    end
     Ctl-->>C: 204
     Note over C,DB: The next request with the old token fails in requireAuth (isSessionEnded) with 401.
 ```

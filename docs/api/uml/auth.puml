@@ -56,7 +56,7 @@ class "RegisterRequest" as RegisterRequestRep <<Representation>> {
 }
 class "SessionResponse" as SessionResponseRep <<Representation>> {
   -company : CompanyProfile
-  -accessToken : string
+  -accessToken : string? (local only)
 }
 class "LoginRequest" as LoginRequestRep <<Representation>> {
   -email : string

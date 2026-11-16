@@ -52,17 +52,17 @@ else authenticated
 
   Ctrl -> Lib : findPendingProposalFor(tx, proposalId, callerId)
   activate Lib
-  Lib -> DB : proposal.findUnique(proposalId)\nselect listing type, status, owner
-  DB --> Lib : proposal + listing
+  Lib -> DB : proposal.findUnique(proposalId)\nselect listing type, status, owner,\nsender deletedAt
+  DB --> Lib : proposal + listing + sender
   Lib --> Ctrl : proposal\n(or throw 404 / 403 / 409)
   deactivate Lib
 
-  alt not found (404), not the listing owner (403),\nproposal not PENDING (409), or listing not OPEN (409)
+  alt not found (404), not the listing owner (403),\nproposal not PENDING (409), listing not OPEN (409),\nor the sender deleted its account (409)
     Ctrl -> DB : ROLLBACK
     Ctrl --> Client : 4xx error JSON (errorHandler)
     Client --> Page : throw ApiError
     Page --> Receiver : Show error in confirmation dialog
-  else valid PENDING proposal on an OPEN job
+  else valid PENDING proposal on an OPEN job, from an active company
     Ctrl -> Lib : closeOpenListing(tx, listingId)
     activate Lib
     Lib -> DB : listing.updateMany\nwhere OPEN -> CLOSED
@@ -77,7 +77,7 @@ else authenticated
 
     Ctrl -> DB : notification.create\nPROPOSAL_ACCEPTED to the proposal sender
 
-    Ctrl -> Lib : rejectPendingProposals(tx, listingId, except proposalId)
+    Ctrl -> Lib : rejectPendingProposals(tx, listingId, callerId, except proposalId)
     activate Lib
     Lib -> DB : proposal.updateManyAndReturn\nother PENDING -> REJECTED
     DB --> Lib : rejected proposals

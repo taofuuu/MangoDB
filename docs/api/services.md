@@ -207,6 +207,8 @@ sequenceDiagram
 ## DELETE /services/:serviceId
 
 Hard delete. Refused when any project came from this service (US2-4).
+Pending hire requests are rejected first, and every rejection notice keeps
+the service's title, so the senders still see it after the delete (#264).
 Portfolio images are removed from storage after the rows are gone.
 
 ```mermaid
@@ -233,9 +235,18 @@ sequenceDiagram
         Ctl-->>C: 409 A service with projects cannot be deleted
     end
     Ctl->>DB: servicePortfolio.findMany (portfolioImage)
-    Ctl->>DB: listing.delete (cascades service, categories, proposals, portfolios)
-    alt gone in between
-        Ctl-->>C: 404 Service not found
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction (any error rolls back every step)
+        Ctl->>DB: listing.findUniqueOrThrow (listingTitle)
+        alt gone in between
+            Ctl-->>C: 404 Service not found
+        end
+        Ctl->>L: rejectPendingProposals(tx, serviceId, caller)
+        L->>DB: proposal.updateManyAndReturn PENDING to REJECTED
+        L->>DB: notification.createMany (PROPOSAL_REJECTED, one per sender)
+        Ctl->>DB: notification.deleteMany (the owner's other notices on this service)
+        Ctl->>DB: notification.updateMany set listingTitle, listingType SERVICE
+        Ctl->>DB: listing.delete (cascades service, categories, proposals, portfolios)
     end
     Ctl->>St: removeFromStorageByUrl per image (best effort, in parallel)
     Ctl-->>C: 204

@@ -35,7 +35,7 @@ class "Notification" as NotificationRep <<Representation>> {
   -notificationId : integer
   -notificationType : NotificationType
   -sender : CompanyBrief
-  -listingId : integer
+  -listingId : integer?
   -listingType : ListingType
   -listingTitle : string
   -projectId : integer?
