@@ -122,16 +122,12 @@ snapshots/         Recorded API responses, diffed when a response changes
 
 ## Documentation
 
-| Read                                                                   | For                                                             |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                     | Branches, commits, pull requests, database rules                |
-| [docs/conventions.md](docs/conventions.md)                             | The coding rules in full                                        |
-| [docs/architecture/](docs/architecture/README.md)                      | Architecture overview and design-quality discussion             |
-| [docs/adding-a-resource.md](docs/adding-a-resource.md)                 | Adding an API endpoint, step by step                            |
-| [docs/adr/](docs/adr/README.md)                                        | Decisions that were made, and why                               |
-| [docs/api/](docs/api/README.md)                                        | Every endpoint as UML, OpenAPI and sequence diagrams            |
-| [docs/uml/](docs/uml)                                                  | Use-case, activity and sequence diagrams                        |
-| [docs/deploy.md](docs/deploy.md)                                       | How the live app is hosted                                      |
-| [docs/demo.md](docs/demo.md)                                           | Demo accounts and the click path for each flow                  |
-| [apps/api](apps/api/README.md), [apps/mangodb](apps/mangodb/README.md) | Running and checking each app                                   |
-| [docs/links.md](docs/links.md)                                         | Live app, test plan, design doc, project doc, backlog and Figma |
+| Read                                                                   | For                                                 |
+| ---------------------------------------------------------------------- | --------------------------------------------------- |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                     | Branches, commits, pull requests, database rules    |
+| [docs/conventions.md](docs/conventions.md)                             | The coding rules in full                            |
+| [docs/architecture/](docs/architecture/README.md)                      | Architecture overview and design-quality discussion |
+| [docs/adding-a-resource.md](docs/adding-a-resource.md)                 | Adding an API endpoint, step by step                |
+| [docs/adr/](docs/adr/README.md)                                        | Decisions that were made, and why                   |
+| [apps/api](apps/api/README.md), [apps/mangodb](apps/mangodb/README.md) | Running and checking each app                       |
+| [docs/links.md](docs/links.md)                                         | Project doc, backlog, daily meeting sheet and Figma |
