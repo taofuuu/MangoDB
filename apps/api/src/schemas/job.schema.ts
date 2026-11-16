@@ -36,6 +36,11 @@ const jobFields = {
         .string()
         .trim()
         .max(100, 'Duration cannot exceed 100 characters')
+        // Free text (ADR 0007 leaves job duration unstructured), but a
+        // negative number like "-2" or "-2 weeks" is never a valid duration.
+        .refine((value) => !/^-\s*\d/.test(value), {
+            message: 'Duration cannot be negative',
+        })
         .nullable()
         .optional(),
     deadline: z.iso

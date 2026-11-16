@@ -7,8 +7,15 @@ export function validateJobLocation(value: string | undefined): string | null {
 }
 
 export function validateJobDuration(value: string | undefined): string | null {
-    if ((value ?? '').trim().length > 100) {
+    const trimmed = (value ?? '').trim();
+
+    if (trimmed.length > 100) {
         return 'Duration cannot exceed 100 characters';
+    }
+
+    // Same rule as the API: free text, but not a negative number.
+    if (/^-\s*\d/.test(trimmed)) {
+        return 'Duration cannot be negative';
     }
 
     return null;
