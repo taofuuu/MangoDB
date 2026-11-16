@@ -1,14 +1,22 @@
 // Shared setup for the EPIC 2 black-box tests (docs/test-plan/test-plan.md
 // §2.3). Accounts come from scripts/.env.snapshot, the same gitignored file
 // scripts/snapshot-api.sh reads, so no credential is written in this repo.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
 export type Role = 'PROVIDER' | 'RECEIVER' | 'BOTH';
 
-// Run from apps/mangodb, where playwright.config.ts lives.
-const ENV_FILE = path.resolve(process.cwd(), '../../scripts/.env.snapshot');
+function findEnvFile(): string {
+    const candidates = [
+        path.resolve(process.cwd(), 'scripts/.env.snapshot'),
+        path.resolve(process.cwd(), '../../scripts/.env.snapshot'),
+        path.resolve(__dirname, '../../../../scripts/.env.snapshot'),
+    ];
+    return candidates.find(existsSync) ?? candidates[0];
+}
+
+const ENV_FILE = findEnvFile();
 
 function readEnvFile(): Record<string, string> {
     const env: Record<string, string> = {};
@@ -96,6 +104,7 @@ export type JobInputs = {
     min?: string;
     max?: string;
     deadline?: string;
+    duration?: string;
 };
 
 export async function fillJobForm(page: Page, inputs: JobInputs) {
@@ -110,6 +119,7 @@ export async function fillJobForm(page: Page, inputs: JobInputs) {
         ['min', page.getByPlaceholder('Ex: 20000')],
         ['max', page.getByPlaceholder('Ex: 50000')],
         ['deadline', page.locator('input[type="date"]')],
+        ['duration', page.getByPlaceholder('Ex: 3 months')],
     ];
     for (const [key, field] of fields) {
         const value = inputs[key];

@@ -1,11 +1,9 @@
 /*
- * US2-6 Create and publish a job posting — black-box test cases TC-2-11 …
- * TC-2-17 and TC-2-52 … TC-2-58 from the EPIC 2 test plan (US2-6 tab). Each test types one test
+ * US2-6 Create and publish a job posting — black-box test cases TC-2-19 …
+ * TC-2-32 and TC-2-59 … TC-2-60 from the EPIC 2 test plan (US2-6 tab). Each test types one test
  * case's inputs into the real "Create Your Job Posting" page and checks the
- * expected output. TC-2-52 … TC-2-56 cover the over-the-limit and budget
- * classes (EC 12 … 16); TC-2-57 checks the "deadline is today" boundary and
- * TC-2-58 the Both account. The jobs made by the valid cases are closed
- * afterwards (jobs cannot be deleted, ADR 0013).
+ * expected output. The jobs made by the valid cases are closed afterwards
+ * (jobs cannot be deleted, ADR 0013).
  */
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -23,6 +21,7 @@ const VALID = {
     min: '20000',
     max: '80000',
     deadline: daysFromToday(60),
+    duration: '3 months',
 };
 
 // Today in the browser's own time zone, YYYY-MM-DD. The form compares the
@@ -42,6 +41,7 @@ async function findMyJob(page: Page, title: string) {
             listingTitle: string;
             listingStatus: string;
             deadline: string | null;
+            duration: string | null;
         }[];
     };
     return items.find((j) => j.listingTitle === title);
@@ -68,7 +68,7 @@ test.describe('US2-6 Create and publish a job posting', () => {
         await page.close();
     });
 
-    test('TC-2-11: all valid inputs publish the job as OPEN', async ({
+    test('TC-2-19: all valid inputs publish the job as OPEN', async ({
         page,
     }) => {
         await submitNewJob(page, {});
@@ -83,7 +83,7 @@ test.describe('US2-6 Create and publish a job posting', () => {
         expect(job?.listingStatus).toBe('OPEN');
     });
 
-    test('TC-2-12: a Provider account cannot create a job', async ({
+    test('TC-2-20: a Provider account cannot create a job', async ({
         browser,
     }) => {
         const page = await browser.newPage();
@@ -100,45 +100,45 @@ test.describe('US2-6 Create and publish a job posting', () => {
         await page.close();
     });
 
-    test('TC-2-13: empty title', async ({ page }) => {
+    test('TC-2-21: empty title', async ({ page }) => {
         await submitNewJob(page, { title: '' });
         await expect(page.getByText('Title is required')).toBeVisible();
     });
 
-    test('TC-2-14: empty description', async ({ page }) => {
+    test('TC-2-22: empty description', async ({ page }) => {
         await submitNewJob(page, { description: '' });
         await expect(page.getByText('Description is required')).toBeVisible();
     });
 
-    test('TC-2-15: empty maximum budget', async ({ page }) => {
+    test('TC-2-23: empty maximum budget', async ({ page }) => {
         await submitNewJob(page, { max: '' });
         await expect(
             page.getByText('Maximum budget is required'),
         ).toBeVisible();
     });
 
-    test('TC-2-16: minimum budget above maximum', async ({ page }) => {
+    test('TC-2-24: minimum budget above maximum', async ({ page }) => {
         await submitNewJob(page, { min: '90000', max: '80000' });
         await expect(
             page.getByText('Minimum budget cannot exceed maximum budget'),
         ).toBeVisible();
     });
 
-    test('TC-2-17: deadline in the past', async ({ page }) => {
+    test('TC-2-25: deadline in the past', async ({ page }) => {
         await submitNewJob(page, { deadline: daysFromToday(-30) });
         await expect(
             page.getByText('Deadline cannot be in the past'),
         ).toBeVisible();
     });
 
-    test('TC-2-52: title longer than 255 characters', async ({ page }) => {
+    test('TC-2-26: title longer than 255 characters', async ({ page }) => {
         await submitNewJob(page, { title: 'a'.repeat(256) });
         await expect(
             page.getByText('Title cannot exceed 255 characters'),
         ).toBeVisible();
     });
 
-    test('TC-2-53: description longer than 10,000 characters', async ({
+    test('TC-2-27: description longer than 10,000 characters', async ({
         page,
     }) => {
         await submitNewJob(page, { description: 'a'.repeat(10_001) });
@@ -147,28 +147,28 @@ test.describe('US2-6 Create and publish a job posting', () => {
         ).toBeVisible();
     });
 
-    test('TC-2-54: maximum budget is zero', async ({ page }) => {
+    test('TC-2-28: maximum budget is zero', async ({ page }) => {
         await submitNewJob(page, { max: '0' });
         await expect(
             page.getByText('Maximum budget must be greater than zero'),
         ).toBeVisible();
     });
 
-    test('TC-2-55: negative minimum budget', async ({ page }) => {
+    test('TC-2-29: negative minimum budget', async ({ page }) => {
         await submitNewJob(page, { min: '-1' });
         await expect(
             page.getByText('Minimum budget cannot be negative'),
         ).toBeVisible();
     });
 
-    test('TC-2-56: minimum budget is not a whole number', async ({ page }) => {
+    test('TC-2-30: minimum budget is not a whole number', async ({ page }) => {
         await submitNewJob(page, { min: '100.5' });
         await expect(
             page.getByText('Minimum budget must be an integer'),
         ).toBeVisible();
     });
 
-    test('TC-2-57: a deadline of today is accepted', async ({ page }) => {
+    test('TC-2-31: a deadline of today is accepted', async ({ page }) => {
         const title = tag('Need a Mobile App today');
         const today = localToday();
         await submitNewJob(page, { title, deadline: today });
@@ -180,7 +180,7 @@ test.describe('US2-6 Create and publish a job posting', () => {
         expect(job?.deadline?.slice(0, 10)).toBe(today);
     });
 
-    test('TC-2-58: a Both account can publish a job', async ({ browser }) => {
+    test('TC-2-32: a Both account can publish a job', async ({ browser }) => {
         const page = await browser.newPage();
         await loginAs(page, 'BOTH');
         await submitNewJob(page, {});
@@ -194,5 +194,21 @@ test.describe('US2-6 Create and publish a job posting', () => {
         // is closed here.
         await closeMyRunJobs(page);
         await page.close();
+    });
+
+    test('TC-2-59: negative maximum budget', async ({ page }) => {
+        await submitNewJob(page, { max: '-1' });
+        await expect(
+            page.getByText('Maximum budget must be greater than zero'),
+        ).toBeVisible();
+        await page.screenshot({ path: 'test-results/tc-2-59.png' });
+    });
+
+    test('TC-2-60: negative duration', async ({ page }) => {
+        await submitNewJob(page, { duration: '-2 months' });
+        await expect(
+            page.getByText('Duration cannot be negative'),
+        ).toBeVisible();
+        await page.screenshot({ path: 'test-results/tc-2-60.png' });
     });
 });
