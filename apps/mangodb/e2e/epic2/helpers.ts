@@ -40,11 +40,43 @@ export function credentials(role: Role): { email: string; password: string } {
 export const RUN_ID = Date.now().toString(36);
 export const tag = (title: string) => `[e2e] ${title} ${RUN_ID}`;
 
+// The BOTH role uses a company this run registers, once, instead of the seed
+// BOTH login: that one is shared by the team and its password in
+// scripts/.env.snapshot stopped working (2026-11-14). Every later loginAs
+// ('BOTH') in the run reuses the same company, so a file still sees one BOTH
+// account throughout.
+let runBoth: Promise<{ email: string; password: string }> | null = null;
+
+function runBothAccount(page: Page) {
+    runBoth ??= (async () => {
+        const account = {
+            email: `e2e.both.${RUN_ID}@example.com`,
+            password: `Both-${Math.random().toString(36).slice(2)}-pw`,
+        };
+        const res = await page.request.post('/api/auth/register', {
+            data: {
+                ...account,
+                companyName: `[e2e] BOTH ${RUN_ID}`,
+                username: `e2e_both_${RUN_ID}`,
+                phone: '0812345678',
+                accountType: 'BOTH',
+                companyType: ['Software House'],
+                tosAccepted: true,
+            },
+        });
+        expect(res.status(), `register run BOTH: ${await res.text()}`).toBe(
+            201,
+        );
+        return account;
+    })();
+    return runBoth;
+}
+
 // Signs in through the API. The session cookie lands in the page's browser
 // context, so the pages opened afterwards are signed in too.
 export async function loginAs(page: Page, role: Role): Promise<void> {
     const res = await page.request.post('/api/auth/login', {
-        data: credentials(role),
+        data: role === 'BOTH' ? await runBothAccount(page) : credentials(role),
     });
     expect(res.status(), `login as ${role}`).toBe(200);
 }
