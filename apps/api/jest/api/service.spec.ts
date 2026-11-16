@@ -315,6 +315,10 @@ describe('DELETE /services/:id', () => {
     it('deletes and removes each portfolio image', async () => {
         db.listing.findUnique.mockResolvedValue(owned);
         db.project.count.mockResolvedValue(0);
+        db.listing.findUniqueOrThrow.mockResolvedValue({
+            listingTitle: 'Web app',
+        });
+        db.proposal.updateManyAndReturn.mockResolvedValue([]);
         db.servicePortfolio.findMany.mockResolvedValue([
             { portfolioImage: publicUrl('portfolio', 'a.png') },
             { portfolioImage: publicUrl('portfolio', 'b.png') },
@@ -330,6 +334,10 @@ describe('DELETE /services/:id', () => {
     it('a service deleted by another request first is a 404', async () => {
         db.listing.findUnique.mockResolvedValue(owned);
         db.project.count.mockResolvedValue(0);
+        db.listing.findUniqueOrThrow.mockResolvedValue({
+            listingTitle: 'Web app',
+        });
+        db.proposal.updateManyAndReturn.mockResolvedValue([]);
         db.servicePortfolio.findMany.mockResolvedValue([]);
         db.listing.delete.mockRejectedValue({ code: 'P2025' });
 

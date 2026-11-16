@@ -41,7 +41,7 @@ These three show one valid class and two different invalid classes.
 
 Playwright starts its own API and web app on ports 4100/3100, so the manual servers can keep running.
 
-The whole suite (32 tests, one per test case TC-2-01 … TC-2-32) takes about 5 minutes. Run it before the demo. Live, run one story, which takes under a minute:
+The whole suite (60 tests, one per test case TC-2-01 … TC-2-60) takes several minutes. Run it before the demo. Live, run one story, which takes under a minute:
 
 ```bash
 cd apps/mangodb && npx playwright test e2e/epic2/us2-6-create-job.spec.ts --headed
@@ -55,7 +55,7 @@ cd apps/mangodb && npx playwright test e2e/epic2
 
 - Each test's name starts with its test case ID.
 - Then show the HTML report: each test has a video and a screenshot.
-- If a test fails with a Next.js "404 This page could not be found", run it again. The dev server sometimes answers 404 while it is still compiling a page; we saw this once, on the edit-job page.
+- If a test fails with a Next.js "404 This page could not be found", run it again. The dev server sometimes answers 404 while it is still compiling a page.
 
 ```bash
 cd apps/mangodb && npx playwright show-report
@@ -66,11 +66,11 @@ cd apps/mangodb && npx playwright show-report
 The function is `assertListingVisible` in `apps/api/src/lib/listing.ts` (lines 69–81). It decides who may read a listing. The tests are in `apps/api/jest/assert-listing-visible.spec.ts`. They need no database and no running server.
 
 ```bash
-cd apps/api && npm run test:jest
+cd apps/api && npx jest jest/assert-listing-visible.spec.ts --coverage
 ```
 
 - The audience should see 7 passed tests, WB-01 … WB-07.
-- Jest reports coverage per file, not per function. So `listing.ts` shows about 39% statements, because we test only one function in it.
+- Jest reports coverage per file, not per function. So `listing.ts` shows about 37% statements, because we test only one function in it.
 - To show 100% for the function: point at "Uncovered Line #s". No number from 69 to 81 is in that list.
 
 | Test  | Input                                 | Path through the function | Expected output   |

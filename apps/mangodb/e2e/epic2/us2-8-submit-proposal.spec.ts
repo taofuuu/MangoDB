@@ -13,6 +13,7 @@ import {
     closeMyRunJobs,
     createJob,
     daysFromToday,
+    deleteRunBoth,
     loginAs,
     tag,
 } from './helpers';
@@ -87,9 +88,9 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         await closeMyRunJobs(page);
         await page.close();
 
+        // Deleting the run's BOTH company also hides its jobs.
         const both = await browser.newPage();
-        await loginAs(both, 'BOTH');
-        await closeMyRunJobs(both);
+        await deleteRunBoth(both);
         await both.close();
     });
 

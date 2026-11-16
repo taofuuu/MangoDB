@@ -9,6 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 import {
     closeMyRunJobs,
     daysFromToday,
+    deleteRunBoth,
     fillJobForm,
     loginAs,
     tag,
@@ -65,6 +66,7 @@ test.describe('US2-6 Create and publish a job posting', () => {
         const page = await browser.newPage();
         await loginAs(page, 'RECEIVER');
         await closeMyRunJobs(page);
+        await deleteRunBoth(page);
         await page.close();
     });
 

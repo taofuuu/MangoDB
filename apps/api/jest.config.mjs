@@ -8,7 +8,8 @@ export default {
     // Prisma's generated client imports its own .ts files as ".js" (ESM style).
     moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
     transform: {
-        // Types are checked by `npm run typecheck`, so here it only compiles.
+        // Only compiles. jest/ is outside tsconfig's "include", so nothing
+        // type-checks these files.
         '^.+\\.ts$': [
             'ts-jest',
             {

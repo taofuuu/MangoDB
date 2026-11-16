@@ -49,24 +49,28 @@ export function credentials(role: Role): { email: string; password: string } {
 export const RUN_ID = Date.now().toString(36);
 export const tag = (title: string) => `[e2e] ${title} ${RUN_ID}`;
 
-// The BOTH role uses a company this run registers, once, instead of the seed
-// BOTH login: that one is shared by the team and its password in
+// The BOTH role uses a company this run registers instead of the seed BOTH
+// login: that one is shared by the team and its password in
 // scripts/.env.snapshot stopped working (2026-11-14). Every later loginAs
-// ('BOTH') in the run reuses the same company, so a file still sees one BOTH
-// account throughout.
+// ('BOTH') reuses the same company until deleteRunBoth removes it, so a file
+// still sees one BOTH account throughout.
 let runBoth: Promise<{ email: string; password: string }> | null = null;
+// A deleted company keeps its email and username, so each new BOTH company
+// in the run needs its own.
+let bothCount = 0;
 
 function runBothAccount(page: Page) {
     runBoth ??= (async () => {
+        const id = `${RUN_ID}_${++bothCount}`;
         const account = {
-            email: `e2e.both.${RUN_ID}@example.com`,
+            email: `e2e.both.${id}@example.com`,
             password: `Both-${Math.random().toString(36).slice(2)}-pw`,
         };
         const res = await page.request.post('/api/auth/register', {
             data: {
                 ...account,
-                companyName: `[e2e] BOTH ${RUN_ID}`,
-                username: `e2e_both_${RUN_ID}`,
+                companyName: `[e2e] BOTH ${id}`,
+                username: `e2e_both_${id}`,
                 phone: '0812345678',
                 accountType: 'BOTH',
                 companyType: ['Software House'],
@@ -79,6 +83,19 @@ function runBothAccount(page: Page) {
         return account;
     })();
     return runBoth;
+}
+
+// Deletes the run's BOTH company so it does not stay in the shared DB. The
+// next loginAs('BOTH') registers a fresh one.
+export async function deleteRunBoth(page: Page): Promise<void> {
+    if (!runBoth) return;
+    const account = await runBoth;
+    runBoth = null;
+    await page.request.post('/api/auth/login', { data: account });
+    const res = await page.request.delete('/api/companies/me', {
+        data: { currentPassword: account.password },
+    });
+    expect(res.status(), 'delete run BOTH').toBe(204);
 }
 
 // Signs in through the API. The session cookie lands in the page's browser
