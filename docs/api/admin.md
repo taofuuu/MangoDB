@@ -110,7 +110,9 @@ sequenceDiagram
 
 ## DELETE /admin/companies/:companyId
 
-US6-4. Soft delete. The admin types their own password first.
+US6-4. Soft delete. The admin types their own password first. Pending
+proposals on the company's listings are rejected, with a notice to each
+sender (#263).
 
 ```mermaid
 sequenceDiagram
@@ -121,6 +123,7 @@ sequenceDiagram
     participant P as auth/password
     participant E as lib/project-eligibility
     participant D as lib/company-deletion
+    participant L as lib/listing
     participant DB as PostgreSQL
 
     C->>G: DELETE /admin/companies/:companyId { currentPassword }
@@ -142,9 +145,18 @@ sequenceDiagram
         Ctl-->>C: 409 ONGOING_PROJECT_BLOCKS_DELETE
     end
     Ctl->>D: softDeleteCompany(companyId)
-    D->>DB: company.updateMany set deletedAt = now
-    alt count is 0 (race)
-        Ctl-->>C: 404 Company account not found
+    rect rgba(128, 128, 128, 0.12)
+        Note over D,DB: prisma.$transaction
+        D->>DB: company.updateMany set deletedAt = now
+        alt count is 0 (race)
+            Ctl-->>C: 404 Company account not found
+        end
+        D->>DB: listing.findMany (its listings with a PENDING proposal)
+        loop each listing
+            D->>L: rejectPendingProposals(tx, listingId, companyId)
+            L->>DB: proposal.updateManyAndReturn PENDING to REJECTED
+            L->>DB: notification.createMany (PROPOSAL_REJECTED, one per sender)
+        end
     end
     Ctl-->>C: 204
 ```
