@@ -98,7 +98,10 @@ class "ChangeCredentialsRequest" as ChangeCredentialsRequestRep <<Representation
 }
 class "SessionResponse" as SessionResponseRep <<Representation>> {
   -company : CompanyProfile
-  -accessToken : string
+  -accessToken : string? (local only)
+}
+class "DeleteCompanyAccountRequest" as DeleteCompanyAccountRequestRep <<Representation>> {
+  -currentPassword : string
 }
 class "PhotoUpload" as PhotoUploadRep <<Representation>> {
   -photo : image file, multipart
@@ -126,6 +129,7 @@ Companies -[#BE185D,dashed]-> CompanySummaryRep : <i><color:#BE185D>«use»</col
 Companies -[#B45309,dashed]-> Me : <i><color:#B45309>«Path» /me</color></i>
 Me -[#BE185D,dashed]-> CompanyProfileRep : <i><color:#BE185D>«use»</color></i>
 Me -[#BE185D,dashed]-> UpdateCompanyProfileRequestRep : <i><color:#BE185D>«use»</color></i>
+Me -[#BE185D,dashed]-> DeleteCompanyAccountRequestRep : <i><color:#BE185D>«use»</color></i>
 Me -[#B45309,dashed]-> Credentials : <i><color:#B45309>«Path» /credentials</color></i>
 Credentials -[#BE185D,dashed]-> ChangeCredentialsRequestRep : <i><color:#BE185D>«use»</color></i>
 Credentials -[#BE185D,dashed]-> SessionResponseRep : <i><color:#BE185D>«use»</color></i>
