@@ -8,8 +8,8 @@ jobs), or **Both**. Providers bid on jobs, Receivers send hire requests to
 services, and an accepted offer becomes a project that both sides run through
 the site.
 
-> **Status:** in the last of three sprints, which ends 9 Nov 2026. The project
-> flow works through the API; its pages are still being built.
+> **Status:** all three sprints are done (25 Aug - 9 Nov 2026). Every flow
+> works end to end, and the app is live: see [docs/links.md](docs/links.md).
 
 ## Features
 
