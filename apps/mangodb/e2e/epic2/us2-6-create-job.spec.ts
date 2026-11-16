@@ -1,6 +1,6 @@
 /*
  * US2-6 Create and publish a job posting — black-box test cases TC-2-19 …
- * TC-2-32 and TC-2-59 … TC-2-60 from the EPIC 2 test plan (US2-6 tab). Each test types one test
+ * TC-2-34 from the EPIC 2 test plan (Google Doc, "final" tab). Each test types one test
  * case's inputs into the real "Create Your Job Posting" page and checks the
  * expected output. The jobs made by the valid cases are closed afterwards
  * (jobs cannot be deleted, ADR 0013).
@@ -196,19 +196,19 @@ test.describe('US2-6 Create and publish a job posting', () => {
         await page.close();
     });
 
-    test('TC-2-59: negative maximum budget', async ({ page }) => {
+    test('TC-2-33: negative maximum budget', async ({ page }) => {
         await submitNewJob(page, { max: '-1' });
         await expect(
             page.getByText('Maximum budget must be greater than zero'),
         ).toBeVisible();
-        await page.screenshot({ path: 'test-results/tc-2-59.png' });
+        await page.screenshot({ path: 'test-results/tc-2-33.png' });
     });
 
-    test('TC-2-60: negative duration', async ({ page }) => {
+    test('TC-2-34: negative duration', async ({ page }) => {
         await submitNewJob(page, { duration: '-2 months' });
         await expect(
             page.getByText('Duration cannot be negative'),
         ).toBeVisible();
-        await page.screenshot({ path: 'test-results/tc-2-60.png' });
+        await page.screenshot({ path: 'test-results/tc-2-34.png' });
     });
 });

@@ -1,10 +1,10 @@
 /*
  * US2-8 Submit a proposal to an open job posting — black-box test cases
- * TC-2-18 … TC-2-26, TC-2-39 … TC-2-41 from docs/test-plan/test-plan.md §2.3.
+ * TC-2-49 … TC-2-60 from the EPIC 2 test plan (Google Doc, "final" tab).
  * The Receiver account posts one OPEN and one CLOSED [e2e] job first; the
  * BOTH account posts one OPEN [e2e] job; the Provider account then fills the
  * real "Submit a proposal" form on the job search page. Serial, because
- * TC-2-20 (a second pending proposal) needs the one TC-2-18 sends.
+ * TC-2-51 (a second pending proposal) needs the one TC-2-49 sends.
  * All run jobs are closed afterwards.
  */
 import { expect, test, type Page } from '@playwright/test';
@@ -97,7 +97,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         await loginAs(page, 'PROVIDER');
     });
 
-    test('TC-2-18: all valid inputs send a PENDING proposal', async ({
+    test('TC-2-49: all valid inputs send a PENDING proposal', async ({
         page,
     }) => {
         await submitProposal(page);
@@ -111,7 +111,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         expect(sent?.proposalStatus).toBe('PENDING');
     });
 
-    test('TC-2-19: a CLOSED job takes no proposal', async ({ page }) => {
+    test('TC-2-50: a CLOSED job takes no proposal', async ({ page }) => {
         // The job search lists open jobs only, so the closed one has no
         // "Add Proposal" button to press.
         await page.goto('/jobs');
@@ -139,7 +139,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         );
     });
 
-    test('TC-2-20: a second pending proposal on the same job', async ({
+    test('TC-2-51: a second pending proposal on the same job', async ({
         page,
     }) => {
         await submitProposal(page);
@@ -148,42 +148,42 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         ).toBeVisible();
     });
 
-    test('TC-2-21: empty terms', async ({ page }) => {
+    test('TC-2-52: empty terms', async ({ page }) => {
         await submitProposal(page, { terms: '' });
         await expect(
             page.getByText('Proposal terms are required'),
         ).toBeVisible();
     });
 
-    test('TC-2-22: empty budget', async ({ page }) => {
+    test('TC-2-53: empty budget', async ({ page }) => {
         await submitProposal(page, { budget: '' });
         await expect(
             page.getByText('Proposal budget is required'),
         ).toBeVisible();
     });
 
-    test('TC-2-23: budget of zero', async ({ page }) => {
+    test('TC-2-54: budget of zero', async ({ page }) => {
         await submitProposal(page, { budget: '0' });
         await expect(
             page.getByText('Proposal budget must be greater than zero'),
         ).toBeVisible();
     });
 
-    test('TC-2-24: duration of zero', async ({ page }) => {
+    test('TC-2-55: duration of zero', async ({ page }) => {
         await submitProposal(page, { duration: '0' });
         await expect(
             page.getByText('Duration must be greater than zero'),
         ).toBeVisible();
     });
 
-    test('TC-2-25: duration over 120 months', async ({ page }) => {
+    test('TC-2-56: duration over 120 months', async ({ page }) => {
         await submitProposal(page, { duration: '121' });
         await expect(
             page.getByText('Duration cannot exceed 120 months'),
         ).toBeVisible();
     });
 
-    test('TC-2-26: duration not in half-month steps', async ({ page }) => {
+    test('TC-2-57: duration not in half-month steps', async ({ page }) => {
         await submitProposal(page, { duration: '1.3' });
         await expect(
             page.getByText(
@@ -192,7 +192,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         ).toBeVisible();
     });
 
-    test('TC-2-46: a RECEIVER account cannot submit a proposal', async ({
+    test('TC-2-58: a RECEIVER account cannot submit a proposal', async ({
         page,
     }) => {
         await loginAs(page, 'RECEIVER');
@@ -219,7 +219,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         expect(res.status()).toBe(403);
     });
 
-    test('TC-2-47: a Provider cannot submit a proposal to their own job', async ({
+    test('TC-2-59: a Provider cannot submit a proposal to their own job', async ({
         page,
     }) => {
         await loginAs(page, 'BOTH');
@@ -244,7 +244,7 @@ test.describe('US2-8 Submit a proposal to an open job posting', () => {
         );
     });
 
-    test('TC-2-48: duration is empty', async ({ page }) => {
+    test('TC-2-60: duration is empty', async ({ page }) => {
         await submitProposal(page, { duration: '' });
         await expect(page.getByText('Duration is required')).toBeVisible();
     });
