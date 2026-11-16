@@ -100,6 +100,8 @@ sequenceDiagram
         end
         alt listing not OPEN
             Ctl-->>C: 409 Listing has already been closed
+        else sender deleted its account
+            Ctl-->>C: 409 This company has deleted its account
         end
         opt listing is a JOB
             Ctl->>L: closeOpenListing(tx, listingId)
