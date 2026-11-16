@@ -1,0 +1,29 @@
+@startuml container
+' C4 Level 2: what runs inside MangoDB, and how the parts talk.
+!include <C4/C4_Container>
+
+LAYOUT_LEFT_RIGHT()
+HIDE_STEREOTYPE()
+
+title Container diagram — MangoDB
+
+Person(user, "Company user", "Provider, Receiver, Both or Admin")
+
+System_Boundary(mangodb, "MangoDB") {
+    Container(web, "Web application", "Next.js 16, React, Tailwind", "Serves the pages. Proxies /api/* to the API, so the browser stays same-origin")
+    Container(api, "API", "Express 5, TypeScript, Zod, Prisma 7", "REST endpoints, JWT in an httpOnly cookie, business rules. Swagger at /api-docs")
+}
+
+System_Boundary(supabase, "Supabase (external)") {
+    ContainerDb(db, "Database", "PostgreSQL", "Companies, listings, proposals, projects, quotations, reviews, revoked tokens")
+    Container(storage, "File storage", "Supabase Storage", "Buckets: profile, portfolio, certificate, quotation")
+}
+
+Rel(user, web, "Uses", "HTTPS")
+Rel(web, api, "Forwards /api/* to", "HTTP, rewrite to API_URL")
+Rel(api, db, "Reads and writes", "SQL, pooled DATABASE_URL")
+Rel(api, storage, "Uploads and deletes files", "HTTPS, supabase-js")
+Rel(user, storage, "Loads images and PDFs from", "HTTPS, public URL")
+
+SHOW_LEGEND()
+@enduml

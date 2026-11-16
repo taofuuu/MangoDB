@@ -47,5 +47,10 @@ jobs:
             - name: Verify
               run: npm run verify
 
+            # The Jest suite in apps/api/jest. typecheck and npm test do not
+            # cover these files, so without this step they can break unseen.
+            - name: Jest
+              run: npm run test:jest --workspace apps/api
+
             - name: Build
               run: npm run build

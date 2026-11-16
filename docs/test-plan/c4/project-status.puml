@@ -1,0 +1,37 @@
+@startuml project-status
+' Supplementary to Level 4: the project status flow that PROJECT_MOVES in
+' apps/api/src/lib/project.ts allows (ADR 0015). moveProjectStatus refuses any
+' other move with 409. Each arrow names the endpoint that makes the move and
+' who may call it; the role check lives in that endpoint, not in project.ts.
+
+hide empty description
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #555555
+skinparam StateBorderColor #3C7FC0
+skinparam StateBackgroundColor #FFFFFF
+skinparam StateBackgroundColor<<final>> #EAEAEA
+
+title Project status — moveProjectStatus (lib/project.ts)
+
+state AWAITING_QUOTATION
+state AWAITING_DEPOSIT : Receiver may report the deposit\n(sets depositReportedAt, status stays)
+state IN_PROGRESS : Provider may add progress notes
+state AWAITING_ACCEPTANCE
+state COMPLETED <<final>> : Receiver may write one review
+state CANCELLED <<final>>
+
+[*] --> AWAITING_QUOTATION : Listing owner accepts a proposal\n(acceptProposal → createProjectFromProposal)
+AWAITING_QUOTATION --> AWAITING_DEPOSIT : Receiver accepts a quotation\n(acceptQuotation)
+AWAITING_DEPOSIT --> IN_PROGRESS : Provider confirms the deposit\n(confirmDeposit)
+IN_PROGRESS --> AWAITING_ACCEPTANCE : Provider submits the work\n(submitWork)
+AWAITING_ACCEPTANCE --> IN_PROGRESS : Receiver rejects the work, with a reason\n(rejectWork)
+AWAITING_ACCEPTANCE --> COMPLETED : Receiver accepts the work\n(acceptWork)
+AWAITING_QUOTATION --> CANCELLED : Either party cancels\n(cancelProject)
+AWAITING_DEPOSIT --> CANCELLED : Either party cancels\n(cancelProject)
+COMPLETED --> [*]
+CANCELLED --> [*]
+
+note "Every move also saves one ProjectUpdate event\nin the same transaction, so a refused move saves none." as N1
+
+@enduml
