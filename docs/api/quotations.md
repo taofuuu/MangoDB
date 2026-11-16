@@ -145,7 +145,8 @@ sequenceDiagram
 ## DELETE /quotations/:quotationId
 
 US4-2. The Provider deletes a pending quotation, so a wrong PDF can be
-replaced before the Receiver answers.
+replaced before the Receiver answers. Refused once the project has moved on
+or was cancelled (#261).
 
 ```mermaid
 sequenceDiagram
@@ -167,10 +168,21 @@ sequenceDiagram
     alt caller is the Receiver
         Ctl-->>C: 403 Only the Provider can delete a quotation
     end
-    Ctl->>DB: quotation.delete where PENDING
-    alt no row matched (Receiver decided first)
-        Ctl-->>C: 409 Quotation is not PENDING
+    Ctl->>Ctl: assertProjectStatus(AWAITING_QUOTATION)
+    alt project moved on or was cancelled
+        Ctl-->>C: 409 Project is not AWAITING_QUOTATION
     end
-    Ctl->>S: remove the PDF (best effort)
+    rect rgba(128, 128, 128, 0.12)
+        Note over Ctl,DB: prisma.$transaction
+        Ctl->>DB: quotation.delete where PENDING
+        alt no row matched (Receiver decided first)
+            Ctl-->>C: 409 Quotation is not PENDING
+        end
+        Ctl->>DB: projectUpdate.create QUOTATION_DELETED (timeline)
+    end
+    Ctl->>DB: quotation.count with the same PDF
+    opt no other row uses it (seeded demo rows share one PDF)
+        Ctl->>S: remove the PDF (best effort)
+    end
     Ctl-->>C: 204
 ```
